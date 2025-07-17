@@ -26,11 +26,13 @@ const AnalyzeSafetyReportToneOutputSchema = z.object({
   overallTone: z
     .string()
     .describe(
-      'The overall tone of the report (e.g., positive, negative, neutral, concerned).'n    ),
+      'The overall tone of the report (e.g., positive, negative, neutral, concerned).'
+    ),
   severityLevel: z
     .string()
     .describe(
-      'The perceived severity level of the reported incident (e.g., low, medium, high, critical).'n    ),
+      'The perceived severity level of the reported incident (e.g., low, medium, high, critical).'
+    ),
   potentialSafetyIssues: z
     .string()
     .describe(
