@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,8 @@ import {
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { studentData } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewStudentForm } from './new-student-form';
 
 export default function StudentsPage() {
   return (
@@ -21,10 +24,23 @@ export default function StudentsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Student Roster</CardTitle>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Student
-            </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Student
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Student</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to add a new student.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewStudentForm />
+                </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>
