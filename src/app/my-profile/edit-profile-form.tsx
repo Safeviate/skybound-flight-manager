@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import type { Personnel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
+import { format, parseISO } from 'date-fns';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -26,6 +32,13 @@ const profileFormSchema = z.object({
   phone: z.string().min(10, {
     message: 'Phone number must be at least 10 characters.',
   }),
+  medicalExpiry: z.date({
+    required_error: 'A medical expiry date is required.',
+  }),
+  licenseExpiry: z.date({
+    required_error: 'A license expiry date is required.',
+  }),
+  // We'll keep the file inputs separate from the form state for now
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -38,13 +51,19 @@ export function EditProfileForm({ user }: { user: Personnel }) {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      medicalExpiry: parseISO(user.medicalExpiry),
+      licenseExpiry: parseISO(user.licenseExpiry),
     },
   });
 
   function onSubmit(data: ProfileFormValues) {
     // In a real application, you would handle the form submission,
-    // like sending the data to your backend API.
-    console.log(data);
+    // including file uploads, to your backend API.
+    console.log({
+        ...data,
+        medicalExpiry: format(data.medicalExpiry, 'yyyy-MM-dd'),
+        licenseExpiry: format(data.licenseExpiry, 'yyyy-MM-dd'),
+    });
     toast({
       title: 'Profile Updated',
       description: 'Your information has been saved.',
@@ -93,11 +112,99 @@ export function EditProfileForm({ user }: { user: Personnel }) {
             </FormItem>
           )}
         />
-        {/* Placeholder for documentation upload */}
-        <div className="space-y-2">
-            <FormLabel>Update Documentation</FormLabel>
-            <Input type="file" />
+        
+        <div className="space-y-4 rounded-md border p-4">
+            <h4 className="font-semibold">Medical Certificate</h4>
+            <div className="space-y-2">
+                <Label>Upload New Certificate</Label>
+                <Input type="file" />
+            </div>
+            <FormField
+            control={form.control}
+            name="medicalExpiry"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Expiry Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, "PPP")
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
         </div>
+
+        <div className="space-y-4 rounded-md border p-4">
+            <h4 className="font-semibold">Pilot License</h4>
+             <div className="space-y-2">
+                <Label>Upload New License</Label>
+                <Input type="file" />
+            </div>
+            <FormField
+            control={form.control}
+            name="licenseExpiry"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Expiry Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, "PPP")
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
         <div className="flex justify-end">
             <Button type="submit">Save Changes</Button>
         </div>
