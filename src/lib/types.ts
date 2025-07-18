@@ -20,6 +20,11 @@ export type Student = {
   licenseExpiry: string;
 };
 
+export type Permission = 'Safety Manager' | 'Quality Manager' | 'Flight Manager' | 'Fleet Manager' | 'User Manager';
+
+export const ALL_PERMISSIONS: Permission[] = ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager'];
+
+
 export type Personnel = {
   id: string;
   name: string;
@@ -29,7 +34,7 @@ export type Personnel = {
   phone: string;
   medicalExpiry: string;
   licenseExpiry: string;
-  permissionLevel: 'User' | 'Manager' | 'Super User';
+  permissions: Permission[];
 };
 
 export type Booking = {

@@ -21,6 +21,8 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
+import { PermissionsForm } from './permissions-form';
+import { ALL_PERMISSIONS } from '@/lib/types';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -32,8 +34,8 @@ const personnelFormSchema = z.object({
   department: z.string({
     required_error: 'Please select a department.'
   }),
-  permissionLevel: z.enum(['User', 'Manager', 'Super User'], {
-    required_error: 'Please select a permission level.'
+  permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: 'You have to select at least one permission.',
   }),
   email: z.string().email({ message: "Please enter a valid email."}),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
@@ -48,7 +50,7 @@ export function NewPersonnelForm() {
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
     defaultValues: {
-      permissionLevel: 'User',
+      permissions: [],
     }
   });
 
@@ -121,28 +123,7 @@ export function NewPersonnelForm() {
                 </FormItem>
             )}
             />
-            <FormField
-              control={form.control}
-              name="permissionLevel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Permission Level</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a permission level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="User">User</SelectItem>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Super User">Super User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
             <FormField
             control={form.control}
             name="email"
@@ -233,6 +214,8 @@ export function NewPersonnelForm() {
                 />
             </div>
         </div>
+
+        <PermissionsForm />
 
         <div className="flex justify-end">
             <Button type="submit">Add Personnel</Button>

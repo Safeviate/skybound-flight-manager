@@ -64,6 +64,7 @@ export default function PersonnelPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Permissions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -75,6 +76,11 @@ export default function PersonnelPage() {
                     </TableCell>
                     <TableCell>{person.email}</TableCell>
                     <TableCell>{person.phone}</TableCell>
+                    <TableCell className="space-x-1">
+                        {person.permissions.map(p => (
+                            <Badge key={p} variant="secondary">{p}</Badge>
+                        ))}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
