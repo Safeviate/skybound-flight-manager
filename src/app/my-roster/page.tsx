@@ -11,15 +11,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Booking } from '@/lib/types';
 import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
+import { bookingData } from '@/lib/mock-data';
 
-// Mock data from bookings page
-const allBookings: Booking[] = [
-  { id: '1', date: '2024-08-15', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training' },
-  { id: '2', date: '2024-08-16', time: '09:00', aircraft: 'N54321', student: 'N/A', instructor: 'Hank Hill', purpose: 'Maintenance' },
-  { id: '3', date: '2024-08-16', time: '11:00', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training' },
-  { id: '4', date: '2024-08-17', time: '10:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training' },
-  { id: '5', date: '2024-08-17', time: '16:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private' },
-];
 
 // In a real app, this would come from the logged-in user's session
 const LOGGED_IN_INSTRUCTOR = 'Mike Ross'; 
@@ -30,7 +23,7 @@ export default function MyRosterPage() {
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const instructorBookings = allBookings.filter(b => b.instructor === LOGGED_IN_INSTRUCTOR);
+  const instructorBookings = bookingData.filter(b => b.instructor === LOGGED_IN_INSTRUCTOR);
 
   const getBookingsForDay = (day: Date) => {
     return instructorBookings

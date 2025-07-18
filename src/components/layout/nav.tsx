@@ -19,10 +19,12 @@ import {
   Shield,
   Rocket,
   Settings,
-  HelpCircle
+  HelpCircle,
+  UserCircle,
 } from 'lucide-react';
 
 const navItems = [
+  { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/bookings', label: 'Bookings', icon: Calendar },
   { href: '/aircraft', label: 'Aircraft', icon: Plane },

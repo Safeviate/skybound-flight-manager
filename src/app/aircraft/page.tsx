@@ -9,63 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge, badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { isAfter, parseISO, format, differenceInDays } from 'date-fns';
-import { cn } from '@/lib/utils';
-
-const SERVICE_INTERVALS = {
-  'A-Check': 50,
-  'B-Check': 100,
-  'C-Check': 500,
-};
-
-const getNextService = (hours: number): { type: string; hoursUntil: number } => {
-  const nextA = SERVICE_INTERVALS['A-Check'] - (hours % SERVICE_INTERVALS['A-Check']);
-  const nextB = SERVICE_INTERVALS['B-Check'] - (hours % SERVICE_INTERVALS['B-Check']);
-  const nextC = SERVICE_INTERVALS['C-Check'] - (hours % SERVICE_INTERVALS['C-Check']);
-
-  let hoursUntil = nextA;
-  let type = 'A-Check';
-
-  if (nextB < hoursUntil) {
-    hoursUntil = nextB;
-    type = 'B-Check';
-  }
-
-  if (nextC < hoursUntil) {
-    hoursUntil = nextC;
-    type = 'C-Check';
-  }
-
-  return { type, hoursUntil: parseFloat(hoursUntil.toFixed(1)) };
-};
-
-// Mock data updated to show all expiry badge variants.
-// Dates are relative to a hypothetical "today" to ensure all states are visible.
-// For example, if today is July 18th, 2024:
-// - Not Expired (Green): > 60 days away (e.g., '2025-05-20')
-// - Expires in 2 months (Yellow): <= 60 days away (e.g., '2024-09-10')
-// - Expires in 1 month (Orange): <= 30 days away (e.g., '2024-08-15')
-// - Expired (Red): < 0 days away (e.g., '2024-06-01')
-const rawAircraftData = [
-  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15' }, // Green / Green
-  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-15' }, // Yellow / Orange
-  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01' }, // Red / Green
-  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-05-20' }, // Green / Red
-  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2024-08-10', insuranceExpiry: '2024-09-01' }, // Orange / Yellow
-];
-
-
-const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
-    const nextService = getNextService(ac.hours);
-    return {
-        ...ac,
-        nextServiceType: nextService.type,
-        hoursUntilService: nextService.hoursUntil,
-    }
-})
+import { getExpiryBadge } from '@/lib/utils';
+import { aircraftData } from '@/lib/mock-data';
 
 
 export default function AircraftPage() {
@@ -81,31 +30,6 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
-
-  const getExpiryBadge = (expiryDate: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day for consistent comparison
-    const date = parseISO(expiryDate);
-    const daysUntil = differenceInDays(date, today);
-
-    let variant: "success" | "warning" | "destructive" | "default" | "orange" = "success";
-
-    if (daysUntil < 0) {
-        variant = 'destructive'; // Expired - Red
-    } else if (daysUntil <= 30) {
-        variant = 'orange'; // Expires in 1 month - Orange
-    } else if (daysUntil <= 60) {
-        variant = 'warning'; // Expires in 2 months - Yellow
-    } else {
-        variant = 'success'; // Not expired - Green
-    }
-
-    const formattedDate = format(date, 'MMM d, yyyy');
-
-    return (
-        <Badge variant={variant}>{formattedDate}</Badge>
-    )
-  }
 
   return (
     <div className="flex flex-col min-h-screen">

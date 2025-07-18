@@ -10,16 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Student } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
-
-const studentData: Student[] = [
-  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75 },
-  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40 },
-  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90 },
-  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20 },
-  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65 },
-];
+import { studentData } from '@/lib/mock-data';
 
 export default function StudentsPage() {
   return (

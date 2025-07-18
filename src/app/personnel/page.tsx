@@ -12,14 +12,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Personnel } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
+import { personnelData } from '@/lib/mock-data';
 
-const personnelData: Personnel[] = [
-  { id: '1', name: 'Mike Ross', role: 'Instructor', email: 'mike.ross@skybound.com', phone: '555-0101' },
-  { id: '2', name: 'Sarah Connor', role: 'Instructor', email: 'sarah.connor@skybound.com', phone: '555-0102' },
-  { id: '3', name: 'Hank Hill', role: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103' },
-  { id: '4', name: 'Laura Croft', role: 'Instructor', email: 'laura.croft@skybound.com', phone: '555-0104' },
-  { id: '5', name: 'Admin User', role: 'Admin', email: 'admin@skybound.com', phone: '555-0100' },
-];
 
 export default function PersonnelPage() {
     const getRoleVariant = (role: Personnel['role']) => {
