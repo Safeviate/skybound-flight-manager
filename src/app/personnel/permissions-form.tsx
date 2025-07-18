@@ -14,7 +14,7 @@ export function PermissionsForm() {
       <div className="mb-4">
         <FormLabel className="text-base">User Permissions</FormLabel>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {ALL_PERMISSIONS.map((permission) => (
           <FormField
             key={permission}

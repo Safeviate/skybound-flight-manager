@@ -20,9 +20,36 @@ export type Student = {
   licenseExpiry: string;
 };
 
-export type Permission = 'Bookings' | 'Aircraft' | 'Students' | 'Personnel' | 'Safety' | 'Quality' | 'Super User';
+export type Permission =
+  | 'Aircraft:View'
+  | 'Aircraft:Edit'
+  | 'Bookings:View'
+  | 'Bookings:Edit'
+  | 'Students:View'
+  | 'Students:Edit'
+  | 'Personnel:View'
+  | 'Personnel:Edit'
+  | 'Safety:View'
+  | 'Safety:Edit'
+  | 'Quality:View'
+  | 'Quality:Edit'
+  | 'Super User';
 
-export const ALL_PERMISSIONS: Permission[] = ['Bookings', 'Aircraft', 'Students', 'Personnel', 'Safety', 'Quality', 'Super User'];
+export const ALL_PERMISSIONS: Permission[] = [
+    'Aircraft:View',
+    'Aircraft:Edit',
+    'Bookings:View',
+    'Bookings:Edit',
+    'Students:View',
+    'Students:Edit',
+    'Personnel:View',
+    'Personnel:Edit',
+    'Safety:View',
+    'Safety:Edit',
+    'Quality:View',
+    'Quality:Edit',
+    'Super User',
+];
 
 export type Role =
   | 'Accountable Manager'
