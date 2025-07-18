@@ -33,12 +33,8 @@ const profileFormSchema = z.object({
   phone: z.string().min(10, {
     message: 'Phone number must be at least 10 characters.',
   }),
-  medicalExpiry: z.date({
-    required_error: 'A medical expiry date is required.',
-  }),
-  licenseExpiry: z.date({
-    required_error: 'A license expiry date is required.',
-  }),
+  documentType: z.string({ required_error: 'Please select a document type.' }),
+  documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -51,16 +47,14 @@ export function EditProfileForm({ user }: { user: Personnel }) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      medicalExpiry: parseISO(user.medicalExpiry),
-      licenseExpiry: parseISO(user.licenseExpiry),
+      documentExpiry: parseISO(user.medicalExpiry), // Defaulting to one, can be improved
     },
   });
 
   function onSubmit(data: ProfileFormValues) {
     console.log({
         ...data,
-        medicalExpiry: format(data.medicalExpiry, 'yyyy-MM-dd'),
-        licenseExpiry: format(data.licenseExpiry, 'yyyy-MM-dd'),
+        documentExpiry: format(data.documentExpiry, 'yyyy-MM-dd'),
     });
     toast({
       title: 'Profile Updated',
@@ -113,100 +107,71 @@ export function EditProfileForm({ user }: { user: Personnel }) {
             />
         </div>
         
-        <div className="space-y-4 rounded-md border p-4">
-            <h4 className="font-semibold">Medical Certificate</h4>
-            <div className="flex gap-4 items-end">
-                <div className="flex-1 space-y-2">
-                    <FormLabel>Upload New Certificate</FormLabel>
-                    <Input type="file" />
-                </div>
+        <div className="space-y-2">
+            <FormLabel>Add Document</FormLabel>
+            <div className="flex gap-4">
                 <FormField
-                control={form.control}
-                name="medicalExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Expiry Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
+                    control={form.control}
+                    name="documentType"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select document type" />
+                            </SelectTrigger>
                             </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
+                            <SelectContent>
+                                <SelectItem value="Medical">Medical Certificate</SelectItem>
+                                <SelectItem value="License">Pilot License</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
-                    </FormItem>
-                )}
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="documentExpiry"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick expiry date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
             </div>
-        </div>
-
-        <div className="space-y-4 rounded-md border p-4">
-            <h4 className="font-semibold">Pilot License</h4>
-             <div className="flex gap-4 items-end">
-                <div className="flex-1 space-y-2">
-                    <FormLabel>Upload New License</FormLabel>
+             <div className="flex-1 space-y-2">
+                    <FormLabel>Upload Document</FormLabel>
                     <Input type="file" />
                 </div>
-                <FormField
-                control={form.control}
-                name="licenseExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>Expiry Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
         </div>
 
         <div className="flex justify-end">
