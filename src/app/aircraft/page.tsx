@@ -88,17 +88,14 @@ export default function AircraftPage() {
     const date = parseISO(expiryDate);
     const daysUntil = differenceInDays(date, today);
 
-    let variant: "success" | "warning" | "destructive" | "default" = "success";
-    let className = "";
+    let variant: "success" | "warning" | "destructive" | "default" | "orange" = "success";
 
     if (daysUntil < 0) {
         variant = 'destructive'; // Expired - Red
     } else if (daysUntil <= 30) {
-        variant = 'warning'; // Expires in 1 month - Orange
-        className = 'bg-orange-500 text-white hover:bg-orange-500/80';
+        variant = 'orange'; // Expires in 1 month - Orange
     } else if (daysUntil <= 60) {
         variant = 'warning'; // Expires in 2 months - Yellow
-        className = 'bg-yellow-500 text-black hover:bg-yellow-500/80';
     } else {
         variant = 'success'; // Not expired - Green
     }
@@ -106,7 +103,7 @@ export default function AircraftPage() {
     const formattedDate = format(date, 'MMM d, yyyy');
 
     return (
-        <Badge variant={variant} className={cn(badgeVariants({variant}), className)}>{formattedDate}</Badge>
+        <Badge variant={variant}>{formattedDate}</Badge>
     )
   }
 
