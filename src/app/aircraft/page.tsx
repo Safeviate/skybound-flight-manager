@@ -9,10 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { isAfter, parseISO, format, differenceInDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const SERVICE_INTERVALS = {
   'A-Check': 50,
@@ -63,7 +64,7 @@ export default function AircraftPage() {
   const getStatusVariant = (status: Aircraft['status']) => {
     switch (status) {
       case 'Available':
-        return 'default';
+        return 'success';
       case 'In Maintenance':
         return 'destructive';
       case 'Booked':
@@ -78,17 +79,25 @@ export default function AircraftPage() {
     const date = parseISO(expiryDate);
     const daysUntil = differenceInDays(date, today);
 
-    let variant: "default" | "secondary" | "destructive" = "default";
+    let variant: "success" | "warning" | "destructive" | "default" = "success";
+    let className = "";
+
     if (daysUntil < 0) {
-        variant = 'destructive';
+        variant = 'destructive'; // Expired - Red
     } else if (daysUntil <= 30) {
-        variant = 'secondary';
+        variant = 'warning'; // Expires in 1 month - Orange
+        className = 'bg-orange-500 text-white hover:bg-orange-500/80';
+    } else if (daysUntil <= 60) {
+        variant = 'warning'; // Expires in 2 months - Yellow
+        className = 'bg-yellow-500 text-black hover:bg-yellow-500/80';
+    } else {
+        variant = 'success'; // Not expired - Green
     }
 
     const formattedDate = format(date, 'MMM d, yyyy');
 
     return (
-        <Badge variant={variant}>{formattedDate}</Badge>
+        <Badge variant={variant} className={cn(badgeVariants({variant}), className)}>{formattedDate}</Badge>
     )
   }
 
