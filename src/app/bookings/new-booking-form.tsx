@@ -68,9 +68,7 @@ export function NewBookingForm() {
       description: 'The new booking has been added to the schedule.',
     });
   }
-
-  const instructors = personnelData.filter(p => p.role === 'Instructor');
-
+  
   const today = new Date('2024-08-15'); // Hardcoding date for consistent display
   today.setHours(0, 0, 0, 0);
 
@@ -78,6 +76,19 @@ export function NewBookingForm() {
     const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
     const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
     return ac.status === 'Available' && !airworthinessExpired && !insuranceExpired;
+  });
+
+  const availableInstructors = personnelData.filter(p => {
+    if (p.role !== 'Instructor') return false;
+    const medicalExpired = isBefore(parseISO(p.medicalExpiry), today);
+    const licenseExpired = isBefore(parseISO(p.licenseExpiry), today);
+    return !medicalExpired && !licenseExpired;
+  });
+
+  const availableStudents = studentData.filter(s => {
+    const medicalExpired = isBefore(parseISO(s.medicalExpiry), today);
+    const licenseExpired = isBefore(parseISO(s.licenseExpiry), today);
+    return !medicalExpired && !licenseExpired;
   });
 
 
@@ -169,9 +180,13 @@ export function NewBookingForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {studentData.map(s => (
-                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                  ))}
+                   {availableStudents.length > 0 ? (
+                    availableStudents.map(s => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>No students available for booking</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -191,9 +206,13 @@ export function NewBookingForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {instructors.map(i => (
-                    <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                  ))}
+                  {availableInstructors.length > 0 ? (
+                    availableInstructors.map(i => (
+                      <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                    ))
+                  ) : (
+                     <SelectItem value="none" disabled>No instructors available for booking</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />

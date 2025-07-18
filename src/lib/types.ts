@@ -16,6 +16,8 @@ export type Student = {
   instructor: string;
   flightHours: number;
   progress: number; // percentage
+  medicalExpiry: string;
+  licenseExpiry: string;
 };
 
 export type Personnel = {
@@ -24,6 +26,8 @@ export type Personnel = {
   role: 'Instructor' | 'Maintenance' | 'Admin';
   email: string;
   phone: string;
+  medicalExpiry: string;
+  licenseExpiry: string;
 };
 
 export type Booking = {

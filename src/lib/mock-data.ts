@@ -22,20 +22,20 @@ export const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
 
 // Student Data
 export const studentData: Student[] = [
-  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75 },
-  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40 },
-  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90 },
-  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20 },
-  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65 },
+  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01' },
+  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10' }, // Expired medical
+  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20' },
+  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01' }, // Expired license
+  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15' },
 ];
 
 // Personnel Data
 export const personnelData: Personnel[] = [
-  { id: '1', name: 'Mike Ross', role: 'Instructor', email: 'mike.ross@skybound.com', phone: '555-0101' },
-  { id: '2', name: 'Sarah Connor', role: 'Instructor', email: 'sarah.connor@skybound.com', phone: '555-0102' },
-  { id: '3', name: 'Hank Hill', role: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103' },
-  { id: '4', name: 'Laura Croft', role: 'Instructor', email: 'laura.croft@skybound.com', phone: '555-0104' },
-  { id: '5', name: 'Admin User', role: 'Admin', email: 'admin@skybound.com', phone: '555-0100' },
+  { id: '1', name: 'Mike Ross', role: 'Instructor', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15' },
+  { id: '2', name: 'Sarah Connor', role: 'Instructor', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22' }, // Expired medical
+  { id: '3', name: 'Hank Hill', role: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01' },
+  { id: '4', name: 'Laura Croft', role: 'Instructor', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30' },
+  { id: '5', name: 'Admin User', role: 'Admin', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01' },
 ];
 
 // Booking Data
