@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,10 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { aircraftData, bookingData } from '@/lib/mock-data';
+import { aircraftData, bookingData as initialBookingData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
-import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay } from 'date-fns';
-import { Calendar as CalendarIcon, GanttChartSquare } from 'lucide-react';
+import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay, isPast } from 'date-fns';
+import { Calendar as CalendarIcon, GanttChartSquare, BookCopy, Check } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { LogFlightForm } from './log-flight-form';
+
 
 type ViewMode = 'month' | 'gantt';
 
@@ -27,6 +31,8 @@ const getPurposeVariant = (purpose: Booking['purpose']) => {
 function MonthView() {
     const today = startOfDay(new Date('2024-08-15'));
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
+    const [bookingData, setBookingData] = useState(initialBookingData);
+    const [dialogsOpen, setDialogsOpen] = useState<{[key: string]: boolean}>({});
 
     const bookedDays = bookingData.map(b => parseISO(b.date));
 
@@ -38,6 +44,11 @@ function MonthView() {
     };
 
     const selectedDayBookings = getBookingsForDay(selectedDay);
+
+    const handleFlightLogged = (bookingId: string) => {
+        setBookingData(prevData => prevData.map(b => b.id === bookingId ? { ...b, status: 'Completed' } : b));
+        setDialogsOpen(prev => ({ ...prev, [bookingId]: false }));
+    };
 
     return (
         <div className="grid md:grid-cols-2 gap-8">
@@ -64,8 +75,9 @@ function MonthView() {
                             <TableRow>
                                 <TableHead>Time</TableHead>
                                 <TableHead>Aircraft</TableHead>
-                                <TableHead>Instructor</TableHead>
                                 <TableHead>Purpose</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -73,9 +85,32 @@ function MonthView() {
                                 <TableRow key={booking.id}>
                                     <TableCell>{booking.time}</TableCell>
                                     <TableCell className="font-medium">{booking.aircraft}</TableCell>
-                                    <TableCell>{booking.instructor}</TableCell>
                                     <TableCell>
                                         <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={booking.status === 'Completed' ? 'success' : 'outline'}>{booking.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {booking.purpose === 'Training' && booking.status === 'Upcoming' && isPast(parseISO(booking.date)) && (
+                                            <Dialog open={dialogsOpen[booking.id]} onOpenChange={(isOpen) => setDialogsOpen(prev => ({...prev, [booking.id]: isOpen}))}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="sm">
+                                                        <BookCopy className="mr-2 h-4 w-4" />
+                                                        Log Flight
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Log Training Flight</DialogTitle>
+                                                        <DialogDescription>
+                                                            Confirm flight details and add instructor notes.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <LogFlightForm booking={booking} onFlightLogged={() => handleFlightLogged(booking.id)} />
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -96,6 +131,7 @@ function MonthView() {
 function GanttView() {
     const today = startOfDay(new Date('2024-08-15'));
     const weekDays = eachDayOfInterval({ start: today, end: addDays(today, 6) });
+    const [bookingData] = useState(initialBookingData);
 
     const bookingsByAircraft: { [key: string]: Booking[] } = {};
     for (const booking of bookingData) {
@@ -133,7 +169,7 @@ function GanttView() {
                                                  <Tooltip key={booking.id}>
                                                     <TooltipTrigger asChild>
                                                         <div className={`absolute p-1 rounded-md h-auto text-white text-xs overflow-hidden ${getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'}`} style={{ top: `${parseInt(booking.time.substring(0,2)) / 24 * 100}%`, height: '25%' }}>
-                                                            {booking.purpose} - {booking.time}
+                                                            {booking.purpose} - {booking.time} {booking.status === 'Completed' && <Check className="inline h-3 w-3 ml-1" />}
                                                         </div>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -141,6 +177,7 @@ function GanttView() {
                                                         <p>Time: {booking.time}</p>
                                                         <p>Instructor: {booking.instructor}</p>
                                                         <p>Student: {booking.student}</p>
+                                                        <p>Status: {booking.status}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             ))}

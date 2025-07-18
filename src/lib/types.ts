@@ -19,7 +19,7 @@ export type Endorsement = {
 };
 
 export type TrainingLogEntry = {
-  id: string;
+  id:string;
   date: string;
   aircraft: string;
   flightDuration: number;
@@ -106,6 +106,7 @@ export type Booking = {
   student: string;
   instructor: string;
   purpose: 'Training' | 'Maintenance' | 'Private';
+  status: 'Upcoming' | 'Completed' | 'Cancelled';
 };
 
 export type SafetyReport = {
