@@ -22,6 +22,7 @@ import {
   Settings,
   HelpCircle,
   UserCircle,
+  CheckSquare,
 } from 'lucide-react';
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/students', label: 'Students', icon: Users },
   { href: '/personnel', label: 'Personnel', icon: UserCheck },
   { href: '/safety', label: 'Safety', icon: Shield },
+  { href: '/quality', label: 'Quality', icon: CheckSquare },
 ];
 
 export default function Nav() {
