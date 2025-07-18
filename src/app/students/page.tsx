@@ -29,15 +29,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from 'lucide-react';
-
-// In a real app, this would come from an auth context/session
-const LOGGED_IN_USER_ID = 'p5';
+import { useUser } from '@/context/user-provider';
 
 export default function StudentsPage() {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(userData.filter(u => u.role === 'Student'));
 
-  const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
+  const { user } = useUser();
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 

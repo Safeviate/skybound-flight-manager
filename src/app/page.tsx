@@ -1,7 +1,13 @@
+
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, Users, Calendar, ShieldAlert } from 'lucide-react';
 import Header from '@/components/layout/header';
 import Link from 'next/link';
+import { useUser } from '@/context/user-provider';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const stats = [
   {
@@ -38,6 +44,23 @@ const recentActivities = [
 ];
 
 export default function Dashboard() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+      return (
+          <div className="flex items-center justify-center min-h-screen">
+              <p>Loading...</p>
+          </div>
+      )
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Dashboard" />

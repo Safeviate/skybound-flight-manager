@@ -1,3 +1,4 @@
+
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
@@ -13,8 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Input } from '../ui/input';
 import Link from 'next/link';
+import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
+  const { user, logout } = useUser();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  }
+  
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8">
       <div className="md:hidden">
@@ -38,14 +49,14 @@ export default function Header({ title, children }: { title: string, children?: 
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src="https://placehold.co/40x40" alt="User" data-ai-hint="user avatar" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src="https://placehold.co/40x40" alt={user?.name || 'User'} data-ai-hint="user avatar" />
+                  <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user?.name || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link href="/my-profile">
                 <DropdownMenuItem>
@@ -55,7 +66,7 @@ export default function Header({ title, children }: { title: string, children?: 
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,13 +16,19 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EditProfileForm } from './edit-profile-form';
 import { ChecklistCard } from '../checklists/checklist-card';
-
-
-// In a real app, this would come from the logged-in user's session
-const LOGGED_IN_USER_ID = 's1'; 
+import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 export default function MyProfilePage() {
-    const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
+    const { user, loading } = useUser();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
 
     const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
@@ -30,12 +36,12 @@ export default function MyProfilePage() {
     
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
 
-    if (!user) {
+    if (loading || !user) {
         return (
             <div className="flex flex-col min-h-screen">
                 <Header title="My Profile" />
                 <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                    <p>User not found.</p>
+                    <p>Loading...</p>
                 </main>
             </div>
         )

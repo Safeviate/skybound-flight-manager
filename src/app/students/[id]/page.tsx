@@ -19,18 +19,16 @@ import { useToast } from '@/hooks/use-toast';
 import { AddEndorsementForm } from './add-endorsement-form';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
+import { useUser } from '@/context/user-provider';
 
-// In a real app, this would come from an auth context/session
-const LOGGED_IN_USER_ID = 'p5';
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
     const student = userData.find(s => s.id === params.id);
     const { toast } = useToast();
     
-    // In a real app, this would be a state managed by a form library or state management tool.
     const [progress, setProgress] = useState(student?.progress || 0);
     
-    const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
+    const { user } = useUser();
     const userPermissions = user?.permissions || [];
     const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
@@ -46,7 +44,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     }
     
     const handleProgressSave = () => {
-        // Here you would typically make an API call to save the progress.
         console.log(`Saving progress for ${student.name}: ${progress}%`);
         toast({
             title: "Progress Updated",
@@ -64,7 +61,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     
         let csvContent = "data:text/csv;charset=utf-8,";
     
-        // Add endorsements section
         csvContent += "Student Endorsements\n";
         csvContent += "Endorsement,Date Awarded,Awarded By\n";
         student.endorsements.forEach((e: Endorsement) => {
@@ -72,9 +68,8 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
           csvContent += row + "\n";
         });
         
-        csvContent += "\n\n"; // Add some space before the next section
+        csvContent += "\n\n";
     
-        // Add training logs section
         csvContent += "Training Log\n";
         const headers = ["Date", "Aircraft", "Flight Duration (hrs)", "Instructor", "Notes"];
         csvContent += headers.join(",") + "\n";
