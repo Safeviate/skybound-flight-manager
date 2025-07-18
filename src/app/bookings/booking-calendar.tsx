@@ -10,7 +10,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { aircraftData, bookingData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
-import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay } from 'date-fns';
+import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay, startOfMonth, endOfMonth, getDaysInMonth } from 'date-fns';
 import { Calendar as CalendarIcon, GanttChartSquare } from 'lucide-react';
 
 type ViewMode = 'month' | 'gantt';
@@ -95,7 +95,10 @@ function MonthView() {
 
 function GanttView() {
     const today = startOfDay(new Date('2024-08-15'));
-    const week = eachDayOfInterval({ start: today, end: addDays(today, 6) });
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const daysInMonth = getDaysInMonth(today);
 
     const bookingsByAircraft: { [key: string]: Booking[] } = {};
     for (const booking of bookingData) {
@@ -108,23 +111,23 @@ function GanttView() {
     return (
         <TooltipProvider>
             <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                <div className="min-w-[800px]">
-                    <div className="grid sticky top-0 z-10 bg-background" style={{ gridTemplateColumns: '120px repeat(7, 1fr)'}}>
+                <div className="min-w-[1600px]">
+                    <div className="grid sticky top-0 z-10 bg-background" style={{ gridTemplateColumns: `120px repeat(${daysInMonth}, minmax(50px, 1fr))`}}>
                         <div className="p-2 border-b border-r font-semibold">Aircraft</div>
-                        {week.map(day => (
+                        {monthDays.map(day => (
                             <div key={day.toISOString()} className="p-2 text-center border-b">
                                 <div className="font-semibold">{format(day, 'EEE')}</div>
-                                <div className="text-xs text-muted-foreground">{format(day, 'MMM d')}</div>
+                                <div className="text-xs text-muted-foreground">{format(day, 'd')}</div>
                             </div>
                         ))}
                     </div>
                     <div className="divide-y">
                         {aircraftData.map(aircraft => (
-                            <div key={aircraft.id} className="grid" style={{ gridTemplateColumns: '120px repeat(7, 1fr)'}}>
+                            <div key={aircraft.id} className="grid" style={{ gridTemplateColumns: `120px repeat(${daysInMonth}, minmax(50px, 1fr))`}}>
                                 <div className="p-2 border-r font-medium text-sm flex items-center">
                                     {aircraft.tailNumber}
                                 </div>
-                                {week.map(day => {
+                                {monthDays.map(day => {
                                     const dayBookings = (bookingsByAircraft[aircraft.tailNumber] || []).filter(b => isSameDay(parseISO(b.date), day));
                                     return (
                                         <div key={day.toISOString()} className="p-1 h-16 border-l relative">
