@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Personnel } from '@/lib/types';
+import type { Personnel, Role } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { personnelData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,13 +19,20 @@ import { NewPersonnelForm } from './new-personnel-form';
 
 
 export default function PersonnelPage() {
-    const getRoleVariant = (role: Personnel['role']) => {
+    const getRoleVariant = (role: Role) => {
         switch (role) {
             case 'Instructor':
+            case 'Chief Flight Instructor':
+            case 'Head Of Training':
                 return 'primary'
             case 'Maintenance':
                 return 'destructive'
             case 'Admin':
+            case 'Accountable Manager':
+            case 'Safety Manager':
+            case 'Quality Manager':
+            case 'HR Manager':
+            case 'Operations Manager':
                 return 'secondary'
             default:
                 return 'outline'

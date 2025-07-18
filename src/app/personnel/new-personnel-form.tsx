@@ -28,7 +28,7 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  role: z.enum(['Instructor', 'Maintenance', 'Admin'], {
+  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student'], {
       required_error: 'Please select a role.'
   }),
   department: z.string({
@@ -92,9 +92,20 @@ export function NewPersonnelForm() {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                        <SelectItem value="Accountable Manager">Accountable Manager</SelectItem>
+                        <SelectItem value="Admin">Admin</SelectItem>
+                        <SelectItem value="Aircraft Manager">Aircraft Manager</SelectItem>
+                        <SelectItem value="Chief Flight Instructor">Chief Flight Instructor</SelectItem>
+                        <SelectItem value="Driver">Driver</SelectItem>
+                        <SelectItem value="Front Office">Front Office</SelectItem>
+                        <SelectItem value="Head Of Training">Head Of Training</SelectItem>
+                        <SelectItem value="HR Manager">HR Manager</SelectItem>
                         <SelectItem value="Instructor">Instructor</SelectItem>
                         <SelectItem value="Maintenance">Maintenance</SelectItem>
-                        <SelectItem value="Admin">Admin</SelectItem>
+                        <SelectItem value="Operations Manager">Operations Manager</SelectItem>
+                        <SelectItem value="Quality Manager">Quality Manager</SelectItem>
+                        <SelectItem value="Safety Manager">Safety Manager</SelectItem>
+                        <SelectItem value="Student">Student</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />

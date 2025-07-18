@@ -24,11 +24,26 @@ export type Permission = 'Safety Manager' | 'Quality Manager' | 'Flight Manager'
 
 export const ALL_PERMISSIONS: Permission[] = ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager'];
 
+export type Role = 
+  | 'Accountable Manager'
+  | 'Admin'
+  | 'Aircraft Manager'
+  | 'Chief Flight Instructor'
+  | 'Driver'
+  | 'Front Office'
+  | 'Head Of Training'
+  | 'HR Manager'
+  | 'Instructor'
+  | 'Maintenance'
+  | 'Operations Manager'
+  | 'Quality Manager'
+  | 'Safety Manager'
+  | 'Student';
 
 export type Personnel = {
   id: string;
   name: string;
-  role: 'Instructor' | 'Maintenance' | 'Admin';
+  role: Role;
   department: string;
   email: string;
   phone: string;
