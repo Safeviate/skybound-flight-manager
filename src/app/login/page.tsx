@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogIn } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { User as AppUser } from '@/lib/types';
+import type { User as AppUser, Role } from '@/lib/types';
 import { Rocket } from 'lucide-react';
 
 export default function LoginPage() {
@@ -31,6 +31,15 @@ export default function LoginPage() {
     }
   }
 
+  const representativeUsers: AppUser[] = [];
+  const roles = new Set<Role>();
+  userData.forEach(user => {
+    if (!roles.has(user.role)) {
+        roles.add(user.role);
+        representativeUsers.push(user);
+    }
+  });
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
@@ -45,7 +54,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {userData.map((user) => (
+          {representativeUsers.map((user) => (
             <div
               key={user.id}
               className="flex items-center justify-between rounded-md border p-4"
