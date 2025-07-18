@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { bookingData, checklistData, userData, aircraftData } from '@/lib/mock-data';
+import { userData, aircraftData, checklistData, bookingData } from '@/lib/mock-data';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser } from '@/lib/types';
@@ -231,7 +231,7 @@ export default function MyProfilePage() {
                                                 Checklist
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-md">
+                                        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
                                             <ChecklistCard 
                                                 checklist={preFlightChecklist} 
                                                 onUpdate={handleChecklistUpdate}

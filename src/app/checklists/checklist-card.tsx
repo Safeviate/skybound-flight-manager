@@ -40,7 +40,7 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />
-        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+        <div className="space-y-3 md:max-h-60 overflow-y-auto pr-2">
           {checklist.items.map(item => (
             <div key={item.id} className="flex items-center space-x-3">
               <Checkbox
