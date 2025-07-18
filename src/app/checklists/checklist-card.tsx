@@ -59,15 +59,22 @@ export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: Ch
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row gap-2">
-        <Button variant="outline" size="sm" onClick={() => onReset(checklist.id)} className="w-full">
-          <RotateCcw className="mr-2 h-4 w-4" />
-          Reset
-        </Button>
-        <Button size="sm" onClick={() => onUpdate(checklist)} className="w-full" disabled={!isComplete}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Submit & Complete
-        </Button>
+      <CardFooter className="flex flex-col gap-4">
+        {isComplete && (
+            <p className="text-xs text-center text-muted-foreground p-2 bg-muted rounded-md">
+                By clicking "Submit", I confirm that I have completed this checklist in good faith and that all required documents are onboard as required by law.
+            </p>
+        )}
+        <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button variant="outline" size="sm" onClick={() => onReset(checklist.id)} className="w-full">
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset
+            </Button>
+            <Button size="sm" onClick={() => onUpdate(checklist)} className="w-full" disabled={!isComplete}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Submit & Complete
+            </Button>
+        </div>
       </CardFooter>
     </Card>
   );
