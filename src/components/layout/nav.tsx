@@ -38,12 +38,12 @@ const navItems: {
 }[] = [
   { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Flight Manager'] },
-  { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Fleet Manager'] },
-  { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Flight Manager'] },
-  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['User Manager'] },
-  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety Manager'] },
-  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality Manager'] },
+  { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings'] },
+  { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft'] },
+  { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students'] },
+  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel'] },
+  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety'] },
+  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality'] },
 ];
 
 export default function Nav() {
