@@ -36,7 +36,7 @@ export const getNextService = (hours: number): { type: string; hoursUntil: numbe
 };
 
 export const getExpiryBadge = (expiryDate: string) => {
-    const today = new Date();
+    const today = new Date('2024-08-15'); // Hardcoding date for consistent display
     today.setHours(0, 0, 0, 0); // Set to start of day for consistent comparison
     const date = parseISO(expiryDate);
     const daysUntil = differenceInDays(date, today);
