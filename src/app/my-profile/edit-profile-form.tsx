@@ -21,7 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
-import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -39,7 +39,6 @@ const profileFormSchema = z.object({
   licenseExpiry: z.date({
     required_error: 'A license expiry date is required.',
   }),
-  // We'll keep the file inputs separate from the form state for now
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -58,8 +57,6 @@ export function EditProfileForm({ user }: { user: Personnel }) {
   });
 
   function onSubmit(data: ProfileFormValues) {
-    // In a real application, you would handle the form submission,
-    // including file uploads, to your backend API.
     console.log({
         ...data,
         medicalExpiry: format(data.medicalExpiry, 'yyyy-MM-dd'),
@@ -118,94 +115,98 @@ export function EditProfileForm({ user }: { user: Personnel }) {
         
         <div className="space-y-4 rounded-md border p-4">
             <h4 className="font-semibold">Medical Certificate</h4>
-            <div className="space-y-2">
-                <Label>Upload New Certificate</Label>
-                <Input type="file" />
+            <div className="flex gap-4 items-end">
+                <div className="flex-1 space-y-2">
+                    <FormLabel>Upload New Certificate</FormLabel>
+                    <Input type="file" />
+                </div>
+                <FormField
+                control={form.control}
+                name="medicalExpiry"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                        <FormLabel>Expiry Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
             </div>
-            <FormField
-            control={form.control}
-            name="medicalExpiry"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Expiry Date</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                            )}
-                            >
-                            {field.value ? (
-                                format(field.value, "PPP")
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                </FormItem>
-            )}
-            />
         </div>
 
         <div className="space-y-4 rounded-md border p-4">
             <h4 className="font-semibold">Pilot License</h4>
-             <div className="space-y-2">
-                <Label>Upload New License</Label>
-                <Input type="file" />
+             <div className="flex gap-4 items-end">
+                <div className="flex-1 space-y-2">
+                    <FormLabel>Upload New License</FormLabel>
+                    <Input type="file" />
+                </div>
+                <FormField
+                control={form.control}
+                name="licenseExpiry"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                        <FormLabel>Expiry Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
             </div>
-            <FormField
-            control={form.control}
-            name="licenseExpiry"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Expiry Date</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                            )}
-                            >
-                            {field.value ? (
-                                format(field.value, "PPP")
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                </FormItem>
-            )}
-            />
         </div>
 
         <div className="flex justify-end">
