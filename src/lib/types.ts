@@ -112,6 +112,7 @@ export type Booking = {
   instructor: string;
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Upcoming' | 'Completed' | 'Cancelled';
+  isChecklistComplete?: boolean;
 };
 
 export type SafetyReport = {
@@ -133,6 +134,7 @@ export type Checklist = {
     title: string;
     category: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
     items: ChecklistItem[];
+    aircraftId?: string;
 };
 
 

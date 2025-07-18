@@ -14,10 +14,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Checklist } from '@/lib/types';
-import { ClipboardCheck, MoreHorizontal, PlusCircle } from 'lucide-react';
+import type { Aircraft, Booking, Checklist } from '@/lib/types';
+import { ClipboardCheck, PlusCircle } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData, checklistData } from '@/lib/mock-data';
+import { aircraftData, bookingData, checklistData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -26,11 +26,25 @@ import { ChecklistCard } from '../checklists/checklist-card';
 
 export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
+  const [bookings, setBookings] = useState<Booking[]>(bookingData);
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
     setChecklists(prevChecklists =>
       prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
     );
+
+    const isComplete = updatedChecklist.items.every(item => item.completed);
+    if (isComplete && updatedChecklist.aircraftId) {
+        setBookings(prevBookings => 
+            prevBookings.map(booking => {
+                const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
+                if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Upcoming') {
+                    return { ...booking, isChecklistComplete: true };
+                }
+                return booking;
+            })
+        )
+    }
   };
   
   const handleReset = (checklistId: string) => {
@@ -59,8 +73,6 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
-
-  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -103,7 +115,9 @@ export default function AircraftPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {aircraftData.map((aircraft) => (
+                {aircraftData.map((aircraft) => {
+                  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
+                  return (
                   <TableRow key={aircraft.id}>
                     <TableCell className="font-medium">{aircraft.tailNumber}</TableCell>
                     <TableCell>{aircraft.model}</TableCell>
@@ -149,7 +163,7 @@ export default function AircraftPage() {
                        </Dialog>
                     </TableCell>
                   </TableRow>
-                ))}
+                )})}
               </TableBody>
             </Table>
           </CardContent>

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { aircraftData, bookingData as initialBookingData } from '@/lib/mock-data';
+import { aircraftData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
 import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay, isPast } from 'date-fns';
 import { Calendar as CalendarIcon, GanttChartSquare, BookCopy, Check } from 'lucide-react';
@@ -28,25 +28,29 @@ const getPurposeVariant = (purpose: Booking['purpose']) => {
     }
 }
 
-function MonthView() {
+interface MonthViewProps {
+    bookings: Booking[];
+    onFlightLogged: (bookingId: string) => void;
+}
+
+function MonthView({ bookings, onFlightLogged }: MonthViewProps) {
     const today = startOfDay(new Date('2024-08-15'));
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
-    const [bookingData, setBookingData] = useState(initialBookingData);
     const [dialogsOpen, setDialogsOpen] = useState<{[key: string]: boolean}>({});
 
-    const bookedDays = bookingData.map(b => parseISO(b.date));
+    const bookedDays = bookings.map(b => parseISO(b.date));
 
     const getBookingsForDay = (day: Date | undefined) => {
         if (!day) return [];
-        return bookingData
+        return bookings
             .filter(booking => isSameDay(parseISO(booking.date), day))
             .sort((a, b) => a.time.localeCompare(b.time));
     };
 
     const selectedDayBookings = getBookingsForDay(selectedDay);
 
-    const handleFlightLogged = (bookingId: string) => {
-        setBookingData(prevData => prevData.map(b => b.id === bookingId ? { ...b, status: 'Completed' } : b));
+    const handleFlightLoggedAndClose = (bookingId: string) => {
+        onFlightLogged(bookingId);
         setDialogsOpen(prev => ({ ...prev, [bookingId]: false }));
     };
 
@@ -81,7 +85,14 @@ function MonthView() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {selectedDayBookings.map(booking => (
+                            {selectedDayBookings.map(booking => {
+                                const logFlightButton = (
+                                    <Button variant="outline" size="sm" disabled={!booking.isChecklistComplete}>
+                                        <BookCopy className="mr-2 h-4 w-4" />
+                                        Log Flight
+                                    </Button>
+                                );
+                                return (
                                 <TableRow key={booking.id}>
                                     <TableCell>{booking.time}</TableCell>
                                     <TableCell className="font-medium">{booking.aircraft}</TableCell>
@@ -94,12 +105,20 @@ function MonthView() {
                                     <TableCell>
                                         {booking.purpose === 'Training' && booking.status === 'Upcoming' && isPast(parseISO(booking.date)) && (
                                             <Dialog open={dialogsOpen[booking.id]} onOpenChange={(isOpen) => setDialogsOpen(prev => ({...prev, [booking.id]: isOpen}))}>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm">
-                                                        <BookCopy className="mr-2 h-4 w-4" />
-                                                        Log Flight
-                                                    </Button>
-                                                </DialogTrigger>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <DialogTrigger asChild>
+                                                                {logFlightButton}
+                                                            </DialogTrigger>
+                                                        </TooltipTrigger>
+                                                        {!booking.isChecklistComplete && (
+                                                            <TooltipContent>
+                                                                <p>Pre-flight checklist must be completed.</p>
+                                                            </TooltipContent>
+                                                        )}
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                                 <DialogContent>
                                                     <DialogHeader>
                                                         <DialogTitle>Log Training Flight</DialogTitle>
@@ -107,13 +126,13 @@ function MonthView() {
                                                             Confirm flight details and add instructor notes.
                                                         </DialogDescription>
                                                     </DialogHeader>
-                                                    <LogFlightForm booking={booking} onFlightLogged={() => handleFlightLogged(booking.id)} />
+                                                    <LogFlightForm booking={booking} onFlightLogged={() => handleFlightLoggedAndClose(booking.id)} />
                                                 </DialogContent>
                                             </Dialog>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 ) : (
@@ -128,13 +147,16 @@ function MonthView() {
     );
 }
 
-function GanttView() {
+interface GanttViewProps {
+    bookings: Booking[];
+}
+
+function GanttView({ bookings }: GanttViewProps) {
     const today = startOfDay(new Date('2024-08-15'));
     const weekDays = eachDayOfInterval({ start: today, end: addDays(today, 6) });
-    const [bookingData] = useState(initialBookingData);
 
     const bookingsByAircraft: { [key: string]: Booking[] } = {};
-    for (const booking of bookingData) {
+    for (const booking of bookings) {
         if (!bookingsByAircraft[booking.aircraft]) {
             bookingsByAircraft[booking.aircraft] = [];
         }
@@ -178,6 +200,7 @@ function GanttView() {
                                                         <p>Instructor: {booking.instructor}</p>
                                                         <p>Student: {booking.student}</p>
                                                         <p>Status: {booking.status}</p>
+                                                        {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             ))}
@@ -193,7 +216,12 @@ function GanttView() {
     );
 }
 
-export function BookingCalendar() {
+interface BookingCalendarProps {
+    bookings: Booking[];
+    onFlightLogged: (bookingId: string) => void;
+}
+
+export function BookingCalendar({ bookings, onFlightLogged }: BookingCalendarProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('month');
 
     return (
@@ -209,7 +237,7 @@ export function BookingCalendar() {
                     Gantt
                 </Button>
             </div>
-            {viewMode === 'month' ? <MonthView /> : <GanttView />}
+            {viewMode === 'month' ? <MonthView bookings={bookings} onFlightLogged={onFlightLogged} /> : <GanttView bookings={bookings} />}
         </div>
     );
 }
