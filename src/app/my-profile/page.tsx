@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userData, aircraftData, checklistData, bookingData } from '@/lib/mock-data';
+import { userData, aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData } from '@/lib/mock-data';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser } from '@/lib/types';
@@ -25,8 +25,8 @@ export default function MyProfilePage() {
     const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
 
-    const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
-    const [bookings, setBookings] = useState<Booking[]>(bookingData);
+    const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
+    const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
     
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
 
@@ -41,10 +41,14 @@ export default function MyProfilePage() {
         )
     }
 
-    const handleChecklistUpdate = (updatedChecklist: Checklist) => {
+    const handleItemToggle = (toggledChecklist: Checklist) => {
         setChecklists(prevChecklists =>
-          prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
+          prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
         );
+    };
+
+    const handleChecklistUpdate = (updatedChecklist: Checklist) => {
+        handleItemToggle(updatedChecklist); // Persist final state
     
         const isComplete = updatedChecklist.items.every(item => item.completed);
         if (isComplete && updatedChecklist.aircraftId) {
@@ -234,6 +238,7 @@ export default function MyProfilePage() {
                                         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
                                             <ChecklistCard 
                                                 checklist={preFlightChecklist} 
+                                                onItemToggle={handleItemToggle}
                                                 onUpdate={handleChecklistUpdate}
                                                 onReset={handleReset}
                                             />

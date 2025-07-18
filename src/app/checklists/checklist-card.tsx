@@ -6,22 +6,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import type { Checklist, ChecklistItem } from '@/lib/types';
-import { RotateCcw } from 'lucide-react';
+import type { Checklist } from '@/lib/types';
+import { RotateCcw, CheckCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
 interface ChecklistCardProps {
   checklist: Checklist;
+  onItemToggle: (checklist: Checklist) => void;
   onUpdate: (checklist: Checklist) => void;
   onReset: (checklistId: string) => void;
 }
 
-export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: ChecklistCardProps) {
   const handleItemToggle = (itemId: string) => {
     const updatedItems = checklist.items.map(item =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
     );
-    onUpdate({ ...checklist, items: updatedItems });
+    onItemToggle({ ...checklist, items: updatedItems });
   };
 
   const completedItems = useMemo(() => checklist.items.filter(item => item.completed).length, [checklist.items]);
@@ -58,10 +59,14 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
           ))}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col sm:flex-row gap-2">
         <Button variant="outline" size="sm" onClick={() => onReset(checklist.id)} className="w-full">
           <RotateCcw className="mr-2 h-4 w-4" />
-          Reset Checklist
+          Reset
+        </Button>
+        <Button size="sm" onClick={() => onUpdate(checklist)} className="w-full" disabled={!isComplete}>
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Submit & Complete
         </Button>
       </CardFooter>
     </Card>

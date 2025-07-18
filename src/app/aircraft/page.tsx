@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist } from '@/lib/types';
 import { ClipboardCheck, PlusCircle } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData, bookingData, checklistData } from '@/lib/mock-data';
+import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -25,13 +25,17 @@ import { ChecklistCard } from '../checklists/checklist-card';
 
 
 export default function AircraftPage() {
-  const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
-  const [bookings, setBookings] = useState<Booking[]>(bookingData);
+  const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
+
+  const handleItemToggle = (toggledChecklist: Checklist) => {
+    setChecklists(prevChecklists =>
+        prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
+    );
+  };
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
-    setChecklists(prevChecklists =>
-      prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
-    );
+    handleItemToggle(updatedChecklist); // Ensure final state is up to date
 
     const isComplete = updatedChecklist.items.every(item => item.completed);
     if (isComplete && updatedChecklist.aircraftId) {
@@ -155,6 +159,7 @@ export default function AircraftPage() {
                             <DialogContent className="sm:max-w-md">
                                 <ChecklistCard 
                                     checklist={preFlightChecklist} 
+                                    onItemToggle={handleItemToggle}
                                     onUpdate={handleChecklistUpdate}
                                     onReset={handleReset}
                                 />

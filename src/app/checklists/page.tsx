@@ -12,15 +12,25 @@ import type { Checklist } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewChecklistForm } from './new-checklist-form';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleItemToggle = (toggledChecklist: Checklist) => {
+    setChecklists(prevChecklists =>
+      prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
+    );
+  };
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
-    setChecklists(prevChecklists =>
-      prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
-    );
+    handleItemToggle(updatedChecklist); // Persist final state
+    toast({
+        title: "Checklist Submitted",
+        description: `"${updatedChecklist.title}" has been completed.`
+    });
   };
   
   const handleReset = (checklistId: string) => {
@@ -91,10 +101,11 @@ export default function ChecklistsPage() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {preFlightChecklists.map(checklist => (
                         <ChecklistCard 
-                        key={checklist.id} 
-                        checklist={checklist} 
-                        onUpdate={handleChecklistUpdate}
-                        onReset={handleReset}
+                            key={checklist.id} 
+                            checklist={checklist} 
+                            onItemToggle={handleItemToggle}
+                            onUpdate={handleChecklistUpdate}
+                            onReset={handleReset}
                         />
                     ))}
                     </div>
@@ -103,10 +114,11 @@ export default function ChecklistsPage() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {postFlightChecklists.map(checklist => (
                             <ChecklistCard 
-                            key={checklist.id} 
-                            checklist={checklist} 
-                            onUpdate={handleChecklistUpdate}
-                            onReset={handleReset}
+                                key={checklist.id} 
+                                checklist={checklist} 
+                                onItemToggle={handleItemToggle}
+                                onUpdate={handleChecklistUpdate}
+                                onReset={handleReset}
                             />
                         ))}
                     </div>
@@ -115,10 +127,11 @@ export default function ChecklistsPage() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {maintenanceChecklists.map(checklist => (
                             <ChecklistCard 
-                            key={checklist.id} 
-                            checklist={checklist} 
-                            onUpdate={handleChecklistUpdate}
-                            onReset={handleReset}
+                                key={checklist.id} 
+                                checklist={checklist} 
+                                onItemToggle={handleItemToggle}
+                                onUpdate={handleChecklistUpdate}
+                                onReset={handleReset}
                             />
                         ))}
                     </div>
