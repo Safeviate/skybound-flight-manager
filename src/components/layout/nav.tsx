@@ -24,20 +24,44 @@ import {
   UserCircle,
   CheckSquare,
 } from 'lucide-react';
+import type { Permission } from '@/lib/types';
+import { personnelData } from '@/lib/mock-data';
 
-const navItems = [
+// In a real app, this would come from an auth context/session
+const LOGGED_IN_USER_ID = '5';
+
+const navItems: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  requiredPermissions?: Permission[];
+}[] = [
   { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/bookings', label: 'Bookings', icon: Calendar },
-  { href: '/aircraft', label: 'Aircraft', icon: Plane },
-  { href: '/students', label: 'Students', icon: Users },
-  { href: '/personnel', label: 'Personnel', icon: UserCheck },
-  { href: '/safety', label: 'Safety', icon: Shield },
-  { href: '/quality', label: 'Quality', icon: CheckSquare },
+  { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Flight Manager'] },
+  { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Fleet Manager'] },
+  { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Flight Manager'] },
+  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['User Manager'] },
+  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety Manager'] },
+  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality Manager'] },
 ];
 
 export default function Nav() {
   const pathname = usePathname();
+  const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+  const userPermissions = user?.permissions || [];
+
+  const hasPermission = (requiredPermissions?: Permission[]) => {
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true; // Public link
+    }
+    if (userPermissions.includes('Super User')) {
+      return true; // Super User sees everything
+    }
+    return requiredPermissions.some(p => userPermissions.includes(p));
+  };
+
+  const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions));
 
   return (
     <>
@@ -49,7 +73,7 @@ export default function Nav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
