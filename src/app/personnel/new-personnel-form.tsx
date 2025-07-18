@@ -22,7 +22,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { PermissionsForm } from './permissions-form';
-import { ALL_PERMISSIONS } from '@/lib/types';
+import type { Role } from '@/lib/types';
+import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
+import React from 'react';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -53,6 +55,15 @@ export function NewPersonnelForm() {
       permissions: [],
     }
   });
+
+  const selectedRole = form.watch('role');
+
+  React.useEffect(() => {
+    if (selectedRole) {
+      const permissionsForRole = ROLE_PERMISSIONS[selectedRole] || [];
+      form.setValue('permissions', permissionsForRole);
+    }
+  }, [selectedRole, form]);
 
   function onSubmit(data: PersonnelFormValues) {
     console.log(data);

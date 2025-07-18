@@ -96,3 +96,33 @@ export type SafetyReport = {
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
 };
+
+const VIEW_ALL_PAGES: Permission[] = [
+    'Aircraft:View',
+    'Bookings:View',
+    'Students:View',
+    'Personnel:View',
+    'Safety:View',
+    'Quality:View',
+];
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+    'Accountable Manager': ['Super User'],
+    'Admin': ['Super User'],
+    'Operations Manager': ['Super User'],
+    'HR Manager': ['Super User'],
+    'Super User': ['Super User'],
+
+    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit'],
+    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit'],
+    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit'],
+    'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit'],
+    
+    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View'],
+    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View'],
+    'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Students:View'],
+    
+    'Front Office': [...VIEW_ALL_PAGES],
+    'Student': ['Bookings:View'],
+    'Driver': [],
+};
