@@ -102,12 +102,17 @@ export const checklistData: Checklist[] = [
         title: 'Cessna 172 Pre-Flight Inspection',
         category: 'Pre-Flight',
         items: [
-            { id: 'cl-1-1', text: 'Cabin - Documents (ARROW)', completed: false },
-            { id: 'cl-1-2', text: 'Fuselage (Left Side) - Check for damage', completed: false },
-            { id: 'cl-1-3', text: 'Empennage - Control surfaces free and correct', completed: false },
-            { id: 'cl-1-4', text: 'Right Wing - Aileron and flap check', completed: false },
-            { id: 'cl-1-5', text: 'Nose - Oil level, propeller, and spinner', completed: false },
-            { id: 'cl-1-6', text: 'Left Wing - Fuel quantity, pitot tube', completed: false },
+            { id: 'cl-1-1', text: 'Certificate of Registration on board', completed: false },
+            { id: 'cl-1-2', text: 'Certificate of Airworthiness on board', completed: false },
+            { id: 'cl-1-3', text: 'Aircraft Radio Station Licence on board', completed: false },
+            { id: 'cl-1-4', text: 'Proof of Insurance on board', completed: false },
+            { id: 'cl-1-5', text: 'Aircraft Flight Manual (AFM) available', completed: false },
+            { id: 'cl-1-6', text: 'Weight & Balance documents available', completed: false },
+            { id: 'cl-1-7', text: 'Aircraft Journey Logbook on board', completed: false },
+            { id: 'cl-1-8', text: 'Fuselage & Empennage - Inspect for damage', completed: false },
+            { id: 'cl-1-9', text: 'Wings & Control Surfaces - Check for damage, freedom of movement', completed: false },
+            { id: 'cl-1-10', text: 'Nose & Propeller - Check oil, inspect propeller/spinner', completed: false },
+            { id: 'cl-1-11', text: 'Fuel & Oil - Check quantities', completed: false },
         ]
     },
     {
