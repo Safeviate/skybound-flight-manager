@@ -108,8 +108,9 @@ function GanttView() {
     return (
         <TooltipProvider>
             <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                <div className="min-w-[1200px]">
-                    <div className="grid sticky top-0 z-10 bg-background" style={{ gridTemplateColumns: '120px repeat(7, 1fr)'}}>
+                <div className="min-w-[1200px] relative">
+                    <ScrollBar orientation="horizontal" className="absolute top-0" />
+                    <div className="grid sticky top-0 z-10 bg-background pt-4" style={{ gridTemplateColumns: '120px repeat(7, 1fr)'}}>
                         <div className="p-2 border-b border-r font-semibold">Aircraft</div>
                         {weekDays.map(day => (
                             <div key={day.toISOString()} className="p-2 text-center border-b">
@@ -150,7 +151,6 @@ function GanttView() {
                         ))}
                     </div>
                 </div>
-                <ScrollBar orientation="horizontal" />
             </ScrollArea>
         </TooltipProvider>
     );
