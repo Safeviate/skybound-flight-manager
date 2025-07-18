@@ -1,3 +1,5 @@
+'use client';
+
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import type { Booking } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { bookingData } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewBookingForm } from './new-booking-form';
 
 
 export default function BookingsPage() {
@@ -35,10 +39,23 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Schedule</CardTitle>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Booking
-            </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Booking
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Create New Booking</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to schedule an aircraft.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewBookingForm />
+                </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>
