@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -80,7 +81,7 @@ export default function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card className="max-w-6xl mx-auto">
             <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-20 w-20">
                             <AvatarImage src="https://placehold.co/80x80" alt={user.name} data-ai-hint="user avatar" />

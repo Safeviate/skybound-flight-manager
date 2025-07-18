@@ -122,14 +122,14 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             <div className="lg:col-span-1 space-y-8">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
                             <Avatar className="h-20 w-20">
                                 <AvatarImage src={`https://placehold.co/80x80.png`} alt={student.name} data-ai-hint="user avatar" />
                                 <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <CardTitle className="text-3xl">{student.name}</CardTitle>
-                                <CardDescription className="mt-1">
+                                <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
+                                <CardDescription className="mt-1 text-center sm:text-left">
                                    <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
                                 </CardDescription>
                             </div>
@@ -236,20 +236,20 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </div>
             <div className="lg:col-span-2">
                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle>Training Log</CardTitle>
                             <CardDescription>Instructor summaries of flight sessions and student progress.</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button onClick={handleDownloadLogbook} variant="outline">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Logbook
                             </Button>
                             {canEdit && (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button>
+                                        <Button className="w-full sm:w-auto">
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             Add Log Entry
                                         </Button>

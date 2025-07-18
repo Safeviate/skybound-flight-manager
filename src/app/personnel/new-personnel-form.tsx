@@ -177,7 +177,7 @@ export function NewPersonnelForm() {
 
         <div className="space-y-2">
             <FormLabel>Documents</FormLabel>
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
                 <FormField
                     control={form.control}
                     name="documentType"

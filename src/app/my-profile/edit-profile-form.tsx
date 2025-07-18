@@ -109,7 +109,7 @@ export function EditProfileForm({ user }: { user: Personnel }) {
         
         <div className="space-y-2">
             <FormLabel>Add Document</FormLabel>
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
                 <FormField
                     control={form.control}
                     name="documentType"
@@ -168,7 +168,7 @@ export function EditProfileForm({ user }: { user: Personnel }) {
                     )}
                 />
             </div>
-             <div className="flex-1 space-y-2">
+             <div className="flex-1 space-y-2 pt-4">
                     <FormLabel>Upload Document</FormLabel>
                     <Input type="file" />
                 </div>

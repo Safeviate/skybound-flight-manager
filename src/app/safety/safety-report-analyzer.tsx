@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
@@ -42,7 +43,7 @@ function AnalysisResult({ data }: { data: AnalyzeSafetyReportToneOutput }) {
         <CardTitle>Analysis Results</CardTitle>
         <CardDescription>AI-powered assessment of the submitted safety report.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 sm:grid-cols-2">
+      <CardContent className="grid gap-6 md:grid-cols-2">
         {resultItems.map(item => (
             <div key={item.title} className="flex items-start space-x-4">
                 <div className="flex-shrink-0">{item.icon}</div>
