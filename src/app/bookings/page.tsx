@@ -3,35 +3,13 @@
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import type { Booking } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
-import { bookingData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
+import { BookingCalendar } from './booking-calendar';
 
 
 export default function BookingsPage() {
-    const getPurposeVariant = (purpose: Booking['purpose']) => {
-        switch (purpose) {
-            case 'Training':
-                return 'default'
-            case 'Maintenance':
-                return 'destructive'
-            case 'Private':
-                return 'secondary'
-            default:
-                return 'outline'
-        }
-    }
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Aircraft Bookings" />
@@ -58,32 +36,7 @@ export default function BookingsPage() {
             </Dialog>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Aircraft</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Instructor</TableHead>
-                  <TableHead>Purpose</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bookingData.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>{booking.date}</TableCell>
-                    <TableCell>{booking.time}</TableCell>
-                    <TableCell className="font-medium">{booking.aircraft}</TableCell>
-                    <TableCell>{booking.student}</TableCell>
-                    <TableCell>{booking.instructor}</TableCell>
-                    <TableCell>
-                      <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <BookingCalendar />
           </CardContent>
         </Card>
       </main>
