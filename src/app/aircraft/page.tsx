@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
+import { isAfter, parseISO, format, differenceInDays } from 'date-fns';
 
 const SERVICE_INTERVALS = {
   'A-Check': 50,
@@ -41,11 +42,11 @@ const getNextService = (hours: number): { type: string; hoursUntil: number } => 
 };
 
 const rawAircraftData = [
-  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5 },
-  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2 },
-  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8 },
-  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0 },
-  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7 },
+  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2024-11-30' },
+  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2025-01-15' },
+  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-07-25', insuranceExpiry: '2025-06-01' },
+  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-10-22' },
+  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2025-08-01', insuranceExpiry: '2024-12-10' },
 ];
 
 const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
@@ -71,6 +72,26 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
+
+  const getExpiryBadge = (expiryDate: string) => {
+    const today = new Date();
+    const date = parseISO(expiryDate);
+    const daysUntil = differenceInDays(date, today);
+
+    let variant: "default" | "secondary" | "destructive" = "default";
+    if (daysUntil < 0) {
+        variant = 'destructive';
+    } else if (daysUntil <= 30) {
+        variant = 'secondary';
+    }
+
+    const formattedDate = format(date, 'MMM d, yyyy');
+
+    return (
+        <Badge variant={variant}>{formattedDate}</Badge>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Aircraft Management" />
@@ -92,7 +113,9 @@ export default function AircraftPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Flight Hours</TableHead>
                   <TableHead>Next Service</TableHead>
-                  <TableHead className="text-right">Hours Until Service</TableHead>
+                  <TableHead>Hours Until</TableHead>
+                  <TableHead>Airworthiness Expiry</TableHead>
+                  <TableHead>Insurance Expiry</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -107,7 +130,9 @@ export default function AircraftPage() {
                     <TableCell>
                       <Badge variant="outline">{aircraft.nextServiceType}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{aircraft.hoursUntilService}</TableCell>
+                    <TableCell>{aircraft.hoursUntilService}</TableCell>
+                    <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
+                    <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

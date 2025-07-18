@@ -6,6 +6,8 @@ export type Aircraft = {
   hours: number;
   nextServiceType: string;
   hoursUntilService: number;
+  airworthinessExpiry: string;
+  insuranceExpiry: string;
 };
 
 export type Student = {
