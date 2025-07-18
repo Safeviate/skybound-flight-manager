@@ -114,9 +114,10 @@ export function NewPersonnelForm() {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                        <SelectItem value="Management">Management</SelectItem>
                         <SelectItem value="Flight Operations">Flight Operations</SelectItem>
+                        <SelectItem value="Ground Operation">Ground Operation</SelectItem>
                         <SelectItem value="Maintenance">Maintenance</SelectItem>
-                        <SelectItem value="Administration">Administration</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />

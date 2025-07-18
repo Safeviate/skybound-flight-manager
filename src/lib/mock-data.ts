@@ -35,7 +35,7 @@ export const personnelData: Personnel[] = [
   { id: '2', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] }, // Expired medical
   { id: '3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: ['Fleet Manager'] },
   { id: '4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
-  { id: '5', name: 'Admin User', role: 'Admin', department: 'Administration', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager'] },
+  { id: '5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager'] },
 ];
 
 // Booking Data
