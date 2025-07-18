@@ -50,11 +50,14 @@ export default function Nav() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href}>
                 <SidebarMenuButton
+                  asChild
                   isActive={pathname === item.href}
                   tooltip={{ children: item.label }}
                 >
-                  <item.icon />
-                  <span>{item.label}</span>
+                  <a>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </a>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
