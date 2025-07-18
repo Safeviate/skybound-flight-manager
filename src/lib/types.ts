@@ -29,7 +29,7 @@ export type Personnel = {
   phone: string;
   medicalExpiry: string;
   licenseExpiry: string;
-  hasAdminRights: boolean;
+  permissionLevel: 'User' | 'Manager' | 'Super User';
 };
 
 export type Booking = {
