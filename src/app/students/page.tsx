@@ -15,13 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronRight, PlusCircle, Archive, RotateCw } from 'lucide-react';
-import { studentData } from '@/lib/mock-data';
+import { studentData, personnelData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import type { Student } from '@/lib/types';
+import type { Student, Permission } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +30,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from 'lucide-react';
 
+// In a real app, this would come from an auth context/session
+const LOGGED_IN_USER_ID = '5';
+
 export default function StudentsPage() {
   const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>(studentData);
+
+  const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+  const userPermissions = user?.permissions || [];
+  const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
   const activeStudents = students.filter(s => s.status === 'Active');
   const archivedStudents = students.filter(s => s.status === 'Archived');
@@ -87,27 +94,29 @@ export default function StudentsPage() {
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {isArchived ? (
-                                     <DropdownMenuItem onClick={() => handleReactivate(student.id)}>
-                                        <RotateCw className="mr-2 h-4 w-4" />
-                                        Reactivate
-                                    </DropdownMenuItem>
-                                ) : (
-                                    <DropdownMenuItem onClick={() => handleArchive(student.id)}>
-                                        <Archive className="mr-2 h-4 w-4" />
-                                        Archive
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {canEdit && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {isArchived ? (
+                                        <DropdownMenuItem onClick={() => handleReactivate(student.id)}>
+                                            <RotateCw className="mr-2 h-4 w-4" />
+                                            Reactivate
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        <DropdownMenuItem onClick={() => handleArchive(student.id)}>
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Archive
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </TableCell>
             </TableRow>
@@ -123,23 +132,25 @@ export default function StudentsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Student Roster</CardTitle>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Student
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Add New Student</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to add a new student.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <NewStudentForm />
-                </DialogContent>
-            </Dialog>
+            {canEdit && (
+              <Dialog>
+                  <DialogTrigger asChild>
+                      <Button>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add Student
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                          <DialogTitle>Add New Student</DialogTitle>
+                          <DialogDescription>
+                              Fill out the form below to add a new student.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <NewStudentForm />
+                  </DialogContent>
+              </Dialog>
+            )}
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="active">

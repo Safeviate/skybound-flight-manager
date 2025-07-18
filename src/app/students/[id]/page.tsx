@@ -5,10 +5,10 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { studentData } from '@/lib/mock-data';
+import { personnelData, studentData } from '@/lib/mock-data';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Endorsement, TrainingLogEntry } from '@/lib/types';
+import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ import { AddEndorsementForm } from './add-endorsement-form';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
 
+// In a real app, this would come from an auth context/session
+const LOGGED_IN_USER_ID = '5';
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
     const student = studentData.find(s => s.id === params.id);
@@ -27,6 +29,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     
     // In a real app, this would be a state managed by a form library or state management tool.
     const [progress, setProgress] = useState(student?.progress || 0);
+    
+    const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+    const userPermissions = user?.permissions || [];
+    const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
     if (!student) {
         return (
@@ -104,10 +110,12 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Student Profile">
-        <Button variant="outline" onClick={handleArchive}>
-            <Archive className="mr-2" />
-            Archive Student
-        </Button>
+        {canEdit && (
+            <Button variant="outline" onClick={handleArchive}>
+                <Archive className="mr-2" />
+                Archive Student
+            </Button>
+        )}
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid gap-8 lg:grid-cols-3">
@@ -162,9 +170,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                                 step={1}
                                 value={[progress]}
                                 onValueChange={(value) => setProgress(value[0])}
+                                disabled={!canEdit}
                             />
                         </div>
-                         <Button onClick={handleProgressSave} className="w-full">
+                         <Button onClick={handleProgressSave} className="w-full" disabled={!canEdit}>
                             <Edit className="mr-2 h-4 w-4" />
                             Save Progress
                         </Button>
@@ -176,23 +185,25 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             <CardTitle>Endorsements</CardTitle>
                             <CardDescription>Qualifications and completed milestones.</CardDescription>
                         </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button size="sm">
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Endorsement</DialogTitle>
-                                    <DialogDescription>
-                                        Fill out the form to add a new endorsement for {student.name}.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <AddEndorsementForm studentId={student.id} />
-                            </DialogContent>
-                        </Dialog>
+                        {canEdit && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button size="sm">
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Endorsement</DialogTitle>
+                                        <DialogDescription>
+                                            Fill out the form to add a new endorsement for {student.name}.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <AddEndorsementForm studentId={student.id} />
+                                </DialogContent>
+                            </Dialog>
+                        )}
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -235,23 +246,25 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Logbook
                             </Button>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Log Entry
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                        <DialogDescription>
-                                            Record details of the training session for {student.name}.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <AddLogEntryForm studentId={student.id} />
-                                </DialogContent>
-                            </Dialog>
+                            {canEdit && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add Log Entry
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                            <DialogDescription>
+                                                Record details of the training session for {student.name}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <AddLogEntryForm studentId={student.id} />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
