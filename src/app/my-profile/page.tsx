@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { userData, aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData } from '@/lib/mock-data';
+import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData } from '@/lib/mock-data';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Checklist, User as AppUser } from '@/lib/types';
+import type { Booking, Checklist, User as AppUser, Aircraft } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
@@ -244,6 +244,7 @@ export default function MyProfilePage() {
                                         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
                                             <ChecklistCard 
                                                 checklist={preFlightChecklist} 
+                                                aircraft={relatedAircraft}
                                                 onItemToggle={handleItemToggle}
                                                 onUpdate={handleChecklistUpdate}
                                                 onReset={handleReset}

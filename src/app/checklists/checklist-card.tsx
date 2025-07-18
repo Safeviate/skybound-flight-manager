@@ -6,18 +6,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import type { Checklist } from '@/lib/types';
-import { RotateCcw, CheckCircle } from 'lucide-react';
-import { useMemo } from 'react';
+import type { Aircraft, Checklist } from '@/lib/types';
+import { RotateCcw, CheckCircle, MapPin, Loader2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { getDistance } from '@/lib/utils.tsx';
+import { airportData } from '@/lib/mock-data';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChecklistCardProps {
   checklist: Checklist;
+  aircraft?: Aircraft;
   onItemToggle: (checklist: Checklist) => void;
   onUpdate: (checklist: Checklist) => void;
   onReset: (checklistId: string) => void;
 }
 
-export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: ChecklistCardProps) {
+type LocationStatus = 'idle' | 'checking' | 'verified' | 'error';
+
+export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset }: ChecklistCardProps) {
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+  const { toast } = useToast();
+
   const handleItemToggle = (itemId: string) => {
     const updatedItems = checklist.items.map(item =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
@@ -30,9 +39,82 @@ export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: Ch
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
   const isComplete = progress === 100;
+  const isPreFlight = checklist.category === 'Pre-Flight';
+  const needsLocationVerification = isPreFlight && isComplete && locationStatus !== 'verified';
+
+  const handleVerifyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ variant: 'destructive', title: 'Geolocation is not supported by your browser.' });
+      setLocationStatus('error');
+      return;
+    }
+
+    setLocationStatus('checking');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userCoords = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        };
+        const airport = airportData.find(a => a.id === aircraft?.location);
+
+        if (!airport) {
+          toast({ variant: 'destructive', title: 'Could not determine aircraft location.' });
+          setLocationStatus('error');
+          return;
+        }
+
+        const distance = getDistance(userCoords, airport.coords);
+        
+        if (distance <= 1) { // 1 km radius
+          toast({ title: 'Location Verified', description: 'You are at the airport. You can now submit.' });
+          setLocationStatus('verified');
+        } else {
+          toast({ variant: 'destructive', title: 'Location Check Failed', description: `You are ${distance.toFixed(1)} km away. You must be at the airport to submit a pre-flight checklist.` });
+          setLocationStatus('error');
+        }
+      },
+      (error) => {
+        let message = 'An unknown error occurred.';
+        if (error.code === error.PERMISSION_DENIED) {
+            message = 'You must allow location access to submit the checklist.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+            message = 'Location information is unavailable.';
+        }
+        toast({ variant: 'destructive', title: 'Location Error', description: message });
+        setLocationStatus('error');
+      }
+    );
+  };
+  
+  const handleResetClick = () => {
+      setLocationStatus('idle');
+      onReset(checklist.id);
+  }
+
+  const getButtonState = () => {
+      if (!isComplete) {
+          return { text: 'Complete All Items', disabled: true, icon: <CheckCircle /> }
+      }
+      if (isPreFlight) {
+        switch (locationStatus) {
+            case 'idle':
+            case 'error':
+                return { text: 'Verify Location', disabled: false, onClick: handleVerifyLocation, icon: <MapPin /> };
+            case 'checking':
+                return { text: 'Verifying...', disabled: true, icon: <Loader2 className="animate-spin" /> };
+            case 'verified':
+                return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
+        }
+      }
+      return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
+  }
+
+  const buttonState = getButtonState();
 
   return (
-    <Card className={`flex flex-col ${isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
+    <Card className={`flex flex-col ${isComplete && locationStatus === 'verified' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
       <CardHeader>
         <CardTitle>{checklist.title}</CardTitle>
         <CardDescription>
@@ -41,7 +123,7 @@ export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: Ch
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />
-        <div className="space-y-3 md:max-h-60 overflow-y-auto pr-2">
+        <div className="space-y-3 overflow-y-auto pr-2 md:max-h-60">
           {checklist.items.map(item => (
             <div key={item.id} className="flex items-center space-x-3">
               <Checkbox
@@ -66,13 +148,13 @@ export function ChecklistCard({ checklist, onItemToggle, onUpdate, onReset }: Ch
             </p>
         )}
         <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <Button variant="outline" size="sm" onClick={() => onReset(checklist.id)} className="w-full">
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset
+            <Button variant="outline" size="sm" onClick={handleResetClick} className="w-full">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset
             </Button>
-            <Button size="sm" onClick={() => onUpdate(checklist)} className="w-full" disabled={!isComplete}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Submit & Complete
+            <Button size="sm" onClick={buttonState.onClick} className="w-full" disabled={buttonState.disabled}>
+                {buttonState.icon}
+                {buttonState.text}
             </Button>
         </div>
       </CardFooter>

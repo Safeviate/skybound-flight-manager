@@ -1,4 +1,13 @@
 
+export type Airport = {
+  id: string;
+  name: string;
+  coords: {
+    lat: number;
+    lon: number;
+  };
+};
+
 export type Aircraft = {
   id: string;
   tailNumber: string;
@@ -9,6 +18,7 @@ export type Aircraft = {
   hoursUntilService: number;
   airworthinessExpiry: string;
   insuranceExpiry: string;
+  location: string; // Airport ID
 };
 
 export type Endorsement = {
@@ -84,7 +94,7 @@ export type User = {
     role: Role;
     email: string;
     phone: string;
-    permissions: Permission[];
+    permissions?: Permission[];
     // Student-specific
     instructor?: string;
     flightHours?: number;
@@ -148,17 +158,14 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Admin': ['Super User'],
     'Operations Manager': ['Super User'],
     'HR Manager': ['Super User'],
-
     'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit'],
     'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit'],
     'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit'],
     'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Checklists:Edit'],
-    
     'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit'],
     'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit'],
     'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Students:View', 'Checklists:View'],
-    
     'Front Office': [...VIEW_ALL_PAGES],
-    'Student': ['Bookings:View', 'Checklists:View'],
+    'Student': ['Bookings:View', 'Aircraft:View'],
     'Driver': [],
 };

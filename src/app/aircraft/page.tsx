@@ -156,9 +156,10 @@ export default function AircraftPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                         {preFlightChecklist && (
-                            <DialogContent className="sm:max-w-md">
+                            <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
                                 <ChecklistCard 
-                                    checklist={preFlightChecklist} 
+                                    checklist={preFlightChecklist}
+                                    aircraft={aircraft}
                                     onItemToggle={handleItemToggle}
                                     onUpdate={handleChecklistUpdate}
                                     onReset={handleReset}
