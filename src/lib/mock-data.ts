@@ -1,5 +1,5 @@
 
-import type { Aircraft, Student, Personnel, Booking, Endorsement, TrainingLogEntry } from './types';
+import type { Aircraft, Student, Personnel, Booking, Endorsement, TrainingLogEntry, Checklist } from './types';
 import { getNextService } from './utils.tsx';
 
 // Aircraft Data
@@ -64,10 +64,10 @@ export const studentData: Student[] = [
 
 // Personnel Data
 export const personnelData: Personnel[] = [
-  { id: '1', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: ['Students:Edit', 'Bookings:Edit'] },
-  { id: '2', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: ['Students:View', 'Bookings:Edit'] },
-  { id: '3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: ['Aircraft:Edit'] },
-  { id: '4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: ['Students:View', 'Bookings:View'] },
+  { id: '1', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: ['Students:Edit', 'Bookings:Edit', 'Checklists:Edit'] },
+  { id: '2', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: ['Students:View', 'Bookings:Edit', 'Checklists:View'] },
+  { id: '3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: ['Aircraft:Edit', 'Checklists:Edit'] },
+  { id: '4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: ['Students:View', 'Bookings:View', 'Checklists:View'] },
   { id: '5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: ['Super User'] },
 ];
 
@@ -93,4 +93,47 @@ export const trainingExercisesData: string[] = [
     "Maneuvers",
     "Solo Flight",
     "Checkride Preparation",
+];
+
+// Checklist Data
+export const checklistData: Checklist[] = [
+    {
+        id: 'cl-1',
+        title: 'Cessna 172 Pre-Flight Inspection',
+        category: 'Pre-Flight',
+        items: [
+            { id: 'cl-1-1', text: 'Cabin - Documents (ARROW)', completed: false },
+            { id: 'cl-1-2', text: 'Fuselage (Left Side) - Check for damage', completed: false },
+            { id: 'cl-1-3', text: 'Empennage - Control surfaces free and correct', completed: false },
+            { id: 'cl-1-4', text: 'Right Wing - Aileron and flap check', completed: false },
+            { id: 'cl-1-5', text: 'Nose - Oil level, propeller, and spinner', completed: false },
+            { id: 'cl-1-6', text: 'Left Wing - Fuel quantity, pitot tube', completed: false },
+        ]
+    },
+    {
+        id: 'cl-2',
+        title: 'Piper PA-28 Post-Flight Secure',
+        category: 'Post-Flight',
+        items: [
+            { id: 'cl-2-1', text: 'Avionics - All off', completed: false },
+            { id: 'cl-2-2', text: 'Mixture - Idle cut-off', completed: false },
+            { id: 'cl-2-3', text: 'Magnetos - Off', completed: false },
+            { id: 'cl-2-4', text: 'Master Switch - Off', completed: false },
+            { id: 'cl-2-5', text: 'Hobbs and Tach Time - Recorded', completed: false },
+            { id: 'cl-2-6', text: 'Control Lock - Installed', completed: false },
+            { id: 'cl-2-7', text: 'Aircraft - Chocked and tied down', completed: false },
+        ]
+    },
+     {
+        id: 'cl-3',
+        title: '100-Hour Inspection',
+        category: 'Maintenance',
+        items: [
+            { id: 'cl-3-1', text: 'Engine - Oil change, filter check', completed: false },
+            { id: 'cl-3-2', text: 'Propeller - Inspect for nicks and security', completed: false },
+            { id: 'cl-3-3', text: 'Landing Gear - Check tires, brakes, struts', completed: false },
+            { id: 'cl-3-4', text: 'Control Systems - Inspect cables and pulleys', completed: false },
+            { id: 'cl-3-5', text: 'Logbooks - Entry completed and signed', completed: false },
+        ]
+    },
 ];

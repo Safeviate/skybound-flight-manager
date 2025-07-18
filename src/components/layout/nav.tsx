@@ -23,6 +23,7 @@ import {
   HelpCircle,
   UserCircle,
   CheckSquare,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { Permission } from '@/lib/types';
 import { personnelData } from '@/lib/mock-data';
@@ -42,6 +43,7 @@ const navItems: {
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'] },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'] },
+  { href: '/checklists', label: 'Checklists', icon: ClipboardCheck, requiredPermissions: ['Checklists:View', 'Checklists:Edit'] },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
 ];
