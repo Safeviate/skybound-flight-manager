@@ -46,9 +46,9 @@ export default function Header({ title }: { title: string }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <Link href="/my-roster">
+           <Link href="/my-profile">
             <DropdownMenuItem>
-                My Roster
+                My Profile
             </DropdownMenuItem>
           </Link>
           <DropdownMenuItem>Settings</DropdownMenuItem>
