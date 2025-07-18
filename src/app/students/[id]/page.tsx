@@ -6,9 +6,9 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { studentData } from '@/lib/mock-data';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Endorsement } from '@/lib/types';
+import type { Endorsement, TrainingLogEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,52 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             description: `${student.name}'s training progress has been set to ${progress}%.`,
         });
     }
+
+    const handleDownloadLogbook = () => {
+        if (!student) return;
+    
+        const escapeCsvCell = (cell: any) => {
+          const cellStr = String(cell).replace(/"/g, '""');
+          return `"${cellStr}"`;
+        };
+    
+        let csvContent = "data:text/csv;charset=utf-8,";
+    
+        // Add endorsements section
+        csvContent += "Student Endorsements\n";
+        csvContent += "Endorsement,Date Awarded,Awarded By\n";
+        student.endorsements.forEach((e: Endorsement) => {
+          const row = [e.name, e.dateAwarded, e.awardedBy].map(escapeCsvCell).join(",");
+          csvContent += row + "\n";
+        });
+        
+        csvContent += "\n\n"; // Add some space before the next section
+    
+        // Add training logs section
+        csvContent += "Training Log\n";
+        const headers = ["Date", "Aircraft", "Flight Duration (hrs)", "Instructor", "Notes"];
+        csvContent += headers.join(",") + "\n";
+    
+        student.trainingLogs.forEach((log: TrainingLogEntry) => {
+          const row = [
+            log.date,
+            log.aircraft,
+            log.flightDuration,
+            log.instructorName,
+            log.instructorNotes,
+          ].map(escapeCsvCell).join(",");
+          csvContent += row + "\n";
+        });
+    
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        const fileName = `${student.name.replace(/\s+/g, '_').toLowerCase()}_logbook.csv`;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -172,23 +218,29 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             <CardTitle>Training Log</CardTitle>
                             <CardDescription>Instructor summaries of flight sessions and student progress.</CardDescription>
                         </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Log Entry
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                    <DialogDescription>
-                                        Record details of the training session for {student.name}.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <AddLogEntryForm studentId={student.id} />
-                            </DialogContent>
-                        </Dialog>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={handleDownloadLogbook} variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Logbook
+                            </Button>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Log Entry
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                        <DialogDescription>
+                                            Record details of the training session for {student.name}.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <AddLogEntryForm studentId={student.id} />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {student.trainingLogs.length > 0 ? (
