@@ -31,11 +31,11 @@ export const studentData: Student[] = [
 
 // Personnel Data
 export const personnelData: Personnel[] = [
-  { id: '1', name: 'Mike Ross', role: 'Instructor', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15' },
-  { id: '2', name: 'Sarah Connor', role: 'Instructor', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22' }, // Expired medical
-  { id: '3', name: 'Hank Hill', role: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01' },
-  { id: '4', name: 'Laura Croft', role: 'Instructor', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30' },
-  { id: '5', name: 'Admin User', role: 'Admin', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01' },
+  { id: '1', name: 'Mike Ross', role: 'Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', hasAdminRights: false },
+  { id: '2', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', hasAdminRights: false }, // Expired medical
+  { id: '3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', hasAdminRights: false },
+  { id: '4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', hasAdminRights: false },
+  { id: '5', name: 'Admin User', role: 'Admin', department: 'Administration', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', hasAdminRights: true },
 ];
 
 // Booking Data

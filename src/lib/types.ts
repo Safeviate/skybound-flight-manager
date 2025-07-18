@@ -24,10 +24,12 @@ export type Personnel = {
   id: string;
   name: string;
   role: 'Instructor' | 'Maintenance' | 'Admin';
+  department: string;
   email: string;
   phone: string;
   medicalExpiry: string;
   licenseExpiry: string;
+  hasAdminRights: boolean;
 };
 
 export type Booking = {

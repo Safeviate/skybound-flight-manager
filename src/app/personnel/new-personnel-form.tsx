@@ -21,6 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -29,6 +30,10 @@ const personnelFormSchema = z.object({
   role: z.enum(['Instructor', 'Maintenance', 'Admin'], {
       required_error: 'Please select a role.'
   }),
+  department: z.string({
+    required_error: 'Please select a department.'
+  }),
+  hasAdminRights: z.boolean().default(false),
   email: z.string().email({ message: "Please enter a valid email."}),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   documentType: z.string({ required_error: 'Please select a document type.' }),
@@ -41,7 +46,12 @@ export function NewPersonnelForm() {
   const { toast } = useToast();
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
+    defaultValues: {
+      hasAdminRights: false,
+    }
   });
+
+  const role = form.watch('role');
 
   function onSubmit(data: PersonnelFormValues) {
     console.log(data);
@@ -90,6 +100,47 @@ export function NewPersonnelForm() {
                 </FormItem>
             )}
             />
+             <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Department</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="Flight Operations">Flight Operations</SelectItem>
+                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        <SelectItem value="Administration">Administration</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            {role === 'Admin' && (
+                <FormField
+                control={form.control}
+                name="hasAdminRights"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2 md:mt-8">
+                        <div className="space-y-0.5">
+                            <FormLabel>System Admin Rights</FormLabel>
+                        </div>
+                        <FormControl>
+                            <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+                />
+            )}
             <FormField
             control={form.control}
             name="email"
