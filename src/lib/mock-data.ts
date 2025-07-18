@@ -1,5 +1,5 @@
 import type { Aircraft, Student, Personnel, Booking } from './types';
-import { getNextService } from './utils';
+import { getNextService } from './utils.tsx';
 
 // Aircraft Data
 const rawAircraftData = [

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { isAfter, parseISO, format, differenceInDays } from 'date-fns';
-import { getExpiryBadge } from '@/lib/utils';
+import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData } from '@/lib/mock-data';
 
 
