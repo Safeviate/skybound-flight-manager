@@ -16,6 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
+import { format } from 'date-fns';
 
 const aircraftFormSchema = z.object({
   tailNumber: z.string().min(2, {
@@ -33,6 +38,8 @@ const aircraftFormSchema = z.object({
   hours: z.coerce.number().min(0, {
       message: "Hours must be a positive number.",
   }),
+  documentType: z.string({ required_error: 'Please select a document type.' }),
+  documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
@@ -132,6 +139,69 @@ export function NewAircraftForm() {
                 </FormItem>
             )}
             />
+        </div>
+
+        <div className="space-y-2">
+            <FormLabel>Documents</FormLabel>
+            <div className="flex gap-4">
+                <FormField
+                    control={form.control}
+                    name="documentType"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select document type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Airworthiness">Airworthiness Certificate</SelectItem>
+                                <SelectItem value="Insurance">Insurance Policy</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="documentExpiry"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick expiry date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
         </div>
 
         <div className="flex justify-end">
