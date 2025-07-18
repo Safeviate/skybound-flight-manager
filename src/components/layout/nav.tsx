@@ -1,7 +1,7 @@
 
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   SidebarHeader,
@@ -25,6 +25,7 @@ import {
   UserCircle,
   CheckSquare,
   ClipboardCheck,
+  LogOut,
 } from 'lucide-react';
 import type { Permission } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -50,8 +51,14 @@ const navItems: {
 export default function Nav() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const router = useRouter();
   const userPermissions = user?.permissions || [];
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -108,6 +115,12 @@ export default function Nav() {
                 <SidebarMenuButton tooltip={{ children: 'Support' }}>
                     <HelpCircle />
                     <span>Support</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Logout' }}>
+                    <LogOut />
+                    <span>Logout</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
          </SidebarMenu>
