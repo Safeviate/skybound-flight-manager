@@ -152,10 +152,6 @@ export function NewAircraftForm() {
             />
             <div className="space-y-4 rounded-md border p-4">
                 <h4 className="font-semibold">Airworthiness Certificate</h4>
-                <div className="space-y-2">
-                    <Label>Upload Certificate</Label>
-                    <Input type="file" />
-                </div>
                 <FormField
                 control={form.control}
                 name="airworthinessExpiry"
@@ -198,10 +194,6 @@ export function NewAircraftForm() {
 
             <div className="space-y-4 rounded-md border p-4 md:col-start-2">
                 <h4 className="font-semibold">Insurance Policy</h4>
-                <div className="space-y-2">
-                    <Label>Upload Policy Document</Label>
-                    <Input type="file" />
-                </div>
                 <FormField
                 control={form.control}
                 name="insuranceExpiry"
