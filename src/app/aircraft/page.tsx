@@ -43,10 +43,10 @@ const getNextService = (hours: number): { type: string; hoursUntil: number } => 
 };
 
 const rawAircraftData = [
-  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2024-11-30' },
-  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2025-01-15' },
-  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-07-25', insuranceExpiry: '2025-06-01' },
-  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-10-22' },
+  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15' },
+  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-10' },
+  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01' },
+  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-05-20' },
   { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2025-08-01', insuranceExpiry: '2024-12-10' },
 ];
 
@@ -76,6 +76,7 @@ export default function AircraftPage() {
 
   const getExpiryBadge = (expiryDate: string) => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for consistent comparison
     const date = parseISO(expiryDate);
     const daysUntil = differenceInDays(date, today);
 
