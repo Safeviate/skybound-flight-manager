@@ -55,11 +55,11 @@ const studentTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
 
 // Student Data
 export const studentData: Student[] = [
-  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', endorsements: studentEndorsements['1'], trainingLogs: studentTrainingLogs['1'] },
-  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', endorsements: studentEndorsements['2'], trainingLogs: studentTrainingLogs['2'] },
-  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', endorsements: studentEndorsements['3'], trainingLogs: studentTrainingLogs['3'] },
-  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', endorsements: studentEndorsements['4'], trainingLogs: studentTrainingLogs['4'] },
-  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', endorsements: studentEndorsements['5'], trainingLogs: studentTrainingLogs['5'] },
+  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['1'], trainingLogs: studentTrainingLogs['1'] },
+  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['2'], trainingLogs: studentTrainingLogs['2'] },
+  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['3'], trainingLogs: studentTrainingLogs['3'] },
+  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['4'], trainingLogs: studentTrainingLogs['4'] },
+  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['5'], trainingLogs: studentTrainingLogs['5'] },
 ];
 
 // Personnel Data

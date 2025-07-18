@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { studentData } from '@/lib/mock-data';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -94,9 +94,21 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         document.body.removeChild(link);
     };
 
+    const handleArchive = () => {
+        toast({
+            title: "Student Archived",
+            description: `${student.name} has been moved to the archives.`,
+        });
+    }
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Student Profile" />
+      <Header title="Student Profile">
+        <Button variant="outline" onClick={handleArchive}>
+            <Archive className="mr-2" />
+            Archive Student
+        </Button>
+      </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-1 space-y-8">
@@ -110,7 +122,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             <div>
                                 <CardTitle className="text-3xl">{student.name}</CardTitle>
                                 <CardDescription className="mt-1">
-                                    Student Pilot
+                                   <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
                                 </CardDescription>
                             </div>
                         </div>

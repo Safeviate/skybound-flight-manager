@@ -35,6 +35,7 @@ export type Student = {
   progress: number; // percentage
   medicalExpiry: string;
   licenseExpiry: string;
+  status: 'Active' | 'Archived';
   endorsements: Endorsement[];
   trainingLogs: TrainingLogEntry[];
 };
