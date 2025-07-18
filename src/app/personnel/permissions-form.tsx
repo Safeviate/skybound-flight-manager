@@ -5,18 +5,6 @@ import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ALL_PERMISSIONS, Permission } from '@/lib/types';
-import type { z } from 'zod';
-
-// Define the schema inline for clarity, though it's inferred from new-personnel-form
-const FormSchema = z.object({
-  permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one permission.',
-  }),
-});
-
-type PermissionsFormProps = {
-    form: ReturnType<typeof useFormContext>;
-}
 
 export function PermissionsForm() {
     const { control } = useFormContext();
