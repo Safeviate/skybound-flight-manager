@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import type { Personnel } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 import { personnelData } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewPersonnelForm } from './new-personnel-form';
 
 
 export default function PersonnelPage() {
@@ -35,10 +38,23 @@ export default function PersonnelPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Personnel Roster</CardTitle>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Personnel
-            </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Personnel
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Add New Personnel</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to add a new person to the roster.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewPersonnelForm />
+                </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>
