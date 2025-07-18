@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { aircraftData, studentData, personnelData } from '@/lib/mock-data';
+import { aircraftData, studentData, personnelData, trainingExercisesData } from '@/lib/mock-data';
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -43,6 +44,7 @@ const bookingFormSchema = z.object({
   purpose: z.enum(['Training', 'Maintenance', 'Private'], {
     required_error: 'Please select a purpose.',
   }),
+  trainingExercise: z.string().optional(),
 });
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
@@ -52,6 +54,8 @@ export function NewBookingForm() {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
   });
+
+  const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
     // In a real application, you would save this data to your database.
@@ -102,6 +106,30 @@ export function NewBookingForm() {
             </FormItem>
           )}
         />
+        {purpose === 'Training' && (
+            <FormField
+            control={form.control}
+            name="trainingExercise"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Training Exercise</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an exercise" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {trainingExercisesData.map(ex => (
+                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
         <FormField
           control={form.control}
           name="aircraft"

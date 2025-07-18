@@ -46,3 +46,13 @@ export const bookingData: Booking[] = [
   { id: '4', date: '2024-08-17', time: '10:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training' },
   { id: '5', date: '2024-08-17', time: '16:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private' },
 ];
+
+// Training Exercises
+export const trainingExercisesData: string[] = [
+    "Takeoffs and Landings",
+    "Slow Flight and Stalls",
+    "Emergency Procedures",
+    "Navigation and Cross-Country",
+    "Instrument Procedures",
+    "Maneuvers",
+];
