@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Input } from '../ui/input';
+import Link from 'next/link';
 
 export default function Header({ title }: { title: string }) {
   return (
@@ -45,6 +46,11 @@ export default function Header({ title }: { title: string }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
+           <Link href="/my-roster">
+            <DropdownMenuItem>
+                My Roster
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
