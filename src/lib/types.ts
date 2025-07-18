@@ -4,6 +4,8 @@ export type Aircraft = {
   model: string;
   status: 'Available' | 'In Maintenance' | 'Booked';
   hours: number;
+  nextServiceType: string;
+  hoursUntilService: number;
 };
 
 export type Student = {

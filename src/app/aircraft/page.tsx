@@ -13,13 +13,50 @@ import { Badge } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
 
-const aircraftData: Aircraft[] = [
+const SERVICE_INTERVALS = {
+  'A-Check': 50,
+  'B-Check': 100,
+  'C-Check': 500,
+};
+
+const getNextService = (hours: number): { type: string; hoursUntil: number } => {
+  const nextA = SERVICE_INTERVALS['A-Check'] - (hours % SERVICE_INTERVALS['A-Check']);
+  const nextB = SERVICE_INTERVALS['B-Check'] - (hours % SERVICE_INTERVALS['B-Check']);
+  const nextC = SERVICE_INTERVALS['C-Check'] - (hours % SERVICE_INTERVALS['C-Check']);
+
+  let hoursUntil = nextA;
+  let type = 'A-Check';
+
+  if (nextB < hoursUntil) {
+    hoursUntil = nextB;
+    type = 'B-Check';
+  }
+
+  if (nextC < hoursUntil) {
+    hoursUntil = nextC;
+    type = 'C-Check';
+  }
+
+  return { type, hoursUntil: parseFloat(hoursUntil.toFixed(1)) };
+};
+
+const rawAircraftData = [
   { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5 },
   { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2 },
   { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8 },
   { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0 },
   { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7 },
 ];
+
+const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
+    const nextService = getNextService(ac.hours);
+    return {
+        ...ac,
+        nextServiceType: nextService.type,
+        hoursUntilService: nextService.hoursUntil,
+    }
+})
+
 
 export default function AircraftPage() {
   const getStatusVariant = (status: Aircraft['status']) => {
@@ -53,7 +90,9 @@ export default function AircraftPage() {
                   <TableHead>Tail Number</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Flight Hours</TableHead>
+                  <TableHead>Flight Hours</TableHead>
+                  <TableHead>Next Service</TableHead>
+                  <TableHead className="text-right">Hours Until Service</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -64,7 +103,11 @@ export default function AircraftPage() {
                     <TableCell>
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{aircraft.hours.toFixed(1)}</TableCell>
+                    <TableCell>{aircraft.hours.toFixed(1)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{aircraft.nextServiceType}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{aircraft.hoursUntilService}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
