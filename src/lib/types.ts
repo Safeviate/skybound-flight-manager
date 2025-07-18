@@ -18,6 +18,15 @@ export type Endorsement = {
     awardedBy: string;
 };
 
+export type TrainingLogEntry = {
+  id: string;
+  date: string;
+  aircraft: string;
+  flightDuration: number;
+  instructorNotes: string;
+  instructorName: string;
+};
+
 export type Student = {
   id: string;
   name: string;
@@ -27,6 +36,7 @@ export type Student = {
   medicalExpiry: string;
   licenseExpiry: string;
   endorsements: Endorsement[];
+  trainingLogs: TrainingLogEntry[];
 };
 
 export type Permission =

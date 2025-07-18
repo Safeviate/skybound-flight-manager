@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { studentData } from '@/lib/mock-data';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { AddEndorsementForm } from './add-endorsement-form';
 import { getExpiryBadge } from '@/lib/utils.tsx';
+import { AddLogEntryForm } from './add-log-entry-form';
 
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
@@ -111,19 +112,17 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                         </Button>
                     </CardContent>
                 </Card>
-            </div>
-            <div className="lg:col-span-2">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div className="space-y-1">
                             <CardTitle>Endorsements</CardTitle>
-                            <CardDescription>Record of qualifications and completed training milestones.</CardDescription>
+                            <CardDescription>Qualifications and completed milestones.</CardDescription>
                         </div>
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button>
+                                <Button size="sm">
                                     <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Endorsement
+                                    Add
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
@@ -142,8 +141,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             <TableHeader>
                                 <TableRow>
                                 <TableHead>Endorsement</TableHead>
-                                <TableHead>Date Awarded</TableHead>
-                                <TableHead>Awarded By</TableHead>
+                                <TableHead>Date</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -154,17 +152,66 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                                         {endorsement.name}
                                     </TableCell>
                                     <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
-                                    <TableCell>{endorsement.awardedBy}</TableCell>
                                 </TableRow>
                                 )) : (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                        No endorsements found for this student.
+                                        No endorsements found.
                                     </TableCell>
                                 </TableRow>
                                 )}
                             </TableBody>
                         </Table>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-2">
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                            <CardTitle>Training Log</CardTitle>
+                            <CardDescription>Instructor summaries of flight sessions and student progress.</CardDescription>
+                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Log Entry
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                    <DialogDescription>
+                                        Record details of the training session for {student.name}.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <AddLogEntryForm studentId={student.id} />
+                            </DialogContent>
+                        </Dialog>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {student.trainingLogs.length > 0 ? (
+                            student.trainingLogs.map((log) => (
+                                <div key={log.id} className="grid gap-2">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
+                                        <Badge variant="outline">{log.instructorName}</Badge>
+                                    </div>
+                                    <div className="flex items-center text-sm text-muted-foreground gap-4">
+                                        <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
+                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration} hrs</span>
+                                    </div>
+                                    <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
+                                </div>
+                            ))
+                        ) : (
+                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">
+                                    No training logs have been added for this student.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

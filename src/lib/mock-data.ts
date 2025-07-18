@@ -1,5 +1,5 @@
 
-import type { Aircraft, Student, Personnel, Booking, Endorsement } from './types';
+import type { Aircraft, Student, Personnel, Booking, Endorsement, TrainingLogEntry } from './types';
 import { getNextService } from './utils.tsx';
 
 // Aircraft Data
@@ -39,14 +39,27 @@ const studentEndorsements: { [key: string]: Endorsement[] } = {
     ],
 };
 
+const studentTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
+    '1': [
+        { id: 'l1', date: '2024-08-10', aircraft: 'N12345', flightDuration: 1.5, instructorName: 'Mike Ross', instructorNotes: 'Excellent handling of slow flight and stalls. Needs to work on consistency during landings.' },
+        { id: 'l2', date: '2024-08-12', aircraft: 'N12345', flightDuration: 1.2, instructorName: 'Mike Ross', instructorNotes: 'Practiced emergency procedures. Good situational awareness, but needs to be quicker on the checklists.' },
+    ],
+    '2': [
+        { id: 'l3', date: '2024-08-11', aircraft: 'N67890', flightDuration: 1.8, instructorName: 'Sarah Connor', instructorNotes: 'First flight focusing on basic maneuvers. Very smooth on the controls.' },
+    ],
+    '3': [],
+    '4': [],
+    '5': [],
+};
+
 
 // Student Data
 export const studentData: Student[] = [
-  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', endorsements: studentEndorsements['1'] },
-  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', endorsements: studentEndorsements['2'] },
-  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', endorsements: studentEndorsements['3'] },
-  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', endorsements: studentEndorsements['4'] },
-  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', endorsements: studentEndorsements['5'] },
+  { id: '1', name: 'John Doe', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', endorsements: studentEndorsements['1'], trainingLogs: studentTrainingLogs['1'] },
+  { id: '2', name: 'Jane Smith', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', endorsements: studentEndorsements['2'], trainingLogs: studentTrainingLogs['2'] },
+  { id: '3', name: 'Peter Jones', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', endorsements: studentEndorsements['3'], trainingLogs: studentTrainingLogs['3'] },
+  { id: '4', name: 'Emily White', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', endorsements: studentEndorsements['4'], trainingLogs: studentTrainingLogs['4'] },
+  { id: '5', name: 'Chris Green', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', endorsements: studentEndorsements['5'], trainingLogs: studentTrainingLogs['5'] },
 ];
 
 // Personnel Data
