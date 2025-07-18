@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '@/lib/types';
 import { userData } from '@/lib/mock-data';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 interface UserContextType {
   user: User | null;
@@ -22,8 +23,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedUserId = localStorage.getItem('currentUserId');
       if (storedUserId) {
-        const currentUser = userData.find(u => u.id === storedUserId) || null;
-        setUser(currentUser);
+        const foundUser = userData.find(u => u.id === storedUserId);
+        if (foundUser) {
+            const permissions = ROLE_PERMISSIONS[foundUser.role] || [];
+            setUser({ ...foundUser, permissions });
+        }
       }
     } catch (error) {
         console.error("Could not access localStorage. User session will not persist.");
@@ -34,15 +38,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback((userId: string) => {
     const userToLogin = userData.find(u => u.id === userId) || null;
-    setUser(userToLogin);
-    try {
-      if (userToLogin) {
-        localStorage.setItem('currentUserId', userId);
-      } else {
-        localStorage.removeItem('currentUserId');
-      }
-    } catch (error) {
-        console.error("Could not access localStorage to set user session.");
+    if (userToLogin) {
+        const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
+        const userWithPermissions = { ...userToLogin, permissions };
+        setUser(userWithPermissions);
+        try {
+            localStorage.setItem('currentUserId', userId);
+        } catch (error) {
+            console.error("Could not access localStorage to set user session.");
+        }
+    } else {
+        setUser(null);
+        try {
+            localStorage.removeItem('currentUserId');
+        } catch (error) {
+            console.error("Could not access localStorage to clear user session.");
+        }
     }
   }, []);
 
@@ -53,7 +64,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
         console.error("Could not access localStorage to clear user session.");
     }
-    // No router push here to keep context decoupled from routing
   }, []);
 
   return (
