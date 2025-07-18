@@ -5,12 +5,16 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { bookingData, personnelData } from '@/lib/mock-data';
-import { Mail, Phone, User, Briefcase, Calendar as CalendarIcon } from 'lucide-react';
+import { Mail, Phone, User, Briefcase, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Personnel } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { EditProfileForm } from './edit-profile-form';
+
 
 // In a real app, this would come from the logged-in user's session
 const LOGGED_IN_PERSONNEL_ID = '1'; 
@@ -76,17 +80,36 @@ export default function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card className="max-w-6xl mx-auto">
             <CardHeader>
-                <div className="flex items-center space-x-4">
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src="https://placehold.co/80x80" alt={user.name} data-ai-hint="user avatar" />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <CardTitle className="text-3xl">{user.name}</CardTitle>
-                        <CardDescription>
-                            <Badge variant={getRoleVariant(user.role)} className="mt-1">{user.role}</Badge>
-                        </CardDescription>
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-4">
+                        <Avatar className="h-20 w-20">
+                            <AvatarImage src="https://placehold.co/80x80" alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <CardTitle className="text-3xl">{user.name}</CardTitle>
+                            <CardDescription>
+                                <Badge variant={getRoleVariant(user.role)} className="mt-1">{user.role}</Badge>
+                            </CardDescription>
+                        </div>
                     </div>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Update Information</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Update Your Information</DialogTitle>
+                                <DialogDescription>
+                                    Make changes to your profile here. Click save when you're done.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <EditProfileForm user={user} />
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-4 border-b pb-6">
