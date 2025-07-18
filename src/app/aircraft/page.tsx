@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +47,7 @@ export default function AircraftPage() {
                         Add Aircraft
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Add New Aircraft</DialogTitle>
                         <DialogDescription>
