@@ -42,13 +42,21 @@ const getNextService = (hours: number): { type: string; hoursUntil: number } => 
   return { type, hoursUntil: parseFloat(hoursUntil.toFixed(1)) };
 };
 
+// Mock data updated to show all expiry badge variants.
+// Dates are relative to a hypothetical "today" to ensure all states are visible.
+// For example, if today is July 18th, 2024:
+// - Not Expired (Green): > 60 days away (e.g., '2025-05-20')
+// - Expires in 2 months (Yellow): <= 60 days away (e.g., '2024-09-10')
+// - Expires in 1 month (Orange): <= 30 days away (e.g., '2024-08-15')
+// - Expired (Red): < 0 days away (e.g., '2024-06-01')
 const rawAircraftData = [
-  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15' },
-  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-10' },
-  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01' },
-  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-05-20' },
-  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2025-08-01', insuranceExpiry: '2024-12-10' },
+  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15' }, // Green / Green
+  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-15' }, // Yellow / Orange
+  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01' }, // Red / Green
+  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2024-05-20' }, // Green / Red
+  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2024-08-10', insuranceExpiry: '2024-09-01' }, // Orange / Yellow
 ];
+
 
 const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
     const nextService = getNextService(ac.hours);
