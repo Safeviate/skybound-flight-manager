@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarContent,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -50,8 +51,13 @@ const navItems: {
 
 export default function Nav() {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
   const userPermissions = user?.permissions || [];
+
+  const handleLinkClick = () => {
+    setOpenMobile(false);
+  };
 
   const hasPermission = (requiredPermissions?: Permission[]) => {
     if (!requiredPermissions || requiredPermissions.length === 0) {
@@ -82,6 +88,7 @@ export default function Nav() {
                   as="a"
                   isActive={pathname === item.href}
                   tooltip={{ children: item.label }}
+                  onClick={handleLinkClick}
                 >
                   <item.icon />
                   <span>{item.label}</span>
