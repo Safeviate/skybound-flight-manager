@@ -20,9 +20,9 @@ export type Student = {
   licenseExpiry: string;
 };
 
-export type Permission = 'Safety Manager' | 'Quality Manager' | 'Flight Manager' | 'Fleet Manager' | 'User Manager';
+export type Permission = 'Safety Manager' | 'Quality Manager' | 'Flight Manager' | 'Fleet Manager' | 'User Manager' | 'Super User';
 
-export const ALL_PERMISSIONS: Permission[] = ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager'];
+export const ALL_PERMISSIONS: Permission[] = ['Safety Manager', 'Quality Manager', 'Flight Manager', 'Fleet Manager', 'User Manager', 'Super User'];
 
 export type Role = 
   | 'Accountable Manager'
