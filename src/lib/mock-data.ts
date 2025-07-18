@@ -79,6 +79,7 @@ export const bookingData: Booking[] = [
   { id: 'b1', date: '2024-08-10', time: '10:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
   { id: 'b2', date: '2024-08-12', time: '13:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
   { id: 'b3', date: '2024-08-11', time: '09:00', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
+  { id: 'b4', date: '2024-08-16', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Upcoming', isChecklistComplete: false },
 ];
 
 // Training Exercises
