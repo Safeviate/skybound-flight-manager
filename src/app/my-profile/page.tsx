@@ -5,8 +5,8 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { bookingData, checklistData, userData } from '@/lib/mock-data';
-import { Mail, Phone, User, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
+import { bookingData, checklistData, userData, aircraftData } from '@/lib/mock-data';
+import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EditProfileForm } from './edit-profile-form';
 import { ChecklistCard } from '../checklists/checklist-card';
-import { aircraftData } from '@/lib/mock-data';
 
 
 // In a real app, this would come from the logged-in user's session
@@ -155,7 +154,7 @@ export default function MyProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-4 border-b pb-6">
                 <div className="flex items-center space-x-3">
-                    <User className="h-5 w-5 text-muted-foreground" />
+                    <UserIcon className="h-5 w-5 text-muted-foreground" />
                     <span className="font-medium">{user.name}</span>
                 </div>
                  <div className="flex items-center space-x-3">
