@@ -58,7 +58,7 @@ export default function ChecklistsPage() {
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Checklist Template
+              New Checklist
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-xl">
