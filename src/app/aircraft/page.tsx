@@ -1,4 +1,7 @@
 
+'use client';
+
+import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,15 +14,39 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft } from '@/lib/types';
-import { PlusCircle } from 'lucide-react';
+import type { Aircraft, Checklist } from '@/lib/types';
+import { ClipboardCheck, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData } from '@/lib/mock-data';
+import { aircraftData, checklistData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChecklistCard } from '../checklists/checklist-card';
 
 
 export default function AircraftPage() {
+  const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
+
+  const handleChecklistUpdate = (updatedChecklist: Checklist) => {
+    setChecklists(prevChecklists =>
+      prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
+    );
+  };
+  
+  const handleReset = (checklistId: string) => {
+    setChecklists(prevChecklists =>
+      prevChecklists.map(c => {
+        if (c.id === checklistId) {
+          return {
+            ...c,
+            items: c.items.map(item => ({ ...item, completed: false })),
+          };
+        }
+        return c;
+      })
+    );
+  };
+  
   const getStatusVariant = (status: Aircraft['status']) => {
     switch (status) {
       case 'Available':
@@ -32,6 +59,8 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
+
+  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -70,6 +99,7 @@ export default function AircraftPage() {
                   <TableHead>Hours Until</TableHead>
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
+                  <TableHead className="text-right">Checklists</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,6 +117,37 @@ export default function AircraftPage() {
                     <TableCell>{aircraft.hoursUntilService}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
+                    <TableCell className="text-right">
+                       <Dialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <ClipboardCheck className="h-4 w-4" />
+                                    <span className="sr-only">Open checklists</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
+                                {preFlightChecklist && (
+                                  <DialogTrigger asChild>
+                                    <DropdownMenuItem>
+                                        {preFlightChecklist.title}
+                                    </DropdownMenuItem>
+                                  </DialogTrigger>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        {preFlightChecklist && (
+                            <DialogContent className="sm:max-w-md">
+                                <ChecklistCard 
+                                    checklist={preFlightChecklist} 
+                                    onUpdate={handleChecklistUpdate}
+                                    onReset={handleReset}
+                                />
+                            </DialogContent>
+                        )}
+                       </Dialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

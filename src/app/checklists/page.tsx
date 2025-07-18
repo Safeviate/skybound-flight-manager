@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle } from 'lucide-react';
 import { checklistData } from '@/lib/mock-data';
@@ -53,19 +53,19 @@ export default function ChecklistsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Checklists">
+      <Header title="Checklist Templates">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Checklist
+              New Checklist Template
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-xl">
             <DialogHeader>
-              <DialogTitle>Create New Checklist</DialogTitle>
+              <DialogTitle>Create New Checklist Template</DialogTitle>
               <DialogDescription>
-                Define the title, category, and items for the new checklist.
+                Define the title, category, and items for the new checklist template.
               </DialogDescription>
             </DialogHeader>
             <NewChecklistForm onSubmit={handleNewChecklist} />
@@ -73,49 +73,59 @@ export default function ChecklistsPage() {
         </Dialog>
       </Header>
       <main className="flex-1 p-4 md:p-8">
-        <Tabs defaultValue="pre-flight">
-          <TabsList className="mb-4">
-            <TabsTrigger value="pre-flight">Pre-Flight</TabsTrigger>
-            <TabsTrigger value="post-flight">Post-Flight</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-          </TabsList>
-          <TabsContent value="pre-flight">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {preFlightChecklists.map(checklist => (
-                <ChecklistCard 
-                  key={checklist.id} 
-                  checklist={checklist} 
-                  onUpdate={handleChecklistUpdate}
-                  onReset={handleReset}
-                />
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="post-flight">
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {postFlightChecklists.map(checklist => (
-                    <ChecklistCard 
-                    key={checklist.id} 
-                    checklist={checklist} 
-                    onUpdate={handleChecklistUpdate}
-                    onReset={handleReset}
-                    />
-                ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="maintenance">
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {maintenanceChecklists.map(checklist => (
-                    <ChecklistCard 
-                    key={checklist.id} 
-                    checklist={checklist} 
-                    onUpdate={handleChecklistUpdate}
-                    onReset={handleReset}
-                    />
-                ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Checklist Templates</CardTitle>
+                <CardDescription>
+                    These are the master checklists used throughout the application. Edit them here.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="pre-flight">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="pre-flight">Pre-Flight</TabsTrigger>
+                    <TabsTrigger value="post-flight">Post-Flight</TabsTrigger>
+                    <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+                </TabsList>
+                <TabsContent value="pre-flight">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {preFlightChecklists.map(checklist => (
+                        <ChecklistCard 
+                        key={checklist.id} 
+                        checklist={checklist} 
+                        onUpdate={handleChecklistUpdate}
+                        onReset={handleReset}
+                        />
+                    ))}
+                    </div>
+                </TabsContent>
+                <TabsContent value="post-flight">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {postFlightChecklists.map(checklist => (
+                            <ChecklistCard 
+                            key={checklist.id} 
+                            checklist={checklist} 
+                            onUpdate={handleChecklistUpdate}
+                            onReset={handleReset}
+                            />
+                        ))}
+                    </div>
+                </TabsContent>
+                <TabsContent value="maintenance">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {maintenanceChecklists.map(checklist => (
+                            <ChecklistCard 
+                            key={checklist.id} 
+                            checklist={checklist} 
+                            onUpdate={handleChecklistUpdate}
+                            onReset={handleReset}
+                            />
+                        ))}
+                    </div>
+                </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
       </main>
     </div>
   );
