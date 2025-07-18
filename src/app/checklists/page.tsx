@@ -10,9 +10,12 @@ import { PlusCircle } from 'lucide-react';
 import { checklistData } from '@/lib/mock-data';
 import type { Checklist } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewChecklistForm } from './new-checklist-form';
 
 export default function ChecklistsPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -34,6 +37,16 @@ export default function ChecklistsPage() {
     );
   };
 
+  const handleNewChecklist = (newChecklist: Omit<Checklist, 'id'>) => {
+    const checklistWithId: Checklist = {
+      ...newChecklist,
+      id: `cl-${Date.now()}`,
+      items: newChecklist.items.map((item, index) => ({ ...item, id: `item-${Date.now()}-${index}` })),
+    };
+    setChecklists(prev => [...prev, checklistWithId]);
+    setIsDialogOpen(false);
+  };
+
   const preFlightChecklists = checklists.filter(c => c.category === 'Pre-Flight');
   const postFlightChecklists = checklists.filter(c => c.category === 'Post-Flight');
   const maintenanceChecklists = checklists.filter(c => c.category === 'Maintenance');
@@ -41,10 +54,23 @@ export default function ChecklistsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Checklists">
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Checklist
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Checklist
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Create New Checklist</DialogTitle>
+              <DialogDescription>
+                Define the title, category, and items for the new checklist.
+              </DialogDescription>
+            </DialogHeader>
+            <NewChecklistForm onSubmit={handleNewChecklist} />
+          </DialogContent>
+        </Dialog>
       </Header>
       <main className="flex-1 p-4 md:p-8">
         <Tabs defaultValue="pre-flight">
