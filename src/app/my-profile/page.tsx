@@ -95,9 +95,9 @@ export default function MyProfilePage() {
                     </div>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">Update Information</span>
+                            <Button>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Update Information
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
