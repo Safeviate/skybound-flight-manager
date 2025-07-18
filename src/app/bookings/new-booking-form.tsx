@@ -24,7 +24,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
+import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { aircraftData, studentData, personnelData } from '@/lib/mock-data';
 
@@ -67,6 +67,16 @@ export function NewBookingForm() {
 
   const instructors = personnelData.filter(p => p.role === 'Instructor');
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const availableAircraft = aircraftData.filter(ac => {
+    const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
+    const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
+    return ac.status === 'Available' && !airworthinessExpired && !insuranceExpired;
+  });
+
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -105,9 +115,13 @@ export function NewBookingForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {aircraftData.map(ac => (
-                    <SelectItem key={ac.id} value={ac.tailNumber}>{ac.model} ({ac.tailNumber})</SelectItem>
-                  ))}
+                  {availableAircraft.length > 0 ? (
+                    availableAircraft.map(ac => (
+                      <SelectItem key={ac.id} value={ac.tailNumber}>{ac.model} ({ac.tailNumber})</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>No aircraft available for booking</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
