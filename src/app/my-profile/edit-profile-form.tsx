@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { Personnel } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -39,7 +39,7 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-export function EditProfileForm({ user }: { user: Personnel }) {
+export function EditProfileForm({ user }: { user: User }) {
   const { toast } = useToast();
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -47,7 +47,7 @@ export function EditProfileForm({ user }: { user: Personnel }) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      documentExpiry: parseISO(user.medicalExpiry), // Defaulting to one, can be improved
+      documentExpiry: user.medicalExpiry ? parseISO(user.medicalExpiry) : new Date(), // Defaulting to one, can be improved
     },
   });
 

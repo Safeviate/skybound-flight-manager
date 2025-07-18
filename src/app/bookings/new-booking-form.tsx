@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { aircraftData, studentData, personnelData, trainingExercisesData } from '@/lib/mock-data';
+import { aircraftData, userData, trainingExercisesData } from '@/lib/mock-data';
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -78,16 +78,17 @@ export function NewBookingForm() {
     return ac.status === 'Available' && !airworthinessExpired && !insuranceExpired;
   });
 
-  const availableInstructors = personnelData.filter(p => {
+  const availableInstructors = userData.filter(p => {
     if (p.role !== 'Instructor') return false;
-    const medicalExpired = isBefore(parseISO(p.medicalExpiry), today);
-    const licenseExpired = isBefore(parseISO(p.licenseExpiry), today);
+    const medicalExpired = p.medicalExpiry ? isBefore(parseISO(p.medicalExpiry), today) : false;
+    const licenseExpired = p.licenseExpiry ? isBefore(parseISO(p.licenseExpiry), today) : false;
     return !medicalExpired && !licenseExpired;
   });
 
-  const availableStudents = studentData.filter(s => {
-    const medicalExpired = isBefore(parseISO(s.medicalExpiry), today);
-    const licenseExpired = isBefore(parseISO(s.licenseExpiry), today);
+  const availableStudents = userData.filter(s => {
+      if (s.role !== 'Student') return false;
+    const medicalExpired = s.medicalExpiry ? isBefore(parseISO(s.medicalExpiry), today) : false;
+    const licenseExpired = s.licenseExpiry ? isBefore(parseISO(s.licenseExpiry), today) : false;
     return !medicalExpired && !licenseExpired;
   });
 

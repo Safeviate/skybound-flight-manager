@@ -21,7 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { personnelData, trainingExercisesData } from '@/lib/mock-data';
+import { userData, trainingExercisesData } from '@/lib/mock-data';
 import type { Role } from '@/lib/types';
 
 const endorsementFormSchema = z.object({
@@ -48,7 +48,7 @@ export function AddEndorsementForm({ studentId }: { studentId: string }) {
   });
 
   const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-  const availableInstructors = personnelData.filter(p => instructorRoles.includes(p.role));
+  const availableInstructors = userData.filter(p => instructorRoles.includes(p.role));
 
   function onSubmit(data: EndorsementFormValues) {
     console.log({

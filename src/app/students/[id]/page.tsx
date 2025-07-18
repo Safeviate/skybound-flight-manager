@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { personnelData, studentData } from '@/lib/mock-data';
+import { userData } from '@/lib/mock-data';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
@@ -21,20 +21,20 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
 
 // In a real app, this would come from an auth context/session
-const LOGGED_IN_USER_ID = '5';
+const LOGGED_IN_USER_ID = 'p5';
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
-    const student = studentData.find(s => s.id === params.id);
+    const student = userData.find(s => s.id === params.id);
     const { toast } = useToast();
     
     // In a real app, this would be a state managed by a form library or state management tool.
     const [progress, setProgress] = useState(student?.progress || 0);
     
-    const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+    const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
     const userPermissions = user?.permissions || [];
     const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
-    if (!student) {
+    if (!student || student.role !== 'Student') {
         return (
             <div className="flex flex-col min-h-screen">
                 <Header title="Student Profile" />
@@ -55,7 +55,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     }
 
     const handleDownloadLogbook = () => {
-        if (!student) return;
+        if (!student || !student.endorsements || !student.trainingLogs) return;
     
         const escapeCsvCell = (cell: any) => {
           const cellStr = String(cell).replace(/"/g, '""');
@@ -142,16 +142,20 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                         </div>
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Flight Hours: {student.flightHours.toFixed(1)}</span>
+                            <span className="font-medium">Flight Hours: {student.flightHours?.toFixed(1)}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <span>Medical Exp: {getExpiryBadge(student.medicalExpiry)}</span>
-                        </div>
+                        {student.medicalExpiry && (
+                            <div className="flex items-center space-x-3">
+                                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                <span>Medical Exp: {getExpiryBadge(student.medicalExpiry)}</span>
+                            </div>
+                        )}
+                        {student.licenseExpiry && (
                         <div className="flex items-center space-x-3">
                             <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                             <span>License Exp: {getExpiryBadge(student.licenseExpiry)}</span>
                         </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -214,7 +218,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
+                                {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
                                 <TableRow key={endorsement.id}>
                                     <TableCell className="font-medium flex items-center gap-2">
                                         <Award className="h-4 w-4 text-accent"/>
@@ -268,7 +272,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {student.trainingLogs.length > 0 ? (
+                        {student.trainingLogs && student.trainingLogs.length > 0 ? (
                             student.trainingLogs.map((log) => (
                                 <div key={log.id} className="grid gap-2">
                                     <div className="flex justify-between items-center">

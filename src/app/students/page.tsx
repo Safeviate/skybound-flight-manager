@@ -15,13 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronRight, PlusCircle, Archive, RotateCw } from 'lucide-react';
-import { studentData, personnelData } from '@/lib/mock-data';
+import { userData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import type { Student, Permission } from '@/lib/types';
+import type { User, Permission } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,13 +31,13 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 
 // In a real app, this would come from an auth context/session
-const LOGGED_IN_USER_ID = '5';
+const LOGGED_IN_USER_ID = 'p5';
 
 export default function StudentsPage() {
   const { toast } = useToast();
-  const [students, setStudents] = useState<Student[]>(studentData);
+  const [students, setStudents] = useState<User[]>(userData.filter(u => u.role === 'Student'));
 
-  const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+  const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
@@ -63,7 +63,7 @@ export default function StudentsPage() {
     });
   }
 
-  const StudentTable = ({ list, isArchived }: { list: Student[], isArchived?: boolean }) => (
+  const StudentTable = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
      <Table>
         <TableHeader>
             <TableRow>
@@ -79,7 +79,7 @@ export default function StudentsPage() {
             <TableRow key={student.id}>
                 <TableCell className="font-medium">{student.name}</TableCell>
                 <TableCell>{student.instructor}</TableCell>
-                <TableCell>{student.flightHours.toFixed(1)}</TableCell>
+                <TableCell>{student.flightHours?.toFixed(1)}</TableCell>
                 <TableCell>
                 <div className="flex items-center gap-2">
                     <Progress value={student.progress} className="w-2/3" />

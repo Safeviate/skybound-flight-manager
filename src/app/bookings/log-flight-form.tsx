@@ -16,8 +16,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import type { Booking, Student } from '@/lib/types';
-import { studentData } from '@/lib/mock-data';
+import type { Booking, User } from '@/lib/types';
+import { userData } from '@/lib/mock-data';
 
 const logFlightFormSchema = z.object({
   flightDuration: z.coerce.number().min(0.1, {
@@ -37,7 +37,7 @@ interface LogFlightFormProps {
 
 export function LogFlightForm({ booking, onFlightLogged }: LogFlightFormProps) {
   const { toast } = useToast();
-  const student = studentData.find(s => s.name === booking.student);
+  const student = userData.find(s => s.name === booking.student);
 
   const form = useForm<LogFlightFormValues>({
     resolver: zodResolver(logFlightFormSchema),

@@ -27,19 +27,6 @@ export type TrainingLogEntry = {
   instructorName: string;
 };
 
-export type Student = {
-  id: string;
-  name: string;
-  instructor: string;
-  flightHours: number;
-  progress: number; // percentage
-  medicalExpiry: string;
-  licenseExpiry: string;
-  status: 'Active' | 'Archived';
-  endorsements: Endorsement[];
-  trainingLogs: TrainingLogEntry[];
-};
-
 export type Permission =
   | 'Aircraft:View'
   | 'Aircraft:Edit'
@@ -91,16 +78,24 @@ export type Role =
   | 'Safety Manager'
   | 'Student';
 
-export type Personnel = {
-  id: string;
-  name: string;
-  role: Role;
-  department: string;
-  email: string;
-  phone: string;
-  medicalExpiry: string;
-  licenseExpiry: string;
-  permissions: Permission[];
+export type User = {
+    id: string;
+    name: string;
+    role: Role;
+    email: string;
+    phone: string;
+    permissions: Permission[];
+    // Student-specific
+    instructor?: string;
+    flightHours?: number;
+    progress?: number;
+    status?: 'Active' | 'Archived';
+    endorsements?: Endorsement[];
+    trainingLogs?: TrainingLogEntry[];
+    // Personnel-specific
+    department?: string;
+    medicalExpiry?: string;
+    licenseExpiry?: string;
 };
 
 export type Booking = {

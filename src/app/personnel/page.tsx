@@ -1,4 +1,6 @@
 
+'use client';
+
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,14 +13,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Personnel, Role } from '@/lib/types';
+import type { User, Role } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
-import { personnelData } from '@/lib/mock-data';
+import { userData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 
 
 export default function PersonnelPage() {
+    const personnelList = userData.filter(u => u.role !== 'Student');
+    
     const getRoleVariant = (role: Role) => {
         switch (role) {
             case 'Instructor':
@@ -75,7 +79,7 @@ export default function PersonnelPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {personnelData.map((person) => (
+                {personnelList.map((person) => (
                   <TableRow key={person.id}>
                     <TableCell className="font-medium">{person.name}</TableCell>
                     <TableCell>

@@ -21,7 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { personnelData } from '@/lib/mock-data';
+import { userData } from '@/lib/mock-data';
 import type { Role } from '@/lib/types';
 
 const studentFormSchema = z.object({
@@ -44,7 +44,7 @@ export function NewStudentForm() {
   });
 
   const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-  const availableInstructors = personnelData.filter(p => instructorRoles.includes(p.role));
+  const availableInstructors = userData.filter(p => instructorRoles.includes(p.role));
 
   function onSubmit(data: StudentFormValues) {
     console.log({
@@ -181,4 +181,3 @@ export function NewStudentForm() {
     </Form>
   );
 }
-

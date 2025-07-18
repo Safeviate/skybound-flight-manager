@@ -27,10 +27,10 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import type { Permission } from '@/lib/types';
-import { personnelData } from '@/lib/mock-data';
+import { userData } from '@/lib/mock-data';
 
 // In a real app, this would come from an auth context/session
-const LOGGED_IN_USER_ID = '5';
+const LOGGED_IN_USER_ID = 's1';
 
 const navItems: {
   href: string;
@@ -52,7 +52,7 @@ const navItems: {
 export default function Nav() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const user = personnelData.find(p => p.id === LOGGED_IN_USER_ID);
+  const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
   const userPermissions = user?.permissions || [];
 
   const handleLinkClick = () => {

@@ -5,24 +5,29 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { bookingData, personnelData } from '@/lib/mock-data';
-import { Mail, Phone, User, Briefcase, Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { bookingData, checklistData, userData } from '@/lib/mock-data';
+import { Mail, Phone, User, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Personnel } from '@/lib/types';
+import type { Booking, Checklist, User as AppUser } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EditProfileForm } from './edit-profile-form';
+import { ChecklistCard } from '../checklists/checklist-card';
+import { aircraftData } from '@/lib/mock-data';
 
 
 // In a real app, this would come from the logged-in user's session
-const LOGGED_IN_PERSONNEL_ID = '1'; 
+const LOGGED_IN_USER_ID = 's1'; 
 
 export default function MyProfilePage() {
-    const user = personnelData.find(p => p.id === LOGGED_IN_PERSONNEL_ID);
+    const user = userData.find(p => p.id === LOGGED_IN_USER_ID);
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
+
+    const [checklists, setChecklists] = useState<Checklist[]>(checklistData);
+    const [bookings, setBookings] = useState<Booking[]>(bookingData);
     
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
 
@@ -37,19 +42,52 @@ export default function MyProfilePage() {
         )
     }
 
-    const instructorBookings = bookingData.filter(b => b.instructor === user.name);
+    const handleChecklistUpdate = (updatedChecklist: Checklist) => {
+        setChecklists(prevChecklists =>
+          prevChecklists.map(c => (c.id === updatedChecklist.id ? updatedChecklist : c))
+        );
+    
+        const isComplete = updatedChecklist.items.every(item => item.completed);
+        if (isComplete && updatedChecklist.aircraftId) {
+            setBookings(prevBookings => 
+                prevBookings.map(booking => {
+                    const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
+                    if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Upcoming') {
+                        return { ...booking, isChecklistComplete: true };
+                    }
+                    return booking;
+                })
+            )
+        }
+      };
+      
+      const handleReset = (checklistId: string) => {
+        setChecklists(prevChecklists =>
+          prevChecklists.map(c => {
+            if (c.id === checklistId) {
+              return {
+                ...c,
+                items: c.items.map(item => ({ ...item, completed: false })),
+              };
+            }
+            return c;
+          })
+        );
+      };
+
+    const userBookings = bookings.filter(b => b.instructor === user.name || b.student === user.name);
 
     const getBookingsForDay = (day: Date | undefined) => {
         if (!day) return [];
-        return instructorBookings
+        return userBookings
         .filter(booking => isSameDay(parseISO(booking.date), day))
         .sort((a, b) => a.time.localeCompare(b.time));
     };
 
-    const bookedDays = instructorBookings.map(b => parseISO(b.date));
+    const bookedDays = userBookings.map(b => parseISO(b.date));
     const selectedDayBookings = getBookingsForDay(selectedDay);
 
-    const getRoleVariant = (role: Personnel['role']) => {
+    const getRoleVariant = (role: AppUser['role']) => {
         switch (role) {
             case 'Instructor':
                 return 'primary'
@@ -57,6 +95,8 @@ export default function MyProfilePage() {
                 return 'destructive'
             case 'Admin':
                 return 'secondary'
+            case 'Student':
+                return 'default'
             default:
                 return 'outline'
         }
@@ -166,21 +206,45 @@ export default function MyProfilePage() {
                     <TableRow>
                       <TableHead>Time</TableHead>
                       <TableHead>Aircraft</TableHead>
-                      <TableHead>Student</TableHead>
+                      <TableHead>Details</TableHead>
                       <TableHead>Purpose</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedDayBookings.map(booking => (
-                      <TableRow key={booking.id}>
-                        <TableCell>{booking.time}</TableCell>
-                        <TableCell className="font-medium">{booking.aircraft}</TableCell>
-                        <TableCell>{booking.student}</TableCell>
-                        <TableCell>
-                           <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {selectedDayBookings.map(booking => {
+                       const relatedAircraft = aircraftData.find(a => a.tailNumber === booking.aircraft);
+                       const preFlightChecklist = relatedAircraft ? checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === relatedAircraft.id) : undefined;
+                       return (
+                        <TableRow key={booking.id}>
+                            <TableCell>{booking.time}</TableCell>
+                            <TableCell className="font-medium">{booking.aircraft}</TableCell>
+                            <TableCell>{user.role === 'Instructor' ? booking.student : booking.instructor}</TableCell>
+                            <TableCell>
+                            <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                {booking.purpose === 'Training' && booking.status === 'Upcoming' && preFlightChecklist && (
+                                     <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="sm">
+                                                <ClipboardCheck className="mr-2 h-4 w-4" />
+                                                Checklist
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-md">
+                                            <ChecklistCard 
+                                                checklist={preFlightChecklist} 
+                                                onUpdate={handleChecklistUpdate}
+                                                onReset={handleReset}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                       );
+                    })}
                   </TableBody>
                 </Table>
               ) : (
