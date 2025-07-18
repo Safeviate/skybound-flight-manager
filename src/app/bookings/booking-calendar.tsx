@@ -107,8 +107,8 @@ function GanttView() {
     
     return (
         <TooltipProvider>
-            <ScrollArea>
-                <div className="w-full">
+            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                <div className="min-w-[800px]">
                     <div className="grid sticky top-0 z-10 bg-background" style={{ gridTemplateColumns: '120px repeat(7, 1fr)'}}>
                         <div className="p-2 border-b border-r font-semibold">Aircraft</div>
                         {week.map(day => (
