@@ -88,7 +88,7 @@ export default function Nav() {
         <SidebarMenu>
           {visibleNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href} passHref>
                 <SidebarMenuButton
                   as="a"
                   isActive={pathname === item.href}
