@@ -11,10 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { ChevronRight, PlusCircle } from 'lucide-react';
 import { studentData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
+import Link from 'next/link';
 
 export default function StudentsPage() {
   return (
@@ -50,6 +51,7 @@ export default function StudentsPage() {
                   <TableHead>Instructor</TableHead>
                   <TableHead>Flight Hours</TableHead>
                   <TableHead>Training Progress</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -63,6 +65,14 @@ export default function StudentsPage() {
                         <Progress value={student.progress} className="w-2/3" />
                         <span>{student.progress}%</span>
                       </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/students/${student.id}`}>
+                                View Profile
+                                <ChevronRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}

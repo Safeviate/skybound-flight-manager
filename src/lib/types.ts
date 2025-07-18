@@ -1,3 +1,4 @@
+
 export type Aircraft = {
   id: string;
   tailNumber: string;
@@ -10,6 +11,13 @@ export type Aircraft = {
   insuranceExpiry: string;
 };
 
+export type Endorsement = {
+    id: string;
+    name: string;
+    dateAwarded: string;
+    awardedBy: string;
+};
+
 export type Student = {
   id: string;
   name: string;
@@ -18,6 +26,7 @@ export type Student = {
   progress: number; // percentage
   medicalExpiry: string;
   licenseExpiry: string;
+  endorsements: Endorsement[];
 };
 
 export type Permission =
@@ -111,7 +120,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Admin': ['Super User'],
     'Operations Manager': ['Super User'],
     'HR Manager': ['Super User'],
-    'Super User': ['Super User'],
 
     'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit'],
     'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit'],
