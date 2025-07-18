@@ -67,7 +67,7 @@ export function NewBookingForm() {
 
   const instructors = personnelData.filter(p => p.role === 'Instructor');
 
-  const today = new Date();
+  const today = new Date('2024-08-15'); // Hardcoding date for consistent display
   today.setHours(0, 0, 0, 0);
 
   const availableAircraft = aircraftData.filter(ac => {
