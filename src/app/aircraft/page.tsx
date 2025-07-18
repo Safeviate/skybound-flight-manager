@@ -12,9 +12,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
-import { isAfter, parseISO, format, differenceInDays } from 'date-fns';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewAircraftForm } from './new-aircraft-form';
 
 
 export default function AircraftPage() {
@@ -38,10 +39,23 @@ export default function AircraftPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Aircraft
-            </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Aircraft
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Add New Aircraft</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to add a new aircraft to the fleet.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewAircraftForm />
+                </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>
