@@ -67,7 +67,7 @@ export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAsses
                         <TableRow>
                             <TableHead>Hazard</TableHead>
                             <TableHead>Risk</TableHead>
-                            <TableHead>Risk Score</TableHead>
+                            <TableHead>Risk Score (Initial <ArrowRight className="inline h-3 w-3" /> Mitigated)</TableHead>
                             <TableHead>Level</TableHead>
                             <TableHead></TableHead>
                         </TableRow>
@@ -82,13 +82,13 @@ export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAsses
                                         <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
                                             {risk.riskScore}
                                         </Badge>
-                                        {risk.residualRiskScore !== undefined && (
-                                            <>
-                                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
-                                                    {risk.residualRiskScore}
-                                                </Badge>
-                                            </>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                        {risk.residualRiskScore !== undefined ? (
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                                {risk.residualRiskScore}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline">N/A</Badge>
                                         )}
                                     </div>
                                 </TableCell>
