@@ -1,6 +1,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -140,6 +141,10 @@ export type AssociatedRisk = {
     likelihood: RiskLikelihood;
     severity: RiskSeverity;
     riskScore: number;
+    mitigationControls?: string;
+    residualLikelihood?: RiskLikelihood;
+    residualSeverity?: RiskSeverity;
+    residualRiskScore?: number;
 }
 
 export type SafetyReport = {

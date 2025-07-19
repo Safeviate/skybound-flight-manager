@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
@@ -15,18 +15,30 @@ const severities: RiskSeverity[] = ['Insignificant', 'Minor', 'Moderate', 'Major
 interface RiskAssessmentToolProps {
   onAssessmentChange?: (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => void;
   showResultCard?: boolean;
+  initialLikelihood?: RiskLikelihood | null;
+  initialSeverity?: RiskSeverity | null;
 }
 
-export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }: RiskAssessmentToolProps) {
-  const [selectedLikelihood, setSelectedLikelihood] = useState<RiskLikelihood | null>(null);
-  const [selectedSeverity, setSelectedSeverity] = useState<RiskSeverity | null>(null);
+export function RiskAssessmentTool({ 
+    onAssessmentChange, 
+    showResultCard = true, 
+    initialLikelihood = null,
+    initialSeverity = null
+}: RiskAssessmentToolProps) {
+  const [selectedLikelihood, setSelectedLikelihood] = useState<RiskLikelihood | null>(initialLikelihood);
+  const [selectedSeverity, setSelectedSeverity] = useState<RiskSeverity | null>(initialSeverity);
+
+  useEffect(() => {
+    setSelectedLikelihood(initialLikelihood);
+    setSelectedSeverity(initialSeverity);
+  }, [initialLikelihood, initialSeverity])
 
   const riskScore = selectedLikelihood && selectedSeverity
     ? getRiskScore(selectedLikelihood, selectedSeverity)
     : null;
 
   const riskLevel = (score: number | null) => {
-      if (score === null) return 'N/A';
+      if (score === null || score === undefined) return 'N/A';
       if (score <= 4) return 'Low';
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';

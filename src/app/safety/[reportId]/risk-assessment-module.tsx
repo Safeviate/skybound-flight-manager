@@ -2,16 +2,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
-import type { AssociatedRisk, RiskLikelihood, RiskSeverity, SafetyReport } from '@/lib/types';
+import type { AssociatedRisk, SafetyReport } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, ArrowRight, Edit } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AddRiskForm } from './add-risk-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AssessMitigationForm } from './assess-mitigation-form';
 
 interface RiskAssessmentModuleProps {
     report: SafetyReport;
@@ -19,7 +20,9 @@ interface RiskAssessmentModuleProps {
 }
 
 export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingRisk, setEditingRisk] = useState<AssociatedRisk | null>(null);
+
   const { toast } = useToast();
 
   const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
@@ -37,15 +40,36 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
     };
 
     onUpdate(updatedReport);
-    setIsDialogOpen(false);
+    setIsAddDialogOpen(false);
     toast({
         title: 'Hazard & Risk Added',
         description: `A new risk with score ${riskScore} has been added to the report.`
     });
   }
+
+  const handleAssessRisk = (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => {
+    const updatedRisks = report.associatedRisks?.map(risk => {
+        if (risk.id === riskId) {
+            const residualRiskScore = getRiskScore(updatedValues.residualLikelihood, updatedValues.residualSeverity);
+            return {
+                ...risk,
+                ...updatedValues,
+                residualRiskScore
+            };
+        }
+        return risk;
+    });
+
+    onUpdate({ ...report, associatedRisks: updatedRisks });
+    setEditingRisk(null);
+    toast({
+        title: 'Mitigation Assessed',
+        description: 'The residual risk score has been updated.'
+    });
+  }
   
   const riskLevel = (score: number | null) => {
-      if (score === null) return 'N/A';
+      if (score === null || score === undefined) return 'N/A';
       if (score <= 4) return 'Low';
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';
@@ -58,10 +82,10 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
             <div>
                 <CardTitle>Risk Register</CardTitle>
                 <CardDescription>
-                    Identified hazards and risks associated with this report.
+                    Identified hazards, risks, and mitigations associated with this report.
                 </CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -86,8 +110,9 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                         <TableRow>
                             <TableHead>Hazard</TableHead>
                             <TableHead>Risk</TableHead>
-                            <TableHead>Score</TableHead>
+                            <TableHead>Risk Score</TableHead>
                             <TableHead>Level</TableHead>
+                            <TableHead></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -96,12 +121,28 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                                 <TableCell className="max-w-xs">{risk.hazard}</TableCell>
                                 <TableCell className="max-w-xs">{risk.risk}</TableCell>
                                 <TableCell>
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                        {risk.riskScore}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                            {risk.riskScore}
+                                        </Badge>
+                                        {risk.residualRiskScore !== undefined && (
+                                            <>
+                                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                                    {risk.residualRiskScore}
+                                                </Badge>
+                                            </>
+                                        )}
+                                    </div>
                                 </TableCell>
                                 <TableCell>
-                                     <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
+                                     <Badge variant="outline">{riskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => setEditingRisk(risk)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Assess
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -113,6 +154,19 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                 </div>
             )}
         </CardContent>
+         {editingRisk && (
+            <Dialog open={!!editingRisk} onOpenChange={(isOpen) => !isOpen && setEditingRisk(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Assess Risk Mitigation</DialogTitle>
+                        <DialogDescription>
+                           For: "{editingRisk.hazard}"
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AssessMitigationForm risk={editingRisk} onAssessRisk={handleAssessRisk} />
+                </DialogContent>
+            </Dialog>
+         )}
     </Card>
   );
 }
