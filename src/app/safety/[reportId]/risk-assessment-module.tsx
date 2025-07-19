@@ -3,19 +3,15 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
-import type { RiskLikelihood, RiskSeverity, SafetyReport } from '@/lib/types';
+import type { AssociatedRisk, RiskLikelihood, RiskSeverity, SafetyReport } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils.tsx';
 import { useToast } from '@/hooks/use-toast';
-import { Check } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-
-const likelihoods: RiskLikelihood[] = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Certain'];
-const severities: RiskSeverity[] = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Catastrophic'];
+import { PlusCircle } from 'lucide-react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AddRiskForm } from './add-risk-form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface RiskAssessmentModuleProps {
     report: SafetyReport;
@@ -23,14 +19,31 @@ interface RiskAssessmentModuleProps {
 }
 
 export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleProps) {
-  const [selectedLikelihood, setSelectedLikelihood] = useState<RiskLikelihood | null>(report.likelihood || null);
-  const [selectedSeverity, setSelectedSeverity] = useState<RiskSeverity | null>(report.severity || null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const riskScore = selectedLikelihood && selectedSeverity
-    ? getRiskScore(selectedLikelihood, selectedSeverity)
-    : null;
+  const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
+    const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
+    
+    const newRisk: AssociatedRisk = {
+        id: `risk-${Date.now()}`,
+        ...newRiskData,
+        riskScore,
+    };
 
+    const updatedReport: SafetyReport = {
+        ...report,
+        associatedRisks: [...(report.associatedRisks || []), newRisk],
+    };
+
+    onUpdate(updatedReport);
+    setIsDialogOpen(false);
+    toast({
+        title: 'Hazard & Risk Added',
+        description: `A new risk with score ${riskScore} has been added to the report.`
+    });
+  }
+  
   const riskLevel = (score: number | null) => {
       if (score === null) return 'N/A';
       if (score <= 4) return 'Low';
@@ -39,122 +52,67 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
       return 'Extreme';
   }
 
-  const handleSaveAssessment = () => {
-    if (!selectedLikelihood || !selectedSeverity || riskScore === null) {
-        toast({
-            variant: 'destructive',
-            title: 'Incomplete Assessment',
-            description: 'Please select both a likelihood and a severity from the matrix.'
-        });
-        return;
-    }
-    const updatedReport: SafetyReport = {
-        ...report,
-        likelihood: selectedLikelihood,
-        severity: selectedSeverity,
-        riskScore: riskScore,
-    };
-    onUpdate(updatedReport);
-    toast({
-        title: 'Risk Assessment Saved',
-        description: `The risk score of ${riskScore} has been saved for this report.`,
-    })
-  }
-
   return (
     <Card>
-        <CardHeader>
-            <CardTitle>Risk Assessment</CardTitle>
-            <CardDescription>
-                Use the matrix to assess the risk associated with this safety report.
-            </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Risk Register</CardTitle>
+                <CardDescription>
+                    Identified hazards and risks associated with this report.
+                </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Hazard & Risk
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Add New Hazard and Risk</DialogTitle>
+                        <DialogDescription>
+                            Describe the hazard, the potential risk, and complete the assessment matrix.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AddRiskForm onAddRisk={handleAddRisk} />
+                </DialogContent>
+            </Dialog>
         </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-8">
-                <div className="md:col-span-2">
-                     <div className="overflow-x-auto">
-                        <Table className="border text-xs">
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="border-r font-bold p-2 align-bottom">Likelihood</TableHead>
-                                <TableHead colSpan={severities.length} className="text-center font-bold p-2">Severity</TableHead>
+        <CardContent>
+            {report.associatedRisks && report.associatedRisks.length > 0 ? (
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Hazard</TableHead>
+                            <TableHead>Risk</TableHead>
+                            <TableHead>Score</TableHead>
+                            <TableHead>Level</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {report.associatedRisks.map(risk => (
+                            <TableRow key={risk.id}>
+                                <TableCell className="max-w-xs">{risk.hazard}</TableCell>
+                                <TableCell className="max-w-xs">{risk.risk}</TableCell>
+                                <TableCell>
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                        {risk.riskScore}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                     <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
+                                </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableHead className="border-r p-2"></TableHead>
-                                {severities.map(s => <TableHead key={s} className="text-center p-2 text-muted-foreground">{s}</TableHead>)}
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {likelihoods.slice().reverse().map(l => (
-                                <TableRow key={l}>
-                                <TableCell className="font-semibold border-r p-2 text-muted-foreground">{l}</TableCell>
-                                {severities.map(s => {
-                                    const score = getRiskScore(l, s);
-                                    const isSelected = l === selectedLikelihood && s === selectedSeverity;
-                                    return (
-                                    <TableCell
-                                        key={s}
-                                        className={cn(
-                                        'text-center cursor-pointer border-l p-2 font-medium',
-                                        isSelected && 'ring-2 ring-primary ring-inset'
-                                        )}
-                                        style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
-                                        onClick={() => {
-                                        setSelectedLikelihood(l);
-                                        setSelectedSeverity(s);
-                                        }}
-                                    >
-                                        {score}
-                                    </TableCell>
-                                    )
-                                })}
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                        ))}
+                    </TableBody>
+                 </Table>
+            ) : (
+                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No hazards or risks have been added yet.</p>
                 </div>
-                <div className="md:col-span-1 space-y-4">
-                     <Card className="bg-muted/50">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">Assessment Result</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col items-center justify-center space-y-2">
-                        {riskScore !== null ? (
-                            <>
-                            <div className="text-5xl font-bold" style={{ color: getRiskScoreColor(riskScore) }}>
-                                {riskScore}
-                            </div>
-                            <Badge className="text-md" style={{ backgroundColor: getRiskScoreColor(riskScore), color: 'white' }}>
-                                {riskLevel(riskScore)} Risk
-                            </Badge>
-                            </>
-                        ) : (
-                            <div className="flex items-center justify-center h-24 text-muted-foreground text-center">
-                                Select from matrix to see score.
-                            </div>
-                        )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4 pt-4">
-                <div className="space-y-2">
-                    <Label htmlFor="hazards">Hazards</Label>
-                    <Textarea id="hazards" name="hazards" placeholder="Describe the identified hazards..." className="min-h-[100px]" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="risk">Risk</Label>
-                    <Textarea id="risk" name="risk" placeholder="Describe the associated risk..." className="min-h-[100px]" />
-                </div>
-            </div>
+            )}
         </CardContent>
-        <CardFooter className="flex justify-end">
-            <Button onClick={handleSaveAssessment}>
-                <Check className="mr-2 h-4 w-4" />
-                Save Risk Assessment
-            </Button>
-        </CardFooter>
     </Card>
   );
 }

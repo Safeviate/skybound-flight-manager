@@ -13,7 +13,12 @@ import { cn } from '@/lib/utils.tsx';
 const likelihoods: RiskLikelihood[] = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Certain'];
 const severities: RiskSeverity[] = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Catastrophic'];
 
-export function RiskAssessmentTool() {
+interface RiskAssessmentToolProps {
+  onAssessmentChange?: (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => void;
+  showResultCard?: boolean;
+}
+
+export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }: RiskAssessmentToolProps) {
   const [selectedLikelihood, setSelectedLikelihood] = useState<RiskLikelihood | null>(null);
   const [selectedSeverity, setSelectedSeverity] = useState<RiskSeverity | null>(null);
 
@@ -27,6 +32,14 @@ export function RiskAssessmentTool() {
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';
       return 'Extreme';
+  }
+
+  const handleCellClick = (l: RiskLikelihood, s: RiskSeverity) => {
+      setSelectedLikelihood(l);
+      setSelectedSeverity(s);
+      if (onAssessmentChange) {
+          onAssessmentChange(l, s);
+      }
   }
 
   return (
@@ -67,10 +80,7 @@ export function RiskAssessmentTool() {
                               isSelected && 'ring-2 ring-primary ring-inset'
                             )}
                             style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
-                            onClick={() => {
-                              setSelectedLikelihood(l);
-                              setSelectedSeverity(s);
-                            }}
+                            onClick={() => handleCellClick(l, s)}
                           >
                             {score}
                           </TableCell>
@@ -85,47 +95,49 @@ export function RiskAssessmentTool() {
         </Card>
       </div>
 
-      <div className="md:col-span-1 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Assessment</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold">Selected Likelihood:</h4>
-              <p>{selectedLikelihood || 'Not selected'}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold">Selected Severity:</h4>
-              <p>{selectedSeverity || 'Not selected'}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
+      {showResultCard && (
+        <div className="md:col-span-1 space-y-6">
+          <Card>
             <CardHeader>
-                <CardTitle>Result</CardTitle>
+              <CardTitle>Assessment</CardTitle>
             </CardHeader>
-             <CardContent className="flex flex-col items-center justify-center space-y-4">
-              {riskScore !== null ? (
-                <>
-                  <div className="text-6xl font-bold" style={{ color: getRiskScoreColor(riskScore) }}>
-                    {riskScore}
-                  </div>
-                  <Badge className="text-lg" style={{ backgroundColor: getRiskScoreColor(riskScore), color: 'white' }}>
-                    {riskLevel(riskScore)}
-                  </Badge>
-                  <p className="text-sm text-center text-muted-foreground">
-                    This risk level requires appropriate mitigation actions as per the SMS manual.
-                  </p>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-24 text-muted-foreground">
-                  Select from matrix to see score.
-                </div>
-              )}
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-semibold">Selected Likelihood:</h4>
+                <p>{selectedLikelihood || 'Not selected'}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Selected Severity:</h4>
+                <p>{selectedSeverity || 'Not selected'}</p>
+              </div>
             </CardContent>
-        </Card>
-      </div>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Result</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                {riskScore !== null ? (
+                  <>
+                    <div className="text-6xl font-bold" style={{ color: getRiskScoreColor(riskScore) }}>
+                      {riskScore}
+                    </div>
+                    <Badge className="text-lg" style={{ backgroundColor: getRiskScoreColor(riskScore), color: 'white' }}>
+                      {riskLevel(riskScore)}
+                    </Badge>
+                    <p className="text-sm text-center text-muted-foreground">
+                      This risk level requires appropriate mitigation actions as per the SMS manual.
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-24 text-muted-foreground">
+                    Select from matrix to see score.
+                  </div>
+                )}
+              </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

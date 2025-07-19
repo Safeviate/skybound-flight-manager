@@ -1,5 +1,6 @@
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -132,6 +133,15 @@ export type DiscussionEntry = {
   replyByDate?: string;
 };
 
+export type AssociatedRisk = {
+    id: string;
+    hazard: string;
+    risk: string;
+    likelihood: RiskLikelihood;
+    severity: RiskSeverity;
+    riskScore: number;
+}
+
 export type SafetyReport = {
   id: string;
   reportNumber: string;
@@ -152,9 +162,7 @@ export type SafetyReport = {
   occurrenceCategory?: string;
   phaseOfFlight?: string;
   discussion?: DiscussionEntry[];
-  likelihood?: RiskLikelihood;
-  severity?: RiskSeverity;
-  riskScore?: number;
+  associatedRisks?: AssociatedRisk[];
 };
 
 export type SuggestInvestigationStepsOutput = {

@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
+import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { DiscussionSection } from './discussion-section';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
@@ -215,15 +215,8 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                             <Input id="subClassification" name="subClassification" placeholder="Enter sub classification" />
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
-                             <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
-                                <SelectTrigger id="phaseOfFlight">
-                                    <SelectValue placeholder="Select Phase of Flight" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <Label htmlFor="phaseOfFlight">Other</Label>
+                            <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., specific maneuver" />
                         </div>
                     </div>
                 </CardContent>
