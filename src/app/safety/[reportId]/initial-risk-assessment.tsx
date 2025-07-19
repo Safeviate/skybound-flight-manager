@@ -53,7 +53,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
 
   return (
     <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between no-print">
             <div>
                 <CardTitle>Initial Risk Assessment</CardTitle>
                 <CardDescription>
@@ -87,7 +87,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             <TableHead>Risk</TableHead>
                             <TableHead>Risk Score</TableHead>
                             <TableHead>Level</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right no-print">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -103,7 +103,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                 <TableCell>
                                      <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right no-print">
                                     <form action={async (formData) => {
                                         const result = await promoteRiskAction(null, formData);
                                         if (result.data) {

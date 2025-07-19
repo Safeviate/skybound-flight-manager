@@ -231,7 +231,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                         <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
                     )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right no-print">
                     <div className="flex gap-1 justify-end">
                         {isEditing ? (
                             <Button size="icon" onClick={handleSave} variant="ghost"><Save className="h-4 w-4 text-primary" /></Button>
