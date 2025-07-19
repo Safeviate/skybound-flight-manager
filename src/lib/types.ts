@@ -5,6 +5,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -141,6 +142,8 @@ export type AssociatedRisk = {
     id: string;
     hazard: string;
     risk: string;
+    hazardArea: string;
+    process: string;
     likelihood: RiskLikelihood;
     severity: RiskSeverity;
     riskScore: number;
@@ -210,6 +213,8 @@ export type Risk = {
   status: RiskStatus;
   mitigation: string;
   dateIdentified: string;
+  hazardArea: string;
+  process: string;
 }
 
 export type ChecklistItem = {

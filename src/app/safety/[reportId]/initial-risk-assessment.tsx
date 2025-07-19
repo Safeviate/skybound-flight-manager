@@ -151,11 +151,13 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                                 id: `risk-reg-${Date.now()}`,
                                                 dateIdentified: new Date().toISOString().split('T')[0],
                                                 description: result.data.description,
-                                                likelihood: result.data.likelihood,
-                                                severity: result.data.severity,
-                                                riskScore: result.data.riskScore,
+                                                likelihood: risk.likelihood,
+                                                severity: risk.severity,
+                                                riskScore: risk.riskScore,
                                                 status: result.data.status,
                                                 mitigation: result.data.mitigation,
+                                                hazardArea: result.data.hazardArea,
+                                                process: result.data.process,
                                             });
                                         }
                                     }}>

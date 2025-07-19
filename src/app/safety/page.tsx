@@ -224,6 +224,8 @@ export default function SafetyPage() {
                     <TableRow>
                       <TableHead>Identified</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Hazard Area</TableHead>
+                      <TableHead>Process</TableHead>
                       <TableHead>Risk Score (Initial → Mitigated)</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
@@ -233,6 +235,12 @@ export default function SafetyPage() {
                       <TableRow key={risk.id}>
                         <TableCell>{risk.dateIdentified}</TableCell>
                         <TableCell className="font-medium max-w-sm">{risk.description}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{risk.hazardArea}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{risk.process}</Badge>
+                        </TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>

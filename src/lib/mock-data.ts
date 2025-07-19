@@ -174,9 +174,9 @@ export const safetyReportData: SafetyReport[] = [
         { id: 'd2', author: 'Sarah Connor', recipient: 'John Smith', message: 'Statement submitted. We were at approximately 500 feet AGL, airspeed 70 knots. The bird came from the right side. It was a very close call.', datePosted: '2024-08-12T14:30:00Z' }
       ],
       associatedRisks: [
-        { id: 'risk-sr1-1', hazard: 'Inadequate pilot briefing on bird activity in the area.', risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.', likelihood: 'Possible', severity: 'Minor', riskScore: 6 },
-        { id: 'risk-sr1-2', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Major', riskScore: 5 },
-        { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
+        { id: 'risk-sr1-1', hazard: 'Inadequate pilot briefing on bird activity in the area.', risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.', likelihood: 'Possible', severity: 'Minor', riskScore: 6, hazardArea: 'Flight Operations', process: 'Approach' },
+        { id: 'risk-sr1-2', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Major', riskScore: 5, hazardArea: 'Flight Operations', process: 'Approach' },
+        { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6, hazardArea: 'Flight Operations', process: 'Approach' },
       ]
     },
     { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
@@ -186,10 +186,10 @@ export const safetyReportData: SafetyReport[] = [
 ];
 
 export const riskRegisterData: Risk[] = [
-    { id: 'risk1', dateIdentified: '2024-08-10', description: 'Bird strike on approach/departure path', likelihood: 'Possible', severity: 'Major', riskScore: 16, residualRiskScore: 6, status: 'Mitigated', mitigation: 'Review bird dispersal procedures with airport operations. Advise pilots to increase vigilance.' },
-    { id: 'risk2', dateIdentified: '2024-08-12', description: 'Student hard landings leading to aircraft damage', likelihood: 'Possible', severity: 'Moderate', riskScore: 12, status: 'Open', mitigation: 'Review landing training syllabus. Emphasize go-around procedure for unstable approaches.' },
-    { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, residualRiskScore: 1, status: 'Closed', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.' },
-    { id: 'risk4', dateIdentified: '2024-06-15', description: 'Runway incursion due to pilot error', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 20, status: 'Open', mitigation: 'Mandatory training on airport signage and communication protocols. Review of hotspot map during pre-flight briefings.' },
+    { id: 'risk1', dateIdentified: '2024-08-10', description: 'Bird strike on approach/departure path', likelihood: 'Possible', severity: 'Major', riskScore: 16, residualRiskScore: 6, status: 'Mitigated', mitigation: 'Review bird dispersal procedures with airport operations. Advise pilots to increase vigilance.', hazardArea: 'Flight Operations', process: 'Approach' },
+    { id: 'risk2', dateIdentified: '2024-08-12', description: 'Student hard landings leading to aircraft damage', likelihood: 'Possible', severity: 'Moderate', riskScore: 12, status: 'Open', mitigation: 'Review landing training syllabus. Emphasize go-around procedure for unstable approaches.', hazardArea: 'Flight Operations', process: 'Landing' },
+    { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, residualRiskScore: 1, status: 'Closed', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.', hazardArea: 'Ground Operations', process: 'Servicing' },
+    { id: 'risk4', dateIdentified: '2024-06-15', description: 'Runway incursion due to pilot error', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 20, status: 'Open', mitigation: 'Mandatory training on airport signage and communication protocols. Review of hotspot map during pre-flight briefings.', hazardArea: 'Flight Operations', process: 'Taxiing' },
 ];
 
     

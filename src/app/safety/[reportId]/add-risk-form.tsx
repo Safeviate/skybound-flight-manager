@@ -18,6 +18,7 @@ import type { AssociatedRisk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useState } from 'react';
 import { RiskAssessmentTool } from '../risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const addRiskFormSchema = z.object({
   hazard: z.string().min(10, {
@@ -26,6 +27,8 @@ const addRiskFormSchema = z.object({
   risk: z.string().min(10, {
     message: 'Risk description must be at least 10 characters long.',
   }),
+  hazardArea: z.string({ required_error: 'Please select a hazard area.'}),
+  process: z.string({ required_error: 'Please select a process.'}),
   likelihood: z.custom<RiskLikelihood>(val => typeof val === 'string', 'Likelihood is required.'),
   severity: z.custom<RiskSeverity>(val => typeof val === 'string', 'Severity is required.'),
 });
@@ -35,6 +38,9 @@ type AddRiskFormValues = z.infer<typeof addRiskFormSchema>;
 interface AddRiskFormProps {
     onAddRisk: (newRisk: Omit<AssociatedRisk, 'id'>) => void;
 }
+
+const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
+const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
 export function AddRiskForm({ onAddRisk }: AddRiskFormProps) {
   const form = useForm<AddRiskFormValues>({
@@ -85,6 +91,48 @@ export function AddRiskForm({ onAddRisk }: AddRiskFormProps) {
             </FormItem>
           )}
         />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="hazardArea"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Hazard Area</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an area" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="process"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Process / Activity</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a process" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         
         <Card>
             <CardContent className="pt-6">
