@@ -50,12 +50,12 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
               <Table className="border text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="border-r font-bold p-1 py-0">Likelihood</TableHead>
-                    <TableHead colSpan={severities.length} className="text-center font-bold p-1 py-0">Severity</TableHead>
+                    <TableHead className="border-r font-bold p-1 h-8">Likelihood</TableHead>
+                    <TableHead colSpan={severities.length} className="text-center font-bold p-1 h-8">Severity</TableHead>
                   </TableRow>
                   <TableRow>
-                    <TableHead className="border-r p-1 py-0"></TableHead>
-                    {severities.map(s => <TableHead key={s} className="text-center p-1 py-0 text-muted-foreground font-normal">{s}</TableHead>)}
+                    <TableHead className="border-r p-1 h-8"></TableHead>
+                    {severities.map(s => <TableHead key={s} className="text-center p-1 h-8 text-muted-foreground font-normal">{s}</TableHead>)}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
