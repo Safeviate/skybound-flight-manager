@@ -2,9 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -46,10 +45,7 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
     <div className="grid md:grid-cols-3 gap-8">
       <div className="md:col-span-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Risk Matrix</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="overflow-x-auto">
               <Table className="border text-xs">
                 <TableHeader>
@@ -122,9 +118,6 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
                     <Badge className="text-lg" style={{ backgroundColor: getRiskScoreColor(riskScore), color: 'white' }}>
                       {riskLevel(riskScore)}
                     </Badge>
-                    <p className="text-sm text-center text-muted-foreground">
-                      This risk level requires appropriate mitigation actions as per the SMS manual.
-                    </p>
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-24 text-muted-foreground">
