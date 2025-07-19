@@ -119,7 +119,11 @@ export default function SafetyPage() {
                   <TableBody>
                     {safetyReports.map((report) => (
                       <TableRow key={report.id}>
-                        <TableCell className="font-mono">{report.reportNumber}</TableCell>
+                        <TableCell className="font-mono">
+                           <Link href={`/safety/${report.id}`} className="hover:underline">
+                                {report.reportNumber}
+                           </Link>
+                        </TableCell>
                         <TableCell>{report.occurrenceDate}</TableCell>
                         <TableCell>{report.filedDate}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
