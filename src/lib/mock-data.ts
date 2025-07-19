@@ -1,4 +1,5 @@
 
+
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk } from './types';
 import { getNextService } from './utils.tsx';
 
@@ -164,6 +165,7 @@ export const safetyReportData: SafetyReport[] = [
       details: 'During final approach to runway 31, a large bird, possibly a hawk, passed very close to the aircraft. No impact was felt, but a post-flight inspection is warranted to be safe. ATC was notified of the bird activity in the area.', 
       status: 'Under Review', 
       aircraftInvolved: 'N/A', 
+      location: 'KPAO',
       investigationTeam: ['Mike Ross', 'Sarah Connor', 'John Smith'],
       investigationNotes: 'Post-flight inspection of the aircraft revealed no visible damage. Interviewed Sarah Connor, who confirmed the bird passed within an estimated 50 feet of the cockpit. Air Traffic Control confirms they issued a general warning about bird activity that morning, but no specific advisory for this flight.', 
       occurrenceCategory: 'BIRD',
@@ -177,10 +179,10 @@ export const safetyReportData: SafetyReport[] = [
         { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
       ]
     },
-    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
-    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', investigationTeam: [] },
-    { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', investigationTeam: [] },
-    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
+    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
+    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
+    { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
+    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
 ];
 
 export const riskRegisterData: Risk[] = [

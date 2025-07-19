@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { aircraftData } from '@/lib/mock-data';
+import { aircraftData, airportData } from '@/lib/mock-data';
 import type { SafetyReport, SafetyReportType } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -77,6 +77,7 @@ const reportFormSchema = z.object({
   raFollowed: z.enum(['Yes', 'No']).optional(),
   raNotFollowedReason: z.string().optional(),
   aircraftInvolved: z.string().optional(),
+  location: z.string().optional(),
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
   }),
@@ -342,30 +343,56 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             )}
             </>
         )}
-        <FormField
-          control={form.control}
-          name="aircraftInvolved"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Aircraft Involved (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an aircraft if applicable" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {aircraftData.map((ac) => (
-                    <SelectItem key={ac.id} value={ac.tailNumber}>
-                      {ac.model} ({ac.tailNumber})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="aircraftInvolved"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Aircraft Involved (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an aircraft if applicable" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {aircraftData.map((ac) => (
+                        <SelectItem key={ac.id} value={ac.tailNumber}>
+                        {ac.model} ({ac.tailNumber})
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Location (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a location if applicable" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {airportData.map((airport) => (
+                        <SelectItem key={airport.id} value={airport.id}>
+                        {airport.name} ({airport.id})
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         <FormField
             control={form.control}
             name="heading"

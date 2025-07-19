@@ -7,7 +7,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -84,7 +84,7 @@ export default function SafetyPage() {
                   File New Report
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
+              <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                   <DialogTitle>File New Safety Report</DialogTitle>
                   <DialogDescription>
@@ -112,6 +112,7 @@ export default function SafetyPage() {
                       <TableHead>Submitted By</TableHead>
                       <TableHead>Report</TableHead>
                       <TableHead>Aircraft</TableHead>
+                      <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -140,7 +141,15 @@ export default function SafetyPage() {
                             <span className="text-muted-foreground truncate">{report.details}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{report.aircraftInvolved}</TableCell>
+                        <TableCell>{report.aircraftInvolved || 'N/A'}</TableCell>
+                        <TableCell>
+                          {report.location && (
+                              <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                  {report.location}
+                              </div>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </TableCell>

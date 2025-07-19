@@ -3,6 +3,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -164,6 +165,7 @@ export type SafetyReport = {
   raFollowed?: 'Yes' | 'No';
   raNotFollowedReason?: string;
   aircraftInvolved?: string;
+  location?: string;
   investigationTeam?: string[];
   investigationNotes?: string;
   occurrenceCategory?: string;

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -315,6 +316,12 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         <div className="flex justify-between items-start flex-col">
                             <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
                             <span>{report.aircraftInvolved}</span>
+                        </div>
+                    )}
+                     {report.location && (
+                        <div className="flex justify-between items-start flex-col">
+                            <span className="font-semibold text-muted-foreground text-sm">Location</span>
+                            <span>{report.location}</span>
                         </div>
                     )}
                 </div>
