@@ -8,9 +8,8 @@ import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, ArrowRight, Edit } from 'lucide-react';
+import { ArrowRight, Edit } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { AddRiskForm } from './add-risk-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AssessMitigationForm } from './assess-mitigation-form';
 
@@ -20,32 +19,9 @@ interface RiskAssessmentModuleProps {
 }
 
 export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleProps) {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<AssociatedRisk | null>(null);
 
   const { toast } = useToast();
-
-  const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
-    const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
-    
-    const newRisk: AssociatedRisk = {
-        id: `risk-${Date.now()}`,
-        ...newRiskData,
-        riskScore,
-    };
-
-    const updatedReport: SafetyReport = {
-        ...report,
-        associatedRisks: [...(report.associatedRisks || []), newRisk],
-    };
-
-    onUpdate(updatedReport);
-    setIsAddDialogOpen(false);
-    toast({
-        title: 'Hazard & Risk Added',
-        description: `A new risk with score ${riskScore} has been added to the report.`
-    });
-  }
 
   const handleAssessRisk = (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => {
     const updatedRisks = report.associatedRisks?.map(risk => {
@@ -78,30 +54,11 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
 
   return (
     <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-                <CardTitle>Risk Register</CardTitle>
-                <CardDescription>
-                    Identified hazards, risks, and mitigations associated with this report.
-                </CardDescription>
-            </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Hazard & Risk
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Add New Hazard and Risk</DialogTitle>
-                        <DialogDescription>
-                            Describe the hazard, the potential risk, and complete the assessment matrix.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <AddRiskForm onAddRisk={handleAddRisk} />
-                </DialogContent>
-            </Dialog>
+        <CardHeader>
+            <CardTitle>Risk Mitigation</CardTitle>
+            <CardDescription>
+                Assess the effectiveness of corrective actions by measuring the residual risk.
+            </CardDescription>
         </CardHeader>
         <CardContent>
             {report.associatedRisks && report.associatedRisks.length > 0 ? (
