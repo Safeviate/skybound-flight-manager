@@ -162,6 +162,7 @@ export type SafetyReport = {
   type: SafetyReportType;
   department: Department;
   subCategory?: string;
+  phaseOfFlight?: string;
   lossOfSeparationType?: string;
   raCallout?: string;
   raFollowed?: 'Yes' | 'No';
@@ -285,6 +286,7 @@ export const ICAO_OCCURRENCE_CATEGORIES = [
 
 export const ICAO_PHASES_OF_FLIGHT = [
     'Standing',
+    'Pushback/Towing',
     'Taxi',
     'Take-off',
     'Initial Climb',
@@ -294,9 +296,10 @@ export const ICAO_PHASES_OF_FLIGHT = [
     'Approach',
     'Landing',
     'Go-around',
+    'Circling',
+    'Emergency Descent',
+    'Holding',
     'Parked',
-    'Towing',
     'Maintenance',
-    'Servicing',
-    'Other',
-];
+    'Other'
+].sort();

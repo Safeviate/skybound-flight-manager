@@ -206,7 +206,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             />
         </div>
         {reportType === 'Flight Operations Report' && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
                     name="subCategory"

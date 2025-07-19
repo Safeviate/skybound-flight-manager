@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
+import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { DiscussionSection } from './discussion-section';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
@@ -345,13 +345,26 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   
   const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
   const [generatePlanState, generatePlanFormAction] = useActionState(generatePlanAction, { message: '', data: null, errors: null });
-  const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(null);
+  const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(() => {
+    // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
+    if (params.reportId === 'sr1') {
+      return {
+        summaryOfFindings: 'The investigation confirmed that a bird passed dangerously close to the aircraft on final approach. The flight crew exercised good judgment in reporting the incident, and the post-flight inspection correctly found no damage. The primary contributing factor was a gap in communication regarding known bird activity.',
+        rootCause: 'Failure to disseminate a general bird activity warning from ATC to the specific flight crew during pre-flight or approach briefing.',
+        correctiveActions: [
+          { action: 'Review and update the pre-flight briefing checklist to include a mandatory check for bird activity advisories.', responsiblePerson: 'Mike Ross', deadline: '2024-09-01', status: 'In Progress' },
+          { action: 'Implement a procedure for the tower to provide specific bird advisories to aircraft on final approach when activity is known.', responsiblePerson: 'John Smith', deadline: '2024-09-15', status: 'Not Started' },
+        ]
+      }
+    }
+    return null;
+  });
 
   useEffect(() => {
-    if (generatePlanState.data) {
+    if (generatePlanState.data && !correctiveActionPlan) {
         setCorrectiveActionPlan(generatePlanState.data as GenerateCorrectiveActionPlanOutput);
     }
-  }, [generatePlanState.data]);
+  }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
@@ -409,6 +422,14 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     }
   };
 
+  const handleClassificationChange = (field: 'occurrenceCategory' | 'phaseOfFlight', value: string) => {
+    if (report) {
+      const updatedReport = { ...report, [field]: value };
+      handleReportUpdate(updatedReport);
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`} />
@@ -465,7 +486,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                  <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 w-full">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
+                            <Label htmlFor="occurrenceCategory">ICAO Occurrence Category</Label>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -485,18 +506,33 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
-                        <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
+                        <Select 
+                          name="occurrenceCategory" 
+                          defaultValue={report.occurrenceCategory}
+                          onValueChange={(value) => handleClassificationChange('occurrenceCategory', value)}
+                        >
                             <SelectTrigger id="occurrenceCategory">
-                                <SelectValue placeholder="Select Occurrence Category" />
+                                <SelectValue placeholder="Select Category" />
                             </SelectTrigger>
                             <SelectContent>
                                 {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="otherClassification">Other</Label>
-                        <Input id="otherClassification" name="otherClassification" placeholder="e.g., Climb, Cruise, Landing" defaultValue={''} />
+                    <div className="space-y-2">
+                      <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
+                      <Select 
+                        name="phaseOfFlight" 
+                        defaultValue={report.phaseOfFlight}
+                        onValueChange={(value) => handleClassificationChange('phaseOfFlight', value)}
+                      >
+                          <SelectTrigger id="phaseOfFlight">
+                              <SelectValue placeholder="Select Phase" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
                     </div>
                 </div>
             </CardFooter>
