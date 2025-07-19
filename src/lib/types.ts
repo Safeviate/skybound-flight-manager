@@ -220,21 +220,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
-    'ADR', 'Aircraft Defect Report',
-    'APRT', 'Approach',
-    'BIRD', 'Bird Strike',
-    'F-POST', 'Flight - Post-impact',
-    'FUEL', 'Fuel Related',
-    'ICE', 'Icing',
-    'LOC-G', 'Loss of Control - Ground',
-    'LOC-I', 'Loss of Control - In-flight',
-    'MED', 'Medical',
-    'NAV', 'Navigation Error',
-    'SCF-NP', 'System/Component Failure - Non-Powerplant',
-    'SCF-PP', 'System/Component Failure - Powerplant',
-    'SEC', 'Security Related',
-    'WSTRW', 'Wind-shear/Thunderstorm',
-    'Other',
+    'ADRM', 'AMAN', 'ARC', 'ATM', 'BIRD', 'CABIN', 'CFIT', 'CTOL', 'EVAC', 'EXTL', 'F-NI',
+    'F-POST', 'FUEL', 'GCOL', 'GTOW', 'ICE', 'LALT', 'LOC-G', 'LOC-I', 'LOLI', 'MAC', 'MED',
+    'NAV', 'OTHR', 'RAMP', 'RE', 'RI', 'SCF-NP', 'SCF-PP', 'SEC', 'TURB', 'UIMC', 'UNK', 'USOS',
+    'WILD', 'WSTRW'
 ];
 
 export const ICAO_PHASES_OF_FLIGHT = [
