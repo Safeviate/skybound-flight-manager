@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -34,6 +33,8 @@ import { useToast } from '@/hooks/use-toast';
 import { EditRiskForm } from './edit-risk-form';
 import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+import { useTableControls } from '@/hooks/use-table-controls.ts';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -62,7 +63,17 @@ export default function SafetyPage() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const groupedRiskData = groupRisksByArea(risks);
+  const reportsControls = useTableControls(safetyReports, {
+    initialSort: { key: 'filedDate', direction: 'desc' },
+    searchKeys: ['reportNumber', 'heading', 'details', 'department'],
+  });
+
+  const riskControls = useTableControls(risks, {
+    initialSort: { key: 'riskScore', direction: 'desc'},
+    searchKeys: ['hazard', 'risk', 'riskOwner', 'reportNumber'],
+  })
+
+  const groupedRiskData = groupRisksByArea(riskControls.items);
 
   const getStatusVariant = (status: SafetyReport['status']) => {
     switch (status) {
@@ -109,6 +120,18 @@ export default function SafetyPage() {
     });
   };
 
+  const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport }) => {
+    const { sortConfig, requestSort } = reportsControls;
+    const isSorted = sortConfig?.key === sortKey;
+    return (
+        <Button variant="ghost" onClick={() => requestSort(sortKey)}>
+            {label}
+            {isSorted && <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />}
+            {!isSorted && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+        </Button>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Safety Management System" />
@@ -147,21 +170,32 @@ export default function SafetyPage() {
                 <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="flex items-center py-4">
+                  <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search reports..."
+                      value={reportsControls.searchTerm}
+                      onChange={(e) => reportsControls.setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Report #</TableHead>
-                      <TableHead>Occurrence Date</TableHead>
+                      <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
+                      <TableHead><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
                       <TableHead>Report</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Aircraft</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
                       <TableHead className="text-right no-print">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {safetyReports.map((report) => (
+                    {reportsControls.items.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell className="font-mono">
                            <Link href={`/safety/${report.id}`} className="hover:underline">
@@ -217,6 +251,9 @@ export default function SafetyPage() {
                     ))}
                   </TableBody>
                 </Table>
+                 {reportsControls.items.length === 0 && (
+                    <div className="text-center text-muted-foreground py-10">No reports found.</div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -247,6 +284,17 @@ export default function SafetyPage() {
                 </Dialog>
               </CardHeader>
               <CardContent>
+                 <div className="flex items-center py-4">
+                  <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search risks..."
+                      value={riskControls.searchTerm}
+                      onChange={(e) => riskControls.setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-8">
                   {groupedRiskData.map(group => (
                     <div key={group.area} className="border rounded-lg">
@@ -262,12 +310,22 @@ export default function SafetyPage() {
                                     <TableHead className="w-[300px]">Hazard</TableHead>
                                     <TableHead className="w-[300px]">Risk</TableHead>
                                     <TableHead className="w-[300px]">Exposure</TableHead>
-                                    <TableHead className="w-[120px]">Initial Risk</TableHead>
+                                    <TableHead className="w-[120px]">
+                                        <Button variant="ghost" onClick={() => riskControls.requestSort('riskScore')} className="px-0">
+                                            Initial Risk
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
                                     <TableHead className="w-[300px]">Existing Mitigation</TableHead>
                                     <TableHead className="w-[300px]">Proposed Mitigation</TableHead>
                                     <TableHead className="w-[120px]">Mitigated Value</TableHead>
                                     <TableHead className="w-[200px]">Owner</TableHead>
-                                    <TableHead className="w-[150px]">Review</TableHead>
+                                    <TableHead className="w-[150px]">
+                                         <Button variant="ghost" onClick={() => riskControls.requestSort('reviewDate')} className="px-0">
+                                            Review
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
                                     <TableHead className="w-[80px] no-print">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -331,7 +389,7 @@ export default function SafetyPage() {
                   ))}
                    {groupedRiskData.length === 0 && (
                         <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No risks have been added to the register yet.</p>
+                            <p className="text-muted-foreground">No risks match your search.</p>
                         </div>
                     )}
                 </div>
