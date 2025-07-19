@@ -95,7 +95,7 @@ export type User = {
     role: Role;
     email: string;
     phone: string;
-    permissions?: Permission[];
+    permissions: Permission[];
     // Student-specific
     instructor?: string;
     flightHours?: number;
@@ -131,6 +131,7 @@ export type SafetyReport = {
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
   type: SafetyReportType;
+  subCategory?: string;
   aircraftInvolved?: string;
 };
 

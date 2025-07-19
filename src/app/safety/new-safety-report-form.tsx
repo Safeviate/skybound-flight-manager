@@ -20,10 +20,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { aircraftData } from '@/lib/mock-data';
 import type { SafetyReport, SafetyReportType } from '@/lib/types';
 
+const flightOpsSubCategories = [
+    'Airspace Violation',
+    'Runway Incursion/Excursion',
+    'Loss of Separation',
+    'Unstable Approach',
+    'Go-Around',
+    'Bird Strike',
+    'Weather Related Incident',
+    'Aircraft System Malfunction',
+    'Passenger Related Incident',
+    'Air Traffic Control (ATC) Issue',
+];
+
 const reportFormSchema = z.object({
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
     required_error: 'Please select a report type.',
   }),
+  subCategory: z.string().optional(),
   aircraftInvolved: z.string().optional(),
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
@@ -52,6 +66,8 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
   });
+
+  const reportType = form.watch('reportType');
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -98,6 +114,30 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             </FormItem>
           )}
         />
+        {reportType === 'Flight Operations Report' && (
+            <FormField
+                control={form.control}
+                name="subCategory"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Flight Operations Sub-Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a sub-category" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {flightOpsSubCategories.map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <FormField
           control={form.control}
           name="aircraftInvolved"

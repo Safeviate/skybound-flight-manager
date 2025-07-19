@@ -118,7 +118,14 @@ export default function SafetyPage() {
                         <TableCell className="font-mono">{report.reportNumber}</TableCell>
                         <TableCell>{report.date}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
-                        <TableCell className="max-w-xs truncate">{report.details}</TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="flex flex-col">
+                            {report.subCategory && (
+                                <Badge variant="secondary" className="mb-1 w-fit">{report.subCategory}</Badge>
+                            )}
+                            <span className="truncate">{report.details}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>{report.aircraftInvolved}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>

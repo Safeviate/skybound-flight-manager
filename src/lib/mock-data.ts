@@ -67,11 +67,11 @@ export const userData: User[] = [
     { id: 'p4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
     { id: 'p5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
     // Students
-    { id: 's1', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'] },
-    { id: 's2', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'] },
-    { id: 's3', name: 'Peter Jones', role: 'Student', email: 'peter.jones@email.com', phone: '555-0203', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['s3'], trainingLogs: studentTrainingLogs['s3'] },
-    { id: 's4', name: 'Emily White', role: 'Student', email: 'emily.white@email.com', phone: '555-0204', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['s4'], trainingLogs: studentTrainingLogs['s4'] },
-    { id: 's5', name: 'Chris Green', role: 'Student', email: 'chris.green@email.com', phone: '555-0205', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['s5'], trainingLogs: studentTrainingLogs['s5'] },
+    { id: 's1', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'], permissions: [] },
+    { id: 's2', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'], permissions: [] },
+    { id: 's3', name: 'Peter Jones', role: 'Student', email: 'peter.jones@email.com', phone: '555-0203', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['s3'], trainingLogs: studentTrainingLogs['s3'], permissions: [] },
+    { id: 's4', name: 'Emily White', role: 'Student', email: 'emily.white@email.com', phone: '555-0204', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['s4'], trainingLogs: studentTrainingLogs['s4'], permissions: [] },
+    { id: 's5', name: 'Chris Green', role: 'Student', email: 'chris.green@email.com', phone: '555-0205', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['s5'], trainingLogs: studentTrainingLogs['s5'], permissions: [] },
   ];
 
 // Booking Data
@@ -152,8 +152,8 @@ export const checklistData: Checklist[] = [
 
 // Safety and Risk Data
 export const safetyReportData: SafetyReport[] = [
-    { id: 'sr1', reportNumber: 'FOR-001', date: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
-    { id: 'sr2', reportNumber: 'FOR-002', date: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
+    { id: 'sr1', reportNumber: 'FOR-001', date: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', subCategory: 'Bird Strike', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
+    { id: 'sr2', reportNumber: 'FOR-002', date: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
     { id: 'sr3', reportNumber: 'GOR-001', date: '2024-07-28', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A' },
 ];
 
