@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
-import type { AssociatedRisk, SafetyReport } from '@/lib/types';
+import type { AssociatedRisk, SafetyReport, CorrectiveAction } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, Edit } from 'lucide-react';
@@ -16,9 +16,10 @@ import { AssessMitigationForm } from './assess-mitigation-form';
 interface MitigatedRiskAssessmentProps {
     report: SafetyReport;
     onUpdate: (updatedReport: SafetyReport) => void;
+    correctiveActions?: CorrectiveAction[];
 }
 
-export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAssessmentProps) {
+export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }: MitigatedRiskAssessmentProps) {
   const [editingRisk, setEditingRisk] = useState<AssociatedRisk | null>(null);
 
   const { toast } = useToast();
@@ -50,6 +51,11 @@ export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAsses
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';
       return 'Extreme';
+  }
+
+  const handleOpenAssessDialog = (risk: AssociatedRisk) => {
+    const formattedActions = correctiveActions?.map(ca => `- ${ca.action} (Assigned to: ${ca.responsiblePerson}, Deadline: ${ca.deadline})`).join('\n') || '';
+    setEditingRisk({ ...risk, mitigationControls: formattedActions });
   }
 
   return (
@@ -96,7 +102,7 @@ export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAsses
                                      <Badge variant="outline">{riskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => setEditingRisk(risk)}>
+                                    <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Assess
                                     </Button>

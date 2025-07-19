@@ -104,24 +104,20 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
 }
 
 interface CorrectiveActionPlanResultProps {
-    data: GenerateCorrectiveActionPlanOutput;
+    plan: GenerateCorrectiveActionPlanOutput;
+    setPlan: React.Dispatch<React.SetStateAction<GenerateCorrectiveActionPlanOutput | null>>;
     report: SafetyReport;
     onCloseReport: () => void;
 }
 
-function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveActionPlanResultProps) {
-    const [plan, setPlan] = useState(data);
+function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: CorrectiveActionPlanResultProps) {
     const [editingActionId, setEditingActionId] = useState<string | null>(null);
     const { toast } = useToast();
-
-    useEffect(() => {
-        setPlan(data);
-    }, [data]);
     
     const handleActionChange = <K extends keyof CorrectiveAction>(index: number, field: K, value: CorrectiveAction[K]) => {
         const updatedActions = [...plan.correctiveActions];
         updatedActions[index] = { ...updatedActions[index], [field]: value };
-        setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
+        setPlan(prev => ({ ...prev!, correctiveActions: updatedActions }));
     };
 
     const handleAddAction = () => {
@@ -132,13 +128,13 @@ function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveA
             deadline: new Date().toISOString().split('T')[0],
             status: 'Not Started',
         };
-        setPlan(prev => ({ ...prev, correctiveActions: [...prev.correctiveActions, newAction] }));
+        setPlan(prev => ({ ...prev!, correctiveActions: [...prev!.correctiveActions, newAction] }));
         setEditingActionId(newAction.id);
     };
 
     const handleRemoveAction = (index: number) => {
         const updatedActions = plan.correctiveActions.filter((_, i) => i !== index);
-        setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
+        setPlan(prev => ({ ...prev!, correctiveActions: updatedActions }));
     };
 
     const getStatusVariant = (status: string) => {
@@ -319,6 +315,13 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   
   const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
   const [generatePlanState, generatePlanFormAction] = useActionState(generatePlanAction, { message: '', data: null, errors: null });
+  const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(null);
+
+  useEffect(() => {
+    if (generatePlanState.data) {
+        setCorrectiveActionPlan(generatePlanState.data as GenerateCorrectiveActionPlanOutput);
+    }
+  }, [generatePlanState.data]);
 
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
@@ -542,8 +545,13 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </Card>
             </TabsContent>
             <TabsContent value="plan" className="pt-4 space-y-8">
-                {generatePlanState.data ? (
-                     <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} report={report} onCloseReport={handleCloseReport} />
+                {correctiveActionPlan ? (
+                     <CorrectiveActionPlanResult 
+                        plan={correctiveActionPlan} 
+                        setPlan={setCorrectiveActionPlan}
+                        report={report} 
+                        onCloseReport={handleCloseReport} 
+                    />
                 ) : (
                     <Card>
                         <CardContent className="pt-6">
@@ -555,7 +563,11 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </CardContent>
                     </Card>
                 )}
-                <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
+                <MitigatedRiskAssessment 
+                    report={report} 
+                    onUpdate={handleReportUpdate} 
+                    correctiveActions={correctiveActionPlan?.correctiveActions}
+                />
             </TabsContent>
         </Tabs>
 
