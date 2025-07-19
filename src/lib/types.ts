@@ -1,4 +1,5 @@
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -126,7 +127,24 @@ export type SafetyReport = {
   submittedBy: string;
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
+  type: 'Incident' | 'Hazard' | 'General';
+  aircraftInvolved?: string;
 };
+
+export type RiskLikelihood = 'Rare' | 'Unlikely' | 'Possible' | 'Likely' | 'Certain';
+export type RiskSeverity = 'Insignificant' | 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
+export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
+
+export type Risk = {
+  id: string;
+  description: string;
+  likelihood: RiskLikelihood;
+  severity: RiskSeverity;
+  riskScore: number;
+  status: RiskStatus;
+  mitigation: string;
+  dateIdentified: string;
+}
 
 export type ChecklistItem = {
     id: string;

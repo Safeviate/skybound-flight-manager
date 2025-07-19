@@ -1,5 +1,5 @@
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -147,4 +147,18 @@ export const checklistData: Checklist[] = [
             { id: 'cl-3-5', text: 'Logbooks - Entry completed and signed', completed: false },
         ]
     },
+];
+
+// Safety and Risk Data
+export const safetyReportData: SafetyReport[] = [
+    { id: 'sr1', date: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Hazard', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
+    { id: 'sr2', date: '2024-08-12', submittedBy: 'John Doe', type: 'Incident', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
+    { id: 'sr3', date: '2024-07-28', submittedBy: 'Hank Hill', type: 'General', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A' },
+];
+
+export const riskRegisterData: Risk[] = [
+    { id: 'risk1', dateIdentified: '2024-08-10', description: 'Bird strike on approach/departure path', likelihood: 'Possible', severity: 'Major', riskScore: 16, status: 'Open', mitigation: 'Review bird dispersal procedures with airport operations. Advise pilots to increase vigilance.' },
+    { id: 'risk2', dateIdentified: '2024-08-12', description: 'Student hard landings leading to aircraft damage', likelihood: 'Possible', severity: 'Moderate', riskScore: 12, status: 'Open', mitigation: 'Review landing training syllabus. Emphasize go-around procedure for unstable approaches.' },
+    { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, status: 'Mitigated', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.' },
+    { id: 'risk4', dateIdentified: '2024-06-15', description: 'Runway incursion due to pilot error', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 20, status: 'Open', mitigation: 'Mandatory training on airport signage and communication protocols. Review of hotspot map during pre-flight briefings.' },
 ];

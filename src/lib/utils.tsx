@@ -1,9 +1,11 @@
 
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import React from 'react';
+import type { RiskLikelihood, RiskSeverity } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -82,4 +84,32 @@ export function getDistance(
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+// Risk Matrix Logic
+const likelihoodMap: Record<RiskLikelihood, number> = {
+  'Rare': 1,
+  'Unlikely': 2,
+  'Possible': 3,
+  'Likely': 4,
+  'Certain': 5,
+};
+
+const severityMap: Record<RiskSeverity, number> = {
+  'Insignificant': 1,
+  'Minor': 2,
+  'Moderate': 3,
+  'Major': 4,
+  'Catastrophic': 5,
+};
+
+export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity): number => {
+    return likelihoodMap[likelihood] * severityMap[severity];
+}
+
+export const getRiskScoreColor = (score: number, opacity: number = 1): string => {
+  if (score <= 4) return `rgba(4, 120, 87, ${opacity})`; // Green-700
+  if (score <= 9) return `rgba(202, 138, 4, ${opacity})`; // Yellow-500
+  if (score <= 16) return `rgba(249, 115, 22, ${opacity})`; // Orange-500
+  return `rgba(220, 38, 38, ${opacity})`; // Red-600
 }
