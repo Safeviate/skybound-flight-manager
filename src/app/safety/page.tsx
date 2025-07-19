@@ -236,18 +236,19 @@ export default function SafetyPage() {
                          <h3 className="font-semibold text-lg">{group.area}</h3>
                       </div>
                       <ScrollArea>
-                        <div className="min-w-[1800px]">
-                           <Table>
+                        <Table className="min-w-[1800px]">
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[5%]">No.</TableHead>
-                                    <TableHead className="w-[15%]">Hazard</TableHead>
-                                    <TableHead className="w-[15%]">Risk</TableHead>
-                                    <TableHead className="w-[15%]">Exposure</TableHead>
-                                    <TableHead className="w-[10%]">Initial Risk</TableHead>
+                                    <TableHead className="w-[4%]">No.</TableHead>
+                                    <TableHead className="w-[12%]">Hazard</TableHead>
+                                    <TableHead className="w-[12%]">Risk</TableHead>
+                                    <TableHead className="w-[12%]">Exposure</TableHead>
+                                    <TableHead className="w-[8%]">Initial Risk</TableHead>
                                     <TableHead className="w-[15%]">Existing Mitigation</TableHead>
                                     <TableHead className="w-[15%]">Proposed Mitigation</TableHead>
-                                    <TableHead className="w-[10%]">Mitigated Value</TableHead>
+                                    <TableHead className="w-[8%]">Mitigated Value</TableHead>
+                                    <TableHead className="w-[8%]">Owner</TableHead>
+                                    <TableHead className="w-[8%]">Review</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -262,7 +263,7 @@ export default function SafetyPage() {
                                             </ul>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md">
+                                            <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md w-12 justify-center">
                                                 {risk.riskScore}
                                             </Badge>
                                         </TableCell>
@@ -270,16 +271,17 @@ export default function SafetyPage() {
                                         <TableCell>{risk.proposedMitigation}</TableCell>
                                         <TableCell>
                                             {risk.residualRiskScore !== undefined ? (
-                                                <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md">
+                                                <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md w-12 justify-center">
                                                     {risk.residualRiskScore}
                                                 </Badge>
                                             ) : '-'}
                                         </TableCell>
+                                        <TableCell>{risk.riskOwner}</TableCell>
+                                        <TableCell>{risk.reviewDate}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
-                           </Table>
-                        </div>
+                        </Table>
                         <ScrollBar orientation="horizontal" />
                       </ScrollArea>
                     </div>
