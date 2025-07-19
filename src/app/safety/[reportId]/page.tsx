@@ -112,12 +112,14 @@ interface CorrectiveActionPlanResultProps {
 
 function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: CorrectiveActionPlanResultProps) {
     const [editingActionId, setEditingActionId] = useState<string | null>(null);
+    const [isEditingSummary, setIsEditingSummary] = useState(false);
+    const [isEditingRootCause, setIsEditingRootCause] = useState(false);
     const { toast } = useToast();
     
     const handleActionChange = <K extends keyof CorrectiveAction>(index: number, field: K, value: CorrectiveAction[K]) => {
         const updatedActions = [...plan.correctiveActions];
         updatedActions[index] = { ...updatedActions[index], [field]: value };
-        setPlan(prev => ({ ...prev!, correctiveActions: updatedActions }));
+        setPlan(prev => prev ? ({ ...prev, correctiveActions: updatedActions }) : null);
     };
 
     const handleAddAction = () => {
@@ -128,13 +130,13 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
             deadline: new Date().toISOString().split('T')[0],
             status: 'Not Started',
         };
-        setPlan(prev => ({ ...prev!, correctiveActions: [...prev!.correctiveActions, newAction] }));
+        setPlan(prev => prev ? ({ ...prev, correctiveActions: [...prev.correctiveActions, newAction] }) : null);
         setEditingActionId(newAction.id);
     };
 
     const handleRemoveAction = (index: number) => {
         const updatedActions = plan.correctiveActions.filter((_, i) => i !== index);
-        setPlan(prev => ({ ...prev!, correctiveActions: updatedActions }));
+        setPlan(prev => prev ? ({ ...prev, correctiveActions: updatedActions }) : null);
     };
 
     const getStatusVariant = (status: string) => {
@@ -256,12 +258,40 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><FileText /> Summary of Findings</h3>
-                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg flex items-center gap-2"><FileText /> Summary of Findings</h3>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditingSummary(!isEditingSummary)}>
+                            {isEditingSummary ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
+                            {isEditingSummary ? 'Save' : 'Edit'}
+                        </Button>
+                    </div>
+                     {isEditingSummary ? (
+                        <Textarea
+                            value={plan.summaryOfFindings}
+                            onChange={(e) => setPlan(prev => prev ? { ...prev, summaryOfFindings: e.target.value } : null)}
+                            className="min-h-[100px]"
+                        />
+                    ) : (
+                        <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
+                    )}
                 </div>
                 <div>
-                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Target /> Root Cause Analysis</h3>
-                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
+                     <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg flex items-center gap-2"><Target /> Root Cause Analysis</h3>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditingRootCause(!isEditingRootCause)}>
+                            {isEditingRootCause ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
+                            {isEditingRootCause ? 'Save' : 'Edit'}
+                        </Button>
+                    </div>
+                     {isEditingRootCause ? (
+                        <Textarea
+                            value={plan.rootCause}
+                            onChange={(e) => setPlan(prev => prev ? { ...prev, rootCause: e.target.value } : null)}
+                            className="min-h-[80px]"
+                        />
+                    ) : (
+                        <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
+                    )}
                 </div>
                 <div>
                     <div className="flex items-center justify-between mb-2">
