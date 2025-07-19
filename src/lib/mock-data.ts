@@ -1,4 +1,5 @@
 
+
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk } from './types';
 import { getNextService } from './utils.tsx';
 
@@ -151,9 +152,9 @@ export const checklistData: Checklist[] = [
 
 // Safety and Risk Data
 export const safetyReportData: SafetyReport[] = [
-    { id: 'sr1', date: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Hazard', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
-    { id: 'sr2', date: '2024-08-12', submittedBy: 'John Doe', type: 'Incident', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
-    { id: 'sr3', date: '2024-07-28', submittedBy: 'Hank Hill', type: 'General', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A' },
+    { id: 'sr1', date: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
+    { id: 'sr2', date: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
+    { id: 'sr3', date: '2024-07-28', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A' },
 ];
 
 export const riskRegisterData: Risk[] = [

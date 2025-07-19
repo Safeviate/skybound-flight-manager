@@ -121,13 +121,15 @@ export type Booking = {
   isChecklistComplete?: boolean;
 };
 
+export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report';
+
 export type SafetyReport = {
   id: string;
   date: string;
   submittedBy: string;
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
-  type: 'Incident' | 'Hazard' | 'General';
+  type: SafetyReportType;
   aircraftInvolved?: string;
 };
 

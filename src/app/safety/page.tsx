@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
-import type { SafetyReport, Risk, RiskStatus } from '@/lib/types';
+import type { SafetyReport, Risk, RiskStatus, SafetyReportType } from '@/lib/types';
 import { getRiskScoreColor } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
@@ -46,6 +46,15 @@ export default function SafetyPage() {
       default: return 'outline';
     }
   };
+
+  const getReportTypeVariant = (type: SafetyReportType) => {
+    switch(type) {
+      case 'Flight Operations Report': return 'primary';
+      case 'Ground Operations Report': return 'secondary';
+      case 'Occupational Report': return 'destructive';
+      default: return 'outline';
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -102,7 +111,7 @@ export default function SafetyPage() {
                         <TableCell>{report.date}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
                         <TableCell>
-                          <Badge variant={report.type === 'Incident' ? 'destructive' : 'secondary'}>{report.type}</Badge>
+                          <Badge variant={getReportTypeVariant(report.type)}>{report.type}</Badge>
                         </TableCell>
                         <TableCell className="max-w-xs truncate">{report.details}</TableCell>
                         <TableCell>{report.aircraftInvolved}</TableCell>

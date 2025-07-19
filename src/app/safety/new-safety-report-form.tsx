@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { aircraftData } from '@/lib/mock-data';
 
 const reportFormSchema = z.object({
-  reportType: z.enum(['Incident', 'Hazard', 'General'], {
+  reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
     required_error: 'Please select a report type.',
   }),
   aircraftInvolved: z.string().optional(),
@@ -61,9 +61,10 @@ export function NewSafetyReportForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Incident">Incident Report</SelectItem>
-                  <SelectItem value="Hazard">Hazard Report</SelectItem>
-                  <SelectItem value="General">General Safety Comment</SelectItem>
+                  <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
+                  <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                  <SelectItem value="Occupational Report">Occupational Report</SelectItem>
+                  <SelectItem value="General Report">General Report</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
