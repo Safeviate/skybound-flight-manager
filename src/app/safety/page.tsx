@@ -136,11 +136,6 @@ export default function SafetyPage() {
                                         {report.subCategory}
                                     </Badge>
                                 )}
-                                {report.phaseOfFlight && (
-                                     <Badge variant="outline" className="w-fit">
-                                        {report.phaseOfFlight}
-                                    </Badge>
-                                )}
                             </div>
                             <span className="text-muted-foreground truncate">{report.details}</span>
                           </div>

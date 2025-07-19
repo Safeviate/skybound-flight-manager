@@ -117,7 +117,10 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         <Card>
             <CardHeader>
                 <CardTitle>{report.heading}</CardTitle>
-                <CardDescription>{report.type}</CardDescription>
+                <div className="flex gap-2 pt-1">
+                    <Badge variant="outline">{report.type}</Badge>
+                    {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
+                </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -148,6 +151,15 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     )}
                 </div>
+                 {(report.occurrenceCategory || report.phaseOfFlight) && (
+                    <div className="space-y-2 pt-2">
+                        <h4 className="font-semibold">ICAO Classification</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {report.occurrenceCategory && <Badge variant="outline">{report.occurrenceCategory}</Badge>}
+                            {report.phaseOfFlight && <Badge variant="outline">{report.phaseOfFlight}</Badge>}
+                        </div>
+                    </div>
+                 )}
                 <div className="space-y-2 pt-2">
                     <h4 className="font-semibold">Details</h4>
                     <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
