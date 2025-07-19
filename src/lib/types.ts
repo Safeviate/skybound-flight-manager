@@ -121,7 +121,7 @@ export type Booking = {
   isChecklistComplete?: boolean;
 };
 
-export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report';
+export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
 
 export type SafetyReport = {
   id: string;

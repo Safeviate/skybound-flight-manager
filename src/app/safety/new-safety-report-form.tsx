@@ -63,7 +63,7 @@ const reportFormSchema = z.object({
   occurrenceDate: z.date({
     required_error: 'An occurrence date is required.',
   }),
-  reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
+  reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report', 'Aircraft Defect Report'], {
     required_error: 'Please select a report type.',
   }),
   subCategory: z.string().optional(),
@@ -91,6 +91,7 @@ const getReportTypeAbbreviation = (type: SafetyReportType) => {
         case 'Ground Operations Report': return 'GOR';
         case 'Occupational Report': return 'OR';
         case 'General Report': return 'GR';
+        case 'Aircraft Defect Report': return 'ADR';
         default: return 'REP';
     }
 }
@@ -149,6 +150,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     <SelectContent>
                     <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
                     <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                    <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
                     <SelectItem value="Occupational Report">Occupational Report</SelectItem>
                     <SelectItem value="General Report">General Report</SelectItem>
                     </SelectContent>
