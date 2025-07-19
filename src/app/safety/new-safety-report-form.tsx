@@ -37,7 +37,7 @@ const flightOpsSubCategories = [
 const lossOfSeparationTypes = [
     'Close Proximity',
     'Resolution advisory',
-    'TA traffic Alert',
+    'Traffic Alert',
 ];
 
 const reportFormSchema = z.object({
