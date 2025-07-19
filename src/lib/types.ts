@@ -140,6 +140,14 @@ export type SafetyReport = {
   aircraftInvolved?: string;
 };
 
+export type SuggestInvestigationStepsOutput = {
+  initialAssessment: string;
+  keyAreasToInvestigate: string[];
+  recommendedActions: string[];
+  potentialContributingFactors: string[];
+};
+
+
 export type RiskLikelihood = 'Rare' | 'Unlikely' | 'Possible' | 'Likely' | 'Certain';
 export type RiskSeverity = 'Insignificant' | 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
 export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';

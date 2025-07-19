@@ -27,6 +27,7 @@ import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function SafetyPage() {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
@@ -153,7 +154,11 @@ export default function SafetyPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                              <DropdownMenuItem>View Details</DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/safety/${report.id}`}>
+                                    View & Investigate
+                                </Link>
+                              </DropdownMenuItem>
                               <DropdownMenuItem>Update Status</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
