@@ -142,19 +142,7 @@ export default function SafetyPage() {
                                     </Badge>
                                 )}
                             </div>
-                            {report.lossOfSeparationType && (
-                                <Badge variant="secondary" className="mb-1 w-fit">
-                                    {report.lossOfSeparationType}
-                                    {report.raCallout && ` (${report.raCallout})`}
-                                    {report.raFollowed === 'No' && ` (Not Followed)`}
-                                </Badge>
-                            )}
                             <span className="text-muted-foreground truncate">{report.details}</span>
-                            {report.raNotFollowedReason && (
-                                <span className="text-xs text-destructive truncate">
-                                    Reason: {report.raNotFollowedReason}
-                                </span>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell>{report.aircraftInvolved}</TableCell>
