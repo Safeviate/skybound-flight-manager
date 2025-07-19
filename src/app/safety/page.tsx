@@ -32,6 +32,7 @@ import { NewRiskForm } from './new-risk-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { EditRiskForm } from './edit-risk-form';
+import { RiskMatrix } from './risk-matrix';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -113,6 +114,7 @@ export default function SafetyPage() {
             <TabsList>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
+              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="assessment">Risk Assessment Tool</TabsTrigger>
             </TabsList>
             <Dialog open={isNewReportOpen} onOpenChange={setIsNewReportOpen}>
@@ -273,7 +275,7 @@ export default function SafetyPage() {
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
                                         <TableCell>
                                             {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.reportNumber.replace('FOR-', 'sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                                <Link href={`/safety/${risk.id.replace('risk-reg-','sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
                                             ) : (
                                                 'N/A'
                                             )}
@@ -335,6 +337,10 @@ export default function SafetyPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="matrix">
+            <RiskMatrix risks={risks} />
+          </TabsContent>
+          
           <TabsContent value="assessment">
             <RiskAssessmentTool />
           </TabsContent>
