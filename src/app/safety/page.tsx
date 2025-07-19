@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import {
@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
