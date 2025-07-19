@@ -214,17 +214,20 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Occurrence Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
                         <div className="space-y-2">
-                            <Label htmlFor="otherClassification">Other</Label>
-                            <Input id="otherClassification" name="otherClassification" placeholder="Enter other classification" />
+                            <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
+                            <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
+                                <SelectTrigger id="occurrenceCategory">
+                                    <SelectValue placeholder="Select Occurrence Category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="subClassification">Sub Classification</Label>
+                            <Input id="subClassification" name="subClassification" placeholder="Enter sub classification" />
                         </div>
                     </div>
                 </CardContent>
