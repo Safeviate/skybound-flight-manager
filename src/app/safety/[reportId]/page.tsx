@@ -151,30 +151,31 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </Card>
             </div>
             <div className="lg:col-span-2 space-y-8">
-                 <form action={formAction}>
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Investigation Workbench</CardTitle>
-                            <CardDescription>
-                                Add notes, classify the report, and use AI to suggest investigation steps.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Label htmlFor="investigationNotes">Investigation Notes</Label>
-                            <Textarea
-                                id="investigationNotes"
-                                name="investigationNotes"
-                                placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                className="min-h-[150px] mt-2"
-                            />
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                            <p className="text-xs text-muted-foreground">The AI analysis may take a few seconds.</p>
-                            <SubmitButton />
-                        </CardFooter>
-                    </Card>
-                 </form>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Investigation Workbench</CardTitle>
+                        <CardDescription>
+                            Add notes, classify the report, and use AI to suggest investigation steps.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form action={formAction} className="space-y-4">
+                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                            <div className="space-y-2">
+                                <Label htmlFor="investigationNotes">Investigation Notes</Label>
+                                <Textarea
+                                    id="investigationNotes"
+                                    name="investigationNotes"
+                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                    className="min-h-[150px]"
+                                />
+                            </div>
+                            <div className="flex justify-end">
+                                <SubmitButton />
+                            </div>
+                        </form>
+                    </CardContent>
+                 </Card>
                  {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
             </div>
         </div>
