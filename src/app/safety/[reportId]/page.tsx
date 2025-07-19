@@ -158,46 +158,51 @@ function CorrectiveActionPlanResult({ data, reportStatus, onCloseReport }: Corre
                     <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Milestone /> Corrective Actions</h3>
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[40%]">Action Required</TableHead>
-                                    <TableHead>Responsible</TableHead>
-                                    <TableHead>Timeline</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Proof</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
                             <TableBody>
                                 {plan.correctiveActions.map((action, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell>{action.action}</TableCell>
-                                        <TableCell>{action.responsiblePerson}</TableCell>
-                                        <TableCell>{getTimelineInfo(action.deadline)}</TableCell>
-                                        <TableCell>
-                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="w-full justify-start" disabled={reportStatus === 'Closed'}>
-                                                        <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'Not Started')}>Not Started</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'In Progress')}>In Progress</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'Completed')}>Completed</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="outline" size="sm" disabled={reportStatus === 'Closed'}>
-                                                <Upload className="mr-2 h-4 w-4" />
-                                                Upload
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" disabled={reportStatus === 'Closed'}>Re-assign</Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    <React.Fragment key={i}>
+                                        <TableRow className="bg-muted/50">
+                                            <TableCell colSpan={5} className="font-medium">
+                                                {action.action}
+                                            </TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell className="w-[25%]">
+                                                <Label>Responsible</Label>
+                                                <div>{action.responsiblePerson}</div>
+                                            </TableCell>
+                                            <TableCell className="w-[20%]">
+                                                <Label>Timeline</Label>
+                                                <div>{getTimelineInfo(action.deadline)}</div>
+                                            </TableCell>
+                                            <TableCell className="w-[20%]">
+                                                <Label>Status</Label>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="w-full justify-start mt-1" disabled={reportStatus === 'Closed'}>
+                                                            <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'Not Started')}>Not Started</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'In Progress')}>In Progress</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'Completed')}>Completed</DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                            <TableCell className="w-[15%]">
+                                                <Label>Proof</Label>
+                                                <Button variant="outline" size="sm" className="w-full mt-1" disabled={reportStatus === 'Closed'}>
+                                                    <Upload className="mr-2 h-4 w-4" />
+                                                    Upload
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell className="text-right w-[20%]">
+                                                <Label>Actions</Label>
+                                                <Button variant="ghost" size="sm" className="w-full mt-1" disabled={reportStatus === 'Closed'}>Re-assign</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    </React.Fragment>
                                 ))}
                             </TableBody>
                         </Table>
