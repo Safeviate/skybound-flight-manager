@@ -34,11 +34,21 @@ const flightOpsSubCategories = [
     'Other',
 ];
 
+const lossOfSeparationTypes = [
+    'Wake Turbulence',
+    'Airspace Infringement',
+    'TCAS Resolution Advisory',
+    'ATC Error',
+    'Pilot Deviation',
+    'Other',
+];
+
 const reportFormSchema = z.object({
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
     required_error: 'Please select a report type.',
   }),
   subCategory: z.string().optional(),
+  lossOfSeparationType: z.string().optional(),
   aircraftInvolved: z.string().optional(),
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
@@ -69,6 +79,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   });
 
   const reportType = form.watch('reportType');
+  const subCategory = form.watch('subCategory');
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -131,6 +142,30 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                             <SelectContent>
                                 {flightOpsSubCategories.map(cat => (
                                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+        {subCategory === 'Loss of Separation' && (
+            <FormField
+                control={form.control}
+                name="lossOfSeparationType"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Type of Separation Loss</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select the type of separation loss" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {lossOfSeparationTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

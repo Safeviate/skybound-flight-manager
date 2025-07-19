@@ -121,7 +121,10 @@ export default function SafetyPage() {
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
                             {report.subCategory && (
-                                <Badge variant="secondary" className="mb-1 w-fit">{report.subCategory}</Badge>
+                                <Badge variant="secondary" className="mb-1 w-fit">
+                                    {report.subCategory}
+                                    {report.lossOfSeparationType && ` - ${report.lossOfSeparationType}`}
+                                </Badge>
                             )}
                             <span className="truncate">{report.details}</span>
                           </div>

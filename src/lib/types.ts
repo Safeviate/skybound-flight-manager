@@ -132,6 +132,7 @@ export type SafetyReport = {
   status: 'Open' | 'Under Review' | 'Closed';
   type: SafetyReportType;
   subCategory?: string;
+  lossOfSeparationType?: string;
   aircraftInvolved?: string;
 };
 
