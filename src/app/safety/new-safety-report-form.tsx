@@ -36,7 +36,7 @@ const flightOpsSubCategories = [
 
 const lossOfSeparationTypes = [
     'Close Proximity',
-    'Resolution advisory',
+    'Resolution Advisory',
     'Traffic Alert',
 ];
 
@@ -188,7 +188,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                 )}
             />
         )}
-        {lossOfSeparationType === 'Resolution advisory' && (
+        {lossOfSeparationType === 'Resolution Advisory' && (
             <>
              <FormField
                 control={form.control}
