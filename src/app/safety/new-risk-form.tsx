@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -73,15 +74,10 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
   };
 
   function handleFormSubmit(data: NewRiskFormValues) {
-    const likelihoodMap: Record<RiskLikelihood, number> = { 'Rare': 1, 'Unlikely': 2, 'Possible': 3, 'Likely': 4, 'Certain': 5 };
-    const severityLetterMap: Record<RiskSeverity, string> = { 'Insignificant': 'E', 'Minor': 'D', 'Moderate': 'C', 'Major': 'B', 'Catastrophic': 'A' };
-    
     onSubmit({
         ...data,
         consequences: data.consequences.split(',').map(s => s.trim()),
         reviewDate: format(data.reviewDate, 'yyyy-MM-dd'),
-        likelihoodValue: likelihoodMap[data.likelihood],
-        severityValue: severityLetterMap[data.severity],
     });
   }
 

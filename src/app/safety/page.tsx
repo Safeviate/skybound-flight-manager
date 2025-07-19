@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
 import type { SafetyReport, Risk, RiskStatus, GroupedRisk } from '@/lib/types';
-import { getRiskScore, getRiskScoreColor, getExpiryBadge, getRiskScoreString } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getExpiryBadge } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
@@ -263,7 +263,7 @@ export default function SafetyPage() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md">
-                                                {getRiskScoreString(risk.likelihoodValue, risk.severityValue)}
+                                                {risk.riskScore}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{risk.existingMitigation}</TableCell>
@@ -271,7 +271,7 @@ export default function SafetyPage() {
                                         <TableCell>
                                             {risk.residualRiskScore !== undefined ? (
                                                 <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md">
-                                                    {getRiskScoreString(risk.residualLikelihoodValue, risk.residualSeverityValue)}
+                                                    {risk.residualRiskScore}
                                                 </Badge>
                                             ) : '-'}
                                         </TableCell>

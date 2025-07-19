@@ -103,23 +103,9 @@ const severityMap: Record<RiskSeverity, number> = {
   'Catastrophic': 5,
 };
 
-const severityLetterMap: Record<RiskSeverity, string> = {
-  'Insignificant': 'E',
-  'Minor': 'D',
-  'Moderate': 'C',
-  'Major': 'B',
-  'Catastrophic': 'A',
-};
-
 export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity): number => {
     return likelihoodMap[likelihood] * severityMap[severity];
 }
-
-export const getRiskScoreString = (likelihoodValue?: number, severityValue?: string) => {
-  if (!likelihoodValue || !severityValue) return '';
-  return `${likelihoodValue}${severityValue}`;
-};
-
 
 export const getRiskScoreColor = (score: number, opacity: number = 1): string => {
   if (score <= 4) return `rgba(4, 120, 87, ${opacity})`; // Green-700
