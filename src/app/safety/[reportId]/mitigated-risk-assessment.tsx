@@ -8,40 +8,20 @@ import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Edit, PlusCircle } from 'lucide-react';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ArrowRight, Edit } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AddRiskForm } from './add-risk-form';
 import { AssessMitigationForm } from './assess-mitigation-form';
 
-interface RiskAssessmentModuleProps {
+interface MitigatedRiskAssessmentProps {
     report: SafetyReport;
     onUpdate: (updatedReport: SafetyReport) => void;
 }
 
-export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleProps) {
-  const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
+export function MitigatedRiskAssessment({ report, onUpdate }: MitigatedRiskAssessmentProps) {
   const [editingRisk, setEditingRisk] = useState<AssociatedRisk | null>(null);
 
   const { toast } = useToast();
-
-  const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
-    const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
-    const newRisk: AssociatedRisk = {
-        ...newRiskData,
-        id: `risk-${Date.now()}`,
-        riskScore,
-    };
-    
-    const updatedRisks = [...(report.associatedRisks || []), newRisk];
-    onUpdate({ ...report, associatedRisks: updatedRisks });
-    
-    setIsAddRiskOpen(false);
-    toast({
-        title: 'Hazard Added to Register',
-        description: 'The new hazard and its initial risk score have been recorded.'
-    });
-  }
 
   const handleAssessRisk = (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => {
     const updatedRisks = report.associatedRisks?.map(risk => {
@@ -74,30 +54,11 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
 
   return (
     <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-                <CardTitle>Risk Mitigation</CardTitle>
-                <CardDescription>
-                    Assess the effectiveness of corrective actions by measuring the residual risk.
-                </CardDescription>
-            </div>
-            <Dialog open={isAddRiskOpen} onOpenChange={setIsAddRiskOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Hazard & Risk
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Add New Hazard & Risk</DialogTitle>
-                        <DialogDescription>
-                            Describe the hazard, the potential risk, and use the matrix to set an initial score.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <AddRiskForm onAddRisk={handleAddRisk} />
-                </DialogContent>
-            </Dialog>
+        <CardHeader>
+            <CardTitle>Risk Mitigation Assessment</CardTitle>
+            <CardDescription>
+                Assess the effectiveness of corrective actions by measuring the residual risk.
+            </CardDescription>
         </CardHeader>
         <CardContent>
             {report.associatedRisks && report.associatedRisks.length > 0 ? (
@@ -146,7 +107,7 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                  </Table>
             ) : (
                 <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No hazards or risks have been added yet.</p>
+                    <p className="text-muted-foreground">No hazards or risks have been added for this report yet.</p>
                 </div>
             )}
         </CardContent>

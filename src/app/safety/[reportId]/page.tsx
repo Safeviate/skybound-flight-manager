@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -23,7 +23,8 @@ import { DiscussionSection } from './discussion-section';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 import { Input } from '@/components/ui/input';
-import { RiskAssessmentModule } from './risk-assessment-module';
+import { InitialRiskAssessment } from './initial-risk-assessment';
+import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -366,8 +367,9 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         <Tabs defaultValue="investigation" className="w-full">
             <TabsList>
                 <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
                 <TabsTrigger value="ai">AI Assistant</TabsTrigger>
-                <TabsTrigger value="plan">Corrective Action Plan &amp; Mitigation</TabsTrigger>
+                <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
             </TabsList>
             <TabsContent value="investigation" className="pt-4">
                  <Card>
@@ -395,6 +397,9 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     </CardContent>
                 </Card>
+            </TabsContent>
+            <TabsContent value="risk-assessment" className="pt-4">
+                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} />
             </TabsContent>
             <TabsContent value="ai" className="pt-4">
                 <Card>
@@ -445,7 +450,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </CardContent>
                     </Card>
                 )}
-                <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
+                <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
             </TabsContent>
         </Tabs>
 
