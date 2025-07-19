@@ -139,6 +139,7 @@ export type SafetyReport = {
   raFollowed?: 'Yes' | 'No';
   raNotFollowedReason?: string;
   aircraftInvolved?: string;
+  investigationTeam?: string[];
 };
 
 export type SuggestInvestigationStepsOutput = {

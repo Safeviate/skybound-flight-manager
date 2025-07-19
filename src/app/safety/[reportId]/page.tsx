@@ -14,6 +14,8 @@ import { suggestStepsAction } from './actions';
 import { AlertCircle, ArrowRight, Bot, ClipboardList, Lightbulb, ListChecks, Loader2, User, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { Separator } from '@/components/ui/separator';
+import { InvestigationTeamForm } from './investigation-team-form';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -154,10 +156,12 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             <CardHeader>
                 <CardTitle>Investigation Workbench</CardTitle>
                 <CardDescription>
-                    Add notes, classify the report, and use AI to suggest investigation steps.
+                    Add notes, assign investigators, classify the report, and use AI to suggest investigation steps.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+                <InvestigationTeamForm report={report} />
+                <Separator />
                 <form action={formAction} className="space-y-4">
                     <input type="hidden" name="report" value={JSON.stringify(report)} />
                     <div className="space-y-2">
