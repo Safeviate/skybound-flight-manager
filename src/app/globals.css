@@ -115,4 +115,7 @@ body {
   .print\:hidden {
     display: none !important;
   }
+  [role="tabpanel"][data-state="inactive"] {
+    display: block !important;
+  }
 }
