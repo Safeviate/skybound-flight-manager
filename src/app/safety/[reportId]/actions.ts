@@ -101,7 +101,7 @@ export async function promoteRiskAction(prevState: any, formData: FormData) {
     const riskString = formData.get('riskToPromote');
 
     if (!reportString || typeof reportString !== 'string' || !riskString || typeof riskString !== 'string') {
-        return { message: 'Invalid data provided.' };
+        return { message: 'Invalid data provided.', data: null };
     }
 
     try {
@@ -113,7 +113,7 @@ export async function promoteRiskAction(prevState: any, formData: FormData) {
         return { message: 'Risk promoted successfully', data: { ...result, ...riskToPromote } };
     } catch (error) {
         console.error(error);
-        return { message: 'An error occurred during promotion.' };
+        return { message: 'An error occurred during promotion.', data: null };
     }
 }
     

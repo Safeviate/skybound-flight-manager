@@ -241,9 +241,10 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     // In a real app, this would be an API call to a central store.
     // For this mock, we can't easily update the state of the parent page.
     // We will show a toast message and the local state will reflect the promotion.
+    // A more robust solution might use a global state manager (e.g., Context, Redux).
      toast({
         title: 'Risk Promoted to Central Register',
-        description: `"${newRisk.description}" is now being tracked centrally.`,
+        description: `"${newRisk.description}" is now being tracked centrally. You can view it on the main Safety page.`,
     });
   };
 

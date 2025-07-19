@@ -21,42 +21,6 @@ interface InitialRiskAssessmentProps {
     onPromoteRisk: (newRisk: RiskRegisterEntry) => void;
 }
 
-function PromoteButton({ risk, promoted }: { risk: AssociatedRisk, promoted?: boolean }) {
-    const { toast } = useToast();
-    const [state, formAction] = useFormState(promoteRiskAction, { message: '', data: null });
-
-    React.useEffect(() => {
-        if (state.message === 'Risk promoted successfully') {
-            toast({
-                title: 'Risk Promoted',
-                description: 'The hazard has been added to the central Risk Register.'
-            });
-            // We can't update the central state from here directly,
-            // so we will rely on the parent component to handle it.
-            // A more robust solution might use a global state manager.
-        } else if (state.message && !state.data) {
-             toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: state.message,
-            });
-        }
-    }, [state, toast]);
-
-    const isPromoted = promoted || (state.data && state.message === 'Risk promoted successfully');
-
-    if (isPromoted) {
-        return <Button size="sm" variant="success" disabled><ArrowUpCircle className="mr-2 h-4 w-4" /> Promoted</Button>;
-    }
-    
-    return (
-        <form action={formAction}>
-            <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
-            <Button size="sm" type="submit"><ArrowUpCircle className="mr-2 h-4 w-4" /> Promote to Register</Button>
-        </form>
-    );
-}
-
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
   const { toast } = useToast();
@@ -143,6 +107,10 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                     <form action={async (formData) => {
                                         const result = await promoteRiskAction(null, formData);
                                         if (result.data) {
+                                            toast({
+                                                title: 'Risk Promoted',
+                                                description: 'The hazard has been added to the central Risk Register.'
+                                            });
                                             onUpdate({
                                                 ...report,
                                                 associatedRisks: report.associatedRisks?.map(r => r.id === risk.id ? { ...r, promotedToRegister: true } : r)
@@ -151,6 +119,9 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                                 id: `risk-reg-${Date.now()}`,
                                                 dateIdentified: new Date().toISOString().split('T')[0],
                                                 description: result.data.description,
+                                                consequences: [], // AI doesn't generate this yet
+                                                hazard: risk.hazard,
+                                                risk: risk.risk,
                                                 likelihood: risk.likelihood,
                                                 severity: risk.severity,
                                                 riskScore: risk.riskScore,
@@ -160,6 +131,8 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                                 process: result.data.process,
                                                 reportNumber: result.data.reportNumber,
                                             });
+                                        } else if (result.message) {
+                                            toast({ variant: 'destructive', title: 'Error', description: result.message });
                                         }
                                     }}>
                                         <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
