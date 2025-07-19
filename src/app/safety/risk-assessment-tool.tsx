@@ -54,21 +54,21 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <Table className="border">
+              <Table className="border text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="border-r font-bold">Likelihood</TableHead>
-                    <TableHead colSpan={severities.length} className="text-center font-bold">Severity</TableHead>
+                    <TableHead className="border-r font-bold p-2">Likelihood</TableHead>
+                    <TableHead colSpan={severities.length} className="text-center font-bold p-2">Severity</TableHead>
                   </TableRow>
                   <TableRow>
-                    <TableHead className="border-r"></TableHead>
-                    {severities.map(s => <TableHead key={s} className="text-center">{s}</TableHead>)}
+                    <TableHead className="border-r p-2"></TableHead>
+                    {severities.map(s => <TableHead key={s} className="text-center p-2 text-muted-foreground font-normal">{s}</TableHead>)}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {likelihoods.slice().reverse().map(l => (
                     <TableRow key={l}>
-                      <TableCell className="font-semibold border-r">{l}</TableCell>
+                      <TableCell className="font-semibold border-r p-2">{l}</TableCell>
                       {severities.map(s => {
                         const score = getRiskScore(l, s);
                         const isSelected = l === selectedLikelihood && s === selectedSeverity;
@@ -76,7 +76,7 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
                           <TableCell
                             key={s}
                             className={cn(
-                              'text-center cursor-pointer border-l hover:bg-muted/50',
+                              'text-center cursor-pointer border-l hover:bg-muted/50 p-2 h-10 w-10 font-medium',
                               isSelected && 'ring-2 ring-primary ring-inset'
                             )}
                             style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
