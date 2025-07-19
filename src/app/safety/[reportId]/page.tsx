@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput } from '@/lib/types';
 import { suggestStepsAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Lightbulb, ListChecks, Loader2, User, Users } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
@@ -20,6 +20,8 @@ import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { DiscussionSection } from './discussion-section';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -158,7 +160,11 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     )}
                 </div>
-                 {report.phaseOfFlight && (
+                 <div className="space-y-2 pt-2">
+                    <h4 className="font-semibold">Details</h4>
+                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
+                </div>
+                {report.phaseOfFlight && (
                     <div className="space-y-2 pt-2">
                         <h4 className="font-semibold">Phase of Flight</h4>
                         <div className="flex flex-wrap gap-2">
@@ -174,17 +180,33 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     </div>
                  )}
-                <div className="space-y-2 pt-2">
-                    <h4 className="font-semibold">Details</h4>
-                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
-                </div>
             </CardContent>
         </Card>
         
         <form action={formAction} className="space-y-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>ICAO ADREP Classification</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        ICAO ADREP Classification
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                                        <Info className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs md:max-w-md" align="start">
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
+                                        {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
+                                            <div key={code} className="text-xs">
+                                                <span className="font-bold">{code}:</span> {definition}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </CardTitle>
                     <CardDescription>
                         Classify the report using the standard ICAO taxonomy for aviation occurrences.
                     </CardDescription>
