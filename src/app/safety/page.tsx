@@ -387,6 +387,7 @@ export default function SafetyPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { user } = useUser();
   const { toast } = useToast();
+  const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
     { id: 'unstableApproaches', name: 'Unstable Approach Rate', target: 1, alert2: 2, alert3: 3, alert4: 4 },
@@ -461,14 +462,39 @@ export default function SafetyPage() {
         </Button>
     );
   };
+  
+  const handleNewSpiSubmit = (newSpi: SpiConfig) => {
+    setSpiConfigs(prev => [...prev, newSpi]);
+    setIsNewTargetDialogOpen(false);
+     toast({
+        title: "SPI Target Added",
+        description: `A new target for "${newSpi.name}" has been added.`
+    });
+  }
 
   const renderActionButton = () => {
     if (activeTab === 'spis') {
       return (
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Target
-        </Button>
+        <Dialog open={isNewTargetDialogOpen} onOpenChange={setIsNewTargetDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Target
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New SPI Target</DialogTitle>
+                    <DialogDescription>
+                        Define a new Safety Performance Indicator and its alert levels.
+                    </DialogDescription>
+                </DialogHeader>
+                <EditSpiForm 
+                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
+                    onUpdate={handleNewSpiSubmit} 
+                />
+            </DialogContent>
+        </Dialog>
       );
     }
     return (
