@@ -149,10 +149,10 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                                 <YAxis allowDecimals={false} />
                                 <Tooltip />
                                 <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={unstableApproachesConfig.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert4} stroke="hsl(var(--destructive-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
                                 <Bar dataKey="count" name="Unstable Approaches">
                                     {unstableApproachesData.map((entry, index) => {
                                         const status = getUnstableApproachStatus(entry.count);
@@ -197,9 +197,9 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                                 <YAxis allowDecimals={false} />
                                 <Tooltip />
                                 <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={adrConfig.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrConfig.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrConfig.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
                                 <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" strokeWidth={2} />
                             </LineChart>
                         </ResponsiveContainer>
@@ -384,6 +384,7 @@ export default function SafetyPage() {
   const [isNewReportOpen, setIsNewReportOpen] = useState(false);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const { user } = useUser();
   const { toast } = useToast();
 
@@ -461,11 +462,41 @@ export default function SafetyPage() {
     );
   };
 
+  const renderActionButton = () => {
+    if (activeTab === 'spis') {
+      return (
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add New Target
+        </Button>
+      );
+    }
+    return (
+      <Dialog open={isNewReportOpen} onOpenChange={setIsNewReportOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            File New Report
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>File New Safety Report</DialogTitle>
+            <DialogDescription>
+              Describe the incident or hazard. This will be reviewed by the Safety Manager.
+            </DialogDescription>
+          </DialogHeader>
+          <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReportSubmit} />
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Safety Management System" />
       <main className="flex-1 p-4 md:p-8">
-        <Tabs defaultValue="dashboard">
+        <Tabs defaultValue="dashboard" onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
             <TabsList>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -475,23 +506,7 @@ export default function SafetyPage() {
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="assessment">Risk Assessment Tool</TabsTrigger>
             </TabsList>
-            <Dialog open={isNewReportOpen} onOpenChange={setIsNewReportOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  File New Report
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-xl">
-                <DialogHeader>
-                  <DialogTitle>File New Safety Report</DialogTitle>
-                  <DialogDescription>
-                    Describe the incident or hazard. This will be reviewed by the Safety Manager.
-                  </DialogDescription>
-                </DialogHeader>
-                <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReportSubmit} />
-              </DialogContent>
-            </Dialog>
+            {renderActionButton()}
           </div>
 
           <TabsContent value="dashboard">
