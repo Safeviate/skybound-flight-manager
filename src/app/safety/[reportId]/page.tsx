@@ -187,7 +187,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        ICAO ADREP Classification
+                        Classification
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
