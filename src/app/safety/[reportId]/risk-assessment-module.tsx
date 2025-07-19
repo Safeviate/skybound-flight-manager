@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils.tsx';
 import { useToast } from '@/hooks/use-toast';
 import { Check } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const likelihoods: RiskLikelihood[] = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Certain'];
 const severities: RiskSeverity[] = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Catastrophic'];
@@ -67,7 +69,7 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                 Use the matrix to assess the risk associated with this safety report.
             </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
             <div className="grid md:grid-cols-3 gap-8">
                 <div className="md:col-span-2">
                      <div className="overflow-x-auto">
@@ -134,6 +136,16 @@ export function RiskAssessmentModule({ report, onUpdate }: RiskAssessmentModuleP
                         )}
                         </CardContent>
                     </Card>
+                </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4 pt-4">
+                <div className="space-y-2">
+                    <Label htmlFor="hazards">Hazards</Label>
+                    <Textarea id="hazards" name="hazards" placeholder="Describe the identified hazards..." className="min-h-[100px]" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="risk">Risk</Label>
+                    <Textarea id="risk" name="risk" placeholder="Describe the associated risk..." className="min-h-[100px]" />
                 </div>
             </div>
         </CardContent>
