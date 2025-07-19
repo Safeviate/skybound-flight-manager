@@ -59,6 +59,8 @@ const reportFormSchema = z.object({
   subCategory: z.string().optional(),
   lossOfSeparationType: z.string().optional(),
   raCallout: z.string().optional(),
+  raFollowed: z.enum(['Yes', 'No']).optional(),
+  raNotFollowedReason: z.string().optional(),
   aircraftInvolved: z.string().optional(),
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
@@ -91,6 +93,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const reportType = form.watch('reportType');
   const subCategory = form.watch('subCategory');
   const lossOfSeparationType = form.watch('lossOfSeparationType');
+  const raFollowed = form.watch('raFollowed');
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -186,6 +189,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             />
         )}
         {lossOfSeparationType === 'Resolution advisory' && (
+            <>
              <FormField
                 control={form.control}
                 name="raCallout"
@@ -208,6 +212,47 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     </FormItem>
                 )}
             />
+            <FormField
+                control={form.control}
+                name="raFollowed"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>RA Followed</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Was the Resolution Advisory followed?" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Yes">Yes</SelectItem>
+                                <SelectItem value="No">No</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            {raFollowed === 'No' && (
+                <FormField
+                    control={form.control}
+                    name="raNotFollowedReason"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Reason RA Not Followed</FormLabel>
+                        <FormControl>
+                            <Textarea
+                            placeholder="Explain why the Resolution Advisory was not followed..."
+                            className="min-h-[100px]"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+            </>
         )}
         <FormField
           control={form.control}

@@ -125,9 +125,15 @@ export default function SafetyPage() {
                                     {report.subCategory}
                                     {report.lossOfSeparationType && ` - ${report.lossOfSeparationType}`}
                                     {report.raCallout && ` (${report.raCallout})`}
+                                    {report.raFollowed === 'No' && ` (Not Followed)`}
                                 </Badge>
                             )}
                             <span className="truncate">{report.details}</span>
+                            {report.raNotFollowedReason && (
+                                <span className="text-xs text-destructive truncate">
+                                    Reason: {report.raNotFollowedReason}
+                                </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{report.aircraftInvolved}</TableCell>

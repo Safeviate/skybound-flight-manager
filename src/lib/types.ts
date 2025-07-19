@@ -134,6 +134,8 @@ export type SafetyReport = {
   subCategory?: string;
   lossOfSeparationType?: string;
   raCallout?: string;
+  raFollowed?: 'Yes' | 'No';
+  raNotFollowedReason?: string;
   aircraftInvolved?: string;
 };
 
