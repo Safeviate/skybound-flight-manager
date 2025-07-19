@@ -35,7 +35,7 @@ import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, ReferenceLine } from 'recharts';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -54,6 +54,10 @@ function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
 }
 
 const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) => {
+    // Define SPI Targets
+    const UNSTABLE_APPROACH_TARGET = 2;
+    const TECHNICAL_DEFECT_TARGET = 3;
+
     // SPI 1: Unstable Approach Rate (as an example of a specific event trend)
     const unstableApproachesByMonth = reports
         .filter(r => r.subCategory === 'Unstable Approach')
@@ -115,9 +119,15 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                             <XAxis dataKey="name" fontSize={12} />
                             <YAxis allowDecimals={false} />
                             <Tooltip />
-                            <Bar dataKey="count" name="Unstable Approaches" fill="hsl(var(--warning))" />
+                            <ReferenceLine y={UNSTABLE_APPROACH_TARGET} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="red" strokeDasharray="3 3" />
+                            <Bar dataKey="count" name="Unstable Approaches">
+                                {unstableApproachesData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.count > UNSTABLE_APPROACH_TARGET ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'} />
+                                ))}
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+                    <p className="text-center text-xs text-muted-foreground">Target: &lt;= {UNSTABLE_APPROACH_TARGET} per month</p>
                 </div>
                  <div className="space-y-2">
                     <h4 className="font-semibold text-center">Reports by Phase of Flight</h4>
@@ -131,6 +141,7 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                             <Tooltip />
                         </PieChart>
                     </ResponsiveContainer>
+                     <p className="text-center text-xs text-muted-foreground">Analysis of operational phases with highest incident rates.</p>
                 </div>
                 <div className="space-y-2">
                     <h4 className="font-semibold text-center">Technical Defect Rate</h4>
@@ -140,9 +151,11 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                             <XAxis dataKey="name" fontSize={12}/>
                             <YAxis allowDecimals={false}/>
                             <Tooltip />
-                            <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--destructive))" />
+                            <ReferenceLine y={TECHNICAL_DEFECT_TARGET} label="Target" stroke="red" strokeDasharray="3 3" />
+                            <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" />
                         </LineChart>
                     </ResponsiveContainer>
+                    <p className="text-center text-xs text-muted-foreground">Target: &lt;= {TECHNICAL_DEFECT_TARGET} per month</p>
                 </div>
             </CardContent>
         </Card>
