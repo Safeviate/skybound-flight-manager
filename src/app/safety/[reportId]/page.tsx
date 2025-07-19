@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
-import type { SafetyReport, SuggestInvestigationStepsOutput } from '@/lib/types';
-import { suggestStepsAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users } from 'lucide-react';
+import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput } from '@/lib/types';
+import { suggestStepsAction, generatePlanAction } from './actions';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 import { Input } from '@/components/ui/input';
 import { RiskAssessmentModule } from './risk-assessment-module';
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -35,12 +35,22 @@ const getStatusVariant = (status: SafetyReport['status']) => {
   }
 };
 
-function SubmitButton() {
+function SuggestStepsButton() {
     const { pending } = useFormStatus();
     return (
       <Button type="submit" disabled={pending}>
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
         Suggest Investigation Steps
+      </Button>
+    );
+}
+
+function GeneratePlanButton() {
+    const { pending } = useFormStatus();
+    return (
+      <Button variant="secondary" type="submit" disabled={pending}>
+        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+        Generate Corrective Action Plan
       </Button>
     );
 }
@@ -82,33 +92,86 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
         </CardContent>
       </Card>
     );
-  }
+}
+
+function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPlanOutput }) {
+    const getStatusVariant = (status: string) => {
+        switch(status) {
+            case 'Completed': return 'success';
+            case 'In Progress': return 'warning';
+            default: return 'outline';
+        }
+    }
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bot /> AI-Generated Corrective Action Plan</CardTitle>
+                <CardDescription>
+                    Based on the complete investigation, this is a draft corrective action plan.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><FileText /> Summary of Findings</h3>
+                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{data.summaryOfFindings}</p>
+                </div>
+                <div>
+                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Target /> Root Cause Analysis</h3>
+                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{data.rootCause}</p>
+                </div>
+                <div>
+                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Milestone /> Corrective Actions</h3>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Action Required</TableHead>
+                                <TableHead>Responsible</TableHead>
+                                <TableHead>Deadline</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.correctiveActions.map((action, i) => (
+                                <TableRow key={i}>
+                                    <TableCell>{action.action}</TableCell>
+                                    <TableCell>{action.responsiblePerson}</TableCell>
+                                    <TableCell>{action.deadline}</TableCell>
+                                    <TableCell><Badge variant={getStatusVariant(action.status)}>{action.status}</Badge></TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function SafetyReportInvestigationPage({ params }: { params: { reportId: string } }) {
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
   const report = safetyReports.find(r => r.id === params.reportId);
   const { toast } = useToast();
   
-  const initialState = {
-    message: '',
-    data: null,
-    errors: null,
-  };
-  const [state, formAction] = useFormState(suggestStepsAction, initialState);
+  const [suggestStepsState, suggestStepsFormAction] = useFormState(suggestStepsAction, { message: '', data: null, errors: null });
+  const [generatePlanState, generatePlanFormAction] = useFormState(generatePlanAction, { message: '', data: null, errors: null });
 
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
   };
+  
+  const [investigationNotes, setInvestigationNotes] = useState(report?.investigationNotes || '');
 
   useEffect(() => {
-    if (state.message && state.message !== 'Invalid form data' && state.message !== 'Analysis complete') {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: state.message,
-      });
+    if (suggestStepsState.message && suggestStepsState.message !== 'Invalid form data' && suggestStepsState.message !== 'Analysis complete') {
+      toast({ variant: 'destructive', title: 'Error', description: suggestStepsState.message });
     }
-  }, [state, toast]);
+  }, [suggestStepsState, toast]);
+
+  useEffect(() => {
+    if (generatePlanState.message && generatePlanState.message !== 'Invalid form data' && generatePlanState.message !== 'Plan generated') {
+        toast({ variant: 'destructive', title: 'Error', description: generatePlanState.message });
+    }
+  }, [generatePlanState, toast]);
 
   if (!report) {
     return (
@@ -169,88 +232,98 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             </CardContent>
         </Card>
         
-        <form action={formAction} className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        Classification
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-5 w-5">
-                                        <Info className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs md:max-w-md" align="start">
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
-                                        {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
-                                            <div key={code} className="text-xs">
-                                                <span className="font-bold">{code}:</span> {definition}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </CardTitle>
-                    <CardDescription>
-                        Classify the report using the standard ICAO taxonomy for aviation occurrences.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
-                            <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
-                                <SelectTrigger id="occurrenceCategory">
-                                    <SelectValue placeholder="Select Occurrence Category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="phaseOfFlight">Other</Label>
-                            <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., Climb, Cruise, Landing" defaultValue={report.phaseOfFlight} />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Investigation Workbench</CardTitle>
-                    <CardDescription>
-                        Add notes, assign investigators, and use AI to suggest investigation steps.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <InvestigationTeamForm report={report} />
-                    <Separator />
-                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                    <Separator />
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    Classification
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5">
+                                    <Info className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs md:max-w-md" align="start">
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
+                                    {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
+                                        <div key={code} className="text-xs">
+                                            <span className="font-bold">{code}:</span> {definition}
+                                        </div>
+                                    ))}
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </CardTitle>
+                <CardDescription>
+                    Classify the report using the standard ICAO taxonomy for aviation occurrences.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="investigationNotes">Investigation Notes</Label>
-                        <Textarea
-                            id="investigationNotes"
-                            name="investigationNotes"
-                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                            className="min-h-[150px]"
-                        />
+                        <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
+                        <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
+                            <SelectTrigger id="occurrenceCategory">
+                                <SelectValue placeholder="Select Occurrence Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
-                </CardContent>
-                <CardFooter className="flex justify-end">
-                     <input type="hidden" name="report" value={JSON.stringify(report)} />
-                     <SubmitButton />
-                </CardFooter>
-            </Card>
-        </form>
+                     <div className="space-y-2">
+                        <Label htmlFor="phaseOfFlight">Other</Label>
+                        <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., Climb, Cruise, Landing" defaultValue={report.phaseOfFlight} />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
 
-        {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
+        <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Investigation Workbench</CardTitle>
+                <CardDescription>
+                    Add notes, assign investigators, and use AI to suggest investigation steps.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <InvestigationTeamForm report={report} />
+                <Separator />
+                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="investigationNotes">Investigation Notes</Label>
+                    <Textarea
+                        id="investigationNotes"
+                        name="investigationNotes"
+                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                        className="min-h-[150px]"
+                        value={investigationNotes}
+                        onChange={(e) => setInvestigationNotes(e.target.value)}
+                    />
+                </div>
+            </CardContent>
+            <CardFooter className="flex flex-wrap justify-end gap-2">
+                 <form action={suggestStepsFormAction}>
+                    <input type="hidden" name="report" value={JSON.stringify({...report, investigationNotes})} />
+                    <SuggestStepsButton />
+                 </form>
+                 <form action={generatePlanFormAction}>
+                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                    <input type="hidden" name="investigationNotes" value={investigationNotes} />
+                    <GeneratePlanButton />
+                 </form>
+            </CardFooter>
+        </Card>
+
+        {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} />}
+        {generatePlanState.data && <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} />}
       </main>
     </div>
   );
 }
+
+    

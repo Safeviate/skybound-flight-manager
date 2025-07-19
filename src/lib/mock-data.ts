@@ -1,5 +1,4 @@
 
-
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk } from './types';
 import { getNextService } from './utils.tsx';
 
@@ -66,6 +65,7 @@ export const userData: User[] = [
     { id: 'p3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: [] },
     { id: 'p4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
     { id: 'p5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
+    { id: 'p6', name: 'John Smith', role: 'Safety Manager', department: 'Management', email: 'john.smith@skybound.com', phone: '555-0105', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
     // Students
     { id: 's1', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'], permissions: [] },
     { id: 's2', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'], permissions: [] },
@@ -161,21 +161,23 @@ export const safetyReportData: SafetyReport[] = [
       submittedBy: 'Sarah Connor', 
       type: 'Flight Operations Report', 
       subCategory: 'Bird Strike', 
-      details: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor.', 
+      details: 'During final approach to runway 31, a large bird, possibly a hawk, passed very close to the aircraft. No impact was felt, but a post-flight inspection is warranted to be safe. ATC was notified of the bird activity in the area.', 
       status: 'Under Review', 
       aircraftInvolved: 'N/A', 
-      investigationTeam: ['Mike Ross', 'Sarah Connor'], 
+      investigationTeam: ['Mike Ross', 'Sarah Connor', 'John Smith'],
+      investigationNotes: 'Post-flight inspection of the aircraft revealed no visible damage. Interviewed Sarah Connor, who confirmed the bird passed within an estimated 50 feet of the cockpit. Air Traffic Control confirms they issued a general warning about bird activity that morning, but no specific advisory for this flight.', 
       occurrenceCategory: 'BIRD',
       discussion: [
-        { id: 'd1', author: 'Mike Ross', recipient: 'Sarah Connor', message: 'Please provide a written statement detailing the event from your perspective.', datePosted: '2024-08-11', replyByDate: '2024-08-14' }
+        { id: 'd1', author: 'John Smith', recipient: 'Sarah Connor', message: 'Please provide a written statement detailing the event from your perspective, including altitude and airspeed at the time of the event.', datePosted: '2024-08-11T10:00:00Z', replyByDate: '2024-08-14T17:00:00Z' },
+        { id: 'd2', author: 'Sarah Connor', recipient: 'John Smith', message: 'Statement submitted. We were at approximately 500 feet AGL, airspeed 70 knots. The bird came from the right side. It was a very close call.', datePosted: '2024-08-12T14:30:00Z' }
       ],
       associatedRisks: [
         { id: 'risk-sr1-1', hazard: 'Inadequate pilot briefing on bird activity in the area.', risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.', likelihood: 'Possible', severity: 'Minor', riskScore: 6 },
-        { id: 'risk-sr1-2', hazard: 'Actual bird strike on the airframe.', risk: 'Minor cosmetic or structural damage to the aircraft (e.g., dented leading edge).', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
-        { id: 'risk-sr1-3', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Major', riskScore: 5 },
+        { id: 'risk-sr1-2', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Major', riskScore: 5 },
+        { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
       ]
     },
-    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'F-POST' },
+    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
     { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', investigationTeam: [] },
     { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', investigationTeam: [] },
     { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
@@ -187,3 +189,5 @@ export const riskRegisterData: Risk[] = [
     { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, status: 'Mitigated', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.' },
     { id: 'risk4', dateIdentified: '2024-06-15', description: 'Runway incursion due to pilot error', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 20, status: 'Open', mitigation: 'Mandatory training on airport signage and communication protocols. Review of hotspot map during pre-flight briefings.' },
 ];
+
+    

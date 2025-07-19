@@ -159,8 +159,8 @@ export type SafetyReport = {
   raNotFollowedReason?: string;
   aircraftInvolved?: string;
   investigationTeam?: string[];
+  investigationNotes?: string;
   occurrenceCategory?: string;
-  phaseOfFlight?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
 };
@@ -170,6 +170,19 @@ export type SuggestInvestigationStepsOutput = {
   keyAreasToInvestigate: string[];
   recommendedActions: string[];
   potentialContributingFactors: string[];
+};
+
+export type CorrectiveAction = {
+    action: string;
+    responsiblePerson: string;
+    deadline: string;
+    status: 'Not Started' | 'In Progress' | 'Completed';
+}
+
+export type GenerateCorrectiveActionPlanOutput = {
+    summaryOfFindings: string;
+    rootCause: string;
+    correctiveActions: CorrectiveAction[];
 };
 
 
@@ -232,7 +245,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
     'ADRM', 'AMAN', 'ARC', 'ATM', 'BIRD', 'CABIN', 'CFIT', 'CTOL', 'EVAC', 'EXTL', 'F-NI', 'F-POST', 'FUEL', 'GCOL', 'GTOW', 'ICE', 'LALT', 'LOC-G', 'LOC-I', 'LOLI', 'MAC', 'MED', 'NAV', 'OTHR', 'RAMP', 'RE', 'RI', 'SCF-NP', 'SCF-PP', 'SEC', 'TURB', 'UIMC', 'UNK', 'USOS', 'WILD', 'WSTRW'
-];
+].sort();
 
 export const ICAO_PHASES_OF_FLIGHT = [
     'Standing',
@@ -251,3 +264,5 @@ export const ICAO_PHASES_OF_FLIGHT = [
     'Servicing',
     'Other',
 ];
+
+    
