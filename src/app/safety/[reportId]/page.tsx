@@ -111,7 +111,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
         <Card>
             <CardHeader>
-                <CardTitle>Report Details</CardTitle>
+                <CardTitle>{report.heading}</CardTitle>
                 <CardDescription>{report.type}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -129,6 +129,7 @@ export type SafetyReport = {
   occurrenceDate: string;
   filedDate: string;
   submittedBy: string;
+  heading: string;
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
   type: SafetyReportType;

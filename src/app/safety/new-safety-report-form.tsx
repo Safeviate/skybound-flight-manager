@@ -66,6 +66,9 @@ const reportFormSchema = z.object({
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report', 'Aircraft Defect Report'], {
     required_error: 'Please select a report type.',
   }),
+  heading: z.string().min(5, {
+    message: 'Heading must be at least 5 characters long.',
+  }),
   subCategory: z.string().optional(),
   lossOfSeparationType: z.string().optional(),
   raCallout: z.string().optional(),
@@ -336,6 +339,19 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+            control={form.control}
+            name="heading"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Report Heading</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., Unstable Approach and Hard Landing" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
         />
         <FormField
           control={form.control}

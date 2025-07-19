@@ -110,7 +110,7 @@ export default function SafetyPage() {
                       <TableHead>Occurrence Date</TableHead>
                       <TableHead>Filed Date</TableHead>
                       <TableHead>Submitted By</TableHead>
-                      <TableHead>Details</TableHead>
+                      <TableHead>Report</TableHead>
                       <TableHead>Aircraft</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -129,6 +129,7 @@ export default function SafetyPage() {
                         <TableCell>{report.submittedBy}</TableCell>
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
+                            <span className="font-medium truncate">{report.heading}</span>
                             {report.subCategory && (
                                 <Badge variant="secondary" className="mb-1 w-fit">
                                     {report.subCategory}
@@ -137,7 +138,7 @@ export default function SafetyPage() {
                                     {report.raFollowed === 'No' && ` (Not Followed)`}
                                 </Badge>
                             )}
-                            <span className="truncate">{report.details}</span>
+                            <span className="text-muted-foreground truncate">{report.details}</span>
                             {report.raNotFollowedReason && (
                                 <span className="text-xs text-destructive truncate">
                                     Reason: {report.raNotFollowedReason}
