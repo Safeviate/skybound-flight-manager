@@ -57,18 +57,18 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
               <Table className="border text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="border-r font-bold p-2">Likelihood</TableHead>
-                    <TableHead colSpan={severities.length} className="text-center font-bold p-2">Severity</TableHead>
+                    <TableHead className="border-r font-bold p-1">Likelihood</TableHead>
+                    <TableHead colSpan={severities.length} className="text-center font-bold p-1">Severity</TableHead>
                   </TableRow>
                   <TableRow>
-                    <TableHead className="border-r p-2"></TableHead>
-                    {severities.map(s => <TableHead key={s} className="text-center p-2 text-muted-foreground font-normal">{s}</TableHead>)}
+                    <TableHead className="border-r p-1"></TableHead>
+                    {severities.map(s => <TableHead key={s} className="text-center p-1 text-muted-foreground font-normal">{s}</TableHead>)}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {likelihoods.slice().reverse().map(l => (
                     <TableRow key={l}>
-                      <TableCell className="font-semibold border-r p-2">{l}</TableCell>
+                      <TableCell className="font-semibold border-r p-1">{l}</TableCell>
                       {severities.map(s => {
                         const score = getRiskScore(l, s);
                         const isSelected = l === selectedLikelihood && s === selectedSeverity;
@@ -76,13 +76,13 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
                           <TableCell
                             key={s}
                             className={cn(
-                              'text-center cursor-pointer border-l hover:bg-muted/50 p-2 h-10 w-10 font-medium',
+                              'text-center cursor-pointer border-l hover:bg-muted/50 p-1 h-8 w-8 font-medium',
                               isSelected && 'ring-2 ring-primary ring-inset'
                             )}
                             style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
                             onClick={() => handleCellClick(l, s)}
                           >
-                            {score}
+                            
                           </TableCell>
                         )
                       })}
