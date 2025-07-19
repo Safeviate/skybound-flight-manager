@@ -108,77 +108,74 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`} />
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-1 space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Report Details</CardTitle>
-                        <CardDescription>{report.type}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Report #</span>
-                            <span className="font-mono">{report.reportNumber}</span>
+      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
+        <Card>
+            <CardHeader>
+                <CardTitle>Report Details</CardTitle>
+                <CardDescription>{report.type}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-start flex-col">
+                        <span className="font-semibold text-muted-foreground text-sm">Report #</span>
+                        <span className="font-mono">{report.reportNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-start flex-col">
+                        <span className="font-semibold text-muted-foreground text-sm">Status</span>
+                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                    </div>
+                    <div className="flex justify-between items-start flex-col">
+                        <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
+                        <span>{report.occurrenceDate}</span>
+                    </div>
+                        <div className="flex justify-between items-start flex-col">
+                        <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
+                        <span>{report.filedDate}</span>
+                    </div>
+                        <div className="flex justify-between items-start flex-col">
+                        <span className="font-semibold text-muted-foreground text-sm">Submitted By</span>
+                        <span>{report.submittedBy}</span>
+                    </div>
+                    {report.aircraftInvolved && (
+                        <div className="flex justify-between items-start flex-col">
+                            <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
+                            <span>{report.aircraftInvolved}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Status</span>
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Occurrence Date</span>
-                            <span>{report.occurrenceDate}</span>
-                        </div>
-                         <div className="flex justify-between items-center">
-                            <span className="font-semibold">Filed Date</span>
-                            <span>{report.filedDate}</span>
-                        </div>
-                         <div className="flex justify-between items-center">
-                            <span className="font-semibold">Submitted By</span>
-                            <span>{report.submittedBy}</span>
-                        </div>
-                        {report.aircraftInvolved && (
-                            <div className="flex justify-between items-center">
-                                <span className="font-semibold">Aircraft</span>
-                                <span>{report.aircraftInvolved}</span>
-                            </div>
-                        )}
-                        <div className="space-y-2 pt-2">
-                            <h4 className="font-semibold">Details</h4>
-                            <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-            <div className="lg:col-span-2 space-y-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Investigation Workbench</CardTitle>
-                        <CardDescription>
-                            Add notes, classify the report, and use AI to suggest investigation steps.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form action={formAction} className="space-y-4">
-                            <input type="hidden" name="report" value={JSON.stringify(report)} />
-                            <div className="space-y-2">
-                                <Label htmlFor="investigationNotes">Investigation Notes</Label>
-                                <Textarea
-                                    id="investigationNotes"
-                                    name="investigationNotes"
-                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                    className="min-h-[150px]"
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <SubmitButton />
-                            </div>
-                        </form>
-                    </CardContent>
-                 </Card>
-                 {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
-            </div>
-        </div>
+                    )}
+                </div>
+                <div className="space-y-2 pt-2">
+                    <h4 className="font-semibold">Details</h4>
+                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Investigation Workbench</CardTitle>
+                <CardDescription>
+                    Add notes, classify the report, and use AI to suggest investigation steps.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form action={formAction} className="space-y-4">
+                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                    <div className="space-y-2">
+                        <Label htmlFor="investigationNotes">Investigation Notes</Label>
+                        <Textarea
+                            id="investigationNotes"
+                            name="investigationNotes"
+                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                            className="min-h-[150px]"
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <SubmitButton />
+                    </div>
+                </form>
+            </CardContent>
+            </Card>
+            {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
       </main>
     </div>
   );
