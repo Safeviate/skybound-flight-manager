@@ -39,7 +39,13 @@ interface InvestigationTeamFormProps {
 
 export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
   const { toast } = useToast();
-  const [team, setTeam] = React.useState<string[]>(report.investigationTeam || []);
+  const [team, setTeam] = React.useState<string[]>(() => {
+    const initialTeam = new Set(report.investigationTeam || []);
+    if (report.submittedBy !== 'Anonymous') {
+        initialTeam.add(report.submittedBy);
+    }
+    return Array.from(initialTeam);
+  });
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
@@ -59,6 +65,15 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
   }
 
   function onRemoveMember(memberName: string) {
+    // Prevent the original reporter from being removed
+    if (memberName === report.submittedBy && report.submittedBy !== 'Anonymous') {
+      toast({
+        variant: 'destructive',
+        title: 'Action Not Allowed',
+        description: 'The original reporter cannot be removed from the investigation team.',
+      });
+      return;
+    }
     setTeam((prevTeam) => prevTeam.filter((m) => m !== memberName));
     toast({
       title: 'Team Member Removed',
@@ -74,6 +89,7 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
           <div className="flex flex-wrap gap-4">
             {team.map((memberName) => {
               const member = userData.find((u) => u.name === memberName);
+              const isReporter = memberName === report.submittedBy;
               return (
                 <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
                   <Avatar className="h-8 w-8">
@@ -82,13 +98,14 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{memberName}</p>
-                    <p className="text-xs text-muted-foreground">{member?.role}</p>
+                    <p className="text-xs text-muted-foreground">{isReporter ? 'Reporter' : member?.role}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 ml-2"
                     onClick={() => onRemoveMember(memberName)}
+                    disabled={isReporter && report.submittedBy !== 'Anonymous'}
                   >
                     <X className="h-4 w-4" />
                   </Button>
