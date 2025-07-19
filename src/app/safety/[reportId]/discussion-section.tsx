@@ -125,12 +125,12 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 border-t pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <FormField
                 control={form.control}
                 name="recipient"
                 render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1">
                     <FormLabel>Send To</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
@@ -154,7 +154,7 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
                 control={form.control}
                 name="replyByDate"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem className="flex-1">
                         <FormLabel>Reply Needed By (Optional)</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
