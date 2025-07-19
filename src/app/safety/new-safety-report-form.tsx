@@ -31,6 +31,7 @@ const flightOpsSubCategories = [
     'Aircraft System Malfunction',
     'Passenger Related Incident',
     'Air Traffic Control (ATC) Issue',
+    'Other',
 ];
 
 const reportFormSchema = z.object({
