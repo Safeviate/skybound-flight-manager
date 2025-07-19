@@ -26,6 +26,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -70,6 +71,7 @@ const reportFormSchema = z.object({
     message: 'Heading must be at least 5 characters long.',
   }),
   subCategory: z.string().optional(),
+  phaseOfFlight: z.string().optional(),
   lossOfSeparationType: z.string().optional(),
   raCallout: z.string().optional(),
   raFollowed: z.enum(['Yes', 'No']).optional(),
@@ -203,28 +205,52 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             />
         </div>
         {reportType === 'Flight Operations Report' && (
-            <FormField
-                control={form.control}
-                name="subCategory"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Flight Operations Sub-Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a sub-category" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {flightOpsSubCategories.map(cat => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <div className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="subCategory"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Flight Operations Sub-Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a sub-category" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {flightOpsSubCategories.map(cat => (
+                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="phaseOfFlight"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Phase of Flight</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select the phase of flight" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {ICAO_PHASES_OF_FLIGHT.map(phase => (
+                                        <SelectItem key={phase} value={phase}>{phase}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
         )}
         {subCategory === 'Loss of Separation' && (
             <FormField
@@ -374,7 +400,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
           control={form.control}
           name="isAnonymous"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-[#ffd300] dark:bg-[#ffd300]/30">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
               <FormControl>
                 <Checkbox
                   checked={field.value}

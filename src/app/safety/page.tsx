@@ -130,10 +130,21 @@ export default function SafetyPage() {
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
                             <span className="font-medium truncate">{report.heading}</span>
-                            {report.subCategory && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {report.subCategory && (
+                                    <Badge variant="secondary" className="w-fit">
+                                        {report.subCategory}
+                                    </Badge>
+                                )}
+                                {report.phaseOfFlight && (
+                                     <Badge variant="outline" className="w-fit">
+                                        {report.phaseOfFlight}
+                                    </Badge>
+                                )}
+                            </div>
+                            {report.lossOfSeparationType && (
                                 <Badge variant="secondary" className="mb-1 w-fit">
-                                    {report.subCategory}
-                                    {report.lossOfSeparationType && ` - ${report.lossOfSeparationType}`}
+                                    {report.lossOfSeparationType}
                                     {report.raCallout && ` (${report.raCallout})`}
                                     {report.raFollowed === 'No' && ` (Not Followed)`}
                                 </Badge>
