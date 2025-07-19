@@ -11,10 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
+import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -28,8 +28,11 @@ import { InitialRiskAssessment } from './initial-risk-assessment';
 import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -102,23 +105,37 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
 
 interface CorrectiveActionPlanResultProps {
     data: GenerateCorrectiveActionPlanOutput;
-    reportStatus: SafetyReport['status'];
+    report: SafetyReport;
     onCloseReport: () => void;
 }
 
-function CorrectiveActionPlanResult({ data, reportStatus, onCloseReport }: CorrectiveActionPlanResultProps) {
+function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveActionPlanResultProps) {
     const [plan, setPlan] = useState(data);
     const { toast } = useToast();
 
     useEffect(() => {
         setPlan(data);
     }, [data]);
-
-    const handleStatusChange = (index: number, newStatus: CorrectiveAction['status']) => {
+    
+    const handleActionChange = <K extends keyof CorrectiveAction>(index: number, field: K, value: CorrectiveAction[K]) => {
         const updatedActions = [...plan.correctiveActions];
-        updatedActions[index].status = newStatus;
+        updatedActions[index][field] = value;
         setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
-        toast({ title: "Status Updated", description: `Action status changed to "${newStatus}".` });
+    };
+
+    const handleAddAction = () => {
+        const newAction: CorrectiveAction = {
+            action: '',
+            responsiblePerson: '',
+            deadline: new Date().toISOString().split('T')[0],
+            status: 'Not Started',
+        };
+        setPlan(prev => ({ ...prev, correctiveActions: [...prev.correctiveActions, newAction] }));
+    };
+
+    const handleRemoveAction = (index: number) => {
+        const updatedActions = plan.correctiveActions.filter((_, i) => i !== index);
+        setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
     };
 
     const getStatusVariant = (status: string) => {
@@ -128,25 +145,15 @@ function CorrectiveActionPlanResult({ data, reportStatus, onCloseReport }: Corre
             default: return 'outline';
         }
     };
-
-    const getTimelineInfo = (deadline: string) => {
-        const today = new Date();
-        const deadlineDate = parseISO(deadline);
-        const days = differenceInDays(deadlineDate, today);
-
-        if (days < 0) return <Badge variant="destructive">Overdue by {-days}d</Badge>;
-        if (days <= 7) return <Badge variant="warning">{days}d remaining</Badge>;
-        return <span className="text-muted-foreground">{days}d remaining</span>;
-    };
     
     const allActionsCompleted = plan.correctiveActions.every(action => action.status === 'Completed');
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Bot /> AI-Generated Corrective Action Plan</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Bot /> Corrective Action Plan</CardTitle>
                 <CardDescription>
-                    Based on the complete investigation, this is a draft corrective action plan. You can update the status below.
+                    This is the corrective action plan for the report. You can edit the details below.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -159,62 +166,98 @@ function CorrectiveActionPlanResult({ data, reportStatus, onCloseReport }: Corre
                     <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
                 </div>
                 <div>
-                    <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Milestone /> Corrective Actions</h3>
-                    <div className="overflow-x-auto">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone /> Corrective Actions</h3>
+                        <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed'}>
+                            <PlusCircleIcon className="mr-2 h-4 w-4" />
+                            Add Action
+                        </Button>
+                    </div>
+                    <div className="overflow-x-auto border rounded-lg">
                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[40%]">Action</TableHead>
+                                    <TableHead>Responsible</TableHead>
+                                    <TableHead>Deadline</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Remove</TableHead>
+                                </TableRow>
+                            </TableHeader>
                             <TableBody>
                                 {plan.correctiveActions.map((action, i) => (
-                                    <React.Fragment key={i}>
-                                        <TableRow className="bg-muted/50">
-                                            <TableCell colSpan={5} className="font-medium">
-                                                {action.action}
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableCell className="w-[25%]">
-                                                <Label>Responsible</Label>
-                                                <div>{action.responsiblePerson}</div>
-                                            </TableCell>
-                                            <TableCell className="w-[20%]">
-                                                <Label>Timeline</Label>
-                                                <div>{getTimelineInfo(action.deadline)}</div>
-                                            </TableCell>
-                                            <TableCell className="w-[20%]">
-                                                <Label>Status</Label>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="w-full justify-start mt-1" disabled={reportStatus === 'Closed'}>
-                                                            <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent>
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'Not Started')}>Not Started</DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'In Progress')}>In Progress</DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(i, 'Completed')}>Completed</DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                            <TableCell className="w-[15%]">
-                                                <Label>Proof</Label>
-                                                <Button variant="outline" size="sm" className="w-full mt-1" disabled={reportStatus === 'Closed'}>
-                                                    <Upload className="mr-2 h-4 w-4" />
-                                                    Upload
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell className="text-right w-[20%]">
-                                                <Label>Actions</Label>
-                                                <Button variant="ghost" size="sm" className="w-full mt-1" disabled={reportStatus === 'Closed'}>Re-assign</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    </React.Fragment>
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            <Textarea
+                                                value={action.action}
+                                                onChange={(e) => handleActionChange(i, 'action', e.target.value)}
+                                                className="min-h-[60px]"
+                                                disabled={report.status === 'Closed'}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Select
+                                                value={action.responsiblePerson}
+                                                onValueChange={(value) => handleActionChange(i, 'responsiblePerson', value)}
+                                                disabled={report.status === 'Closed'}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Person" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {report.investigationTeam?.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" className="w-full justify-start font-normal" disabled={report.status === 'Closed'}>
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {format(parseISO(action.deadline), "MMM d, yyyy")}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent>
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={parseISO(action.deadline)}
+                                                        onSelect={(date) => date && handleActionChange(i, 'deadline', date.toISOString().split('T')[0])}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Select
+                                                value={action.status}
+                                                onValueChange={(value: CorrectiveAction['status']) => handleActionChange(i, 'status', value)}
+                                                disabled={report.status === 'Closed'}
+                                            >
+                                                <SelectTrigger>
+                                                    <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Not Started">Not Started</SelectItem>
+                                                    <SelectItem value="In Progress">In Progress</SelectItem>
+                                                    <SelectItem value="Completed">Completed</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveAction(i)} disabled={report.status === 'Closed'}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
             </CardContent>
-             {allActionsCompleted && reportStatus !== 'Closed' && (
-                <CardFooter className="flex justify-end">
+             {allActionsCompleted && report.status !== 'Closed' && (
+                <CardFooter className="flex justify-end gap-2">
+                    <Button variant="outline">Save Plan</Button>
                     <Button onClick={onCloseReport}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Close & Archive Report
@@ -456,7 +499,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             </TabsContent>
             <TabsContent value="plan" className="pt-4 space-y-8">
                 {generatePlanState.data ? (
-                     <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} reportStatus={report.status} onCloseReport={handleCloseReport} />
+                     <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} report={report} onCloseReport={handleCloseReport} />
                 ) : (
                     <Card>
                         <CardContent className="pt-6">
@@ -476,3 +519,5 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
+
+    
