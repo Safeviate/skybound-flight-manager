@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { aircraftData } from '@/lib/mock-data';
+import type { SafetyReport, SafetyReportType } from '@/lib/types';
 
 const reportFormSchema = z.object({
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
@@ -31,23 +32,49 @@ const reportFormSchema = z.object({
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
-export function NewSafetyReportForm() {
+interface NewSafetyReportFormProps {
+    safetyReports: SafetyReport[];
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'date' | 'status'>) => void;
+}
+
+const getReportTypeAbbreviation = (type: SafetyReportType) => {
+    switch (type) {
+        case 'Flight Operations Report': return 'FOR';
+        case 'Ground Operations Report': return 'GOR';
+        case 'Occupational Report': return 'OR';
+        case 'General Report': return 'GR';
+        default: return 'REP';
+    }
+}
+
+export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReportFormProps) {
   const { toast } = useToast();
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
   });
 
-  function onSubmit(data: ReportFormValues) {
-    console.log(data);
+  function handleFormSubmit(data: ReportFormValues) {
+    const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
+    const reportsOfType = safetyReports.filter(r => r.reportNumber.startsWith(reportTypeAbbr));
+    const nextId = reportsOfType.length + 1;
+    const reportNumber = `${reportTypeAbbr}-${String(nextId).padStart(3, '0')}`;
+
+    const newReport = {
+        ...data,
+        reportNumber,
+    };
+    
+    onSubmit(newReport);
+
     toast({
       title: 'Report Filed',
-      description: 'Your safety report has been submitted for review.',
+      description: `Your safety report (${reportNumber}) has been submitted for review.`,
     });
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="reportType"

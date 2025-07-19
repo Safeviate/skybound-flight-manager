@@ -24,10 +24,14 @@ import type { SafetyReport, Risk, RiskStatus, SafetyReportType } from '@/lib/typ
 import { getRiskScoreColor } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
+import { useUser } from '@/context/user-provider';
+import { format } from 'date-fns';
 
 export default function SafetyPage() {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
+  const [isNewReportOpen, setIsNewReportOpen] = useState(false);
+  const { user } = useUser();
 
   const getStatusVariant = (status: SafetyReport['status']) => {
     switch (status) {
@@ -56,6 +60,18 @@ export default function SafetyPage() {
     }
   }
 
+  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'date' | 'status'>) => {
+    const newReport: SafetyReport = {
+        id: `sr-${Date.now()}`,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        submittedBy: user?.name || 'System',
+        status: 'Open',
+        ...newReportData,
+    };
+    setSafetyReports(prev => [newReport, ...prev]);
+    setIsNewReportOpen(false);
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Safety Management System" />
@@ -67,7 +83,7 @@ export default function SafetyPage() {
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="assessment">Risk Assessment Tool</TabsTrigger>
             </TabsList>
-            <Dialog>
+            <Dialog open={isNewReportOpen} onOpenChange={setIsNewReportOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -81,7 +97,7 @@ export default function SafetyPage() {
                     Describe the incident or hazard. This will be reviewed by the Safety Manager.
                   </DialogDescription>
                 </DialogHeader>
-                <NewSafetyReportForm />
+                <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReport} />
               </DialogContent>
             </Dialog>
           </div>
@@ -96,6 +112,7 @@ export default function SafetyPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Report #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Submitted By</TableHead>
                       <TableHead>Type</TableHead>
@@ -108,6 +125,7 @@ export default function SafetyPage() {
                   <TableBody>
                     {safetyReports.map((report) => (
                       <TableRow key={report.id}>
+                        <TableCell className="font-mono">{report.reportNumber}</TableCell>
                         <TableCell>{report.date}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
                         <TableCell>

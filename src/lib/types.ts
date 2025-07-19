@@ -125,6 +125,7 @@ export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations R
 
 export type SafetyReport = {
   id: string;
+  reportNumber: string;
   date: string;
   submittedBy: string;
   details: string;
