@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
@@ -92,7 +92,7 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                                             {cellRisks.map(risk => (
                                                 <div key={risk.id} className="text-sm">
                                                     {risk.reportNumber ? (
-                                                        <Link href={`/safety/${risk.id.replace('risk-reg-', 'sr')}`}>
+                                                        <Link href={`/safety/${risk.reportNumber.replace('FOR-','sr').replace('GOR-','sr').replace('ADR-','sr')}`}>
                                                             <Badge variant="secondary" className="hover:underline">{risk.reportNumber}</Badge>
                                                         </Link>
                                                     ) : (
