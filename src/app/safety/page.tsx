@@ -35,7 +35,7 @@ import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -52,6 +52,102 @@ function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
     risks: grouped[area],
   }));
 }
+
+const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) => {
+    // SPI 1: Unstable Approach Rate (as an example of a specific event trend)
+    const unstableApproachesByMonth = reports
+        .filter(r => r.subCategory === 'Unstable Approach')
+        .reduce((acc, report) => {
+            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+    const unstableApproachesData = Object.keys(unstableApproachesByMonth).map(month => ({
+        name: month,
+        count: unstableApproachesByMonth[month],
+    })).reverse();
+
+    // SPI 2: Reports by Phase of Flight
+    const reportsByPhase = reports
+        .filter(r => r.phaseOfFlight)
+        .reduce((acc, report) => {
+            const phase = report.phaseOfFlight!;
+            acc[phase] = (acc[phase] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+    
+    const reportsByPhaseData = Object.keys(reportsByPhase).map(phase => ({
+        name: phase,
+        value: reportsByPhase[phase],
+    }));
+
+    // SPI 3: Technical Defect Rate
+    const adrByMonth = reports
+        .filter(r => r.type === 'Aircraft Defect Report')
+        .reduce((acc, report) => {
+            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+    const adrData = Object.keys(adrByMonth).map(month => ({
+        name: month,
+        count: adrByMonth[month],
+    })).reverse();
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'];
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Safety Performance Indicators (SPIs)</CardTitle>
+                <CardDescription>
+                    Monitoring key indicators to proactively manage safety, based on ICAO and SACAA principles.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                 <div className="space-y-2">
+                    <h4 className="font-semibold text-center">Unstable Approach Rate</h4>
+                     <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={unstableApproachesData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" fontSize={12} />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="count" name="Unstable Approaches" fill="hsl(var(--warning))" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                 <div className="space-y-2">
+                    <h4 className="font-semibold text-center">Reports by Phase of Flight</h4>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                            <Pie data={reportsByPhaseData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                                {reportsByPhaseData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="space-y-2">
+                    <h4 className="font-semibold text-center">Technical Defect Rate</h4>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={adrData}>
+                             <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" fontSize={12}/>
+                            <YAxis allowDecimals={false}/>
+                            <Tooltip />
+                            <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--destructive))" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
 
 const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: Risk[] }) => {
     const openReports = reports.filter(r => r.status !== 'Closed').length;
@@ -78,7 +174,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
         value: reportsByStatus[status],
     }));
     
-    const riskLevels = risks.reduce((acc, risk) => {
+    const riskLevels = risks.filter(r => r.status === 'Open').reduce((acc, risk) => {
         const level = getRiskLevel(risk.riskScore);
         acc[level] = (acc[level] || 0) + 1;
         return acc;
@@ -87,7 +183,10 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     const riskLevelsData = Object.keys(riskLevels).map(level => ({
         name: level,
         count: riskLevels[level],
-    }));
+    })).sort((a,b) => { // Ensure consistent order
+        const order = { 'Low': 1, 'Medium': 2, 'High': 3, 'Extreme': 4 };
+        return order[a.name as keyof typeof order] - order[b.name as keyof typeof order];
+    });
 
     const statusColors = {
         'Open': 'hsl(var(--destructive))',
@@ -136,6 +235,9 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                     </CardContent>
                 </Card>
             </div>
+
+            <SafetyPerformanceIndicators reports={reports} />
+
             <div className="grid gap-8 md:grid-cols-2">
                 <Card>
                     <CardHeader>
@@ -146,8 +248,8 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={reportsOverTimeData}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
+                                <XAxis dataKey="name" fontSize={12} />
+                                <YAxis allowDecimals={false} />
                                 <Tooltip />
                                 <Bar dataKey="reports" fill="hsl(var(--primary))" />
                             </BarChart>
@@ -176,7 +278,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
             </div>
              <Card>
                 <CardHeader>
-                    <CardTitle>Risk Level Distribution</CardTitle>
+                    <CardTitle>Open Risk Level Distribution</CardTitle>
                     <CardDescription>Number of open risks in each risk category.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -184,7 +286,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                         <BarChart data={riskLevelsData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
-                            <YAxis />
+                            <YAxis allowDecimals={false} />
                             <Tooltip />
                             <Legend />
                             <Bar dataKey="count" name="Number of Risks">
