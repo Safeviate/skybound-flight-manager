@@ -51,12 +51,13 @@ export default function SafetyPage() {
     }
   };
 
-  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'>) => {
+  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'> & { isAnonymous?: boolean }) => {
+    const { isAnonymous, ...reportData } = newReportData;
     const newReport: SafetyReport = {
         id: `sr-${Date.now()}`,
-        submittedBy: user?.name || 'System',
+        submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
         status: 'Open',
-        ...newReportData,
+        ...reportData,
     };
     setSafetyReports(prev => [newReport, ...prev]);
     setIsNewReportOpen(false);

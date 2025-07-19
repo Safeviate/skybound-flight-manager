@@ -72,7 +72,7 @@ export const userData: User[] = [
     { id: 's3', name: 'Peter Jones', role: 'Student', email: 'peter.jones@email.com', phone: '555-0203', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['s3'], trainingLogs: studentTrainingLogs['s3'], permissions: [] },
     { id: 's4', name: 'Emily White', role: 'Student', email: 'emily.white@email.com', phone: '555-0204', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['s4'], trainingLogs: studentTrainingLogs['s4'], permissions: [] },
     { id: 's5', name: 'Chris Green', role: 'Student', email: 'chris.green@email.com', phone: '555-0205', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['s5'], trainingLogs: studentTrainingLogs['s5'], permissions: [] },
-  ];
+];
 
 // Booking Data
 export const bookingData: Booking[] = [
@@ -155,6 +155,7 @@ export const safetyReportData: SafetyReport[] = [
     { id: 'sr1', reportNumber: 'FOR-001', occurrenceDate: '2024-08-10', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', subCategory: 'Bird Strike', details: 'Observed large flock of birds near runway 31 threshold during morning operations.', status: 'Under Review', aircraftInvolved: 'N/A' },
     { id: 'sr2', reportNumber: 'FOR-002', occurrenceDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345' },
     { id: 'sr3', reportNumber: 'GOR-001', occurrenceDate: '2024-07-28', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A' },
+    { id: 'sr4', reportNumber: 'GR-001', occurrenceDate: '2024-08-14', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A' },
 ];
 
 export const riskRegisterData: Risk[] = [

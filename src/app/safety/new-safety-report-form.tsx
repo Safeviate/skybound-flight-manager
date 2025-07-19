@@ -24,6 +24,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -73,13 +74,14 @@ const reportFormSchema = z.object({
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
   }),
+  isAnonymous: z.boolean().default(false).optional(),
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
     safetyReports: SafetyReport[];
-    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'>) => void;
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'> & { isAnonymous?: boolean }) => void;
 }
 
 const getReportTypeAbbreviation = (type: SafetyReportType) => {
@@ -98,6 +100,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
         occurrenceDate: new Date(),
+        isAnonymous: false,
     }
   });
 
@@ -345,6 +348,28 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isAnonymous"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  File Anonymously
+                </FormLabel>
+                <p className="text-xs text-muted-foreground">
+                  If checked, your name will not be attached to this report.
+                </p>
+              </div>
             </FormItem>
           )}
         />
