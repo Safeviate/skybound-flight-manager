@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -111,6 +111,7 @@ interface CorrectiveActionPlanResultProps {
 
 function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveActionPlanResultProps) {
     const [plan, setPlan] = useState(data);
+    const [editingActionId, setEditingActionId] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -119,18 +120,20 @@ function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveA
     
     const handleActionChange = <K extends keyof CorrectiveAction>(index: number, field: K, value: CorrectiveAction[K]) => {
         const updatedActions = [...plan.correctiveActions];
-        updatedActions[index][field] = value;
+        updatedActions[index] = { ...updatedActions[index], [field]: value };
         setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
     };
 
     const handleAddAction = () => {
-        const newAction: CorrectiveAction = {
+        const newAction: CorrectiveAction & { id: string } = {
+            id: `new-${Date.now()}`,
             action: '',
             responsiblePerson: '',
             deadline: new Date().toISOString().split('T')[0],
             status: 'Not Started',
         };
         setPlan(prev => ({ ...prev, correctiveActions: [...prev.correctiveActions, newAction] }));
+        setEditingActionId(newAction.id);
     };
 
     const handleRemoveAction = (index: number) => {
@@ -147,6 +150,105 @@ function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveA
     };
     
     const allActionsCompleted = plan.correctiveActions.every(action => action.status === 'Completed');
+
+    const ActionRow = ({ action, index }: { action: CorrectiveAction & { id?: string }, index: number }) => {
+        const isEditing = editingActionId === action.id;
+        
+        const handleSave = () => {
+             // Basic validation
+            if (!action.action || !action.responsiblePerson) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Action and Responsible Person cannot be empty.' });
+                return;
+            }
+            setEditingActionId(null);
+        };
+
+        return (
+            <TableRow>
+                <TableCell>
+                    {isEditing ? (
+                        <Textarea
+                            value={action.action}
+                            onChange={(e) => handleActionChange(index, 'action', e.target.value)}
+                            className="min-h-[60px]"
+                        />
+                    ) : (
+                        <p className="text-sm">{action.action}</p>
+                    )}
+                </TableCell>
+                <TableCell>
+                    {isEditing ? (
+                         <Select
+                            value={action.responsiblePerson}
+                            onValueChange={(value) => handleActionChange(index, 'responsiblePerson', value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Person" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {report.investigationTeam?.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                       <p className="text-sm">{action.responsiblePerson}</p>
+                    )}
+                </TableCell>
+                 <TableCell>
+                    {isEditing ? (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {format(parseISO(action.deadline), "MMM d, yyyy")}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                                <Calendar
+                                    mode="single"
+                                    selected={parseISO(action.deadline)}
+                                    onSelect={(date) => date && handleActionChange(index, 'deadline', date.toISOString().split('T')[0])}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    ) : (
+                         <p className="text-sm">{format(parseISO(action.deadline), "MMM d, yyyy")}</p>
+                    )}
+                </TableCell>
+                <TableCell>
+                     {isEditing ? (
+                         <Select
+                            value={action.status}
+                            onValueChange={(value: CorrectiveAction['status']) => handleActionChange(index, 'status', value)}
+                        >
+                            <SelectTrigger>
+                                 <SelectValue placeholder="Select Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Not Started">Not Started</SelectItem>
+                                <SelectItem value="In Progress">In Progress</SelectItem>
+                                <SelectItem value="Completed">Completed</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                    )}
+                </TableCell>
+                <TableCell className="text-right">
+                    <div className="flex gap-1 justify-end">
+                        {isEditing ? (
+                            <Button size="icon" onClick={handleSave} variant="ghost"><Save className="h-4 w-4 text-primary" /></Button>
+                        ) : (
+                            <Button size="icon" onClick={() => setEditingActionId(action.id || null)} variant="ghost" disabled={report.status === 'Closed'}><Edit className="h-4 w-4" /></Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveAction(index)} disabled={report.status === 'Closed' || isEditing}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                </TableCell>
+            </TableRow>
+        )
+    };
 
     return (
         <Card>
@@ -168,7 +270,7 @@ function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveA
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone /> Corrective Actions</h3>
-                        <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed'}>
+                        <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed' || editingActionId !== null}>
                             <PlusCircleIcon className="mr-2 h-4 w-4" />
                             Add Action
                         </Button>
@@ -181,74 +283,16 @@ function CorrectiveActionPlanResult({ data, report, onCloseReport }: CorrectiveA
                                     <TableHead>Responsible</TableHead>
                                     <TableHead>Deadline</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Remove</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {plan.correctiveActions.map((action, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell>
-                                            <Textarea
-                                                value={action.action}
-                                                onChange={(e) => handleActionChange(i, 'action', e.target.value)}
-                                                className="min-h-[60px]"
-                                                disabled={report.status === 'Closed'}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Select
-                                                value={action.responsiblePerson}
-                                                onValueChange={(value) => handleActionChange(i, 'responsiblePerson', value)}
-                                                disabled={report.status === 'Closed'}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select Person" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {report.investigationTeam?.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="outline" className="w-full justify-start font-normal" disabled={report.status === 'Closed'}>
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {format(parseISO(action.deadline), "MMM d, yyyy")}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent>
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={parseISO(action.deadline)}
-                                                        onSelect={(date) => date && handleActionChange(i, 'deadline', date.toISOString().split('T')[0])}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Select
-                                                value={action.status}
-                                                onValueChange={(value: CorrectiveAction['status']) => handleActionChange(i, 'status', value)}
-                                                disabled={report.status === 'Closed'}
-                                            >
-                                                <SelectTrigger>
-                                                    <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Not Started">Not Started</SelectItem>
-                                                    <SelectItem value="In Progress">In Progress</SelectItem>
-                                                    <SelectItem value="Completed">Completed</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveAction(i)} disabled={report.status === 'Closed'}>
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    <ActionRow
+                                        key={(action as any).id || i}
+                                        action={{ id: (action as any).id || `action-${i}`, ...action }}
+                                        index={i}
+                                    />
                                 ))}
                             </TableBody>
                         </Table>
@@ -519,5 +563,3 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
-
-    
