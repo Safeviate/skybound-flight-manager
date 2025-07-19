@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -432,7 +432,12 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title={`Investigate Report: ${report.reportNumber}`} />
+      <Header title={`Investigate Report: ${report.reportNumber}`}>
+        <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Report
+        </Button>
+      </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <Card>
             <CardHeader>
@@ -539,7 +544,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         </Card>
         
         <Tabs defaultValue="investigation" className="w-full">
-            <TabsList>
+            <TabsList className="no-print">
                 <TabsTrigger value="investigation">Investigation</TabsTrigger>
                 <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
                 <TabsTrigger value="ai">AI Assistant</TabsTrigger>

@@ -22,7 +22,7 @@ export default function Header({ title, children }: { title: string, children?: 
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
