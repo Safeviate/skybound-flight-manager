@@ -28,7 +28,7 @@ export default function Header({ title, children }: { title: string, children?: 
       </div>
       <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap">{title}</h1>
       <div className="w-full flex-1 flex items-center justify-between">
-        <form className="w-full max-w-sm">
+        <form className="w-full max-w-sm ml-4">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

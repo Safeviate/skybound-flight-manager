@@ -7,7 +7,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -111,10 +111,15 @@ export default function SafetyPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Safety Management System" />
+      <Header title="Safety Management System">
+        <Button variant="outline" onClick={() => window.print()} className="print:hidden">
+            <Printer className="mr-2 h-4 w-4" />
+            Print
+        </Button>
+      </Header>
       <main className="flex-1 p-4 md:p-8">
         <Tabs defaultValue="reports">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 no-print">
             <TabsList>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
@@ -157,7 +162,7 @@ export default function SafetyPage() {
                       <TableHead>Aircraft</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right no-print">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -195,7 +200,7 @@ export default function SafetyPage() {
                         <TableCell>
                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right no-print">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
@@ -223,7 +228,7 @@ export default function SafetyPage() {
 
           <TabsContent value="register">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between no-print">
                 <div>
                     <CardTitle>Risk Register</CardTitle>
                     <CardDescription>A log of identified risks and their mitigation status.</CardDescription>
@@ -268,7 +273,7 @@ export default function SafetyPage() {
                                     <TableHead className="w-[120px]">Mitigated Value</TableHead>
                                     <TableHead className="w-[200px]">Owner</TableHead>
                                     <TableHead className="w-[150px]">Review</TableHead>
-                                    <TableHead className="w-[80px]">Actions</TableHead>
+                                    <TableHead className="w-[80px] no-print">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -305,7 +310,7 @@ export default function SafetyPage() {
                                         </TableCell>
                                         <TableCell>{risk.riskOwner}</TableCell>
                                         <TableCell>{risk.reviewDate}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="no-print">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="icon">

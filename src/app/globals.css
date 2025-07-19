@@ -94,7 +94,7 @@ body {
     background: #fff;
     color: #000;
   }
-  header, [data-sidebar], button, input, textarea, a[href] {
+  header, [data-sidebar], button, input, textarea, a[href], .no-print {
     display: none !important;
   }
   main {
@@ -107,6 +107,12 @@ body {
     page-break-inside: avoid;
   }
   .no-print {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  .print\:hidden {
     display: none !important;
   }
 }
