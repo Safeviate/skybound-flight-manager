@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
@@ -96,7 +96,13 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
     );
 }
 
-function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPlanOutput }) {
+interface CorrectiveActionPlanResultProps {
+    data: GenerateCorrectiveActionPlanOutput;
+    reportStatus: SafetyReport['status'];
+    onCloseReport: () => void;
+}
+
+function CorrectiveActionPlanResult({ data, reportStatus, onCloseReport }: CorrectiveActionPlanResultProps) {
     const [plan, setPlan] = useState(data);
     const { toast } = useToast();
 
@@ -128,6 +134,8 @@ function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPl
         if (days <= 7) return <Badge variant="warning">{days}d remaining</Badge>;
         return <span className="text-muted-foreground">{days}d remaining</span>;
     };
+    
+    const allActionsCompleted = plan.correctiveActions.every(action => action.status === 'Completed');
 
     return (
         <Card>
@@ -169,7 +177,7 @@ function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPl
                                         <TableCell>
                                              <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="w-full justify-start">
+                                                    <Button variant="outline" size="sm" className="w-full justify-start" disabled={reportStatus === 'Closed'}>
                                                         <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -181,13 +189,13 @@ function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPl
                                             </DropdownMenu>
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="outline" size="sm">
+                                            <Button variant="outline" size="sm" disabled={reportStatus === 'Closed'}>
                                                 <Upload className="mr-2 h-4 w-4" />
                                                 Upload
                                             </Button>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm">Re-assign</Button>
+                                            <Button variant="ghost" size="sm" disabled={reportStatus === 'Closed'}>Re-assign</Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -196,6 +204,14 @@ function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPl
                     </div>
                 </div>
             </CardContent>
+             {allActionsCompleted && reportStatus !== 'Closed' && (
+                <CardFooter className="flex justify-end">
+                    <Button onClick={onCloseReport}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Close & Archive Report
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }
@@ -210,6 +226,17 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
 
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
+  };
+
+  const handleCloseReport = () => {
+    if (report) {
+      const updatedReport = { ...report, status: 'Closed' as SafetyReport['status'] };
+      handleReportUpdate(updatedReport);
+      toast({
+        title: "Report Closed",
+        description: `Report ${report.reportNumber} has been successfully closed and archived.`
+      });
+    }
   };
   
   useEffect(() => {
@@ -377,7 +404,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         </Card>
 
         {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} />}
-        {generatePlanState.data && <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} />}
+        {generatePlanState.data && <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} reportStatus={report.status} onCloseReport={handleCloseReport} />}
       </main>
     </div>
   );
