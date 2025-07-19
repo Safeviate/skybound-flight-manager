@@ -51,10 +51,9 @@ export default function SafetyPage() {
     }
   };
 
-  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'date' | 'status'>) => {
+  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'>) => {
     const newReport: SafetyReport = {
         id: `sr-${Date.now()}`,
-        date: format(new Date(), 'yyyy-MM-dd'),
         submittedBy: user?.name || 'System',
         status: 'Open',
         ...newReportData,
@@ -81,7 +80,7 @@ export default function SafetyPage() {
                   File New Report
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>File New Safety Report</DialogTitle>
                   <DialogDescription>
@@ -116,7 +115,7 @@ export default function SafetyPage() {
                     {safetyReports.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell className="font-mono">{report.reportNumber}</TableCell>
-                        <TableCell>{report.date}</TableCell>
+                        <TableCell>{report.occurrenceDate}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">

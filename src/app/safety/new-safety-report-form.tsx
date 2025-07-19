@@ -19,6 +19,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { aircraftData } from '@/lib/mock-data';
 import type { SafetyReport, SafetyReportType } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
+import { format } from 'date-fns';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -53,6 +58,9 @@ const raCalloutTypes = [
 ];
 
 const reportFormSchema = z.object({
+  occurrenceDate: z.date({
+    required_error: 'An occurrence date is required.',
+  }),
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
     required_error: 'Please select a report type.',
   }),
@@ -71,7 +79,7 @@ type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
     safetyReports: SafetyReport[];
-    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'date' | 'status'>) => void;
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'>) => void;
 }
 
 const getReportTypeAbbreviation = (type: SafetyReportType) => {
@@ -88,6 +96,9 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const { toast } = useToast();
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
+    defaultValues: {
+        occurrenceDate: new Date(),
+    }
   });
 
   const reportType = form.watch('reportType');
@@ -104,6 +115,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
     const newReport = {
         ...data,
         reportNumber,
+        occurrenceDate: format(data.occurrenceDate, 'yyyy-MM-dd'),
     };
     
     onSubmit(newReport);
@@ -117,29 +129,70 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="reportType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Report Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a report type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
-                  <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
-                  <SelectItem value="Occupational Report">Occupational Report</SelectItem>
-                  <SelectItem value="General Report">General Report</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="reportType"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Report Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a report type" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
+                    <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                    <SelectItem value="Occupational Report">Occupational Report</SelectItem>
+                    <SelectItem value="General Report">General Report</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+            control={form.control}
+            name="occurrenceDate"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Occurrence/Hazard Observation Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, "PPP")
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date > new Date()}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         {reportType === 'Flight Operations Report' && (
             <FormField
                 control={form.control}
