@@ -3,6 +3,7 @@
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
+import React from 'react';
 import { useFormStatus } from 'react-dom';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -27,7 +28,8 @@ import { RiskAssessmentModule } from './risk-assessment-module';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { differenceInDays, parseISO } from 'date-fns';
-import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -60,7 +62,7 @@ function GeneratePlanButton() {
 
 function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationStepsOutput }) {
     return (
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Bot /> AI-Suggested Investigation Plan</CardTitle>
           <CardDescription>
@@ -321,39 +323,28 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
                 </div>
             </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    Classification
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-5 w-5">
-                                    <Info className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs md:max-w-md" align="start">
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
-                                    {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
-                                        <div key={code} className="text-xs">
-                                            <span className="font-bold">{code}:</span> {definition}
-                                        </div>
-                                    ))}
-                                </div>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </CardTitle>
-                <CardDescription>
-                    Classify the report using the standard ICAO taxonomy for aviation occurrences.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardFooter>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="space-y-2">
                         <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
+                         <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                   <Button variant="ghost" size="icon" className="h-5 w-5 ml-2 relative -top-1">
+                                        <Info className="h-4 w-4 text-muted-foreground" />
+                                   </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs md:max-w-md" align="start">
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
+                                        {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
+                                            <div key={code} className="text-xs">
+                                                <span className="font-bold">{code}:</span> {definition}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
                             <SelectTrigger id="occurrenceCategory">
                                 <SelectValue placeholder="Select Occurrence Category" />
@@ -364,55 +355,104 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="phaseOfFlight">Other</Label>
-                        <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., Climb, Cruise, Landing" defaultValue={report.phaseOfFlight} />
+                        <Label htmlFor="otherClassification">Other</Label>
+                        <Input id="otherClassification" name="otherClassification" placeholder="e.g., Climb, Cruise, Landing" defaultValue={''} />
                     </div>
                 </div>
-            </CardContent>
-        </Card>
-
-        <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Investigation Workbench</CardTitle>
-                <CardDescription>
-                    Add notes, assign investigators, and use AI to suggest investigation steps.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <InvestigationTeamForm report={report} />
-                <Separator />
-                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                <Separator />
-                <div className="space-y-2">
-                    <Label htmlFor="investigationNotes">Investigation Notes</Label>
-                    <Textarea
-                        id="investigationNotes"
-                        name="investigationNotes"
-                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                        className="min-h-[150px]"
-                        value={report.investigationNotes || ''}
-                        onChange={handleInvestigationNotesChange}
-                    />
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-wrap justify-end gap-2">
-                 <form action={suggestStepsFormAction}>
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <SuggestStepsButton />
-                 </form>
-                 <form action={generatePlanFormAction}>
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <GeneratePlanButton />
-                 </form>
             </CardFooter>
         </Card>
+        
+        <Tabs defaultValue="investigation" className="w-full">
+            <TabsList>
+                <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                <TabsTrigger value="risk">Risk Assessment</TabsTrigger>
+                <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+                <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
+            </TabsList>
+            <TabsContent value="investigation" className="pt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Investigation Workbench</CardTitle>
+                        <CardDescription>
+                            Add notes, assign investigators, and discuss the report with your team.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <InvestigationTeamForm report={report} />
+                        <Separator />
+                        <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                        <Separator />
+                        <div className="space-y-2">
+                            <Label htmlFor="investigationNotes">Investigation Notes & Findings</Label>
+                            <Textarea
+                                id="investigationNotes"
+                                name="investigationNotes"
+                                placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                className="min-h-[150px]"
+                                value={report.investigationNotes || ''}
+                                onChange={handleInvestigationNotesChange}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="risk" className="pt-4">
+                 <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
+            </TabsContent>
+            <TabsContent value="ai" className="pt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>AI Assistant</CardTitle>
+                        <CardDescription>
+                            Use generative AI to help with the investigation process.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1 p-4 border rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
+                                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                    Get AI suggestions for how to proceed with the investigation based on the report details.
+                                </p>
+                                <form action={suggestStepsFormAction}>
+                                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                    <SuggestStepsButton />
+                                </form>
+                            </div>
+                            <div className="flex-1 p-4 border rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
+                                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                    Generate a complete corrective action plan based on all notes, discussion, and findings.
+                                </p>
+                                <form action={generatePlanFormAction}>
+                                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                    <GeneratePlanButton />
+                                </form>
+                            </div>
+                        </div>
+                        {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} />}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="plan" className="pt-4">
+                {generatePlanState.data ? (
+                     <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} reportStatus={report.status} onCloseReport={handleCloseReport} />
+                ) : (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">
+                                    No action plan has been generated yet. Use the AI Assistant to create one.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </TabsContent>
+        </Tabs>
 
-        {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} />}
-        {generatePlanState.data && <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} reportStatus={report.status} onCloseReport={handleCloseReport} />}
       </main>
     </div>
   );
 }
-    
+
