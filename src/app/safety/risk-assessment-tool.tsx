@@ -45,17 +45,17 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
     <div className="grid md:grid-cols-3 gap-8">
       <div className="md:col-span-2">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-0 md:p-2">
             <div className="overflow-x-auto">
               <Table className="border text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="border-r font-bold p-1">Likelihood</TableHead>
-                    <TableHead colSpan={severities.length} className="text-center font-bold p-1">Severity</TableHead>
+                    <TableHead className="border-r font-bold p-1 py-0">Likelihood</TableHead>
+                    <TableHead colSpan={severities.length} className="text-center font-bold p-1 py-0">Severity</TableHead>
                   </TableRow>
                   <TableRow>
-                    <TableHead className="border-r p-1"></TableHead>
-                    {severities.map(s => <TableHead key={s} className="text-center p-1 text-muted-foreground font-normal">{s}</TableHead>)}
+                    <TableHead className="border-r p-1 py-0"></TableHead>
+                    {severities.map(s => <TableHead key={s} className="text-center p-1 py-0 text-muted-foreground font-normal">{s}</TableHead>)}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
