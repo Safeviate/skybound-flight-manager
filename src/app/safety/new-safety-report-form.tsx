@@ -35,12 +35,9 @@ const flightOpsSubCategories = [
 ];
 
 const lossOfSeparationTypes = [
-    'Wake Turbulence',
-    'Airspace Infringement',
-    'TCAS Resolution Advisory',
-    'ATC Error',
-    'Pilot Deviation',
-    'Other',
+    'Close Proximity',
+    'Resolution advisory',
+    'TA traffic Alert',
 ];
 
 const reportFormSchema = z.object({
