@@ -107,9 +107,18 @@ export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity)
     return likelihoodMap[likelihood] * severityMap[severity];
 }
 
-export const getRiskScoreColor = (score: number, opacity: number = 1): string => {
-  if (score <= 4) return `rgba(4, 120, 87, ${opacity})`; // Green-700
-  if (score <= 9) return `rgba(202, 138, 4, ${opacity})`; // Yellow-500
-  if (score <= 16) return `rgba(249, 115, 22, ${opacity})`; // Orange-500
-  return `rgba(220, 38, 38, ${opacity})`; // Red-600
+export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium' | 'High' | 'Extreme' | 'N/A' => {
+      if (score === null || score === undefined) return 'N/A';
+      if (score <= 4) return 'Low';
+      if (score <= 9) return 'Medium';
+      if (score <= 16) return 'High';
+      return 'Extreme';
+  }
+
+export const getRiskScoreColor = (score: number | null | undefined, opacity: number = 1): string => {
+  if (score === null || score === undefined) return `rgba(100, 116, 139, ${opacity})`; // slate-500
+  if (score <= 4) return `rgba(22, 163, 74, ${opacity})`; // green-600
+  if (score <= 9) return `rgba(234, 179, 8, ${opacity})`; // yellow-500
+  if (score <= 16) return `rgba(249, 115, 22, ${opacity})`; // orange-500
+  return `rgba(220, 38, 38, ${opacity})`; // red-600
 }

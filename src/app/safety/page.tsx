@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -21,11 +21,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
 import type { SafetyReport, Risk, GroupedRisk, Department } from '@/lib/types';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
-import { format } from 'date-fns';
+import { format, parseISO, startOfMonth } from 'date-fns';
 import Link from 'next/link';
 import { NewRiskForm } from './new-risk-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -35,7 +35,7 @@ import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
-
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -53,6 +53,153 @@ function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   }));
 }
 
+const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: Risk[] }) => {
+    const openReports = reports.filter(r => r.status !== 'Closed').length;
+    const highRiskIssues = risks.filter(r => (r.riskScore || 0) >= 10).length;
+    
+    const reportsByMonth = reports.reduce((acc, report) => {
+        const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+        acc[month] = (acc[month] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const reportsOverTimeData = Object.keys(reportsByMonth).map(month => ({
+        name: month,
+        reports: reportsByMonth[month],
+    })).reverse();
+
+    const reportsByStatus = reports.reduce((acc, report) => {
+        acc[report.status] = (acc[report.status] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const reportsByStatusData = Object.keys(reportsByStatus).map(status => ({
+        name: status,
+        value: reportsByStatus[status],
+    }));
+    
+    const riskLevels = risks.reduce((acc, risk) => {
+        const level = getRiskLevel(risk.riskScore);
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    const riskLevelsData = Object.keys(riskLevels).map(level => ({
+        name: level,
+        count: riskLevels[level],
+    }));
+
+    const statusColors = {
+        'Open': 'hsl(var(--destructive))',
+        'Under Review': 'hsl(var(--warning))',
+        'Closed': 'hsl(var(--success))',
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{reports.length}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Open Reports</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{openReports}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">High/Extreme Risks</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{highRiskIssues}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Avg. Time to Close</CardTitle>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">14 Days</div>
+                        <p className="text-xs text-muted-foreground">(Mock Data)</p>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="grid gap-8 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Reports Over Time</CardTitle>
+                        <CardDescription>Number of safety reports filed per month.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={reportsOverTimeData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar dataKey="reports" fill="hsl(var(--primary))" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Reports by Status</CardTitle>
+                        <CardDescription>Breakdown of all safety reports.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                           <PieChart>
+                                <Pie data={reportsByStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                                    {reportsByStatusData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={statusColors[entry.name as keyof typeof statusColors]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Risk Level Distribution</CardTitle>
+                    <CardDescription>Number of open risks in each risk category.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={riskLevelsData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="count" name="Number of Risks">
+                                {riskLevelsData.map((entry, index) => {
+                                    const score = {Low: 1, Medium: 5, High: 10, Extreme: 17}[entry.name] || 1;
+                                    return <Cell key={`cell-${index}`} fill={getRiskScoreColor(score)} />
+                                })}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
 
 export default function SafetyPage() {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
@@ -136,9 +283,10 @@ export default function SafetyPage() {
     <div className="flex flex-col min-h-screen">
       <Header title="Safety Management System" />
       <main className="flex-1 p-4 md:p-8">
-        <Tabs defaultValue="reports">
+        <Tabs defaultValue="dashboard">
           <div className="flex items-center justify-between mb-4 no-print">
             <TabsList>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
@@ -162,6 +310,10 @@ export default function SafetyPage() {
               </DialogContent>
             </Dialog>
           </div>
+
+          <TabsContent value="dashboard">
+            <SafetyDashboard reports={safetyReports} risks={risks} />
+          </TabsContent>
 
           <TabsContent value="reports">
             <Card>
