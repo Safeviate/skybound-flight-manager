@@ -326,25 +326,27 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             <CardFooter>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="space-y-2">
-                        <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
-                         <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                   <Button variant="ghost" size="icon" className="h-5 w-5 ml-2 relative -top-1">
-                                        <Info className="h-4 w-4 text-muted-foreground" />
-                                   </Button>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs md:max-w-md" align="start">
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
-                                        {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
-                                            <div key={code} className="text-xs">
-                                                <span className="font-bold">{code}:</span> {definition}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                                            <Info className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs md:max-w-md" align="start">
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
+                                            {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
+                                                <div key={code} className="text-xs">
+                                                    <span className="font-bold">{code}:</span> {definition}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
                             <SelectTrigger id="occurrenceCategory">
                                 <SelectValue placeholder="Select Occurrence Category" />
@@ -455,4 +457,3 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
-
