@@ -10,9 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
-import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput } from '@/lib/types';
+import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +25,8 @@ import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 import { Input } from '@/components/ui/input';
 import { RiskAssessmentModule } from './risk-assessment-module';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { differenceInDays, parseISO } from 'date-fns';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -95,52 +97,103 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
 }
 
 function CorrectiveActionPlanResult({ data }: { data: GenerateCorrectiveActionPlanOutput }) {
+    const [plan, setPlan] = useState(data);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        setPlan(data);
+    }, [data]);
+
+    const handleStatusChange = (index: number, newStatus: CorrectiveAction['status']) => {
+        const updatedActions = [...plan.correctiveActions];
+        updatedActions[index].status = newStatus;
+        setPlan(prev => ({ ...prev, correctiveActions: updatedActions }));
+        toast({ title: "Status Updated", description: `Action status changed to "${newStatus}".` });
+    };
+
     const getStatusVariant = (status: string) => {
         switch(status) {
             case 'Completed': return 'success';
             case 'In Progress': return 'warning';
             default: return 'outline';
         }
-    }
+    };
+
+    const getTimelineInfo = (deadline: string) => {
+        const today = new Date();
+        const deadlineDate = parseISO(deadline);
+        const days = differenceInDays(deadlineDate, today);
+
+        if (days < 0) return <Badge variant="destructive">Overdue by {-days}d</Badge>;
+        if (days <= 7) return <Badge variant="warning">{days}d remaining</Badge>;
+        return <span className="text-muted-foreground">{days}d remaining</span>;
+    };
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Bot /> AI-Generated Corrective Action Plan</CardTitle>
                 <CardDescription>
-                    Based on the complete investigation, this is a draft corrective action plan.
+                    Based on the complete investigation, this is a draft corrective action plan. You can update the status below.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
                     <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><FileText /> Summary of Findings</h3>
-                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{data.summaryOfFindings}</p>
+                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
                 </div>
                 <div>
                     <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Target /> Root Cause Analysis</h3>
-                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{data.rootCause}</p>
+                    <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
                 </div>
                 <div>
                     <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Milestone /> Corrective Actions</h3>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Action Required</TableHead>
-                                <TableHead>Responsible</TableHead>
-                                <TableHead>Deadline</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {data.correctiveActions.map((action, i) => (
-                                <TableRow key={i}>
-                                    <TableCell>{action.action}</TableCell>
-                                    <TableCell>{action.responsiblePerson}</TableCell>
-                                    <TableCell>{action.deadline}</TableCell>
-                                    <TableCell><Badge variant={getStatusVariant(action.status)}>{action.status}</Badge></TableCell>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[40%]">Action Required</TableHead>
+                                    <TableHead>Responsible</TableHead>
+                                    <TableHead>Timeline</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Proof</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {plan.correctiveActions.map((action, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>{action.action}</TableCell>
+                                        <TableCell>{action.responsiblePerson}</TableCell>
+                                        <TableCell>{getTimelineInfo(action.deadline)}</TableCell>
+                                        <TableCell>
+                                             <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="w-full justify-start">
+                                                        <Badge variant={getStatusVariant(action.status)}>{action.status}</Badge>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'Not Started')}>Not Started</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'In Progress')}>In Progress</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleStatusChange(i, 'Completed')}>Completed</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button variant="outline" size="sm">
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                Upload
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm">Re-assign</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -192,7 +245,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`} />
-      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <Card>
             <CardHeader>
                 <CardTitle>{report.heading}</CardTitle>
