@@ -166,7 +166,6 @@ export const safetyReportData: SafetyReport[] = [
       aircraftInvolved: 'N/A', 
       investigationTeam: ['Mike Ross', 'Sarah Connor'], 
       occurrenceCategory: 'BIRD', 
-      phaseOfFlight: 'Approach',
       discussion: [
         { id: 'd1', author: 'Mike Ross', recipient: 'Sarah Connor', message: 'Please provide a written statement detailing the event from your perspective.', datePosted: '2024-08-11', replyByDate: '2024-08-14' }
       ],
