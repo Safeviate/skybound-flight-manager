@@ -215,6 +215,8 @@ export type Risk = {
   dateIdentified: string;
   hazardArea: string;
   process: string;
+  riskOwner?: string;
+  reviewDate?: string;
 }
 
 export type ChecklistItem = {

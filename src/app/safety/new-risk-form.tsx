@@ -18,6 +18,12 @@ import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { userData } from '@/lib/mock-data';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
+import { format } from 'date-fns';
 
 const newRiskFormSchema = z.object({
   description: z.string().min(10, {
@@ -34,6 +40,8 @@ const newRiskFormSchema = z.object({
   severity: z.custom<RiskSeverity>((val) => typeof val === 'string', {
     message: 'Severity is required.',
   }),
+  riskOwner: z.string({ required_error: 'Please select a risk owner.' }),
+  reviewDate: z.date({ required_error: 'A review date is required.' }),
 });
 
 type NewRiskFormValues = z.infer<typeof newRiskFormSchema>;
@@ -51,6 +59,8 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
     resolver: zodResolver(newRiskFormSchema),
   });
 
+  const availableOwners = userData.filter(u => u.role !== 'Student');
+
   const handleAssessmentChange = (
     likelihood: RiskLikelihood | null,
     severity: RiskSeverity | null
@@ -60,7 +70,10 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
   };
 
   function handleFormSubmit(data: NewRiskFormValues) {
-    onSubmit(data);
+    onSubmit({
+        ...data,
+        reviewDate: format(data.reviewDate, 'yyyy-MM-dd'),
+    });
   }
 
   return (
@@ -136,6 +149,67 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
                         </SelectContent>
                     </Select>
                     <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="riskOwner"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Risk Owner</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an owner" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {availableOwners.map(owner => <SelectItem key={owner.id} value={owner.name}>{owner.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="reviewDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col pt-2">
+                        <FormLabel>Next Review Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                    date < new Date()
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
                     </FormItem>
                 )}
             />

@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
 import type { SafetyReport, Risk, RiskStatus } from '@/lib/types';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getExpiryBadge } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
@@ -224,10 +224,10 @@ export default function SafetyPage() {
                     <TableRow>
                       <TableHead>Identified</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead>Hazard Area</TableHead>
-                      <TableHead>Process</TableHead>
                       <TableHead>Risk Score (Initial → Mitigated)</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Next Review</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -235,12 +235,6 @@ export default function SafetyPage() {
                       <TableRow key={risk.id}>
                         <TableCell>{risk.dateIdentified}</TableCell>
                         <TableCell className="font-medium max-w-sm">{risk.description}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{risk.hazardArea}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{risk.process}</Badge>
-                        </TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
@@ -258,6 +252,10 @@ export default function SafetyPage() {
                         </TableCell>
                         <TableCell>
                             <Badge variant={getRiskStatusVariant(risk.status)}>{risk.status}</Badge>
+                        </TableCell>
+                        <TableCell>{risk.riskOwner}</TableCell>
+                        <TableCell>
+                            {risk.reviewDate && getExpiryBadge(risk.reviewDate)}
                         </TableCell>
                       </TableRow>
                     ))}
