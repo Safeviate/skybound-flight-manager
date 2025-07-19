@@ -7,6 +7,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -220,6 +221,8 @@ export type Risk = {
   residualSeverityValue?: string;
   residualRiskScore?: number;
   mitigation: string;
+  existingMitigation?: string;
+  proposedMitigation?: string;
   dateIdentified: string;
   hazardArea: string;
   process: string;
@@ -296,5 +299,3 @@ export const ICAO_PHASES_OF_FLIGHT = [
     'Servicing',
     'Other',
 ];
-
-    

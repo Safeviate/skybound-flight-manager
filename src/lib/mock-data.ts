@@ -185,6 +185,29 @@ export const safetyReportData: SafetyReport[] = [
     { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
 ];
 
-export const riskRegisterData: Risk[] = [];
-
-    
+export const riskRegisterData: Risk[] = [
+    {
+        id: 'risk-reg-1',
+        hazard: 'Bird activity on or near airport',
+        risk: 'Mid-air collision with wildlife resulting in aircraft damage or loss of control.',
+        consequences: ['Aircraft damage (windshield, control surfaces)', 'Engine ingestion/failure', 'Pilot incapacitation or startle effect'],
+        likelihood: 'Possible',
+        likelihoodValue: 3,
+        severity: 'Major',
+        severityValue: 'B',
+        riskScore: 12,
+        existingMitigation: 'ATC advisories for reported bird activity.',
+        proposedMitigation: 'Implement mandatory review of daily bird activity logs during pre-flight briefing. Install bird cannons near runway thresholds.',
+        mitigation: '',
+        residualLikelihood: 'Unlikely',
+        residualLikelihoodValue: 2,
+        residualSeverity: 'Major',
+        residualSeverityValue: 'B',
+        residualRiskScore: 8,
+        dateIdentified: '2024-08-11',
+        hazardArea: 'Flight Operations',
+        process: 'Approach/Departure',
+        riskOwner: 'John Smith',
+        reviewDate: '2025-02-11'
+    }
+];
