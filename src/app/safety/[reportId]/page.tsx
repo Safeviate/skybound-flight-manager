@@ -324,7 +324,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </div>
             </CardContent>
             <CardFooter>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Label htmlFor="occurrenceCategory">ICAO Classification</Label>
