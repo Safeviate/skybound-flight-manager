@@ -1,5 +1,6 @@
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -303,3 +304,22 @@ export const ICAO_PHASES_OF_FLIGHT = [
     'Maintenance',
     'Other'
 ].sort();
+
+
+export type NonConformanceIssue = {
+  id: string;
+  category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
+  description: string;
+};
+
+export type QualityAudit = {
+  id: string;
+  date: string;
+  type: 'Internal' | 'External';
+  auditor: string;
+  area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
+  status: 'Compliant' | 'With Findings' | 'Non-Compliant';
+  complianceScore: number;
+  nonConformanceIssues: NonConformanceIssue[];
+  summary: string;
+};

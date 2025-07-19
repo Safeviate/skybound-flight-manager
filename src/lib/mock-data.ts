@@ -1,6 +1,7 @@
 
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk } from './types';
+
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -67,6 +68,7 @@ export const userData: User[] = [
     { id: 'p4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
     { id: 'p5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
     { id: 'p6', name: 'John Smith', role: 'Safety Manager', department: 'Management', email: 'john.smith@skybound.com', phone: '555-0105', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
+    { id: 'p7', name: 'Jessica Jones', role: 'Quality Manager', department: 'Management', email: 'jessica.jones@skybound.com', phone: '555-0106', permissions: [] },
     // Students
     { id: 's1', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'], permissions: [] },
     { id: 's2', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'], permissions: [] },
@@ -209,3 +211,59 @@ export const riskRegisterData: Risk[] = safetyReportData
             reviewDate: '2025-02-11',
         }))
     );
+
+export const qualityAuditData: QualityAudit[] = [
+    {
+        id: 'QA-001',
+        date: '2024-07-20',
+        type: 'Internal',
+        auditor: 'Jessica Jones',
+        area: 'Flight Operations',
+        status: 'With Findings',
+        complianceScore: 92,
+        nonConformanceIssues: [
+            { id: 'nci-1', category: 'Documentation', description: 'Incomplete journey logbook entries for two aircraft.' },
+            { id: 'nci-2', category: 'Procedural', description: 'One pre-flight checklist was signed but not dated.' },
+        ],
+        summary: 'Overall compliance is good, but attention to detail in record-keeping needs improvement. Corrective actions issued for documentation procedures.'
+    },
+    {
+        id: 'QA-002',
+        date: '2024-06-15',
+        type: 'External',
+        auditor: 'FAA',
+        area: 'Maintenance',
+        status: 'Compliant',
+        complianceScore: 98,
+        nonConformanceIssues: [],
+        summary: 'The maintenance department demonstrated excellent adherence to all regulatory requirements and best practices. No findings.'
+    },
+    {
+        id: 'QA-003',
+        date: '2024-05-30',
+        type: 'Internal',
+        auditor: 'Jessica Jones',
+        area: 'Ground Ops',
+        status: 'With Findings',
+        complianceScore: 88,
+        nonConformanceIssues: [
+            { id: 'nci-3', category: 'Equipment', description: 'One fire extinguisher in the hangar was found to be past its inspection date.' },
+            { id: 'nci-4', category: 'Training', description: 'Records for recurrent training on fueling procedures for one staff member could not be located.' },
+            { id: 'nci-5', category: 'Procedural', description: 'Aircraft chocking procedures were not consistently followed.' },
+        ],
+        summary: 'Several non-conformance issues were identified, primarily related to equipment checks and procedural adherence. Corrective actions have been assigned.'
+    },
+    {
+        id: 'QA-004',
+        date: '2024-04-10',
+        type: 'Internal',
+        auditor: 'Jessica Jones',
+        area: 'Flight Operations',
+        status: 'Compliant',
+        complianceScore: 96,
+        nonConformanceIssues: [
+             { id: 'nci-6', category: 'Documentation', description: 'Minor inconsistencies found in student training records.' },
+        ],
+        summary: 'The audit confirmed a high level of compliance with training standards. A minor finding in documentation was noted and has been corrected.'
+    }
+];

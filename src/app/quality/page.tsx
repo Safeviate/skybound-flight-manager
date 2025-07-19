@@ -1,12 +1,160 @@
+
+'use client';
+
+import { useState } from 'react';
 import Header from '@/components/layout/header';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { qualityAuditData as initialAuditData } from '@/lib/mock-data';
+import type { QualityAudit } from '@/lib/types';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { format, parseISO } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Bot } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 
+const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
+  const chartData = data.map(audit => ({
+    date: format(parseISO(audit.date), 'MMM yy'),
+    score: audit.complianceScore,
+  })).reverse();
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="date" />
+        <YAxis domain={[80, 100]} unit="%" />
+        <Tooltip
+            contentStyle={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border))',
+            }}
+        />
+        <Legend />
+        <Line type="monotone" dataKey="score" name="Compliance Score" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+};
+
+const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
+    const conformanceCounts: { [key: string]: number } = {};
+    data.flatMap(audit => audit.nonConformanceIssues).forEach(issue => {
+        conformanceCounts[issue.category] = (conformanceCounts[issue.category] || 0) + 1;
+    });
+
+    const chartData = Object.keys(conformanceCounts).map(key => ({
+        name: key,
+        count: conformanceCounts[key],
+    }));
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                <Tooltip 
+                    cursor={{fill: 'hsl(var(--muted))'}}
+                    contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                    }}
+                />
+                <Legend />
+                <Bar dataKey="count" name="Issues" fill="hsl(var(--primary))" />
+            </BarChart>
+        </ResponsiveContainer>
+    );
+};
+
 export default function QualityPage() {
+  const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
+
+  const getStatusVariant = (status: QualityAudit['status']) => {
+    switch (status) {
+      case 'Compliant': return 'success';
+      case 'With Findings': return 'warning';
+      case 'Non-Compliant': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Quality Management" />
-      <main className="flex-1 p-4 md:p-8">
-        <QualityAuditAnalyzer />
+      <Header title="Quality Assurance Dashboard">
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button>
+                    <Bot className="mr-2 h-4 w-4" />
+                    AI Audit Analysis
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <QualityAuditAnalyzer />
+            </DialogContent>
+        </Dialog>
+      </Header>
+      <main className="flex-1 p-4 md:p-8 space-y-8">
+        <div className="grid gap-8 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Compliance Score Over Time</CardTitle>
+                    <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ComplianceChart data={audits} />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Non-Conformance Categories</CardTitle>
+                    <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <NonConformanceChart data={audits} />
+                </CardContent>
+            </Card>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Recent Quality Audits</CardTitle>
+                <CardDescription>A log of recently completed internal and external audits.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Audit ID</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Area</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Score</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {audits.map(audit => (
+                            <TableRow key={audit.id}>
+                                <TableCell className="font-mono">{audit.id}</TableCell>
+                                <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
+                                <TableCell>{audit.type}</TableCell>
+                                <TableCell>{audit.area}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right font-medium">{audit.complianceScore}%</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+
       </main>
     </div>
   );
