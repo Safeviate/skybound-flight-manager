@@ -169,6 +169,11 @@ export const safetyReportData: SafetyReport[] = [
       phaseOfFlight: 'Approach',
       discussion: [
         { id: 'd1', author: 'Mike Ross', recipient: 'Sarah Connor', message: 'Please provide a written statement detailing the event from your perspective.', datePosted: '2024-08-11', replyByDate: '2024-08-14' }
+      ],
+      associatedRisks: [
+        { id: 'risk-sr1-1', hazard: 'Inadequate pilot briefing on bird activity in the area.', risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.', likelihood: 'Possible', severity: 'Minor', riskScore: 6 },
+        { id: 'risk-sr1-2', hazard: 'Actual bird strike on the airframe.', risk: 'Minor cosmetic or structural damage to the aircraft (e.g., dented leading edge).', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
+        { id: 'risk-sr1-3', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 5 },
       ]
     },
     { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'F-POST', phaseOfFlight: 'Landing' },
