@@ -356,7 +356,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
           control={form.control}
           name="isAnonymous"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-900/30">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-[#ffd300] dark:bg-[#ffd300]/30">
               <FormControl>
                 <Checkbox
                   checked={field.value}
