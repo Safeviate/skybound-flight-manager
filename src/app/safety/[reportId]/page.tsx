@@ -180,43 +180,49 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </div>
             </CardContent>
         </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Investigation Workbench</CardTitle>
-                <CardDescription>
-                    Add notes, assign investigators, classify the report, and use AI to suggest investigation steps.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <InvestigationTeamForm report={report} />
-                <Separator />
-                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                <Separator />
-                <form action={formAction} className="space-y-4">
-                    <div className="space-y-4">
-                        <Label>ICAO ADREP Classification</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Occurrence Category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Phase of Flight" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
+        
+        <form action={formAction} className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>ICAO ADREP Classification</CardTitle>
+                    <CardDescription>
+                        Classify the report using the standard ICAO taxonomy for aviation occurrences.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Occurrence Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Phase of Flight" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Investigation Workbench</CardTitle>
+                    <CardDescription>
+                        Add notes, assign investigators, and use AI to suggest investigation steps.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <InvestigationTeamForm report={report} />
                     <Separator />
-                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                    <Separator />
                     <div className="space-y-2">
                         <Label htmlFor="investigationNotes">Investigation Notes</Label>
                         <Textarea
@@ -226,13 +232,15 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                             className="min-h-[150px]"
                         />
                     </div>
-                    <div className="flex justify-end">
-                        <SubmitButton />
-                    </div>
-                </form>
-            </CardContent>
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                     <input type="hidden" name="report" value={JSON.stringify(report)} />
+                     <SubmitButton />
+                </CardFooter>
             </Card>
-            {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
+        </form>
+
+        {state.data && <InvestigationAnalysisResult data={state.data as SuggestInvestigationStepsOutput} />}
       </main>
     </div>
   );
