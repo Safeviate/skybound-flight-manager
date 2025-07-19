@@ -240,17 +240,17 @@ export default function SafetyPage() {
                         <Table className="min-w-[1800px]">
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>No.</TableHead>
-                                    <TableHead>Source Report</TableHead>
-                                    <TableHead>Hazard</TableHead>
-                                    <TableHead>Risk</TableHead>
-                                    <TableHead>Exposure</TableHead>
-                                    <TableHead>Initial Risk</TableHead>
-                                    <TableHead>Existing Mitigation</TableHead>
-                                    <TableHead>Proposed Mitigation</TableHead>
-                                    <TableHead>Mitigated Value</TableHead>
-                                    <TableHead>Owner</TableHead>
-                                    <TableHead>Review</TableHead>
+                                    <TableHead className="w-[60px]">No.</TableHead>
+                                    <TableHead className="w-[150px]">Source Report</TableHead>
+                                    <TableHead className="w-[300px]">Hazard</TableHead>
+                                    <TableHead className="w-[300px]">Risk</TableHead>
+                                    <TableHead className="w-[300px]">Exposure</TableHead>
+                                    <TableHead className="w-[120px]">Initial Risk</TableHead>
+                                    <TableHead className="w-[300px]">Existing Mitigation</TableHead>
+                                    <TableHead className="w-[300px]">Proposed Mitigation</TableHead>
+                                    <TableHead className="w-[120px]">Mitigated Value</TableHead>
+                                    <TableHead className="w-[200px]">Owner</TableHead>
+                                    <TableHead className="w-[150px]">Review</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
