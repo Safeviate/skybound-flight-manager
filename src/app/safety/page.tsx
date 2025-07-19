@@ -111,12 +111,7 @@ export default function SafetyPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Safety Management System">
-        <Button variant="outline" onClick={() => window.print()} className="print:hidden">
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-        </Button>
-      </Header>
+      <Header title="Safety Management System" />
       <main className="flex-1 p-4 md:p-8">
         <Tabs defaultValue="reports">
           <div className="flex items-center justify-between mb-4 no-print">
