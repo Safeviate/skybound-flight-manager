@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge, badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
@@ -36,6 +36,7 @@ import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, ReferenceLine } from 'recharts';
+import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -53,9 +54,24 @@ function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   }));
 }
 
-const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) => {
+interface SafetyPerformanceIndicatorsProps {
+  reports: SafetyReport[];
+  spiConfigs: SpiConfig[];
+  onConfigChange: (newConfigs: SpiConfig[]) => void;
+}
+
+const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: SafetyPerformanceIndicatorsProps) => {
+    const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
+
+    const handleSpiUpdate = (updatedSpi: SpiConfig) => {
+        onConfigChange(spiConfigs.map(spi => spi.id === updatedSpi.id ? updatedSpi : spi));
+        setEditingSpi(null);
+    };
+
+    const unstableApproachesConfig = spiConfigs.find(c => c.id === 'unstableApproaches')!;
+    const adrConfig = spiConfigs.find(c => c.id === 'adr')!;
+
     // === SPI 1: Unstable Approach Rate ===
-    const unstableApproachesTarget = { target: 1, alert2: 2, alert3: 3, alert4: 4 };
     const unstableApproachesByMonth = reports
         .filter(r => r.subCategory === 'Unstable Approach')
         .reduce((acc, report) => {
@@ -71,14 +87,13 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
     const latestUnstableApproachCount = unstableApproachesData[0]?.count || 0;
     
     const getUnstableApproachStatus = (count: number) => {
-        if (count >= unstableApproachesTarget.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-        if (count >= unstableApproachesTarget.alert3) return { label: 'Action Required', variant: 'orange' as const };
-        if (count >= unstableApproachesTarget.alert2) return { label: 'Monitor', variant: 'warning' as const };
+        if (count >= unstableApproachesConfig.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+        if (count >= unstableApproachesConfig.alert3) return { label: 'Action Required', variant: 'orange' as const };
+        if (count >= unstableApproachesConfig.alert2) return { label: 'Monitor', variant: 'warning' as const };
         return { label: 'Acceptable', variant: 'success' as const };
     };
 
     // === SPI 2: Technical Defect Rate ===
-    const adrTarget = { target: 3, alert2: 4, alert3: 5, alert4: 6 };
     const adrByMonth = reports
         .filter(r => r.type === 'Aircraft Defect Report')
         .reduce((acc, report) => {
@@ -94,9 +109,9 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
     const latestAdrCount = adrData[0]?.count || 0;
 
     const getAdrStatus = (count: number) => {
-        if (count >= adrTarget.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-        if (count >= adrTarget.alert3) return { label: 'Action Required', variant: 'orange' as const };
-        if (count >= adrTarget.alert2) return { label: 'Monitor', variant: 'warning' as const };
+        if (count >= adrConfig.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+        if (count >= adrConfig.alert3) return { label: 'Action Required', variant: 'orange' as const };
+        if (count >= adrConfig.alert2) return { label: 'Monitor', variant: 'warning' as const };
         return { label: 'Acceptable', variant: 'success' as const };
     };
 
@@ -116,9 +131,14 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                                 <CardTitle className="text-lg">Unstable Approach Rate</CardTitle>
                                 <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
                             </div>
-                            <Badge variant={getUnstableApproachStatus(latestUnstableApproachCount).variant}>
-                                {getUnstableApproachStatus(latestUnstableApproachCount).label}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-2">
+                                <Badge variant={getUnstableApproachStatus(latestUnstableApproachCount).variant}>
+                                    {getUnstableApproachStatus(latestUnstableApproachCount).label}
+                                </Badge>
+                                <Button variant="ghost" size="sm" onClick={() => setEditingSpi(unstableApproachesConfig)}>
+                                    <Edit className="h-3 w-3 mr-1" /> Edit Targets
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col justify-center">
@@ -129,10 +149,10 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                                 <YAxis allowDecimals={false} />
                                 <Tooltip />
                                 <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={unstableApproachesTarget.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesTarget.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesTarget.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesTarget.alert4} stroke="hsl(var(--destructive-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesConfig.alert4} stroke="hsl(var(--destructive-foreground))" strokeDasharray="3 3" />
                                 <Bar dataKey="count" name="Unstable Approaches">
                                     {unstableApproachesData.map((entry, index) => {
                                         const status = getUnstableApproachStatus(entry.count);
@@ -149,7 +169,7 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                         </ResponsiveContainer>
                     </CardContent>
                      <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                        <p>Safety Performance Target: &lt;= {unstableApproachesTarget.target} per month.</p>
+                        <p>Safety Performance Target: &lt;= {unstableApproachesConfig.target} per month.</p>
                     </CardFooter>
                 </Card>
                 <Card className="flex flex-col">
@@ -159,9 +179,14 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                                 <CardTitle className="text-lg">Aircraft Technical Defect Rate</CardTitle>
                                 <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
                             </div>
-                            <Badge variant={getAdrStatus(latestAdrCount).variant}>
-                                {getAdrStatus(latestAdrCount).label}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-2">
+                                <Badge variant={getAdrStatus(latestAdrCount).variant}>
+                                    {getAdrStatus(latestAdrCount).label}
+                                </Badge>
+                                 <Button variant="ghost" size="sm" onClick={() => setEditingSpi(adrConfig)}>
+                                    <Edit className="h-3 w-3 mr-1" /> Edit Targets
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col justify-center">
@@ -172,18 +197,31 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                                 <YAxis allowDecimals={false} />
                                 <Tooltip />
                                 <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={adrTarget.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrTarget.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrTarget.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrConfig.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
                                 <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" strokeWidth={2} />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                     <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                       <p>Safety Performance Target: &lt;= {adrTarget.target} per month.</p>
+                       <p>Safety Performance Target: &lt;= {adrConfig.target} per month.</p>
                     </CardFooter>
                 </Card>
             </CardContent>
+            {editingSpi && (
+                <Dialog open={!!editingSpi} onOpenChange={() => setEditingSpi(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit SPI: {editingSpi.name}</DialogTitle>
+                            <DialogDescription>
+                                Adjust the target and alert levels for this Safety Performance Indicator.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <EditSpiForm spi={editingSpi} onUpdate={handleSpiUpdate} />
+                    </DialogContent>
+                </Dialog>
+            )}
         </Card>
     );
 };
@@ -275,8 +313,6 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                 </Card>
             </div>
 
-            <SafetyPerformanceIndicators reports={reports} />
-
             <div className="grid gap-8 md:grid-cols-2">
                 <Card>
                     <CardHeader>
@@ -350,6 +386,11 @@ export default function SafetyPage() {
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const { user } = useUser();
   const { toast } = useToast();
+
+  const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
+    { id: 'unstableApproaches', name: 'Unstable Approach Rate', target: 1, alert2: 2, alert3: 3, alert4: 4 },
+    { id: 'adr', name: 'Aircraft Technical Defect Rate', target: 3, alert2: 4, alert3: 5, alert4: 6 }
+  ]);
 
   const reportsControls = useTableControls(safetyReports, {
     initialSort: { key: 'filedDate', direction: 'desc' },
@@ -430,6 +471,7 @@ export default function SafetyPage() {
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
+              <TabsTrigger value="spis">SPIs</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="assessment">Risk Assessment Tool</TabsTrigger>
             </TabsList>
@@ -688,6 +730,10 @@ export default function SafetyPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="spis">
+            <SafetyPerformanceIndicators reports={safetyReports} spiConfigs={spiConfigs} onConfigChange={setSpiConfigs} />
           </TabsContent>
 
           <TabsContent value="matrix">
