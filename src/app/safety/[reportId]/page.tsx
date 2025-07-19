@@ -22,6 +22,7 @@ import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { DiscussionSection } from './discussion-section';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
+import { Input } from '@/components/ui/input';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -221,14 +222,10 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                                 {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Phase of Flight" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                            <Label htmlFor="otherClassification">Other</Label>
+                            <Input id="otherClassification" name="otherClassification" placeholder="Enter other classification" />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
