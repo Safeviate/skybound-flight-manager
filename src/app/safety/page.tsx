@@ -22,17 +22,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
 import type { SafetyReport, Risk, RiskStatus } from '@/lib/types';
-import { getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { NewRiskForm } from './new-risk-form';
 
 export default function SafetyPage() {
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [isNewReportOpen, setIsNewReportOpen] = useState(false);
+  const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const { user } = useUser();
 
   const getStatusVariant = (status: SafetyReport['status']) => {
@@ -53,7 +55,7 @@ export default function SafetyPage() {
     }
   };
 
-  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate'> & { isAnonymous?: boolean }) => {
+  const handleNewReportSubmit = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate'> & { isAnonymous?: boolean }) => {
     const { isAnonymous, ...reportData } = newReportData;
     const newReport: SafetyReport = {
         id: `sr-${Date.now()}`,
@@ -64,7 +66,19 @@ export default function SafetyPage() {
     };
     setSafetyReports(prev => [newReport, ...prev]);
     setIsNewReportOpen(false);
-  }
+  };
+  
+  const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'status' | 'riskScore'>) => {
+    const newRisk: Risk = {
+      ...newRiskData,
+      id: `risk-reg-${Date.now()}`,
+      dateIdentified: format(new Date(), 'yyyy-MM-dd'),
+      status: 'Open',
+      riskScore: getRiskScore(newRiskData.likelihood, newRiskData.severity),
+    };
+    setRisks(prev => [newRisk, ...prev]);
+    setIsNewRiskOpen(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -91,7 +105,7 @@ export default function SafetyPage() {
                     Describe the incident or hazard. This will be reviewed by the Safety Manager.
                   </DialogDescription>
                 </DialogHeader>
-                <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReport} />
+                <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReportSubmit} />
               </DialogContent>
             </Dialog>
           </div>
@@ -181,9 +195,28 @@ export default function SafetyPage() {
 
           <TabsContent value="register">
             <Card>
-              <CardHeader>
-                <CardTitle>Risk Register</CardTitle>
-                <CardDescription>A log of identified risks and their mitigation status.</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Risk Register</CardTitle>
+                    <CardDescription>A log of identified risks and their mitigation status.</CardDescription>
+                </div>
+                 <Dialog open={isNewRiskOpen} onOpenChange={setIsNewRiskOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            New Risk Assessment
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>New Risk Assessment</DialogTitle>
+                            <DialogDescription>
+                                Proactively add a new risk to the central register.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <NewRiskForm onSubmit={handleNewRiskSubmit} />
+                    </DialogContent>
+                </Dialog>
               </CardHeader>
               <CardContent>
                  <Table>
