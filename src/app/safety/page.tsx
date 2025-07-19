@@ -54,11 +54,8 @@ function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
 }
 
 const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) => {
-    // Define SPI Targets
-    const UNSTABLE_APPROACH_TARGET = 2;
-    const TECHNICAL_DEFECT_TARGET = 3;
-
-    // SPI 1: Unstable Approach Rate (as an example of a specific event trend)
+    // === SPI 1: Unstable Approach Rate ===
+    const unstableApproachesTarget = { target: 1, alert2: 2, alert3: 3, alert4: 4 };
     const unstableApproachesByMonth = reports
         .filter(r => r.subCategory === 'Unstable Approach')
         .reduce((acc, report) => {
@@ -71,22 +68,17 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
         name: month,
         count: unstableApproachesByMonth[month],
     })).reverse();
-
-    // SPI 2: Reports by Phase of Flight
-    const reportsByPhase = reports
-        .filter(r => r.phaseOfFlight)
-        .reduce((acc, report) => {
-            const phase = report.phaseOfFlight!;
-            acc[phase] = (acc[phase] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
+    const latestUnstableApproachCount = unstableApproachesData[0]?.count || 0;
     
-    const reportsByPhaseData = Object.keys(reportsByPhase).map(phase => ({
-        name: phase,
-        value: reportsByPhase[phase],
-    }));
+    const getUnstableApproachStatus = (count: number) => {
+        if (count >= unstableApproachesTarget.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+        if (count >= unstableApproachesTarget.alert3) return { label: 'Action Required', variant: 'orange' as const };
+        if (count >= unstableApproachesTarget.alert2) return { label: 'Monitor', variant: 'warning' as const };
+        return { label: 'Acceptable', variant: 'success' as const };
+    };
 
-    // SPI 3: Technical Defect Rate
+    // === SPI 2: Technical Defect Rate ===
+    const adrTarget = { target: 3, alert2: 4, alert3: 5, alert4: 6 };
     const adrByMonth = reports
         .filter(r => r.type === 'Aircraft Defect Report')
         .reduce((acc, report) => {
@@ -99,8 +91,14 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
         name: month,
         count: adrByMonth[month],
     })).reverse();
+    const latestAdrCount = adrData[0]?.count || 0;
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'];
+    const getAdrStatus = (count: number) => {
+        if (count >= adrTarget.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+        if (count >= adrTarget.alert3) return { label: 'Action Required', variant: 'orange' as const };
+        if (count >= adrTarget.alert2) return { label: 'Monitor', variant: 'warning' as const };
+        return { label: 'Acceptable', variant: 'success' as const };
+    };
 
     return (
         <Card>
@@ -110,53 +108,81 @@ const SafetyPerformanceIndicators = ({ reports }: { reports: SafetyReport[] }) =
                     Monitoring key indicators to proactively manage safety, based on ICAO and SACAA principles.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                 <div className="space-y-2">
-                    <h4 className="font-semibold text-center">Unstable Approach Rate</h4>
-                     <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={unstableApproachesData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" fontSize={12} />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <ReferenceLine y={UNSTABLE_APPROACH_TARGET} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="red" strokeDasharray="3 3" />
-                            <Bar dataKey="count" name="Unstable Approaches">
-                                {unstableApproachesData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.count > UNSTABLE_APPROACH_TARGET ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                    <p className="text-center text-xs text-muted-foreground">Target: &lt;= {UNSTABLE_APPROACH_TARGET} per month</p>
-                </div>
-                 <div className="space-y-2">
-                    <h4 className="font-semibold text-center">Reports by Phase of Flight</h4>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie data={reportsByPhaseData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
-                                {reportsByPhaseData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
-                     <p className="text-center text-xs text-muted-foreground">Analysis of operational phases with highest incident rates.</p>
-                </div>
-                <div className="space-y-2">
-                    <h4 className="font-semibold text-center">Technical Defect Rate</h4>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={adrData}>
-                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" fontSize={12}/>
-                            <YAxis allowDecimals={false}/>
-                            <Tooltip />
-                            <ReferenceLine y={TECHNICAL_DEFECT_TARGET} label="Target" stroke="red" strokeDasharray="3 3" />
-                            <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                    <p className="text-center text-xs text-muted-foreground">Target: &lt;= {TECHNICAL_DEFECT_TARGET} per month</p>
-                </div>
+            <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
+                 <Card className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-lg">Unstable Approach Rate</CardTitle>
+                                <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
+                            </div>
+                            <Badge variant={getUnstableApproachStatus(latestUnstableApproachCount).variant}>
+                                {getUnstableApproachStatus(latestUnstableApproachCount).label}
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-center">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={unstableApproachesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" fontSize={12} />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip />
+                                <Legend verticalAlign="top" height={36}/>
+                                <ReferenceLine y={unstableApproachesTarget.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesTarget.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesTarget.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={unstableApproachesTarget.alert4} stroke="hsl(var(--destructive-foreground))" strokeDasharray="3 3" />
+                                <Bar dataKey="count" name="Unstable Approaches">
+                                    {unstableApproachesData.map((entry, index) => {
+                                        const status = getUnstableApproachStatus(entry.count);
+                                        const color = {
+                                            'success': 'hsl(var(--success))',
+                                            'warning': 'hsl(var(--warning))',
+                                            'orange': 'hsl(var(--orange))',
+                                            'destructive': 'hsl(var(--destructive))'
+                                        }[status.variant];
+                                        return <Cell key={`cell-${index}`} fill={color} />;
+                                    })}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                     <CardFooter className="text-center text-xs text-muted-foreground justify-center">
+                        <p>Safety Performance Target: &lt;= {unstableApproachesTarget.target} per month.</p>
+                    </CardFooter>
+                </Card>
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-lg">Aircraft Technical Defect Rate</CardTitle>
+                                <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
+                            </div>
+                            <Badge variant={getAdrStatus(latestAdrCount).variant}>
+                                {getAdrStatus(latestAdrCount).label}
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-center">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={adrData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" fontSize={12} />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip />
+                                <Legend verticalAlign="top" height={36}/>
+                                <ReferenceLine y={adrTarget.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrTarget.alert2} stroke="hsl(var(--warning-foreground))" strokeDasharray="3 3" />
+                                <ReferenceLine y={adrTarget.alert3} stroke="hsl(var(--orange-foreground))" strokeDasharray="3 3" />
+                                <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" strokeWidth={2} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                    <CardFooter className="text-center text-xs text-muted-foreground justify-center">
+                       <p>Safety Performance Target: &lt;= {adrTarget.target} per month.</p>
+                    </CardFooter>
+                </Card>
             </CardContent>
         </Card>
     );
