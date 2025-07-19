@@ -273,7 +273,7 @@ export default function SafetyPage() {
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
                                         <TableCell>
                                             {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.id.replace('risk-reg-', 'sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                                <Link href={`/safety/${risk.reportNumber.replace('FOR-', 'sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
                                             ) : (
                                                 'N/A'
                                             )}
@@ -358,4 +358,3 @@ export default function SafetyPage() {
     </div>
   );
 }
-

@@ -71,7 +71,7 @@ export function EditRiskForm({ risk, onSubmit }: EditRiskFormProps) {
     defaultValues: {
       ...risk,
       consequences: risk.consequences.join(', '),
-      reviewDate: parseISO(risk.reviewDate as string),
+      reviewDate: risk.reviewDate ? parseISO(risk.reviewDate) : new Date(),
     },
   });
 
