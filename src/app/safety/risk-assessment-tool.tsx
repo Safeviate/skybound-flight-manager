@@ -48,9 +48,6 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
         <Card>
           <CardHeader>
             <CardTitle>Risk Matrix</CardTitle>
-            <CardDescription>
-              Select a likelihood and severity to determine the risk score.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
