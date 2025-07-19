@@ -210,13 +210,9 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="subClassification">Sub Classification</Label>
-                            <Input id="subClassification" name="subClassification" placeholder="Enter sub classification" />
-                        </div>
                          <div className="space-y-2">
-                            <Label htmlFor="phaseOfFlight">Other</Label>
-                            <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., specific maneuver" />
+                            <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
+                            <Input id="phaseOfFlight" name="phaseOfFlight" placeholder="e.g., Climb, Cruise, Landing" defaultValue={report.phaseOfFlight} />
                         </div>
                     </div>
                 </CardContent>
