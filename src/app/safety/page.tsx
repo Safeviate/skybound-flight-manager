@@ -7,7 +7,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, ArrowRight } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -21,8 +21,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
-import type { SafetyReport, Risk, RiskStatus, GroupedRisk } from '@/lib/types';
-import { getRiskScore, getRiskScoreColor, getExpiryBadge } from '@/lib/utils.tsx';
+import type { SafetyReport, Risk, GroupedRisk } from '@/lib/types';
+import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
@@ -30,6 +30,8 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { NewRiskForm } from './new-risk-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { EditRiskForm } from './edit-risk-form';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -53,7 +55,9 @@ export default function SafetyPage() {
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [isNewReportOpen, setIsNewReportOpen] = useState(false);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
+  const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const { user } = useUser();
+  const { toast } = useToast();
 
   const groupedRiskData = groupRisksByArea(risks);
 
@@ -79,7 +83,7 @@ export default function SafetyPage() {
     setIsNewReportOpen(false);
   };
   
-  const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore'>) => {
+  const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
     const newRisk: Risk = {
       ...newRiskData,
       id: `risk-reg-${Date.now()}`,
@@ -89,6 +93,15 @@ export default function SafetyPage() {
     };
     setRisks(prev => [newRisk, ...prev]);
     setIsNewRiskOpen(false);
+  };
+  
+  const handleEditRiskSubmit = (updatedRiskData: Risk) => {
+    setRisks(prevRisks => prevRisks.map(r => r.id === updatedRiskData.id ? updatedRiskData : r));
+    setEditingRisk(null);
+    toast({
+        title: "Risk Updated",
+        description: "The risk details have been successfully saved."
+    });
   };
 
   return (
@@ -251,6 +264,7 @@ export default function SafetyPage() {
                                     <TableHead className="w-[120px]">Mitigated Value</TableHead>
                                     <TableHead className="w-[200px]">Owner</TableHead>
                                     <TableHead className="w-[150px]">Review</TableHead>
+                                    <TableHead className="w-[80px]">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -287,6 +301,22 @@ export default function SafetyPage() {
                                         </TableCell>
                                         <TableCell>{risk.riskOwner}</TableCell>
                                         <TableCell>{risk.reviewDate}</TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        <span className="sr-only">Actions</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onSelect={() => setEditingRisk(risk)}>
+                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        Edit Risk
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -309,7 +339,23 @@ export default function SafetyPage() {
             <RiskAssessmentTool />
           </TabsContent>
         </Tabs>
+        
+        {editingRisk && (
+            <Dialog open={!!editingRisk} onOpenChange={() => setEditingRisk(null)}>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Risk</DialogTitle>
+                        <DialogDescription>
+                            Update the details for the selected risk. Your changes will be saved to the register.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <EditRiskForm risk={editingRisk} onSubmit={handleEditRiskSubmit} />
+                </DialogContent>
+            </Dialog>
+        )}
+
       </main>
     </div>
   );
 }
+
