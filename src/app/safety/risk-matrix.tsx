@@ -91,7 +91,13 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                                         <div className="grid gap-2">
                                             {cellRisks.map(risk => (
                                                 <div key={risk.id} className="text-sm">
-                                                    <Badge variant="secondary">{risk.reportNumber || 'Manual'}</Badge>
+                                                    {risk.reportNumber ? (
+                                                        <Link href={`/safety/${risk.id.replace('risk-reg-', 'sr')}`}>
+                                                            <Badge variant="secondary" className="hover:underline">{risk.reportNumber}</Badge>
+                                                        </Link>
+                                                    ) : (
+                                                        <Badge variant="secondary">Manual</Badge>
+                                                    )}
                                                     <p className="font-semibold mt-1">{risk.hazard}</p>
                                                 </div>
                                             ))}
