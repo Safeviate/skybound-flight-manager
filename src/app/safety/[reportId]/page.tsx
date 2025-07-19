@@ -366,9 +366,8 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         <Tabs defaultValue="investigation" className="w-full">
             <TabsList>
                 <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                <TabsTrigger value="risk">Risk Assessment</TabsTrigger>
                 <TabsTrigger value="ai">AI Assistant</TabsTrigger>
-                <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
+                <TabsTrigger value="plan">Corrective Action Plan &amp; Mitigation</TabsTrigger>
             </TabsList>
             <TabsContent value="investigation" className="pt-4">
                  <Card>
@@ -396,9 +395,6 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     </CardContent>
                 </Card>
-            </TabsContent>
-            <TabsContent value="risk" className="pt-4">
-                 <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
             </TabsContent>
             <TabsContent value="ai" className="pt-4">
                 <Card>
@@ -435,7 +431,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="plan" className="pt-4">
+            <TabsContent value="plan" className="pt-4 space-y-8">
                 {generatePlanState.data ? (
                      <CorrectiveActionPlanResult data={generatePlanState.data as GenerateCorrectiveActionPlanOutput} reportStatus={report.status} onCloseReport={handleCloseReport} />
                 ) : (
@@ -449,6 +445,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </CardContent>
                     </Card>
                 )}
+                <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
             </TabsContent>
         </Tabs>
 
@@ -456,5 +453,3 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
-
-    
