@@ -65,10 +65,6 @@ export async function generatePlanAction(prevState: any, formData: FormData) {
   
   const report: SafetyReport = JSON.parse(reportString);
 
-  // Note: We're also grabbing the live investigation notes from the form
-  const investigationNotes = formData.get('investigationNotes') as string;
-  report.investigationNotes = investigationNotes;
-
   const validatedFields = reportSchema.safeParse({ report });
 
   if (!validatedFields.success) {
@@ -80,6 +76,7 @@ export async function generatePlanAction(prevState: any, formData: FormData) {
   }
 
   try {
+    // The investigation notes are part of the report object from the form now
     const result = await generateCorrectiveActionPlan({
       report: validatedFields.data.report,
     });

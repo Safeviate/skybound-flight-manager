@@ -39,7 +39,7 @@ export async function generateCorrectiveActionPlan(
 
 const prompt = ai.definePrompt({
   name: 'generateCorrectiveActionPlanPrompt',
-  input: {schema: GenerateCorrectiveActionPlanInputSchema},
+  input: {schema: z.object({ report: z.string() }) },
   output: {schema: GenerateCorrectiveActionPlanOutputSchema},
   prompt: `You are an expert aviation Safety Manager responsible for creating Corrective Action Plans (CAPs).
 
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
 
   Safety Report Investigation File:
   '''json
-  {{{jsonStringify report}}}
+  {{{report}}}
   '''
 
   Your analysis must consider all sections of the report:
@@ -71,9 +71,8 @@ const generateCorrectiveActionPlanFlow = ai.defineFlow(
     outputSchema: GenerateCorrectiveActionPlanOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({ report: JSON.stringify(input.report, null, 2) });
     return output!;
   }
 );
-
     

@@ -34,7 +34,7 @@ export async function suggestInvestigationSteps(
 
 const prompt = ai.definePrompt({
   name: 'suggestInvestigationStepsPrompt',
-  input: {schema: SuggestInvestigationStepsInputSchema},
+  input: {schema: z.object({ report: z.string() })},
   output: {schema: SuggestInvestigationStepsOutputSchema},
   prompt: `You are an expert aviation safety investigator.
 
@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
 
   Safety Report Data:
   '''json
-  {{{jsonStringify report}}}
+  {{{report}}}
   '''
 
   Analyze the report and provide an initial assessment, key areas to investigate, recommended immediate actions, and potential contributing factors.
@@ -57,7 +57,7 @@ const suggestInvestigationStepsFlow = ai.defineFlow(
     outputSchema: SuggestInvestigationStepsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({ report: JSON.stringify(input.report, null, 2) });
     return output!;
   }
 );

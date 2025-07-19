@@ -159,8 +159,6 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
   };
   
-  const [investigationNotes, setInvestigationNotes] = useState(report?.investigationNotes || '');
-
   useEffect(() => {
     if (suggestStepsState.message && suggestStepsState.message !== 'Invalid form data' && suggestStepsState.message !== 'Analysis complete') {
       toast({ variant: 'destructive', title: 'Error', description: suggestStepsState.message });
@@ -183,6 +181,13 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
       </div>
     );
   }
+
+  const handleInvestigationNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (report) {
+        const updatedReport = { ...report, investigationNotes: e.target.value };
+        handleReportUpdate(updatedReport);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -301,19 +306,18 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         name="investigationNotes"
                         placeholder="Add your investigation notes, findings, and root cause analysis here..."
                         className="min-h-[150px]"
-                        value={investigationNotes}
-                        onChange={(e) => setInvestigationNotes(e.target.value)}
+                        value={report.investigationNotes || ''}
+                        onChange={handleInvestigationNotesChange}
                     />
                 </div>
             </CardContent>
             <CardFooter className="flex flex-wrap justify-end gap-2">
                  <form action={suggestStepsFormAction}>
-                    <input type="hidden" name="report" value={JSON.stringify({...report, investigationNotes})} />
+                    <input type="hidden" name="report" value={JSON.stringify(report)} />
                     <SuggestStepsButton />
                  </form>
                  <form action={generatePlanFormAction}>
                     <input type="hidden" name="report" value={JSON.stringify(report)} />
-                    <input type="hidden" name="investigationNotes" value={investigationNotes} />
                     <GeneratePlanButton />
                  </form>
             </CardFooter>
@@ -325,5 +329,4 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
-
     
