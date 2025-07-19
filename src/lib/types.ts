@@ -127,6 +127,7 @@ export type SafetyReport = {
   id: string;
   reportNumber: string;
   occurrenceDate: string;
+  filedDate: string;
   submittedBy: string;
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';

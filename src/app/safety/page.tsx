@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -51,12 +52,13 @@ export default function SafetyPage() {
     }
   };
 
-  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status'> & { isAnonymous?: boolean }) => {
+  const handleNewReport = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate'> & { isAnonymous?: boolean }) => {
     const { isAnonymous, ...reportData } = newReportData;
     const newReport: SafetyReport = {
         id: `sr-${Date.now()}`,
         submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
         status: 'Open',
+        filedDate: format(new Date(), 'yyyy-MM-dd'),
         ...reportData,
     };
     setSafetyReports(prev => [newReport, ...prev]);
@@ -104,7 +106,8 @@ export default function SafetyPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Report #</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Occurrence Date</TableHead>
+                      <TableHead>Filed Date</TableHead>
                       <TableHead>Submitted By</TableHead>
                       <TableHead>Details</TableHead>
                       <TableHead>Aircraft</TableHead>
@@ -117,6 +120,7 @@ export default function SafetyPage() {
                       <TableRow key={report.id}>
                         <TableCell className="font-mono">{report.reportNumber}</TableCell>
                         <TableCell>{report.occurrenceDate}</TableCell>
+                        <TableCell>{report.filedDate}</TableCell>
                         <TableCell>{report.submittedBy}</TableCell>
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
