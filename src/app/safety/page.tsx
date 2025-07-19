@@ -46,15 +46,6 @@ export default function SafetyPage() {
     }
   };
   
-  const getRiskStatusVariant = (status: RiskStatus) => {
-    switch (status) {
-      case 'Open': return 'destructive';
-      case 'Mitigated': return 'warning';
-      case 'Closed': return 'success';
-      default: return 'outline';
-    }
-  };
-
   const handleNewReportSubmit = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate'> & { isAnonymous?: boolean }) => {
     const { isAnonymous, ...reportData } = newReportData;
     const newReport: SafetyReport = {
@@ -225,7 +216,6 @@ export default function SafetyPage() {
                       <TableHead>Identified</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Risk Score (Initial → Mitigated)</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Owner</TableHead>
                       <TableHead>Next Review</TableHead>
                     </TableRow>
@@ -249,9 +239,6 @@ export default function SafetyPage() {
                                     </>
                                 )}
                             </div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant={getRiskStatusVariant(risk.status)}>{risk.status}</Badge>
                         </TableCell>
                         <TableCell>{risk.riskOwner}</TableCell>
                         <TableCell>
