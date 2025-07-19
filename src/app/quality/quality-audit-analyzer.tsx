@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
 import { analyzeAuditAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AnalyzeQualityAuditOutput } from '@/ai/flows/analyze-quality-audit-flow';
 import { Loader2, AlertTriangle, CheckCircle, Trophy, Edit } from 'lucide-react';
-import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
@@ -57,7 +57,7 @@ function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
 }
 
 export function QualityAuditAnalyzer() {
-  const [state, formAction] = useFormState(analyzeAuditAction, initialState);
+  const [state, formAction] = useActionState(analyzeAuditAction, initialState);
   const { toast } = useToast();
 
   useEffect(() => {

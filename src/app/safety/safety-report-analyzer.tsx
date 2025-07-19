@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
 import { analyzeReportAction } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AnalyzeSafetyReportToneOutput } from '@/ai/flows/analyze-safety-report-tone';
 import { Loader2, AlertTriangle, CheckCircle, Info, BarChart } from 'lucide-react';
-import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const initialState = {
@@ -59,7 +59,7 @@ function AnalysisResult({ data }: { data: AnalyzeSafetyReportToneOutput }) {
 }
 
 export function SafetyReportAnalyzer() {
-  const [state, formAction] = useFormState(analyzeReportAction, initialState);
+  const [state, formAction] = useActionState(analyzeReportAction, initialState);
   const { toast } = useToast();
 
   useEffect(() => {

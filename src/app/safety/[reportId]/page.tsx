@@ -2,7 +2,8 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,6 @@ import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveA
 import { suggestStepsAction, generatePlanAction } from './actions';
 import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,6 +27,7 @@ import { RiskAssessmentModule } from './risk-assessment-module';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { differenceInDays, parseISO } from 'date-fns';
+import React from 'react';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -226,8 +227,8 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   const report = safetyReports.find(r => r.id === params.reportId);
   const { toast } = useToast();
   
-  const [suggestStepsState, suggestStepsFormAction] = useFormState(suggestStepsAction, { message: '', data: null, errors: null });
-  const [generatePlanState, generatePlanFormAction] = useFormState(generatePlanAction, { message: '', data: null, errors: null });
+  const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
+  const [generatePlanState, generatePlanFormAction] = useActionState(generatePlanAction, { message: '', data: null, errors: null });
 
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
