@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
@@ -260,7 +259,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-lg flex items-center gap-2"><FileText /> Summary of Findings</h3>
-                        <Button variant="ghost" size="sm" onClick={() => setIsEditingSummary(!isEditingSummary)}>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditingSummary(!isEditingSummary)} className="no-print">
                             {isEditingSummary ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                             {isEditingSummary ? 'Save' : 'Edit'}
                         </Button>
@@ -278,7 +277,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                 <div>
                      <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-lg flex items-center gap-2"><Target /> Root Cause Analysis</h3>
-                        <Button variant="ghost" size="sm" onClick={() => setIsEditingRootCause(!isEditingRootCause)}>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditingRootCause(!isEditingRootCause)} className="no-print">
                             {isEditingRootCause ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                             {isEditingRootCause ? 'Save' : 'Edit'}
                         </Button>
@@ -296,7 +295,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone /> Corrective Actions</h3>
-                        <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed' || editingActionId !== null}>
+                        <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed' || editingActionId !== null} className="no-print">
                             <PlusCircleIcon className="mr-2 h-4 w-4" />
                             Add Action
                         </Button>
@@ -309,7 +308,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                                     <TableHead>Responsible</TableHead>
                                     <TableHead>Deadline</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="text-right no-print">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -326,7 +325,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                 </div>
             </CardContent>
              {allActionsCompleted && report.status !== 'Closed' && (
-                <CardFooter className="flex justify-end gap-2">
+                <CardFooter className="flex justify-end gap-2 no-print">
                     <Button variant="outline">Save Plan</Button>
                     <Button onClick={onCloseReport}>
                         <CheckCircle className="mr-2 h-4 w-4" />
@@ -433,7 +432,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`}>
-        <Button variant="outline" onClick={() => window.print()}>
+        <Button variant="outline" onClick={() => window.print()} className="no-print">
             <Printer className="mr-2 h-4 w-4" />
             Print Report
         </Button>
@@ -495,7 +494,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 no-print">
                                             <Info className="h-4 w-4 text-muted-foreground" />
                                     </Button>
                                     </TooltipTrigger>
@@ -550,21 +549,23 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 <TabsTrigger value="ai">AI Assistant</TabsTrigger>
                 <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
             </TabsList>
-            <TabsContent value="investigation" className="pt-4">
+            <TabsContent value="investigation" className="pt-4 print:block">
                  <Card>
                     <CardHeader>
                         <CardTitle>Investigation Workbench</CardTitle>
-                        <CardDescription>
+                        <CardDescription className="no-print">
                             Add notes, assign investigators, and discuss the report with your team.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <InvestigationTeamForm report={report} />
-                        <Separator />
-                        <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                        <Separator />
+                        <div className="no-print">
+                            <InvestigationTeamForm report={report} />
+                            <Separator className="my-6" />
+                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                            <Separator className="my-6" />
+                        </div>
                         <div className="space-y-2">
-                            <Label htmlFor="investigationNotes">Investigation Notes & Findings</Label>
+                            <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
                             <Textarea
                                 id="investigationNotes"
                                 name="investigationNotes"
@@ -577,10 +578,10 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="risk-assessment" className="pt-4">
+            <TabsContent value="risk-assessment" className="pt-4 print:block">
                 <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
             </TabsContent>
-            <TabsContent value="ai" className="pt-4">
+            <TabsContent value="ai" className="pt-4 no-print">
                 <Card>
                     <CardHeader>
                         <CardTitle>AI Assistant</CardTitle>
@@ -615,7 +616,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="plan" className="pt-4 space-y-8">
+            <TabsContent value="plan" className="pt-4 space-y-8 print:block">
                 {correctiveActionPlan ? (
                      <CorrectiveActionPlanResult 
                         plan={correctiveActionPlan} 
@@ -624,7 +625,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         onCloseReport={handleCloseReport} 
                     />
                 ) : (
-                    <Card>
+                    <Card className="no-print">
                         <CardContent className="pt-6">
                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                 <p className="text-muted-foreground">
