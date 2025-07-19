@@ -133,6 +133,7 @@ export type SafetyReport = {
   type: SafetyReportType;
   subCategory?: string;
   lossOfSeparationType?: string;
+  raCallout?: string;
   aircraftInvolved?: string;
 };
 

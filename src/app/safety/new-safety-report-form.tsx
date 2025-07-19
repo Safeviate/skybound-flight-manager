@@ -40,12 +40,25 @@ const lossOfSeparationTypes = [
     'Traffic Alert',
 ];
 
+const raCalloutTypes = [
+    'Climb',
+    'Descend',
+    'Maintain Vertical Speed, Maintain',
+    'Level Off, Level Off',
+    'Monitor Vertical Speed',
+    'Increase Climb',
+    'Increase Descent',
+    'Climb, Crossing Climb',
+    'Descend, Crossing Descend',
+];
+
 const reportFormSchema = z.object({
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report'], {
     required_error: 'Please select a report type.',
   }),
   subCategory: z.string().optional(),
   lossOfSeparationType: z.string().optional(),
+  raCallout: z.string().optional(),
   aircraftInvolved: z.string().optional(),
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
@@ -77,6 +90,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
 
   const reportType = form.watch('reportType');
   const subCategory = form.watch('subCategory');
+  const lossOfSeparationType = form.watch('lossOfSeparationType');
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -162,6 +176,30 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                             </FormControl>
                             <SelectContent>
                                 {lossOfSeparationTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+        {lossOfSeparationType === 'Resolution advisory' && (
+             <FormField
+                control={form.control}
+                name="raCallout"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>RA Callout</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select the RA callout" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {raCalloutTypes.map(type => (
                                     <SelectItem key={type} value={type}>{type}</SelectItem>
                                 ))}
                             </SelectContent>

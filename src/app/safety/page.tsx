@@ -124,6 +124,7 @@ export default function SafetyPage() {
                                 <Badge variant="secondary" className="mb-1 w-fit">
                                     {report.subCategory}
                                     {report.lossOfSeparationType && ` - ${report.lossOfSeparationType}`}
+                                    {report.raCallout && ` (${report.raCallout})`}
                                 </Badge>
                             )}
                             <span className="truncate">{report.details}</span>
