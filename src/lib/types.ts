@@ -1,4 +1,5 @@
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -72,6 +73,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Super User',
 ];
 
+export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance';
+
 export type Role =
   | 'Accountable Manager'
   | 'Admin'
@@ -103,7 +106,7 @@ export type User = {
     endorsements?: Endorsement[];
     trainingLogs?: TrainingLogEntry[];
     // Personnel-specific
-    department?: string;
+    department?: Department;
     medicalExpiry?: string;
     licenseExpiry?: string;
 };
@@ -157,6 +160,7 @@ export type SafetyReport = {
   details: string;
   status: 'Open' | 'Under Review' | 'Closed';
   type: SafetyReportType;
+  department: Department;
   subCategory?: string;
   lossOfSeparationType?: string;
   raCallout?: string;
@@ -169,6 +173,14 @@ export type SafetyReport = {
   occurrenceCategory?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
+};
+
+export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
+    'Flight Operations Report': 'Flight Operations',
+    'Ground Operations Report': 'Ground Operation',
+    'Aircraft Defect Report': 'Maintenance',
+    'Occupational Report': 'Management',
+    'General Report': 'Management',
 };
 
 export type SuggestInvestigationStepsOutput = {

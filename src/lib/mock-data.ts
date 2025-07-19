@@ -161,6 +161,7 @@ export const safetyReportData: SafetyReport[] = [
       filedDate: '2024-08-10', 
       submittedBy: 'Sarah Connor', 
       type: 'Flight Operations Report', 
+      department: 'Flight Operations',
       subCategory: 'Bird Strike', 
       details: 'During final approach to runway 31, a large bird, possibly a hawk, passed very close to the aircraft. No impact was felt, but a post-flight inspection is warranted to be safe. ATC was notified of the bird activity in the area.', 
       status: 'Under Review', 
@@ -179,52 +180,31 @@ export const safetyReportData: SafetyReport[] = [
         { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6, hazardArea: 'Flight Operations', process: 'Approach', promotedToRegister: false },
       ]
     },
-    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
-    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
-    { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
-    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
+    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', department: 'Flight Operations', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
+    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', department: 'Ground Operation', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
+    { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', department: 'Management', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [] },
+    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', department: 'Maintenance', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
 ];
 
-export const riskRegisterData: Risk[] = [
-    {
-        id: 'risk-reg-1',
-        hazard: 'Inadequate pilot briefing on bird activity in the area.',
-        risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.',
-        consequences: ['Aircraft damage', 'Loss of separation'],
-        likelihood: 'Possible',
-        severity: 'Minor',
-        riskScore: 6,
-        status: 'Open',
-        existingMitigation: 'General ATC advisories for bird activity.',
-        proposedMitigation: 'Mandatory review of local wildlife logs during pre-flight dispatch.',
-        mitigation: '',
-        residualLikelihood: 'Unlikely',
-        residualSeverity: 'Minor',
-        residualRiskScore: 4,
-        dateIdentified: '2024-08-11',
-        hazardArea: 'Flight Operations',
-        process: 'Approach',
-        riskOwner: 'John Smith',
-        reviewDate: '2025-02-11',
-        reportNumber: 'FOR-001'
-    },
-    {
-        id: 'risk-reg-2',
-        hazard: 'Bird ingestion into engine during a critical phase of flight.',
-        risk: 'Potential for engine failure on approach, leading to a loss of control.',
-        consequences: ['Engine failure', 'Forced landing', 'Loss of aircraft'],
-        likelihood: 'Rare',
-        severity: 'Major',
-        riskScore: 5,
-        status: 'Open',
-        existingMitigation: 'None specific.',
-        proposedMitigation: 'Increase engine inspections after reported high bird activity. Review go-around procedures for engine failure scenarios.',
-        mitigation: '',
-        dateIdentified: '2024-08-11',
-        hazardArea: 'Flight Operations',
-        process: 'Approach',
-        riskOwner: 'Mike Ross',
-        reviewDate: '2025-02-11',
-        reportNumber: 'FOR-001'
-    },
-];
+export const riskRegisterData: Risk[] = safetyReportData
+    .flatMap(report => 
+        (report.associatedRisks || [])
+        .filter(risk => risk.promotedToRegister)
+        .map(risk => ({
+            id: `risk-reg-${risk.id}`,
+            hazard: risk.hazard,
+            risk: risk.risk,
+            consequences: ['Aircraft damage', 'Injury'], // Example data
+            likelihood: risk.likelihood,
+            severity: risk.severity,
+            riskScore: risk.riskScore,
+            status: 'Open',
+            mitigation: '',
+            dateIdentified: report.filedDate,
+            hazardArea: risk.hazardArea,
+            process: risk.process,
+            reportNumber: report.reportNumber,
+            riskOwner: 'John Smith',
+            reviewDate: '2025-02-11',
+        }))
+    );

@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import { riskRegisterData as initialRisks } from '@/lib/mock-data';
-import type { SafetyReport, Risk, GroupedRisk } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
@@ -33,6 +33,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { EditRiskForm } from './edit-risk-form';
 import { RiskMatrix } from './risk-matrix';
+import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
+
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -71,13 +73,15 @@ export default function SafetyPage() {
     }
   };
   
-  const handleNewReportSubmit = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate'> & { isAnonymous?: boolean }) => {
+  const handleNewReportSubmit = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => {
     const { isAnonymous, ...reportData } = newReportData;
+    const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type];
     const newReport: SafetyReport = {
         id: `sr-${Date.now()}`,
         submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
         status: 'Open',
         filedDate: format(new Date(), 'yyyy-MM-dd'),
+        department: department,
         ...reportData,
     };
     setSafetyReports(prev => [newReport, ...prev]);
@@ -148,9 +152,8 @@ export default function SafetyPage() {
                     <TableRow>
                       <TableHead>Report #</TableHead>
                       <TableHead>Occurrence Date</TableHead>
-                      <TableHead>Filed Date</TableHead>
-                      <TableHead>Submitted By</TableHead>
                       <TableHead>Report</TableHead>
+                      <TableHead>Department</TableHead>
                       <TableHead>Aircraft</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
@@ -166,8 +169,6 @@ export default function SafetyPage() {
                            </Link>
                         </TableCell>
                         <TableCell>{report.occurrenceDate}</TableCell>
-                        <TableCell>{report.filedDate}</TableCell>
-                        <TableCell>{report.submittedBy}</TableCell>
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
                             <span className="font-medium truncate">{report.heading}</span>
@@ -181,6 +182,7 @@ export default function SafetyPage() {
                             <span className="text-muted-foreground truncate">{report.details}</span>
                           </div>
                         </TableCell>
+                        <TableCell>{report.department}</TableCell>
                         <TableCell>{report.aircraftInvolved || 'N/A'}</TableCell>
                         <TableCell>
                           {report.location && (
@@ -252,7 +254,7 @@ export default function SafetyPage() {
                          <h3 className="font-semibold text-lg">{group.area}</h3>
                       </div>
                       <ScrollArea>
-                        <Table className="min-w-[1800px]">
+                        <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[60px]">No.</TableHead>
@@ -275,7 +277,7 @@ export default function SafetyPage() {
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
                                         <TableCell>
                                             {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.id.replace('risk-reg-','sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                                <Link href={`/safety/${risk.reportNumber.replace(/[^a-zA-Z0-9-]/g, '')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
                                             ) : (
                                                 'N/A'
                                             )}
