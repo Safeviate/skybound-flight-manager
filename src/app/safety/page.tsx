@@ -28,6 +28,7 @@ import { useUser } from '@/context/user-provider';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { NewRiskForm } from './new-risk-form';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -227,73 +228,85 @@ export default function SafetyPage() {
                 </Dialog>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {groupedRiskData.map(group => (
                     <div key={group.area} className="border rounded-lg">
-                      <div className="bg-muted p-2 border-b">
-                         <h3 className="font-semibold">{group.area}</h3>
+                      <div className="bg-muted p-3 border-b">
+                         <h3 className="font-semibold text-lg">{group.area}</h3>
                       </div>
-                      {/* Headers */}
-                      <div className="grid grid-cols-12 text-xs font-semibold border-b bg-muted/50">
-                          <div className="col-span-5 p-2 border-r">Hazard</div>
-                          <div className="col-span-3 text-center p-2 border-r">Initial Risk</div>
-                          <div className="col-span-4 text-center p-2">Residual Risk Mitigated A.L.A.R.P</div>
-                      </div>
-                       <div className="grid grid-cols-12 text-xs font-semibold border-b">
-                          <div className="col-span-1 p-2 border-r">No</div>
-                          <div className="col-span-1 p-2 border-r">Hazard</div>
-                          <div className="col-span-1 p-2 border-r">Risk</div>
-                          <div className="col-span-2 p-2 border-r">Exposure / Consequence</div>
-                          
-                          {/* Initial Risk */}
-                          <div className="p-1 text-center border-r">P</div>
-                          <div className="p-1 text-center border-r">S</div>
-                          <div className="p-1 text-center border-r">PxS</div>
-
-                          {/* Residual Risk */}
-                          <div className="col-span-2 p-2 border-r">Mitigation</div>
-                          <div className="p-1 text-center border-r">P</div>
-                          <div className="p-1 text-center border-r">S</div>
-                          <div className="p-1 text-center border-r">PxS</div>
-                          <div className="p-1 text-center">Owner</div>
-                       </div>
-                      {/* Body */}
-                      {group.risks.map((risk, index) => (
-                        <div key={risk.id} className="grid grid-cols-12 text-xs border-b last:border-b-0">
-                          {/* Hazard Info */}
-                          <div className="col-span-1 p-2 border-r">{String(index + 1).padStart(3, '0')}</div>
-                          <div className="col-span-1 p-2 border-r">{risk.hazard}</div>
-                          <div className="col-span-1 p-2 border-r">{risk.risk}</div>
-                          <div className="col-span-2 p-2 border-r">
-                            <ul className="list-disc list-inside">
-                              {risk.consequences.map((c, i) => <li key={i}>{c}</li>)}
-                            </ul>
+                      <ScrollArea>
+                        <div className="min-w-[1800px]">
+                           {/* Main Headers */}
+                          <div className="grid grid-cols-12 text-sm font-semibold border-b bg-muted/50">
+                              <div className="col-span-5 p-2 border-r">Hazard</div>
+                              <div className="col-span-3 text-center p-2 border-r">Initial Risk</div>
+                              <div className="col-span-4 text-center p-2">Residual Risk Mitigated A.L.A.R.P</div>
                           </div>
+                          {/* Sub Headers */}
+                           <div className="grid grid-cols-12 text-xs font-semibold border-b text-center">
+                              <div className="col-span-1 p-2 border-r text-left">No</div>
+                              <div className="col-span-1 p-2 border-r text-left">Hazard</div>
+                              <div className="col-span-1 p-2 border-r text-left">Risk</div>
+                              <div className="col-span-2 p-2 border-r text-left">Exposure / Consequence</div>
+                              
+                              <div className="p-1 border-r">P</div>
+                              <div className="p-1 border-r">S</div>
+                              <div className="p-1 border-r">PxS</div>
 
-                          {/* Initial Risk */}
-                          <div className="flex items-center justify-center p-1 border-r">{risk.likelihoodValue}</div>
-                          <div className="flex items-center justify-center p-1 border-r">{risk.severityValue}</div>
-                          <div className="flex items-center justify-center p-1 border-r">
-                            <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md">
-                              {getRiskScoreString(risk.likelihoodValue, risk.severityValue)}
-                            </Badge>
-                          </div>
-                          
-                          {/* Residual Risk */}
-                          <div className="col-span-2 p-2 border-r">{risk.mitigation}</div>
-                          <div className="flex items-center justify-center p-1 border-r">{risk.residualLikelihoodValue}</div>
-                          <div className="flex items-center justify-center p-1 border-r">{risk.residualSeverityValue}</div>
-                           <div className="flex items-center justify-center p-1 border-r">
-                            {risk.residualRiskScore !== undefined ? (
-                               <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md">
-                                {getRiskScoreString(risk.residualLikelihoodValue, risk.residualSeverityValue)}
-                               </Badge>
-                            ) : '-'}
-                          </div>
-                          <div className="flex items-center justify-center p-1">{risk.riskOwner}</div>
+                              <div className="col-span-2 p-2 border-r text-left">Mitigation</div>
+                              <div className="p-1 border-r">P</div>
+                              <div className="p-1 border-r">S</div>
+                              <div className="p-1 border-r">PxS</div>
+                              <div className="p-1">Owner</div>
+                           </div>
+                          {/* Body */}
+                          {group.risks.map((risk, index) => (
+                            <div key={risk.id} className="grid grid-cols-12 text-sm border-b last:border-b-0">
+                              {/* Hazard Info */}
+                              <div className="col-span-1 p-2 border-r space-y-1">
+                                <p>{String(index + 1).padStart(3, '0')}</p>
+                                <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md">
+                                  {getRiskScoreString(risk.likelihoodValue, risk.severityValue)}
+                                </Badge>
+                              </div>
+                              <div className="col-span-1 p-2 border-r space-y-1">
+                                <div>{risk.hazard}</div>
+                                <div className="text-muted-foreground">{risk.riskOwner}</div>
+                              </div>
+                              <div className="col-span-1 p-2 border-r">{risk.risk}</div>
+                              <div className="col-span-2 p-2 border-r">
+                                <ul className="list-disc list-inside">
+                                  {risk.consequences.map((c, i) => <li key={i}>{c}</li>)}
+                                </ul>
+                              </div>
 
+                              {/* Initial Risk */}
+                              <div className="flex items-center justify-center p-1 border-r">{risk.likelihoodValue}</div>
+                              <div className="flex items-center justify-center p-1 border-r">{risk.severityValue}</div>
+                              <div className="flex items-center justify-center p-1 border-r">
+                                <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md">
+                                  {getRiskScoreString(risk.likelihoodValue, risk.severityValue)}
+                                </Badge>
+                              </div>
+                              
+                              {/* Residual Risk */}
+                              <div className="col-span-2 p-2 border-r">{risk.mitigation}</div>
+                              <div className="flex items-center justify-center p-1 border-r">{risk.residualLikelihoodValue}</div>
+                              <div className="flex items-center justify-center p-1 border-r">{risk.residualSeverityValue}</div>
+                               <div className="flex items-center justify-center p-1 border-r">
+                                {risk.residualRiskScore !== undefined ? (
+                                   <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md">
+                                    {getRiskScoreString(risk.residualLikelihoodValue, risk.residualSeverityValue)}
+                                   </Badge>
+                                ) : '-'}
+                              </div>
+                              <div className="flex items-center justify-center p-1">{risk.riskOwner}</div>
+
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
                     </div>
                   ))}
                 </div>
