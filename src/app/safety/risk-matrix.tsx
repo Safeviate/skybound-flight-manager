@@ -52,7 +52,7 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                         <span className="text-muted-foreground ml-auto">Severity</span>
                     </div>
                 </TableHead>
-                {severities.map(s => <TableHead key={s} className="text-center p-1 h-10 font-semibold">{s}</TableHead>)}
+                {severities.map(s => <TableHead key={s} className="text-center p-1 h-20 w-20 font-semibold">{s}</TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,7 +78,7 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                     );
 
                     return (
-                      <TableCell key={s} className="text-center p-0 border-l h-20">
+                      <TableCell key={s} className="text-center p-0 border-l h-20 w-20">
                         {riskCount > 0 ? (
                            <Popover>
                                 <PopoverTrigger asChild>{CellContent}</PopoverTrigger>
@@ -92,7 +92,7 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                                             {cellRisks.map(risk => (
                                                 <div key={risk.id} className="text-sm">
                                                     {risk.reportNumber ? (
-                                                        <Link href={`/safety/${risk.reportNumber.replace('FOR-','sr').replace('GOR-','sr').replace('ADR-','sr')}`}>
+                                                        <Link href={`/safety/${risk.reportNumber.replace(/[^a-zA-Z0-9-]/g, '')}`}>
                                                             <Badge variant="secondary" className="hover:underline">{risk.reportNumber}</Badge>
                                                         </Link>
                                                     ) : (
