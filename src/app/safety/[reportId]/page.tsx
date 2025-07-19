@@ -23,6 +23,7 @@ import { DiscussionSection } from './discussion-section';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 import { Input } from '@/components/ui/input';
+import { RiskAssessmentModule } from './risk-assessment-module';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -165,22 +166,6 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     <h4 className="font-semibold">Details</h4>
                     <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
                 </div>
-                {report.phaseOfFlight && (
-                    <div className="space-y-2 pt-2">
-                        <h4 className="font-semibold">Phase of Flight</h4>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline">{report.phaseOfFlight}</Badge>
-                        </div>
-                    </div>
-                 )}
-                 {report.occurrenceCategory && (
-                    <div className="space-y-2 pt-2">
-                        <h4 className="font-semibold">ICAO Occurrence Category</h4>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline">{report.occurrenceCategory}</Badge>
-                        </div>
-                    </div>
-                 )}
             </CardContent>
         </Card>
         
@@ -229,9 +214,22 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                             <Label htmlFor="subClassification">Sub Classification</Label>
                             <Input id="subClassification" name="subClassification" placeholder="Enter sub classification" />
                         </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
+                             <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
+                                <SelectTrigger id="phaseOfFlight">
+                                    <SelectValue placeholder="Select Phase of Flight" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
+
+            <RiskAssessmentModule report={report} onUpdate={handleReportUpdate} />
 
             <Card>
                 <CardHeader>

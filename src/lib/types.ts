@@ -152,6 +152,9 @@ export type SafetyReport = {
   occurrenceCategory?: string;
   phaseOfFlight?: string;
   discussion?: DiscussionEntry[];
+  likelihood?: RiskLikelihood;
+  severity?: RiskSeverity;
+  riskScore?: number;
 };
 
 export type SuggestInvestigationStepsOutput = {
@@ -220,10 +223,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
-    'ADRM', 'AMAN', 'ARC', 'ATM', 'BIRD', 'CABIN', 'CFIT', 'CTOL', 'EVAC', 'EXTL', 'F-NI',
-    'F-POST', 'FUEL', 'GCOL', 'GTOW', 'ICE', 'LALT', 'LOC-G', 'LOC-I', 'LOLI', 'MAC', 'MED',
-    'NAV', 'OTHR', 'RAMP', 'RE', 'RI', 'SCF-NP', 'SCF-PP', 'SEC', 'TURB', 'UIMC', 'UNK', 'USOS',
-    'WILD', 'WSTRW'
+    'ADRM', 'CFIT', 'FUEL', 'LOC-I', 'RAMP', 'TURB', 'AMAN', 'CTOL', 'GCOL', 'LOLI', 'RE', 'UIMC', 'ARC', 'EVAC', 'GTOW', 'MAC', 'RI', 'UNK', 'ATM', 'EXTL', 'ICE', 'MED', 'SCF-NP', 'USOS', 'BIRD', 'F-NI', 'LALT', 'NAV', 'SCF-PP', 'WILD', 'CABIN', 'F-POST', 'LOC-G', 'OTHR', 'SEC', 'WSTRW'
 ];
 
 export const ICAO_PHASES_OF_FLIGHT = [
