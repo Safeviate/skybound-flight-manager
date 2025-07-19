@@ -147,6 +147,7 @@ export type AssociatedRisk = {
     residualLikelihood?: RiskLikelihood;
     residualSeverity?: RiskSeverity;
     residualRiskScore?: number;
+    promotedToRegister?: boolean;
 }
 
 export type SafetyReport = {

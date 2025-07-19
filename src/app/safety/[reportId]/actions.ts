@@ -4,7 +4,8 @@
 import { z } from 'zod';
 import { suggestInvestigationSteps } from '@/ai/flows/suggest-investigation-steps-flow';
 import { generateCorrectiveActionPlan } from '@/ai/flows/generate-corrective-action-plan-flow';
-import type { SafetyReport } from '@/lib/types';
+import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow';
+import type { SafetyReport, AssociatedRisk } from '@/lib/types';
 
 const reportSchema = z.object({
   report: z.any(),
@@ -95,4 +96,24 @@ export async function generatePlanAction(prevState: any, formData: FormData) {
   }
 }
 
+export async function promoteRiskAction(prevState: any, formData: FormData) {
+    const reportString = formData.get('report');
+    const riskString = formData.get('riskToPromote');
+
+    if (!reportString || typeof reportString !== 'string' || !riskString || typeof riskString !== 'string') {
+        return { message: 'Invalid data provided.' };
+    }
+
+    try {
+        const report: SafetyReport = JSON.parse(reportString);
+        const riskToPromote: AssociatedRisk = JSON.parse(riskString);
+
+        const result = await promoteToRiskRegister({ report, riskToPromote });
+
+        return { message: 'Risk promoted successfully', data: { ...result, ...riskToPromote } };
+    } catch (error) {
+        console.error(error);
+        return { message: 'An error occurred during promotion.' };
+    }
+}
     

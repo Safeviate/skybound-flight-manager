@@ -1,24 +1,63 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useFormState } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
-import type { AssociatedRisk, SafetyReport } from '@/lib/types';
+import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, ArrowUpCircle } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
+import { promoteRiskAction } from './actions';
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
     onUpdate: (updatedReport: SafetyReport) => void;
+    onPromoteRisk: (newRisk: RiskRegisterEntry) => void;
 }
 
-export function InitialRiskAssessment({ report, onUpdate }: InitialRiskAssessmentProps) {
+function PromoteButton({ risk, promoted }: { risk: AssociatedRisk, promoted?: boolean }) {
+    const { toast } = useToast();
+    const [state, formAction] = useFormState(promoteRiskAction, { message: '', data: null });
+
+    React.useEffect(() => {
+        if (state.message === 'Risk promoted successfully') {
+            toast({
+                title: 'Risk Promoted',
+                description: 'The hazard has been added to the central Risk Register.'
+            });
+            // We can't update the central state from here directly,
+            // so we will rely on the parent component to handle it.
+            // A more robust solution might use a global state manager.
+        } else if (state.message && !state.data) {
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: state.message,
+            });
+        }
+    }, [state, toast]);
+
+    const isPromoted = promoted || (state.data && state.message === 'Risk promoted successfully');
+
+    if (isPromoted) {
+        return <Button size="sm" variant="success" disabled><ArrowUpCircle className="mr-2 h-4 w-4" /> Promoted</Button>;
+    }
+    
+    return (
+        <form action={formAction}>
+            <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
+            <Button size="sm" type="submit"><ArrowUpCircle className="mr-2 h-4 w-4" /> Promote to Register</Button>
+        </form>
+    );
+}
+
+export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
   const { toast } = useToast();
 
@@ -84,6 +123,7 @@ export function InitialRiskAssessment({ report, onUpdate }: InitialRiskAssessmen
                             <TableHead>Risk</TableHead>
                             <TableHead>Risk Score</TableHead>
                             <TableHead>Level</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -98,6 +138,34 @@ export function InitialRiskAssessment({ report, onUpdate }: InitialRiskAssessmen
                                 </TableCell>
                                 <TableCell>
                                      <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <form action={async (formData) => {
+                                        const result = await promoteRiskAction(null, formData);
+                                        if (result.data) {
+                                            onUpdate({
+                                                ...report,
+                                                associatedRisks: report.associatedRisks?.map(r => r.id === risk.id ? { ...r, promotedToRegister: true } : r)
+                                            });
+                                            onPromoteRisk({
+                                                id: `risk-reg-${Date.now()}`,
+                                                dateIdentified: new Date().toISOString().split('T')[0],
+                                                description: result.data.description,
+                                                likelihood: result.data.likelihood,
+                                                severity: result.data.severity,
+                                                riskScore: result.data.riskScore,
+                                                status: result.data.status,
+                                                mitigation: result.data.mitigation,
+                                            });
+                                        }
+                                    }}>
+                                        <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
+                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                        <Button size="sm" type="submit" disabled={risk.promotedToRegister}>
+                                            <ArrowUpCircle className="mr-2 h-4 w-4" />
+                                            {risk.promotedToRegister ? 'Promoted' : 'Promote'}
+                                        </Button>
+                                    </form>
                                 </TableCell>
                             </TableRow>
                         ))}

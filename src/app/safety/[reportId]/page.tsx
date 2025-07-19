@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
-import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction } from '@/lib/types';
+import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
 import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -236,6 +236,16 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   const handleReportUpdate = (updatedReport: SafetyReport) => {
     setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
   };
+  
+  const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
+    // In a real app, this would be an API call to a central store.
+    // For this mock, we can't easily update the state of the parent page.
+    // We will show a toast message and the local state will reflect the promotion.
+     toast({
+        title: 'Risk Promoted to Central Register',
+        description: `"${newRisk.description}" is now being tracked centrally.`,
+    });
+  };
 
   const handleCloseReport = () => {
     if (report) {
@@ -406,7 +416,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </Card>
             </TabsContent>
             <TabsContent value="risk-assessment" className="pt-4">
-                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} />
+                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
             </TabsContent>
             <TabsContent value="ai" className="pt-4">
                 <Card>
