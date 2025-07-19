@@ -151,12 +151,19 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     )}
                 </div>
-                 {(report.occurrenceCategory || report.phaseOfFlight) && (
+                {report.occurrenceCategory && (
                     <div className="space-y-2 pt-2">
-                        <h4 className="font-semibold">ICAO Classification</h4>
+                        <h4 className="font-semibold">ICAO Occurrence Category</h4>
                         <div className="flex flex-wrap gap-2">
-                            {report.occurrenceCategory && <Badge variant="outline">{report.occurrenceCategory}</Badge>}
-                            {report.phaseOfFlight && <Badge variant="outline">{report.phaseOfFlight}</Badge>}
+                            <Badge variant="outline">{report.occurrenceCategory}</Badge>
+                        </div>
+                    </div>
+                 )}
+                 {report.phaseOfFlight && (
+                    <div className="space-y-2 pt-2">
+                        <h4 className="font-semibold">Phase of Flight</h4>
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline">{report.phaseOfFlight}</Badge>
                         </div>
                     </div>
                  )}
