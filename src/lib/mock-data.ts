@@ -165,20 +165,20 @@ export const safetyReportData: SafetyReport[] = [
       status: 'Under Review', 
       aircraftInvolved: 'N/A', 
       investigationTeam: ['Mike Ross', 'Sarah Connor'], 
-      occurrenceCategory: 'BIRD', 
+      occurrenceCategory: 'BIRD',
       discussion: [
         { id: 'd1', author: 'Mike Ross', recipient: 'Sarah Connor', message: 'Please provide a written statement detailing the event from your perspective.', datePosted: '2024-08-11', replyByDate: '2024-08-14' }
       ],
       associatedRisks: [
         { id: 'risk-sr1-1', hazard: 'Inadequate pilot briefing on bird activity in the area.', risk: 'Pilots may not be sufficiently vigilant, increasing the chance of a bird strike.', likelihood: 'Possible', severity: 'Minor', riskScore: 6 },
         { id: 'risk-sr1-2', hazard: 'Actual bird strike on the airframe.', risk: 'Minor cosmetic or structural damage to the aircraft (e.g., dented leading edge).', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6 },
-        { id: 'risk-sr1-3', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 5 },
+        { id: 'risk-sr1-3', hazard: 'Bird ingestion into engine during a critical phase of flight.', risk: 'Potential for engine failure on approach, leading to a loss of control.', likelihood: 'Rare', severity: 'Major', riskScore: 5 },
       ]
     },
-    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'F-POST', phaseOfFlight: 'Landing' },
-    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', investigationTeam: [], phaseOfFlight: 'Servicing' },
+    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', subCategory: 'Unstable Approach', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', investigationTeam: ['John Doe'], occurrenceCategory: 'F-POST' },
+    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', investigationTeam: [] },
     { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', investigationTeam: [] },
-    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP', phaseOfFlight: 'Parked' },
+    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
 ];
 
 export const riskRegisterData: Risk[] = [
