@@ -73,13 +73,13 @@ export function RiskAssessmentTool({ onAssessmentChange, showResultCard = true }
                           <TableCell
                             key={s}
                             className={cn(
-                              'text-center cursor-pointer border-l hover:bg-muted/50 p-1 h-8 w-8 font-medium',
+                              'text-center cursor-pointer border-l hover:bg-muted/50 p-1 h-8 w-8 font-medium text-foreground/80',
                               isSelected && 'ring-2 ring-primary ring-inset'
                             )}
                             style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
                             onClick={() => handleCellClick(l, s)}
                           >
-                            
+                            {score}
                           </TableCell>
                         )
                       })}
