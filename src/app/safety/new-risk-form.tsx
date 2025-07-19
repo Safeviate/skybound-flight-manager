@@ -24,11 +24,14 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
 
 const newRiskFormSchema = z.object({
-  description: z.string().min(10, {
+  hazard: z.string().min(3, { message: 'Hazard is required.'}),
+  risk: z.string().min(10, {
     message: 'Description must be at least 10 characters long.',
   }),
+  consequences: z.string().min(3, { message: 'At least one consequence is required.'}),
   mitigation: z.string().min(10, {
     message: 'Initial mitigation must be at least 10 characters long.',
   }),
@@ -47,7 +50,7 @@ const newRiskFormSchema = z.object({
 type NewRiskFormValues = z.infer<typeof newRiskFormSchema>;
 
 interface NewRiskFormProps {
-  onSubmit: (data: Omit<NewRiskFormValues, 'riskScore'>) => void;
+  onSubmit: (data: Omit<Risk, 'id' | 'riskScore' | 'dateIdentified'>) => void;
 }
 
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
@@ -70,9 +73,15 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
   };
 
   function handleFormSubmit(data: NewRiskFormValues) {
+    const likelihoodMap: Record<RiskLikelihood, number> = { 'Rare': 1, 'Unlikely': 2, 'Possible': 3, 'Likely': 4, 'Certain': 5 };
+    const severityLetterMap: Record<RiskSeverity, string> = { 'Insignificant': 'E', 'Minor': 'D', 'Moderate': 'C', 'Major': 'B', 'Catastrophic': 'A' };
+    
     onSubmit({
         ...data,
+        consequences: data.consequences.split(',').map(s => s.trim()),
         reviewDate: format(data.reviewDate, 'yyyy-MM-dd'),
+        likelihoodValue: likelihoodMap[data.likelihood],
+        severityValue: severityLetterMap[data.severity],
     });
   }
 
@@ -81,13 +90,42 @@ export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="description"
+          name="hazard"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hazard</FormLabel>
+              <FormControl>
+                <Input placeholder="Describe the hazard" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="risk"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Risk Description</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Describe the identified risk..."
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="consequences"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Consequences</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="List potential consequences, separated by commas"
                   {...field}
                 />
               </FormControl>

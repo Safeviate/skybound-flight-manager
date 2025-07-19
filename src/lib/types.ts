@@ -6,6 +6,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -205,12 +206,19 @@ export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
 
 export type Risk = {
   id: string;
-  description: string;
+  hazard: string;
+  risk: string;
+  consequences: string[];
   likelihood: RiskLikelihood;
+  likelihoodValue: number;
   severity: RiskSeverity;
+  severityValue: string;
   riskScore: number;
+  residualLikelihood?: RiskLikelihood;
+  residualLikelihoodValue?: number;
+  residualSeverity?: RiskSeverity;
+  residualSeverityValue?: string;
   residualRiskScore?: number;
-  status: RiskStatus;
   mitigation: string;
   dateIdentified: string;
   hazardArea: string;
@@ -218,6 +226,12 @@ export type Risk = {
   riskOwner?: string;
   reviewDate?: string;
 }
+
+export type GroupedRisk = {
+  area: string;
+  risks: Risk[];
+};
+
 
 export type ChecklistItem = {
     id: string;
