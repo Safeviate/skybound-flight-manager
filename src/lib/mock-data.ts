@@ -194,6 +194,7 @@ export const riskRegisterData: Risk[] = [
         likelihood: 'Possible',
         severity: 'Major',
         riskScore: 12,
+        status: 'Open',
         existingMitigation: 'ATC advisories for reported bird activity.',
         proposedMitigation: 'Implement mandatory review of daily bird activity logs during pre-flight briefing. Install bird cannons near runway thresholds.',
         mitigation: '',
@@ -204,6 +205,7 @@ export const riskRegisterData: Risk[] = [
         hazardArea: 'Flight Operations',
         process: 'Approach/Departure',
         riskOwner: 'John Smith',
-        reviewDate: '2025-02-11'
+        reviewDate: '2025-02-11',
+        reportNumber: 'FOR-001'
     }
 ];

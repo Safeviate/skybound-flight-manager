@@ -85,6 +85,7 @@ export default function SafetyPage() {
       id: `risk-reg-${Date.now()}`,
       dateIdentified: format(new Date(), 'yyyy-MM-dd'),
       riskScore: getRiskScore(newRiskData.likelihood, newRiskData.severity),
+      status: 'Open',
     };
     setRisks(prev => [newRisk, ...prev]);
     setIsNewRiskOpen(false);
@@ -239,22 +240,30 @@ export default function SafetyPage() {
                         <Table className="min-w-[1800px]">
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[4%]">No.</TableHead>
-                                    <TableHead className="w-[12%]">Hazard</TableHead>
-                                    <TableHead className="w-[12%]">Risk</TableHead>
-                                    <TableHead className="w-[12%]">Exposure</TableHead>
-                                    <TableHead className="w-[8%]">Initial Risk</TableHead>
-                                    <TableHead className="w-[15%]">Existing Mitigation</TableHead>
-                                    <TableHead className="w-[15%]">Proposed Mitigation</TableHead>
-                                    <TableHead className="w-[8%]">Mitigated Value</TableHead>
-                                    <TableHead className="w-[8%]">Owner</TableHead>
-                                    <TableHead className="w-[8%]">Review</TableHead>
+                                    <TableHead>No.</TableHead>
+                                    <TableHead>Source Report</TableHead>
+                                    <TableHead>Hazard</TableHead>
+                                    <TableHead>Risk</TableHead>
+                                    <TableHead>Exposure</TableHead>
+                                    <TableHead>Initial Risk</TableHead>
+                                    <TableHead>Existing Mitigation</TableHead>
+                                    <TableHead>Proposed Mitigation</TableHead>
+                                    <TableHead>Mitigated Value</TableHead>
+                                    <TableHead>Owner</TableHead>
+                                    <TableHead>Review</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {group.risks.map((risk, index) => (
                                     <TableRow key={risk.id}>
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
+                                        <TableCell>
+                                            {risk.reportNumber ? (
+                                                <Link href={`/safety/${risk.id.replace('risk-reg-', 'sr')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                            ) : (
+                                                'N/A'
+                                            )}
+                                        </TableCell>
                                         <TableCell>{risk.hazard}</TableCell>
                                         <TableCell>{risk.risk}</TableCell>
                                         <TableCell>

@@ -9,6 +9,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -218,6 +219,7 @@ export type Risk = {
   residualSeverity?: RiskSeverity;
   residualRiskScore?: number;
   mitigation: string;
+  status: RiskStatus;
   existingMitigation?: string;
   proposedMitigation?: string;
   dateIdentified: string;
@@ -225,6 +227,7 @@ export type Risk = {
   process: string;
   riskOwner?: string;
   reviewDate?: string;
+  reportNumber?: string;
 }
 
 export type GroupedRisk = {

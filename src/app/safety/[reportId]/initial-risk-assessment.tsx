@@ -158,6 +158,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                                 mitigation: result.data.mitigation,
                                                 hazardArea: result.data.hazardArea,
                                                 process: result.data.process,
+                                                reportNumber: result.data.reportNumber,
                                             });
                                         }
                                     }}>

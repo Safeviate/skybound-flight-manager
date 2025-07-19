@@ -25,6 +25,7 @@ const PromoteToRiskRegisterOutputSchema = z.object({
   status: z.enum(['Open', 'Mitigated', 'Closed']).describe('The initial status of the risk.'),
   hazardArea: z.string().describe("The general area of operations where the hazard exists (e.g., Flight Operations, Maintenance, Ground Operations)."),
   process: z.string().describe("The specific process or activity during which the hazard occurs (e.g., Landing, Takeoff, Refueling)."),
+  reportNumber: z.string().describe("The report number from the source safety report.")
 });
 export type PromoteToRiskRegisterOutput = z.infer<typeof PromoteToRiskRegisterOutputSchema>;
 
@@ -58,6 +59,7 @@ Based on this information:
 3.  Set the initial **status** to "Open".
 4.  From the safety report's context, determine the most relevant **hazardArea**. Choose one from: Flight Operations, Maintenance, Ground Operations, Administration.
 5.  From the safety report's context, determine the most relevant **process** or activity. Choose one from: Pre-flight, Taxiing, Takeoff, Climb, Cruise, Descent, Approach, Landing, Post-flight, Servicing, Other.
+6.  Extract the **reportNumber** from the main safety report.
 
 Output the results in the required JSON format.`,
 });
