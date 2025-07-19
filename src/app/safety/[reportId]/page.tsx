@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
@@ -8,16 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { safetyReportData } from '@/lib/mock-data';
+import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput } from '@/lib/types';
 import { suggestStepsAction } from './actions';
 import { AlertCircle, ArrowRight, Bot, ClipboardList, Lightbulb, ListChecks, Loader2, User, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
+import { DiscussionSection } from './discussion-section';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -79,7 +81,8 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
   }
 
 export default function SafetyReportInvestigationPage({ params }: { params: { reportId: string } }) {
-  const report = safetyReportData.find(r => r.id === params.reportId);
+  const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
+  const report = safetyReports.find(r => r.id === params.reportId);
   const { toast } = useToast();
   
   const initialState = {
@@ -88,6 +91,10 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     errors: null,
   };
   const [state, formAction] = useFormState(suggestStepsAction, initialState);
+
+  const handleReportUpdate = (updatedReport: SafetyReport) => {
+    setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
+  };
 
   useEffect(() => {
     if (state.message && state.message !== 'Invalid form data' && state.message !== 'Analysis complete') {
@@ -151,19 +158,19 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </div>
                     )}
                 </div>
-                {report.occurrenceCategory && (
-                    <div className="space-y-2 pt-2">
-                        <h4 className="font-semibold">ICAO Occurrence Category</h4>
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline">{report.occurrenceCategory}</Badge>
-                        </div>
-                    </div>
-                 )}
                  {report.phaseOfFlight && (
                     <div className="space-y-2 pt-2">
                         <h4 className="font-semibold">Phase of Flight</h4>
                         <div className="flex flex-wrap gap-2">
                             <Badge variant="outline">{report.phaseOfFlight}</Badge>
+                        </div>
+                    </div>
+                 )}
+                 {report.occurrenceCategory && (
+                    <div className="space-y-2 pt-2">
+                        <h4 className="font-semibold">ICAO Occurrence Category</h4>
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline">{report.occurrenceCategory}</Badge>
                         </div>
                     </div>
                  )}
@@ -183,6 +190,8 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
             </CardHeader>
             <CardContent className="space-y-6">
                 <InvestigationTeamForm report={report} />
+                <Separator />
+                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
                 <Separator />
                 <form action={formAction} className="space-y-4">
                     <div className="space-y-4">

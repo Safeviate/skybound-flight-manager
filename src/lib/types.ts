@@ -123,6 +123,15 @@ export type Booking = {
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
 
+export type DiscussionEntry = {
+  id: string;
+  author: string;
+  recipient: string;
+  message: string;
+  datePosted: string;
+  replyByDate?: string;
+};
+
 export type SafetyReport = {
   id: string;
   reportNumber: string;
@@ -142,6 +151,7 @@ export type SafetyReport = {
   investigationTeam?: string[];
   occurrenceCategory?: string;
   phaseOfFlight?: string;
+  discussion?: DiscussionEntry[];
 };
 
 export type SuggestInvestigationStepsOutput = {
