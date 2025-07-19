@@ -140,6 +140,8 @@ export type SafetyReport = {
   raNotFollowedReason?: string;
   aircraftInvolved?: string;
   investigationTeam?: string[];
+  occurrenceCategory?: string;
+  phaseOfFlight?: string;
 };
 
 export type SuggestInvestigationStepsOutput = {
@@ -206,3 +208,39 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Student': ['Bookings:View', 'Aircraft:View'],
     'Driver': [],
 };
+
+export const ICAO_OCCURRENCE_CATEGORIES = [
+    'ADR', 'Aircraft Defect Report',
+    'APRT', 'Approach',
+    'BIRD', 'Bird Strike',
+    'F-POST', 'Flight - Post-impact',
+    'FUEL', 'Fuel Related',
+    'ICE', 'Icing',
+    'LOC-G', 'Loss of Control - Ground',
+    'LOC-I', 'Loss of Control - In-flight',
+    'MED', 'Medical',
+    'NAV', 'Navigation Error',
+    'SCF-NP', 'System/Component Failure - Non-Powerplant',
+    'SCF-PP', 'System/Component Failure - Powerplant',
+    'SEC', 'Security Related',
+    'WSTRW', 'Wind-shear/Thunderstorm',
+    'Other',
+];
+
+export const ICAO_PHASES_OF_FLIGHT = [
+    'Standing',
+    'Taxi',
+    'Take-off',
+    'Initial Climb',
+    'Climb',
+    'Cruise',
+    'Descent',
+    'Approach',
+    'Landing',
+    'Go-around',
+    'Parked',
+    'Towing',
+    'Maintenance',
+    'Servicing',
+    'Other',
+];

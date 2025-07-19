@@ -16,6 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ICAO_OCCURRENCE_CATEGORIES, ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
+
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -163,6 +166,28 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 <InvestigationTeamForm report={report} />
                 <Separator />
                 <form action={formAction} className="space-y-4">
+                    <div className="space-y-4">
+                        <Label>ICAO ADREP Classification</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <Select name="occurrenceCategory" defaultValue={report.occurrenceCategory}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Occurrence Category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <Select name="phaseOfFlight" defaultValue={report.phaseOfFlight}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Phase of Flight" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <Separator />
                     <input type="hidden" name="report" value={JSON.stringify(report)} />
                     <div className="space-y-2">
                         <Label htmlFor="investigationNotes">Investigation Notes</Label>
