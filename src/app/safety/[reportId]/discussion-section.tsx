@@ -31,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { userData } from '@/lib/mock-data';
 import type { DiscussionEntry, SafetyReport } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
-import { CalendarIcon, MessageSquare, Send, Reply } from 'lucide-react';
+import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 
 const discussionFormSchema = z.object({
@@ -88,6 +88,15 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
     });
   }
 
+  const handleReplyClick = (entry: DiscussionEntry) => {
+    form.setValue('recipient', entry.author);
+    form.setValue('message', `> Replying to: "${entry.message}"\n\n`);
+    const messageTextarea = document.getElementById('message');
+    if (messageTextarea) {
+        messageTextarea.focus();
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -104,15 +113,23 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
                             </Avatar>
                             <div className="flex-1 space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <p className="font-semibold text-sm">{entry.author} <Reply className="inline h-3 w-3 text-muted-foreground mx-1" /> {entry.recipient}</p>
+                                    <p className="font-semibold text-sm">{entry.author} <ReplyIcon className="inline h-3 w-3 text-muted-foreground mx-1" /> {entry.recipient}</p>
                                     <p className="text-xs text-muted-foreground">{format(new Date(entry.datePosted), "MMM d, yyyy 'at' h:mm a")}</p>
                                 </div>
                                 <div className="p-3 rounded-md bg-muted text-sm">{entry.message}</div>
-                                {entry.replyByDate && (
-                                    <div className="text-xs text-muted-foreground">
-                                        <Badge variant="warning">Reply needed by {format(new Date(entry.replyByDate), 'MMM d, yyyy')}</Badge>
-                                    </div>
-                                )}
+                                <div className="flex items-center justify-between">
+                                    {entry.replyByDate && (
+                                        <div className="text-xs text-muted-foreground">
+                                            <Badge variant="warning">Reply needed by {format(new Date(entry.replyByDate), 'MMM d, yyyy')}</Badge>
+                                        </div>
+                                    )}
+                                    {user?.name === entry.recipient && (
+                                        <Button variant="link" size="sm" onClick={() => handleReplyClick(entry)} className="p-0 h-auto text-xs">
+                                            <ReplyIcon className="mr-1 h-3 w-3" />
+                                            Reply
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )
@@ -198,6 +215,7 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
                 <FormLabel>Message / Instruction</FormLabel>
                 <FormControl>
                   <Textarea
+                    id="message"
                     placeholder="Type your message here..."
                     className="min-h-[100px]"
                     {...field}
