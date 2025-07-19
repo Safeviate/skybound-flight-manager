@@ -186,9 +186,9 @@ export const safetyReportData: SafetyReport[] = [
 ];
 
 export const riskRegisterData: Risk[] = [
-    { id: 'risk1', dateIdentified: '2024-08-10', description: 'Bird strike on approach/departure path', likelihood: 'Possible', severity: 'Major', riskScore: 16, status: 'Open', mitigation: 'Review bird dispersal procedures with airport operations. Advise pilots to increase vigilance.' },
+    { id: 'risk1', dateIdentified: '2024-08-10', description: 'Bird strike on approach/departure path', likelihood: 'Possible', severity: 'Major', riskScore: 16, residualRiskScore: 6, status: 'Mitigated', mitigation: 'Review bird dispersal procedures with airport operations. Advise pilots to increase vigilance.' },
     { id: 'risk2', dateIdentified: '2024-08-12', description: 'Student hard landings leading to aircraft damage', likelihood: 'Possible', severity: 'Moderate', riskScore: 12, status: 'Open', mitigation: 'Review landing training syllabus. Emphasize go-around procedure for unstable approaches.' },
-    { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, status: 'Mitigated', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.' },
+    { id: 'risk3', dateIdentified: '2024-07-28', description: 'Fuel spillage at self-serve pumps', likelihood: 'Unlikely', severity: 'Minor', riskScore: 5, residualRiskScore: 1, status: 'Closed', mitigation: 'Faulty fuel pump handle replaced on 2024-07-29. Monitoring for further issues.' },
     { id: 'risk4', dateIdentified: '2024-06-15', description: 'Runway incursion due to pilot error', likelihood: 'Rare', severity: 'Catastrophic', riskScore: 20, status: 'Open', mitigation: 'Mandatory training on airport signage and communication protocols. Review of hotspot map during pre-flight briefings.' },
 ];
 

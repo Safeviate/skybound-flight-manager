@@ -7,7 +7,7 @@ import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, ArrowRight } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -191,9 +191,7 @@ export default function SafetyPage() {
                     <TableRow>
                       <TableHead>Identified</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead>Likelihood</TableHead>
-                      <TableHead>Severity</TableHead>
-                      <TableHead>Risk Score</TableHead>
+                      <TableHead>Risk Score (Initial → Mitigated)</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -201,13 +199,21 @@ export default function SafetyPage() {
                     {risks.map((risk) => (
                       <TableRow key={risk.id}>
                         <TableCell>{risk.dateIdentified}</TableCell>
-                        <TableCell className="font-medium">{risk.description}</TableCell>
-                        <TableCell>{risk.likelihood}</TableCell>
-                        <TableCell>{risk.severity}</TableCell>
+                        <TableCell className="font-medium max-w-sm">{risk.description}</TableCell>
                         <TableCell>
-                          <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                            {risk.riskScore}
-                          </Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                    {risk.riskScore}
+                                </Badge>
+                                {risk.residualRiskScore !== undefined && (
+                                    <>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                            {risk.residualRiskScore}
+                                        </Badge>
+                                    </>
+                                )}
+                            </div>
                         </TableCell>
                         <TableCell>
                             <Badge variant={getRiskStatusVariant(risk.status)}>{risk.status}</Badge>
