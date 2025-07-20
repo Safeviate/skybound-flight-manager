@@ -1,5 +1,5 @@
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -339,4 +339,34 @@ export const auditChecklistData: AuditChecklist[] = [
             { id: 'fe-5', text: 'Are security and access control measures for facilities and aircraft appropriate?', isCompliant: null, notes: '' },
         ]
     }
+];
+
+export const mockAlerts: Alert[] = [
+  {
+    id: '1',
+    number: 1,
+    type: 'Red Tag',
+    title: 'GROUND ALL AIRCRAFT - SEVERE WEATHER',
+    description: 'All flight operations are suspended immediately due to severe thunderstorms in the vicinity. No takeoffs or landings permitted until further notice.',
+    author: 'John Smith, Safety Manager',
+    date: '2024-08-16',
+  },
+  {
+    id: '2',
+    number: 1,
+    type: 'Yellow Tag',
+    title: 'Runway 31 Closed for Maintenance',
+    description: 'Runway 31 will be closed for minor repairs from 14:00 to 17:00 local time today. Plan all operations for Runway 13.',
+    author: 'Mike Ross, Chief Flight Instructor',
+    date: '2024-08-16',
+  },
+  {
+    id: '3',
+    number: 2,
+    type: 'Yellow Tag',
+    title: 'Increased Bird Activity Reported',
+    description: 'Multiple reports of increased bird activity on the final approach path for Runway 13. Pilots are advised to exercise extreme caution.',
+    author: 'Safety Department',
+    date: '2024-08-15',
+  },
 ];

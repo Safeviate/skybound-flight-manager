@@ -1,5 +1,6 @@
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -356,4 +357,14 @@ export type AuditScheduleItem = {
   year: number;
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   status: AuditStatus;
+};
+
+export type Alert = {
+  id: string;
+  number: number;
+  type: 'Red Tag' | 'Yellow Tag';
+  title: string;
+  description: string;
+  author: string;
+  date: string;
 };

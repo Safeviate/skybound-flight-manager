@@ -5,46 +5,8 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-type Alert = {
-  id: string;
-  number: number;
-  type: 'Red Tag' | 'Yellow Tag';
-  title: string;
-  description: string;
-  author: string;
-  date: string;
-};
-
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    number: 1,
-    type: 'Red Tag',
-    title: 'GROUND ALL AIRCRAFT - SEVERE WEATHER',
-    description: 'All flight operations are suspended immediately due to severe thunderstorms in the vicinity. No takeoffs or landings permitted until further notice.',
-    author: 'John Smith, Safety Manager',
-    date: '2024-08-16',
-  },
-  {
-    id: '2',
-    number: 1,
-    type: 'Yellow Tag',
-    title: 'Runway 31 Closed for Maintenance',
-    description: 'Runway 31 will be closed for minor repairs from 14:00 to 17:00 local time today. Plan all operations for Runway 13.',
-    author: 'Mike Ross, Chief Flight Instructor',
-    date: '2024-08-16',
-  },
-  {
-    id: '3',
-    number: 2,
-    type: 'Yellow Tag',
-    title: 'Increased Bird Activity Reported',
-    description: 'Multiple reports of increased bird activity on the final approach path for Runway 13. Pilots are advised to exercise extreme caution.',
-    author: 'Safety Department',
-    date: '2024-08-15',
-  },
-];
+import type { Alert } from '@/lib/types';
+import { mockAlerts } from '@/lib/mock-data';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
