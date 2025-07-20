@@ -49,7 +49,7 @@ const navItems: {
   { href: '/checklists', label: 'Checklist Templates', icon: ClipboardCheck, requiredPermissions: ['Checklists:View', 'Checklists:Edit'] },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
-  { href: '/reports', label: 'Reports', icon: AreaChart, requiredPermissions: ['Reports:View'] },
+  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'] },
 ];
 
 export default function Nav() {

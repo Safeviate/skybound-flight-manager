@@ -81,7 +81,7 @@ const MonthlyFlightHoursChart = () => {
 export default function ReportsPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Reports & Analytics" />
+      <Header title="Flight Statistics" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader>
