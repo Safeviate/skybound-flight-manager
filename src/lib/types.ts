@@ -2,6 +2,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -57,6 +58,8 @@ export type Permission =
   | 'Checklists:Edit'
   | 'Alerts:View'
   | 'Alerts:Edit'
+  | 'Reports:View'
+  | 'Reports:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -76,6 +79,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Checklists:Edit',
     'Alerts:View',
     'Alerts:Edit',
+    'Reports:View',
+    'Reports:Edit',
     'Super User',
 ];
 
@@ -288,6 +293,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
     'Quality:View',
     'Checklists:View',
     'Alerts:View',
+    'Reports:View',
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -295,8 +301,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Admin': ['Super User'],
     'Operations Manager': ['Super User'],
     'HR Manager': ['Super User'],
-    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit'],
-    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit'],
+    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View'],
+    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit', 'Reports:View'],
     'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Alerts:Edit'],
     'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Checklists:Edit'],
     'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
