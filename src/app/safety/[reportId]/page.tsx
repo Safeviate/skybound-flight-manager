@@ -557,38 +557,94 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
 );
 
 function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysisOutput, onIncorporate: (text: string) => void }) {
-    
+    const [editableAnalysis, setEditableAnalysis] = useState<FiveWhysAnalysisOutput>(data);
+
     const handleIncorporate = () => {
         let textToIncorporate = "\n--- 5 WHYS ROOT CAUSE ANALYSIS ---\n\n";
-        textToIncorporate += `**Problem Statement:** ${data.problemStatement}\n\n`;
-        data.analysis.forEach((item, index) => {
+        textToIncorporate += `**Problem Statement:** ${editableAnalysis.problemStatement}\n\n`;
+        editableAnalysis.analysis.forEach((item, index) => {
             textToIncorporate += `**Why ${index + 1}:** ${item.why}\n`;
             textToIncorporate += `**Because:** ${item.because}\n\n`;
         });
-        textToIncorporate += `**Determined Root Cause:** ${data.rootCause}\n`;
+        textToIncorporate += `**Determined Root Cause:** ${editableAnalysis.rootCause}\n`;
         textToIncorporate += "\n--- END OF 5 WHYS ANALYSIS ---\n";
         onIncorporate(textToIncorporate);
     };
 
+    const handleTextChange = <K extends keyof FiveWhysAnalysisOutput>(field: K, value: string) => {
+        setEditableAnalysis(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleAnalysisChange = (index: number, field: 'why' | 'because', value: string) => {
+        const newAnalysis = [...editableAnalysis.analysis];
+        newAnalysis[index] = { ...newAnalysis[index], [field]: value };
+        setEditableAnalysis(prev => ({ ...prev, analysis: newAnalysis }));
+    };
+
+    const addWhy = () => {
+        const newAnalysis = [...editableAnalysis.analysis, { why: '', because: '' }];
+        setEditableAnalysis(prev => ({ ...prev, analysis: newAnalysis }));
+    };
+
+    const removeWhy = (index: number) => {
+        const newAnalysis = editableAnalysis.analysis.filter((_, i) => i !== index);
+        setEditableAnalysis(prev => ({ ...prev, analysis: newAnalysis }));
+    };
+
     return (
         <div className="space-y-4 pt-4">
-            <h3 className="font-semibold text-base flex items-center gap-2"><Bot /> 5 Whys Analysis Result</h3>
+            <h3 className="font-semibold text-base flex items-center gap-2"><Bot /> Editable 5 Whys Analysis Result</h3>
             <div className="p-4 bg-muted rounded-lg space-y-4">
                 <div>
-                    <p className="font-semibold text-sm">Problem Statement</p>
-                    <p className="text-sm text-muted-foreground">{data.problemStatement}</p>
+                    <Label className="font-semibold text-sm">Problem Statement</Label>
+                    <Textarea
+                        value={editableAnalysis.problemStatement}
+                        onChange={(e) => handleTextChange('problemStatement', e.target.value)}
+                        className="bg-background mt-1"
+                    />
                 </div>
                 <Separator />
-                {data.analysis.map((item, index) => (
-                    <div key={index} className="space-y-1">
-                        <p className="font-semibold text-sm">Why #{index + 1}: {item.why}</p>
-                        <p className="text-sm text-muted-foreground pl-4"> <span className="font-medium">Because:</span> {item.because}</p>
+                {editableAnalysis.analysis.map((item, index) => (
+                    <div key={index} className="space-y-2 p-3 border rounded-md bg-background/50 relative">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6"
+                            onClick={() => removeWhy(index)}
+                        >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                        <div>
+                            <Label className="font-semibold text-sm">Why #{index + 1}</Label>
+                            <Textarea
+                                value={item.why}
+                                onChange={(e) => handleAnalysisChange(index, 'why', e.target.value)}
+                                placeholder="Ask 'Why?'..."
+                                className="bg-background mt-1"
+                            />
+                        </div>
+                        <div>
+                            <Label className="font-semibold text-sm">Because...</Label>
+                            <Textarea
+                                value={item.because}
+                                onChange={(e) => handleAnalysisChange(index, 'because', e.target.value)}
+                                placeholder="Answer 'Because...'"
+                                className="bg-background mt-1"
+                            />
+                        </div>
                     </div>
                 ))}
+                 <Button variant="outline" size="sm" onClick={addWhy}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Why
+                </Button>
                 <Separator />
                  <div>
-                    <p className="font-semibold text-sm">Root Cause</p>
-                    <p className="text-sm text-muted-foreground">{data.rootCause}</p>
+                    <Label className="font-semibold text-sm">Root Cause</Label>
+                    <Textarea
+                        value={editableAnalysis.rootCause}
+                        onChange={(e) => handleTextChange('rootCause', e.target.value)}
+                        className="bg-background mt-1"
+                    />
                 </div>
             </div>
             <Button onClick={handleIncorporate}>
