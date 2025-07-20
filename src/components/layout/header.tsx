@@ -1,4 +1,5 @@
 
+
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
@@ -21,11 +22,18 @@ export default function Header({ title, children }: { title: string, children?: 
   const { user } = useUser();
   const router = useRouter();
 
+  const childrenArray = React.Children.toArray(children);
+  const backButton = childrenArray.find(child => (child as React.ReactElement)?.props?.href === "/safety");
+  const otherChildren = childrenArray.filter(child => (child as React.ReactElement)?.props?.href !== "/safety");
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
+      
+      {backButton}
+
       <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap">{title}</h1>
       <div className="w-full flex-1 flex items-center justify-between">
         <form className="w-full max-w-sm ml-4">
@@ -39,7 +47,7 @@ export default function Header({ title, children }: { title: string, children?: 
           </div>
         </form>
         <div className="flex items-center gap-4">
-          {children}
+          {otherChildren}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">

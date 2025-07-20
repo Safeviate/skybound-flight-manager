@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
@@ -531,20 +532,20 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`}>
-        <Button variant="outline" onClick={() => window.print()} className="no-print">
-            <Printer className="mr-2 h-4 w-4" />
-            Print Report
-        </Button>
-      </Header>
-      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
-        <div className="no-print">
-            <Button asChild variant="outline">
+        <div className="flex items-center gap-4">
+            <Button asChild variant="outline" className="no-print">
                 <Link href="/safety">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to All Reports
                 </Link>
             </Button>
+            <Button variant="outline" onClick={() => window.print()} className="no-print">
+                <Printer className="mr-2 h-4 w-4" />
+                Print Report
+            </Button>
         </div>
+      </Header>
+      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <div className="no-print">
             <Card>
                 <CardHeader>
