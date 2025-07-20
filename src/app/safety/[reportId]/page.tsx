@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useMemo, FC } from 'react';
+import { useEffect, useState, useActionState, useMemo, FC, Fragment } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
@@ -527,24 +527,30 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
                 </CardContent>
             </Card>
             <Card>
-                <CardContent className="pt-6 space-y-6">
+                <CardHeader>
+                  <CardTitle>Risk Assessment & Mitigation</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-6">
                     <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
+                    <Separator />
+                    <MitigatedRiskAssessment 
+                        report={report} 
+                        onUpdate={onUpdate} 
+                        correctiveActions={correctiveActionPlan?.correctiveActions}
+                    />
                 </CardContent>
             </Card>
             {correctiveActionPlan && (
                 <Card>
-                    <CardContent className="pt-6 space-y-6">
+                  <CardHeader>
+                    <CardTitle>Corrective Action Plan</CardTitle>
+                  </CardHeader>
+                    <CardContent className="pt-0 space-y-6">
                         <CorrectiveActionPlanResult 
                             plan={correctiveActionPlan} 
                             setPlan={() => {}} // dummy function for print
                             report={report} 
                             onCloseReport={() => {}} // dummy
-                        />
-                        <Separator />
-                        <MitigatedRiskAssessment 
-                            report={report} 
-                            onUpdate={onUpdate} 
-                            correctiveActions={correctiveActionPlan?.correctiveActions}
                         />
                     </CardContent>
                 </Card>
@@ -910,17 +916,15 @@ export default function SafetyReportInvestigationPage() {
                                 <CardDescription>Identify, assess, and track mitigation for all associated risks.</CardDescription>
                            </div>
                         </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-0">
+                        <AccordionContent className="p-6 pt-0 space-y-6">
                             <Separator className="mb-6"/>
-                            <div className="space-y-6">
-                                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                                <Separator />
-                                <MitigatedRiskAssessment 
-                                    report={report} 
-                                    onUpdate={handleReportUpdate} 
-                                    correctiveActions={correctiveActionPlan?.correctiveActions}
-                                />
-                            </div>
+                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                            <Separator />
+                            <MitigatedRiskAssessment 
+                                report={report} 
+                                onUpdate={handleReportUpdate} 
+                                correctiveActions={correctiveActionPlan?.correctiveActions}
+                            />
                         </AccordionContent>
                     </Card>
                 </AccordionItem>
