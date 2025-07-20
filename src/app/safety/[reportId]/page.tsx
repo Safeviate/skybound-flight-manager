@@ -651,7 +651,8 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
 
 export default function SafetyReportInvestigationPage() {
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
-  const { reportId } = useParams() as { reportId: string };
+  const params = useParams();
+  const reportId = params.reportId as string;
   const report = safetyReports.find(r => r.id === reportId);
   const { toast } = useToast();
   
@@ -897,7 +898,11 @@ export default function SafetyReportInvestigationPage() {
                         <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
                     </TabsList>
                     <TabsContent value="risk-assessment">
-                        <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                        <Card>
+                            <CardContent className="pt-6">
+                                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                     <TabsContent value="ai">
                         <Card>
@@ -974,30 +979,32 @@ export default function SafetyReportInvestigationPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="plan" className="space-y-8">
-                        {correctiveActionPlan ? (
-                            <CorrectiveActionPlanResult 
-                                plan={correctiveActionPlan} 
-                                setPlan={setCorrectiveActionPlan}
-                                report={report} 
-                                onCloseReport={handleCloseReport} 
-                            />
-                        ) : (
-                            <Card>
-                                <CardContent className="pt-6">
+                    <TabsContent value="plan">
+                        <Card className="space-y-8">
+                            <CardContent className="pt-6">
+                                {correctiveActionPlan ? (
+                                    <CorrectiveActionPlanResult 
+                                        plan={correctiveActionPlan} 
+                                        setPlan={setCorrectiveActionPlan}
+                                        report={report} 
+                                        onCloseReport={handleCloseReport} 
+                                    />
+                                ) : (
                                     <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                         <p className="text-muted-foreground">
                                             No action plan has been generated yet. Use the AI Assistant to create one.
                                         </p>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        )}
-                        <MitigatedRiskAssessment 
-                            report={report} 
-                            onUpdate={handleReportUpdate} 
-                            correctiveActions={correctiveActionPlan?.correctiveActions}
-                        />
+                                )}
+                            </CardContent>
+                            <CardContent>
+                                <MitigatedRiskAssessment 
+                                    report={report} 
+                                    onUpdate={handleReportUpdate} 
+                                    correctiveActions={correctiveActionPlan?.correctiveActions}
+                                />
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>
