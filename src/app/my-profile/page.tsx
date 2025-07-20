@@ -6,11 +6,11 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/mock-data';
-import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format, parseISO, isSameDay, isBefore } from 'date-fns';
+import { format, parseISO, isBefore, differenceInDays } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +19,7 @@ import { ChecklistCard } from '../checklists/checklist-card';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getExpiryBadge } from '@/lib/utils.tsx';
 
 export default function MyProfilePage() {
     const { user, loading } = useUser();
@@ -140,7 +141,21 @@ export default function MyProfilePage() {
         isBefore(parseISO(risk.reviewDate), thirtyDaysFromNow)
     );
 
-    const totalTasks = discussionRequests.length + riskReviews.length;
+    const personalAlerts: { type: string, date: string, daysUntil: number }[] = [];
+    if (user.medicalExpiry) {
+        const daysUntil = differenceInDays(parseISO(user.medicalExpiry), today);
+        if (daysUntil <= 60) {
+            personalAlerts.push({ type: 'Medical Certificate', date: user.medicalExpiry, daysUntil });
+        }
+    }
+    if (user.licenseExpiry) {
+        const daysUntil = differenceInDays(parseISO(user.licenseExpiry), today);
+        if (daysUntil <= 60) {
+            personalAlerts.push({ type: 'Pilot License', date: user.licenseExpiry, daysUntil });
+        }
+    }
+
+    const totalTasks = discussionRequests.length + riskReviews.length + personalAlerts.length;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -187,17 +202,25 @@ export default function MyProfilePage() {
                             <UserIcon className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">{user.name}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <Briefcase className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">{user.role}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
+                         <div className="flex items-center space-x-3">
                             <Mail className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">{user.email}</span>
                         </div>
                         <div className="flex items-center space-x-3">
                             <Phone className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">{user.phone}</span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <Briefcase className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">{user.department || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                             <span>Medical Exp: {user.medicalExpiry ? getExpiryBadge(user.medicalExpiry) : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                            <span>License Exp: {user.licenseExpiry ? getExpiryBadge(user.licenseExpiry) : 'N/A'}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -268,6 +291,7 @@ export default function MyProfilePage() {
                                                         onItemToggle={handleItemToggle}
                                                         onUpdate={handleChecklistUpdate}
                                                         onReset={handleReset}
+                                                        onEdit={() => {}}
                                                     />
                                                 </DialogContent>
                                             </Dialog>
@@ -292,15 +316,39 @@ export default function MyProfilePage() {
             <div className="xl:col-span-1">
                 <Card>
                     <CardHeader>
-                        <CardTitle>My Safety Tasks ({totalTasks})</CardTitle>
-                        <CardDescription>Action items assigned to you from the Safety Management System.</CardDescription>
+                        <CardTitle>My Action Items ({totalTasks})</CardTitle>
+                        <CardDescription>Alerts and tasks assigned to you that require your attention.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {totalTasks > 0 ? (
                             <>
+                                {personalAlerts.length > 0 && (
+                                     <div className="space-y-2">
+                                        <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
+                                        <ul className="space-y-2">
+                                            {personalAlerts.map(({ type, date, daysUntil }) => (
+                                                <li key={type}>
+                                                     <div className="block p-3 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex items-start gap-3">
+                                                                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-semibold">{type} Expiry</p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired'} on {format(parseISO(date), 'MMM d, yyyy')}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                                 {discussionRequests.length > 0 && (
                                     <div className="space-y-2">
-                                        <h4 className="font-semibold text-sm text-muted-foreground">Discussion Responses Required</h4>
+                                        <h4 className="font-semibold text-sm text-muted-foreground">Safety Discussion Responses</h4>
                                         <ul className="space-y-2">
                                             {discussionRequests.map(({ report, entry }) => (
                                                 <li key={entry.id}>
@@ -348,7 +396,7 @@ export default function MyProfilePage() {
                             </>
                         ) : (
                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground text-center">No outstanding safety tasks.</p>
+                                <p className="text-muted-foreground text-center">No outstanding alerts or tasks.</p>
                             </div>
                         )}
                     </CardContent>
