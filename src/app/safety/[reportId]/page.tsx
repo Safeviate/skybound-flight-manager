@@ -90,7 +90,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
     });
 
     const handleIncorporate = () => {
-        let textToIncorporate = "\n--- AI-SUGGESTED INVESTIGATION PLAN ---\n\n";
+        let textToIncorporate = "";
         let hasContent = false;
 
         if (selected.initialAssessment) {
@@ -114,7 +114,6 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
         }
         
         if (hasContent) {
-            textToIncorporate += "--- END OF AI SUGGESTIONS ---\n";
             onIncorporate(textToIncorporate);
         }
     };
@@ -901,7 +900,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 <TabsContent value="risk-assessment">
                     <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                 </TabsContent>
-                 <TabsContent value="ai">
+                 <TabsContent value="ai" className="no-print">
                     <div className="no-print">
                         <Card>
                             <CardHeader>
@@ -1021,3 +1020,4 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     </div>
   );
 }
+
