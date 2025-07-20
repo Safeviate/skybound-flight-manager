@@ -26,6 +26,7 @@ import {
   CheckSquare,
   ClipboardCheck,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import type { Permission } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -39,6 +40,7 @@ const navItems: {
 }[] = [
   { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'] },
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'] },

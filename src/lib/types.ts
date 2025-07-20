@@ -53,6 +53,8 @@ export type Permission =
   | 'Quality:Edit'
   | 'Checklists:View'
   | 'Checklists:Edit'
+  | 'Alerts:View'
+  | 'Alerts:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -70,6 +72,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Quality:Edit',
     'Checklists:View',
     'Checklists:Edit',
+    'Alerts:View',
+    'Alerts:Edit',
     'Super User',
 ];
 
@@ -281,6 +285,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
     'Safety:View',
     'Quality:View',
     'Checklists:View',
+    'Alerts:View',
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -288,16 +293,16 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Admin': ['Super User'],
     'Operations Manager': ['Super User'],
     'HR Manager': ['Super User'],
-    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit'],
-    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit'],
-    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit'],
+    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit'],
+    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit'],
+    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Alerts:Edit'],
     'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Checklists:Edit'],
-    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit'],
-    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit'],
+    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
+    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
     'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Students:View', 'Checklists:View'],
     'Front Office': [...VIEW_ALL_PAGES],
-    'Student': ['Bookings:View', 'Aircraft:View'],
-    'Driver': [],
+    'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
+    'Driver': ['Alerts:View'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
