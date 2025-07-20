@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
@@ -650,9 +650,9 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
 }
 
 export default function SafetyReportInvestigationPage() {
-  const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
   const params = useParams();
   const reportId = params.reportId as string;
+  const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
   const report = safetyReports.find(r => r.id === reportId);
   const { toast } = useToast();
   
@@ -898,7 +898,14 @@ export default function SafetyReportInvestigationPage() {
                         <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
                     </TabsList>
                     <TabsContent value="risk-assessment">
-                        <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                        <div className="space-y-8">
+                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                            <MitigatedRiskAssessment 
+                                report={report} 
+                                onUpdate={handleReportUpdate} 
+                                correctiveActions={correctiveActionPlan?.correctiveActions}
+                            />
+                        </div>
                     </TabsContent>
                     <TabsContent value="ai">
                         <Card>
@@ -936,71 +943,67 @@ export default function SafetyReportInvestigationPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="investigation">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Investigation Workbench</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
-                                        <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <form action={fiveWhysFormAction}>
-                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                            <FiveWhysButton />
-                                        </form>
-                                        {fiveWhysState.data && (
-                                            <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
-                                        )}
-                                    </CardContent>
-                                </Card>
-                                <Separator className="my-6" />
-                                <InvestigationTeamForm report={report} />
-                                <Separator className="my-6" />
-                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                <Separator className="my-6" />
-                                <div className="space-y-2">
-                                    <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                    <Textarea
-                                        id="investigationNotes"
-                                        name="investigationNotes"
-                                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                        className="min-h-[150px]"
-                                        value={report.investigationNotes || ''}
-                                        onChange={handleInvestigationNotesChange}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <div className="space-y-8">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
+                                    <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form action={fiveWhysFormAction}>
+                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                        <FiveWhysButton />
+                                    </form>
+                                    {fiveWhysState.data && (
+                                        <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
+                                    )}
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Investigation Workbench</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <InvestigationTeamForm report={report} />
+                                    <Separator className="my-6" />
+                                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                    <Separator className="my-6" />
+                                    <div className="space-y-2">
+                                        <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                        <Textarea
+                                            id="investigationNotes"
+                                            name="investigationNotes"
+                                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                            className="min-h-[150px]"
+                                            value={report.investigationNotes || ''}
+                                            onChange={handleInvestigationNotesChange}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
                     <TabsContent value="plan">
-                         <Card className="space-y-8">
-                            <CardContent className="pt-6">
-                                {correctiveActionPlan ? (
-                                    <CorrectiveActionPlanResult 
-                                        plan={correctiveActionPlan} 
-                                        setPlan={setCorrectiveActionPlan}
-                                        report={report} 
-                                        onCloseReport={handleCloseReport} 
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                        <p className="text-muted-foreground">
-                                            No action plan has been generated yet. Use the AI Assistant to create one.
-                                        </p>
-                                    </div>
-                                )}
-                            </CardContent>
-                            <CardContent>
-                                <MitigatedRiskAssessment 
+                        <div className="space-y-8">
+                            {correctiveActionPlan ? (
+                                <CorrectiveActionPlanResult 
+                                    plan={correctiveActionPlan} 
+                                    setPlan={setCorrectiveActionPlan}
                                     report={report} 
-                                    onUpdate={handleReportUpdate} 
-                                    correctiveActions={correctiveActionPlan?.correctiveActions}
+                                    onCloseReport={handleCloseReport} 
                                 />
-                            </CardContent>
-                        </Card>
+                            ) : (
+                                <Card>
+                                    <CardContent className="pt-6">
+                                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                            <p className="text-muted-foreground">
+                                                No action plan has been generated yet. Use the AI Assistant to create one.
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
