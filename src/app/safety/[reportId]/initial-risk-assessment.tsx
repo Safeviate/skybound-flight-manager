@@ -128,12 +128,12 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
 
   return (
     <Fragment>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 no-print">
+        <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex-1">
-                <CardTitle>Initial Risk Assessment</CardTitle>
-                <CardDescription>
+                <h3 className="font-semibold text-lg">Initial Risk Assessment</h3>
+                <p className="text-sm text-muted-foreground">
                     Identify hazards associated with this report and assess their initial risk level.
-                </CardDescription>
+                </p>
             </div>
             <div className="flex flex-col items-end gap-2 w-52">
                 <Dialog open={isAddRiskOpen} onOpenChange={setIsAddRiskOpen}>
@@ -158,88 +158,87 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                     <SuggestHazardsButton />
                 </form>
             </div>
-        </CardHeader>
-        <CardContent>
-            {suggestHazardsState.data && (
-                <HazardSuggestionsResult 
-                    data={suggestHazardsState.data as SuggestHazardsOutput} 
-                    onAddHazards={handleAddSuggestedHazards}
-                />
-            )}
-            {report.associatedRisks && report.associatedRisks.length > 0 ? (
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Hazard</TableHead>
-                            <TableHead>Risk</TableHead>
-                            <TableHead>Risk Score</TableHead>
-                            <TableHead>Level</TableHead>
-                            <TableHead className="text-right no-print">Actions</TableHead>
+        </div>
+
+        {suggestHazardsState.data && (
+            <HazardSuggestionsResult 
+                data={suggestHazardsState.data as SuggestHazardsOutput} 
+                onAddHazards={handleAddSuggestedHazards}
+            />
+        )}
+        {report.associatedRisks && report.associatedRisks.length > 0 ? (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Hazard</TableHead>
+                        <TableHead>Risk</TableHead>
+                        <TableHead>Risk Score</TableHead>
+                        <TableHead>Level</TableHead>
+                        <TableHead className="text-right no-print">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {report.associatedRisks.map(risk => (
+                        <TableRow key={risk.id}>
+                            <TableCell className="max-w-xs">{risk.hazard}</TableCell>
+                            <TableCell className="max-w-xs">{risk.risk}</TableCell>
+                            <TableCell>
+                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                    {risk.riskScore}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                    <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right no-print">
+                                <form action={async (formData) => {
+                                    const result = await promoteRiskAction(null, formData);
+                                    if (result.data) {
+                                        toast({
+                                            title: 'Risk Promoted',
+                                            description: 'The hazard has been added to the central Risk Register.'
+                                        });
+                                        onUpdate({
+                                            ...report,
+                                            associatedRisks: report.associatedRisks?.map(r => r.id === risk.id ? { ...r, promotedToRegister: true } : r)
+                                        });
+                                        onPromoteRisk({
+                                            id: `risk-reg-${Date.now()}`,
+                                            dateIdentified: new Date().toISOString().split('T')[0],
+                                            description: result.data.description,
+                                            consequences: [], // AI doesn't generate this yet
+                                            hazard: risk.hazard,
+                                            risk: risk.risk,
+                                            likelihood: risk.likelihood,
+                                            severity: risk.severity,
+                                            riskScore: risk.riskScore,
+                                            status: result.data.status,
+                                            mitigation: result.data.mitigation,
+                                            hazardArea: result.data.hazardArea,
+                                            process: result.data.process,
+                                            reportNumber: result.data.reportNumber,
+                                        });
+                                    } else if (result.message) {
+                                        toast({ variant: 'destructive', title: 'Error', description: result.message });
+                                    }
+                                }}>
+                                    <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
+                                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                    <Button size="sm" type="submit" disabled={risk.promotedToRegister}>
+                                        <ArrowUpCircle className="mr-2 h-4 w-4" />
+                                        {risk.promotedToRegister ? 'Promoted' : 'Promote'}
+                                    </Button>
+                                </form>
+                            </TableCell>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {report.associatedRisks.map(risk => (
-                            <TableRow key={risk.id}>
-                                <TableCell className="max-w-xs">{risk.hazard}</TableCell>
-                                <TableCell className="max-w-xs">{risk.risk}</TableCell>
-                                <TableCell>
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                        {risk.riskScore}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                     <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right no-print">
-                                    <form action={async (formData) => {
-                                        const result = await promoteRiskAction(null, formData);
-                                        if (result.data) {
-                                            toast({
-                                                title: 'Risk Promoted',
-                                                description: 'The hazard has been added to the central Risk Register.'
-                                            });
-                                            onUpdate({
-                                                ...report,
-                                                associatedRisks: report.associatedRisks?.map(r => r.id === risk.id ? { ...r, promotedToRegister: true } : r)
-                                            });
-                                            onPromoteRisk({
-                                                id: `risk-reg-${Date.now()}`,
-                                                dateIdentified: new Date().toISOString().split('T')[0],
-                                                description: result.data.description,
-                                                consequences: [], // AI doesn't generate this yet
-                                                hazard: risk.hazard,
-                                                risk: risk.risk,
-                                                likelihood: risk.likelihood,
-                                                severity: risk.severity,
-                                                riskScore: risk.riskScore,
-                                                status: result.data.status,
-                                                mitigation: result.data.mitigation,
-                                                hazardArea: result.data.hazardArea,
-                                                process: result.data.process,
-                                                reportNumber: result.data.reportNumber,
-                                            });
-                                        } else if (result.message) {
-                                            toast({ variant: 'destructive', title: 'Error', description: result.message });
-                                        }
-                                    }}>
-                                        <input type="hidden" name="riskToPromote" value={JSON.stringify(risk)} />
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <Button size="sm" type="submit" disabled={risk.promotedToRegister}>
-                                            <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                            {risk.promotedToRegister ? 'Promoted' : 'Promote'}
-                                        </Button>
-                                    </form>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                 </Table>
-            ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No hazards or risks have been added yet.</p>
-                </div>
-            )}
-        </CardContent>
+                    ))}
+                </TableBody>
+                </Table>
+        ) : (
+            <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">No hazards or risks have been added yet.</p>
+            </div>
+        )}
     </Fragment>
   );
 }

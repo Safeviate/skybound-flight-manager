@@ -30,12 +30,12 @@ import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { differenceInDays, format, parseISO } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -366,14 +366,8 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Bot /> Corrective Action Plan</CardTitle>
-                <CardDescription>
-                    This is the corrective action plan for the report. You can edit the details below.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <Fragment>
+            <div className="space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-base flex items-center gap-2"><FileText /> Summary of Findings</h3>
@@ -441,17 +435,17 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                         </Table>
                     </div>
                 </div>
-            </CardContent>
+            </div>
              {allActionsCompleted && report.status !== 'Closed' && (
-                <CardFooter className="flex justify-end gap-2 no-print">
+                <div className="flex justify-end gap-2 mt-6 no-print">
                     <Button variant="outline">Save Plan</Button>
                     <Button onClick={onCloseReport}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Close & Archive Report
                     </Button>
-                </CardFooter>
+                </div>
             )}
-        </Card>
+        </Fragment>
     );
 }
 
@@ -532,21 +526,28 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
                     </div>
                 </CardContent>
             </Card>
-            <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
+            <Card>
+                <CardContent className="pt-6 space-y-6">
+                    <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
+                </CardContent>
+            </Card>
             {correctiveActionPlan && (
-                <>
-                    <CorrectiveActionPlanResult 
-                        plan={correctiveActionPlan} 
-                        setPlan={() => {}} // dummy function for print
-                        report={report} 
-                        onCloseReport={() => {}} // dummy
-                    />
-                    <MitigatedRiskAssessment 
-                        report={report} 
-                        onUpdate={onUpdate} 
-                        correctiveActions={correctiveActionPlan?.correctiveActions}
-                    />
-                </>
+                <Card>
+                    <CardContent className="pt-6 space-y-6">
+                        <CorrectiveActionPlanResult 
+                            plan={correctiveActionPlan} 
+                            setPlan={() => {}} // dummy function for print
+                            report={report} 
+                            onCloseReport={() => {}} // dummy
+                        />
+                        <Separator />
+                        <MitigatedRiskAssessment 
+                            report={report} 
+                            onUpdate={onUpdate} 
+                            correctiveActions={correctiveActionPlan?.correctiveActions}
+                        />
+                    </CardContent>
+                </Card>
             )}
         </div>
     );
@@ -788,225 +789,244 @@ export default function SafetyReportInvestigationPage() {
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <div className="no-print">
-            <Card>
-                <CardHeader>
-                    <CardTitle>{report.heading}</CardTitle>
-                    <div className="flex gap-2 pt-1">
-                        <Badge variant="outline">{report.type}</Badge>
-                        {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Report #</span>
-                            <span className="font-mono">{report.reportNumber}</span>
-                        </div>
-                        <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Status</span>
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                        </div>
-                        <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
-                            <span>{report.occurrenceDate}</span>
-                        </div>
-                            <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
-                            <span>{report.filedDate}</span>
-                        </div>
-                            <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Submitted By</span>
-                            <span>{report.submittedBy}</span>
-                        </div>
-                        {report.aircraftInvolved && (
-                            <div className="flex justify-between items-start flex-col">
-                                <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
-                                <span>{report.aircraftInvolved}</span>
-                            </div>
-                        )}
-                        {report.location && (
-                            <div className="flex justify-between items-start flex-col">
-                                <span className="font-semibold text-muted-foreground text-sm">Location</span>
-                                <span>{report.location}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="space-y-2 pt-2">
-                        <h4 className="font-semibold">Details</h4>
-                        <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 w-full">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="occurrenceCategory">ICAO Occurrence Category</Label>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 no-print">
-                                                <Info className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs md:max-w-md" align="start">
-                                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
-                                                {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
-                                                    <div key={code} className="text-xs">
-                                                        <span className="font-bold">{code}:</span> {definition}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                            <Select 
-                            name="occurrenceCategory" 
-                            defaultValue={report.occurrenceCategory}
-                            onValueChange={(value) => handleClassificationChange('occurrenceCategory', value)}
-                            >
-                                <SelectTrigger id="occurrenceCategory">
-                                    <SelectValue placeholder="Select Category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
-                        <Select 
-                            name="phaseOfFlight" 
-                            defaultValue={report.phaseOfFlight}
-                            onValueChange={(value) => handleClassificationChange('phaseOfFlight', value)}
-                        >
-                            <SelectTrigger id="phaseOfFlight">
-                                <SelectValue placeholder="Select Phase" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                </CardFooter>
-            </Card>
-            <Tabs defaultValue="risk-assessment" className="w-full">
-                <TabsList>
-                    <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
-                    <TabsTrigger value="ai">AI Assistant</TabsTrigger>
-                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
-                </TabsList>
-                <TabsContent value="risk-assessment">
-                     <Card>
-                        <CardContent className="pt-6 space-y-6">
-                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                            <Separator />
-                            <MitigatedRiskAssessment 
-                                report={report} 
-                                onUpdate={handleReportUpdate} 
-                                correctiveActions={correctiveActionPlan?.correctiveActions}
-                            />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="ai">
+            <Accordion type="single" collapsible defaultValue="step-1" className="w-full space-y-4">
+                <AccordionItem value="step-1">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>AI Assistant</CardTitle>
-                            <CardDescription>
-                                Use generative AI to help with the investigation process.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
-                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                        Get AI suggestions for how to proceed with the investigation based on the report details.
-                                    </p>
-                                    <form action={suggestStepsFormAction}>
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <SuggestStepsButton />
-                                    </form>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 1: Triage & Classification</CardTitle>
+                                <CardDescription>Review and classify the initial report details.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <Separator className="mb-6"/>
+                            <div className="space-y-4">
+                               <div className="space-y-2">
+                                    <h4 className="font-semibold">{report.heading}</h4>
+                                    <div className="flex gap-2 pt-1">
+                                        <Badge variant="outline">{report.type}</Badge>
+                                        {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
+                                    </div>
+                               </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div className="flex justify-between items-start flex-col">
+                                        <span className="font-semibold text-muted-foreground text-sm">Report #</span>
+                                        <span className="font-mono">{report.reportNumber}</span>
+                                    </div>
+                                    <div className="flex justify-between items-start flex-col">
+                                        <span className="font-semibold text-muted-foreground text-sm">Status</span>
+                                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                                    </div>
+                                    <div className="flex justify-between items-start flex-col">
+                                        <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
+                                        <span>{report.occurrenceDate}</span>
+                                    </div>
+                                        <div className="flex justify-between items-start flex-col">
+                                        <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
+                                        <span>{report.filedDate}</span>
+                                    </div>
+                                        <div className="flex justify-between items-start flex-col">
+                                        <span className="font-semibold text-muted-foreground text-sm">Submitted By</span>
+                                        <span>{report.submittedBy}</span>
+                                    </div>
+                                    {report.aircraftInvolved && (
+                                        <div className="flex justify-between items-start flex-col">
+                                            <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
+                                            <span>{report.aircraftInvolved}</span>
+                                        </div>
+                                    )}
+                                    {report.location && (
+                                        <div className="flex justify-between items-start flex-col">
+                                            <span className="font-semibold text-muted-foreground text-sm">Location</span>
+                                            <span>{report.location}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex-1 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
-                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                        Generate a complete corrective action plan based on all notes, discussion, and findings.
+                                <div className="space-y-2 pt-2">
+                                    <h4 className="font-semibold">Details</h4>
+                                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 w-full pt-4 border-t">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Label htmlFor="occurrenceCategory">ICAO Occurrence Category</Label>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-5 w-5 no-print">
+                                                            <Info className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="max-w-xs md:max-w-md" align="start">
+                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 p-2">
+                                                            {Object.entries(ICAO_CODE_DEFINITIONS).map(([code, definition]) => (
+                                                                <div key={code} className="text-xs">
+                                                                    <span className="font-bold">{code}:</span> {definition}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        <Select 
+                                        name="occurrenceCategory" 
+                                        defaultValue={report.occurrenceCategory}
+                                        onValueChange={(value) => handleClassificationChange('occurrenceCategory', value)}
+                                        >
+                                            <SelectTrigger id="occurrenceCategory">
+                                                <SelectValue placeholder="Select Category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {ICAO_OCCURRENCE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                    <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
+                                    <Select 
+                                        name="phaseOfFlight" 
+                                        defaultValue={report.phaseOfFlight}
+                                        onValueChange={(value) => handleClassificationChange('phaseOfFlight', value)}
+                                    >
+                                        <SelectTrigger id="phaseOfFlight">
+                                            <SelectValue placeholder="Select Phase" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {ICAO_PHASES_OF_FLIGHT.map(phase => <SelectItem key={phase} value={phase}>{phase}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                 <AccordionItem value="step-2">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 2: Risk Assessment & Mitigation</CardTitle>
+                                <CardDescription>Identify, assess, and track mitigation for all associated risks.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <Separator className="mb-6"/>
+                            <div className="space-y-6">
+                                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                                <Separator />
+                                <MitigatedRiskAssessment 
+                                    report={report} 
+                                    onUpdate={handleReportUpdate} 
+                                    correctiveActions={correctiveActionPlan?.correctiveActions}
+                                />
+                            </div>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                <AccordionItem value="step-3">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 3: Investigation Workbench</CardTitle>
+                                <CardDescription>Form a team, discuss findings, and document the investigation process.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <Separator className="mb-6"/>
+                            <div className="space-y-6">
+                                <InvestigationTeamForm report={report} />
+                                <Separator />
+                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                <Separator />
+                                <div className="space-y-2">
+                                    <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                    <Textarea
+                                        id="investigationNotes"
+                                        name="investigationNotes"
+                                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                        className="min-h-[150px]"
+                                        value={report.investigationNotes || ''}
+                                        onChange={handleInvestigationNotesChange}
+                                    />
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                <AccordionItem value="step-4">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 4: AI Analysis Tools</CardTitle>
+                                <CardDescription>Use generative AI to assist with root cause analysis and planning.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                             <Separator className="mb-6"/>
+                             <div className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1 p-4 border rounded-lg">
+                                        <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
+                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                            Get AI suggestions for how to proceed with the investigation.
+                                        </p>
+                                        <form action={suggestStepsFormAction}>
+                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                            <SuggestStepsButton />
+                                        </form>
+                                    </div>
+                                    <div className="flex-1 p-4 border rounded-lg">
+                                        <h3 className="font-semibold flex items-center gap-2"><Target/> 5 Whys Analysis</h3>
+                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                            Perform a root cause analysis to understand the core issue.
+                                        </p>
+                                         <form action={fiveWhysFormAction}>
+                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                            <FiveWhysButton />
+                                        </form>
+                                    </div>
+                                </div>
+                                {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
+                                {fiveWhysState.data && (
+                                    <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
+                                )}
+                             </div>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                <AccordionItem value="step-5">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 5: Corrective Action Plan</CardTitle>
+                                <CardDescription>Generate, finalize, and track the plan to prevent recurrence.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <Separator className="mb-6"/>
+                            {correctiveActionPlan ? (
+                                <CorrectiveActionPlanResult 
+                                    plan={correctiveActionPlan} 
+                                    setPlan={setCorrectiveActionPlan}
+                                    report={report} 
+                                    onCloseReport={handleCloseReport} 
+                                />
+                            ) : (
+                                <div className="space-y-4 text-center">
+                                    <p className="text-muted-foreground">
+                                        No action plan has been generated yet. Use the AI Assistant to create one.
                                     </p>
-                                    <form action={generatePlanFormAction}>
+                                     <form action={generatePlanFormAction}>
                                         <input type="hidden" name="report" value={JSON.stringify(report)} />
                                         <GeneratePlanButton />
                                     </form>
                                 </div>
-                            </div>
-                            {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
-                        </CardContent>
+                            )}
+                        </AccordionContent>
                     </Card>
-                </TabsContent>
-                <TabsContent value="investigation">
-                    <Card>
-                        <CardContent className="pt-6 space-y-6">
-                            <div>
-                                <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
-                                <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
-                                <div className="mt-4">
-                                    <form action={fiveWhysFormAction}>
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <FiveWhysButton />
-                                    </form>
-                                    {fiveWhysState.data && (
-                                        <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
-                                    )}
-                                </div>
-                            </div>
-                            <Separator />
-                            <div>
-                                <CardTitle>Investigation Workbench</CardTitle>
-                                <div className="mt-4 space-y-6">
-                                    <InvestigationTeamForm report={report} />
-                                    <Separator />
-                                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                    <Separator />
-                                    <div className="space-y-2">
-                                        <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                        <Textarea
-                                            id="investigationNotes"
-                                            name="investigationNotes"
-                                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                            className="min-h-[150px]"
-                                            value={report.investigationNotes || ''}
-                                            onChange={handleInvestigationNotesChange}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="plan">
-                    {correctiveActionPlan ? (
-                        <CorrectiveActionPlanResult 
-                            plan={correctiveActionPlan} 
-                            setPlan={setCorrectiveActionPlan}
-                            report={report} 
-                            onCloseReport={handleCloseReport} 
-                        />
-                    ) : (
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                    <p className="text-muted-foreground">
-                                        No action plan has been generated yet. Use the AI Assistant to create one.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-            </Tabs>
+                </AccordionItem>
+            </Accordion>
         </div>
 
         <div className="hidden print:block">

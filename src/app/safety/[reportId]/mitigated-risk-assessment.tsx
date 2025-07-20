@@ -61,70 +61,68 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
 
   return (
     <Fragment>
-        <CardHeader>
-            <CardTitle>Risk Mitigation Assessment</CardTitle>
-            <CardDescription>
+        <div>
+            <h3 className="font-semibold text-lg">Risk Mitigation Assessment</h3>
+            <p className="text-sm text-muted-foreground">
                 Assess the effectiveness of corrective actions by measuring the residual risk.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {report.associatedRisks && report.associatedRisks.length > 0 ? (
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Hazard</TableHead>
-                            <TableHead>Risk</TableHead>
-                            <TableHead>Risk Score (Initial <ArrowRight className="inline h-3 w-3" /> Mitigated)</TableHead>
-                            <TableHead>Level</TableHead>
-                            <TableHead></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {report.associatedRisks.map(risk => (
-                            <TableRow key={risk.id}>
-                                <TableCell className="max-w-xs">{risk.hazard}</TableCell>
-                                <TableCell className="max-w-xs">{risk.risk}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                            {risk.riskScore}
+            </p>
+        </div>
+        {report.associatedRisks && report.associatedRisks.length > 0 ? (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Hazard</TableHead>
+                        <TableHead>Risk</TableHead>
+                        <TableHead>Risk Score (Initial <ArrowRight className="inline h-3 w-3" /> Mitigated)</TableHead>
+                        <TableHead>Level</TableHead>
+                        <TableHead></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {report.associatedRisks.map(risk => (
+                        <TableRow key={risk.id}>
+                            <TableCell className="max-w-xs">{risk.hazard}</TableCell>
+                            <TableCell className="max-w-xs">{risk.risk}</TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                        {risk.riskScore}
+                                    </Badge>
+                                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    {risk.residualRiskScore !== undefined ? (
+                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                            {risk.residualRiskScore}
                                         </Badge>
-                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                        {risk.residualRiskScore !== undefined ? (
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
-                                                {risk.residualRiskScore}
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="outline">N/A</Badge>
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                     <Badge variant="outline">{riskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Assess
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                 </Table>
-            ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No hazards or risks have been added for this report yet.</p>
-                </div>
-            )}
-        </CardContent>
+                                    ) : (
+                                        <Badge variant="outline">N/A</Badge>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                    <Badge variant="outline">{riskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Assess
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+        ) : (
+            <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">No hazards or risks have been added for this report yet.</p>
+            </div>
+        )}
          {editingRisk && (
             <Dialog open={!!editingRisk} onOpenChange={(isOpen) => !isOpen && setEditingRisk(null)}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Assess Risk Mitigation</DialogTitle>
                         <DialogDescription>
-                           For: "{editingRisk.hazard}"
+                            For: "{editingRisk.hazard}"
                         </DialogDescription>
                     </DialogHeader>
                     <AssessMitigationForm risk={editingRisk} onAssessRisk={handleAssessRisk} />
