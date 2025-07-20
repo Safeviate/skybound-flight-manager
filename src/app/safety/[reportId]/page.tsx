@@ -936,19 +936,13 @@ export default function SafetyReportInvestigationPage() {
                     <Card>
                         <AccordionTrigger className="p-6">
                            <div className="text-left">
-                                <CardTitle>Step 2: Risk Assessment & Mitigation</CardTitle>
-                                <CardDescription>Identify, assess, and track mitigation for all associated risks.</CardDescription>
+                                <CardTitle>Step 2: Initial Risk Assessment</CardTitle>
+                                <CardDescription>Identify hazards and assess their initial risk level before mitigation.</CardDescription>
                            </div>
                         </AccordionTrigger>
                         <AccordionContent className="p-6 pt-0 space-y-6">
                             <Separator className="mb-6"/>
                             <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                            <Separator />
-                            <MitigatedRiskAssessment 
-                                report={report} 
-                                onUpdate={handleReportUpdate} 
-                                correctiveActions={correctiveActionPlan?.correctiveActions}
-                            />
                         </AccordionContent>
                     </Card>
                 </AccordionItem>
@@ -1027,7 +1021,25 @@ export default function SafetyReportInvestigationPage() {
                     <Card>
                         <AccordionTrigger className="p-6">
                            <div className="text-left">
-                                <CardTitle>Step 5: Corrective Action Plan</CardTitle>
+                                <CardTitle>Step 5: Residual Risk</CardTitle>
+                                <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0 space-y-6">
+                            <Separator className="mb-6"/>
+                             <MitigatedRiskAssessment 
+                                report={report} 
+                                onUpdate={handleReportUpdate} 
+                                correctiveActions={correctiveActionPlan?.correctiveActions}
+                            />
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                <AccordionItem value="step-6">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 6: Corrective Action Plan</CardTitle>
                                 <CardDescription>Generate, finalize, and track the plan to prevent recurrence.</CardDescription>
                            </div>
                         </AccordionTrigger>
