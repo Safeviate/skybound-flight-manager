@@ -76,25 +76,25 @@ function InvestigationAnalysisResult({ data }: { data: SuggestInvestigationSteps
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><ClipboardList /> Initial Assessment</h3>
-            <p className="text-muted-foreground bg-muted p-3 rounded-md">{data.initialAssessment}</p>
+            <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><ClipboardList /> Initial Assessment</h3>
+            <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{data.initialAssessment}</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
              <div>
-                <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><ListChecks /> Key Areas to Investigate</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><ListChecks /> Key Areas to Investigate</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                     {data.keyAreasToInvestigate.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
              </div>
              <div>
-                <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><AlertCircle /> Recommended Immediate Actions</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><AlertCircle /> Recommended Immediate Actions</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                     {data.recommendedActions.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
              </div>
           </div>
            <div>
-            <h3 className="font-semibold text-lg flex items-center gap-2 mb-2"><Users /> Potential Contributing Factors</h3>
+            <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><Users /> Potential Contributing Factors</h3>
             <div className="flex flex-wrap gap-2">
                 {data.potentialContributingFactors.map((item, i) => <Badge key={i} variant="secondary">{item}</Badge>)}
             </div>
