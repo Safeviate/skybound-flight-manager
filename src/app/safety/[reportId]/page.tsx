@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
@@ -898,11 +898,7 @@ export default function SafetyReportInvestigationPage() {
                         <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
                     </TabsList>
                     <TabsContent value="risk-assessment">
-                        <Card>
-                            <CardContent className="pt-6">
-                                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                            </CardContent>
-                        </Card>
+                        <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                     </TabsContent>
                     <TabsContent value="ai">
                         <Card>
@@ -980,7 +976,7 @@ export default function SafetyReportInvestigationPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="plan">
-                        <Card className="space-y-8">
+                         <Card className="space-y-8">
                             <CardContent className="pt-6">
                                 {correctiveActionPlan ? (
                                     <CorrectiveActionPlanResult 
