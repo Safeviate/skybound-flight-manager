@@ -4,8 +4,8 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { qualityAuditData as initialAuditData } from '@/lib/mock-data';
-import type { QualityAudit } from '@/lib/types';
+import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/mock-data';
+import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
+import { AuditSchedule } from './audit-schedule';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -73,6 +74,7 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 
 export default function QualityPage() {
   const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
+  const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -81,6 +83,19 @@ export default function QualityPage() {
       case 'Non-Compliant': return 'destructive';
       default: return 'outline';
     }
+  };
+  
+  const handleScheduleUpdate = (updatedItem: AuditScheduleItem) => {
+    setSchedule(prevSchedule => {
+      const existingItem = prevSchedule.find(item => item.id === updatedItem.id);
+      if (existingItem) {
+        // Update existing item
+        return prevSchedule.map(item => item.id === updatedItem.id ? updatedItem : item);
+      } else {
+        // Add new item if it doesn't exist
+        return [...prevSchedule, updatedItem];
+      }
+    });
   };
 
   return (
@@ -99,6 +114,17 @@ export default function QualityPage() {
         </Dialog>
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Annual Audit Schedule</CardTitle>
+            <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AuditSchedule schedule={schedule} onUpdate={handleScheduleUpdate} />
+          </CardContent>
+        </Card>
+
         <div className="grid gap-8 md:grid-cols-2">
             <Card>
                 <CardHeader>

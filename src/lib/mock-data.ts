@@ -1,7 +1,8 @@
 
 
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit } from './types';
+
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -268,4 +269,14 @@ export const qualityAuditData: QualityAudit[] = [
         ],
         summary: 'The audit confirmed a high level of compliance with training standards. A minor finding in documentation was noted and has been corrected.'
     }
+];
+
+export const auditScheduleData: AuditScheduleItem[] = [
+  { id: 'sch-1', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
+  { id: 'sch-2', area: 'Maintenance', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
+  { id: 'sch-3', area: 'Ground Ops', year: new Date().getFullYear(), quarter: 'Q2', status: 'Scheduled' },
+  { id: 'sch-4', area: 'Management', year: new Date().getFullYear(), quarter: 'Q2', status: 'Pending' },
+  { id: 'sch-5', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
+  { id: 'sch-6', area: 'Safety Systems', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
+  { id: 'sch-7', area: 'External (FAA)', year: new Date().getFullYear(), quarter: 'Q4', status: 'Pending' },
 ];

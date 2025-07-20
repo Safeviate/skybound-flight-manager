@@ -1,6 +1,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -322,4 +323,14 @@ export type QualityAudit = {
   complianceScore: number;
   nonConformanceIssues: NonConformanceIssue[];
   summary: string;
+};
+
+export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
+
+export type AuditScheduleItem = {
+  id: string;
+  area: string;
+  year: number;
+  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  status: AuditStatus;
 };
