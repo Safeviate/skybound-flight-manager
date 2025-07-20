@@ -39,14 +39,6 @@ const spiFormSchema = z.object({
   alert2: z.coerce.number().min(0, 'Value must be positive.'),
   alert3: z.coerce.number().min(0, 'Value must be positive.'),
   alert4: z.coerce.number().min(0, 'Value must be positive.'),
-}).refine(data => {
-    if (data.calculation === 'rate') {
-        return !!data.unit && data.unit.trim().length > 0;
-    }
-    return true;
-}, {
-    message: 'Unit is required for rate calculations.',
-    path: ['unit'],
 });
 
 
@@ -123,21 +115,19 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                   </FormItem>
               )}
           />
-           {calculationType === 'rate' && (
-             <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., per 100 hours" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-           )}
+           <FormField
+              control={form.control}
+              name="unit"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Unit</FormLabel>
+                  <FormControl>
+                      <Input placeholder="e.g., per month" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
+          />
         </div>
         
         <p className="text-sm font-medium text-foreground pt-2">Alert Levels</p>
