@@ -3,10 +3,12 @@
 
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { mockAlerts } from '@/lib/mock-data';
+import { Button } from '@/components/ui/button';
+import { useUser } from '@/context/user-provider';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -25,16 +27,27 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 export default function AlertsPage() {
+  const { user } = useUser();
+  const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Alerts & Notifications" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
-          <CardHeader>
-            <CardTitle>System Alerts</CardTitle>
-            <CardDescription>
-              Important notifications and operational alerts are displayed here.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>System Alerts</CardTitle>
+                <CardDescription>
+                Important notifications and operational alerts are displayed here.
+                </CardDescription>
+            </div>
+            {canCreateAlerts && (
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create Notification
+                </Button>
+            )}
           </CardHeader>
           <CardContent>
             {mockAlerts.length > 0 ? (
