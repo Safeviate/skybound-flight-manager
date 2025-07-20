@@ -1,12 +1,13 @@
 
 'use client';
 
+import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
-import { mockAlerts } from '@/lib/mock-data';
+import { mockAlerts as initialAlerts } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {
@@ -14,7 +15,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { NewAlertForm } from './new-alert-form';
+import { format } from 'date-fns';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -34,7 +37,30 @@ const getAlertIcon = (type: Alert['type']) => {
 
 export default function AlertsPage() {
   const { user } = useUser();
+  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
+
+  const handleNewAlert = (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
+    if (!user) return;
+
+    const lastAlertOfType = alerts
+        .filter(a => a.type === data.type)
+        .sort((a,b) => b.number - a.number)[0];
+
+    const newAlert: Alert = {
+        ...data,
+        id: `alert-${Date.now()}`,
+        number: (lastAlertOfType?.number || 0) + 1,
+        author: user.name,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        readBy: [user.name], // Creator has implicitly read it
+    };
+
+    setAlerts(prev => [newAlert, ...prev]);
+    setIsDialogOpen(false);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -49,16 +75,29 @@ export default function AlertsPage() {
                 </CardDescription>
             </div>
             {canCreateAlerts && (
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Notification
-                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create Notification
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create New System Notification</DialogTitle>
+                            <DialogDescription>
+                                Select the type and provide details for the new alert.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <NewAlertForm onSubmit={handleNewAlert} />
+                    </DialogContent>
+                </Dialog>
             )}
           </CardHeader>
           <CardContent>
-            {mockAlerts.length > 0 ? (
+            {alerts.length > 0 ? (
                 <div className="space-y-4">
-                    {mockAlerts.map((alert) => (
+                    {alerts.map((alert) => (
                         <Collapsible key={alert.id} className="w-full">
                             <Card className="hover:bg-muted/50 transition-colors">
                                 <CardHeader className="flex flex-row items-start justify-between gap-4">
