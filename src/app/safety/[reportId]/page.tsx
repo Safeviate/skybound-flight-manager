@@ -940,7 +940,7 @@ export default function SafetyReportInvestigationPage() {
                                 <CardDescription>Identify hazards and assess their initial risk level before mitigation.</CardDescription>
                            </div>
                         </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-0 space-y-6">
+                        <AccordionContent className="p-6 pt-0">
                             <Separator className="mb-6"/>
                             <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                         </AccordionContent>
@@ -950,37 +950,7 @@ export default function SafetyReportInvestigationPage() {
                     <Card>
                         <AccordionTrigger className="p-6">
                            <div className="text-left">
-                                <CardTitle>Step 3: Investigation Workbench</CardTitle>
-                                <CardDescription>Form a team, discuss findings, and document the investigation process.</CardDescription>
-                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-0">
-                            <Separator className="mb-6"/>
-                            <div className="space-y-6">
-                                <InvestigationTeamForm report={report} />
-                                <Separator />
-                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                <Separator />
-                                <div className="space-y-2">
-                                    <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                    <Textarea
-                                        id="investigationNotes"
-                                        name="investigationNotes"
-                                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                        className="min-h-[150px]"
-                                        value={report.investigationNotes || ''}
-                                        onChange={handleInvestigationNotesChange}
-                                    />
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </Card>
-                </AccordionItem>
-                <AccordionItem value="step-4">
-                    <Card>
-                        <AccordionTrigger className="p-6">
-                           <div className="text-left">
-                                <CardTitle>Step 4: AI Analysis Tools</CardTitle>
+                                <CardTitle>Step 3: AI Analysis Tools</CardTitle>
                                 <CardDescription>Use generative AI to assist with root cause analysis and planning.</CardDescription>
                            </div>
                         </AccordionTrigger>
@@ -1017,6 +987,36 @@ export default function SafetyReportInvestigationPage() {
                         </AccordionContent>
                     </Card>
                 </AccordionItem>
+                <AccordionItem value="step-4">
+                    <Card>
+                        <AccordionTrigger className="p-6">
+                           <div className="text-left">
+                                <CardTitle>Step 4: Investigation Workbench</CardTitle>
+                                <CardDescription>Form a team, discuss findings, and document the investigation process.</CardDescription>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <Separator className="mb-6"/>
+                            <div className="space-y-6">
+                                <InvestigationTeamForm report={report} />
+                                <Separator />
+                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                <Separator />
+                                <div className="space-y-2">
+                                    <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                    <Textarea
+                                        id="investigationNotes"
+                                        name="investigationNotes"
+                                        placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                        className="min-h-[150px]"
+                                        value={report.investigationNotes || ''}
+                                        onChange={handleInvestigationNotesChange}
+                                    />
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
                 <AccordionItem value="step-5">
                     <Card>
                         <AccordionTrigger className="p-6">
@@ -1025,9 +1025,9 @@ export default function SafetyReportInvestigationPage() {
                                 <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
                            </div>
                         </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-0 space-y-6">
+                        <AccordionContent className="p-6 pt-0">
                             <Separator className="mb-6"/>
-                             <MitigatedRiskAssessment 
+                            <MitigatedRiskAssessment 
                                 report={report} 
                                 onUpdate={handleReportUpdate} 
                                 correctiveActions={correctiveActionPlan?.correctiveActions}
