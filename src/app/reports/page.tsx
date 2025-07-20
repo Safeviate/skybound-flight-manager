@@ -18,7 +18,7 @@ const AircraftUtilizationChart = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(utilizationData).map(([name, bookings]) => ({
+    return Object.entries(bookingsByAircraft).map(([name, bookings]) => ({
       name,
       bookings,
     }));
