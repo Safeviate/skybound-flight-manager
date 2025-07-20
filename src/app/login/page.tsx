@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
-import { userData, mockAlerts } from '@/lib/mock-data';
+import { userData, mockAlerts as allAlerts } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,33 @@ const getAlertIcon = (type: Alert['type']) => {
 export default function LoginPage() {
   const { login } = useUser();
   const router = useRouter();
-  const [acknowledged, setAcknowledged] = useState(mockAlerts.length === 0);
+  const [alertsToShow, setAlertsToShow] = useState<Alert[]>([]);
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  useEffect(() => {
+    try {
+        const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlertIds') || '[]');
+        const unacknowledged = allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
+        setAlertsToShow(unacknowledged);
+        if (unacknowledged.length === 0) {
+            setAcknowledged(true);
+        }
+    } catch (e) {
+        setAlertsToShow(allAlerts);
+    }
+  }, []);
+
+  const handleAcknowledge = () => {
+    try {
+        const currentIds = JSON.parse(sessionStorage.getItem('acknowledgedAlertIds') || '[]');
+        const newIds = alertsToShow.map(alert => alert.id);
+        const allAcknowledgedIds = [...new Set([...currentIds, ...newIds])];
+        sessionStorage.setItem('acknowledgedAlertIds', JSON.stringify(allAcknowledgedIds));
+    } catch (e) {
+        console.error("Could not write to sessionStorage");
+    }
+    setAcknowledged(true);
+  };
 
   const handleLogin = (userId: string) => {
     login(userId);
@@ -75,7 +101,7 @@ export default function LoginPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                {mockAlerts.map((alert) => (
+                {alertsToShow.map((alert) => (
                     <Card key={alert.id}>
                         <CardHeader className="flex flex-row items-start justify-between gap-4">
                             <div className="flex items-start gap-4">
@@ -94,7 +120,7 @@ export default function LoginPage() {
                         </CardContent>
                     </Card>
                 ))}
-                 <Button onClick={() => setAcknowledged(true)} className="w-full mt-4">Acknowledge & Continue to Login</Button>
+                 <Button onClick={handleAcknowledge} className="w-full mt-4">Acknowledge & Continue to Login</Button>
             </CardContent>
         </Card>
       ) : (
