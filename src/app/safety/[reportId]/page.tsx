@@ -4,7 +4,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import React from 'react';
-import { useFormStatus } from 'react-dom';
+import { useFormStatus, useParams } from 'react-dom';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -91,29 +91,23 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
 
     const handleIncorporate = () => {
         let textToIncorporate = "";
-        let hasContent = false;
-
         if (selected.initialAssessment) {
             textToIncorporate += `**Initial Assessment:**\n${data.initialAssessment}\n\n`;
-            hasContent = true;
         }
 
         if (selected.keyAreas.length > 0) {
             textToIncorporate += `**Key Areas to Investigate:**\n${selected.keyAreas.map(item => `- ${item}`).join('\n')}\n\n`;
-            hasContent = true;
         }
 
         if (selected.recommendedActions.length > 0) {
             textToIncorporate += `**Recommended Immediate Actions:**\n${selected.recommendedActions.map(item => `- ${item}`).join('\n')}\n\n`;
-            hasContent = true;
         }
 
         if (selected.potentialFactors.length > 0) {
             textToIncorporate += `**Potential Contributing Factors:**\n${selected.potentialFactors.map(item => `- ${item}`).join('\n')}\n\n`;
-            hasContent = true;
         }
         
-        if (hasContent) {
+        if (textToIncorporate.length > 0) {
             onIncorporate(textToIncorporate);
         }
     };
@@ -171,7 +165,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
             <div className="space-y-2">
                 <div className="flex items-center space-x-3">
                     <Checkbox id="select-assessment" onCheckedChange={() => handleToggle('initialAssessment', true)} />
-                    <Label htmlFor="select-assessment" className="text-base font-semibold flex items-center gap-2 mb-2">
+                    <Label htmlFor="select-assessment" className="text-base font-semibold flex items-center gap-2">
                         <ClipboardList /> Initial Assessment
                     </Label>
                 </div>
@@ -179,7 +173,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
             </div>
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><ListChecks /> Key Areas to Investigate</h3>
+                    <h3 className="font-semibold text-base flex items-center gap-2"><ListChecks /> Key Areas to Investigate</h3>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {data.keyAreasToInvestigate.map((item, i) => (
                             <li key={i} className="flex items-center space-x-3">
@@ -190,7 +184,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
                     </ul>
                 </div>
                 <div className="space-y-2">
-                    <h3 className="font-semibold text-base flex items-center gap-2 mb-2"><AlertCircle /> Recommended Immediate Actions</h3>
+                    <h3 className="font-semibold text-base flex items-center gap-2"><AlertCircle /> Recommended Immediate Actions</h3>
                      <ul className="space-y-2 text-sm text-muted-foreground">
                         {data.recommendedActions.map((item, i) => (
                             <li key={i} className="flex items-center space-x-3">
@@ -202,7 +196,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
                 </div>
             </div>
             <div className="space-y-2">
-                <h3 className="text-base font-semibold flex items-center gap-2 mb-2">
+                <h3 className="text-base font-semibold flex items-center gap-2">
                     <Users /> Potential Contributing Factors
                 </h3>
                 <ul className="space-y-2 text-sm text-muted-foreground ml-2">
@@ -656,7 +650,8 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
 
 export default function SafetyReportInvestigationPage({ params }: { params: { reportId: string } }) {
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
-  const report = safetyReports.find(r => r.id === params.reportId);
+  const { reportId } = useParams() as { reportId: string };
+  const report = safetyReports.find(r => r.id === reportId);
   const { toast } = useToast();
   
   const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
@@ -667,7 +662,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
 
   useEffect(() => {
     // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
-    if (params.reportId === 'sr1') {
+    if (reportId === 'sr1') {
       setCorrectiveActionPlan({
         summaryOfFindings: 'The investigation confirmed that a bird passed dangerously close to the aircraft on final approach. The flight crew exercised good judgment in reporting the incident, and the post-flight inspection correctly found no damage. The primary contributing factor was a gap in communication regarding known bird activity.',
         rootCause: 'Failure to disseminate a general bird activity warning from ATC to the specific flight crew during pre-flight or approach briefing.',
@@ -679,7 +674,7 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
     } else {
         setCorrectiveActionPlan(null);
     }
-  }, [params.reportId]);
+  }, [reportId]);
 
   useEffect(() => {
     if (generatePlanState.data && !correctiveActionPlan) {
