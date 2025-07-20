@@ -127,8 +127,8 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
 
   return (
     <Card>
-        <CardHeader className="flex flex-row items-start justify-between no-print">
-            <div>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 no-print">
+            <div className="flex-1">
                 <CardTitle>Initial Risk Assessment</CardTitle>
                 <CardDescription>
                     Identify hazards associated with this report and assess their initial risk level.
