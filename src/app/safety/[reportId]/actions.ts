@@ -6,6 +6,7 @@ import { suggestInvestigationSteps } from '@/ai/flows/suggest-investigation-step
 import { generateCorrectiveActionPlan } from '@/ai/flows/generate-corrective-action-plan-flow';
 import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow';
 import { fiveWhysAnalysis } from '@/ai/flows/five-whys-analysis-flow';
+import { suggestHazards } from '@/ai/flows/suggest-hazards-flow';
 import type { SafetyReport, AssociatedRisk } from '@/lib/types';
 
 const reportSchema = z.object({
@@ -133,5 +134,21 @@ export async function fiveWhysAnalysisAction(prevState: any, formData: FormData)
     console.error(error);
     return { message: 'An error occurred during 5 Whys analysis.', data: null, errors: null };
   }
+}
+
+export async function suggestHazardsAction(prevState: any, formData: FormData) {
+    const reportText = formData.get('reportText');
+
+    if (!reportText || typeof reportText !== 'string') {
+        return { message: 'Invalid report data provided.', data: null };
+    }
+
+    try {
+        const result = await suggestHazards({ reportText });
+        return { message: 'Hazard suggestion complete.', data: result };
+    } catch (error) {
+        console.error(error);
+        return { message: 'An error occurred during hazard suggestion.', data: null };
+    }
 }
     
