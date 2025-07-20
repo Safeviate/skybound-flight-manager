@@ -648,7 +648,7 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
     );
 }
 
-export default function SafetyReportInvestigationPage({ params }: { params: { reportId: string } }) {
+export default function SafetyReportInvestigationPage() {
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
   const { reportId } = useParams() as { reportId: string };
   const report = safetyReports.find(r => r.id === reportId);
