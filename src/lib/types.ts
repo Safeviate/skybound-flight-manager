@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export type Airport = {
   id: string;
   name: string;
@@ -263,10 +258,12 @@ export type AuditChecklistItem = {
     notes?: string;
 }
 
+export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops';
+
 export type AuditChecklist = {
     id: string;
     title: string;
-    area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
+    area: AuditArea;
     items: AuditChecklistItem[];
 }
 

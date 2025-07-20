@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist } from './types';
 import { getNextService } from './utils.tsx';
 
@@ -285,26 +280,63 @@ export const auditScheduleData: AuditScheduleItem[] = [
 
 export const auditChecklistData: AuditChecklist[] = [
     {
-        id: 'acl-1',
-        title: 'Internal Documentation Audit',
-        area: 'Management',
+        id: 'saccaa-01',
+        title: 'Personnel & Licensing Audit',
+        area: 'Personnel',
         items: [
-            { id: 'acl-1-1', text: 'Are all aircraft journey logs up to date?', isCompliant: null },
-            { id: 'acl-1-2', text: 'Are student training records complete and signed?', isCompliant: null },
-            { id: 'acl-1-3', text: 'Are personnel files, including licenses and medicals, current?', isCompliant: null },
-            { id: 'acl-1-4', text: 'Is the Safety Management System manual accessible to all staff?', isCompliant: null },
+            { id: 'p-1', text: 'Is the Chief Flight Instructor (CFI) properly nominated and approved?', isCompliant: null },
+            { id: 'p-2', text: 'Do all Flight Instructors hold valid licenses and ratings for the courses taught?', isCompliant: null },
+            { id: 'p-3', text: 'Are instructor medical certificates valid and current?', isCompliant: null },
+            { id: 'p-4', text: 'Is there a record of instructor standardisation and proficiency checks?', isCompliant: null },
+            { id: 'p-5', text: 'Are instructor-to-student ratios compliant with regulations?', isCompliant: null },
         ]
     },
     {
-        id: 'acl-2',
-        title: 'Maintenance Hangar Safety Audit',
+        id: 'saccaa-02',
+        title: 'Aircraft & Maintenance Records Audit',
         area: 'Maintenance',
         items: [
-            { id: 'acl-2-1', text: 'Are all fire extinguishers serviced and accessible?', isCompliant: null },
-            { id: 'acl-2-2', text: 'Is Personal Protective Equipment (PPE) available and in good condition?', isCompliant: null },
-            { id: 'acl-2-3', text: 'Are hazardous materials stored and labeled correctly?', isCompliant: null },
-            { id: 'acl-2-4', text: 'Are walkways and work areas clear of obstructions?', isCompliant: null },
-            { id: 'acl-2-5', text: 'Are all tools and equipment in their proper storage locations?', isCompliant: null },
+            { id: 'am-1', text: 'Does each training aircraft have a valid Certificate of Airworthiness?', isCompliant: null },
+            { id: 'am-2', text: 'Are aircraft maintenance programs approved and up-to-date?', isCompliant: null },
+            { id: 'am-3', text: 'Are all required inspections (e.g., 100-hour, annual) documented and current?', isCompliant: null },
+            { id: 'am-4', text: 'Is the Aircraft Journey Logbook being completed correctly for every flight?', isCompliant: null },
+            { id: 'am-5', text: 'Is all required emergency and survival equipment on board and serviceable?', isCompliant: null },
+        ]
+    },
+    {
+        id: 'saccaa-03',
+        title: 'Training & Procedures Manual (TPM) Audit',
+        area: 'Management',
+        items: [
+            { id: 'tpm-1', text: 'Is the TPM approved by the SACAA?', isCompliant: null },
+            { id: 'tpm-2', text: 'Is the TPM readily available to all relevant personnel?', isCompliant: null },
+            { id: 'tpm-3', text: 'Does the TPM accurately describe the courses offered?', isCompliant: null },
+            { id: 'tpm-4', text: 'Are the syllabi, lesson plans, and grading criteria defined as per regulations?', isCompliant: null },
+            { id: 'tpm-5', text: 'Is there a system for amending and distributing updates to the TPM?', isCompliant: null },
+        ]
+    },
+     {
+        id: 'saccaa-04',
+        title: 'Student Records & Progress Audit',
+        area: 'Records',
+        items: [
+            { id: 'sr-1', text: 'Is there a complete and orderly file for each enrolled student?', isCompliant: null },
+            { id: 'sr-2', text: 'Do student files contain copies of medical certificates and pilot licenses (if any)?', isCompliant: null },
+            { id: 'sr-3', text: 'Are flight training hours, ground school hours, and simulator hours logged accurately?', isCompliant: null },
+            { id: 'sr-4', text: 'Are student progress tests and examination results properly recorded?', isCompliant: null },
+            { id: 'sr-5', text: 'Is there evidence of regular review of student progress by the CFI?', isCompliant: null },
+        ]
+    },
+    {
+        id: 'saccaa-05',
+        title: 'Facilities & Equipment Audit',
+        area: 'Facilities',
+        items: [
+            { id: 'fe-1', text: 'Are the main base of operations and any satellite bases approved?', isCompliant: null },
+            { id: 'fe-2', text: 'Are briefing rooms adequate in size and properly equipped (e.g., whiteboards, models)?', isCompliant: null },
+            { id: 'fe-3', text: 'Is there a suitable library with up-to-date regulations, charts, and manuals?', isCompliant: null },
+            { id: 'fe-4', text: 'Are flight simulators (if used) approved and serviceable?', isCompliant: null },
+            { id: 'fe-5', text: 'Are security and access control measures for facilities and aircraft appropriate?', isCompliant: null },
         ]
     }
 ];
