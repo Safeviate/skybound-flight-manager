@@ -11,10 +11,11 @@ import { format, parseISO } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bot } from 'lucide-react';
+import { Bot, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
+import { useRouter } from 'next/navigation';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -78,6 +79,7 @@ export default function QualityPage() {
   const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
+  const router = useRouter();
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -195,11 +197,12 @@ export default function QualityPage() {
                             <TableHead>Area</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Score</TableHead>
+                            <TableHead className="w-12"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {audits.map(audit => (
-                            <TableRow key={audit.id}>
+                            <TableRow key={audit.id} onClick={() => router.push(`/quality/${audit.id}`)} className="cursor-pointer">
                                 <TableCell className="font-mono">{audit.id}</TableCell>
                                 <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
                                 <TableCell>{audit.type}</TableCell>
@@ -208,6 +211,7 @@ export default function QualityPage() {
                                     <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right font-medium">{audit.complianceScore}%</TableCell>
+                                <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
