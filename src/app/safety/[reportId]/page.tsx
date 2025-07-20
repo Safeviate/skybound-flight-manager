@@ -663,20 +663,23 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   const [generatePlanState, generatePlanFormAction] = useActionState(generatePlanAction, { message: '', data: null, errors: null });
   const [fiveWhysState, fiveWhysFormAction] = useActionState(fiveWhysAnalysisAction, { message: '', data: null, errors: null });
 
-  const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(() => {
+  const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(null);
+
+  useEffect(() => {
     // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
     if (params.reportId === 'sr1') {
-      return {
+      setCorrectiveActionPlan({
         summaryOfFindings: 'The investigation confirmed that a bird passed dangerously close to the aircraft on final approach. The flight crew exercised good judgment in reporting the incident, and the post-flight inspection correctly found no damage. The primary contributing factor was a gap in communication regarding known bird activity.',
         rootCause: 'Failure to disseminate a general bird activity warning from ATC to the specific flight crew during pre-flight or approach briefing.',
         correctiveActions: [
           { action: 'Review and update the pre-flight briefing checklist to include a mandatory check for bird activity advisories.', responsiblePerson: 'Mike Ross', deadline: '2024-09-01', status: 'In Progress' },
           { action: 'Implement a procedure for the tower to provide specific bird advisories to aircraft on final approach when activity is known.', responsiblePerson: 'John Smith', deadline: '2024-09-15', status: 'Not Started' },
         ]
-      }
+      });
+    } else {
+        setCorrectiveActionPlan(null);
     }
-    return null;
-  });
+  }, [params.reportId]);
 
   useEffect(() => {
     if (generatePlanState.data && !correctiveActionPlan) {
