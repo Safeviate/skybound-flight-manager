@@ -169,7 +169,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                         <Textarea
                             value={action.action}
                             onChange={(e) => handleActionChange(index, 'action', e.target.value)}
-                            className="min-h-[60px]"
+                            className="min-h-[60px] text-sm"
                         />
                     ) : (
                         <p className="text-sm">{action.action}</p>
@@ -181,7 +181,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                             value={action.responsiblePerson}
                             onValueChange={(value) => handleActionChange(index, 'responsiblePerson', value)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="text-sm">
                                 <SelectValue placeholder="Select Person" />
                             </SelectTrigger>
                             <SelectContent>
@@ -196,7 +196,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                     {isEditing ? (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start font-normal">
+                                <Button variant="outline" className="w-full justify-start font-normal text-sm">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {format(parseISO(action.deadline), "MMM d, yyyy")}
                                 </Button>
@@ -220,7 +220,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                             value={action.status}
                             onValueChange={(value: CorrectiveAction['status']) => handleActionChange(index, 'status', value)}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="text-sm">
                                  <SelectValue placeholder="Select Status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -270,7 +270,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                         <Textarea
                             value={plan.summaryOfFindings}
                             onChange={(e) => setPlan(prev => prev ? { ...prev, summaryOfFindings: e.target.value } : null)}
-                            className="min-h-[100px]"
+                            className="min-h-[100px] text-sm"
                         />
                     ) : (
                         <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
@@ -288,7 +288,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                         <Textarea
                             value={plan.rootCause}
                             onChange={(e) => setPlan(prev => prev ? { ...prev, rootCause: e.target.value } : null)}
-                            className="min-h-[80px]"
+                            className="min-h-[80px] text-sm"
                         />
                     ) : (
                         <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
