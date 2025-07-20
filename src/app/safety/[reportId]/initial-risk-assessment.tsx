@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import React, { useState, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
@@ -126,7 +127,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
   }
 
   return (
-    <Card>
+    <>
         <CardHeader className="flex flex-row items-start justify-between gap-4 no-print">
             <div className="flex-1">
                 <CardTitle>Initial Risk Assessment</CardTitle>
@@ -239,6 +240,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                 </div>
             )}
         </CardContent>
-    </Card>
+    </>
   );
 }

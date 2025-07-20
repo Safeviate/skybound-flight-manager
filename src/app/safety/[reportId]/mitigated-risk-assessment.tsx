@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, CorrectiveAction } from '@/lib/types';
@@ -59,7 +60,7 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
   }
 
   return (
-    <Card>
+    <>
         <CardHeader>
             <CardTitle>Risk Mitigation Assessment</CardTitle>
             <CardDescription>
@@ -130,6 +131,6 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
                 </DialogContent>
             </Dialog>
          )}
-    </Card>
+    </>
   );
 }

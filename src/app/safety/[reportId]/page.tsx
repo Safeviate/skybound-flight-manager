@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState, useActionState, useMemo } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
@@ -455,100 +455,102 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
     );
 }
 
-const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: SafetyReport) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) => (
-    <div className="space-y-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>{report.heading}</CardTitle>
-                <div className="flex gap-2 pt-1">
-                    <Badge variant="outline">{report.type}</Badge>
-                    {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="flex justify-between items-start flex-col">
-                        <span className="font-semibold text-muted-foreground text-sm">Report #</span>
-                        <span className="font-mono">{report.reportNumber}</span>
+function PrintableReport({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: SafetyReport) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) {
+    return (
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>{report.heading}</CardTitle>
+                    <div className="flex gap-2 pt-1">
+                        <Badge variant="outline">{report.type}</Badge>
+                        {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
                     </div>
-                    <div className="flex justify-between items-start flex-col">
-                        <span className="font-semibold text-muted-foreground text-sm">Status</span>
-                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                    </div>
-                    <div className="flex justify-between items-start flex-col">
-                        <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
-                        <span>{report.occurrenceDate}</span>
-                    </div>
-                    <div className="flex justify-between items-start flex-col">
-                        <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
-                        <span>{report.filedDate}</span>
-                    </div>
-                    <div className="flex justify-between items-start flex-col">
-                        <span className="font-semibold text-muted-foreground text-sm">Submitted By</span>
-                        <span>{report.submittedBy}</span>
-                    </div>
-                    {report.aircraftInvolved && (
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
-                            <span>{report.aircraftInvolved}</span>
+                            <span className="font-semibold text-muted-foreground text-sm">Report #</span>
+                            <span className="font-mono">{report.reportNumber}</span>
                         </div>
-                    )}
-                     {report.location && (
                         <div className="flex justify-between items-start flex-col">
-                            <span className="font-semibold text-muted-foreground text-sm">Location</span>
-                            <span>{report.location}</span>
+                            <span className="font-semibold text-muted-foreground text-sm">Status</span>
+                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
-                    )}
-                </div>
-                 <div className="space-y-2 pt-2">
-                    <h4 className="font-semibold">Details</h4>
-                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
-                </div>
-            </CardContent>
-            <CardFooter>
-                 <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 w-full">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor="occurrenceCategory">ICAO Occurrence Category</Label>
+                        <div className="flex justify-between items-start flex-col">
+                            <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
+                            <span>{report.occurrenceDate}</span>
                         </div>
-                        <Input readOnly value={report.occurrenceCategory || 'N/A'} />
+                        <div className="flex justify-between items-start flex-col">
+                            <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
+                            <span>{report.filedDate}</span>
+                        </div>
+                        <div className="flex justify-between items-start flex-col">
+                            <span className="font-semibold text-muted-foreground text-sm">Submitted By</span>
+                            <span>{report.submittedBy}</span>
+                        </div>
+                        {report.aircraftInvolved && (
+                            <div className="flex justify-between items-start flex-col">
+                                <span className="font-semibold text-muted-foreground text-sm">Aircraft</span>
+                                <span>{report.aircraftInvolved}</span>
+                            </div>
+                        )}
+                        {report.location && (
+                            <div className="flex justify-between items-start flex-col">
+                                <span className="font-semibold text-muted-foreground text-sm">Location</span>
+                                <span>{report.location}</span>
+                            </div>
+                        )}
                     </div>
+                    <div className="space-y-2 pt-2">
+                        <h4 className="font-semibold">Details</h4>
+                        <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{report.details}</p>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4 w-full">
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="occurrenceCategory">ICAO Occurrence Category</Label>
+                            </div>
+                            <Input readOnly value={report.occurrenceCategory || 'N/A'} />
+                        </div>
+                        <div className="space-y-2">
+                        <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
+                        <Input readOnly value={report.phaseOfFlight || 'N/A'} />
+                        </div>
+                    </div>
+                </CardFooter>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Investigation</CardTitle>
+                </CardHeader>
+                <CardContent>
                     <div className="space-y-2">
-                      <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
-                      <Input readOnly value={report.phaseOfFlight || 'N/A'} />
+                        <Label>Investigation Notes &amp; Findings</Label>
+                        <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md min-h-[150px] whitespace-pre-wrap">{report.investigationNotes || 'No notes entered.'}</p>
                     </div>
-                </div>
-            </CardFooter>
-        </Card>
-        <Card>
-            <CardHeader>
-                <CardTitle>Investigation</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <Label>Investigation Notes &amp; Findings</Label>
-                    <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md min-h-[150px] whitespace-pre-wrap">{report.investigationNotes || 'No notes entered.'}</p>
-                </div>
-            </CardContent>
-        </Card>
-        <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
-        {correctiveActionPlan && (
-            <>
-                <CorrectiveActionPlanResult 
-                    plan={correctiveActionPlan} 
-                    setPlan={() => {}} // dummy function for print
-                    report={report} 
-                    onCloseReport={() => {}} // dummy
-                />
-                <MitigatedRiskAssessment 
-                    report={report} 
-                    onUpdate={onUpdate} 
-                    correctiveActions={correctiveActionPlan?.correctiveActions}
-                />
-            </>
-        )}
-    </div>
-);
+                </CardContent>
+            </Card>
+            <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
+            {correctiveActionPlan && (
+                <>
+                    <CorrectiveActionPlanResult 
+                        plan={correctiveActionPlan} 
+                        setPlan={() => {}} // dummy function for print
+                        report={report} 
+                        onCloseReport={() => {}} // dummy
+                    />
+                    <MitigatedRiskAssessment 
+                        report={report} 
+                        onUpdate={onUpdate} 
+                        correctiveActions={correctiveActionPlan?.correctiveActions}
+                    />
+                </>
+            )}
+        </div>
+    );
+}
 
 function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysisOutput, onIncorporate: (text: string) => void }) {
     const [editableAnalysis, setEditableAnalysis] = useState<FiveWhysAnalysisOutput>(data);
@@ -653,7 +655,8 @@ export default function SafetyReportInvestigationPage() {
   const params = useParams();
   const reportId = params.reportId as string;
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
-  const report = safetyReports.find(r => r.id === reportId);
+  const report = useMemo(() => safetyReports.find(r => r.id === reportId), [safetyReports, reportId]);
+
   const { toast } = useToast();
   
   const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
@@ -888,130 +891,122 @@ export default function SafetyReportInvestigationPage() {
                     </div>
                 </CardFooter>
             </Card>
-            <div className="no-print">
-                <Tabs defaultValue="risk-assessment" className="w-full">
-                    <TabsList>
-                        <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
-                        <TabsTrigger value="ai">AI Assistant</TabsTrigger>
-                        <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                        <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="risk-assessment">
+            <Tabs defaultValue="risk-assessment" className="w-full">
+                <TabsList>
+                    <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
+                    <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                    <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
+                </TabsList>
+                <TabsContent value="risk-assessment">
+                     <Card>
+                        <CardContent className="pt-6 space-y-6">
+                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                            <Separator />
+                            <MitigatedRiskAssessment 
+                                report={report} 
+                                onUpdate={handleReportUpdate} 
+                                correctiveActions={correctiveActionPlan?.correctiveActions}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="ai">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>AI Assistant</CardTitle>
+                            <CardDescription>
+                                Use generative AI to help with the investigation process.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <div className="flex-1 p-4 border rounded-lg">
+                                    <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
+                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                        Get AI suggestions for how to proceed with the investigation based on the report details.
+                                    </p>
+                                    <form action={suggestStepsFormAction}>
+                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                        <SuggestStepsButton />
+                                    </form>
+                                </div>
+                                <div className="flex-1 p-4 border rounded-lg">
+                                    <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
+                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                        Generate a complete corrective action plan based on all notes, discussion, and findings.
+                                    </p>
+                                    <form action={generatePlanFormAction}>
+                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                        <GeneratePlanButton />
+                                    </form>
+                                </div>
+                            </div>
+                            {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="investigation">
+                    <Card>
+                        <CardContent className="pt-6 space-y-6">
+                            <div>
+                                <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
+                                <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
+                                <div className="mt-4">
+                                    <form action={fiveWhysFormAction}>
+                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                        <FiveWhysButton />
+                                    </form>
+                                    {fiveWhysState.data && (
+                                        <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
+                                    )}
+                                </div>
+                            </div>
+                            <Separator />
+                            <div>
+                                <CardTitle>Investigation Workbench</CardTitle>
+                                <div className="mt-4 space-y-6">
+                                    <InvestigationTeamForm report={report} />
+                                    <Separator />
+                                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                    <Separator />
+                                    <div className="space-y-2">
+                                        <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                        <Textarea
+                                            id="investigationNotes"
+                                            name="investigationNotes"
+                                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                            className="min-h-[150px]"
+                                            value={report.investigationNotes || ''}
+                                            onChange={handleInvestigationNotesChange}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="plan">
+                    {correctiveActionPlan ? (
+                        <CorrectiveActionPlanResult 
+                            plan={correctiveActionPlan} 
+                            setPlan={setCorrectiveActionPlan}
+                            report={report} 
+                            onCloseReport={handleCloseReport} 
+                        />
+                    ) : (
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="space-y-8">
-                                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                                    <MitigatedRiskAssessment 
-                                        report={report} 
-                                        onUpdate={handleReportUpdate} 
-                                        correctiveActions={correctiveActionPlan?.correctiveActions}
-                                    />
+                                <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">
+                                        No action plan has been generated yet. Use the AI Assistant to create one.
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
-                    <TabsContent value="ai">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>AI Assistant</CardTitle>
-                                <CardDescription>
-                                    Use generative AI to help with the investigation process.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <div className="flex-1 p-4 border rounded-lg">
-                                        <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
-                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                            Get AI suggestions for how to proceed with the investigation based on the report details.
-                                        </p>
-                                        <form action={suggestStepsFormAction}>
-                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                            <SuggestStepsButton />
-                                        </form>
-                                    </div>
-                                    <div className="flex-1 p-4 border rounded-lg">
-                                        <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
-                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                            Generate a complete corrective action plan based on all notes, discussion, and findings.
-                                        </p>
-                                        <form action={generatePlanFormAction}>
-                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                            <GeneratePlanButton />
-                                        </form>
-                                    </div>
-                                </div>
-                                {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="investigation">
-                        <Card>
-                             <CardContent className="pt-6">
-                                <div className="space-y-8">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
-                                            <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <form action={fiveWhysFormAction}>
-                                                <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                                <FiveWhysButton />
-                                            </form>
-                                            {fiveWhysState.data && (
-                                                <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Investigation Workbench</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-6">
-                                            <InvestigationTeamForm report={report} />
-                                            <Separator className="my-6" />
-                                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                            <Separator className="my-6" />
-                                            <div className="space-y-2">
-                                                <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                                <Textarea
-                                                    id="investigationNotes"
-                                                    name="investigationNotes"
-                                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                                    className="min-h-[150px]"
-                                                    value={report.investigationNotes || ''}
-                                                    onChange={handleInvestigationNotesChange}
-                                                />
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="plan">
-                        {correctiveActionPlan ? (
-                            <CorrectiveActionPlanResult 
-                                plan={correctiveActionPlan} 
-                                setPlan={setCorrectiveActionPlan}
-                                report={report} 
-                                onCloseReport={handleCloseReport} 
-                            />
-                        ) : (
-                            <Card>
-                                <CardContent className="pt-6">
-                                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                        <p className="text-muted-foreground">
-                                            No action plan has been generated yet. Use the AI Assistant to create one.
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </TabsContent>
-                </Tabs>
-            </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
 
         <div className="hidden print:block">
