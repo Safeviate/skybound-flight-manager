@@ -3,12 +3,18 @@
 
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { mockAlerts } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { Separator } from '@/components/ui/separator';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -53,7 +59,7 @@ export default function AlertsPage() {
             {mockAlerts.length > 0 ? (
                 <div className="space-y-4">
                     {mockAlerts.map((alert) => (
-                        <button key={alert.id} className="w-full text-left">
+                        <Collapsible key={alert.id} className="w-full">
                             <Card className="hover:bg-muted/50 transition-colors">
                                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                                    <div className="flex items-start gap-4">
@@ -66,13 +72,34 @@ export default function AlertsPage() {
                                             <CardDescription className="mt-2">{alert.description}</CardDescription>
                                         </div>
                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
+                                    <CollapsibleTrigger asChild>
+                                      <Button variant="ghost" size="icon">
+                                        <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
+                                      </Button>
+                                    </CollapsibleTrigger>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-xs text-muted-foreground">Issued by {alert.author} on {alert.date}</p>
                                 </CardContent>
                             </Card>
-                        </button>
+                            <CollapsibleContent>
+                                <div className="p-4 border-t-0 border rounded-b-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                    <h4 className="text-sm font-semibold">Acknowledged By ({alert.readBy.length})</h4>
+                                  </div>
+                                  {alert.readBy.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                      {alert.readBy.map(name => (
+                                        <Badge key={name} variant="secondary">{name}</Badge>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
+                                  )}
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
                     ))}
                 </div>
             ) : (

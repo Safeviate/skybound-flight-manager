@@ -2,8 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User } from '@/lib/types';
-import { userData } from '@/lib/mock-data';
+import type { User, Alert } from '@/lib/types';
+import { userData, mockAlerts } from '@/lib/mock-data';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 interface UserContextType {
@@ -42,6 +42,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
         const userWithPermissions = { ...userToLogin, permissions };
         setUser(userWithPermissions);
+        
+        // Simulate acknowledging alerts
+        mockAlerts.forEach(alert => {
+            if (!alert.readBy.includes(userToLogin.name)) {
+                alert.readBy.push(userToLogin.name);
+            }
+        });
+
         try {
             localStorage.setItem('currentUserId', userId);
         } catch (error) {

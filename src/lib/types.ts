@@ -1,6 +1,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -367,4 +368,5 @@ export type Alert = {
   description: string;
   author: string;
   date: string;
+  readBy: string[];
 };

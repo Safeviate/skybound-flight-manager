@@ -350,6 +350,7 @@ export const mockAlerts: Alert[] = [
     description: 'All flight operations are suspended immediately due to severe thunderstorms in the vicinity. No takeoffs or landings permitted until further notice.',
     author: 'John Smith, Safety Manager',
     date: '2024-08-16',
+    readBy: [],
   },
   {
     id: '2',
@@ -359,6 +360,7 @@ export const mockAlerts: Alert[] = [
     description: 'Runway 31 will be closed for minor repairs from 14:00 to 17:00 local time today. Plan all operations for Runway 13.',
     author: 'Mike Ross, Chief Flight Instructor',
     date: '2024-08-16',
+    readBy: [],
   },
   {
     id: '3',
@@ -368,5 +370,6 @@ export const mockAlerts: Alert[] = [
     description: 'Multiple reports of increased bird activity on the final approach path for Runway 13. Pilots are advised to exercise extreme caution.',
     author: 'Safety Department',
     date: '2024-08-15',
+    readBy: [],
   },
 ];
