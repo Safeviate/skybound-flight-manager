@@ -39,6 +39,14 @@ const spiFormSchema = z.object({
   alert2: z.coerce.number().min(0, 'Value must be positive.'),
   alert3: z.coerce.number().min(0, 'Value must be positive.'),
   alert4: z.coerce.number().min(0, 'Value must be positive.'),
+}).refine(data => {
+    if (data.calculation === 'rate' && !data.unit) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Unit is required for rate calculations.",
+    path: ["unit"],
 });
 
 
@@ -48,6 +56,8 @@ interface EditSpiFormProps {
   spi: SpiConfig;
   onUpdate: (updatedSpi: SpiConfig) => void;
 }
+
+const countUnits = ["Per Day", "Per Week", "Per Month", "Per Year"];
 
 export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const { toast } = useToast();
@@ -120,11 +130,26 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               name="unit"
               render={({ field }) => (
                   <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                      <Input placeholder="e.g., per month" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                    <FormLabel>Unit</FormLabel>
+                    {calculationType === 'count' ? (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a unit" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {countUnits.map(unit => (
+                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <FormControl>
+                            <Input placeholder="e.g., per 100 hours" {...field} />
+                        </FormControl>
+                    )}
+                    <FormMessage />
                   </FormItem>
               )}
           />
