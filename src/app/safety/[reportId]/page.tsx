@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry, FiveWhysAnalysisOutput } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction, fiveWhysAnalysisAction } from './actions';
-import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer, PlusCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer, PlusCircle, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -776,6 +776,24 @@ export default function SafetyReportInvestigationPage() {
       handleReportUpdate(updatedReport);
     }
   };
+  
+  const generateMailtoLink = () => {
+    if (!report) return "";
+
+    const subject = `Safety Report: ${report.reportNumber} - ${report.heading}`;
+    let body = `A safety report requires your attention.\n\n`;
+    body += `Report Number: ${report.reportNumber}\n`;
+    body += `Heading: ${report.heading}\n`;
+    body += `Status: ${report.status}\n`;
+    body += `Date of Occurrence: ${report.occurrenceDate}\n\n`;
+    body += `Details:\n${report.details}\n\n`;
+    if (report.investigationNotes) {
+        body += `Investigation Notes:\n${report.investigationNotes}\n\n`;
+    }
+    body += `Link to report: ${window.location.href}`;
+
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -791,6 +809,12 @@ export default function SafetyReportInvestigationPage() {
                 <Printer className="mr-2 h-4 w-4" />
                 Print Report
             </Button>
+            <a href={generateMailtoLink()}>
+                 <Button variant="outline" className="no-print">
+                    <Mail className="mr-2 h-4 w-4" />
+                    Email Report
+                </Button>
+            </a>
         </div>
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
