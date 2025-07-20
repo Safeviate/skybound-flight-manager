@@ -68,51 +68,9 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
         setEditingSpi(null);
     };
 
-    const unstableApproachesConfig = spiConfigs.find(c => c.id === 'unstableApproaches')!;
-    const adrConfig = spiConfigs.find(c => c.id === 'adr')!;
-
-    // === SPI 1: Unstable Approach Rate ===
-    const unstableApproachesByMonth = reports
-        .filter(r => r.subCategory === 'Unstable Approach')
-        .reduce((acc, report) => {
-            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
-            acc[month] = (acc[month] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-    const unstableApproachesData = Object.keys(unstableApproachesByMonth).map(month => ({
-        name: month,
-        count: unstableApproachesByMonth[month],
-    })).reverse();
-    const latestUnstableApproachCount = unstableApproachesData[0]?.count || 0;
-    
-    const getUnstableApproachStatus = (count: number) => {
-        if (count >= unstableApproachesConfig.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-        if (count >= unstableApproachesConfig.alert3) return { label: 'Action Required', variant: 'orange' as const };
-        if (count >= unstableApproachesConfig.alert2) return { label: 'Monitor', variant: 'warning' as const };
-        return { label: 'Acceptable', variant: 'success' as const };
-    };
-
-    // === SPI 2: Technical Defect Rate ===
-    const adrByMonth = reports
-        .filter(r => r.type === 'Aircraft Defect Report')
-        .reduce((acc, report) => {
-            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
-            acc[month] = (acc[month] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-    const adrData = Object.keys(adrByMonth).map(month => ({
-        name: month,
-        count: adrByMonth[month],
-    })).reverse();
-    const latestAdrCount = adrData[0]?.count || 0;
-
-    const getAdrStatus = (count: number) => {
-        if (count >= adrConfig.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-        if (count >= adrConfig.alert3) return { label: 'Action Required', variant: 'orange' as const };
-        if (count >= adrConfig.alert2) return { label: 'Monitor', variant: 'warning' as const };
-        return { label: 'Acceptable', variant: 'success' as const };
+    const monthlyFlightHours = { // Mock data
+        'Jul 24': 320,
+        'Aug 24': 350,
     };
 
     return (
@@ -124,90 +82,87 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
-                 <Card className="flex flex-col">
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-lg">Unstable Approach Rate</CardTitle>
-                                <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <Badge variant={getUnstableApproachStatus(latestUnstableApproachCount).variant}>
-                                    {getUnstableApproachStatus(latestUnstableApproachCount).label}
-                                </Badge>
-                                <Button variant="ghost" size="sm" onClick={() => setEditingSpi(unstableApproachesConfig)}>
-                                    <Edit className="h-3 w-3 mr-1" /> Edit Targets
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex flex-col justify-center">
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={unstableApproachesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" fontSize={12} />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip />
-                                <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={unstableApproachesConfig.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
-                                <ReferenceLine y={unstableApproachesConfig.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
-                                <Bar dataKey="count" name="Unstable Approaches">
-                                    {unstableApproachesData.map((entry, index) => {
-                                        const status = getUnstableApproachStatus(entry.count);
-                                        const color = {
-                                            'success': 'hsl(var(--success))',
-                                            'warning': 'hsl(var(--warning))',
-                                            'orange': 'hsl(var(--orange))',
-                                            'destructive': 'hsl(var(--destructive))'
-                                        }[status.variant];
-                                        return <Cell key={`cell-${index}`} fill={color} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                     <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                        <p>Safety Performance Target: &lt;= {unstableApproachesConfig.target} per month.</p>
-                    </CardFooter>
-                </Card>
-                <Card className="flex flex-col">
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-lg">Aircraft Technical Defect Rate</CardTitle>
-                                <CardDescription className="text-xs">Type: Lagging Indicator</CardDescription>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <Badge variant={getAdrStatus(latestAdrCount).variant}>
-                                    {getAdrStatus(latestAdrCount).label}
-                                </Badge>
-                                 <Button variant="ghost" size="sm" onClick={() => setEditingSpi(adrConfig)}>
-                                    <Edit className="h-3 w-3 mr-1" /> Edit Targets
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex flex-col justify-center">
-                        <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={adrData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" fontSize={12} />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip />
-                                <Legend verticalAlign="top" height={36}/>
-                                <ReferenceLine y={adrConfig.target} label={{ value: 'Target', position: 'insideTopLeft' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrConfig.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
-                                <ReferenceLine y={adrConfig.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
-                                <Line type="monotone" dataKey="count" name="Defect Reports" stroke="hsl(var(--primary))" strokeWidth={2} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                    <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                       <p>Safety Performance Target: &lt;= {adrConfig.target} per month.</p>
-                    </CardFooter>
-                </Card>
+                {spiConfigs.map(config => {
+                    const spiData = reports
+                        .filter(r => config.filter(r))
+                        .reduce((acc, report) => {
+                            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+                            acc[month] = (acc[month] || 0) + 1;
+                            return acc;
+                        }, {} as Record<string, number>);
+
+                    const chartData = Object.keys(spiData).map(month => {
+                        const count = spiData[month];
+                        if (config.calculation === 'rate' && config.unit) {
+                            const totalHours = monthlyFlightHours[month as keyof typeof monthlyFlightHours] || 0;
+                            const rate = totalHours > 0 ? (count / totalHours) * 100 : 0;
+                            return { name: month, value: parseFloat(rate.toFixed(2)) };
+                        }
+                        return { name: month, value: count };
+                    }).reverse();
+                    
+                    const latestValue = chartData[0]?.value || 0;
+                    
+                    const getStatus = (value: number) => {
+                        if (value >= config.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+                        if (value >= config.alert3) return { label: 'Action Required', variant: 'orange' as const };
+                        if (value >= config.alert2) return { label: 'Monitor', variant: 'warning' as const };
+                        return { label: 'Acceptable', variant: 'success' as const };
+                    };
+
+                    const status = getStatus(latestValue);
+                    
+                    return (
+                        <Card key={config.id} className="flex flex-col">
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-lg">{config.name}</CardTitle>
+                                        <CardDescription className="text-xs">Type: {config.type}</CardDescription>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <Badge variant={status.variant}>
+                                            {status.label}
+                                        </Badge>
+                                        <Button variant="ghost" size="sm" onClick={() => setEditingSpi(config)}>
+                                            <Edit className="h-3 w-3 mr-1" /> Edit Targets
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-1 flex flex-col justify-center">
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" fontSize={12} />
+                                        <YAxis allowDecimals={false} />
+                                        <Tooltip formatter={(value) => `${value} ${config.unit || ''}`} />
+                                        <Legend verticalAlign="top" height={36}/>
+                                        <ReferenceLine y={config.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
+                                        <ReferenceLine y={config.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
+                                        <ReferenceLine y={config.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
+                                        <ReferenceLine y={config.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
+                                        <Bar dataKey="value" name={config.name}>
+                                            {chartData.map((entry, index) => {
+                                                const entryStatus = getStatus(entry.value);
+                                                const color = {
+                                                    'success': 'hsl(var(--success))',
+                                                    'warning': 'hsl(var(--warning))',
+                                                    'orange': 'hsl(var(--orange))',
+                                                    'destructive': 'hsl(var(--destructive))'
+                                                }[entryStatus.variant];
+                                                return <Cell key={`cell-${index}`} fill={color} />;
+                                            })}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </CardContent>
+                             <CardFooter className="text-center text-xs text-muted-foreground justify-center">
+                                <p>Safety Performance Target: &lt;= {config.target} {config.unit || ''}</p>
+                            </CardFooter>
+                        </Card>
+                    )
+                })}
             </CardContent>
             {editingSpi && (
                 <Dialog open={!!editingSpi} onOpenChange={() => setEditingSpi(null)}>
@@ -390,8 +345,31 @@ export default function SafetyPage() {
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
-    { id: 'unstableApproaches', name: 'Unstable Approach Rate', target: 1, alert2: 2, alert3: 3, alert4: 4 },
-    { id: 'adr', name: 'Aircraft Technical Defect Rate', target: 3, alert2: 4, alert3: 5, alert4: 6 }
+    { 
+        id: 'unstableApproaches', 
+        name: 'Unstable Approach Rate',
+        type: 'Lagging Indicator',
+        calculation: 'count',
+        target: 1, alert2: 2, alert3: 3, alert4: 4, 
+        filter: (r: SafetyReport) => r.subCategory === 'Unstable Approach' 
+    },
+    { 
+        id: 'adr', 
+        name: 'Aircraft Technical Defect Rate',
+        type: 'Lagging Indicator',
+        calculation: 'count',
+        target: 3, alert2: 4, alert3: 5, alert4: 6, 
+        filter: (r: SafetyReport) => r.type === 'Aircraft Defect Report'
+    },
+    {
+        id: 'allIncidentsRate',
+        name: 'All Incidents per 100 Flight Hours',
+        type: 'Lagging Indicator',
+        calculation: 'rate',
+        unit: 'per 100 hours',
+        target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
+        filter: (r: SafetyReport) => r.type.includes('Report'), // filter for all reports
+    }
   ]);
 
   const reportsControls = useTableControls(safetyReports, {
@@ -464,7 +442,7 @@ export default function SafetyPage() {
   };
   
   const handleNewSpiSubmit = (newSpi: SpiConfig) => {
-    setSpiConfigs(prev => [...prev, newSpi]);
+    setSpiConfigs(prev => [...prev, { ...newSpi, filter: () => true }]); // Generic filter for new SPI
     setIsNewTargetDialogOpen(false);
      toast({
         title: "SPI Target Added",
@@ -490,7 +468,7 @@ export default function SafetyPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <EditSpiForm 
-                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
+                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
                     onUpdate={handleNewSpiSubmit} 
                 />
             </DialogContent>

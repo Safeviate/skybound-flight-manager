@@ -15,14 +15,19 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import type { SafetyReport } from '@/lib/types';
 
 export type SpiConfig = {
     id: string;
     name: string;
+    type: 'Leading Indicator' | 'Lagging Indicator';
+    calculation: 'count' | 'rate';
+    unit?: 'per 100 hours';
     target: number;
     alert2: number;
     alert3: number;
     alert4: number;
+    filter: (report: SafetyReport) => boolean;
 };
 
 const spiFormSchema = z.object({
@@ -73,7 +78,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                     <FormItem>
                     <FormLabel>Target (&lt;=)</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -86,7 +91,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                     <FormItem>
                     <FormLabel>Alert Level 2 (Monitor)</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -99,7 +104,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                     <FormItem>
                     <FormLabel>Alert Level 3 (Action)</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -112,7 +117,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                     <FormItem>
                     <FormLabel>Alert Level 4 (Urgent)</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
