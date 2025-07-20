@@ -902,39 +902,41 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                     <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                 </TabsContent>
                  <TabsContent value="ai">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>AI Assistant</CardTitle>
-                            <CardDescription>
-                                Use generative AI to help with the investigation process.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
-                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                        Get AI suggestions for how to proceed with the investigation based on the report details.
-                                    </p>
-                                    <form action={suggestStepsFormAction}>
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <SuggestStepsButton />
-                                    </form>
+                    <div className="no-print">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>AI Assistant</CardTitle>
+                                <CardDescription>
+                                    Use generative AI to help with the investigation process.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1 p-4 border rounded-lg">
+                                        <h3 className="font-semibold flex items-center gap-2"><Lightbulb/> Suggest Steps</h3>
+                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                            Get AI suggestions for how to proceed with the investigation based on the report details.
+                                        </p>
+                                        <form action={suggestStepsFormAction}>
+                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                            <SuggestStepsButton />
+                                        </form>
+                                    </div>
+                                    <div className="flex-1 p-4 border rounded-lg">
+                                        <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
+                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                            Generate a complete corrective action plan based on all notes, discussion, and findings.
+                                        </p>
+                                        <form action={generatePlanFormAction}>
+                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                            <GeneratePlanButton />
+                                        </form>
+                                    </div>
                                 </div>
-                                <div className="flex-1 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><FileText/> Generate Plan</h3>
-                                    <p className="text-sm text-muted-foreground mt-1 mb-4">
-                                        Generate a complete corrective action plan based on all notes, discussion, and findings.
-                                    </p>
-                                    <form action={generatePlanFormAction}>
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <GeneratePlanButton />
-                                    </form>
-                                </div>
-                            </div>
-                            {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
-                        </CardContent>
-                    </Card>
+                                {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
                 <TabsContent value="investigation">
                     <Card>
