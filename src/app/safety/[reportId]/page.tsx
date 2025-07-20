@@ -767,7 +767,6 @@ export default function SafetyReportInvestigationPage() {
     }
   };
 
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`}>
@@ -898,14 +897,18 @@ export default function SafetyReportInvestigationPage() {
                         <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
                     </TabsList>
                     <TabsContent value="risk-assessment">
-                        <div className="space-y-8">
-                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
-                            <MitigatedRiskAssessment 
-                                report={report} 
-                                onUpdate={handleReportUpdate} 
-                                correctiveActions={correctiveActionPlan?.correctiveActions}
-                            />
-                        </div>
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="space-y-8">
+                                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
+                                    <MitigatedRiskAssessment 
+                                        report={report} 
+                                        onUpdate={handleReportUpdate} 
+                                        correctiveActions={correctiveActionPlan?.correctiveActions}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                     <TabsContent value="ai">
                         <Card>
@@ -943,67 +946,69 @@ export default function SafetyReportInvestigationPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="investigation">
-                        <div className="space-y-8">
+                        <Card>
+                             <CardContent className="pt-6">
+                                <div className="space-y-8">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
+                                            <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <form action={fiveWhysFormAction}>
+                                                <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                                <FiveWhysButton />
+                                            </form>
+                                            {fiveWhysState.data && (
+                                                <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Investigation Workbench</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6">
+                                            <InvestigationTeamForm report={report} />
+                                            <Separator className="my-6" />
+                                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                            <Separator className="my-6" />
+                                            <div className="space-y-2">
+                                                <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                                <Textarea
+                                                    id="investigationNotes"
+                                                    name="investigationNotes"
+                                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                                    className="min-h-[150px]"
+                                                    value={report.investigationNotes || ''}
+                                                    onChange={handleInvestigationNotesChange}
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="plan">
+                        {correctiveActionPlan ? (
+                            <CorrectiveActionPlanResult 
+                                plan={correctiveActionPlan} 
+                                setPlan={setCorrectiveActionPlan}
+                                report={report} 
+                                onCloseReport={handleCloseReport} 
+                            />
+                        ) : (
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
-                                    <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <form action={fiveWhysFormAction}>
-                                        <input type="hidden" name="report" value={JSON.stringify(report)} />
-                                        <FiveWhysButton />
-                                    </form>
-                                    {fiveWhysState.data && (
-                                        <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
-                                    )}
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Investigation Workbench</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <InvestigationTeamForm report={report} />
-                                    <Separator className="my-6" />
-                                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                    <Separator className="my-6" />
-                                    <div className="space-y-2">
-                                        <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                        <Textarea
-                                            id="investigationNotes"
-                                            name="investigationNotes"
-                                            placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                            className="min-h-[150px]"
-                                            value={report.investigationNotes || ''}
-                                            onChange={handleInvestigationNotesChange}
-                                        />
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">
+                                            No action plan has been generated yet. Use the AI Assistant to create one.
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="plan">
-                        <div className="space-y-8">
-                            {correctiveActionPlan ? (
-                                <CorrectiveActionPlanResult 
-                                    plan={correctiveActionPlan} 
-                                    setPlan={setCorrectiveActionPlan}
-                                    report={report} 
-                                    onCloseReport={handleCloseReport} 
-                                />
-                            ) : (
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                            <p className="text-muted-foreground">
-                                                No action plan has been generated yet. Use the AI Assistant to create one.
-                                            </p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
