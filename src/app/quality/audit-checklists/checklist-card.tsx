@@ -10,6 +10,7 @@ import { RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 interface ChecklistCardProps {
   checklist: AuditChecklist;
@@ -18,6 +19,10 @@ interface ChecklistCardProps {
 }
 
 export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardProps) {
+  const [department, setDepartment] = useState(checklist.department || '');
+  const [auditeeName, setAuditeeName] = useState(checklist.auditeeName || '');
+  const [auditeePosition, setAuditeePosition] = useState(checklist.auditeePosition || '');
+  const [auditor, setAuditor] = useState(checklist.auditor || '');
 
   const handleItemToggle = (itemId: string, status: boolean) => {
     const updatedItems = checklist.items.map(item =>
@@ -47,7 +52,15 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
 
   const handleSubmit = () => {
     // In a real app, this would submit the audit result to the backend
-    console.log("Submitting audit:", checklist.title, "Compliance:", complianceRate.toFixed(0) + "%");
+    const auditData = {
+        ...checklist,
+        department,
+        auditeeName,
+        auditeePosition,
+        auditor,
+        complianceRate: complianceRate.toFixed(0) + "%"
+    };
+    console.log("Submitting audit:", auditData);
   }
 
 
@@ -58,6 +71,24 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
         <CardDescription>
           {completedItems} of {totalItems} items completed.
         </CardDescription>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 border-t mt-2">
+            <div>
+                <Label htmlFor={`department-${checklist.id}`} className="text-xs">Department</Label>
+                <Input id={`department-${checklist.id}`} value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g., Maintenance" />
+            </div>
+            <div>
+                <Label htmlFor={`auditor-${checklist.id}`} className="text-xs">Auditor</Label>
+                <Input id={`auditor-${checklist.id}`} value={auditor} onChange={(e) => setAuditor(e.target.value)} placeholder="Auditor Name" />
+            </div>
+            <div>
+                <Label htmlFor={`auditeeName-${checklist.id}`} className="text-xs">Auditee Name</Label>
+                <Input id={`auditeeName-${checklist.id}`} value={auditeeName} onChange={(e) => setAuditeeName(e.target.value)} placeholder="Person being audited" />
+            </div>
+             <div>
+                <Label htmlFor={`auditeePosition-${checklist.id}`} className="text-xs">Position</Label>
+                <Input id={`auditeePosition-${checklist.id}`} value={auditeePosition} onChange={(e) => setAuditeePosition(e.target.value)} placeholder="Auditee's role" />
+            </div>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />

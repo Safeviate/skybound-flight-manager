@@ -1,4 +1,5 @@
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -265,6 +266,10 @@ export type AuditChecklist = {
     title: string;
     area: AuditArea;
     items: AuditChecklistItem[];
+    department?: string;
+    auditeeName?: string;
+    auditeePosition?: string;
+    auditor?: string;
 }
 
 
