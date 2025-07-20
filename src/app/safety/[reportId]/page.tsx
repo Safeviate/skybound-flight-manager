@@ -532,13 +532,13 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Investigate Report: ${report.reportNumber}`}>
+        <Button asChild variant="outline" className="no-print">
+            <Link href="/safety?tab=reports">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to All Reports
+            </Link>
+        </Button>
         <div className="flex items-center gap-4">
-            <Button asChild variant="outline" className="no-print">
-                <Link href="/safety">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to All Reports
-                </Link>
-            </Button>
             <Button variant="outline" onClick={() => window.print()} className="no-print">
                 <Printer className="mr-2 h-4 w-4" />
                 Print Report

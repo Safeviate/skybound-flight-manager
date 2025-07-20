@@ -1,7 +1,9 @@
 
+
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -377,12 +379,15 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
 };
 
 export default function SafetyPage() {
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [isNewReportOpen, setIsNewReportOpen] = useState(false);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user } = useUser();
   const { toast } = useToast();
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
@@ -558,7 +563,7 @@ export default function SafetyPage() {
     <div className="flex flex-col min-h-screen">
       <Header title="Safety Management System" />
       <main className="flex-1 p-4 md:p-8">
-        <Tabs defaultValue="dashboard" onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
             <TabsList>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
