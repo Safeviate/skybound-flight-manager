@@ -82,6 +82,7 @@ export default function QualityPage() {
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -127,6 +128,11 @@ export default function QualityPage() {
     // Remove schedule items associated with the deleted area
     setSchedule(prevSchedule => prevSchedule.filter(item => item.area !== areaToDelete));
   };
+  
+  const handleAuditSubmit = (newAudit: QualityAudit) => {
+    setAudits(prevAudits => [newAudit, ...prevAudits]);
+    setActiveTab('audits');
+  };
 
 
   return (
@@ -146,7 +152,7 @@ export default function QualityPage() {
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
 
-        <Tabs defaultValue="dashboard">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
@@ -230,7 +236,7 @@ export default function QualityPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
-                <AuditChecklistsPage />
+                <AuditChecklistsPage onAuditSubmit={handleAuditSubmit} />
             </TabsContent>
         </Tabs>
 

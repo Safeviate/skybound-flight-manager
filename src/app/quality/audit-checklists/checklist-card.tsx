@@ -18,9 +18,10 @@ interface ChecklistCardProps {
   onUpdate: (checklist: AuditChecklist) => void;
   onReset: (checklistId: string) => void;
   onEdit: (checklist: AuditChecklist) => void;
+  onSubmit: (checklist: AuditChecklist) => void;
 }
 
-export function ChecklistCard({ checklist, onUpdate, onReset, onEdit }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }: ChecklistCardProps) {
   const [department, setDepartment] = useState(checklist.department || '');
   const [auditeeName, setAuditeeName] = useState(checklist.auditeeName || '');
   const [auditeePosition, setAuditeePosition] = useState(checklist.auditeePosition || '');
@@ -56,20 +57,14 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit }: Checklis
   }
 
   const handleSubmit = () => {
-    // In a real app, this would submit the audit result to the backend
-    const auditData = {
+    const auditData: AuditChecklist = {
         ...checklist,
         department,
         auditeeName,
         auditeePosition,
         auditor,
-        complianceRate: complianceRate.toFixed(0) + "%"
     };
-    console.log("Submitting audit:", auditData);
-     toast({
-      title: 'Audit Submitted',
-      description: `The "${checklist.title}" audit has been submitted.`,
-    });
+    onSubmit(auditData);
   }
   
   const handleEditToggle = () => {
