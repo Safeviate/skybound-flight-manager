@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction } from './actions';
-import { AlertCircle, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
+import Link from 'next/link';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -536,6 +537,14 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         </Button>
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
+        <div className="no-print">
+            <Button asChild variant="outline">
+                <Link href="/safety">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to All Reports
+                </Link>
+            </Button>
+        </div>
         <div className="no-print">
             <Card>
                 <CardHeader>
