@@ -72,6 +72,12 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
         'Jul 24': 320,
         'Aug 24': 350,
     };
+    
+    // Mock data for checklist completion
+    const monthlyChecklistCompletion = {
+        'Jul 24': 98,
+        'Aug 24': 95
+    }
 
     return (
         <Card>
@@ -83,16 +89,30 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
             </CardHeader>
             <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
-                    const spiData = reports
-                        .filter(r => config.filter(r))
-                        .reduce((acc, report) => {
-                            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
-                            acc[month] = (acc[month] || 0) + 1;
-                            return acc;
-                        }, {} as Record<string, number>);
+                    let spiData;
+                    if (config.id === 'checklistCompletion') {
+                        spiData = Object.keys(monthlyChecklistCompletion).map(month => ({
+                            name: month,
+                            value: monthlyChecklistCompletion[month as keyof typeof monthlyChecklistCompletion]
+                        }));
+                    } else {
+                        spiData = reports
+                            .filter(r => config.filter(r))
+                            .reduce((acc, report) => {
+                                const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+                                acc[month] = (acc[month] || 0) + 1;
+                                return acc;
+                            }, {} as Record<string, number>);
+                    }
+
 
                     const chartData = Object.keys(spiData).map(month => {
-                        const count = spiData[month];
+                        if (config.id === 'checklistCompletion') {
+                            const data = spiData as {name: string, value: number}[];
+                            return data.find(d => d.name === month) || { name: month, value: 0 };
+                        }
+                        
+                        const count = (spiData as Record<string, number>)[month];
                         if (config.calculation === 'rate' && config.unit) {
                             const totalHours = monthlyFlightHours[month as keyof typeof monthlyFlightHours] || 0;
                             const rate = totalHours > 0 ? (count / totalHours) * 100 : 0;
@@ -103,23 +123,31 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                     
                     const latestValue = chartData[0]?.value || 0;
                     
-                    const getStatus = (value: number) => {
-                        if (value >= config.alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-                        if (value >= config.alert3) return { label: 'Action Required', variant: 'orange' as const };
-                        if (value >= config.alert2) return { label: 'Monitor', variant: 'warning' as const };
-                        return { label: 'Acceptable', variant: 'success' as const };
+                     const getStatus = (value: number) => {
+                        const { targetDirection, alert4, alert3, alert2, target } = config;
+                        if (targetDirection === '>=') {
+                            if (value < alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+                            if (value < alert3) return { label: 'Action Required', variant: 'orange' as const };
+                            if (value < alert2) return { label: 'Monitor', variant: 'warning' as const };
+                            return { label: 'Acceptable', variant: 'success' as const };
+                        } else { // '<=' direction
+                            if (value >= alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+                            if (value >= alert3) return { label: 'Action Required', variant: 'orange' as const };
+                            if (value >= alert2) return { label: 'Monitor', variant: 'warning' as const };
+                            return { label: 'Acceptable', variant: 'success' as const };
+                        }
                     };
 
                     const status = getStatus(latestValue);
                     
-                    const ChartComponent = config.calculation === 'rate' ? LineChart : BarChart;
-                    const ChartTypeComponent = config.calculation === 'rate' ? Line : Bar;
+                    const ChartComponent = config.id === 'checklistCompletion' || config.calculation === 'rate' ? LineChart : BarChart;
+                    const ChartTypeComponent = config.id === 'checklistCompletion' || config.calculation === 'rate' ? Line : Bar;
                     
                     const chartProps: any = {
                         dataKey: "value",
                         name: config.name,
                     };
-                    if (config.calculation === 'rate') {
+                    if (ChartComponent === LineChart) {
                         chartProps.stroke = "hsl(var(--primary))";
                         chartProps.strokeWidth = 2;
                         chartProps.activeDot = { r: 8 };
@@ -161,7 +189,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                                     <ChartComponent data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="name" fontSize={12} />
-                                        <YAxis allowDecimals={config.calculation === 'rate'} />
+                                        <YAxis allowDecimals={config.calculation === 'rate' || config.id === 'checklistCompletion'} unit={config.id === 'checklistCompletion' ? '%' : ''} />
                                         <Tooltip formatter={(value) => `${value} ${config.unit || ''}`} />
                                         <Legend verticalAlign="top" height={36}/>
                                         <ReferenceLine y={config.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
@@ -173,7 +201,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                                 </ResponsiveContainer>
                             </CardContent>
                              <CardFooter className="text-center text-xs text-muted-foreground justify-center">
-                                <p>Safety Performance Target: &lt;= {config.target} {config.unit || ''}</p>
+                                <p>Safety Performance Target: {config.targetDirection} {config.target} {config.unit || ''}</p>
                             </CardFooter>
                         </Card>
                     )
@@ -366,6 +394,7 @@ export default function SafetyPage() {
         type: 'Lagging Indicator',
         calculation: 'count',
         unit: 'Per Month',
+        targetDirection: '<=',
         target: 1, alert2: 2, alert3: 3, alert4: 4, 
         filter: (r: SafetyReport) => r.subCategory === 'Unstable Approach' 
     },
@@ -375,6 +404,7 @@ export default function SafetyPage() {
         type: 'Lagging Indicator',
         calculation: 'count',
         unit: 'Per Month',
+        targetDirection: '<=',
         target: 3, alert2: 4, alert3: 5, alert4: 6, 
         filter: (r: SafetyReport) => r.type === 'Aircraft Defect Report'
     },
@@ -384,8 +414,19 @@ export default function SafetyPage() {
         type: 'Lagging Indicator',
         calculation: 'rate',
         unit: 'per 100 hours',
+        targetDirection: '<=',
         target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
         filter: (r: SafetyReport) => r.type.includes('Report'), // filter for all reports
+    },
+    {
+        id: 'checklistCompletion',
+        name: 'Pre-Flight Checklist Completion Rate',
+        type: 'Leading Indicator',
+        calculation: 'rate',
+        unit: '%',
+        targetDirection: '>=',
+        target: 98, alert2: 95, alert3: 90, alert4: 85,
+        filter: (r: SafetyReport) => false, // This is calculated differently
     }
   ]);
 
@@ -485,7 +526,7 @@ export default function SafetyPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <EditSpiForm 
-                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
+                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
                     onUpdate={handleNewSpiSubmit} 
                 />
             </DialogContent>

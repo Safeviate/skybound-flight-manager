@@ -24,6 +24,7 @@ export type SpiConfig = {
     type: 'Leading Indicator' | 'Lagging Indicator';
     calculation: 'count' | 'rate';
     unit?: string; // e.g., "per 100 hours"
+    targetDirection: '<=' | '>=';
     target: number;
     alert2: number;
     alert3: number;
@@ -35,10 +36,11 @@ const spiFormSchema = z.object({
   name: z.string().min(3, 'Name is required.'),
   calculation: z.enum(['count', 'rate']),
   unit: z.string().optional(),
-  target: z.coerce.number().min(0, 'Value must be positive.'),
-  alert2: z.coerce.number().min(0, 'Value must be positive.'),
-  alert3: z.coerce.number().min(0, 'Value must be positive.'),
-  alert4: z.coerce.number().min(0, 'Value must be positive.'),
+  targetDirection: z.enum(['<=', '>=']),
+  target: z.coerce.number(),
+  alert2: z.coerce.number(),
+  alert3: z.coerce.number(),
+  alert4: z.coerce.number(),
 }).refine(data => {
     if (data.calculation === 'rate' && !data.unit) {
         return false;
@@ -67,6 +69,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
       name: spi.name,
       calculation: spi.calculation,
       unit: spi.unit,
+      targetDirection: spi.targetDirection,
       target: spi.target,
       alert2: spi.alert2,
       alert3: spi.alert3,
@@ -154,6 +157,28 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
               )}
           />
         </div>
+
+         <FormField
+            control={form.control}
+            name="targetDirection"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Target Direction</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select target direction" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="<=">Less than or equal to (&le;)</SelectItem>
+                        <SelectItem value=">=">Greater than or equal to (&ge;)</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
         
         <p className="text-sm font-medium text-foreground pt-2">Alert Levels</p>
         <div className="grid grid-cols-2 gap-4">
@@ -162,7 +187,7 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
                 name="target"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Target (&lt;=)</FormLabel>
+                    <FormLabel>Target</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" {...field} />
                     </FormControl>
