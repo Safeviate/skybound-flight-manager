@@ -71,12 +71,12 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
         initialAssessment: boolean;
         keyAreas: string[];
         recommendedActions: string[];
-        potentialFactors: boolean;
+        potentialFactors: string[];
     }>({
         initialAssessment: false,
         keyAreas: [],
         recommendedActions: [],
-        potentialFactors: false,
+        potentialFactors: [],
     });
 
     const handleIncorporate = () => {
@@ -98,8 +98,8 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
             hasContent = true;
         }
 
-        if (selected.potentialFactors) {
-            textToIncorporate += `**Potential Contributing Factors:**\n${data.potentialContributingFactors.join(', ')}\n\n`;
+        if (selected.potentialFactors.length > 0) {
+            textToIncorporate += `**Potential Contributing Factors:**\n${selected.potentialFactors.map(item => `- ${item}`).join('\n')}\n\n`;
             hasContent = true;
         }
         
@@ -113,35 +113,42 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
         selected.initialAssessment ||
         selected.keyAreas.length > 0 ||
         selected.recommendedActions.length > 0 ||
-        selected.potentialFactors;
+        selected.potentialFactors.length > 0;
 
-    const handleToggle = (type: 'initialAssessment' | 'potentialFactors' | 'keyArea' | 'recommendedAction', value: string | boolean) => {
+    const handleToggle = (type: 'initialAssessment' | 'keyArea' | 'recommendedAction' | 'potentialFactor', value: string | boolean) => {
         setSelected(prev => {
             const newSelected = { ...prev };
-            if (type === 'initialAssessment') {
-                newSelected.initialAssessment = value as boolean;
-            } else if (type === 'potentialFactors') {
-                newSelected.potentialFactors = value as boolean;
-            } else if (type === 'keyArea') {
-                const item = value as string;
-                const index = newSelected.keyAreas.indexOf(item);
-                if (index > -1) {
-                    newSelected.keyAreas.splice(index, 1);
-                } else {
-                    newSelected.keyAreas.push(item);
-                }
-            } else if (type === 'recommendedAction') {
-                const item = value as string;
-                const index = newSelected.recommendedActions.indexOf(item);
-                if (index > -1) {
-                    newSelected.recommendedActions.splice(index, 1);
-                } else {
-                    newSelected.recommendedActions.push(item);
-                }
+            const item = value as string;
+            switch (type) {
+                case 'initialAssessment':
+                    newSelected.initialAssessment = !newSelected.initialAssessment;
+                    break;
+                case 'keyArea':
+                    if (newSelected.keyAreas.includes(item)) {
+                        newSelected.keyAreas = newSelected.keyAreas.filter(k => k !== item);
+                    } else {
+                        newSelected.keyAreas.push(item);
+                    }
+                    break;
+                case 'recommendedAction':
+                    if (newSelected.recommendedActions.includes(item)) {
+                        newSelected.recommendedActions = newSelected.recommendedActions.filter(a => a !== item);
+                    } else {
+                        newSelected.recommendedActions.push(item);
+                    }
+                    break;
+                case 'potentialFactor':
+                    if (newSelected.potentialFactors.includes(item)) {
+                        newSelected.potentialFactors = newSelected.potentialFactors.filter(f => f !== item);
+                    } else {
+                        newSelected.potentialFactors.push(item);
+                    }
+                    break;
             }
             return newSelected;
         });
     };
+
 
     return (
       <Card className="mt-6">
@@ -154,7 +161,7 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
         <CardContent className="space-y-6">
             <div className="space-y-2">
                 <div className="flex items-center space-x-3">
-                    <Checkbox id="select-assessment" onCheckedChange={(checked) => handleToggle('initialAssessment', !!checked)} />
+                    <Checkbox id="select-assessment" onCheckedChange={() => handleToggle('initialAssessment', true)} />
                     <Label htmlFor="select-assessment" className="text-base font-semibold flex items-center gap-2 mb-2">
                         <ClipboardList /> Initial Assessment
                     </Label>
@@ -186,15 +193,17 @@ function InvestigationAnalysisResult({ data, onIncorporate }: { data: SuggestInv
                 </div>
             </div>
             <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                     <Checkbox id="select-factors" onCheckedChange={(checked) => handleToggle('potentialFactors', !!checked)} />
-                    <Label htmlFor="select-factors" className="text-base font-semibold flex items-center gap-2 mb-2">
-                        <Users /> Potential Contributing Factors
-                    </Label>
-                </div>
-                <div className="flex flex-wrap gap-2 ml-7">
-                    {data.potentialContributingFactors.map((item, i) => <Badge key={i} variant="secondary">{item}</Badge>)}
-                </div>
+                <h3 className="text-base font-semibold flex items-center gap-2 mb-2">
+                    <Users /> Potential Contributing Factors
+                </h3>
+                <ul className="space-y-2 text-sm text-muted-foreground ml-2">
+                    {data.potentialContributingFactors.map((item, i) => (
+                         <li key={i} className="flex items-center space-x-3">
+                            <Checkbox id={`factor-${i}`} onCheckedChange={() => handleToggle('potentialFactor', item)} />
+                            <Label htmlFor={`factor-${i}`}>{item}</Label>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </CardContent>
         <CardFooter>
