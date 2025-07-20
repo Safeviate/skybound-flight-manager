@@ -16,13 +16,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type SpiConfig = {
     id: string;
     name: string;
     type: 'Leading Indicator' | 'Lagging Indicator';
     calculation: 'count' | 'rate';
-    unit?: 'per 100 hours';
+    unit?: string; // e.g., "per 100 hours"
     target: number;
     alert2: number;
     alert3: number;
@@ -31,11 +32,23 @@ export type SpiConfig = {
 };
 
 const spiFormSchema = z.object({
+  name: z.string().min(3, 'Name is required.'),
+  calculation: z.enum(['count', 'rate']),
+  unit: z.string().optional(),
   target: z.coerce.number().min(0, 'Value must be positive.'),
   alert2: z.coerce.number().min(0, 'Value must be positive.'),
   alert3: z.coerce.number().min(0, 'Value must be positive.'),
   alert4: z.coerce.number().min(0, 'Value must be positive.'),
+}).refine(data => {
+    if (data.calculation === 'rate') {
+        return !!data.unit && data.unit.trim().length > 0;
+    }
+    return true;
+}, {
+    message: 'Unit is required for rate calculations.',
+    path: ['unit'],
 });
+
 
 type SpiFormValues = z.infer<typeof spiFormSchema>;
 
@@ -49,12 +62,17 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   const form = useForm<SpiFormValues>({
     resolver: zodResolver(spiFormSchema),
     defaultValues: {
+      name: spi.name,
+      calculation: spi.calculation,
+      unit: spi.unit,
       target: spi.target,
       alert2: spi.alert2,
       alert3: spi.alert3,
       alert4: spi.alert4,
     },
   });
+  
+  const calculationType = form.watch('calculation');
 
   function onSubmit(data: SpiFormValues) {
     onUpdate({
@@ -70,6 +88,59 @@ export function EditSpiForm({ spi, onUpdate }: EditSpiFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Indicator Name</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., Unstable Approach Rate" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+              control={form.control}
+              name="calculation"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Calculation</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select calculation type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="count">Count</SelectItem>
+                            <SelectItem value="rate">Rate</SelectItem>
+                        </SelectContent>
+                    </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+          />
+           {calculationType === 'rate' && (
+             <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., per 100 hours" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+           )}
+        </div>
+        
+        <p className="text-sm font-medium text-foreground pt-2">Alert Levels</p>
         <div className="grid grid-cols-2 gap-4">
             <FormField
                 control={form.control}
