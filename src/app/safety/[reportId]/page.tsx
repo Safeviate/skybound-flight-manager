@@ -260,7 +260,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
             <CardContent className="space-y-6">
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><FileText /> Summary of Findings</h3>
+                        <h3 className="font-semibold text-base flex items-center gap-2"><FileText /> Summary of Findings</h3>
                         <Button variant="ghost" size="sm" onClick={() => setIsEditingSummary(!isEditingSummary)} className="no-print">
                             {isEditingSummary ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                             {isEditingSummary ? 'Save' : 'Edit'}
@@ -273,12 +273,12 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                             className="min-h-[100px]"
                         />
                     ) : (
-                        <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
+                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{plan.summaryOfFindings}</p>
                     )}
                 </div>
                 <div>
                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><Target /> Root Cause Analysis</h3>
+                        <h3 className="font-semibold text-base flex items-center gap-2"><Target /> Root Cause Analysis</h3>
                         <Button variant="ghost" size="sm" onClick={() => setIsEditingRootCause(!isEditingRootCause)} className="no-print">
                             {isEditingRootCause ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                             {isEditingRootCause ? 'Save' : 'Edit'}
@@ -291,7 +291,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                             className="min-h-[80px]"
                         />
                     ) : (
-                        <p className="text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
+                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{plan.rootCause}</p>
                     )}
                 </div>
                 <div>
