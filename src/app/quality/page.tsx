@@ -72,9 +72,12 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     );
 };
 
+const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
+
 export default function QualityPage() {
   const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
+  const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -89,14 +92,38 @@ export default function QualityPage() {
     setSchedule(prevSchedule => {
       const existingItem = prevSchedule.find(item => item.id === updatedItem.id);
       if (existingItem) {
-        // Update existing item
         return prevSchedule.map(item => item.id === updatedItem.id ? updatedItem : item);
       } else {
-        // Add new item if it doesn't exist
         return [...prevSchedule, updatedItem];
       }
     });
   };
+
+  const handleAreaUpdate = (index: number, newName: string) => {
+    const oldName = auditAreas[index];
+    setAuditAreas(prevAreas => {
+        const newAreas = [...prevAreas];
+        newAreas[index] = newName;
+        return newAreas;
+    });
+    // Also update schedule items that used the old name
+    setSchedule(prevSchedule =>
+      prevSchedule.map(item => (item.area === oldName ? { ...item, area: newName } : item))
+    );
+  };
+
+  const handleAreaAdd = () => {
+      const newAreaName = `New Area ${auditAreas.length + 1}`;
+      setAuditAreas(prev => [...prev, newAreaName]);
+  };
+
+  const handleAreaDelete = (index: number) => {
+    const areaToDelete = auditAreas[index];
+    setAuditAreas(prev => prev.filter((_, i) => i !== index));
+    // Remove schedule items associated with the deleted area
+    setSchedule(prevSchedule => prevSchedule.filter(item => item.area !== areaToDelete));
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -121,7 +148,14 @@ export default function QualityPage() {
             <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
           </CardHeader>
           <CardContent>
-            <AuditSchedule schedule={schedule} onUpdate={handleScheduleUpdate} />
+            <AuditSchedule 
+                auditAreas={auditAreas}
+                schedule={schedule} 
+                onUpdate={handleScheduleUpdate}
+                onAreaUpdate={handleAreaUpdate}
+                onAreaAdd={handleAreaAdd}
+                onAreaDelete={handleAreaDelete}
+            />
           </CardContent>
         </Card>
 

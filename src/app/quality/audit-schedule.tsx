@@ -5,19 +5,22 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils.tsx';
 import type { AuditScheduleItem, AuditStatus } from '@/lib/types';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Edit, PlusCircle, Save, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
-const AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
 const STATUS_OPTIONS: AuditStatus[] = ['Scheduled', 'Completed', 'Pending', 'Not Scheduled'];
 const YEAR = new Date().getFullYear();
 
 interface AuditScheduleProps {
+  auditAreas: string[];
   schedule: AuditScheduleItem[];
   onUpdate: (item: AuditScheduleItem) => void;
+  onAreaUpdate: (index: number, newName: string) => void;
+  onAreaAdd: () => void;
+  onAreaDelete: (index: number) => void;
 }
 
 const getStatusBadgeVariant = (status: AuditStatus) => {
@@ -36,8 +39,6 @@ const StatusSelector = ({
   currentStatus: AuditStatus, 
   onSelect: (status: AuditStatus) => void 
 }) => {
-  const [open, setOpen] = React.useState(false);
-
   return (
     <div className="p-4 space-y-2">
       <p className="text-sm font-medium">Set Audit Status</p>
@@ -48,7 +49,6 @@ const StatusSelector = ({
           className="w-full justify-start"
           onClick={() => {
             onSelect(status);
-            setOpen(false);
           }}
         >
           {status}
@@ -59,7 +59,10 @@ const StatusSelector = ({
 };
 
 
-export function AuditSchedule({ schedule, onUpdate }: AuditScheduleProps) {
+export function AuditSchedule({ auditAreas, schedule, onUpdate, onAreaUpdate, onAreaAdd, onAreaDelete }: AuditScheduleProps) {
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
+  const [tempAreaName, setTempAreaName] = React.useState('');
+
   const getScheduleItem = (area: string, quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4'): AuditScheduleItem => {
     return schedule.find(item => item.area === area && item.quarter === quarter && item.year === YEAR) 
            || { id: `${area}-${quarter}-${YEAR}`, area, quarter, year: YEAR, status: 'Not Scheduled' };
@@ -69,17 +72,57 @@ export function AuditSchedule({ schedule, onUpdate }: AuditScheduleProps) {
     onUpdate({ ...item, status: newStatus });
   };
 
+  const handleEditClick = (index: number) => {
+    setEditingIndex(index);
+    setTempAreaName(auditAreas[index]);
+  };
+
+  const handleSaveClick = (index: number) => {
+    onAreaUpdate(index, tempAreaName);
+    setEditingIndex(null);
+  };
+  
+  const handleCancelClick = () => {
+    setEditingIndex(null);
+  };
+
   return (
     <div className="border rounded-lg overflow-x-auto">
       <div className="min-w-[800px]">
-        <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
+        <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
           <div className="p-3 border-b border-r">Audit Area</div>
           {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0">{q} {YEAR}</div>)}
         </div>
         <div className="grid grid-cols-1">
-          {AUDIT_AREAS.map(area => (
-            <div key={area} className="grid items-stretch" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
-              <div className="p-3 border-b border-r font-medium flex items-center">{area}</div>
+          {auditAreas.map((area, index) => (
+            <div key={index} className="grid items-stretch" style={{ gridTemplateColumns: '250px repeat(4, 1fr)' }}>
+              <div className="p-2 border-b border-r font-medium flex items-center justify-between gap-2">
+                {editingIndex === index ? (
+                  <Input 
+                    value={tempAreaName}
+                    onChange={(e) => setTempAreaName(e.target.value)}
+                    className="h-8"
+                  />
+                ) : (
+                   <span>{area}</span>
+                )}
+                <div className="flex items-center">
+                    {editingIndex === index ? (
+                        <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSaveClick(index)}>
+                                <Save className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onAreaDelete(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </>
+                    ) : (
+                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(index)}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+              </div>
               {QUARTERS.map(quarter => {
                 const item = getScheduleItem(area, quarter);
                 return (
@@ -107,6 +150,12 @@ export function AuditSchedule({ schedule, onUpdate }: AuditScheduleProps) {
               })}
             </div>
           ))}
+        </div>
+        <div className="p-2 border-t">
+            <Button variant="outline" size="sm" onClick={onAreaAdd}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Area
+            </Button>
         </div>
       </div>
     </div>
