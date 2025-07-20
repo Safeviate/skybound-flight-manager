@@ -6,12 +6,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import type { Aircraft, Checklist } from '@/lib/types';
-import { RotateCcw, CheckCircle, MapPin, Loader2 } from 'lucide-react';
+import type { Aircraft, Checklist, ChecklistItem } from '@/lib/types';
+import { RotateCcw, CheckCircle, MapPin, Loader2, Edit, Save, X, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { getDistance } from '@/lib/utils.tsx';
 import { airportData } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 interface ChecklistCardProps {
   checklist: Checklist;
@@ -19,12 +20,15 @@ interface ChecklistCardProps {
   onItemToggle: (checklist: Checklist) => void;
   onUpdate: (checklist: Checklist) => void;
   onReset: (checklistId: string) => void;
+  onEdit: (checklist: Checklist) => void;
 }
 
 type LocationStatus = 'idle' | 'checking' | 'verified' | 'error';
 
-export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset, onEdit }: ChecklistCardProps) {
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
   const { toast } = useToast();
 
   const handleItemToggle = (itemId: string) => {
@@ -40,7 +44,6 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   
   const isComplete = progress === 100;
   const isPreFlight = checklist.category === 'Pre-Flight';
-  const needsLocationVerification = isPreFlight && isComplete && locationStatus !== 'verified';
 
   const handleVerifyLocation = () => {
     if (!navigator.geolocation) {
@@ -111,15 +114,108 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
       return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
   }
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Cancel edits, revert to original
+      setEditableChecklist(checklist);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveEdit = () => {
+    onEdit(editableChecklist);
+    setIsEditing(false);
+    toast({
+        title: "Checklist Updated",
+        description: `"${editableChecklist.title}" has been saved.`
+    });
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditableChecklist(prev => ({ ...prev, title: e.target.value }));
+  };
+
+  const handleItemTextChange = (itemId: string, newText: string) => {
+    setEditableChecklist(prev => ({
+        ...prev,
+        items: prev.items.map(item => item.id === itemId ? { ...item, text: newText } : item)
+    }));
+  };
+
+  const handleAddItem = () => {
+      const newItem: ChecklistItem = {
+          id: `item-${Date.now()}`,
+          text: 'New item',
+          completed: false,
+      };
+      setEditableChecklist(prev => ({
+          ...prev,
+          items: [...prev.items, newItem]
+      }));
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+      setEditableChecklist(prev => ({
+          ...prev,
+          items: prev.items.filter(item => item.id !== itemId)
+      }));
+  };
+
   const buttonState = getButtonState();
+
+  if (isEditing) {
+    return (
+        <Card className="flex flex-col bg-muted/30">
+        <CardHeader>
+            <Input value={editableChecklist.title} onChange={handleTitleChange} className="text-lg font-semibold"/>
+        </CardHeader>
+        <CardContent className="flex-1 space-y-4">
+            <div className="space-y-3 overflow-y-auto pr-2 md:max-h-60">
+            {editableChecklist.items.map(item => (
+                <div key={item.id} className="flex items-center space-x-2">
+                    <Input
+                        value={item.text}
+                        onChange={(e) => handleItemTextChange(item.id, e.target.value)}
+                        className="flex-1"
+                    />
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} disabled={editableChecklist.items.length <= 1}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+            </div>
+             <Button variant="outline" size="sm" className="w-full" onClick={handleAddItem}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+        </CardContent>
+        <CardFooter className="flex flex-col sm:flex-row gap-2 w-full">
+            <Button variant="ghost" size="sm" onClick={handleEditToggle} className="w-full">
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveEdit} className="w-full">
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+            </Button>
+        </CardFooter>
+        </Card>
+    );
+  }
 
   return (
     <Card className={`flex flex-col ${isComplete && locationStatus === 'verified' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
       <CardHeader>
-        <CardTitle>{checklist.title}</CardTitle>
-        <CardDescription>
-          {completedItems} of {totalItems} items completed.
-        </CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>{checklist.title}</CardTitle>
+                <CardDescription>
+                {completedItems} of {totalItems} items completed.
+                </CardDescription>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleEditToggle}>
+                <Edit className="h-4 w-4" />
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />

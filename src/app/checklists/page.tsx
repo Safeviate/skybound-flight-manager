@@ -57,6 +57,12 @@ export default function ChecklistsPage() {
     setIsDialogOpen(false);
   };
 
+  const handleChecklistEdit = (editedChecklist: Checklist) => {
+    setChecklists(prevChecklists => 
+        prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
+    );
+  };
+
   const preFlightChecklists = checklists.filter(c => c.category === 'Pre-Flight');
   const postFlightChecklists = checklists.filter(c => c.category === 'Post-Flight');
   const maintenanceChecklists = checklists.filter(c => c.category === 'Maintenance');
@@ -106,6 +112,7 @@ export default function ChecklistsPage() {
                             onItemToggle={handleItemToggle}
                             onUpdate={handleChecklistUpdate}
                             onReset={handleReset}
+                            onEdit={handleChecklistEdit}
                         />
                     ))}
                     </div>
@@ -119,6 +126,7 @@ export default function ChecklistsPage() {
                                 onItemToggle={handleItemToggle}
                                 onUpdate={handleChecklistUpdate}
                                 onReset={handleReset}
+                                onEdit={handleChecklistEdit}
                             />
                         ))}
                     </div>
@@ -132,6 +140,7 @@ export default function ChecklistsPage() {
                                 onItemToggle={handleItemToggle}
                                 onUpdate={handleChecklistUpdate}
                                 onReset={handleReset}
+                                onEdit={handleChecklistEdit}
                             />
                         ))}
                     </div>
