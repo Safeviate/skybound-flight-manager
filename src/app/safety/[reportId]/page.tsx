@@ -296,7 +296,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                 </div>
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone /> Corrective Actions</h3>
+                        <h3 className="font-semibold text-base flex items-center gap-2"><Milestone /> Corrective Actions</h3>
                         <Button variant="outline" size="sm" onClick={handleAddAction} disabled={report.status === 'Closed' || editingActionId !== null} className="no-print">
                             <PlusCircleIcon className="mr-2 h-4 w-4" />
                             Add Action
