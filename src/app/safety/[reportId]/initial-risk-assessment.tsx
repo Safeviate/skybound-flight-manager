@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
@@ -79,7 +79,7 @@ function HazardSuggestionsResult({ data, onAddHazards }: { data: SuggestHazardsO
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
   const { toast } = useToast();
-  const [suggestHazardsState, suggestHazardsFormAction] = useFormState(suggestHazardsAction, { message: '', data: null });
+  const [suggestHazardsState, suggestHazardsFormAction] = useActionState(suggestHazardsAction, { message: '', data: null });
 
   const handleAddRisk = (newRiskData: Omit<AssociatedRisk, 'id'>) => {
     const riskScore = getRiskScore(newRiskData.likelihood, newRiskData.severity);
