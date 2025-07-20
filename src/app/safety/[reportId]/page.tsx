@@ -774,43 +774,17 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                 </CardFooter>
             </Card>
             
-            <Tabs defaultValue="investigation" className="w-full">
+            <Tabs defaultValue="risk-assessment" className="w-full">
                 <TabsList className="no-print">
-                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
                     <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
                     <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
                     <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
                 </TabsList>
-                <TabsContent value="investigation">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Investigation Workbench</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="no-print">
-                                <InvestigationTeamForm report={report} />
-                                <Separator className="my-6" />
-                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                                <Separator className="my-6" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
-                                <Textarea
-                                    id="investigationNotes"
-                                    name="investigationNotes"
-                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
-                                    className="min-h-[150px]"
-                                    value={report.investigationNotes || ''}
-                                    onChange={handleInvestigationNotesChange}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
                 <TabsContent value="risk-assessment">
                     <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                 </TabsContent>
-                <TabsContent value="ai">
+                 <TabsContent value="ai">
                     <Card>
                         <CardHeader>
                             <CardTitle>AI Assistant</CardTitle>
@@ -842,6 +816,32 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                                 </div>
                             </div>
                             {suggestStepsState.data && <InvestigationAnalysisResult data={suggestStepsState.data as SuggestInvestigationStepsOutput} onIncorporate={handleIncorporateSuggestions} />}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="investigation">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Investigation Workbench</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="no-print">
+                                <InvestigationTeamForm report={report} />
+                                <Separator className="my-6" />
+                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                                <Separator className="my-6" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
+                                <Textarea
+                                    id="investigationNotes"
+                                    name="investigationNotes"
+                                    placeholder="Add your investigation notes, findings, and root cause analysis here..."
+                                    className="min-h-[150px]"
+                                    value={report.investigationNotes || ''}
+                                    onChange={handleInvestigationNotesChange}
+                                />
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
