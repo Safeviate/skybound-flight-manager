@@ -268,7 +268,7 @@ export type AuditChecklist = {
 }
 
 
-const VIEW_ALL_PAGES: Permission[] = [
+export const VIEW_ALL_PAGES: Permission[] = [
     'Aircraft:View',
     'Bookings:View',
     'Students:View',

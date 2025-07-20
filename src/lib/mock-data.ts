@@ -284,11 +284,11 @@ export const auditChecklistData: AuditChecklist[] = [
         title: 'Personnel & Licensing Audit',
         area: 'Personnel',
         items: [
-            { id: 'p-1', text: 'Is the Chief Flight Instructor (CFI) properly nominated and approved?', isCompliant: null },
-            { id: 'p-2', text: 'Do all Flight Instructors hold valid licenses and ratings for the courses taught?', isCompliant: null },
-            { id: 'p-3', text: 'Are instructor medical certificates valid and current?', isCompliant: null },
-            { id: 'p-4', text: 'Is there a record of instructor standardisation and proficiency checks?', isCompliant: null },
-            { id: 'p-5', text: 'Are instructor-to-student ratios compliant with regulations?', isCompliant: null },
+            { id: 'p-1', text: 'Is the Chief Flight Instructor (CFI) properly nominated and approved?', isCompliant: null, notes: '' },
+            { id: 'p-2', text: 'Do all Flight Instructors hold valid licenses and ratings for the courses taught?', isCompliant: null, notes: '' },
+            { id: 'p-3', text: 'Are instructor medical certificates valid and current?', isCompliant: null, notes: '' },
+            { id: 'p-4', text: 'Is there a record of instructor standardisation and proficiency checks?', isCompliant: null, notes: '' },
+            { id: 'p-5', text: 'Are instructor-to-student ratios compliant with regulations?', isCompliant: null, notes: '' },
         ]
     },
     {
@@ -296,11 +296,11 @@ export const auditChecklistData: AuditChecklist[] = [
         title: 'Aircraft & Maintenance Records Audit',
         area: 'Maintenance',
         items: [
-            { id: 'am-1', text: 'Does each training aircraft have a valid Certificate of Airworthiness?', isCompliant: null },
-            { id: 'am-2', text: 'Are aircraft maintenance programs approved and up-to-date?', isCompliant: null },
-            { id: 'am-3', text: 'Are all required inspections (e.g., 100-hour, annual) documented and current?', isCompliant: null },
-            { id: 'am-4', text: 'Is the Aircraft Journey Logbook being completed correctly for every flight?', isCompliant: null },
-            { id: 'am-5', text: 'Is all required emergency and survival equipment on board and serviceable?', isCompliant: null },
+            { id: 'am-1', text: 'Does each training aircraft have a valid Certificate of Airworthiness?', isCompliant: null, notes: '' },
+            { id: 'am-2', text: 'Are aircraft maintenance programs approved and up-to-date?', isCompliant: null, notes: '' },
+            { id: 'am-3', text: 'Are all required inspections (e.g., 100-hour, annual) documented and current?', isCompliant: null, notes: '' },
+            { id: 'am-4', text: 'Is the Aircraft Journey Logbook being completed correctly for every flight?', isCompliant: null, notes: '' },
+            { id: 'am-5', text: 'Is all required emergency and survival equipment on board and serviceable?', isCompliant: null, notes: '' },
         ]
     },
     {
@@ -308,11 +308,11 @@ export const auditChecklistData: AuditChecklist[] = [
         title: 'Training & Procedures Manual (TPM) Audit',
         area: 'Management',
         items: [
-            { id: 'tpm-1', text: 'Is the TPM approved by the SACAA?', isCompliant: null },
-            { id: 'tpm-2', text: 'Is the TPM readily available to all relevant personnel?', isCompliant: null },
-            { id: 'tpm-3', text: 'Does the TPM accurately describe the courses offered?', isCompliant: null },
-            { id: 'tpm-4', text: 'Are the syllabi, lesson plans, and grading criteria defined as per regulations?', isCompliant: null },
-            { id: 'tpm-5', text: 'Is there a system for amending and distributing updates to the TPM?', isCompliant: null },
+            { id: 'tpm-1', text: 'Is the TPM approved by the SACAA?', isCompliant: null, notes: '' },
+            { id: 'tpm-2', text: 'Is the TPM readily available to all relevant personnel?', isCompliant: null, notes: '' },
+            { id: 'tpm-3', text: 'Does the TPM accurately describe the courses offered?', isCompliant: null, notes: '' },
+            { id: 'tpm-4', text: 'Are the syllabi, lesson plans, and grading criteria defined as per regulations?', isCompliant: null, notes: '' },
+            { id: 'tpm-5', text: 'Is there a system for amending and distributing updates to the TPM?', isCompliant: null, notes: '' },
         ]
     },
      {
@@ -320,11 +320,11 @@ export const auditChecklistData: AuditChecklist[] = [
         title: 'Student Records & Progress Audit',
         area: 'Records',
         items: [
-            { id: 'sr-1', text: 'Is there a complete and orderly file for each enrolled student?', isCompliant: null },
-            { id: 'sr-2', text: 'Do student files contain copies of medical certificates and pilot licenses (if any)?', isCompliant: null },
-            { id: 'sr-3', text: 'Are flight training hours, ground school hours, and simulator hours logged accurately?', isCompliant: null },
-            { id: 'sr-4', text: 'Are student progress tests and examination results properly recorded?', isCompliant: null },
-            { id: 'sr-5', text: 'Is there evidence of regular review of student progress by the CFI?', isCompliant: null },
+            { id: 'sr-1', text: 'Is there a complete and orderly file for each enrolled student?', isCompliant: null, notes: '' },
+            { id: 'sr-2', text: 'Do student files contain copies of medical certificates and pilot licenses (if any)?', isCompliant: null, notes: '' },
+            { id: 'sr-3', text: 'Are flight training hours, ground school hours, and simulator hours logged accurately?', isCompliant: null, notes: '' },
+            { id: 'sr-4', text: 'Are student progress tests and examination results properly recorded?', isCompliant: null, notes: '' },
+            { id: 'sr-5', text: 'Is there evidence of regular review of student progress by the CFI?', isCompliant: null, notes: '' },
         ]
     },
     {
@@ -332,11 +332,11 @@ export const auditChecklistData: AuditChecklist[] = [
         title: 'Facilities & Equipment Audit',
         area: 'Facilities',
         items: [
-            { id: 'fe-1', text: 'Are the main base of operations and any satellite bases approved?', isCompliant: null },
-            { id: 'fe-2', text: 'Are briefing rooms adequate in size and properly equipped (e.g., whiteboards, models)?', isCompliant: null },
-            { id: 'fe-3', text: 'Is there a suitable library with up-to-date regulations, charts, and manuals?', isCompliant: null },
-            { id: 'fe-4', text: 'Are flight simulators (if used) approved and serviceable?', isCompliant: null },
-            { id: 'fe-5', text: 'Are security and access control measures for facilities and aircraft appropriate?', isCompliant: null },
+            { id: 'fe-1', text: 'Are the main base of operations and any satellite bases approved?', isCompliant: null, notes: '' },
+            { id: 'fe-2', text: 'Are briefing rooms adequate in size and properly equipped (e.g., whiteboards, models)?', isCompliant: null, notes: '' },
+            { id: 'fe-3', text: 'Is there a suitable library with up-to-date regulations, charts, and manuals?', isCompliant: null, notes: '' },
+            { id: 'fe-4', text: 'Are flight simulators (if used) approved and serviceable?', isCompliant: null, notes: '' },
+            { id: 'fe-5', text: 'Are security and access control measures for facilities and aircraft appropriate?', isCompliant: null, notes: '' },
         ]
     }
 ];

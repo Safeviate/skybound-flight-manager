@@ -9,6 +9,7 @@ import type { AuditChecklist, AuditChecklistItem } from '@/lib/types';
 import { RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ChecklistCardProps {
   checklist: AuditChecklist;
@@ -25,6 +26,13 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
     onUpdate({ ...checklist, items: updatedItems });
   };
   
+  const handleNotesChange = (itemId: string, notes: string) => {
+      const updatedItems = checklist.items.map(item => 
+        item.id === itemId ? { ...item, notes } : item
+      );
+      onUpdate({ ...checklist, items: updatedItems });
+  };
+
   const completedItems = useMemo(() => checklist.items.filter(item => item.isCompliant !== null).length, [checklist.items]);
   const compliantItems = useMemo(() => checklist.items.filter(item => item.isCompliant === true).length, [checklist.items]);
   const totalItems = checklist.items.length;
@@ -53,9 +61,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />
-        <div className="space-y-3 overflow-y-auto pr-2 md:max-h-60">
+        <div className="space-y-4 overflow-y-auto pr-2 md:max-h-80">
           {checklist.items.map(item => (
-            <div key={item.id} className="space-y-2">
+            <div key={item.id} className="space-y-3 p-3 border rounded-lg bg-muted/30">
               <Label
                 htmlFor={`${checklist.id}-${item.id}`}
                 className={cn("flex-1 text-sm", item.isCompliant !== null && 'text-muted-foreground')}
@@ -80,13 +88,19 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
                     <XCircle className="mr-2 h-4 w-4" /> Non-Compliant
                 </Button>
               </div>
+              <Textarea
+                placeholder="Add notes or evidence..."
+                value={item.notes || ''}
+                onChange={(e) => handleNotesChange(item.id, e.target.value)}
+                className="bg-background"
+              />
             </div>
           ))}
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
         {isComplete && (
-            <div className="text-center bg-muted p-3 rounded-md">
+            <div className="text-center bg-muted p-3 rounded-md w-full">
                 <p className="font-semibold">Compliance Rate: {complianceRate.toFixed(0)}%</p>
                 <p className="text-xs text-muted-foreground">
                     This checklist is complete and ready for submission.

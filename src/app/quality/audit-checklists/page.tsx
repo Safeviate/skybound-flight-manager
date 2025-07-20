@@ -28,7 +28,7 @@ export default function AuditChecklistsPage() {
         if (c.id === checklistId) {
           return {
             ...c,
-            items: c.items.map(item => ({ ...item, isCompliant: null })),
+            items: c.items.map(item => ({ ...item, isCompliant: null, notes: '' })),
           };
         }
         return c;
@@ -43,7 +43,8 @@ export default function AuditChecklistsPage() {
       items: newChecklistData.items.map((item, index) => ({ 
           ...item, 
           id: `item-${Date.now()}-${index}`,
-          isCompliant: null 
+          isCompliant: null,
+          notes: '',
       })),
     };
     setChecklists(prev => [...prev, newChecklist]);
