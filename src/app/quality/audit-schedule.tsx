@@ -70,42 +70,44 @@ export function AuditSchedule({ schedule, onUpdate }: AuditScheduleProps) {
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="grid grid-cols-5 bg-muted font-semibold">
-        <div className="p-3 border-b border-r">Audit Area</div>
-        {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0">{q} {YEAR}</div>)}
-      </div>
-      <div className="grid grid-cols-1">
-        {AUDIT_AREAS.map(area => (
-          <div key={area} className="grid grid-cols-5 items-stretch">
-            <div className="p-3 border-b border-r font-medium flex items-center">{area}</div>
-            {QUARTERS.map(quarter => {
-              const item = getScheduleItem(area, quarter);
-              return (
-                <Popover key={quarter}>
-                  <PopoverTrigger asChild>
-                    <button className={cn(
-                      "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",
-                      item.status !== 'Not Scheduled' && 'bg-muted/30'
-                    )}>
-                      {item.status !== 'Not Scheduled' ? (
-                        <Badge variant={getStatusBadgeVariant(item.status)}>{item.status}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">Click to schedule</span>
-                      )}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <StatusSelector 
-                      currentStatus={item.status}
-                      onSelect={(newStatus) => handleStatusChange(item, newStatus)}
-                    />
-                  </PopoverContent>
-                </Popover>
-              );
-            })}
-          </div>
-        ))}
+    <div className="border rounded-lg overflow-x-auto">
+      <div className="min-w-[800px]">
+        <div className="grid bg-muted font-semibold" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
+          <div className="p-3 border-b border-r">Audit Area</div>
+          {QUARTERS.map(q => <div key={q} className="p-3 text-center border-b border-r last:border-r-0">{q} {YEAR}</div>)}
+        </div>
+        <div className="grid grid-cols-1">
+          {AUDIT_AREAS.map(area => (
+            <div key={area} className="grid items-stretch" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
+              <div className="p-3 border-b border-r font-medium flex items-center">{area}</div>
+              {QUARTERS.map(quarter => {
+                const item = getScheduleItem(area, quarter);
+                return (
+                  <Popover key={quarter}>
+                    <PopoverTrigger asChild>
+                      <button className={cn(
+                        "p-3 text-center border-b border-r last:border-r-0 hover:bg-muted/50 cursor-pointer flex items-center justify-center",
+                        item.status !== 'Not Scheduled' && 'bg-muted/30'
+                      )}>
+                        {item.status !== 'Not Scheduled' ? (
+                          <Badge variant={getStatusBadgeVariant(item.status)}>{item.status}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Click to schedule</span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <StatusSelector 
+                        currentStatus={item.status}
+                        onSelect={(newStatus) => handleStatusChange(item, newStatus)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
