@@ -4,7 +4,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import React from 'react';
-import { useFormStatus, useParams } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -887,15 +888,14 @@ export default function SafetyReportInvestigationPage() {
                     </div>
                 </CardFooter>
             </Card>
-            
-            <Tabs defaultValue="risk-assessment" className="w-full">
-                <TabsList className="no-print">
-                    <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
-                    <TabsTrigger value="ai">AI Assistant</TabsTrigger>
-                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
-                </TabsList>
-                <div className="no-print">
+            <div className="no-print">
+                <Tabs defaultValue="risk-assessment" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
+                        <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+                        <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                        <TabsTrigger value="plan">Corrective Action Plan</TabsTrigger>
+                    </TabsList>
                     <TabsContent value="risk-assessment">
                         <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                     </TabsContent>
@@ -999,8 +999,8 @@ export default function SafetyReportInvestigationPage() {
                             correctiveActions={correctiveActionPlan?.correctiveActions}
                         />
                     </TabsContent>
-                </div>
-            </Tabs>
+                </Tabs>
+            </div>
         </div>
 
         <div className="hidden print:block">
