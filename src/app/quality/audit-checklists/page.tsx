@@ -55,6 +55,12 @@ export default function AuditChecklistsPage() {
     });
   };
 
+  const handleChecklistEdit = (editedChecklist: AuditChecklist) => {
+    setChecklists(prevChecklists => 
+        prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
+    );
+  };
+
   const checklistsByArea = checklists.reduce((acc, checklist) => {
     const area = checklist.area;
     if (!acc[area]) {
@@ -109,6 +115,7 @@ export default function AuditChecklistsPage() {
                         checklist={checklist} 
                         onUpdate={handleUpdate}
                         onReset={handleReset}
+                        onEdit={handleChecklistEdit}
                     />
                 ))}
                 </div>

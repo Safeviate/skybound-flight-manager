@@ -6,23 +6,28 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { AuditChecklist, AuditChecklistItem } from '@/lib/types';
-import { RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChecklistCardProps {
   checklist: AuditChecklist;
   onUpdate: (checklist: AuditChecklist) => void;
   onReset: (checklistId: string) => void;
+  onEdit: (checklist: AuditChecklist) => void;
 }
 
-export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, onUpdate, onReset, onEdit }: ChecklistCardProps) {
   const [department, setDepartment] = useState(checklist.department || '');
   const [auditeeName, setAuditeeName] = useState(checklist.auditeeName || '');
   const [auditeePosition, setAuditeePosition] = useState(checklist.auditeePosition || '');
   const [auditor, setAuditor] = useState(checklist.auditor || '');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableChecklist, setEditableChecklist] = useState<AuditChecklist>(checklist);
+  const { toast } = useToast();
 
   const handleItemToggle = (itemId: string, status: boolean) => {
     const updatedItems = checklist.items.map(item =>
@@ -61,13 +66,107 @@ export function ChecklistCard({ checklist, onUpdate, onReset }: ChecklistCardPro
         complianceRate: complianceRate.toFixed(0) + "%"
     };
     console.log("Submitting audit:", auditData);
+     toast({
+      title: 'Audit Submitted',
+      description: `The "${checklist.title}" audit has been submitted.`,
+    });
   }
+  
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setEditableChecklist(checklist);
+    }
+    setIsEditing(!isEditing);
+  };
 
+  const handleSaveEdit = () => {
+    onEdit(editableChecklist);
+    setIsEditing(false);
+    toast({
+        title: "Checklist Updated",
+        description: `"${editableChecklist.title}" has been saved.`
+    });
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditableChecklist(prev => ({ ...prev, title: e.target.value }));
+  };
+
+  const handleItemTextChange = (itemId: string, newText: string) => {
+    setEditableChecklist(prev => ({
+        ...prev,
+        items: prev.items.map(item => item.id === itemId ? { ...item, text: newText } : item)
+    }));
+  };
+
+  const handleAddItem = () => {
+      const newItem: AuditChecklistItem = {
+          id: `item-${Date.now()}`,
+          text: 'New item',
+          isCompliant: null,
+      };
+      setEditableChecklist(prev => ({
+          ...prev,
+          items: [...prev.items, newItem]
+      }));
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+      setEditableChecklist(prev => ({
+          ...prev,
+          items: prev.items.filter(item => item.id !== itemId)
+      }));
+  };
+
+
+  if (isEditing) {
+    return (
+        <Card className="flex flex-col bg-muted/30">
+            <CardHeader>
+                <Input value={editableChecklist.title} onChange={handleTitleChange} className="text-lg font-semibold"/>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-4">
+                <div className="space-y-3 overflow-y-auto pr-2 md:max-h-60">
+                {editableChecklist.items.map(item => (
+                    <div key={item.id} className="flex items-center space-x-2">
+                        <Input
+                            value={item.text}
+                            onChange={(e) => handleItemTextChange(item.id, e.target.value)}
+                            className="flex-1"
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} disabled={editableChecklist.items.length <= 1}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                ))}
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={handleAddItem}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+                </Button>
+            </CardContent>
+            <CardFooter className="flex flex-col sm:flex-row gap-2 w-full">
+                <Button variant="ghost" size="sm" onClick={handleEditToggle} className="w-full">
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit} className="w-full">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>{checklist.title}</CardTitle>
+        <div className="flex justify-between items-start">
+            <CardTitle>{checklist.title}</CardTitle>
+             <Button variant="ghost" size="icon" onClick={handleEditToggle}>
+                <Edit className="h-4 w-4" />
+            </Button>
+        </div>
         <CardDescription>
           {completedItems} of {totalItems} items completed.
         </CardDescription>
