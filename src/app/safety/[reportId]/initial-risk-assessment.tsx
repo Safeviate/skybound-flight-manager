@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useActionState } from 'react';
+import React, { useState, useActionState, Fragment } from 'react';
 import { useFormStatus } from 'react-dom';
 import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -127,7 +127,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
   }
 
   return (
-    <>
+    <Fragment>
         <CardHeader className="flex flex-row items-start justify-between gap-4 no-print">
             <div className="flex-1">
                 <CardTitle>Initial Risk Assessment</CardTitle>
@@ -240,6 +240,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                 </div>
             )}
         </CardContent>
-    </>
+    </Fragment>
   );
 }

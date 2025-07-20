@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useMemo } from 'react';
+import { useEffect, useState, useActionState, useMemo, FC } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams } from 'next/navigation';
@@ -455,7 +455,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
     );
 }
 
-function PrintableReport({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: SafetyReport) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) {
+const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: SafetyReport) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) => {
     return (
         <div className="space-y-8">
             <Card>
@@ -550,7 +550,7 @@ function PrintableReport({ report, correctiveActionPlan, onUpdate, onPromoteRisk
             )}
         </div>
     );
-}
+};
 
 function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysisOutput, onIncorporate: (text: string) => void }) {
     const [editableAnalysis, setEditableAnalysis] = useState<FiveWhysAnalysisOutput>(data);

@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
@@ -60,7 +60,7 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
   }
 
   return (
-    <>
+    <Fragment>
         <CardHeader>
             <CardTitle>Risk Mitigation Assessment</CardTitle>
             <CardDescription>
@@ -131,6 +131,6 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
                 </DialogContent>
             </Dialog>
          )}
-    </>
+    </Fragment>
   );
 }
