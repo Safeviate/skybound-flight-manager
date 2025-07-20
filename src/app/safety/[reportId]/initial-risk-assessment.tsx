@@ -27,7 +27,7 @@ interface InitialRiskAssessmentProps {
 function SuggestHazardsButton() {
     const { pending } = useFormStatus();
     return (
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
+      <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
         AI Hazard Suggestions
       </Button>
@@ -134,10 +134,10 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                     Identify hazards associated with this report and assess their initial risk level.
                 </CardDescription>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 w-52">
                 <Dialog open={isAddRiskOpen} onOpenChange={setIsAddRiskOpen}>
                     <DialogTrigger asChild>
-                        <Button size="sm">
+                        <Button size="sm" className="w-full">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Hazard Manually
                         </Button>
@@ -152,7 +152,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                         <AddRiskForm onAddRisk={handleAddRisk} />
                     </DialogContent>
                 </Dialog>
-                <form action={suggestHazardsFormAction}>
+                <form action={suggestHazardsFormAction} className="w-full">
                     <input type="hidden" name="reportText" value={report.details} />
                     <SuggestHazardsButton />
                 </form>
