@@ -112,6 +112,32 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
 
                     const status = getStatus(latestValue);
                     
+                    const ChartComponent = config.calculation === 'rate' ? LineChart : BarChart;
+                    const ChartTypeComponent = config.calculation === 'rate' ? Line : Bar;
+                    
+                    const chartProps: any = {
+                        dataKey: "value",
+                        name: config.name,
+                    };
+                    if (config.calculation === 'rate') {
+                        chartProps.stroke = "hsl(var(--primary))";
+                        chartProps.strokeWidth = 2;
+                        chartProps.activeDot = { r: 8 };
+                        chartProps.type = "monotone";
+                    } else {
+                        chartProps.children = chartData.map((entry, index) => {
+                            const entryStatus = getStatus(entry.value);
+                            const color = {
+                                'success': 'hsl(var(--success))',
+                                'warning': 'hsl(var(--warning))',
+                                'orange': 'hsl(var(--orange))',
+                                'destructive': 'hsl(var(--destructive))'
+                            }[entryStatus.variant];
+                            return <Cell key={`cell-${index}`} fill={color} />;
+                        });
+                    }
+
+
                     return (
                         <Card key={config.id} className="flex flex-col">
                             <CardHeader>
@@ -132,29 +158,18 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                             </CardHeader>
                             <CardContent className="flex-1 flex flex-col justify-center">
                                 <ResponsiveContainer width="100%" height={250}>
-                                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <ChartComponent data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="name" fontSize={12} />
-                                        <YAxis allowDecimals={false} />
+                                        <YAxis allowDecimals={config.calculation === 'rate'} />
                                         <Tooltip formatter={(value) => `${value} ${config.unit || ''}`} />
                                         <Legend verticalAlign="top" height={36}/>
                                         <ReferenceLine y={config.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
                                         <ReferenceLine y={config.alert2} stroke="hsl(var(--warning))" strokeDasharray="3 3" />
                                         <ReferenceLine y={config.alert3} stroke="hsl(var(--orange))" strokeDasharray="3 3" />
                                         <ReferenceLine y={config.alert4} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
-                                        <Bar dataKey="value" name={config.name}>
-                                            {chartData.map((entry, index) => {
-                                                const entryStatus = getStatus(entry.value);
-                                                const color = {
-                                                    'success': 'hsl(var(--success))',
-                                                    'warning': 'hsl(var(--warning))',
-                                                    'orange': 'hsl(var(--orange))',
-                                                    'destructive': 'hsl(var(--destructive))'
-                                                }[entryStatus.variant];
-                                                return <Cell key={`cell-${index}`} fill={color} />;
-                                            })}
-                                        </Bar>
-                                    </BarChart>
+                                        <ChartTypeComponent {...chartProps} />
+                                    </ChartComponent>
                                 </ResponsiveContainer>
                             </CardContent>
                              <CardFooter className="text-center text-xs text-muted-foreground justify-center">
@@ -350,6 +365,7 @@ export default function SafetyPage() {
         name: 'Unstable Approach Rate',
         type: 'Lagging Indicator',
         calculation: 'count',
+        unit: 'Per Month',
         target: 1, alert2: 2, alert3: 3, alert4: 4, 
         filter: (r: SafetyReport) => r.subCategory === 'Unstable Approach' 
     },
@@ -358,6 +374,7 @@ export default function SafetyPage() {
         name: 'Aircraft Technical Defect Rate',
         type: 'Lagging Indicator',
         calculation: 'count',
+        unit: 'Per Month',
         target: 3, alert2: 4, alert3: 5, alert4: 6, 
         filter: (r: SafetyReport) => r.type === 'Aircraft Defect Report'
     },
