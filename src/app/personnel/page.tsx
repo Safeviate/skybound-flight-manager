@@ -18,6 +18,7 @@ import { PlusCircle } from 'lucide-react';
 import { userData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 export default function PersonnelPage() {
@@ -81,7 +82,15 @@ export default function PersonnelPage() {
               <TableBody>
                 {personnelList.map((person) => (
                   <TableRow key={person.id}>
-                    <TableCell className="font-medium">{person.name}</TableCell>
+                    <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage src={`https://placehold.co/40x40.png`} alt={person.name} data-ai-hint="user avatar" />
+                                <AvatarFallback>{person.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span>{person.name}</span>
+                        </div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getRoleVariant(person.role)}>{person.role}</Badge>
                     </TableCell>

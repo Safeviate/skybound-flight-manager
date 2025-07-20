@@ -10,9 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, User as UserIcon } from 'lucide-react';
 import { Input } from '../ui/input';
 import Link from 'next/link';
 import { useUser } from '@/context/user-provider';
@@ -42,10 +41,9 @@ export default function Header({ title, children }: { title: string, children?: 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
-                <Avatar>
-                  <AvatarImage src="https://placehold.co/40x40" alt={user?.name || 'User'} data-ai-hint="user avatar" />
-                  <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
+                <div className="h-10 w-10 flex items-center justify-center">
+                    <UserIcon className="h-5 w-5" />
+                </div>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>

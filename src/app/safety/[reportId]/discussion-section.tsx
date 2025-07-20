@@ -26,12 +26,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { userData } from '@/lib/mock-data';
 import type { DiscussionEntry, SafetyReport } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
-import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon } from 'lucide-react';
+import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon, User as UserIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 
 const discussionFormSchema = z.object({
@@ -107,10 +106,9 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
                     const author = userData.find(u => u.name === entry.author);
                     return (
                         <div key={entry.id} className="flex gap-3">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://placehold.co/40x40.png`} alt={entry.author} data-ai-hint="user avatar" />
-                                <AvatarFallback>{entry.author.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <div className="h-9 w-9 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
                             <div className="flex-1 space-y-1">
                                 <div className="flex items-center justify-between">
                                     <p className="font-semibold text-sm">{entry.author} <ReplyIcon className="inline h-3 w-3 text-muted-foreground mx-1" /> {entry.recipient}</p>

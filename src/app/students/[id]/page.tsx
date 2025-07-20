@@ -4,9 +4,8 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { userData } from '@/lib/mock-data';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -118,10 +117,9 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
-                            <Avatar className="h-20 w-20">
-                                <AvatarImage src={`https://placehold.co/80x80.png`} alt={student.name} data-ai-hint="user avatar" />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <div className="p-4 rounded-full bg-muted">
+                                <UserIcon className="h-12 w-12 text-muted-foreground" />
+                            </div>
                             <div>
                                 <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
                                 <CardDescription className="mt-1 text-center sm:text-left">

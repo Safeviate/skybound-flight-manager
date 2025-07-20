@@ -7,8 +7,7 @@ import { userData, mockAlerts as allAlerts } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, Rocket, AlertTriangle, Info } from 'lucide-react';
+import { LogIn, Rocket, AlertTriangle, Info, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { User as AppUser, Role, Alert } from '@/lib/types';
 
@@ -138,10 +137,9 @@ export default function LoginPage() {
                 className="flex items-center justify-between rounded-md border p-4"
                 >
                 <div className="flex items-center gap-4">
-                    <Avatar>
-                    <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="user avatar" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                    <div className="p-2 rounded-full bg-muted">
+                        <UserIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
                     <div>
                     <p className="font-semibold">{user.name}</p>
                     <Badge variant={getRoleVariant(user.role)}>{user.role}</Badge>

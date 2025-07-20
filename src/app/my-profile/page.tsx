@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/mock-data';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -167,10 +166,9 @@ export default function MyProfilePage() {
                     <CardHeader>
                         <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                             <div className="flex items-center space-x-4">
-                                <Avatar className="h-20 w-20">
-                                    <AvatarImage src="https://placehold.co/80x80" alt={user.name} data-ai-hint="user avatar" />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
+                                <div className="p-4 rounded-full bg-muted">
+                                    <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                </div>
                                 <div>
                                     <CardTitle className="text-3xl">{user.name}</CardTitle>
                                     <CardDescription>

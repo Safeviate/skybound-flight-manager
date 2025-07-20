@@ -24,8 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { userData } from '@/lib/mock-data';
 import type { SafetyReport } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus, X, User as UserIcon } from 'lucide-react';
 
 const teamFormSchema = z.object({
   personnel: z.string().min(1, 'You must select a person to add.'),
@@ -92,10 +91,9 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
               const isReporter = memberName === report.submittedBy;
               return (
                 <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://placehold.co/40x40.png`} alt={memberName} data-ai-hint="user avatar" />
-                    <AvatarFallback>{memberName.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                   <div className="h-8 w-8 flex-shrink-0 bg-secondary rounded-full flex items-center justify-center">
+                      <UserIcon className="h-5 w-5 text-muted-foreground" />
+                   </div>
                   <div>
                     <p className="font-medium text-sm">{memberName}</p>
                     <p className="text-xs text-muted-foreground">{isReporter ? 'Reporter' : member?.role}</p>
