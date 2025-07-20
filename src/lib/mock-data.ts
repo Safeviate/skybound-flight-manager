@@ -3,7 +3,8 @@
 
 
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem } from './types';
+
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -280,4 +281,30 @@ export const auditScheduleData: AuditScheduleItem[] = [
   { id: 'sch-5', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
   { id: 'sch-6', area: 'Safety Systems', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
   { id: 'sch-7', area: 'External (FAA)', year: new Date().getFullYear(), quarter: 'Q4', status: 'Pending' },
+];
+
+export const auditChecklistData: AuditChecklist[] = [
+    {
+        id: 'acl-1',
+        title: 'Internal Documentation Audit',
+        area: 'Management',
+        items: [
+            { id: 'acl-1-1', text: 'Are all aircraft journey logs up to date?', isCompliant: null },
+            { id: 'acl-1-2', text: 'Are student training records complete and signed?', isCompliant: null },
+            { id: 'acl-1-3', text: 'Are personnel files, including licenses and medicals, current?', isCompliant: null },
+            { id: 'acl-1-4', text: 'Is the Safety Management System manual accessible to all staff?', isCompliant: null },
+        ]
+    },
+    {
+        id: 'acl-2',
+        title: 'Maintenance Hangar Safety Audit',
+        area: 'Maintenance',
+        items: [
+            { id: 'acl-2-1', text: 'Are all fire extinguishers serviced and accessible?', isCompliant: null },
+            { id: 'acl-2-2', text: 'Is Personal Protective Equipment (PPE) available and in good condition?', isCompliant: null },
+            { id: 'acl-2-3', text: 'Are hazardous materials stored and labeled correctly?', isCompliant: null },
+            { id: 'acl-2-4', text: 'Are walkways and work areas clear of obstructions?', isCompliant: null },
+            { id: 'acl-2-5', text: 'Are all tools and equipment in their proper storage locations?', isCompliant: null },
+        ]
+    }
 ];

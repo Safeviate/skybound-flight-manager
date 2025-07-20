@@ -3,6 +3,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -254,6 +255,20 @@ export type Checklist = {
     items: ChecklistItem[];
     aircraftId?: string;
 };
+
+export type AuditChecklistItem = {
+    id: string;
+    text: string;
+    isCompliant: boolean | null;
+    notes?: string;
+}
+
+export type AuditChecklist = {
+    id: string;
+    title: string;
+    area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
+    items: AuditChecklistItem[];
+}
 
 
 const VIEW_ALL_PAGES: Permission[] = [

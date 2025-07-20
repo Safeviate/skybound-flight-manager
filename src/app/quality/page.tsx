@@ -11,11 +11,13 @@ import { format, parseISO } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AuditChecklistsPage from './audit-checklists/page';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -129,7 +131,7 @@ export default function QualityPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Quality Assurance Dashboard">
+      <Header title="Quality Assurance">
         <Dialog>
             <DialogTrigger asChild>
                 <Button>
@@ -144,80 +146,93 @@ export default function QualityPage() {
       </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Annual Audit Schedule</CardTitle>
-            <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AuditSchedule 
-                auditAreas={auditAreas}
-                schedule={schedule} 
-                onUpdate={handleScheduleUpdate}
-                onAreaUpdate={handleAreaUpdate}
-                onAreaAdd={handleAreaAdd}
-                onAreaDelete={handleAreaDelete}
-            />
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="dashboard">
+            <TabsList>
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="audits">Audits</TabsTrigger>
+                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+            </TabsList>
+            <TabsContent value="dashboard" className="space-y-8 mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Annual Audit Schedule</CardTitle>
+                        <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AuditSchedule 
+                            auditAreas={auditAreas}
+                            schedule={schedule} 
+                            onUpdate={handleScheduleUpdate}
+                            onAreaUpdate={handleAreaUpdate}
+                            onAreaAdd={handleAreaAdd}
+                            onAreaDelete={handleAreaDelete}
+                        />
+                    </CardContent>
+                </Card>
 
-        <div className="grid gap-8 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Compliance Score Over Time</CardTitle>
-                    <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ComplianceChart data={audits} />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Non-Conformance Categories</CardTitle>
-                    <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <NonConformanceChart data={audits} />
-                </CardContent>
-            </Card>
-        </div>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Recent Quality Audits</CardTitle>
-                <CardDescription>A log of recently completed internal and external audits.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Audit ID</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Area</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Score</TableHead>
-                            <TableHead className="w-12"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {audits.map(audit => (
-                            <TableRow key={audit.id} onClick={() => router.push(`/quality/${audit.id}`)} className="cursor-pointer">
-                                <TableCell className="font-mono">{audit.id}</TableCell>
-                                <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
-                                <TableCell>{audit.type}</TableCell>
-                                <TableCell>{audit.area}</TableCell>
-                                <TableCell>
-                                    <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-medium">{audit.complianceScore}%</TableCell>
-                                <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                <div className="grid gap-8 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Compliance Score Over Time</CardTitle>
+                            <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ComplianceChart data={audits} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Non-Conformance Categories</CardTitle>
+                            <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <NonConformanceChart data={audits} />
+                        </CardContent>
+                    </Card>
+                </div>
+            </TabsContent>
+            <TabsContent value="audits" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Quality Audits</CardTitle>
+                        <CardDescription>A log of recently completed internal and external audits.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Audit ID</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Area</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Score</TableHead>
+                                    <TableHead className="w-12"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {audits.map(audit => (
+                                    <TableRow key={audit.id} onClick={() => router.push(`/quality/${audit.id}`)} className="cursor-pointer">
+                                        <TableCell className="font-mono">{audit.id}</TableCell>
+                                        <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
+                                        <TableCell>{audit.type}</TableCell>
+                                        <TableCell>{audit.area}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">{audit.complianceScore}%</TableCell>
+                                        <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="checklists" className="mt-4">
+                <AuditChecklistsPage />
+            </TabsContent>
+        </Tabs>
 
       </main>
     </div>
