@@ -110,10 +110,12 @@ export default function Nav() {
       <SidebarFooter>
          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: 'Settings' }}>
+              <Link href="/settings" passHref>
+                <SidebarMenuButton tooltip={{ children: 'Settings' }} isActive={pathname === '/settings'} onClick={handleLinkClick}>
                     <Settings />
                     <span>Settings</span>
                 </SidebarMenuButton>
+              </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip={{ children: 'Support' }}>
