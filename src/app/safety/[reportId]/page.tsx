@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
-import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry } from '@/lib/types';
-import { suggestStepsAction, generatePlanAction } from './actions';
+import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry, FiveWhysAnalysisOutput } from '@/lib/types';
+import { suggestStepsAction, generatePlanAction, fiveWhysAnalysisAction } from './actions';
 import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -63,6 +63,16 @@ function GeneratePlanButton() {
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
         Generate Corrective Action Plan
       </Button>
+    );
+}
+
+function FiveWhysButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button variant="outline" type="submit" disabled={pending}>
+            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+            Start 5 Whys Analysis
+        </Button>
     );
 }
 
@@ -546,6 +556,48 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
     </div>
 );
 
+function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysisOutput, onIncorporate: (text: string) => void }) {
+    
+    const handleIncorporate = () => {
+        let textToIncorporate = "\n--- 5 WHYS ROOT CAUSE ANALYSIS ---\n\n";
+        textToIncorporate += `**Problem Statement:** ${data.problemStatement}\n\n`;
+        data.analysis.forEach((item, index) => {
+            textToIncorporate += `**Why ${index + 1}:** ${item.why}\n`;
+            textToIncorporate += `**Because:** ${item.because}\n\n`;
+        });
+        textToIncorporate += `**Determined Root Cause:** ${data.rootCause}\n`;
+        textToIncorporate += "\n--- END OF 5 WHYS ANALYSIS ---\n";
+        onIncorporate(textToIncorporate);
+    };
+
+    return (
+        <div className="space-y-4 pt-4">
+            <h3 className="font-semibold text-base flex items-center gap-2"><Bot /> 5 Whys Analysis Result</h3>
+            <div className="p-4 bg-muted rounded-lg space-y-4">
+                <div>
+                    <p className="font-semibold text-sm">Problem Statement</p>
+                    <p className="text-sm text-muted-foreground">{data.problemStatement}</p>
+                </div>
+                <Separator />
+                {data.analysis.map((item, index) => (
+                    <div key={index} className="space-y-1">
+                        <p className="font-semibold text-sm">Why #{index + 1}: {item.why}</p>
+                        <p className="text-sm text-muted-foreground pl-4"> <span className="font-medium">Because:</span> {item.because}</p>
+                    </div>
+                ))}
+                <Separator />
+                 <div>
+                    <p className="font-semibold text-sm">Root Cause</p>
+                    <p className="text-sm text-muted-foreground">{data.rootCause}</p>
+                </div>
+            </div>
+            <Button onClick={handleIncorporate}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Incorporate into Notes
+            </Button>
+        </div>
+    );
+}
 
 export default function SafetyReportInvestigationPage({ params }: { params: { reportId: string } }) {
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
@@ -554,6 +606,8 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
   
   const [suggestStepsState, suggestStepsFormAction] = useActionState(suggestStepsAction, { message: '', data: null, errors: null });
   const [generatePlanState, generatePlanFormAction] = useActionState(generatePlanAction, { message: '', data: null, errors: null });
+  const [fiveWhysState, fiveWhysFormAction] = useActionState(fiveWhysAnalysisAction, { message: '', data: null, errors: null });
+
   const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(() => {
     // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
     if (params.reportId === 'sr1') {
@@ -614,6 +668,13 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
         toast({ variant: 'destructive', title: 'Error', description: generatePlanState.message });
     }
   }, [generatePlanState.message, toast]);
+
+  useEffect(() => {
+    if (fiveWhysState.message && fiveWhysState.message !== 'Invalid form data' && fiveWhysState.message !== '5 Whys analysis complete.') {
+        toast({ variant: 'destructive', title: 'Error', description: fiveWhysState.message });
+    }
+  }, [fiveWhysState, toast]);
+
 
   if (!report) {
     return (
@@ -826,6 +887,22 @@ export default function SafetyReportInvestigationPage({ params }: { params: { re
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="no-print">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Root Cause Analysis (5 Whys)</CardTitle>
+                                        <CardDescription>Use AI to perform a structured root cause analysis on this report.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <form action={fiveWhysFormAction}>
+                                            <input type="hidden" name="report" value={JSON.stringify(report)} />
+                                            <FiveWhysButton />
+                                        </form>
+                                        {fiveWhysState.data && (
+                                            <FiveWhysAnalysisResult data={fiveWhysState.data as FiveWhysAnalysisOutput} onIncorporate={handleIncorporateSuggestions} />
+                                        )}
+                                    </CardContent>
+                                </Card>
+                                <Separator className="my-6" />
                                 <InvestigationTeamForm report={report} />
                                 <Separator className="my-6" />
                                 <DiscussionSection report={report} onUpdate={handleReportUpdate} />

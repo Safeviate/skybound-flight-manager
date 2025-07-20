@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { suggestInvestigationSteps } from '@/ai/flows/suggest-investigation-steps-flow';
 import { generateCorrectiveActionPlan } from '@/ai/flows/generate-corrective-action-plan-flow';
 import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow';
+import { fiveWhysAnalysis } from '@/ai/flows/five-whys-analysis-flow';
 import type { SafetyReport, AssociatedRisk } from '@/lib/types';
 
 const reportSchema = z.object({
@@ -115,5 +116,22 @@ export async function promoteRiskAction(prevState: any, formData: FormData) {
         console.error(error);
         return { message: 'An error occurred during promotion.', data: null };
     }
+}
+
+export async function fiveWhysAnalysisAction(prevState: any, formData: FormData) {
+  const reportString = formData.get('report');
+
+  if (!reportString || typeof reportString !== 'string') {
+    return { message: 'Invalid report data provided.', data: null, errors: null };
+  }
+
+  try {
+    const report: SafetyReport = JSON.parse(reportString);
+    const result = await fiveWhysAnalysis({ report });
+    return { message: '5 Whys analysis complete.', data: result, errors: null };
+  } catch (error) {
+    console.error(error);
+    return { message: 'An error occurred during 5 Whys analysis.', data: null, errors: null };
+  }
 }
     

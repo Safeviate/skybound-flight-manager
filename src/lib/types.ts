@@ -4,6 +4,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -201,6 +202,12 @@ export type SuggestInvestigationStepsOutput = {
   keyAreasToInvestigate: string[];
   recommendedActions: string[];
   potentialContributingFactors: string[];
+};
+
+export type FiveWhysAnalysisOutput = {
+  problemStatement: string;
+  analysis: { why: string; because: string }[];
+  rootCause: string;
 };
 
 export type CorrectiveAction = {
