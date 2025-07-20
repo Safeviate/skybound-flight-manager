@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 type Alert = {
   id: string;
+  number: number;
   type: 'Red Tag' | 'Yellow Tag';
   title: string;
   description: string;
@@ -18,6 +19,7 @@ type Alert = {
 const mockAlerts: Alert[] = [
   {
     id: '1',
+    number: 1,
     type: 'Red Tag',
     title: 'GROUND ALL AIRCRAFT - SEVERE WEATHER',
     description: 'All flight operations are suspended immediately due to severe thunderstorms in the vicinity. No takeoffs or landings permitted until further notice.',
@@ -26,6 +28,7 @@ const mockAlerts: Alert[] = [
   },
   {
     id: '2',
+    number: 1,
     type: 'Yellow Tag',
     title: 'Runway 31 Closed for Maintenance',
     description: 'Runway 31 will be closed for minor repairs from 14:00 to 17:00 local time today. Plan all operations for Runway 13.',
@@ -34,6 +37,7 @@ const mockAlerts: Alert[] = [
   },
   {
     id: '3',
+    number: 2,
     type: 'Yellow Tag',
     title: 'Increased Bird Activity Reported',
     description: 'Multiple reports of increased bird activity on the final approach path for Runway 13. Pilots are advised to exercise extreme caution.',
@@ -82,7 +86,7 @@ export default function AlertsPage() {
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
-                                                <CardTitle className="text-lg">{alert.title}</CardTitle>
+                                                <CardTitle className="text-lg">#{alert.number} - {alert.title}</CardTitle>
                                             </div>
                                             <CardDescription className="mt-2">{alert.description}</CardDescription>
                                         </div>
