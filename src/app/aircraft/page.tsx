@@ -87,35 +87,7 @@ export default function AircraftPage() {
   };
 
   const handlePrint = () => {
-    const printContents = document.getElementById('qr-code-dialog')?.innerHTML;
-    if (printContents) {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-      
-      const doc = iframe.contentWindow?.document;
-      if (doc) {
-        doc.open();
-        doc.write('<html><head><title>Print QR Code</title>');
-        // Optional: Add some basic styling for printing
-        doc.write('<style>body { text-align: center; font-family: sans-serif; } canvas { width: 200px !important; height: 200px !important; } </style>');
-        doc.write('</head><body>');
-        doc.write(printContents);
-        doc.write('</body></html>');
-        doc.close();
-        
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      }
-
-      // Clean up the iframe after printing
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
-    }
+    window.print();
   };
 
 
@@ -155,7 +127,7 @@ export default function AircraftPage() {
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
                   <TableHead className="text-right">Checklists</TableHead>
-                  <TableHead className="text-right">QR Code</TableHead>
+                  <TableHead className="text-right no-print">QR Code</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -206,24 +178,22 @@ export default function AircraftPage() {
                         )}
                        </Dialog>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right no-print">
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                     <QrCode className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs">
-                                <div id="qr-code-dialog">
-                                    <DialogHeader>
-                                        <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
-                                        <DialogDescription className="text-center">
-                                            Scan to start pre-flight checklist.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="p-4 flex justify-center">
-                                        {qrUrl && <QRCode value={qrUrl} size={200} />}
-                                    </div>
+                            <DialogContent className="sm:max-w-xs qr-code-dialog">
+                                <DialogHeader>
+                                    <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
+                                    <DialogDescription className="text-center">
+                                        Scan to start pre-flight checklist.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="p-4 flex justify-center">
+                                    {qrUrl && <QRCode value={qrUrl} size={200} renderAs="svg" />}
                                 </div>
                                 <DialogFooter>
                                     <Button onClick={handlePrint}>
