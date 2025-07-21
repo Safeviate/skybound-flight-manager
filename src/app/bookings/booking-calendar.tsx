@@ -59,7 +59,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
         if (!day) return [];
         return bookings
             .filter(booking => isSameDay(parseISO(booking.date), day))
-            .sort((a, b) => a.time.localeCompare(b.time));
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
     };
 
     const selectedDayBookings = getBookingsForDay(selectedDay);
@@ -138,7 +138,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
 
                                 return (
                                 <TableRow key={booking.id}>
-                                    <TableCell>{booking.time}</TableCell>
+                                    <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
                                     <TableCell className="font-medium">{booking.aircraft}</TableCell>
                                     <TableCell>
                                         <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
@@ -230,24 +230,34 @@ function GanttView({ bookings }: GanttViewProps) {
                                 {weekDays.map(day => {
                                     const dayBookings = (bookingsByAircraft[aircraft.tailNumber] || []).filter(b => isSameDay(parseISO(b.date), day));
                                     return (
-                                        <div key={day.toISOString()} className="p-1 h-16 border-l relative">
-                                            {dayBookings.map(booking => (
-                                                 <Tooltip key={booking.id}>
-                                                    <TooltipTrigger asChild>
-                                                        <div className={`absolute p-1 rounded-md h-auto text-white text-xs overflow-hidden ${getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'}`} style={{ top: `${parseInt(booking.time.substring(0,2)) / 24 * 100}%`, height: '25%' }}>
-                                                            {booking.purpose} - {booking.time} {booking.status === 'Completed' && <Check className="inline h-3 w-3 ml-1" />}
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>{booking.aircraft} ({booking.purpose})</p>
-                                                        <p>Time: {booking.time}</p>
-                                                        <p>Instructor: {booking.instructor}</p>
-                                                        <p>Student: {booking.student}</p>
-                                                        <p>Status: {booking.status}</p>
-                                                        {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            ))}
+                                        <div key={day.toISOString()} className="p-1 h-24 border-l relative">
+                                            {dayBookings.map(booking => {
+                                                const startHour = parseInt(booking.startTime.substring(0, 2));
+                                                const endHour = parseInt(booking.endTime.substring(0, 2));
+                                                const startMinute = parseInt(booking.startTime.substring(3, 5));
+                                                const endMinute = parseInt(booking.endTime.substring(3, 5));
+                                                const top = (startHour + startMinute / 60) / 24 * 100;
+                                                const durationHours = (endHour - startHour) + (endMinute - startMinute) / 60;
+                                                const height = (durationHours / 24) * 100;
+
+                                                 return (
+                                                    <Tooltip key={booking.id}>
+                                                        <TooltipTrigger asChild>
+                                                            <div className={`absolute p-1 rounded-md text-white text-xs overflow-hidden ${getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'}`} style={{ top: `${top}%`, height: `${height}%`, width: 'calc(100% - 0.5rem)' }}>
+                                                                {booking.purpose} - {booking.startTime} {booking.status === 'Completed' && <Check className="inline h-3 w-3 ml-1" />}
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{booking.aircraft} ({booking.purpose})</p>
+                                                            <p>Time: {booking.startTime} - {booking.endTime}</p>
+                                                            <p>Instructor: {booking.instructor}</p>
+                                                            <p>Student: {booking.student}</p>
+                                                            <p>Status: {booking.status}</p>
+                                                            {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                 )
+                                            })}
                                         </div>
                                     )
                                 })}

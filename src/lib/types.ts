@@ -127,7 +127,8 @@ export type User = {
 export type Booking = {
   id: string;
   date: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   aircraft: string;
   student: string;
   instructor: string;

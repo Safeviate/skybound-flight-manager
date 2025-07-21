@@ -31,6 +31,8 @@ import { aircraftData, userData, trainingExercisesData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
 
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 const bookingFormSchema = z.object({
   aircraft: z.string({
     required_error: 'Please select an aircraft.',
@@ -40,14 +42,21 @@ const bookingFormSchema = z.object({
   date: z.date({
     required_error: 'A date is required.',
   }),
-  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+  startTime: z.string().regex(timeRegex, {
+      message: "Please enter a valid time in HH:mm format.",
+  }),
+  endTime: z.string().regex(timeRegex, {
       message: "Please enter a valid time in HH:mm format.",
   }),
   purpose: z.enum(['Training', 'Maintenance', 'Private'], {
     required_error: 'Please select a purpose.',
   }),
   trainingExercise: z.string().optional(),
+}).refine(data => data.endTime > data.startTime, {
+    message: "End time must be after start time.",
+    path: ["endTime"],
 });
+
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
@@ -275,14 +284,29 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
                 </FormItem>
             )}
             />
+        </div>
+        <div className="flex gap-4">
             <FormField
                 control={form.control}
-                name="time"
+                name="startTime"
                 render={({ field }) => (
                     <FormItem className="flex flex-col flex-1">
-                    <FormLabel>Time</FormLabel>
+                    <FormLabel>Start Time</FormLabel>
                     <FormControl>
                         <Input placeholder="14:00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col flex-1">
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                        <Input placeholder="15:30" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
