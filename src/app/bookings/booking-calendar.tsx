@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   addDays,
@@ -13,6 +13,7 @@ import { aircraftData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
 import { GanttAircraftColumn } from './gantt-aircraft-column';
 import { GanttTimeline } from './gantt-timeline';
+import { GanttTimelineHeader } from './gantt-timeline-header';
 
 interface BookingCalendarProps {
   bookings: Booking[];
@@ -20,6 +21,7 @@ interface BookingCalendarProps {
 
 export function BookingCalendar({ bookings }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date('2024-08-15'));
+  const timelineHeaderRef = useRef<HTMLDivElement>(null);
 
   const handlePreviousDay = () => {
     setCurrentDate(subDays(currentDate, 1));
@@ -31,6 +33,12 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
   
   const handleToday = () => {
     setCurrentDate(new Date('2024-08-15'));
+  }
+
+  const handleTimelineScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (timelineHeaderRef.current) {
+        timelineHeaderRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
   }
 
   return (
@@ -60,11 +68,11 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
             <div className="p-2 border-b border-r">
               <h3 className="font-semibold text-center">Aircraft</h3>
             </div>
-            <div className="p-2 border-b overflow-x-auto">
-              {/* This will hold the timeline header */}
+            <div className="p-2 border-b overflow-x-hidden">
+                <GanttTimelineHeader ref={timelineHeaderRef} />
             </div>
             <GanttAircraftColumn aircraft={aircraftData} />
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" onScroll={handleTimelineScroll}>
                 <GanttTimeline date={currentDate} bookings={bookings} aircraft={aircraftData} />
             </div>
         </div>
