@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { userData } from '@/lib/mock-data';
 import type { Role } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const studentFormSchema = z.object({
   name: z.string().min(2, {
@@ -33,6 +35,9 @@ const studentFormSchema = z.object({
   }),
   medicalExpiry: z.date({ required_error: 'An expiry date is required.' }),
   licenseExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
+    message: "You must give consent to proceed."
+  }),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -41,6 +46,9 @@ export function NewStudentForm() {
   const { toast } = useToast();
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      consentDisplayContact: false,
+    }
   });
 
   const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
@@ -174,6 +182,31 @@ export function NewStudentForm() {
                 </FormItem>
             )}
         />
+
+        <FormField
+          control={form.control}
+          name="consentDisplayContact"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Privacy Consent
+                </FormLabel>
+                <FormDescription>
+                  I consent to my contact details (email and phone number) being displayed to other users within the application for operational purposes. My details will not be shared publicly outside of this system.
+                </FormDescription>
+                 <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+
         <div className="flex justify-end">
           <Button type="submit">Add Student</Button>
         </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,6 +26,7 @@ import { PermissionsForm } from './permissions-form';
 import type { Role } from '@/lib/types';
 import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
 import React from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -43,6 +45,9 @@ const personnelFormSchema = z.object({
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   documentType: z.string({ required_error: 'Please select a document type.' }),
   documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
+    message: "You must give consent to proceed."
+  }),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -53,6 +58,7 @@ export function NewPersonnelForm() {
     resolver: zodResolver(personnelFormSchema),
     defaultValues: {
       permissions: [],
+      consentDisplayContact: false,
     }
   });
 
@@ -239,6 +245,30 @@ export function NewPersonnelForm() {
         </div>
 
         <PermissionsForm />
+
+        <FormField
+          control={form.control}
+          name="consentDisplayContact"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Privacy Consent
+                </FormLabel>
+                <FormDescription>
+                  I consent to my contact details (email and phone number) being displayed to other users within the application for operational purposes. My details will not be shared publicly outside of this system.
+                </FormDescription>
+                 <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end">
             <Button type="submit">Add Personnel</Button>

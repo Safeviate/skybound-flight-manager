@@ -94,8 +94,8 @@ export default function PersonnelPage() {
                     <TableCell>
                       <Badge variant={getRoleVariant(person.role)}>{person.role}</Badge>
                     </TableCell>
-                    <TableCell>{person.email}</TableCell>
-                    <TableCell>{person.phone}</TableCell>
+                    <TableCell>{person.consentDisplayContact ? person.email : '[Private]'}</TableCell>
+                    <TableCell>{person.consentDisplayContact ? person.phone : '[Private]'}</TableCell>
                     <TableCell className="space-x-1">
                         {person.permissions.map(p => (
                             <Badge key={p} variant="secondary">{p}</Badge>

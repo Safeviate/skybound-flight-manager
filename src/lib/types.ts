@@ -5,6 +5,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -111,6 +112,7 @@ export type User = {
     email: string;
     phone: string;
     permissions: Permission[];
+    consentDisplayContact?: boolean;
     // Student-specific
     instructor?: string;
     flightHours?: number;
