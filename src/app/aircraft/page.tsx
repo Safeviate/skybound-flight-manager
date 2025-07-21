@@ -109,8 +109,11 @@ export default function AircraftPage() {
   
   const handleGenerateQrCode = (aircraftId: string) => {
     if (typeof window !== 'undefined') {
-        const url = `${window.location.origin}/checklists/start/${aircraftId}`;
-        setQrCodeUrl(url);
+        const currentUrl = new URL(window.location.href);
+        // Replace the current path with the new path
+        currentUrl.pathname = `/checklists/start/${aircraftId}`;
+        currentUrl.search = ''; // Clear any query parameters
+        setQrCodeUrl(currentUrl.toString());
     }
   };
 
