@@ -87,7 +87,7 @@ function MonthView({ bookings, onFlightLogged }: MonthViewProps) {
                         <TableBody>
                             {selectedDayBookings.map(booking => {
                                 const logFlightButton = (
-                                    <Button variant="outline" size="sm" disabled={!booking.isChecklistComplete}>
+                                    <Button variant="outline" size="sm" disabled={!booking.isPostFlightChecklistComplete}>
                                         <BookCopy className="mr-2 h-4 w-4" />
                                         Log Flight
                                     </Button>
@@ -112,9 +112,9 @@ function MonthView({ bookings, onFlightLogged }: MonthViewProps) {
                                                                 {logFlightButton}
                                                             </DialogTrigger>
                                                         </TooltipTrigger>
-                                                        {!booking.isChecklistComplete && (
+                                                        {!booking.isPostFlightChecklistComplete && (
                                                             <TooltipContent>
-                                                                <p>Pre-flight checklist must be completed.</p>
+                                                                <p>Post-flight checklist must be completed.</p>
                                                             </TooltipContent>
                                                         )}
                                                     </Tooltip>

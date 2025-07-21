@@ -39,17 +39,25 @@ export default function AircraftPage() {
     handleItemToggle(updatedChecklist); // Ensure final state is up to date
 
     const isComplete = updatedChecklist.items.every(item => item.completed);
-    if (isComplete && updatedChecklist.aircraftId) {
-        setBookings(prevBookings => 
-            prevBookings.map(booking => {
-                const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
-                if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Upcoming') {
-                    return { ...booking, isChecklistComplete: true };
-                }
+    if (!isComplete || !updatedChecklist.aircraftId) return;
+
+    setBookings(prevBookings => 
+        prevBookings.map(booking => {
+            const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
+            if (!aircraft || booking.aircraft !== aircraft.tailNumber || booking.status !== 'Upcoming') {
                 return booking;
-            })
-        )
-    }
+            }
+
+            if (updatedChecklist.category === 'Pre-Flight') {
+                return { ...booking, isChecklistComplete: true };
+            }
+            if (updatedChecklist.category === 'Post-Flight') {
+                return { ...booking, isPostFlightChecklistComplete: true };
+            }
+
+            return booking;
+        })
+    )
   };
   
   const handleReset = (checklistId: string) => {

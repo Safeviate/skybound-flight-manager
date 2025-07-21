@@ -6,6 +6,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -136,6 +137,7 @@ export type Booking = {
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Upcoming' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
+  isPostFlightChecklistComplete?: boolean;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
