@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -139,317 +140,319 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
+      <ScrollArea className="max-h-[70vh] pr-6">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+              <FormField
+              control={form.control}
+              name="reportType"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Report Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select a report type" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
+                      <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                      <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
+                      <SelectItem value="Occupational Report">Occupational Report</SelectItem>
+                      <SelectItem value="General Report">General Report</SelectItem>
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+              <FormField
+              control={form.control}
+              name="occurrenceDate"
+              render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                      <FormLabel>Occurrence/Hazard Observation Date</FormLabel>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                          <FormControl>
+                              <Button
+                              variant={"outline"}
+                              className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                              )}
+                              >
+                              {field.value ? (
+                                  format(field.value, "PPP")
+                              ) : (
+                                  <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                          </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date > new Date()}
+                              initialFocus
+                          />
+                          </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                  </FormItem>
+              )}
+              />
+          </div>
+          {reportType === 'Flight Operations Report' && (
+              <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                      control={form.control}
+                      name="subCategory"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Flight Operations Sub-Category</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Select a sub-category" />
+                                  </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {flightOpsSubCategories.map(cat => (
+                                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="phaseOfFlight"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Phase of Flight</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Select the phase of flight" />
+                                  </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {ICAO_PHASES_OF_FLIGHT.map(phase => (
+                                          <SelectItem key={phase} value={phase}>{phase}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+              </div>
+          )}
+          {subCategory === 'Loss of Separation' && (
+              <FormField
+                  control={form.control}
+                  name="lossOfSeparationType"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Type of Separation Loss</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select the type of separation loss" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {lossOfSeparationTypes.map(type => (
+                                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+          )}
+          {lossOfSeparationType === 'Resolution Advisory' && (
+              <>
+              <FormField
+                  control={form.control}
+                  name="raCallout"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>RA Callout</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Select the RA callout" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {raCalloutTypes.map(type => (
+                                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+              <FormField
+                  control={form.control}
+                  name="raFollowed"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>RA Followed</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Was the Resolution Advisory followed?" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="Yes">Yes</SelectItem>
+                                  <SelectItem value="No">No</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+              {raFollowed === 'No' && (
+                  <FormField
+                      control={form.control}
+                      name="raNotFollowedReason"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Reason RA Not Followed</FormLabel>
+                          <FormControl>
+                              <Textarea
+                              placeholder="Explain why the Resolution Advisory was not followed..."
+                              className="min-h-[100px]"
+                              {...field}
+                              />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+              )}
+              </>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+              <FormField
+              control={form.control}
+              name="aircraftInvolved"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Aircraft Involved (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select an aircraft if applicable" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      {aircraftData.map((ac) => (
+                          <SelectItem key={ac.id} value={ac.tailNumber}>
+                          {ac.model} ({ac.tailNumber})
+                          </SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+              <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Location (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select a location if applicable" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      {airportData.map((airport) => (
+                          <SelectItem key={airport.id} value={airport.id}>
+                          {airport.name} ({airport.id})
+                          </SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+          </div>
+          <FormField
+              control={form.control}
+              name="heading"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Report Heading</FormLabel>
+                  <FormControl>
+                      <Input placeholder="e.g., Unstable Approach and Hard Landing" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  </FormItem>
+              )}
+          />
+          <FormField
             control={form.control}
-            name="reportType"
+            name="details"
             render={({ field }) => (
-                <FormItem>
-                <FormLabel>Report Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a report type" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
-                    <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
-                    <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
-                    <SelectItem value="Occupational Report">Occupational Report</SelectItem>
-                    <SelectItem value="General Report">General Report</SelectItem>
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-            control={form.control}
-            name="occurrenceDate"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                    <FormLabel>Occurrence/Hazard Observation Date</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                            )}
-                            >
-                            {field.value ? (
-                                format(field.value, "PPP")
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date > new Date()}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        {reportType === 'Flight Operations Report' && (
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="subCategory"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Flight Operations Sub-Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a sub-category" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {flightOpsSubCategories.map(cat => (
-                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="phaseOfFlight"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Phase of Flight</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select the phase of flight" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {ICAO_PHASES_OF_FLIGHT.map(phase => (
-                                        <SelectItem key={phase} value={phase}>{phase}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-        )}
-        {subCategory === 'Loss of Separation' && (
-            <FormField
-                control={form.control}
-                name="lossOfSeparationType"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Type of Separation Loss</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select the type of separation loss" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {lossOfSeparationTypes.map(type => (
-                                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        )}
-        {lossOfSeparationType === 'Resolution Advisory' && (
-            <>
-             <FormField
-                control={form.control}
-                name="raCallout"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>RA Callout</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select the RA callout" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {raCalloutTypes.map(type => (
-                                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="raFollowed"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>RA Followed</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Was the Resolution Advisory followed?" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Yes">Yes</SelectItem>
-                                <SelectItem value="No">No</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            {raFollowed === 'No' && (
-                <FormField
-                    control={form.control}
-                    name="raNotFollowedReason"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Reason RA Not Followed</FormLabel>
-                        <FormControl>
-                            <Textarea
-                            placeholder="Explain why the Resolution Advisory was not followed..."
-                            className="min-h-[100px]"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            )}
-            </>
-        )}
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="aircraftInvolved"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aircraft Involved (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select an aircraft if applicable" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {aircraftData.map((ac) => (
-                        <SelectItem key={ac.id} value={ac.tailNumber}>
-                        {ac.model} ({ac.tailNumber})
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Location (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a location if applicable" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {airportData.map((airport) => (
-                        <SelectItem key={airport.id} value={airport.id}>
-                        {airport.name} ({airport.id})
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        <FormField
-            control={form.control}
-            name="heading"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Report Heading</FormLabel>
+              <FormItem>
+                <FormLabel>Details</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Unstable Approach and Hard Landing" {...field} />
+                  <Textarea
+                    placeholder="Provide a detailed description of the event, including date, time, location, and persons involved..."
+                    className="min-h-[150px]"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-        />
-        <FormField
-          control={form.control}
-          name="details"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Details</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Provide a detailed description of the event, including date, time, location, and persons involved..."
-                  className="min-h-[150px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="isAnonymous"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  File Anonymously
-                </FormLabel>
-                <p className="text-xs text-muted-foreground">
-                  If checked, your name will not be attached to this report.
-                </p>
-              </div>
-            </FormItem>
-          )}
-        />
+          />
+          <FormField
+            control={form.control}
+            name="isAnonymous"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    File Anonymously
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    If checked, your name will not be attached to this report.
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
 
-        <div className="flex justify-end pt-4">
-          <Button type="submit">Submit Report</Button>
-        </div>
-      </form>
+          <div className="flex justify-end pt-4">
+            <Button type="submit">Submit Report</Button>
+          </div>
+        </form>
+      </ScrollArea>
     </Form>
   );
 }
