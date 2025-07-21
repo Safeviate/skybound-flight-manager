@@ -9,7 +9,6 @@ import { checklistData, aircraftData } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
 
@@ -22,8 +21,8 @@ export default function StartChecklistPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-        // If not logged in, redirect to login page with a parameter
-        router.push(`/login?aircraftId=${aircraftId}`);
+        const currentPath = `/checklists/start/${aircraftId}`;
+        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [user, loading, router, aircraftId]);
 
