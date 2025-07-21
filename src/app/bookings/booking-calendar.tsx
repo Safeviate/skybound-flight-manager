@@ -29,7 +29,7 @@ export function BookingCalendar() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">
-          {format(currentDate, 'MMMM yyyy')}
+          {format(currentDate, 'PPP')}
         </h3>
         <div className="flex items-center gap-2">
           <Button
@@ -54,7 +54,7 @@ export function BookingCalendar() {
       <div className="grid border rounded-lg" style={{ gridTemplateColumns: '200px 1fr' }}>
         {/* Top-left empty cell */}
         <div className="p-3 font-semibold border-b border-r bg-muted">
-          Aircraft
+          
         </div>
         
         {/* Top-right timeline header */}
