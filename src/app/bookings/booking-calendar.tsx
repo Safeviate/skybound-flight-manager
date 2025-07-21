@@ -76,7 +76,7 @@ export function BookingCalendar() {
 
         {/* Bottom-right timeline body */}
         <div ref={timelineBodyRef} className="overflow-x-auto" onScroll={handleScroll}>
-          <GanttTimeline />
+          <GanttTimeline currentDate={currentDate} />
         </div>
       </div>
     </div>

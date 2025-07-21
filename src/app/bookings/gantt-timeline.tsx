@@ -5,6 +5,7 @@ import React from 'react';
 import { aircraftData, bookingData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
+import { format } from 'date-fns';
 
 const HOURS_IN_DAY = 24;
 const HOUR_COLUMN_WIDTH_PX = 96;
@@ -25,8 +26,8 @@ const getBookingVariant = (purpose: Booking['purpose']) => {
     }
 }
 
-export function GanttTimeline() {
-  const currentDate = '2024-08-16'; // Using a date with multiple bookings for better visualization
+export function GanttTimeline({ currentDate }: { currentDate: Date }) {
+  const dateString = format(currentDate, 'yyyy-MM-dd');
 
   return (
     <div className="relative" style={{ minWidth: `${TOTAL_WIDTH_PX}px` }}>
@@ -40,7 +41,7 @@ export function GanttTimeline() {
       {/* Booking rows */}
       <div className="relative">
         {aircraftData.map(aircraft => {
-          const todaysBookings = bookingData.filter(b => b.aircraft === aircraft.tailNumber && b.date === currentDate);
+          const todaysBookings = bookingData.filter(b => b.aircraft === aircraft.tailNumber && b.date === dateString);
           
           return (
             <div key={aircraft.id} className="h-20 border-b relative">
