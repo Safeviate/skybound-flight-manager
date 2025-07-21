@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { aircraftData } from '@/lib/mock-data';
 import type { Booking, Aircraft } from '@/lib/types';
 import { format, parseISO, isSameDay, addDays, subDays, eachDayOfInterval, startOfDay, isPast, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
@@ -17,6 +17,8 @@ import { LogFlightForm } from './log-flight-form';
 import { useUser } from '@/context/user-provider';
 import { useSettings } from '@/context/settings-provider';
 import { cn } from '@/lib/utils.tsx';
+import { GanttAircraftColumn } from './gantt-aircraft-column';
+import { GanttTimeline } from './gantt-timeline';
 
 
 type ViewMode = 'month' | 'gantt';
@@ -150,44 +152,28 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
     );
 }
 
-interface GanttViewProps {
-    bookings: Booking[];
-}
-
-function GanttView({ bookings }: GanttViewProps) {
+function GanttView({ bookings }: { bookings: Booking[] }) {
     const [currentDay, setCurrentDay] = useState(startOfDay(new Date('2024-08-15')));
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    const hourWidth = 120; // 120px per hour for 15-min increments
-    const aircraftColWidth = 150;
-    const rowHeight = 96; // 6rem
-
-    const bookingsByAircraft = bookings.reduce((acc, booking) => {
-        if (!acc[booking.aircraft]) {
-            acc[booking.aircraft] = [];
-        }
-        acc[booking.aircraft].push(booking);
-        return acc;
-    }, {} as Record<string, Booking[]>);
+    const timelineContainerRef = useRef<HTMLDivElement>(null);
+    const aircraftColumnRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
 
-    const timelineRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLDivElement>(null);
-    const aircraftColRef = useRef<HTMLDivElement>(null);
-
     const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+        const { scrollLeft, scrollTop } = event.currentTarget;
         if (headerRef.current) {
-            headerRef.current.scrollLeft = event.currentTarget.scrollLeft;
+            headerRef.current.scrollLeft = scrollLeft;
         }
-        if (aircraftColRef.current) {
-            aircraftColRef.current.scrollTop = event.currentTarget.scrollTop;
+        if (aircraftColumnRef.current) {
+            aircraftColumnRef.current.scrollTop = scrollTop;
         }
     };
 
     return (
         <TooltipProvider>
-            <div className="flex items-center justify-center gap-4 mb-4">
+             <div className="flex items-center justify-center gap-4 mb-4">
                 <Button variant="outline" size="icon" onClick={prevDay}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -198,114 +184,32 @@ function GanttView({ bookings }: GanttViewProps) {
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
-            <div className="relative border rounded-lg overflow-hidden">
-                {/* Fixed Aircraft Header */}
-                <div 
-                    className="p-2 font-semibold flex items-end border-b border-r bg-muted absolute top-0 left-0 z-20"
-                    style={{ width: `${aircraftColWidth}px`, height: '40px' }}
-                >
+            <div className="grid grid-cols-[150px_1fr] border rounded-lg overflow-hidden">
+                <div className="font-semibold p-2 border-b border-r bg-muted flex items-end">
                     Aircraft
                 </div>
-                {/* Scrollable Timeline Header */}
-                <div 
-                    ref={headerRef} 
-                    className="overflow-x-hidden"
-                    style={{ marginLeft: `${aircraftColWidth}px` }}
-                >
-                    <div className="grid" style={{ gridTemplateColumns: `repeat(24, ${hourWidth}px)` }}>
-                        {hours.map(hour => (
-                            <div key={hour} className="p-2 text-center border-b border-l font-semibold text-sm h-10">
+                <div ref={headerRef} className="overflow-x-hidden border-b">
+                    <div className="grid grid-cols-24" style={{width: `${24 * 120}px`}}>
+                         {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                            <div key={hour} className="p-2 text-center border-l font-semibold text-sm h-10 w-[120px]">
                                 {format(new Date(0, 0, 0, hour), 'HH:mm')}
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="flex" style={{ height: `${rowHeight * aircraftData.length}px`, maxHeight: 'calc(100vh - 400px)' }}>
-                    {/* Fixed Aircraft Column */}
-                    <div ref={aircraftColRef} className="overflow-y-hidden" style={{ width: `${aircraftColWidth}px`, height: '100%' }}>
-                         {aircraftData.map(aircraft => (
-                            <div 
-                                key={aircraft.id} 
-                                className="p-2 font-medium text-sm flex items-center border-r border-b bg-muted"
-                                style={{ height: `${rowHeight}px` }}
-                            >
-                                {aircraft.tailNumber}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Scrollable Timeline Grid */}
-                    <ScrollArea 
-                        ref={timelineRef} 
-                        className="flex-1 w-full"
-                        onScroll={handleScroll}
-                    >
-                        <div className="relative">
-                             {aircraftData.map((aircraft, rowIndex) => (
-                                <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(24, ${hourWidth}px)`, height: `${rowHeight}px` }}>
-                                    {/* Grid Background */}
-                                    {hours.map(hour => (
-                                        <div key={hour} className="h-full border-l border-b relative flex">
-                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                            <div className="w-1/4 h-full"></div>
-                                        </div>
-                                    ))}
-
-                                    {/* Bookings */}
-                                    {(bookingsByAircraft[aircraft.tailNumber] || [])
-                                        .filter(b => isSameDay(parseISO(b.date), currentDay))
-                                        .map(booking => {
-                                            const startHour = parseInt(booking.startTime.split(':')[0]);
-                                            const startMinute = parseInt(booking.startTime.split(':')[1]);
-                                            const endHour = parseInt(booking.endTime.split(':')[0]);
-                                            const endMinute = parseInt(booking.endTime.split(':')[1]);
-
-                                            const startInMinutes = startHour * 60 + startMinute;
-                                            const endInMinutes = endHour * 60 + endMinute;
-
-                                            const left = (startInMinutes / 60) * hourWidth;
-                                            const width = ((endInMinutes - startInMinutes) / 60) * hourWidth;
-
-                                            return (
-                                                <Tooltip key={booking.id}>
-                                                    <TooltipTrigger asChild>
-                                                        <div
-                                                            className={cn(
-                                                                'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-10',
-                                                                getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
-                                                            )}
-                                                            style={{ left: `${left}px`, width: `${width}px` }}
-                                                        >
-                                                            <span className="truncate">{booking.purpose} - {booking.startTime}</span>
-                                                            {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>{booking.aircraft} ({booking.purpose})</p>
-                                                        <p>Time: {booking.startTime} - {booking.endTime}</p>
-                                                        <p>Instructor: {booking.instructor}</p>
-                                                        <p>Student: {booking.student}</p>
-                                                        <p>Status: {booking.status}</p>
-                                                        {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            )
-                                        })
-                                    }
-                                </div>
-                            ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                <div ref={aircraftColumnRef} className="overflow-y-hidden border-r bg-muted" style={{maxHeight: 'calc(100vh - 400px)'}}>
+                   <GanttAircraftColumn />
                 </div>
+                
+                <ScrollArea ref={timelineContainerRef} onScroll={handleScroll} style={{maxHeight: 'calc(100vh - 400px)'}}>
+                    <GanttTimeline bookings={bookings} currentDay={currentDay} />
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
             </div>
         </TooltipProvider>
     );
 }
-
 
 interface BookingCalendarProps {
     bookings: Booking[];
