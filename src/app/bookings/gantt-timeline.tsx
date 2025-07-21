@@ -16,11 +16,10 @@ export function GanttTimeline({ date, bookings, aircraft }: GanttTimelineProps) 
       <div
         className="grid"
         style={{
-          gridTemplateRows: `repeat(${aircraft.length}, 60px)`,
+          gridTemplateRows: `repeat(1, 60px)`, // Only one row now
         }}
       >
-        {aircraft.map((ac, index) => (
-          <div key={ac.id} className="border-b relative">
+        <div className="border-b relative">
             {/* Horizontal grid lines for each hour */}
             {Array.from({ length: 24 }).map((_, hour) => (
                 <div 
@@ -29,8 +28,7 @@ export function GanttTimeline({ date, bookings, aircraft }: GanttTimelineProps) 
                     style={{ left: `${hour * 80}px`, width: '80px' }}
                 ></div>
             ))}
-          </div>
-        ))}
+        </div>
       </div>
     </div>
   );

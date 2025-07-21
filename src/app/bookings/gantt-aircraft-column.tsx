@@ -22,16 +22,7 @@ const getStatusVariant = (status: Aircraft['status']) => {
 export function GanttAircraftColumn({ aircraft }: GanttAircraftColumnProps) {
   return (
     <div className="border-r">
-      {aircraft.map((ac, index) => (
-        <div
-          key={ac.id}
-          className="flex flex-col justify-center p-2 border-b"
-          style={{ height: '60px' }}
-        >
-          <p className="font-semibold text-sm">{ac.tailNumber}</p>
-          <p className="text-xs text-muted-foreground truncate">{ac.model}</p>
-        </div>
-      ))}
+      {/* Aircraft list is intentionally left empty */}
     </div>
   );
 }
