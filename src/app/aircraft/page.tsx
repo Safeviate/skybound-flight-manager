@@ -110,9 +110,9 @@ export default function AircraftPage() {
   const handleGenerateQrCode = (aircraftId: string) => {
     if (typeof window !== 'undefined') {
         const currentUrl = new URL(window.location.href);
-        // Replace the current path with the new path
-        currentUrl.pathname = `/checklists/start/${aircraftId}`;
-        currentUrl.search = ''; // Clear any query parameters
+        // Point the QR code to the login page, passing the aircraftId as a parameter.
+        currentUrl.pathname = `/login`;
+        currentUrl.search = `?aircraftId=${aircraftId}`;
         setQrCodeUrl(currentUrl.toString());
     }
   };

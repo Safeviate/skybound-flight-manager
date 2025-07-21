@@ -22,11 +22,10 @@ export default function StartChecklistPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-        // If not logged in, redirect to login page with a redirect parameter
-        const currentPath = window.location.pathname;
-        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+        // If not logged in, redirect to login page with a parameter
+        router.push(`/login?aircraftId=${aircraftId}`);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, aircraftId]);
 
 
   const aircraft = aircraftData.find(a => a.id === aircraftId);

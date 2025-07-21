@@ -63,9 +63,9 @@ export default function LoginPage() {
 
   const handleLogin = (userId: string) => {
     login(userId);
-    const redirectUrl = searchParams.get('redirect');
-    if (redirectUrl) {
-        router.push(redirectUrl);
+    const aircraftId = searchParams.get('aircraftId');
+    if (aircraftId) {
+        router.push(`/checklists/start/${aircraftId}`);
     } else {
         router.push('/');
     }
