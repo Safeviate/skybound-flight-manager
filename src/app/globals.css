@@ -102,22 +102,19 @@ body {
 }
 
 @media print {
-  body {
-    background: #fff;
-    color: #000;
+  body.print-active > *:not(#qr-code-dialog-wrapper) {
+    display: none;
   }
-  header, [data-sidebar], button, input, textarea, a[href], .no-print {
-    display: none !important;
+  
+  #qr-code-dialog-wrapper {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  .card {
-    border: 1px solid #ddd !important;
-    box-shadow: none !important;
-    page-break-inside: avoid;
-  }
+
   .no-print {
     display: none !important;
   }
@@ -130,23 +127,8 @@ body {
   [role="tabpanel"][data-state="inactive"] {
     display: block !important;
   }
-}
-
-.print-qr-code * {
-  visibility: hidden;
-}
-
-.print-qr-code [role="dialog"],
-.print-qr-code [role="dialog"] * {
-  visibility: visible;
-}
-
-.print-qr-code [role="dialog"] {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  box-shadow: none;
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
 }

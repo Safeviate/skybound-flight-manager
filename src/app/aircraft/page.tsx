@@ -87,9 +87,14 @@ export default function AircraftPage() {
   };
 
   const handlePrint = () => {
-    document.body.classList.add('print-qr-code');
-    window.print();
-    document.body.classList.remove('print-qr-code');
+    const printContents = document.getElementById('qr-code-dialog')?.innerHTML;
+    const originalContents = document.body.innerHTML;
+    if (printContents) {
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload(); // Reload to re-attach event listeners
+    }
   };
 
 
@@ -187,15 +192,17 @@ export default function AircraftPage() {
                                     <QrCode className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs" id="qr-code-dialog">
-                                <DialogHeader>
-                                    <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
-                                    <DialogDescription className="text-center">
-                                        Scan to start pre-flight checklist.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="p-4 flex justify-center">
-                                    {qrUrl && <QRCode value={qrUrl} size={200} />}
+                            <DialogContent className="sm:max-w-xs" id="qr-code-dialog-wrapper">
+                                <div id="qr-code-dialog">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
+                                        <DialogDescription className="text-center">
+                                            Scan to start pre-flight checklist.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="p-4 flex justify-center">
+                                        {qrUrl && <QRCode value={qrUrl} size={200} />}
+                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <Button onClick={handlePrint}>
