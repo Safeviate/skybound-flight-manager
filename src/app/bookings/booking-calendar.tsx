@@ -139,7 +139,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                         <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                         {booking.status === 'Pending Approval' && (
+                                         {booking.status === 'Pending Approval' && settings.requireInstructorApproval && (
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
