@@ -5,16 +5,16 @@
   "description": "Flight school management system",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f0f0f0",
-  "theme_color": "#4287f5",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
