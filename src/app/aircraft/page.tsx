@@ -31,7 +31,7 @@ export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
   const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [qrCodeValue, setQrCodeValue] = useState('');
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -109,13 +109,7 @@ export default function AircraftPage() {
   };
   
   const handleGenerateQrCode = (aircraftId: string) => {
-    if (typeof window !== 'undefined') {
-        const currentUrl = new URL(window.location.href);
-        const checklistPath = `/checklists/start/${aircraftId}`;
-        const loginUrl = new URL('/login', currentUrl.origin);
-        loginUrl.searchParams.set('redirect', checklistPath);
-        setQrCodeUrl(loginUrl.toString());
-    }
+    setQrCodeValue(`skybound-checklist:${aircraftId}`);
   };
 
   const handlePrint = (aircraftId: string) => {
@@ -266,11 +260,11 @@ export default function AircraftPage() {
                                     <DialogHeader>
                                         <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
                                         <DialogDescription className="text-center">
-                                            Scan to start checklist.
+                                            Scan to get checklist ID.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="p-4 flex justify-center">
-                                        {qrCodeUrl && <QRCode value={qrCodeUrl} size={200} renderAs="svg" />}
+                                        {qrCodeValue && <QRCode value={qrCodeValue} size={200} renderAs="svg" />}
                                     </div>
                                 </div>
                                 <DialogFooter>
