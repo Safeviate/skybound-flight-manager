@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,7 @@ export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
   const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -106,11 +107,11 @@ export default function AircraftPage() {
     }
   };
   
-  const getQRCodeUrl = (aircraftId: string) => {
+  const handleGenerateQrCode = (aircraftId: string) => {
     if (typeof window !== 'undefined') {
-        return `/checklists/start/${aircraftId}`;
+        const url = `${window.location.origin}/checklists/start/${aircraftId}`;
+        setQrCodeUrl(url);
     }
-    return '';
   };
 
   const handlePrint = (aircraftId: string) => {
@@ -184,7 +185,6 @@ export default function AircraftPage() {
                 {fleet.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
                   const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
-                  const qrUrl = getQRCodeUrl(aircraft.id);
                   return (
                   <TableRow key={aircraft.id}>
                     <TableCell className="font-medium">
@@ -251,7 +251,7 @@ export default function AircraftPage() {
                         </DropdownMenu>
                     </TableCell>
                     <TableCell className="text-right no-print">
-                        <Dialog>
+                        <Dialog onOpenChange={(open) => open && handleGenerateQrCode(aircraft.id)}>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                     <QrCode className="h-4 w-4" />
@@ -266,7 +266,7 @@ export default function AircraftPage() {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="p-4 flex justify-center">
-                                        {qrUrl && <QRCode value={qrUrl} size={200} renderAs="svg" />}
+                                        {qrCodeUrl && <QRCode value={qrCodeUrl} size={200} renderAs="svg" />}
                                     </div>
                                 </div>
                                 <DialogFooter>
