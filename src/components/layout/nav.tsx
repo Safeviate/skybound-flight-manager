@@ -46,7 +46,6 @@ const navItems: {
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'] },
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'] },
-  { href: '/checklists/start', label: 'Start Checklist', icon: QrCode },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'] },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'] },
   { href: '/checklists', label: 'Checklist Templates', icon: ClipboardCheck, requiredPermissions: ['Checklists:View', 'Checklists:Edit'] },
