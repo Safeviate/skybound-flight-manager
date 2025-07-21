@@ -1,28 +1,10 @@
 
-import type { Aircraft } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import React from 'react';
 
-interface GanttAircraftColumnProps {
-  aircraft: Aircraft[];
-}
-
-const getStatusVariant = (status: Aircraft['status']) => {
-    switch (status) {
-      case 'Available':
-        return 'success';
-      case 'In Maintenance':
-        return 'destructive';
-      case 'Booked':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-};
-
-export function GanttAircraftColumn({ aircraft }: GanttAircraftColumnProps) {
+export function GanttAircraftColumn() {
   return (
-    <div className="border-r">
-      {/* Aircraft list is intentionally left empty */}
+    <div>
+      {/* Aircraft column will be built here */}
     </div>
   );
 }

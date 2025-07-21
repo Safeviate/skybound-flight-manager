@@ -14,6 +14,7 @@ import { BookingCalendar } from './booking-calendar';
 
 export default function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
+  const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
 
   const handleBookingCreated = (newBooking: Omit<Booking, 'id'>) => {
       const bookingWithId: Booking = {
@@ -21,6 +22,7 @@ export default function BookingsPage() {
           id: `booking-${Date.now()}`
       };
       setBookingData(prev => [...prev, bookingWithId]);
+      setIsNewBookingOpen(false);
   }
 
   return (
@@ -30,7 +32,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Schedule</CardTitle>
-            <Dialog>
+            <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -49,7 +51,7 @@ export default function BookingsPage() {
             </Dialog>
           </CardHeader>
           <CardContent>
-            <BookingCalendar bookings={bookingData} />
+            <BookingCalendar />
           </CardContent>
         </Card>
       </main>
