@@ -164,7 +164,7 @@ function DayView({ bookings }: { bookings: Booking[] }) {
                 <Button variant="outline" size="icon" onClick={prevDay}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                 <Button variant="outline" onClick={goToToday}>Today</Button>
+                <Button variant="outline" onClick={goToToday}>Today</Button>
                 <h2 className="text-xl font-semibold w-48 text-center">
                     {format(currentDay, 'eeee, MMMM d')}
                 </h2>
@@ -299,5 +299,7 @@ export function BookingCalendar({ bookings, fleet, onFlightLogged, onApproveBook
         </div>
     );
 }
+
+    
 
     
