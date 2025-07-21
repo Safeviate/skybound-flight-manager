@@ -11,6 +11,8 @@ import { useState } from 'react';
 import type { Booking } from '@/lib/types';
 import { bookingData as initialBookingData } from '@/lib/mock-data';
 import { BookingCalendar } from './booking-calendar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MonthlyCalendarView } from './monthly-calendar-view';
 
 export default function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
@@ -51,7 +53,18 @@ export default function BookingsPage() {
             </Dialog>
           </CardHeader>
           <CardContent>
-            <BookingCalendar />
+            <Tabs defaultValue="day">
+                <TabsList>
+                    <TabsTrigger value="day">Day View</TabsTrigger>
+                    <TabsTrigger value="month">Month View</TabsTrigger>
+                </TabsList>
+                <TabsContent value="day" className="mt-4">
+                    <BookingCalendar />
+                </TabsContent>
+                <TabsContent value="month" className="mt-4">
+                    <MonthlyCalendarView bookings={bookingData} />
+                </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </main>
