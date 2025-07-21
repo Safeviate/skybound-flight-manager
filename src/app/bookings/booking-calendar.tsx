@@ -183,10 +183,10 @@ function GanttView({ bookings }: GanttViewProps) {
                 </Button>
             </div>
             <ScrollArea className="w-full whitespace-nowrap border rounded-lg">
-                <div className="relative" style={{ '--hour-width': '120px' } as React.CSSProperties}>
+                <div className="relative" style={{ '--hour-width': '120px', '--aircraft-col-width': '150px' } as React.CSSProperties}>
                     {/* Header */}
-                    <div className="grid sticky top-0 z-20 bg-background" style={{ gridTemplateColumns: '150px repeat(24, var(--hour-width))' }}>
-                        <div className="p-2 font-semibold flex items-end border-b border-r sticky left-0 bg-background">Aircraft</div>
+                    <div className="grid sticky top-0 z-30 bg-background" style={{ gridTemplateColumns: 'var(--aircraft-col-width) repeat(24, var(--hour-width))' }}>
+                        <div className="p-2 font-semibold flex items-end border-b border-r sticky left-0 bg-background z-10">Aircraft</div>
                         {hours.map(hour => (
                             <div key={hour} className="p-2 text-center border-b border-l font-semibold text-sm h-10">
                                 {format(new Date(0, 0, 0, hour), 'HH:mm')}
@@ -197,7 +197,7 @@ function GanttView({ bookings }: GanttViewProps) {
                     {/* Content */}
                     <div className="divide-y">
                         {aircraftData.map(aircraft => (
-                            <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: '150px repeat(24, var(--hour-width))' }}>
+                            <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: 'var(--aircraft-col-width) repeat(24, var(--hour-width))' }}>
                                 {/* Aircraft Column */}
                                 <div className="p-2 font-medium text-sm flex items-center h-24 border-r sticky left-0 bg-background z-10">
                                     {aircraft.tailNumber}
@@ -233,10 +233,10 @@ function GanttView({ bookings }: GanttViewProps) {
                                                 <TooltipTrigger asChild>
                                                     <div
                                                         className={cn(
-                                                            'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center',
+                                                            'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-20',
                                                             getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
                                                         )}
-                                                        style={{ left: `calc(150px + ${left}px)`, width: `${width}px` }}
+                                                        style={{ left: `calc(var(--aircraft-col-width) + ${left}px)`, width: `${width}px` }}
                                                     >
                                                         <span className="truncate">{booking.purpose} - {booking.startTime}</span>
                                                         {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
