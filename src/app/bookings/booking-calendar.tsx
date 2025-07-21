@@ -60,11 +60,13 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
             <div className="p-2 border-b border-r">
               <h3 className="font-semibold text-center">Aircraft</h3>
             </div>
-            <div className="p-2 border-b">
+            <div className="p-2 border-b overflow-x-auto">
               {/* This will hold the timeline header */}
             </div>
             <GanttAircraftColumn aircraft={aircraftData} />
-            <GanttTimeline date={currentDate} bookings={bookings} aircraft={aircraftData} />
+            <div className="overflow-x-auto">
+                <GanttTimeline date={currentDate} bookings={bookings} aircraft={aircraftData} />
+            </div>
         </div>
       </div>
     </div>

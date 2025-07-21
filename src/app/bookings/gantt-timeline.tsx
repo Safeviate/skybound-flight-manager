@@ -12,7 +12,7 @@ interface GanttTimelineProps {
 
 export function GanttTimeline({ date, bookings, aircraft }: GanttTimelineProps) {
   return (
-    <div className="relative">
+    <div className="relative min-w-[2000px]">
       {/* Timeline grid will be built here */}
       <div
         className="grid"
@@ -23,6 +23,7 @@ export function GanttTimeline({ date, bookings, aircraft }: GanttTimelineProps) 
         {aircraft.map((ac, index) => (
           <div key={ac.id} className="border-b">
             {/* A single aircraft row */}
+            <div className="h-full w-full bg-blue-500/10"></div>
           </div>
         ))}
       </div>
