@@ -143,12 +143,14 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
 }
 
 function DayView({ bookings }: { bookings: Booking[] }) {
-    const [currentDay, setCurrentDay] = useState(startOfDay(new Date('2024-08-15')));
+    const today = startOfDay(new Date('2024-08-15'));
+    const [currentDay, setCurrentDay] = useState(today);
     const aircraftColumnRef = useRef<HTMLDivElement>(null);
     const timelineHeaderRef = useRef<HTMLDivElement>(null);
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
+    const goToToday = () => setCurrentDay(today);
 
     const handleVerticalScroll = (scrollTop: number) => {
         if (aircraftColumnRef.current) {
@@ -158,10 +160,11 @@ function DayView({ bookings }: { bookings: Booking[] }) {
 
     return (
         <div className="flex flex-col">
-             <div className="flex items-center justify-center gap-4 mb-4">
+             <div className="flex items-center justify-center gap-2 mb-4">
                 <Button variant="outline" size="icon" onClick={prevDay}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
+                 <Button variant="outline" onClick={goToToday}>Today</Button>
                 <h2 className="text-xl font-semibold w-48 text-center">
                     {format(currentDay, 'eeee, MMMM d')}
                 </h2>
@@ -296,3 +299,5 @@ export function BookingCalendar({ bookings, fleet, onFlightLogged, onApproveBook
         </div>
     );
 }
+
+    
