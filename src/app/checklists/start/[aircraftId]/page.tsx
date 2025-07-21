@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import type { Checklist, Aircraft } from '@/lib/types';
 import { checklistData, aircraftData } from '@/lib/mock-data';
