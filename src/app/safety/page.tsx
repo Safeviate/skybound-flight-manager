@@ -602,11 +602,11 @@ export default function SafetyPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
-                      <TableHead><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
+                      <TableHead className="hidden md:table-cell"><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
                       <TableHead>Report</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Aircraft</TableHead>
-                      <TableHead>Location</TableHead>
+                      <TableHead className="hidden lg:table-cell">Department</TableHead>
+                      <TableHead className="hidden lg:table-cell">Aircraft</TableHead>
+                      <TableHead className="hidden xl:table-cell">Location</TableHead>
                       <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
                       <TableHead className="text-right no-print">Actions</TableHead>
                     </TableRow>
@@ -619,7 +619,7 @@ export default function SafetyPage() {
                                 {report.reportNumber}
                            </Link>
                         </TableCell>
-                        <TableCell>{report.occurrenceDate}</TableCell>
+                        <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
                         <TableCell className="max-w-xs">
                           <div className="flex flex-col">
                             <span className="font-medium truncate">{report.heading}</span>
@@ -630,12 +630,12 @@ export default function SafetyPage() {
                                     </Badge>
                                 )}
                             </div>
-                            <span className="text-muted-foreground truncate">{report.details}</span>
+                            <span className="text-muted-foreground truncate hidden sm:inline">{report.details}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{report.department}</TableCell>
-                        <TableCell>{report.aircraftInvolved || 'N/A'}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {report.location && (
                               <div className="flex items-center gap-1">
                                   <MapPin className="h-3 w-3 text-muted-foreground" />
