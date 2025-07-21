@@ -7,6 +7,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -274,6 +275,16 @@ export type Checklist = {
     items: ChecklistItem[];
     aircraftId?: string;
 };
+
+export type CompletedChecklist = {
+    id: string;
+    checklistId: string;
+    checklistName: string;
+    checklistType: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
+    aircraftId: string;
+    completedBy: string;
+    completionDate: string;
+}
 
 export type AuditChecklistItem = {
     id: string;

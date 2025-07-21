@@ -23,6 +23,7 @@ import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChecklistCard } from '../checklists/checklist-card';
 import QRCode from 'qrcode.react';
+import Link from 'next/link';
 
 
 export default function AircraftPage() {
@@ -168,7 +169,11 @@ export default function AircraftPage() {
                   const qrUrl = getQRCodeUrl(aircraft.id);
                   return (
                   <TableRow key={aircraft.id}>
-                    <TableCell className="font-medium">{aircraft.tailNumber}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/aircraft/${aircraft.id}`} className="hover:underline">
+                        {aircraft.tailNumber}
+                      </Link>
+                    </TableCell>
                     <TableCell>{aircraft.model}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>

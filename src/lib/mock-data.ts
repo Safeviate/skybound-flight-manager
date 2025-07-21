@@ -1,5 +1,5 @@
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist } from './types';
 import { getNextService } from './utils.tsx';
 
 export const airportData: Airport[] = [
@@ -149,6 +149,12 @@ export const checklistData: Checklist[] = [
             { id: 'cl-3-5', text: 'Logbooks - Entry completed and signed', completed: false },
         ]
     },
+];
+
+export const completedChecklistData: CompletedChecklist[] = [
+    { id: 'ccl-1', checklistId: 'cl-1', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-2', checklistId: 'cl-1', checklistName: 'Cessna 172 Post-Flight Secure', checklistType: 'Post-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-3', checklistId: 'cl-1', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'Jane Smith', completionDate: '2024-08-12' },
 ];
 
 // Safety and Risk Data
