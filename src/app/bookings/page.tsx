@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from '@/components/layout/header';
@@ -9,6 +10,7 @@ import { NewBookingForm } from './new-booking-form';
 import { useState } from 'react';
 import type { Booking } from '@/lib/types';
 import { bookingData as initialBookingData } from '@/lib/mock-data';
+import { BookingCalendar } from './booking-calendar';
 
 export default function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
@@ -47,9 +49,7 @@ export default function BookingsPage() {
             </Dialog>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">The bookings calendar will be implemented here.</p>
-            </div>
+            <BookingCalendar bookings={bookingData} />
           </CardContent>
         </Card>
       </main>
