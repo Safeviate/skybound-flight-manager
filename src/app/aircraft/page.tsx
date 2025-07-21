@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist } from '@/lib/types';
-import { ClipboardCheck, PlusCircle } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChecklistCard } from '../checklists/checklist-card';
+import QRCode from 'qrcode.react';
 
 
 export default function AircraftPage() {
@@ -77,6 +78,14 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
+  
+  const getQRCodeUrl = (aircraftId: string) => {
+    if (typeof window !== 'undefined') {
+        return `${window.location.origin}/checklists/start/${aircraftId}`;
+    }
+    return '';
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -111,16 +120,16 @@ export default function AircraftPage() {
                   <TableHead>Model</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Flight Hours</TableHead>
-                  <TableHead>Next Service</TableHead>
-                  <TableHead>Hours Until</TableHead>
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
                   <TableHead className="text-right">Checklists</TableHead>
+                  <TableHead className="text-right">QR Code</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {aircraftData.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
+                  const qrUrl = getQRCodeUrl(aircraft.id);
                   return (
                   <TableRow key={aircraft.id}>
                     <TableCell className="font-medium">{aircraft.tailNumber}</TableCell>
@@ -129,10 +138,6 @@ export default function AircraftPage() {
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
                     </TableCell>
                     <TableCell>{aircraft.hours.toFixed(1)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{aircraft.nextServiceType}</Badge>
-                    </TableCell>
-                    <TableCell>{aircraft.hoursUntilService}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
                     <TableCell className="text-right">
@@ -163,10 +168,31 @@ export default function AircraftPage() {
                                     onItemToggle={handleItemToggle}
                                     onUpdate={handleChecklistUpdate}
                                     onReset={handleReset}
+                                    onEdit={() => {}}
                                 />
                             </DialogContent>
                         )}
                        </Dialog>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <QrCode className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-xs">
+                                <DialogHeader>
+                                    <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
+                                    <DialogDescription className="text-center">
+                                        Scan to start pre-flight checklist.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="p-4 flex justify-center">
+                                    {qrUrl && <QRCode value={qrUrl} size={200} />}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </TableCell>
                   </TableRow>
                 )})}
