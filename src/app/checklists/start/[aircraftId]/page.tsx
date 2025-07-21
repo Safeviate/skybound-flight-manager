@@ -3,12 +3,13 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import Header from '@/components/layout/header';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import type { Checklist, Aircraft } from '@/lib/types';
 import { checklistData, aircraftData } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
+import { Toaster } from '@/components/ui/toaster';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function StartChecklistPage() {
   const params = useParams();
@@ -16,19 +17,29 @@ export default function StartChecklistPage() {
   const { toast } = useToast();
 
   const aircraft = aircraftData.find(a => a.id === aircraftId);
-  const initialChecklist = checklistData.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraftId);
+  // Find the master checklist template
+  const checklistTemplate = checklistData.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraftId);
   
-  const [checklist, setChecklist] = useState<Checklist | undefined>(initialChecklist);
+  // Create a unique instance of the checklist for this session
+  const [checklist, setChecklist] = useState<Checklist | undefined>(() => {
+    if (!checklistTemplate) return undefined;
+    return {
+      ...checklistTemplate,
+      id: `session-${Date.now()}`, // Give this specific checklist run a unique ID
+      items: checklistTemplate.items.map(item => ({ ...item, completed: false })),
+    };
+  });
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklist(toggledChecklist);
   };
   
   const handleReset = (checklistId: string) => {
-    if (initialChecklist) {
+    if (checklistTemplate) {
       setChecklist({
-        ...initialChecklist,
-        items: initialChecklist.items.map(item => ({ ...item, completed: false })),
+        ...checklistTemplate,
+        id: `session-${Date.now()}`,
+        items: checklistTemplate.items.map(item => ({ ...item, completed: false })),
       });
     }
   };
@@ -54,9 +65,11 @@ export default function StartChecklistPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title={`Pre-Flight: ${aircraft.model}`} />
-      <main className="flex-1 p-4 md:p-8 flex items-center justify-center bg-muted/40">
+    <div className="flex flex-col min-h-screen bg-muted/40">
+        <header className="bg-background p-4 border-b">
+            <CardTitle>Pre-Flight: {aircraft.model} ({aircraft.tailNumber})</CardTitle>
+        </header>
+      <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
         <ChecklistCard 
             checklist={checklist} 
             aircraft={aircraft}
@@ -66,6 +79,7 @@ export default function StartChecklistPage() {
             onEdit={() => {}} // Editing disabled on this page
         />
       </main>
+      <Toaster />
     </div>
   );
 }
