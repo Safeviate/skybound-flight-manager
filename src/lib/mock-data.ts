@@ -122,6 +122,21 @@ export const checklistData: Checklist[] = [
             { id: 'cl-1-12', text: 'Fuel & Oil - Check quantities', completed: false },
         ]
     },
+     {
+        id: 'cl-1-post',
+        title: 'Cessna 172 Post-Flight Secure',
+        category: 'Post-Flight',
+        aircraftId: '1',
+        items: [
+            { id: 'cl-1-post-1', text: 'Avionics - All off', completed: false },
+            { id: 'cl-1-post-2', text: 'Mixture - Idle cut-off', completed: false },
+            { id: 'cl-1-post-3', text: 'Magnetos - Off', completed: false },
+            { id: 'cl-1-post-4', text: 'Master Switch - Off', completed: false },
+            { id: 'cl-1-post-5', text: 'Hobbs and Tach Time - Recorded', completed: false },
+            { id: 'cl-1-post-6', text: 'Control Lock - Installed', completed: false },
+            { id: 'cl-1-post-7', text: 'Aircraft - Chocked and tied down', completed: false },
+        ]
+    },
     {
         id: 'cl-2',
         title: 'Piper PA-28 Post-Flight Secure',
@@ -379,5 +394,3 @@ export const mockAlerts: Alert[] = [
     readBy: ['Mike Ross', 'Sarah Connor', 'Laura Croft', 'John Doe', 'Jane Smith', 'Peter Jones'],
   },
 ];
-
-    
