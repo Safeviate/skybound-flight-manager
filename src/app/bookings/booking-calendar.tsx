@@ -182,7 +182,7 @@ function GanttView({ bookings }: GanttViewProps) {
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
-            <ScrollArea className="w-full whitespace-nowrap rounded-md border isolate">
+            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                 <div className="relative" style={{'--hour-width': '120px'} as React.CSSProperties}>
                     <div className="grid sticky top-0 z-20 bg-background" style={{ gridTemplateColumns: '150px repeat(24, var(--hour-width))' }}>
                         <div className="p-2 border-b border-r font-semibold flex items-end sticky left-0 bg-background z-30">Aircraft</div>
@@ -196,7 +196,7 @@ function GanttView({ bookings }: GanttViewProps) {
                     <div className="divide-y">
                         {aircraftData.map(aircraft => (
                             <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: '150px repeat(24, var(--hour-width))' }}>
-                                <div className="p-2 border-r font-medium text-sm flex items-center h-24 sticky left-0 bg-background z-20">
+                                <div className="p-2 border-r font-medium text-sm flex items-center h-24 sticky left-0 bg-background z-10">
                                     {aircraft.tailNumber}
                                 </div>
                                 {hours.map(hour => (
