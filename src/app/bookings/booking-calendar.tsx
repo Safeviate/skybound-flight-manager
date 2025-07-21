@@ -13,12 +13,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const rowHeight = 96; // 6rem
 const hourWidth = 120; // 120px per hour
+const timelineStartHour = 6;
+const timelineEndHour = 23;
+const timelineHours = Array.from({ length: timelineEndHour - timelineStartHour + 1 }, (_, i) => i + timelineStartHour);
+
 
 const DayTimelineHeader = () => {
     return (
       <div className="sticky top-0 z-10 bg-muted">
-        <div className="flex" style={{ width: `${24 * hourWidth}px` }}>
-          {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+        <div className="flex" style={{ width: `${timelineHours.length * hourWidth}px` }}>
+          {timelineHours.map(hour => (
             <div key={hour} className="p-2 text-center border-l font-semibold text-sm w-[120px] flex-shrink-0">
               {format(new Date(0, 0, 0, hour), 'HH:mm')}
             </div>
@@ -38,7 +42,6 @@ const getPurposeVariant = (purpose: Booking['purpose']) => {
 };
 
 const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Booking[], currentDay: Date, onVerticalScroll: (scrollTop: number) => void }) => {
-    const hours = Array.from({ length: 24 }, (_, i) => i);
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
         if (!acc[booking.aircraft]) {
             acc[booking.aircraft] = [];
@@ -67,12 +70,12 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
 
     return (
         <ScrollArea ref={scrollContainerRef} className="flex-1" orientation="horizontal">
-            <div className="relative" style={{ width: `${24 * hourWidth}px` }}>
+            <div className="relative" style={{ width: `${timelineHours.length * hourWidth}px` }}>
                 <DayTimelineHeader />
                 {aircraftData.map((aircraft) => (
-                    <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(24, ${hourWidth}px)`, height: `${rowHeight}px` }}>
+                    <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(${timelineHours.length}, ${hourWidth}px)`, height: `${rowHeight}px` }}>
                         {/* Grid Background */}
-                        {hours.map(hour => (
+                        {timelineHours.map(hour => (
                             <div key={hour} className="h-full border-l border-b relative flex">
                                 <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
                                 <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
@@ -97,8 +100,8 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
                                 const endHour = parseInt(booking.endTime.split(':')[0]);
                                 const endMinute = parseInt(booking.endTime.split(':')[1]);
 
-                                const startInMinutes = startHour * 60 + startMinute;
-                                const endInMinutes = endHour * 60 + endMinute;
+                                const startInMinutes = (startHour - timelineStartHour) * 60 + startMinute;
+                                const endInMinutes = (endHour - timelineStartHour) * 60 + endMinute;
 
                                 const left = (startInMinutes / 60) * hourWidth;
                                 const width = ((endInMinutes - startInMinutes) / 60) * hourWidth;
