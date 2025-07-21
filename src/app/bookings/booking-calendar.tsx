@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, UIEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -157,6 +157,9 @@ interface GanttViewProps {
 function GanttView({ bookings }: GanttViewProps) {
     const [currentDay, setCurrentDay] = useState(startOfDay(new Date('2024-08-15')));
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    const hourWidth = 120; // 120px per hour for 15-min increments
+    const aircraftColWidth = 150;
+    const rowHeight = 96; // 6rem
 
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
         if (!acc[booking.aircraft]) {
@@ -168,6 +171,19 @@ function GanttView({ bookings }: GanttViewProps) {
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
+
+    const timelineRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLDivElement>(null);
+    const aircraftColRef = useRef<HTMLDivElement>(null);
+
+    const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+        if (headerRef.current) {
+            headerRef.current.scrollLeft = event.currentTarget.scrollLeft;
+        }
+        if (aircraftColRef.current) {
+            aircraftColRef.current.scrollTop = event.currentTarget.scrollTop;
+        }
+    };
 
     return (
         <TooltipProvider>
@@ -182,87 +198,114 @@ function GanttView({ bookings }: GanttViewProps) {
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
-            <ScrollArea className="w-full whitespace-nowrap border rounded-lg">
-                <div className="relative" style={{ '--hour-width': '120px', '--aircraft-col-width': '150px' } as React.CSSProperties}>
-                    {/* Header */}
-                    <div className="grid sticky top-0 z-30 bg-background" style={{ gridTemplateColumns: 'var(--aircraft-col-width) repeat(24, var(--hour-width))' }}>
-                        <div className="p-2 font-semibold flex items-end border-b border-r sticky left-0 bg-background z-10">Aircraft</div>
+            <div className="relative border rounded-lg overflow-hidden">
+                {/* Fixed Aircraft Header */}
+                <div 
+                    className="p-2 font-semibold flex items-end border-b border-r bg-muted absolute top-0 left-0 z-20"
+                    style={{ width: `${aircraftColWidth}px`, height: '40px' }}
+                >
+                    Aircraft
+                </div>
+                {/* Scrollable Timeline Header */}
+                <div 
+                    ref={headerRef} 
+                    className="overflow-x-hidden"
+                    style={{ marginLeft: `${aircraftColWidth}px` }}
+                >
+                    <div className="grid" style={{ gridTemplateColumns: `repeat(24, ${hourWidth}px)` }}>
                         {hours.map(hour => (
                             <div key={hour} className="p-2 text-center border-b border-l font-semibold text-sm h-10">
                                 {format(new Date(0, 0, 0, hour), 'HH:mm')}
                             </div>
                         ))}
                     </div>
+                </div>
 
-                    {/* Content */}
-                    <div className="divide-y">
-                        {aircraftData.map(aircraft => (
-                            <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: 'var(--aircraft-col-width) repeat(24, var(--hour-width))' }}>
-                                {/* Aircraft Column */}
-                                <div className="p-2 font-medium text-sm flex items-center h-24 border-r sticky left-0 bg-background z-10">
-                                    {aircraft.tailNumber}
-                                </div>
-                                
-                                {/* Grid Background */}
-                                {hours.map(hour => (
-                                    <div key={hour} className="h-24 border-l relative flex">
-                                        <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                        <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                        <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                        <div className="w-1/4 h-full"></div>
-                                    </div>
-                                ))}
-
-                                {/* Bookings */}
-                                {(bookingsByAircraft[aircraft.tailNumber] || [])
-                                    .filter(b => isSameDay(parseISO(b.date), currentDay))
-                                    .map(booking => {
-                                        const startHour = parseInt(booking.startTime.split(':')[0]);
-                                        const startMinute = parseInt(booking.startTime.split(':')[1]);
-                                        const endHour = parseInt(booking.endTime.split(':')[0]);
-                                        const endMinute = parseInt(booking.endTime.split(':')[1]);
-
-                                        const startInMinutes = startHour * 60 + startMinute;
-                                        const endInMinutes = endHour * 60 + endMinute;
-
-                                        const left = (startInMinutes / 60) * 120;
-                                        const width = ((endInMinutes - startInMinutes) / 60) * 120;
-
-                                        return (
-                                            <Tooltip key={booking.id}>
-                                                <TooltipTrigger asChild>
-                                                    <div
-                                                        className={cn(
-                                                            'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-20',
-                                                            getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
-                                                        )}
-                                                        style={{ left: `calc(var(--aircraft-col-width) + ${left}px)`, width: `${width}px` }}
-                                                    >
-                                                        <span className="truncate">{booking.purpose} - {booking.startTime}</span>
-                                                        {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{booking.aircraft} ({booking.purpose})</p>
-                                                    <p>Time: {booking.startTime} - {booking.endTime}</p>
-                                                    <p>Instructor: {booking.instructor}</p>
-                                                    <p>Student: {booking.student}</p>
-                                                    <p>Status: {booking.status}</p>
-                                                    {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        )
-                                    })
-                                }
+                <div className="flex" style={{ height: `${rowHeight * aircraftData.length}px`, maxHeight: 'calc(100vh - 400px)' }}>
+                    {/* Fixed Aircraft Column */}
+                    <div ref={aircraftColRef} className="overflow-y-hidden" style={{ width: `${aircraftColWidth}px`, height: '100%' }}>
+                         {aircraftData.map(aircraft => (
+                            <div 
+                                key={aircraft.id} 
+                                className="p-2 font-medium text-sm flex items-center border-r border-b bg-muted"
+                                style={{ height: `${rowHeight}px` }}
+                            >
+                                {aircraft.tailNumber}
                             </div>
                         ))}
                     </div>
+
+                    {/* Scrollable Timeline Grid */}
+                    <ScrollArea 
+                        ref={timelineRef} 
+                        className="flex-1 w-full"
+                        onScroll={handleScroll}
+                    >
+                        <div className="relative">
+                             {aircraftData.map((aircraft, rowIndex) => (
+                                <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(24, ${hourWidth}px)`, height: `${rowHeight}px` }}>
+                                    {/* Grid Background */}
+                                    {hours.map(hour => (
+                                        <div key={hour} className="h-full border-l border-b relative flex">
+                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                                            <div className="w-1/4 h-full"></div>
+                                        </div>
+                                    ))}
+
+                                    {/* Bookings */}
+                                    {(bookingsByAircraft[aircraft.tailNumber] || [])
+                                        .filter(b => isSameDay(parseISO(b.date), currentDay))
+                                        .map(booking => {
+                                            const startHour = parseInt(booking.startTime.split(':')[0]);
+                                            const startMinute = parseInt(booking.startTime.split(':')[1]);
+                                            const endHour = parseInt(booking.endTime.split(':')[0]);
+                                            const endMinute = parseInt(booking.endTime.split(':')[1]);
+
+                                            const startInMinutes = startHour * 60 + startMinute;
+                                            const endInMinutes = endHour * 60 + endMinute;
+
+                                            const left = (startInMinutes / 60) * hourWidth;
+                                            const width = ((endInMinutes - startInMinutes) / 60) * hourWidth;
+
+                                            return (
+                                                <Tooltip key={booking.id}>
+                                                    <TooltipTrigger asChild>
+                                                        <div
+                                                            className={cn(
+                                                                'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-10',
+                                                                getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
+                                                            )}
+                                                            style={{ left: `${left}px`, width: `${width}px` }}
+                                                        >
+                                                            <span className="truncate">{booking.purpose} - {booking.startTime}</span>
+                                                            {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{booking.aircraft} ({booking.purpose})</p>
+                                                        <p>Time: {booking.startTime} - {booking.endTime}</p>
+                                                        <p>Instructor: {booking.instructor}</p>
+                                                        <p>Student: {booking.student}</p>
+                                                        <p>Status: {booking.status}</p>
+                                                        {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )
+                                        })
+                                    }
+                                </div>
+                            ))}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
                 </div>
-                <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
         </TooltipProvider>
     );
 }
+
 
 interface BookingCalendarProps {
     bookings: Booking[];
@@ -272,7 +315,7 @@ interface BookingCalendarProps {
 }
 
 export function BookingCalendar({ bookings, fleet, onFlightLogged, onApproveBooking }: BookingCalendarProps) {
-    const [viewMode, setViewMode] = useState<ViewMode>('month');
+    const [viewMode, setViewMode] = useState<ViewMode>('gantt');
 
     return (
         <div className="space-y-4">
