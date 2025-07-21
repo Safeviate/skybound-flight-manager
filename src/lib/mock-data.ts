@@ -100,76 +100,127 @@ export const trainingExercisesData: string[] = [
     "Checkride Preparation",
 ];
 
+const genericPreFlightItems = [
+    { id: 'pre-1', text: 'Certificate of Registration (C of R) on board', completed: false },
+    { id: 'pre-2', text: 'Certificate of Airworthiness (C of A) on board', completed: false },
+    { id: 'pre-3', text: 'Aircraft Radio Station Licence on board', completed: false },
+    { id: 'pre-4', text: 'Proof of Insurance on board', completed: false },
+    { id: 'pre-5', text: 'Aircraft Flight Manual (AFM) available', completed: false },
+    { id: 'pre-6', text: 'Weight & Balance documents available', completed: false },
+    { id: 'pre-7', text: 'Aircraft Journey Logbook on board', completed: false },
+    { id: 'pre-8', text: 'Minimum Equipment List (MEL) available', completed: false },
+    { id: 'pre-9', text: 'Fuselage & Empennage - Inspect for damage', completed: false },
+    { id: 'pre-10', text: 'Wings & Control Surfaces - Check for damage, freedom of movement', completed: false },
+    { id: 'pre-11', text: 'Nose & Propeller - Check oil, inspect propeller/spinner', completed: false },
+    { id: 'pre-12', text: 'Fuel & Oil - Check quantities', completed: false },
+];
+
+const genericPostFlightItems = [
+    { id: 'post-1', text: 'Avionics - All off', completed: false },
+    { id: 'post-2', text: 'Mixture - Idle cut-off', completed: false },
+    { id: 'post-3', text: 'Magnetos - Off', completed: false },
+    { id: 'post-4', text: 'Master Switch - Off', completed: false },
+    { id: 'post-5', text: 'Hobbs and Tach Time - Recorded', completed: false },
+    { id: 'post-6', text: 'Control Lock - Installed', completed: false },
+    { id: 'post-7', text: 'Aircraft - Chocked and tied down', completed: false },
+];
+
 // Checklist Data
 export const checklistData: Checklist[] = [
+    // Aircraft 1: Cessna 172
     {
-        id: 'cl-1',
+        id: 'cl-1-pre',
         title: 'Cessna 172 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '1',
-        items: [
-            { id: 'cl-1-1', text: 'Certificate of Registration (C of R) on board', completed: false },
-            { id: 'cl-1-2', text: 'Certificate of Airworthiness (C of A) on board', completed: false },
-            { id: 'cl-1-3', text: 'Aircraft Radio Station Licence on board', completed: false },
-            { id: 'cl-1-4', text: 'Proof of Insurance on board', completed: false },
-            { id: 'cl-1-5', text: 'Aircraft Flight Manual (AFM) available', completed: false },
-            { id: 'cl-1-6', text: 'Weight & Balance documents available', completed: false },
-            { id: 'cl-1-7', text: 'Aircraft Journey Logbook on board', completed: false },
-            { id: 'cl-1-8', text: 'Minimum Equipment List (MEL) available', completed: false },
-            { id: 'cl-1-9', text: 'Fuselage & Empennage - Inspect for damage', completed: false },
-            { id: 'cl-1-10', text: 'Wings & Control Surfaces - Check for damage, freedom of movement', completed: false },
-            { id: 'cl-1-11', text: 'Nose & Propeller - Check oil, inspect propeller/spinner', completed: false },
-            { id: 'cl-1-12', text: 'Fuel & Oil - Check quantities', completed: false },
-        ]
+        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
     },
      {
         id: 'cl-1-post',
         title: 'Cessna 172 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '1',
-        items: [
-            { id: 'cl-1-post-1', text: 'Avionics - All off', completed: false },
-            { id: 'cl-1-post-2', text: 'Mixture - Idle cut-off', completed: false },
-            { id: 'cl-1-post-3', text: 'Magnetos - Off', completed: false },
-            { id: 'cl-1-post-4', text: 'Master Switch - Off', completed: false },
-            { id: 'cl-1-post-5', text: 'Hobbs and Tach Time - Recorded', completed: false },
-            { id: 'cl-1-post-6', text: 'Control Lock - Installed', completed: false },
-            { id: 'cl-1-post-7', text: 'Aircraft - Chocked and tied down', completed: false },
-        ]
+        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
+    },
+    // Aircraft 2: Piper PA-28
+    {
+        id: 'cl-2-pre',
+        title: 'Piper PA-28 Pre-Flight Inspection',
+        category: 'Pre-Flight',
+        aircraftId: '2',
+        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
     },
     {
-        id: 'cl-2',
+        id: 'cl-2-post',
         title: 'Piper PA-28 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '2',
-        items: [
-            { id: 'cl-2-1', text: 'Avionics - All off', completed: false },
-            { id: 'cl-2-2', text: 'Mixture - Idle cut-off', completed: false },
-            { id: 'cl-2-3', text: 'Magnetos - Off', completed: false },
-            { id: 'cl-2-4', text: 'Master Switch - Off', completed: false },
-            { id: 'cl-2-5', text: 'Hobbs and Tach Time - Recorded', completed: false },
-            { id: 'cl-2-6', text: 'Control Lock - Installed', completed: false },
-            { id: 'cl-2-7', text: 'Aircraft - Chocked and tied down', completed: false },
-        ]
+        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
     },
+    // Aircraft 3: Diamond DA40
+    {
+        id: 'cl-3-pre',
+        title: 'Diamond DA40 Pre-Flight Inspection',
+        category: 'Pre-Flight',
+        aircraftId: '3',
+        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
+    },
+    {
+        id: 'cl-3-post',
+        title: 'Diamond DA40 Post-Flight Secure',
+        category: 'Post-Flight',
+        aircraftId: '3',
+        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
+    },
+    // Aircraft 4: Cirrus SR22
+    {
+        id: 'cl-4-pre',
+        title: 'Cirrus SR22 Pre-Flight Inspection',
+        category: 'Pre-Flight',
+        aircraftId: '4',
+        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
+    },
+    {
+        id: 'cl-4-post',
+        title: 'Cirrus SR22 Post-Flight Secure',
+        category: 'Post-Flight',
+        aircraftId: '4',
+        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
+    },
+    // Aircraft 5: Beechcraft G36
+    {
+        id: 'cl-5-pre',
+        title: 'Beechcraft G36 Pre-Flight Inspection',
+        category: 'Pre-Flight',
+        aircraftId: '5',
+        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
+    },
+    {
+        id: 'cl-5-post',
+        title: 'Beechcraft G36 Post-Flight Secure',
+        category: 'Post-Flight',
+        aircraftId: '5',
+        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
+    },
+    // Generic Maintenance
      {
-        id: 'cl-3',
+        id: 'cl-maint-1',
         title: '100-Hour Inspection',
         category: 'Maintenance',
         items: [
-            { id: 'cl-3-1', text: 'Engine - Oil change, filter check', completed: false },
-            { id: 'cl-3-2', text: 'Propeller - Inspect for nicks and security', completed: false },
-            { id: 'cl-3-3', text: 'Landing Gear - Check tires, brakes, struts', completed: false },
-            { id: 'cl-3-4', text: 'Control Systems - Inspect cables and pulleys', completed: false },
-            { id: 'cl-3-5', text: 'Logbooks - Entry completed and signed', completed: false },
+            { id: 'm-1', text: 'Engine - Oil change, filter check', completed: false },
+            { id: 'm-2', text: 'Propeller - Inspect for nicks and security', completed: false },
+            { id: 'm-3', text: 'Landing Gear - Check tires, brakes, struts', completed: false },
+            { id: 'm-4', text: 'Control Systems - Inspect cables and pulleys', completed: false },
+            { id: 'm-5', text: 'Logbooks - Entry completed and signed', completed: false },
         ]
     },
 ];
 
 export const completedChecklistData: CompletedChecklist[] = [
-    { id: 'ccl-1', checklistId: 'cl-1', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
-    { id: 'ccl-2', checklistId: 'cl-1', checklistName: 'Cessna 172 Post-Flight Secure', checklistType: 'Post-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
-    { id: 'ccl-3', checklistId: 'cl-1', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'Jane Smith', completionDate: '2024-08-12' },
+    { id: 'ccl-1', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-2', checklistId: 'cl-1-post', checklistName: 'Cessna 172 Post-Flight Secure', checklistType: 'Post-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-3', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'Jane Smith', completionDate: '2024-08-12' },
 ];
 
 // Safety and Risk Data
