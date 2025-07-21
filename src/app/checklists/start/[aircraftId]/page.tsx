@@ -22,7 +22,9 @@ export default function StartChecklistPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+        // If not logged in, redirect to login page with a redirect parameter
+        const currentPath = window.location.pathname;
+        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [user, loading, router]);
 
@@ -37,7 +39,7 @@ export default function StartChecklistPage() {
     return {
       ...checklistTemplate,
       id: `session-${Date.now()}`, // Give this specific checklist run a unique ID
-      items: checklistTemplate.items.map(item => ({ ...item, completed: false })),
+      items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
     };
   });
 
@@ -50,7 +52,7 @@ export default function StartChecklistPage() {
       setChecklist({
         ...checklistTemplate,
         id: `session-${Date.now()}`,
-        items: checklistTemplate.items.map(item => ({ ...item, completed: false })),
+        items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
       });
     }
   };
@@ -66,7 +68,7 @@ export default function StartChecklistPage() {
   if (loading || !user) {
     return (
         <div className="flex items-center justify-center min-h-screen">
-            <p>Loading...</p>
+            <p>Redirecting to login...</p>
         </div>
     );
   }

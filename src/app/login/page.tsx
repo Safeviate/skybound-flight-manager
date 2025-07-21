@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { userData, mockAlerts as allAlerts } from '@/lib/mock-data';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LogIn, Rocket, AlertTriangle, Info, User as UserIcon } from 'lucide-react';
@@ -32,6 +32,7 @@ const getAlertIcon = (type: Alert['type']) => {
 export default function LoginPage() {
   const { login } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [alertsToShow, setAlertsToShow] = useState<Alert[]>([]);
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -62,7 +63,12 @@ export default function LoginPage() {
 
   const handleLogin = (userId: string) => {
     login(userId);
-    router.push('/');
+    const redirectUrl = searchParams.get('redirect');
+    if (redirectUrl) {
+        router.push(redirectUrl);
+    } else {
+        router.push('/');
+    }
   };
   
   const getRoleVariant = (role: AppUser['role']) => {
