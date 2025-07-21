@@ -66,7 +66,7 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
       <div className="border rounded-lg">
         <div className="grid grid-cols-[200px_1fr]">
             <div className="p-2 border-b border-r">
-              <h3 className="font-semibold text-center">Aircraft</h3>
+              <h3 className="font-semibold text-center"></h3>
             </div>
             <div className="p-2 border-b overflow-x-hidden">
                 <GanttTimelineHeader ref={timelineHeaderRef} />
