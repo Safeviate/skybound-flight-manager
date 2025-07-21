@@ -15,14 +15,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Printer } from 'lucide-react';
+import { ClipboardCheck, PlusCircle } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/mock-data';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChecklistCard } from '../checklists/checklist-card';
-import QRCode from 'qrcode.react';
 import Link from 'next/link';
 
 
@@ -30,7 +29,6 @@ export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
   const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
-  const [qrCodeValue, setQrCodeValue] = useState('');
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -84,10 +82,13 @@ export default function AircraftPage() {
     setChecklists(prevChecklists =>
       prevChecklists.map(c => {
         if (c.id === checklistId) {
-          return {
-            ...c,
-            items: c.items.map(item => ({ ...item, completed: false })),
-          };
+          const originalTemplate = checklistData.find(template => template.id === c.id);
+          if (originalTemplate) {
+            return {
+                ...originalTemplate,
+                items: originalTemplate.items.map(item => ({ ...item, completed: false })),
+            };
+          }
         }
         return c;
       })
@@ -107,39 +108,6 @@ export default function AircraftPage() {
     }
   };
   
-  const handleGenerateQrCode = (aircraftId: string) => {
-    // The QR code now contains a simple text identifier, not a URL.
-    setQrCodeValue(`skybound-checklist:${aircraftId}`);
-  };
-
-  const handlePrint = (aircraftId: string) => {
-    const qrCodeDialogContent = document.getElementById(`qr-code-dialog-content-${aircraftId}`);
-    if (qrCodeDialogContent) {
-        const printWindow = window.open('', '', 'height=600,width=800');
-        if (printWindow) {
-            printWindow.document.write('<html><head><title>Print QR Code</title>');
-            printWindow.document.write(`
-                <style>
-                    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-                    .print-container { text-align: center; }
-                </style>
-            `);
-            printWindow.document.write('</head><body>');
-            printWindow.document.write('<div class="print-container">');
-            printWindow.document.write(qrCodeDialogContent.innerHTML);
-            printWindow.document.write('</div>');
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 250);
-        }
-    }
-  };
-
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Aircraft Management" />
@@ -175,8 +143,7 @@ export default function AircraftPage() {
                   <TableHead>Flight Hours</TableHead>
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
-                  <TableHead className="text-right">Checklists</TableHead>
-                  <TableHead className="text-right no-print">QR Code</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -245,36 +212,11 @@ export default function AircraftPage() {
                                     </DialogContent>
                                   </Dialog>
                                 )}
+                                {!preFlightChecklist && !postFlightChecklist && (
+                                    <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </TableCell>
-                    <TableCell className="text-right no-print">
-                        <Dialog onOpenChange={(open) => open && handleGenerateQrCode(aircraft.id)}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <QrCode className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs">
-                                <div id={`qr-code-dialog-content-${aircraft.id}`}>
-                                    <DialogHeader>
-                                        <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
-                                        <DialogDescription className="text-center">
-                                            Scan to copy checklist ID. Paste it in the "Start Checklist" page on your mobile device.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="p-4 flex justify-center">
-                                        {qrCodeValue && <QRCode value={qrCodeValue} size={200} renderAs="svg" />}
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button onClick={() => handlePrint(aircraft.id)}>
-                                        <Printer className="mr-2 h-4 w-4" />
-                                        Print QR Code
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
                     </TableCell>
                   </TableRow>
                 )})}
@@ -285,3 +227,4 @@ export default function AircraftPage() {
       </main>
     </div>
   );
+}
