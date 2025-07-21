@@ -43,6 +43,13 @@ export function BookingCalendar() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setCurrentDate(new Date('2024-08-15'))}
+          >
+            Today
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setCurrentDate(addDays(currentDate, 1))}
           >
             Next Day
