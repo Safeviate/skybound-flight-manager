@@ -235,7 +235,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: { book
                     </div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l">
+            <div className="grid grid-cols-7 grid-rows-6 border-l">
                 {days.map((day) => {
                     const dayBookings = getBookingsForDay(day);
                     return (
@@ -303,3 +303,4 @@ export function BookingCalendar({ bookings, fleet, onFlightLogged, onApproveBook
     
 
     
+
