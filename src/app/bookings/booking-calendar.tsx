@@ -41,7 +41,7 @@ const getPurposeVariant = (purpose: Booking['purpose']) => {
     }
 };
 
-const DayTimeline = ({ bookings, currentDay, onHorizontalScroll }: { bookings: Booking[], currentDay: Date, onHorizontalScroll: (scrollLeft: number) => void }) => {
+const DayTimeline = ({ bookings, currentDay }: { bookings: Booking[], currentDay: Date }) => {
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
         if (!acc[booking.aircraft]) {
             acc[booking.aircraft] = [];
@@ -50,111 +50,83 @@ const DayTimeline = ({ bookings, currentDay, onHorizontalScroll }: { bookings: B
         return acc;
     }, {} as Record<string, Booking[]>);
 
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    
-    useEffect(() => {
-        const handleScroll = () => {
-            if (scrollContainerRef.current) {
-                onHorizontalScroll(scrollContainerRef.current.scrollLeft);
-            }
-        };
-
-        const container = scrollContainerRef.current;
-        container?.addEventListener('scroll', handleScroll);
-
-        return () => {
-            container?.removeEventListener('scroll', handleScroll);
-        };
-    }, [onHorizontalScroll]);
-
-
     return (
-        <ScrollArea ref={scrollContainerRef} className="flex-1" orientation="horizontal">
-            <div className="relative" style={{ width: `${timelineHours.length * hourWidth}px` }}>
-                {aircraftData.map((aircraft) => (
-                    <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(${timelineHours.length}, ${hourWidth}px)`, height: `${rowHeight}px` }}>
-                        {/* Grid Background */}
-                        {timelineHours.map(hour => (
-                            <div key={hour} className="h-full border-l border-b relative flex">
-                                <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
-                                <div className="w-1/4 h-full"></div>
-                            </div>
-                        ))}
-                        
-                        {/* Watermark */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-8xl font-bold text-muted/30 select-none">
-                                {aircraft.tailNumber}
-                            </span>
+        <div className="relative" style={{ width: `${timelineHours.length * hourWidth}px` }}>
+            {aircraftData.map((aircraft) => (
+                <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(${timelineHours.length}, ${hourWidth}px)`, height: `${rowHeight}px` }}>
+                    {/* Grid Background */}
+                    {timelineHours.map(hour => (
+                        <div key={hour} className="h-full border-l border-b relative flex">
+                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                            <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
+                            <div className="w-1/4 h-full"></div>
                         </div>
-
-                        {/* Bookings */}
-                        {(bookingsByAircraft[aircraft.tailNumber] || [])
-                            .filter(b => isSameDay(parseISO(b.date), currentDay))
-                            .map(booking => {
-                                const startHour = parseInt(booking.startTime.split(':')[0]);
-                                const startMinute = parseInt(booking.startTime.split(':')[1]);
-                                const endHour = parseInt(booking.endTime.split(':')[0]);
-                                const endMinute = parseInt(booking.endTime.split(':')[1]);
-
-                                const startInMinutes = (startHour - timelineStartHour) * 60 + startMinute;
-                                const endInMinutes = (endHour - timelineStartHour) * 60 + endMinute;
-
-                                const left = (startInMinutes / 60) * hourWidth;
-                                const width = ((endInMinutes - startInMinutes) / 60) * hourWidth;
-
-                                return (
-                                    <TooltipProvider key={booking.id}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div
-                                                    className={cn(
-                                                        'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-10',
-                                                        getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
-                                                    )}
-                                                    style={{ left: `${left}px`, width: `${width}px` }}
-                                                >
-                                                    <span className="truncate">{booking.purpose} - {booking.aircraft}</span>
-                                                    {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
-                                                </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{booking.aircraft} ({booking.purpose})</p>
-                                                <p>Time: {booking.startTime} - {booking.endTime}</p>
-                                                <p>Instructor: {booking.instructor}</p>
-                                                <p>Student: {booking.student}</p>
-                                                <p>Status: {booking.status}</p>
-                                                {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )
-                            })
-                        }
+                    ))}
+                    
+                    {/* Watermark */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-8xl font-bold text-muted/30 select-none">
+                            {aircraft.tailNumber}
+                        </span>
                     </div>
-                ))}
-            </div>
-             <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+
+                    {/* Bookings */}
+                    {(bookingsByAircraft[aircraft.tailNumber] || [])
+                        .filter(b => isSameDay(parseISO(b.date), currentDay))
+                        .map(booking => {
+                            const startHour = parseInt(booking.startTime.split(':')[0]);
+                            const startMinute = parseInt(booking.startTime.split(':')[1]);
+                            const endHour = parseInt(booking.endTime.split(':')[0]);
+                            const endMinute = parseInt(booking.endTime.split(':')[1]);
+
+                            const startInMinutes = (startHour - timelineStartHour) * 60 + startMinute;
+                            const endInMinutes = (endHour - timelineStartHour) * 60 + endMinute;
+
+                            const left = (startInMinutes / 60) * hourWidth;
+                            const width = ((endInMinutes - startInMinutes) / 60) * hourWidth;
+
+                            return (
+                                <TooltipProvider key={booking.id}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className={cn(
+                                                    'absolute top-1/2 -translate-y-1/2 p-1.5 rounded-md text-white text-xs overflow-hidden h-16 flex items-center z-10',
+                                                    getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
+                                                )}
+                                                style={{ left: `${left}px`, width: `${width}px` }}
+                                            >
+                                                <span className="truncate">{booking.purpose} - {booking.aircraft}</span>
+                                                {booking.status === 'Completed' && <Check className="h-3 w-3 ml-1 flex-shrink-0" />}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{booking.aircraft} ({booking.purpose})</p>
+                                            <p>Time: {booking.startTime} - {booking.endTime}</p>
+                                            <p>Instructor: {booking.instructor}</p>
+                                            <p>Student: {booking.student}</p>
+                                            <p>Status: {booking.status}</p>
+                                            {booking.purpose === 'Training' && <p>Checklist: {booking.isChecklistComplete ? 'Complete' : 'Pending'}</p>}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )
+                        })
+                    }
+                </div>
+            ))}
+        </div>
     );
 }
 
 function DayView({ bookings }: { bookings: Booking[] }) {
     const today = startOfDay(new Date('2024-08-15'));
     const [currentDay, setCurrentDay] = useState(today);
-    const timelineHeaderRef = useRef<HTMLDivElement>(null);
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
     const goToToday = () => setCurrentDay(today);
-
-    const handleHorizontalScroll = (scrollLeft: number) => {
-        if (timelineHeaderRef.current) {
-            timelineHeaderRef.current.scrollLeft = scrollLeft;
-        }
-    };
 
     return (
         <div className="flex flex-col">
@@ -171,11 +143,11 @@ function DayView({ bookings }: { bookings: Booking[] }) {
                 </Button>
             </div>
             <div className="grid grid-cols-[150px_1fr] border rounded-lg overflow-hidden">
-                <div className="font-semibold p-2 border-b border-r bg-muted flex items-end sticky top-0 z-20">
+                <div className="font-semibold p-2 border-b border-r bg-muted flex items-end">
                     Aircraft
                 </div>
-                <div className="border-b bg-muted overflow-x-hidden" ref={timelineHeaderRef}>
-                    <DayTimelineHeader />
+                <div className="border-b bg-muted border-r">
+                    {/* The header is now part of the scroll area below */}
                 </div>
                 <div className="border-r bg-muted overflow-hidden relative">
                     <div>
@@ -191,7 +163,11 @@ function DayView({ bookings }: { bookings: Booking[] }) {
                     </div>
                 </div>
                 
-                <DayTimeline bookings={bookings} currentDay={currentDay} onHorizontalScroll={handleHorizontalScroll} />
+                <ScrollArea className="flex-1" orientation="horizontal">
+                    <DayTimelineHeader />
+                    <DayTimeline bookings={bookings} currentDay={currentDay} />
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
             </div>
         </div>
     );
@@ -299,8 +275,3 @@ export function BookingCalendar({ bookings, fleet, onFlightLogged, onApproveBook
         </div>
     );
 }
-
-    
-
-    
-
