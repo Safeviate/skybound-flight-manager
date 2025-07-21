@@ -77,15 +77,15 @@ export const userData: User[] = [
 
 // Booking Data
 export const bookingData: Booking[] = [
-  { id: '1', date: '2024-08-15', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Upcoming', isChecklistComplete: true },
+  { id: '1', date: '2024-08-15', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: true },
   { id: '2', date: '2024-08-16', time: '09:00', aircraft: 'N54321', student: 'N/A', instructor: 'Hank Hill', purpose: 'Maintenance', status: 'Completed', isChecklistComplete: false },
-  { id: '3', date: '2024-08-16', time: '11:00', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Upcoming', isChecklistComplete: false },
-  { id: '4', date: '2024-08-17', time: '10:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training', status: 'Upcoming', isChecklistComplete: false },
-  { id: '5', date: '2024-08-17', time: '16:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private', status: 'Upcoming', isChecklistComplete: false },
+  { id: '3', date: '2024-08-16', time: '11:00', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
+  { id: '4', date: '2024-08-17', time: '10:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
+  { id: '5', date: '2024-08-17', time: '16:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private', status: 'Approved', isChecklistComplete: false },
   { id: 'b1', date: '2024-08-10', time: '10:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
   { id: 'b2', date: '2024-08-12', time: '13:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
   { id: 'b3', date: '2024-08-11', time: '09:00', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
-  { id: 'b4', date: '2024-08-16', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Upcoming', isChecklistComplete: false },
+  { id: 'b4', date: '2024-08-16', time: '14:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
 ];
 
 // Training Exercises

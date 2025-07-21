@@ -34,7 +34,6 @@ const getStatusVariant = (status: Booking['status']) => {
     switch (status) {
         case 'Completed': return 'success';
         case 'Approved': return 'primary';
-        case 'Pending Approval': return 'warning';
         case 'Cancelled': return 'destructive';
         default: return 'outline';
     }
@@ -148,20 +147,6 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                         <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                         {booking.status === 'Pending Approval' && settings.requireInstructorApproval && (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div>{approveButton}</div>
-                                                    </TooltipTrigger>
-                                                    {tooltipContent && (
-                                                        <TooltipContent>
-                                                            <p>{tooltipContent}</p>
-                                                        </TooltipContent>
-                                                    )}
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                         )}
                                         {booking.purpose === 'Training' && booking.status === 'Approved' && isPast(parseISO(booking.date)) && (
                                             <Dialog open={dialogsOpen[booking.id]} onOpenChange={(isOpen) => setDialogsOpen(prev => ({...prev, [booking.id]: isOpen}))}>
                                                 <TooltipProvider>

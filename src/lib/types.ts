@@ -132,7 +132,7 @@ export type Booking = {
   student: string;
   instructor: string;
   purpose: 'Training' | 'Maintenance' | 'Private';
-  status: 'Pending Approval' | 'Approved' | 'Completed' | 'Cancelled';
+  status: 'Approved' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
   isPostFlightChecklistComplete?: boolean;
 };

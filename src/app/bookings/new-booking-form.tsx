@@ -65,7 +65,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
-    const status = settings.requireInstructorApproval ? 'Pending Approval' : 'Approved';
+    const status = 'Approved';
 
     const newBooking: Omit<Booking, 'id'> = {
         ...data,
@@ -77,10 +77,8 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
     onBookingCreated(newBooking);
     
     toast({
-      title: 'Booking Request Submitted',
-      description: status === 'Pending Approval' 
-        ? 'The booking is now pending instructor approval.' 
-        : 'Your booking has been confirmed.',
+      title: 'Booking Confirmed',
+      description: `Your booking has been confirmed.`,
     });
   }
   

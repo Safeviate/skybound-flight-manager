@@ -60,21 +60,6 @@ export default function OperationalSettingsPage() {
                 onCheckedChange={() => handleToggle('enforcePostFlightCheck')}
               />
             </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <Label htmlFor="require-approval" className="text-base">
-                  Require Instructor Approval for Bookings
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                    Enable a two-step booking process where an instructor or manager must approve a booking before it is confirmed.
-                </p>
-              </div>
-              <Switch
-                id="require-approval"
-                checked={settings.requireInstructorApproval}
-                onCheckedChange={() => handleToggle('requireInstructorApproval')}
-              />
-            </div>
           </CardContent>
         </Card>
       </main>
