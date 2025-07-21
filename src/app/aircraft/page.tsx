@@ -88,12 +88,33 @@ export default function AircraftPage() {
 
   const handlePrint = () => {
     const printContents = document.getElementById('qr-code-dialog')?.innerHTML;
-    const originalContents = document.body.innerHTML;
     if (printContents) {
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); // Reload to re-attach event listeners
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+      
+      const doc = iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write('<html><head><title>Print QR Code</title>');
+        // Optional: Add some basic styling for printing
+        doc.write('<style>body { text-align: center; font-family: sans-serif; } canvas { width: 200px !important; height: 200px !important; } </style>');
+        doc.write('</head><body>');
+        doc.write(printContents);
+        doc.write('</body></html>');
+        doc.close();
+        
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      }
+
+      // Clean up the iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
     }
   };
 
@@ -192,7 +213,7 @@ export default function AircraftPage() {
                                     <QrCode className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs" id="qr-code-dialog-wrapper">
+                            <DialogContent className="sm:max-w-xs">
                                 <div id="qr-code-dialog">
                                     <DialogHeader>
                                         <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
