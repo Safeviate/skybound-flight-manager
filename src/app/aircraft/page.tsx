@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -110,8 +111,10 @@ export default function AircraftPage() {
   const handleGenerateQrCode = (aircraftId: string) => {
     if (typeof window !== 'undefined') {
         const currentUrl = new URL(window.location.href);
-        const urlForQr = `${currentUrl.origin}/checklists/start/${aircraftId}`;
-        setQrCodeUrl(urlForQr);
+        const checklistPath = `/checklists/start/${aircraftId}`;
+        const loginUrl = new URL('/login', currentUrl.origin);
+        loginUrl.searchParams.set('redirect', checklistPath);
+        setQrCodeUrl(loginUrl.toString());
     }
   };
 
@@ -288,4 +291,5 @@ export default function AircraftPage() {
       </main>
     </div>
   );
-}
+
+    
