@@ -32,6 +32,21 @@ export default function OperationalSettingsPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
+                <Label htmlFor="enforce-pre-flight" className="text-base">
+                  Enforce Pre-Flight Checks
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Prevent approval of a flight booking until the pre-flight checklist for that specific flight is complete.
+                </p>
+              </div>
+              <Switch
+                id="enforce-pre-flight"
+                checked={settings.enforcePreFlightCheck}
+                onCheckedChange={() => handleToggle('enforcePreFlightCheck')}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
                 <Label htmlFor="enforce-post-flight" className="text-base">
                   Enforce Post-Flight Checks
                 </Label>

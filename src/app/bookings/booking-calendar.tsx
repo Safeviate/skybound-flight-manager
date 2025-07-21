@@ -119,7 +119,16 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                     </Button>
                                 );
                                 
-                                const isApprovalDisabled = !userCanApprove(booking) || (settings.enforcePostFlightCheck && !!aircraft?.isPostFlightPending);
+                                const isPostFlightPending = settings.enforcePostFlightCheck && !!aircraft?.isPostFlightPending;
+                                const isPreFlightPending = settings.enforcePreFlightCheck && !booking.isChecklistComplete;
+                                const isApprovalDisabled = !userCanApprove(booking) || isPostFlightPending || isPreFlightPending;
+
+                                let tooltipContent = null;
+                                if (isPostFlightPending) {
+                                    tooltipContent = "Previous flight's post-flight checklist is not complete for this aircraft.";
+                                } else if (isPreFlightPending) {
+                                    tooltipContent = "This flight's pre-flight checklist must be completed before approval.";
+                                }
                                 
                                 const approveButton = (
                                     <Button variant="outline" size="sm" onClick={() => onApproveBooking(booking.id)} disabled={isApprovalDisabled}>
@@ -145,9 +154,9 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                                     <TooltipTrigger asChild>
                                                         <div>{approveButton}</div>
                                                     </TooltipTrigger>
-                                                    {aircraft?.isPostFlightPending && settings.enforcePostFlightCheck && (
+                                                    {tooltipContent && (
                                                         <TooltipContent>
-                                                            <p>Previous flight's post-flight checklist is not complete for this aircraft.</p>
+                                                            <p>{tooltipContent}</p>
                                                         </TooltipContent>
                                                     )}
                                                 </Tooltip>

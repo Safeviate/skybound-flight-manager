@@ -29,6 +29,7 @@ import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { aircraftData, userData, trainingExercisesData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
+import { useSettings } from '@/context/settings-provider';
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -56,6 +57,7 @@ interface NewBookingFormProps {
 
 export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const { toast } = useToast();
+  const { settings } = useSettings();
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
   });
@@ -63,17 +65,22 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
+    const status = settings.requireInstructorApproval ? 'Pending Approval' : 'Approved';
+
     const newBooking: Omit<Booking, 'id'> = {
         ...data,
         date: format(data.date, 'yyyy-MM-dd'),
-        status: 'Pending Approval',
+        status,
         student: data.student || 'N/A',
         instructor: data.instructor || 'N/A',
     };
     onBookingCreated(newBooking);
+    
     toast({
       title: 'Booking Request Submitted',
-      description: 'The booking is now pending instructor approval.',
+      description: status === 'Pending Approval' 
+        ? 'The booking is now pending instructor approval.' 
+        : 'Your booking has been confirmed.',
     });
   }
   
