@@ -21,23 +21,36 @@ const defaultSettings: Settings = {
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => {
-    try {
-      const storedSettings = localStorage.getItem('operationalSettings');
-      return storedSettings ? JSON.parse(storedSettings) : defaultSettings;
-    } catch (error) {
-      return defaultSettings;
-    }
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     try {
-        localStorage.setItem('operationalSettings', JSON.stringify(settings));
+      const storedSettings = localStorage.getItem('operationalSettings');
+      if (storedSettings) {
+        setSettings(JSON.parse(storedSettings));
+      }
     } catch (error) {
-        console.error("Could not access localStorage. Settings will not be persisted.");
+        // If localStorage is not available or parsing fails, it will use defaultSettings
+        console.error("Could not access localStorage. Default settings will be used.");
     }
-  }, [settings]);
-
+  }, []);
+  
+  useEffect(() => {
+    if (isMounted) {
+        try {
+            localStorage.setItem('operationalSettings', JSON.stringify(settings));
+        } catch (error) {
+            console.error("Could not access localStorage. Settings will not be persisted.");
+        }
+    }
+  }, [settings, isMounted]);
+  
+  // To avoid hydration mismatch, we can return a loading state or the children with default values
+  // until the component is mounted on the client. Here, we pass the default values initially.
+  // The useEffect will then trigger a re-render with the correct client-side values.
+  
   return (
     <SettingsContext.Provider value={{ settings, setSettings }}>
       {children}
