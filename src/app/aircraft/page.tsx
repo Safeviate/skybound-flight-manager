@@ -109,10 +109,11 @@ export default function AircraftPage() {
   
   const handleGenerateQrCode = (aircraftId: string) => {
     if (typeof window !== 'undefined') {
+        // Instead of creating a clickable URL, we encode the URL as text.
+        // This avoids cross-device authentication issues in secure environments.
         const currentUrl = new URL(window.location.href);
-        // Point the QR code to the login page, passing the aircraftId as a parameter.
-        currentUrl.pathname = `/login`;
-        currentUrl.search = `?aircraftId=${aircraftId}`;
+        currentUrl.pathname = `/checklists/start/${aircraftId}`;
+        currentUrl.search = ''; // Clear other params
         setQrCodeUrl(currentUrl.toString());
     }
   };
@@ -265,7 +266,7 @@ export default function AircraftPage() {
                                     <DialogHeader>
                                         <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
                                         <DialogDescription className="text-center">
-                                            Scan to start pre-flight checklist.
+                                            Scan to copy checklist URL.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="p-4 flex justify-center">
