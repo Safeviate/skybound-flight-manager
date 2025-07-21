@@ -16,6 +16,7 @@ import { Calendar as CalendarIcon, GanttChartSquare, BookCopy, Check, Ban, Check
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { LogFlightForm } from './log-flight-form';
 import { useUser } from '@/context/user-provider';
+import { useSettings } from '@/context/settings-provider';
 
 
 type ViewMode = 'month' | 'gantt';
@@ -51,6 +52,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
     const [dialogsOpen, setDialogsOpen] = useState<{[key: string]: boolean}>({});
     const { user } = useUser();
+    const { settings } = useSettings();
 
     const bookedDays = bookings.map(b => parseISO(b.date));
 
@@ -111,14 +113,16 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                 const aircraft = fleet.find(ac => ac.tailNumber === booking.aircraft);
 
                                 const logFlightButton = (
-                                    <Button variant="outline" size="sm" disabled={!booking.isPostFlightChecklistComplete}>
+                                    <Button variant="outline" size="sm" disabled={settings.enforcePostFlightCheck && !booking.isPostFlightChecklistComplete}>
                                         <BookCopy className="mr-2 h-4 w-4" />
                                         Log Flight
                                     </Button>
                                 );
                                 
+                                const isApprovalDisabled = !userCanApprove(booking) || (settings.enforcePostFlightCheck && !!aircraft?.isPostFlightPending);
+                                
                                 const approveButton = (
-                                    <Button variant="outline" size="sm" onClick={() => onApproveBooking(booking.id)} disabled={!userCanApprove(booking) || aircraft?.isPostFlightPending}>
+                                    <Button variant="outline" size="sm" onClick={() => onApproveBooking(booking.id)} disabled={isApprovalDisabled}>
                                         <CheckCircle className="mr-2 h-4 w-4" />
                                         Approve
                                     </Button>
@@ -141,7 +145,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                                     <TooltipTrigger asChild>
                                                         <div>{approveButton}</div>
                                                     </TooltipTrigger>
-                                                    {aircraft?.isPostFlightPending && (
+                                                    {aircraft?.isPostFlightPending && settings.enforcePostFlightCheck && (
                                                         <TooltipContent>
                                                             <p>Previous flight's post-flight checklist is not complete for this aircraft.</p>
                                                         </TooltipContent>
@@ -158,7 +162,7 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
                                                                 <div>{logFlightButton}</div>
                                                             </DialogTrigger>
                                                         </TooltipTrigger>
-                                                        {!booking.isPostFlightChecklistComplete && (
+                                                        {!booking.isPostFlightChecklistComplete && settings.enforcePostFlightCheck && (
                                                             <TooltipContent>
                                                                 <p>Post-flight checklist must be completed.</p>
                                                             </TooltipContent>

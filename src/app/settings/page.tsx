@@ -11,7 +11,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header title="Settings" />
+      <Header title="Appearance Settings" />
       <main className="flex-1 p-4 md:p-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>

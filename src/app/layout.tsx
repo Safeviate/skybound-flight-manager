@@ -6,6 +6,7 @@ import Nav from '@/components/layout/nav';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SettingsProvider } from '@/context/settings-provider';
 
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <UserProvider>
+            <SettingsProvider>
               <SidebarProvider>
                   <Sidebar>
                       <Nav />
@@ -42,6 +44,7 @@ export default function RootLayout({
                   </SidebarInset>
               </SidebarProvider>
               <Toaster />
+            </SettingsProvider>
           </UserProvider>
         </ThemeProvider>
       </body>

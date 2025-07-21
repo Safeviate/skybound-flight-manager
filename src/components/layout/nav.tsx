@@ -28,6 +28,7 @@ import {
   LogOut,
   Bell,
   AreaChart,
+  Cog,
 } from 'lucide-react';
 import type { Permission } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -50,6 +51,11 @@ const navItems: {
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
   { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'] },
+];
+
+const settingsNavItems = [
+    { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
+    { href: '/settings', label: 'Appearance', icon: Settings },
 ];
 
 export default function Nav() {
@@ -79,6 +85,7 @@ export default function Nav() {
   };
 
   const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions));
+  const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
 
   return (
     <>
@@ -109,14 +116,16 @@ export default function Nav() {
       </SidebarContent>
       <SidebarFooter>
          <SidebarMenu>
-            <SidebarMenuItem>
-              <Link href="/settings" passHref>
-                <SidebarMenuButton tooltip={{ children: 'Settings' }} isActive={pathname === '/settings'} onClick={handleLinkClick}>
-                    <Settings />
-                    <span>Settings</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+            {visibleSettingsItems.map((item) => (
+                 <SidebarMenuItem key={item.href}>
+                    <Link href={item.href} passHref>
+                        <SidebarMenuButton tooltip={{ children: item.label }} isActive={pathname === item.href} onClick={handleLinkClick}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+            ))}
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip={{ children: 'Support' }}>
                     <HelpCircle />
