@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { aircraftData } from '@/lib/mock-data';
 import type { Booking, Aircraft } from '@/lib/types';
 import { format, parseISO, isSameDay, addDays, subDays, eachDayOfInterval, startOfDay, isPast, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
@@ -156,18 +156,13 @@ function GanttView({ bookings }: { bookings: Booking[] }) {
     const [currentDay, setCurrentDay] = useState(startOfDay(new Date('2024-08-15')));
     const timelineContainerRef = useRef<HTMLDivElement>(null);
     const aircraftColumnRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLDivElement>(null);
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
 
     const handleScroll = (event: UIEvent<HTMLDivElement>) => {
-        const { scrollLeft, scrollTop } = event.currentTarget;
-        if (headerRef.current) {
-            headerRef.current.scrollLeft = scrollLeft;
-        }
         if (aircraftColumnRef.current) {
-            aircraftColumnRef.current.scrollTop = scrollTop;
+            aircraftColumnRef.current.scrollTop = event.currentTarget.scrollTop;
         }
     };
 
@@ -188,16 +183,17 @@ function GanttView({ bookings }: { bookings: Booking[] }) {
                 <div className="font-semibold p-2 border-b border-r bg-muted flex items-end">
                     Aircraft
                 </div>
-                <div ref={headerRef} className="overflow-x-hidden border-b">
-                    <div className="grid grid-cols-24" style={{width: `${24 * 120}px`}}>
+                <ScrollArea className="border-b" style={{height: '40px'}}>
+                     <div className="grid grid-cols-24 h-10" style={{width: `${24 * 120}px`}}>
                          {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                            <div key={hour} className="p-2 text-center border-l font-semibold text-sm h-10 w-[120px]">
+                            <div key={hour} className="p-2 text-center border-l font-semibold text-sm w-[120px]">
                                 {format(new Date(0, 0, 0, hour), 'HH:mm')}
                             </div>
                         ))}
                     </div>
-                </div>
-
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+                
                 <div ref={aircraftColumnRef} className="overflow-y-hidden border-r bg-muted" style={{maxHeight: 'calc(100vh - 400px)'}}>
                    <GanttAircraftColumn />
                 </div>
