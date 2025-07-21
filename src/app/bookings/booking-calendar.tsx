@@ -59,7 +59,7 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
           </div>
         </div>
         <div className="text-lg font-semibold">
-            {format(currentDate, 'MMMM d, yyyy')}
+            {/* The time display has been removed from here */}
         </div>
         <div>{/* Placeholder for future controls */}</div>
       </div>
