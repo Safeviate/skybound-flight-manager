@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -11,12 +10,13 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { aircraftData } from '@/lib/mock-data';
 import type { Booking, Aircraft } from '@/lib/types';
-import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay, isPast } from 'date-fns';
-import { Calendar as CalendarIcon, GanttChartSquare, BookCopy, Check, Ban, CheckCircle } from 'lucide-react';
+import { format, parseISO, isSameDay, addDays, eachDayOfInterval, startOfDay, isPast, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
+import { Calendar as CalendarIcon, GanttChartSquare, BookCopy, Check, Ban, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { LogFlightForm } from './log-flight-form';
 import { useUser } from '@/context/user-provider';
 import { useSettings } from '@/context/settings-provider';
+import { cn } from '@/lib/utils.tsx';
 
 
 type ViewMode = 'month' | 'gantt';
@@ -48,21 +48,21 @@ interface MonthViewProps {
 
 function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthViewProps) {
     const today = startOfDay(new Date('2024-08-15'));
-    const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
-    const [dialogsOpen, setDialogsOpen] = useState<{[key: string]: boolean}>({});
+    const [currentMonth, setCurrentMonth] = useState(startOfMonth(today));
+    const [dialogsOpen, setDialogsOpen] = useState<{ [key: string]: boolean }>({});
     const { user } = useUser();
     const { settings } = useSettings();
 
-    const bookedDays = bookings.map(b => parseISO(b.date));
+    const firstDayOfMonth = startOfWeek(currentMonth);
+    const lastDayOfMonth = endOfWeek(endOfMonth(currentMonth));
+    const days = eachDayOfInterval({ start: firstDayOfMonth, end: lastDayOfMonth });
+    const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    const getBookingsForDay = (day: Date | undefined) => {
-        if (!day) return [];
+    const getBookingsForDay = (day: Date) => {
         return bookings
             .filter(booking => isSameDay(parseISO(booking.date), day))
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
     };
-
-    const selectedDayBookings = getBookingsForDay(selectedDay);
 
     const handleFlightLoggedAndClose = (bookingId: string) => {
         onFlightLogged(bookingId);
@@ -77,115 +77,74 @@ function MonthView({ bookings, fleet, onFlightLogged, onApproveBooking }: MonthV
         return user.name === booking.instructor;
     }
 
+    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+    
     return (
-        <div className="grid md:grid-cols-2 gap-8">
-            <div className="flex justify-center">
-                <Calendar
-                    mode="single"
-                    selected={selectedDay}
-                    onSelect={setSelectedDay}
-                    className="rounded-md border"
-                    defaultMonth={today}
-                    modifiers={{ booked: bookedDays }}
-                    modifiersClassNames={{
-                        booked: 'bg-primary/20 text-primary-foreground rounded-full',
-                    }}
-                />
+        <div className="flex flex-col h-[calc(100vh-280px)]">
+             <div className="flex items-center justify-center gap-4 mb-4">
+                <Button variant="outline" size="icon" onClick={prevMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <h2 className="text-xl font-semibold w-40 text-center">
+                    {format(currentMonth, 'MMMM yyyy')}
+                </h2>
+                <Button variant="outline" size="icon" onClick={nextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
             </div>
-            <div className="space-y-4">
-                <h3 className="text-xl font-semibold">
-                    {selectedDay ? format(selectedDay, 'EEEE, MMMM d') : 'No date selected'}
-                </h3>
-                {selectedDayBookings.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Time</TableHead>
-                                <TableHead>Aircraft</TableHead>
-                                <TableHead>Purpose</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {selectedDayBookings.map(booking => {
-                                const aircraft = fleet.find(ac => ac.tailNumber === booking.aircraft);
-
-                                const logFlightButton = (
-                                    <Button variant="outline" size="sm" disabled={settings.enforcePostFlightCheck && !booking.isPostFlightChecklistComplete}>
-                                        <BookCopy className="mr-2 h-4 w-4" />
-                                        Log Flight
-                                    </Button>
-                                );
-                                
-                                const isPostFlightPending = settings.enforcePostFlightCheck && !!aircraft?.isPostFlightPending;
-                                const isPreFlightPending = settings.enforcePreFlightCheck && !booking.isChecklistComplete;
-                                const isApprovalDisabled = !userCanApprove(booking) || isPostFlightPending || isPreFlightPending;
-
-                                let tooltipContent = null;
-                                if (isPostFlightPending) {
-                                    tooltipContent = "Previous flight's post-flight checklist is not complete for this aircraft.";
-                                } else if (isPreFlightPending) {
-                                    tooltipContent = "This flight's pre-flight checklist must be completed before approval.";
-                                }
-                                
-                                const approveButton = (
-                                    <Button variant="outline" size="sm" onClick={() => onApproveBooking(booking.id)} disabled={isApprovalDisabled}>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Approve
-                                    </Button>
-                                );
-
-                                return (
-                                <TableRow key={booking.id}>
-                                    <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
-                                    <TableCell className="font-medium">{booking.aircraft}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {booking.purpose === 'Training' && booking.status === 'Approved' && isPast(parseISO(booking.date)) && (
-                                            <Dialog open={dialogsOpen[booking.id]} onOpenChange={(isOpen) => setDialogsOpen(prev => ({...prev, [booking.id]: isOpen}))}>
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <DialogTrigger asChild>
-                                                                <div>{logFlightButton}</div>
-                                                            </DialogTrigger>
-                                                        </TooltipTrigger>
-                                                        {!booking.isPostFlightChecklistComplete && settings.enforcePostFlightCheck && (
-                                                            <TooltipContent>
-                                                                <p>Post-flight checklist must be completed.</p>
-                                                            </TooltipContent>
-                                                        )}
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                                <DialogContent>
-                                                    <DialogHeader>
-                                                        <DialogTitle>Log Training Flight</DialogTitle>
-                                                        <DialogDescription>
-                                                            Confirm flight details and add instructor notes.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <LogFlightForm booking={booking} onFlightLogged={() => handleFlightLoggedAndClose(booking.id)} />
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            )})}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">
-                            {selectedDay ? "No bookings for this day." : "Select a day to see bookings."}
-                        </p>
+            <div className="grid grid-cols-7 border-t border-l">
+                 {weekdays.map((day) => (
+                    <div key={day} className="p-2 text-center font-semibold text-sm border-b border-r bg-muted/50">
+                        {day}
                     </div>
-                )}
+                ))}
+            </div>
+            <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l">
+                {days.map((day) => {
+                    const dayBookings = getBookingsForDay(day);
+                    return (
+                        <div
+                            key={day.toString()}
+                            className={cn(
+                                "border-r border-b p-2 relative flex flex-col",
+                                isSameMonth(day, currentMonth) ? '' : 'bg-muted/30 text-muted-foreground',
+                                isSameDay(day, today) && 'bg-blue-100 dark:bg-blue-900/30'
+                            )}
+                        >
+                            <span className={cn(
+                                'font-semibold mb-2',
+                                isSameDay(day, today) && 'text-primary'
+                            )}>
+                                {format(day, 'd')}
+                            </span>
+                            <div className="space-y-1 overflow-y-auto">
+                                {dayBookings.map(booking => (
+                                     <TooltipProvider key={booking.id}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className={cn(
+                                                    'p-1.5 rounded-md text-xs text-white overflow-hidden text-left cursor-pointer',
+                                                    getPurposeVariant(booking.purpose) === 'destructive' ? 'bg-destructive' : 'bg-primary'
+                                                )}>
+                                                    <p className="font-semibold truncate">{booking.startTime} - {booking.aircraft}</p>
+                                                    <p className="truncate">{booking.purpose}</p>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{booking.aircraft} ({booking.purpose})</p>
+                                                <p>Time: {booking.startTime} - {booking.endTime}</p>
+                                                <p>Instructor: {booking.instructor}</p>
+                                                <p>Student: {booking.student}</p>
+                                                <p>Status: {booking.status}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
