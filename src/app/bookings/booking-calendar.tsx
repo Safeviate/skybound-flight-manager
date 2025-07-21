@@ -184,9 +184,9 @@ function GanttView({ bookings }: { bookings: Booking[] }) {
                     Aircraft
                 </div>
                 <ScrollArea className="border-b" style={{height: '40px'}}>
-                     <div className="grid grid-cols-24 h-10" style={{width: `${24 * 120}px`}}>
+                     <div className="flex h-10" style={{width: `${24 * 120}px`}}>
                          {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                            <div key={hour} className="p-2 text-center border-l font-semibold text-sm w-[120px]">
+                            <div key={hour} className="p-2 text-center border-l font-semibold text-sm w-[120px] flex-shrink-0">
                                 {format(new Date(0, 0, 0, hour), 'HH:mm')}
                             </div>
                         ))}
