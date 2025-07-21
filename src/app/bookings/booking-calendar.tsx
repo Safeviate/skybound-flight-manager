@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   addDays,
@@ -20,8 +20,9 @@ interface BookingCalendarProps {
 }
 
 export function BookingCalendar({ bookings }: BookingCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date('2024-08-15'));
-  const timelineHeaderRef = useRef<HTMLDivElement>(null);
+  const [currentDate, setCurrentDate] = React.useState(new Date('2024-08-15'));
+  const timelineHeaderRef = React.useRef<HTMLDivElement>(null);
+  const timelineContainerRef = React.useRef<HTMLDivElement>(null);
 
   const handlePreviousDay = () => {
     setCurrentDate(subDays(currentDate, 1));
@@ -68,11 +69,15 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
             <div className="p-2 border-b border-r">
               <h3 className="font-semibold text-center"></h3>
             </div>
-            <div className="p-2 border-b overflow-x-hidden">
-                <GanttTimelineHeader ref={timelineHeaderRef} />
+            <div className="p-2 border-b overflow-x-hidden" ref={timelineHeaderRef}>
+                <GanttTimelineHeader />
             </div>
-            <GanttAircraftColumn aircraft={aircraftData} />
-            <div className="overflow-x-auto" onScroll={handleTimelineScroll}>
+        </div>
+        <div className="grid grid-cols-[200px_1fr]">
+            <div className="p-2 border-r">
+                <h3 className="font-semibold text-center">Time</h3>
+            </div>
+             <div className="overflow-x-auto" ref={timelineContainerRef} onScroll={handleTimelineScroll}>
                 <GanttTimeline date={currentDate} bookings={bookings} aircraft={aircraftData} />
             </div>
         </div>
