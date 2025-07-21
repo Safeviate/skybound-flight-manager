@@ -201,14 +201,12 @@ function GanttView({ bookings }: GanttViewProps) {
                                 </div>
                                 {hours.map(hour => (
                                     <div key={hour} className="h-24 border-l relative flex">
-                                        {/* 15-minute grid lines */}
                                         <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
                                         <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
                                         <div className="w-1/4 h-full border-r border-dashed border-muted"></div>
                                         <div className="w-1/4 h-full"></div>
                                     </div>
                                 ))}
-                                {/* Render bookings for this aircraft */}
                                 {(bookingsByAircraft[aircraft.tailNumber] || [])
                                     .filter(b => isSameDay(parseISO(b.date), currentDay))
                                     .map(booking => {
@@ -220,7 +218,7 @@ function GanttView({ bookings }: GanttViewProps) {
                                         const startInMinutes = startHour * 60 + startMinute;
                                         const endInMinutes = endHour * 60 + endMinute;
 
-                                        const left = (startInMinutes / (24 * 60)) * (24 * 120); // 120 is hour width
+                                        const left = (startInMinutes / (24 * 60)) * (24 * 120);
                                         const width = ((endInMinutes - startInMinutes) / (24 * 60)) * (24 * 120);
 
                                         return (
