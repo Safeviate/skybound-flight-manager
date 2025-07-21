@@ -41,7 +41,7 @@ const getPurposeVariant = (purpose: Booking['purpose']) => {
     }
 };
 
-const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Booking[], currentDay: Date, onVerticalScroll: (scrollTop: number) => void }) => {
+const DayTimeline = ({ bookings, currentDay, onHorizontalScroll }: { bookings: Booking[], currentDay: Date, onHorizontalScroll: (scrollLeft: number) => void }) => {
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
         if (!acc[booking.aircraft]) {
             acc[booking.aircraft] = [];
@@ -55,7 +55,7 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
     useEffect(() => {
         const handleScroll = () => {
             if (scrollContainerRef.current) {
-                onVerticalScroll(scrollContainerRef.current.scrollTop);
+                onHorizontalScroll(scrollContainerRef.current.scrollLeft);
             }
         };
 
@@ -65,13 +65,12 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
         return () => {
             container?.removeEventListener('scroll', handleScroll);
         };
-    }, [onVerticalScroll]);
+    }, [onHorizontalScroll]);
 
 
     return (
         <ScrollArea ref={scrollContainerRef} className="flex-1" orientation="horizontal">
             <div className="relative" style={{ width: `${timelineHours.length * hourWidth}px` }}>
-                <DayTimelineHeader />
                 {aircraftData.map((aircraft) => (
                     <div key={aircraft.id} className="grid relative" style={{ gridTemplateColumns: `repeat(${timelineHours.length}, ${hourWidth}px)`, height: `${rowHeight}px` }}>
                         {/* Grid Background */}
@@ -145,16 +144,15 @@ const DayTimeline = ({ bookings, currentDay, onVerticalScroll }: { bookings: Boo
 function DayView({ bookings }: { bookings: Booking[] }) {
     const today = startOfDay(new Date('2024-08-15'));
     const [currentDay, setCurrentDay] = useState(today);
-    const aircraftColumnRef = useRef<HTMLDivElement>(null);
     const timelineHeaderRef = useRef<HTMLDivElement>(null);
 
     const nextDay = () => setCurrentDay(addDays(currentDay, 1));
     const prevDay = () => setCurrentDay(subDays(currentDay, 1));
     const goToToday = () => setCurrentDay(today);
 
-    const handleVerticalScroll = (scrollTop: number) => {
-        if (aircraftColumnRef.current) {
-            aircraftColumnRef.current.style.transform = `translateY(-${scrollTop}px)`;
+    const handleHorizontalScroll = (scrollLeft: number) => {
+        if (timelineHeaderRef.current) {
+            timelineHeaderRef.current.scrollLeft = scrollLeft;
         }
     };
 
@@ -176,9 +174,11 @@ function DayView({ bookings }: { bookings: Booking[] }) {
                 <div className="font-semibold p-2 border-b border-r bg-muted flex items-end sticky top-0 z-20">
                     Aircraft
                 </div>
-                <div className="p-2 border-b bg-muted" ref={timelineHeaderRef}></div>
+                <div className="border-b bg-muted overflow-x-hidden" ref={timelineHeaderRef}>
+                    <DayTimelineHeader />
+                </div>
                 <div className="border-r bg-muted overflow-hidden relative">
-                    <div ref={aircraftColumnRef}>
+                    <div>
                         {aircraftData.map(aircraft => (
                             <div 
                                 key={aircraft.id} 
@@ -191,7 +191,7 @@ function DayView({ bookings }: { bookings: Booking[] }) {
                     </div>
                 </div>
                 
-                <DayTimeline bookings={bookings} currentDay={currentDay} onVerticalScroll={handleVerticalScroll} />
+                <DayTimeline bookings={bookings} currentDay={currentDay} onHorizontalScroll={handleHorizontalScroll} />
             </div>
         </div>
     );
