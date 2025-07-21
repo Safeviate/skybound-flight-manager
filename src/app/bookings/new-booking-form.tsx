@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils.tsx';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { aircraftData, userData, trainingExercisesData } from '@/lib/mock-data';
+import type { Booking } from '@/lib/types';
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -49,7 +50,11 @@ const bookingFormSchema = z.object({
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
-export function NewBookingForm() {
+interface NewBookingFormProps {
+    onBookingCreated: (newBooking: Omit<Booking, 'id'>) => void;
+}
+
+export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const { toast } = useToast();
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
@@ -58,14 +63,17 @@ export function NewBookingForm() {
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
-    // In a real application, you would save this data to your database.
-    console.log({
+    const newBooking: Omit<Booking, 'id'> = {
         ...data,
         date: format(data.date, 'yyyy-MM-dd'),
-    });
+        status: 'Pending Approval',
+        student: data.student || 'N/A',
+        instructor: data.instructor || 'N/A',
+    };
+    onBookingCreated(newBooking);
     toast({
-      title: 'Booking Created',
-      description: 'The new booking has been added to the schedule.',
+      title: 'Booking Request Submitted',
+      description: 'The booking is now pending instructor approval.',
     });
   }
   

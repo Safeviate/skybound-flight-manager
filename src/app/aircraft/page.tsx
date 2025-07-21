@@ -29,6 +29,7 @@ import Link from 'next/link';
 export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
+  const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -41,24 +42,41 @@ export default function AircraftPage() {
 
     const isComplete = updatedChecklist.items.every(item => item.completed);
     if (!isComplete || !updatedChecklist.aircraftId) return;
+    
+    const aircraft = fleet.find(ac => ac.id === updatedChecklist.aircraftId);
+    if (!aircraft) return;
 
-    setBookings(prevBookings => 
-        prevBookings.map(booking => {
-            const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
-            if (!aircraft || booking.aircraft !== aircraft.tailNumber || booking.status !== 'Upcoming') {
+    if (updatedChecklist.category === 'Pre-Flight') {
+         setBookings(prevBookings => 
+            prevBookings.map(booking => {
+                if (booking.aircraft === aircraft.tailNumber && booking.status === 'Approved') {
+                    return { ...booking, isChecklistComplete: true };
+                }
                 return booking;
-            }
+            })
+        )
+    }
 
-            if (updatedChecklist.category === 'Pre-Flight') {
-                return { ...booking, isChecklistComplete: true };
-            }
-            if (updatedChecklist.category === 'Post-Flight') {
-                return { ...booking, isPostFlightChecklistComplete: true };
-            }
+    if (updatedChecklist.category === 'Post-Flight') {
+        // Find the completed booking this checklist belongs to.
+        // In a real app this link would be more direct.
+        const relatedBooking = bookings.find(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' && b.isChecklistComplete);
 
-            return booking;
-        })
-    )
+        if(relatedBooking) {
+            setBookings(prevBookings => 
+                prevBookings.map(booking => 
+                    booking.id === relatedBooking.id ? { ...booking, isPostFlightChecklistComplete: true } : booking
+                )
+            );
+        }
+
+        // Mark the aircraft as ready for the next flight
+        setFleet(prevFleet =>
+            prevFleet.map(ac => 
+                ac.id === aircraft.id ? { ...ac, isPostFlightPending: false } : ac
+            )
+        );
+    }
   };
   
   const handleReset = (checklistId: string) => {
@@ -163,7 +181,7 @@ export default function AircraftPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {aircraftData.map((aircraft) => {
+                {fleet.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
                   const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
                   const qrUrl = getQRCodeUrl(aircraft.id);

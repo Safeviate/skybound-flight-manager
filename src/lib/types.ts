@@ -1,13 +1,4 @@
 
-
-
-
-
-
-
-
-
-
 export type Airport = {
   id: string;
   name: string;
@@ -28,6 +19,7 @@ export type Aircraft = {
   airworthinessExpiry: string;
   insuranceExpiry: string;
   location: string; // Airport ID
+  isPostFlightPending?: boolean;
 };
 
 export type Endorsement = {
@@ -51,6 +43,7 @@ export type Permission =
   | 'Aircraft:Edit'
   | 'Bookings:View'
   | 'Bookings:Edit'
+  | 'Bookings:Approve'
   | 'Students:View'
   | 'Students:Edit'
   | 'Personnel:View'
@@ -72,6 +65,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Aircraft:Edit',
     'Bookings:View',
     'Bookings:Edit',
+    'Bookings:Approve',
     'Students:View',
     'Students:Edit',
     'Personnel:View',
@@ -136,7 +130,7 @@ export type Booking = {
   student: string;
   instructor: string;
   purpose: 'Training' | 'Maintenance' | 'Private';
-  status: 'Upcoming' | 'Completed' | 'Cancelled';
+  status: 'Pending Approval' | 'Approved' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
   isPostFlightChecklistComplete?: boolean;
 };
@@ -328,9 +322,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit', 'Reports:View'],
     'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Alerts:Edit'],
     'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Checklists:Edit'],
-    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
-    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
-    'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Students:View', 'Checklists:View'],
+    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
+    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit'],
+    'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Bookings:Approve', 'Students:View', 'Checklists:View'],
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
