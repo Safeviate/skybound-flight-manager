@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   addDays,
@@ -11,7 +11,6 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { aircraftData } from '@/lib/mock-data';
 import type { Booking } from '@/lib/types';
-import { GanttAircraftColumn } from './gantt-aircraft-column';
 import { GanttTimeline } from './gantt-timeline';
 import { GanttTimelineHeader } from './gantt-timeline-header';
 
@@ -58,10 +57,7 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
             </Button>
           </div>
         </div>
-        <div className="text-lg font-semibold">
-            {/* The time display has been removed from here */}
-        </div>
-        <div>{/* Placeholder for future controls */}</div>
+        <div></div>
       </div>
       
       <div className="border rounded-lg">
@@ -75,7 +71,7 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
         </div>
         <div className="grid grid-cols-[200px_1fr]">
             <div className="p-2 border-r">
-                <h3 className="font-semibold text-center">Time</h3>
+                <h3 className="font-semibold text-center"></h3>
             </div>
              <div className="overflow-x-auto" ref={timelineContainerRef} onScroll={handleTimelineScroll}>
                 <GanttTimeline date={currentDate} bookings={bookings} aircraft={aircraftData} />
