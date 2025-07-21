@@ -15,10 +15,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Printer } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/mock-data';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChecklistCard } from '../checklists/checklist-card';
@@ -84,6 +84,12 @@ export default function AircraftPage() {
         return `${window.location.origin}/checklists/start/${aircraftId}`;
     }
     return '';
+  };
+
+  const handlePrint = () => {
+    document.body.classList.add('print-qr-code');
+    window.print();
+    document.body.classList.remove('print-qr-code');
   };
 
 
@@ -181,7 +187,7 @@ export default function AircraftPage() {
                                     <QrCode className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs">
+                            <DialogContent className="sm:max-w-xs" id="qr-code-dialog">
                                 <DialogHeader>
                                     <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
                                     <DialogDescription className="text-center">
@@ -191,6 +197,12 @@ export default function AircraftPage() {
                                 <div className="p-4 flex justify-center">
                                     {qrUrl && <QRCode value={qrUrl} size={200} />}
                                 </div>
+                                <DialogFooter>
+                                    <Button onClick={handlePrint}>
+                                        <Printer className="mr-2 h-4 w-4" />
+                                        Print QR Code
+                                    </Button>
+                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </TableCell>

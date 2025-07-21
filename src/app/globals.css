@@ -131,3 +131,22 @@ body {
     display: block !important;
   }
 }
+
+.print-qr-code * {
+  visibility: hidden;
+}
+
+.print-qr-code [role="dialog"],
+.print-qr-code [role="dialog"] * {
+  visibility: visible;
+}
+
+.print-qr-code [role="dialog"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  box-shadow: none;
+}
