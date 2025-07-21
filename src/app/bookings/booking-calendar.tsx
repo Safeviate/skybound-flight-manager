@@ -20,7 +20,7 @@ const timelineHours = Array.from({ length: timelineEndHour - timelineStartHour +
 
 const DayTimelineHeader = ({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement> }) => {
     return (
-      <div ref={scrollRef} className="relative bg-muted" style={{ width: `${timelineHours.length * hourWidth}px` }}>
+      <div ref={scrollRef} className="relative bg-muted overflow-hidden" style={{ width: `${timelineHours.length * hourWidth}px` }}>
         <div className="flex">
           {timelineHours.map(hour => (
             <div key={hour} className="p-2 text-center border-l font-semibold text-sm w-[120px] flex-shrink-0">
