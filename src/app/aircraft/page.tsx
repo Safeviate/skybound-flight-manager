@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -109,6 +108,7 @@ export default function AircraftPage() {
   };
   
   const handleGenerateQrCode = (aircraftId: string) => {
+    // The QR code now contains a simple text identifier, not a URL.
     setQrCodeValue(`skybound-checklist:${aircraftId}`);
   };
 
@@ -260,7 +260,7 @@ export default function AircraftPage() {
                                     <DialogHeader>
                                         <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
                                         <DialogDescription className="text-center">
-                                            Scan to get checklist ID.
+                                            Scan to copy checklist ID. Paste it in the "Start Checklist" page on your mobile device.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="p-4 flex justify-center">
@@ -285,5 +285,3 @@ export default function AircraftPage() {
       </main>
     </div>
   );
-
-    

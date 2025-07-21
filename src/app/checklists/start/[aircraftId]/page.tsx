@@ -78,7 +78,7 @@ export default function StartChecklistPage() {
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
             <Rocket className="w-16 h-16 text-primary mb-4" />
             <h1 className="text-2xl font-bold">Checklist Not Found</h1>
-            <p className="text-muted-foreground">The checklist for this aircraft could not be located. Please check the QR code or contact support.</p>
+            <p className="text-muted-foreground">The checklist for this aircraft could not be located. Please check the ID or contact support.</p>
         </div>
       </div>
     );
