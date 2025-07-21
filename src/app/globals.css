@@ -103,23 +103,32 @@ body {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  body {
+    background: #fff;
+    color: #000;
   }
-  .qr-code-dialog, .qr-code-dialog * {
-    visibility: visible;
+  header, [data-sidebar], button, input, textarea, a[href], .no-print {
+    display: none !important;
   }
-  .qr-code-dialog {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-    box-shadow: none;
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
   }
   .no-print {
     display: none !important;
   }
+  .print\:block {
+    display: block !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  [role="tabpanel"][data-state="inactive"] {
+    display: block !important;
+  }
 }
-

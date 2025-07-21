@@ -86,8 +86,32 @@ export default function AircraftPage() {
     return '';
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (aircraftId: string) => {
+    const qrCodeDialogContent = document.getElementById(`qr-code-dialog-content-${aircraftId}`);
+    if (qrCodeDialogContent) {
+        const printWindow = window.open('', '', 'height=600,width=800');
+        if (printWindow) {
+            printWindow.document.write('<html><head><title>Print QR Code</title>');
+            // Include basic styles for centering
+            printWindow.document.write(`
+                <style>
+                    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+                    .print-container { text-align: center; }
+                </style>
+            `);
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<div class="print-container">');
+            printWindow.document.write(qrCodeDialogContent.innerHTML);
+            printWindow.document.write('</div>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
+    }
   };
 
 
@@ -185,18 +209,20 @@ export default function AircraftPage() {
                                     <QrCode className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs qr-code-dialog">
-                                <DialogHeader>
-                                    <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
-                                    <DialogDescription className="text-center">
-                                        Scan to start pre-flight checklist.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="p-4 flex justify-center">
-                                    {qrUrl && <QRCode value={qrUrl} size={200} renderAs="svg" />}
+                            <DialogContent className="sm:max-w-xs">
+                                <div id={`qr-code-dialog-content-${aircraft.id}`}>
+                                    <DialogHeader>
+                                        <DialogTitle className="text-center">{aircraft.model} ({aircraft.tailNumber})</DialogTitle>
+                                        <DialogDescription className="text-center">
+                                            Scan to start pre-flight checklist.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="p-4 flex justify-center">
+                                        {qrUrl && <QRCode value={qrUrl} size={200} renderAs="svg" />}
+                                    </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button onClick={handlePrint}>
+                                    <Button onClick={() => handlePrint(aircraft.id)}>
                                         <Printer className="mr-2 h-4 w-4" />
                                         Print QR Code
                                     </Button>
