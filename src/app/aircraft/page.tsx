@@ -141,7 +141,7 @@ export default function AircraftPage() {
                   <TableHead>Tail Number</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Flight Hours</TableHead>
+                  <TableHead>Hobbs Hours</TableHead>
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
