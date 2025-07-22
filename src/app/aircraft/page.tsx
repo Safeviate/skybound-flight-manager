@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Booking, Checklist } from '@/lib/types';
+import type { Aircraft, Booking, Checklist, Permission } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
@@ -26,6 +26,7 @@ import Link from 'next/link';
 import QRCode from 'qrcode.react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/context/user-provider';
 
 
 export default function AircraftPage() {
@@ -35,6 +36,9 @@ export default function AircraftPage() {
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
+  const { user } = useUser();
+
+  const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -204,7 +208,7 @@ export default function AircraftPage() {
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
                     </TableCell>
                     <TableCell>
-                        {isEditing ? (
+                        {isEditing && canEditAircraft ? (
                              <div className="flex items-center gap-2">
                                 <Input 
                                     type="number" 
@@ -219,9 +223,11 @@ export default function AircraftPage() {
                         ) : (
                             <div className="flex items-center gap-2">
                                 {aircraft.hours.toFixed(1)}
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
-                                    <Edit className="h-3 w-3" />
-                                </Button>
+                                {canEditAircraft && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
+                                        <Edit className="h-3 w-3" />
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </TableCell>
@@ -312,3 +318,5 @@ export default function AircraftPage() {
     </div>
   );
 }
+
+    
