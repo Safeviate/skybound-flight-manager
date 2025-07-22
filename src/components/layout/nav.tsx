@@ -30,6 +30,7 @@ import {
   AreaChart,
   Cog,
   QrCode,
+  Building,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -58,6 +59,7 @@ const navItems: {
 
 const settingsNavItems = [
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
+    { href: '/settings/companies', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
 

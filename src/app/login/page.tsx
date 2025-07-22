@@ -13,6 +13,7 @@ import type { User as AppUser, Role, Alert } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -180,6 +181,9 @@ export default function LoginPage() {
                     <p className="text-xs text-muted-foreground text-center px-4">
                         For demo purposes, you can use any email from the mock user data (e.g., admin@skybound.com) and any password.
                     </p>
+                    <Link href="/corporate" className="text-xs text-muted-foreground hover:underline">
+                        Need to register a new company?
+                    </Link>
                 </CardFooter>
             </form>
         </Card>
