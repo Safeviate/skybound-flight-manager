@@ -15,16 +15,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { PermissionsForm } from './permissions-form';
-import type { Role } from '@/lib/types';
-import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
+import type { Role, User } from '@/lib/types';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -43,8 +42,8 @@ const personnelFormSchema = z.object({
   }),
   email: z.string().email({ message: "Please enter a valid email."}),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
-  documentType: z.string({ required_error: 'Please select a document type.' }),
-  documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  medicalExpiry: z.date().optional(),
+  licenseExpiry: z.date().optional(),
   consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
     message: "You must give consent to proceed."
   }),
@@ -52,11 +51,19 @@ const personnelFormSchema = z.object({
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
 
-export function NewPersonnelForm() {
-  const { toast } = useToast();
+interface PersonnelFormProps {
+    onSubmit: (data: Omit<User, 'id'>) => void;
+    existingPersonnel?: User;
+}
+
+export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProps) {
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
-    defaultValues: {
+    defaultValues: existingPersonnel ? {
+        ...existingPersonnel,
+        medicalExpiry: existingPersonnel.medicalExpiry ? parseISO(existingPersonnel.medicalExpiry) : undefined,
+        licenseExpiry: existingPersonnel.licenseExpiry ? parseISO(existingPersonnel.licenseExpiry) : undefined,
+    } : {
       permissions: [],
       consentDisplayContact: false,
     }
@@ -65,23 +72,25 @@ export function NewPersonnelForm() {
   const selectedRole = form.watch('role');
 
   React.useEffect(() => {
-    if (selectedRole) {
+    // Do not auto-update permissions if we are editing an existing user
+    if (selectedRole && !existingPersonnel) {
       const permissionsForRole = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', permissionsForRole);
     }
-  }, [selectedRole, form]);
+  }, [selectedRole, form, existingPersonnel]);
 
-  function onSubmit(data: PersonnelFormValues) {
-    console.log(data);
-    toast({
-      title: 'Personnel Added',
-      description: `${data.name} has been added to the roster.`,
-    });
+  function handleFormSubmit(data: PersonnelFormValues) {
+    const submissionData = {
+        ...data,
+        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : undefined,
+        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : undefined,
+    };
+    onSubmit(submissionData as Omit<User, 'id'>);
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8 max-h-[70vh] overflow-y-auto p-1 pr-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
             <FormField
             control={form.control}
@@ -186,29 +195,48 @@ export function NewPersonnelForm() {
             <div className="flex flex-col md:flex-row gap-4">
                 <FormField
                     control={form.control}
-                    name="documentType"
+                    name="medicalExpiry"
                     render={({ field }) => (
                         <FormItem className="flex-1">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select document type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Medical">Medical Certificate</SelectItem>
-                                <SelectItem value="License">Pilot License</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                             <FormLabel>Medical Expiry</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick expiry date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
-                <FormField
+                 <FormField
                     control={form.control}
-                    name="documentExpiry"
+                    name="licenseExpiry"
                     render={({ field }) => (
                         <FormItem className="flex-1">
+                             <FormLabel>License Expiry</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <FormControl>
@@ -271,9 +299,11 @@ export function NewPersonnelForm() {
         />
 
         <div className="flex justify-end">
-            <Button type="submit">Add Personnel</Button>
+            <Button type="submit">{existingPersonnel ? 'Save Changes' : 'Add Personnel'}</Button>
         </div>
       </form>
     </Form>
   );
 }
+
+    

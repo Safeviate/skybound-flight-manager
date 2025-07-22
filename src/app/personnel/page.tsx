@@ -1,9 +1,10 @@
 
 'use client';
 
+import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -14,19 +15,51 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
-import { PlusCircle } from 'lucide-react';
-import { userData } from '@/lib/data-provider';
+import { PlusCircle, Edit } from 'lucide-react';
+import { userData as initialUserData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { NewPersonnelForm } from './new-personnel-form';
+import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/context/user-provider';
-
+import { useToast } from '@/hooks/use-toast';
 
 export default function PersonnelPage() {
     const { user } = useUser();
-    const personnelList = userData.filter(u => u.role !== 'Student');
+    const [personnelList, setPersonnelList] = useState(initialUserData.filter(u => u.role !== 'Student'));
+    const [editingPersonnel, setEditingPersonnel] = useState<User | null>(null);
+    const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
+    const { toast } = useToast();
     
     const canEditPersonnel = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
+
+    const handleFormSubmit = (personnelData: Omit<User, 'id'>) => {
+        if (editingPersonnel) {
+            // Update existing personnel
+            const updatedList = personnelList.map(p => p.id === editingPersonnel.id ? { ...editingPersonnel, ...personnelData } : p);
+            setPersonnelList(updatedList);
+            toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
+        } else {
+            // Add new personnel
+            const newUser: User = {
+                id: `p-${Date.now()}`,
+                ...personnelData,
+                permissions: personnelData.permissions || [],
+            };
+            setPersonnelList(prev => [...prev, newUser]);
+            toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
+        }
+        setEditingPersonnel(null);
+        setIsNewPersonnelDialogOpen(false);
+    };
+    
+    const handleEditClick = (person: User) => {
+        setEditingPersonnel(person);
+    }
+    
+    const handleDialogClose = () => {
+        setEditingPersonnel(null);
+        setIsNewPersonnelDialogOpen(false);
+    }
 
     const getRoleVariant = (role: Role) => {
         switch (role) {
@@ -53,9 +86,12 @@ export default function PersonnelPage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Personnel Roster</CardTitle>
+            <div>
+              <CardTitle>Personnel Roster</CardTitle>
+              <CardDescription>A list of all non-student personnel in the system.</CardDescription>
+            </div>
             {canEditPersonnel && (
-              <Dialog>
+              <Dialog open={isNewPersonnelDialogOpen} onOpenChange={setIsNewPersonnelDialogOpen}>
                   <DialogTrigger asChild>
                       <Button>
                           <PlusCircle className="mr-2 h-4 w-4" />
@@ -69,7 +105,7 @@ export default function PersonnelPage() {
                               Fill out the form below to add a new person to the roster.
                           </DialogDescription>
                       </DialogHeader>
-                      <NewPersonnelForm />
+                      <PersonnelForm onSubmit={handleFormSubmit} />
                   </DialogContent>
               </Dialog>
             )}
@@ -83,6 +119,7 @@ export default function PersonnelPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Permissions</TableHead>
+                  {canEditPersonnel && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -102,11 +139,31 @@ export default function PersonnelPage() {
                     </TableCell>
                     <TableCell>{person.consentDisplayContact ? person.email : '[Private]'}</TableCell>
                     <TableCell>{person.consentDisplayContact ? person.phone : '[Private]'}</TableCell>
-                    <TableCell className="space-x-1">
+                    <TableCell className="space-x-1 max-w-xs">
                         {person.permissions.map(p => (
-                            <Badge key={p} variant="secondary">{p}</Badge>
+                            <Badge key={p} variant="secondary" className="mb-1">{p}</Badge>
                         ))}
                     </TableCell>
+                    {canEditPersonnel && (
+                        <TableCell className="text-right">
+                           <Dialog open={editingPersonnel?.id === person.id} onOpenChange={(isOpen) => !isOpen && handleDialogClose()}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
+                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-2xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Personnel: {person.name}</DialogTitle>
+                                        <DialogDescription>
+                                            Update the details for this user.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <PersonnelForm onSubmit={handleFormSubmit} existingPersonnel={person} />
+                                </DialogContent>
+                            </Dialog>
+                        </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -117,3 +174,5 @@ export default function PersonnelPage() {
     </div>
   );
 }
+
+    
