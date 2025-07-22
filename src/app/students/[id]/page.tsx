@@ -145,10 +145,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                             <BookUser className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">Flight Hours: {student.flightHours?.toFixed(1)}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <Book className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Hobbs Hours: {student.flightHours?.toFixed(1)}</span>
-                        </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
                                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
@@ -248,7 +244,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle>Training Log</CardTitle>
-                            <CardDescription>Instructor summaries of flight sessions and student progress.</CardDescription>
+                            <CardDescription>Total Hobbs: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
