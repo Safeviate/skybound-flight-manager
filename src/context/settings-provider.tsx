@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface Settings {
   enforcePostFlightCheck: boolean;
   enforcePreFlightCheck: boolean;
+  enforcePostMaintenanceCheck: boolean;
 }
 
 interface SettingsContextType {
@@ -18,6 +19,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const defaultSettings: Settings = {
     enforcePostFlightCheck: true,
     enforcePreFlightCheck: true,
+    enforcePostMaintenanceCheck: true,
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {

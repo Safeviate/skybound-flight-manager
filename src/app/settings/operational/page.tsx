@@ -60,6 +60,21 @@ export default function OperationalSettingsPage() {
                 onCheckedChange={() => handleToggle('enforcePostFlightCheck')}
               />
             </div>
+             <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="enforce-post-maintenance" className="text-base">
+                  Enforce Post-Maintenance Checks
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Prevent an aircraft from being booked if it is in maintenance until a maintenance checklist is completed.
+                </p>
+              </div>
+              <Switch
+                id="enforce-post-maintenance"
+                checked={settings.enforcePostMaintenanceCheck}
+                onCheckedChange={() => handleToggle('enforcePostMaintenanceCheck')}
+              />
+            </div>
           </CardContent>
         </Card>
       </main>

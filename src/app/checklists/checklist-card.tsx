@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { Aircraft, Checklist, ChecklistItem } from '@/lib/types';
-import { RotateCcw, CheckCircle, Edit, Save, X, PlusCircle, Trash2 } from 'lucide-react';
+import { RotateCcw, CheckCircle, Edit, Save, X, PlusCircle, Trash2, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ interface ChecklistCardProps {
   checklist: Checklist;
   aircraft?: Aircraft;
   onItemToggle: (checklist: Checklist) => void;
-  onUpdate: (checklist: Checklist) => void;
+  onUpdate: (checklist: Checklist, hobbs?: number) => void;
   onReset: (checklistId: string) => void;
   onEdit: (checklist: Checklist) => void;
 }
@@ -24,6 +24,7 @@ interface ChecklistCardProps {
 export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset, onEdit }: ChecklistCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
+  const [hobbsValue, setHobbsValue] = useState<string>(aircraft?.hours.toFixed(1) || '');
   const { toast } = useToast();
 
   const handleItemToggle = (itemId: string) => {
@@ -38,6 +39,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
   const isComplete = progress === 100;
+  const isMaintenance = checklist.category === 'Maintenance';
 
   const handleResetClick = () => {
       onReset(checklist.id);
@@ -46,6 +48,9 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const getButtonState = () => {
       if (!isComplete) {
           return { text: 'Complete All Items', disabled: true, icon: <CheckCircle /> }
+      }
+      if (isMaintenance) {
+        return { text: 'Submit & Complete Maintenance', disabled: false, onClick: () => onUpdate(checklist, parseFloat(hobbsValue)), icon: <Wrench /> }
       }
       return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
   }
@@ -139,7 +144,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   }
 
   return (
-    <Card className={`flex flex-col ${isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
+    <Card className={`flex flex-col ${isComplete && !isMaintenance ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''} ${isComplete && isMaintenance ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
@@ -172,9 +177,21 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
             </div>
           ))}
         </div>
+        {isMaintenance && isComplete && (
+            <div className="space-y-2">
+                <Label htmlFor="hobbs">Post-Maintenance Hobbs Hours</Label>
+                <Input 
+                    id="hobbs" 
+                    type="number" 
+                    value={hobbsValue} 
+                    onChange={e => setHobbsValue(e.target.value)}
+                    placeholder={aircraft?.hours.toFixed(1)}
+                />
+            </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        {isComplete && (
+        {isComplete && !isMaintenance && (
             <p className="text-xs text-center text-muted-foreground p-2 bg-muted rounded-md">
                 By clicking "Submit", I confirm that I have completed this checklist in good faith and that all required documents are onboard as required by law.
             </p>

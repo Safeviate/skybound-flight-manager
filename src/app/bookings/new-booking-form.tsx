@@ -97,7 +97,8 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const availableAircraft = aircraftData.filter(ac => {
     const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
     const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
-    return ac.status === 'Available' && !airworthinessExpired && !insuranceExpired;
+    const isAvailable = settings.enforcePostMaintenanceCheck ? ac.status === 'Available' : ac.status !== 'In Maintenance';
+    return isAvailable && !airworthinessExpired && !insuranceExpired;
   });
 
   const availableInstructors = userData.filter(p => {

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, Permission } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Save } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -46,7 +46,7 @@ export default function AircraftPage() {
     );
   };
 
-  const handleChecklistUpdate = (updatedChecklist: Checklist) => {
+  const handleChecklistUpdate = (updatedChecklist: Checklist, hobbs?: number) => {
     handleItemToggle(updatedChecklist); // Ensure final state is up to date
 
     const isComplete = updatedChecklist.items.every(item => item.completed);
@@ -100,6 +100,18 @@ export default function AircraftPage() {
                 )
             );
         }
+    }
+
+    if (updatedChecklist.category === 'Maintenance' && hobbs !== undefined) {
+      setFleet(prevFleet =>
+        prevFleet.map(ac =>
+          ac.id === aircraft.id ? { ...ac, hours: hobbs, status: 'Available' } : ac
+        )
+      );
+      toast({
+        title: "Maintenance Complete",
+        description: `Aircraft ${aircraft.tailNumber} is now available. Hobbs hours set to ${hobbs}.`,
+      });
     }
   };
   
@@ -194,6 +206,7 @@ export default function AircraftPage() {
                 {fleet.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
                   const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
+                  const maintenanceChecklist = checklists.find(c => c.category === 'Maintenance' && c.aircraftId === aircraft.id);
                   const isEditing = editingHobbsId === aircraft.id;
 
                   return (
@@ -235,6 +248,26 @@ export default function AircraftPage() {
                     <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
                     <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                            {maintenanceChecklist && aircraft.status === 'In Maintenance' && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="destructive" size="sm">
+                                            <Wrench className="mr-2 h-4 w-4" />
+                                            Post-Maint.
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                    <ChecklistCard 
+                                        checklist={maintenanceChecklist}
+                                        aircraft={aircraft}
+                                        onItemToggle={handleItemToggle}
+                                        onUpdate={handleChecklistUpdate}
+                                        onReset={handleReset}
+                                        onEdit={() => {}}
+                                    />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="ghost" size="icon">
