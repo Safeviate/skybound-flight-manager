@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, Permission } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
+import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData, checklistData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
