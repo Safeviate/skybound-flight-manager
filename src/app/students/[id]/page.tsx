@@ -66,7 +66,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         doc.setFontSize(12);
         doc.text(`Student: ${student.name}`, 14, 32);
         doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
-        doc.text(`Total Hobbs Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
+        doc.text(`Total Flight Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
     
         // Endorsements Table
         if (student.endorsements && student.endorsements.length > 0) {
