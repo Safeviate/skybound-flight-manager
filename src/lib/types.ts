@@ -1,4 +1,5 @@
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -10,6 +11,7 @@ export type Airport = {
 
 export type Aircraft = {
   id: string;
+  companyId: string;
   tailNumber: string;
   model: string;
   status: 'Available' | 'In Maintenance' | 'Booked';
@@ -109,6 +111,7 @@ export type Role =
 
 export type User = {
     id: string;
+    companyId: string;
     name: string;
     role: Role;
     email: string;
@@ -130,6 +133,7 @@ export type User = {
 
 export type Booking = {
   id: string;
+  companyId: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -171,6 +175,7 @@ export type AssociatedRisk = {
 
 export type SafetyReport = {
   id: string;
+  companyId: string;
   reportNumber: string;
   occurrenceDate: string;
   filedDate: string;
@@ -236,6 +241,7 @@ export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
 
 export type Risk = {
   id: string;
+  companyId: string;
   hazard: string;
   risk: string;
   consequences: string[];
@@ -271,6 +277,7 @@ export type ChecklistItem = {
 
 export type Checklist = {
     id: string;
+    companyId: string;
     title: string;
     category: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
     items: ChecklistItem[];
@@ -279,6 +286,7 @@ export type Checklist = {
 
 export type CompletedChecklist = {
     id: string;
+    companyId: string;
     checklistId: string;
     checklistName: string;
     checklistType: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
@@ -298,6 +306,7 @@ export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' |
 
 export type AuditChecklist = {
     id: string;
+    companyId: string;
     title: string;
     area: AuditArea;
     items: AuditChecklistItem[];
@@ -370,6 +379,7 @@ export type NonConformanceIssue = {
 
 export type QualityAudit = {
   id: string;
+  companyId: string;
   date: string;
   type: 'Internal' | 'External';
   auditor: string;
@@ -384,6 +394,7 @@ export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled
 
 export type AuditScheduleItem = {
   id: string;
+  companyId: string;
   area: string;
   year: number;
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
@@ -392,6 +403,7 @@ export type AuditScheduleItem = {
 
 export type Alert = {
   id: string;
+  companyId: string;
   number: number;
   type: 'Red Tag' | 'Yellow Tag';
   title: string;

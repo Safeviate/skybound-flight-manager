@@ -8,11 +8,11 @@ export const airportData: Airport[] = [
 
 // Aircraft Data
 const rawAircraftData = [
-  { id: '1', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15', location: 'KPAO' },
-  { id: '2', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-15', location: 'KPAO' },
-  { id: '3', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01', location: 'KPAO' },
-  { id: '4', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2025-05-20', location: 'KPAO' },
-  { id: '5', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2024-07-10', insuranceExpiry: '2024-05-01', location: 'KPAO' },
+  { id: '1', companyId: 'skybound', tailNumber: 'N12345', model: 'Cessna 172 Skyhawk', status: 'Available', hours: 1250.5, airworthinessExpiry: '2025-05-20', insuranceExpiry: '2025-01-15', location: 'KPAO' },
+  { id: '2', companyId: 'skybound', tailNumber: 'N54321', model: 'Piper PA-28 Archer', status: 'In Maintenance', hours: 850.2, airworthinessExpiry: '2024-09-10', insuranceExpiry: '2024-08-15', location: 'KPAO' },
+  { id: '3', companyId: 'skybound', tailNumber: 'N67890', model: 'Diamond DA40 Star', status: 'Booked', hours: 475.8, airworthinessExpiry: '2024-06-01', insuranceExpiry: '2025-06-01', location: 'KPAO' },
+  { id: '4', companyId: 'skybound', tailNumber: 'N11223', model: 'Cirrus SR22', status: 'Available', hours: 320.0, airworthinessExpiry: '2025-03-15', insuranceExpiry: '2025-05-20', location: 'KPAO' },
+  { id: '5', companyId: 'skybound', tailNumber: 'N44556', model: 'Beechcraft G36 Bonanza', status: 'Available', hours: 2100.7, airworthinessExpiry: '2024-07-10', insuranceExpiry: '2024-05-01', location: 'KPAO' },
 ];
 
 export const aircraftData: Aircraft[] = rawAircraftData.map(ac => {
@@ -60,32 +60,32 @@ const studentTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
 // Unified User Data
 export const userData: User[] = [
     // Personnel
-    { id: 'p1', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: [] },
-    { id: 'p2', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] },
-    { id: 'p3', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: [] },
-    { id: 'p4', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
-    { id: 'p5', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
-    { id: 'p6', name: 'John Smith', role: 'Safety Manager', department: 'Management', email: 'john.smith@skybound.com', phone: '555-0105', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
-    { id: 'p7', name: 'Jessica Jones', role: 'Quality Manager', department: 'Management', email: 'jessica.jones@skybound.com', phone: '555-0106', permissions: [] },
+    { id: 'p1', companyId: 'skybound', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: [] },
+    { id: 'p2', companyId: 'skybound', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] },
+    { id: 'p3', companyId: 'skybound', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: [] },
+    { id: 'p4', companyId: 'skybound', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
+    { id: 'p5', companyId: 'skybound', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
+    { id: 'p6', companyId: 'skybound', name: 'John Smith', role: 'Safety Manager', department: 'Management', email: 'john.smith@skybound.com', phone: '555-0105', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
+    { id: 'p7', companyId: 'skybound', name: 'Jessica Jones', role: 'Quality Manager', department: 'Management', email: 'jessica.jones@skybound.com', phone: '555-0106', permissions: [] },
     // Students
-    { id: 's1', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'], permissions: [] },
-    { id: 's2', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'], permissions: [] },
-    { id: 's3', name: 'Peter Jones', role: 'Student', email: 'peter.jones@email.com', phone: '555-0203', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['s3'], trainingLogs: studentTrainingLogs['s3'], permissions: [] },
-    { id: 's4', name: 'Emily White', role: 'Student', email: 'emily.white@email.com', phone: '555-0204', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['s4'], trainingLogs: studentTrainingLogs['s4'], permissions: [] },
-    { id: 's5', name: 'Chris Green', role: 'Student', email: 'chris.green@email.com', phone: '555-0205', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['s5'], trainingLogs: studentTrainingLogs['s5'], permissions: [] },
+    { id: 's1', companyId: 'skybound', name: 'John Doe', role: 'Student', email: 'john.doe@email.com', phone: '555-0201', instructor: 'Mike Ross', flightHours: 45.5, progress: 75, medicalExpiry: '2025-01-01', licenseExpiry: '2025-06-01', status: 'Active', endorsements: studentEndorsements['s1'], trainingLogs: studentTrainingLogs['s1'], permissions: [] },
+    { id: 's2', companyId: 'skybound', name: 'Jane Smith', role: 'Student', email: 'jane.smith@email.com', phone: '555-0202', instructor: 'Sarah Connor', flightHours: 22.0, progress: 40, medicalExpiry: '2024-07-20', licenseExpiry: '2025-02-10', status: 'Active', endorsements: studentEndorsements['s2'], trainingLogs: studentTrainingLogs['s2'], permissions: [] },
+    { id: 's3', companyId: 'skybound', name: 'Peter Jones', role: 'Student', email: 'peter.jones@email.com', phone: '555-0203', instructor: 'Mike Ross', flightHours: 60.2, progress: 90, medicalExpiry: '2025-11-10', licenseExpiry: '2025-08-20', status: 'Active', endorsements: studentEndorsements['s3'], trainingLogs: studentTrainingLogs['s3'], permissions: [] },
+    { id: 's4', companyId: 'skybound', name: 'Emily White', role: 'Student', email: 'emily.white@email.com', phone: '555-0204', instructor: 'Laura Croft', flightHours: 10.5, progress: 20, medicalExpiry: '2026-03-01', licenseExpiry: '2024-08-01', status: 'Archived', endorsements: studentEndorsements['s4'], trainingLogs: studentTrainingLogs['s4'], permissions: [] },
+    { id: 's5', companyId: 'skybound', name: 'Chris Green', role: 'Student', email: 'chris.green@email.com', phone: '555-0205', instructor: 'Sarah Connor', flightHours: 35.8, progress: 65, medicalExpiry: '2025-09-15', licenseExpiry: '2025-09-15', status: 'Active', endorsements: studentEndorsements['s5'], trainingLogs: studentTrainingLogs['s5'], permissions: [] },
 ];
 
 // Booking Data
 export const bookingData: Booking[] = [
-  { id: '1', date: '2024-08-15', startTime: '14:00', endTime: '16:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: true },
-  { id: '2', date: '2024-08-16', startTime: '09:00', endTime: '17:00', aircraft: 'N54321', student: 'N/A', instructor: 'Hank Hill', purpose: 'Maintenance', status: 'Completed', isChecklistComplete: false },
-  { id: '3', date: '2024-08-16', startTime: '11:00', endTime: '12:30', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
-  { id: '4', date: '2024-08-17', startTime: '10:00', endTime: '12:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
-  { id: '5', date: '2024-08-17', startTime: '16:00', endTime: '17:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private', status: 'Approved', isChecklistComplete: false },
-  { id: 'b1', date: '2024-08-10', startTime: '10:00', endTime: '11:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
-  { id: 'b2', date: '2024-08-12', startTime: '13:00', endTime: '14:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
-  { id: 'b3', date: '2024-08-11', startTime: '09:00', endTime: '10:45', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
-  { id: 'b4', date: '2024-08-16', startTime: '14:00', endTime: '15:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
+  { id: '1', companyId: 'skybound', date: '2024-08-15', startTime: '14:00', endTime: '16:00', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: true },
+  { id: '2', companyId: 'skybound', date: '2024-08-16', startTime: '09:00', endTime: '17:00', aircraft: 'N54321', student: 'N/A', instructor: 'Hank Hill', purpose: 'Maintenance', status: 'Completed', isChecklistComplete: false },
+  { id: '3', companyId: 'skybound', date: '2024-08-16', startTime: '11:00', endTime: '12:30', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
+  { id: '4', companyId: 'skybound', date: '2024-08-17', startTime: '10:00', endTime: '12:00', aircraft: 'N11223', student: 'Peter Jones', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
+  { id: '5', companyId: 'skybound', date: '2024-08-17', startTime: '16:00', endTime: '17:00', aircraft: 'N44556', student: 'N/A', instructor: 'N/A', purpose: 'Private', status: 'Approved', isChecklistComplete: false },
+  { id: 'b1', companyId: 'skybound', date: '2024-08-10', startTime: '10:00', endTime: '11:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
+  { id: 'b2', companyId: 'skybound', date: '2024-08-12', startTime: '13:00', endTime: '14:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
+  { id: 'b3', companyId: 'skybound', date: '2024-08-11', startTime: '09:00', endTime: '10:45', aircraft: 'N67890', student: 'Jane Smith', instructor: 'Sarah Connor', purpose: 'Training', status: 'Completed', isChecklistComplete: true },
+  { id: 'b4', companyId: 'skybound', date: '2024-08-16', startTime: '14:00', endTime: '15:30', aircraft: 'N12345', student: 'John Doe', instructor: 'Mike Ross', purpose: 'Training', status: 'Approved', isChecklistComplete: false },
 ];
 
 // Training Exercises
@@ -130,6 +130,7 @@ export const checklistData: Checklist[] = [
     // Aircraft 1: Cessna 172
     {
         id: 'cl-1-pre',
+        companyId: 'skybound',
         title: 'Cessna 172 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '1',
@@ -137,6 +138,7 @@ export const checklistData: Checklist[] = [
     },
      {
         id: 'cl-1-post',
+        companyId: 'skybound',
         title: 'Cessna 172 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '1',
@@ -145,6 +147,7 @@ export const checklistData: Checklist[] = [
     // Aircraft 2: Piper PA-28
     {
         id: 'cl-2-pre',
+        companyId: 'skybound',
         title: 'Piper PA-28 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '2',
@@ -152,6 +155,7 @@ export const checklistData: Checklist[] = [
     },
     {
         id: 'cl-2-post',
+        companyId: 'skybound',
         title: 'Piper PA-28 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '2',
@@ -160,6 +164,7 @@ export const checklistData: Checklist[] = [
     // Aircraft 3: Diamond DA40
     {
         id: 'cl-3-pre',
+        companyId: 'skybound',
         title: 'Diamond DA40 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '3',
@@ -167,6 +172,7 @@ export const checklistData: Checklist[] = [
     },
     {
         id: 'cl-3-post',
+        companyId: 'skybound',
         title: 'Diamond DA40 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '3',
@@ -175,6 +181,7 @@ export const checklistData: Checklist[] = [
     // Aircraft 4: Cirrus SR22
     {
         id: 'cl-4-pre',
+        companyId: 'skybound',
         title: 'Cirrus SR22 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '4',
@@ -182,6 +189,7 @@ export const checklistData: Checklist[] = [
     },
     {
         id: 'cl-4-post',
+        companyId: 'skybound',
         title: 'Cirrus SR22 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '4',
@@ -190,6 +198,7 @@ export const checklistData: Checklist[] = [
     // Aircraft 5: Beechcraft G36
     {
         id: 'cl-5-pre',
+        companyId: 'skybound',
         title: 'Beechcraft G36 Pre-Flight Inspection',
         category: 'Pre-Flight',
         aircraftId: '5',
@@ -197,6 +206,7 @@ export const checklistData: Checklist[] = [
     },
     {
         id: 'cl-5-post',
+        companyId: 'skybound',
         title: 'Beechcraft G36 Post-Flight Secure',
         category: 'Post-Flight',
         aircraftId: '5',
@@ -205,6 +215,7 @@ export const checklistData: Checklist[] = [
     // Generic Maintenance
      {
         id: 'cl-maint-1',
+        companyId: 'skybound',
         title: '100-Hour Inspection',
         category: 'Maintenance',
         items: [
@@ -218,15 +229,16 @@ export const checklistData: Checklist[] = [
 ];
 
 export const completedChecklistData: CompletedChecklist[] = [
-    { id: 'ccl-1', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
-    { id: 'ccl-2', checklistId: 'cl-1-post', checklistName: 'Cessna 172 Post-Flight Secure', checklistType: 'Post-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
-    { id: 'ccl-3', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'Jane Smith', completionDate: '2024-08-12' },
+    { id: 'ccl-1', companyId: 'skybound', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-2', companyId: 'skybound', checklistId: 'cl-1-post', checklistName: 'Cessna 172 Post-Flight Secure', checklistType: 'Post-Flight', aircraftId: '1', completedBy: 'John Doe', completionDate: '2024-08-10' },
+    { id: 'ccl-3', companyId: 'skybound', checklistId: 'cl-1-pre', checklistName: 'Cessna 172 Pre-Flight Inspection', checklistType: 'Pre-Flight', aircraftId: '1', completedBy: 'Jane Smith', completionDate: '2024-08-12' },
 ];
 
 // Safety and Risk Data
 export const safetyReportData: SafetyReport[] = [
     { 
       id: 'sr1', 
+      companyId: 'skybound',
       reportNumber: 'FOR-001', 
       heading: 'Possible Bird Strike on Final Approach', 
       occurrenceDate: '2024-08-10', 
@@ -253,12 +265,12 @@ export const safetyReportData: SafetyReport[] = [
         { id: 'risk-sr1-3', hazard: 'Startle effect on pilot during a critical phase of flight.', risk: 'Sudden appearance of a large bird could cause an abrupt, inappropriate control input from the pilot, leading to an unstable approach.', likelihood: 'Unlikely', severity: 'Moderate', riskScore: 6, hazardArea: 'Flight Operations', process: 'Approach', promotedToRegister: false },
       ]
     },
-    { id: 'sr2', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', department: 'Flight Operations', subCategory: 'Unstable Approach', phaseOfFlight: 'Landing', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
-    { id: 'sr3', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', department: 'Ground Operation', phaseOfFlight: 'Servicing', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'RAMP' },
-    { id: 'sr4', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', department: 'Management', phaseOfFlight: 'Maintenance', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'ADRM' },
-    { id: 'sr5', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', department: 'Maintenance', phaseOfFlight: 'Parked', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
-    { id: 'sr6', reportNumber: 'FOR-003', heading: 'Another Unstable Approach', occurrenceDate: '2024-07-15', filedDate: '2024-07-15', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', department: 'Flight Operations', subCategory: 'Unstable Approach', phaseOfFlight: 'Approach', details: 'Student initiated go-around due to unstable approach. Good decision making.', status: 'Closed', aircraftInvolved: 'N67890', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'ARC' },
-    { id: 'sr7', reportNumber: 'ADR-002', heading: 'ELT Activated Erroneously', occurrenceDate: '2024-07-22', filedDate: '2024-07-22', submittedBy: 'Mike Ross', type: 'Aircraft Defect Report', department: 'Maintenance', phaseOfFlight: 'Post-flight', details: 'The Emergency Locator Transmitter (ELT) on N11223 activated on its own after shutdown. Required manual deactivation.', status: 'Closed', aircraftInvolved: 'N11223', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'SCF-NP' },
+    { id: 'sr2', companyId: 'skybound', reportNumber: 'FOR-002', heading: 'Unstable Approach and Hard Landing', occurrenceDate: '2024-08-12', filedDate: '2024-08-12', submittedBy: 'John Doe', type: 'Flight Operations Report', department: 'Flight Operations', subCategory: 'Unstable Approach', phaseOfFlight: 'Landing', details: 'Hard landing in N12345. Suspected ballooned landing, but aircraft seems undamaged. Recommending inspection.', status: 'Open', aircraftInvolved: 'N12345', location: 'KPAO', investigationTeam: ['John Doe'], occurrenceCategory: 'ARC' },
+    { id: 'sr3', companyId: 'skybound', reportNumber: 'GOR-001', heading: 'Sticky Fuel Pump Handle', occurrenceDate: '2024-07-28', filedDate: '2024-07-29', submittedBy: 'Hank Hill', type: 'Ground Operations Report', department: 'Ground Operation', phaseOfFlight: 'Servicing', details: 'Fuel pump handle in self-serve area is sticky and sometimes fails to shut off cleanly, causing minor spillage.', status: 'Closed', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'RAMP' },
+    { id: 'sr4', companyId: 'skybound', reportNumber: 'GR-001', heading: 'Hangar Door Grinding Noise', occurrenceDate: '2024-08-14', filedDate: '2024-08-15', submittedBy: 'Anonymous', type: 'General Report', department: 'Management', phaseOfFlight: 'Maintenance', details: 'Hangar door mechanism seems to be grinding and is difficult to open. May require servicing.', status: 'Open', aircraftInvolved: 'N/A', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'ADRM' },
+    { id: 'sr5', companyId: 'skybound', reportNumber: 'ADR-001', heading: 'Hydraulic Fluid Leak on Landing Gear', occurrenceDate: '2024-08-16', filedDate: '2024-08-16', submittedBy: 'Hank Hill', type: 'Aircraft Defect Report', department: 'Maintenance', phaseOfFlight: 'Parked', details: 'Landing gear strut on N54321 appears to be leaking hydraulic fluid.', status: 'Open', aircraftInvolved: 'N54321', location: 'KPAO', investigationTeam: ['Hank Hill'], occurrenceCategory: 'SCF-NP' },
+    { id: 'sr6', companyId: 'skybound', reportNumber: 'FOR-003', heading: 'Another Unstable Approach', occurrenceDate: '2024-07-15', filedDate: '2024-07-15', submittedBy: 'Sarah Connor', type: 'Flight Operations Report', department: 'Flight Operations', subCategory: 'Unstable Approach', phaseOfFlight: 'Approach', details: 'Student initiated go-around due to unstable approach. Good decision making.', status: 'Closed', aircraftInvolved: 'N67890', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'ARC' },
+    { id: 'sr7', companyId: 'skybound', reportNumber: 'ADR-002', heading: 'ELT Activated Erroneously', occurrenceDate: '2024-07-22', filedDate: '2024-07-22', submittedBy: 'Mike Ross', type: 'Aircraft Defect Report', department: 'Maintenance', phaseOfFlight: 'Post-flight', details: 'The Emergency Locator Transmitter (ELT) on N11223 activated on its own after shutdown. Required manual deactivation.', status: 'Closed', aircraftInvolved: 'N11223', location: 'KPAO', investigationTeam: [], occurrenceCategory: 'SCF-NP' },
 ];
 
 export const riskRegisterData: Risk[] = safetyReportData
@@ -267,6 +279,7 @@ export const riskRegisterData: Risk[] = safetyReportData
         .filter(risk => risk.promotedToRegister)
         .map(risk => ({
             id: `risk-reg-${risk.id}`,
+            companyId: 'skybound',
             hazard: risk.hazard,
             risk: risk.risk,
             consequences: ['Aircraft damage', 'Injury'], // Example data
@@ -287,6 +300,7 @@ export const riskRegisterData: Risk[] = safetyReportData
 export const qualityAuditData: QualityAudit[] = [
     {
         id: 'QA-001',
+        companyId: 'skybound',
         date: '2024-07-20',
         type: 'Internal',
         auditor: 'Jessica Jones',
@@ -301,6 +315,7 @@ export const qualityAuditData: QualityAudit[] = [
     },
     {
         id: 'QA-002',
+        companyId: 'skybound',
         date: '2024-06-15',
         type: 'External',
         auditor: 'FAA',
@@ -312,6 +327,7 @@ export const qualityAuditData: QualityAudit[] = [
     },
     {
         id: 'QA-003',
+        companyId: 'skybound',
         date: '2024-05-30',
         type: 'Internal',
         auditor: 'Jessica Jones',
@@ -327,6 +343,7 @@ export const qualityAuditData: QualityAudit[] = [
     },
     {
         id: 'QA-004',
+        companyId: 'skybound',
         date: '2024-04-10',
         type: 'Internal',
         auditor: 'Jessica Jones',
@@ -341,18 +358,19 @@ export const qualityAuditData: QualityAudit[] = [
 ];
 
 export const auditScheduleData: AuditScheduleItem[] = [
-  { id: 'sch-1', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
-  { id: 'sch-2', area: 'Maintenance', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
-  { id: 'sch-3', area: 'Ground Ops', year: new Date().getFullYear(), quarter: 'Q2', status: 'Scheduled' },
-  { id: 'sch-4', area: 'Management', year: new Date().getFullYear(), quarter: 'Q2', status: 'Pending' },
-  { id: 'sch-5', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
-  { id: 'sch-6', area: 'Safety Systems', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
-  { id: 'sch-7', area: 'External (FAA)', year: new Date().getFullYear(), quarter: 'Q4', status: 'Pending' },
+  { id: 'sch-1', companyId: 'skybound', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
+  { id: 'sch-2', companyId: 'skybound', area: 'Maintenance', year: new Date().getFullYear(), quarter: 'Q1', status: 'Completed' },
+  { id: 'sch-3', companyId: 'skybound', area: 'Ground Ops', year: new Date().getFullYear(), quarter: 'Q2', status: 'Scheduled' },
+  { id: 'sch-4', companyId: 'skybound', area: 'Management', year: new Date().getFullYear(), quarter: 'Q2', status: 'Pending' },
+  { id: 'sch-5', companyId: 'skybound', area: 'Flight Operations', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
+  { id: 'sch-6', companyId: 'skybound', area: 'Safety Systems', year: new Date().getFullYear(), quarter: 'Q3', status: 'Scheduled' },
+  { id: 'sch-7', companyId: 'skybound', area: 'External (FAA)', year: new Date().getFullYear(), quarter: 'Q4', status: 'Pending' },
 ];
 
 export const auditChecklistData: AuditChecklist[] = [
     {
         id: 'saccaa-01',
+        companyId: 'skybound',
         title: 'Personnel & Licensing Audit',
         area: 'Personnel',
         items: [
@@ -365,6 +383,7 @@ export const auditChecklistData: AuditChecklist[] = [
     },
     {
         id: 'saccaa-02',
+        companyId: 'skybound',
         title: 'Aircraft & Maintenance Records Audit',
         area: 'Maintenance',
         items: [
@@ -377,6 +396,7 @@ export const auditChecklistData: AuditChecklist[] = [
     },
     {
         id: 'saccaa-03',
+        companyId: 'skybound',
         title: 'Training & Procedures Manual (TPM) Audit',
         area: 'Management',
         items: [
@@ -389,6 +409,7 @@ export const auditChecklistData: AuditChecklist[] = [
     },
      {
         id: 'saccaa-04',
+        companyId: 'skybound',
         title: 'Student Records & Progress Audit',
         area: 'Records',
         items: [
@@ -401,6 +422,7 @@ export const auditChecklistData: AuditChecklist[] = [
     },
     {
         id: 'saccaa-05',
+        companyId: 'skybound',
         title: 'Facilities & Equipment Audit',
         area: 'Facilities',
         items: [
@@ -416,6 +438,7 @@ export const auditChecklistData: AuditChecklist[] = [
 export const mockAlerts: Alert[] = [
   {
     id: '1',
+    companyId: 'skybound',
     number: 1,
     type: 'Red Tag',
     title: 'GROUND ALL AIRCRAFT - SEVERE WEATHER',
@@ -426,6 +449,7 @@ export const mockAlerts: Alert[] = [
   },
   {
     id: '2',
+    companyId: 'skybound',
     number: 1,
     type: 'Yellow Tag',
     title: 'Runway 31 Closed for Maintenance',
@@ -436,6 +460,7 @@ export const mockAlerts: Alert[] = [
   },
   {
     id: '3',
+    companyId: 'skybound',
     number: 2,
     type: 'Yellow Tag',
     title: 'Increased Bird Activity Reported',
