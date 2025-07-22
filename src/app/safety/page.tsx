@@ -20,8 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { safetyReportData as initialSafetyReports } from '@/lib/mock-data';
-import { riskRegisterData as initialRisks } from '@/lib/mock-data';
+import { safetyReportData as initialSafetyReports, riskRegisterData as initialRisks } from '@/lib/data-provider';
 import type { SafetyReport, Risk, GroupedRisk, Department } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';

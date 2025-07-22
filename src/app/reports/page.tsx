@@ -4,7 +4,7 @@
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { bookingData, userData, aircraftData } from '@/lib/mock-data';
+import { bookingData, userData, aircraftData } from '@/lib/data-provider';
 import { useMemo } from 'react';
 
 const AircraftUtilizationChart = () => {

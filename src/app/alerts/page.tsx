@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
-import { mockAlerts as initialAlerts } from '@/lib/mock-data';
+import { allAlerts as initialAlerts } from '@/lib/data-provider';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {

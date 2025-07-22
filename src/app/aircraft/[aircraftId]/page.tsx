@@ -4,12 +4,12 @@
 import { useParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { aircraftData, completedChecklistData } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
 import { Plane, Wrench, Hourglass, Calendar, CheckSquare } from 'lucide-react';
+import { aircraftData, completedChecklistData } from '@/lib/data-provider';
 
 export default function AircraftDetailPage() {
   const params = useParams();

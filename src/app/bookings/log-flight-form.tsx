@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import type { Booking, User } from '@/lib/types';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 
 const logFlightFormSchema = z.object({
   flightDuration: z.coerce.number().min(0.1, {

@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { aircraftData, userData, trainingExercisesData } from '@/lib/mock-data';
+import { aircraftData, userData, trainingExercisesData } from '@/lib/data-provider';
 import type { Booking } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
 

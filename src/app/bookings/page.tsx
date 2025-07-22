@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { NewBookingForm } from './new-booking-form';
 import { useState } from 'react';
 import type { Booking } from '@/lib/types';
-import { bookingData as initialBookingData } from '@/lib/mock-data';
+import { bookingData as initialBookingData } from '@/lib/data-provider';
 import { BookingCalendar } from './booking-calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MonthlyCalendarView } from './monthly-calendar-view';

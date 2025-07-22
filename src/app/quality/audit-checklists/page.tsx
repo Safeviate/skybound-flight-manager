@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { auditChecklistData } from '@/lib/mock-data';
+import { auditChecklistData } from '@/lib/data-provider';
 import type { AuditChecklist, QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';

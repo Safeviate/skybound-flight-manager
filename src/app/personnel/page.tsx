@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
 import { PlusCircle } from 'lucide-react';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

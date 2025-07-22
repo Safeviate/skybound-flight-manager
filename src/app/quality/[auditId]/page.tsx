@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { qualityAuditData } from '@/lib/mock-data';
+import { qualityAuditData } from '@/lib/data-provider';
 import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';

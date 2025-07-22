@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { safetyReportData as initialSafetyReports, userData } from '@/lib/mock-data';
+import { safetyReportData as initialSafetyReports, userData } from '@/lib/data-provider';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry, FiveWhysAnalysisOutput } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction, fiveWhysAnalysisAction } from './actions';
 import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer, PlusCircle, Mail } from 'lucide-react';

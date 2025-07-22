@@ -19,7 +19,7 @@ import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';

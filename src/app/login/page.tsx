@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
-import { userData, mockAlerts as allAlerts } from '@/lib/mock-data';
+import { userData, allAlerts } from '@/lib/data-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

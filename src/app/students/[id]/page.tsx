@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
@@ -19,6 +19,8 @@ import { AddEndorsementForm } from './add-endorsement-form';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
 import { useUser } from '@/context/user-provider';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 export default function StudentProfilePage({ params }: { params: { id: string } }) {
@@ -52,46 +54,50 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
     const handleDownloadLogbook = () => {
         if (!student || !student.endorsements || !student.trainingLogs) return;
-    
-        const escapeCsvCell = (cell: any) => {
-          const cellStr = String(cell).replace(/"/g, '""');
-          return `"${cellStr}"`;
-        };
-    
-        let csvContent = "data:text/csv;charset=utf-8,";
-    
-        csvContent += "Student Endorsements\n";
-        csvContent += "Endorsement,Date Awarded,Awarded By\n";
-        student.endorsements.forEach((e: Endorsement) => {
-          const row = [e.name, e.dateAwarded, e.awardedBy].map(escapeCsvCell).join(",");
-          csvContent += row + "\n";
-        });
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(20);
+        doc.text("Student Training Log", 14, 22);
+
+        // Student Info
+        doc.setFontSize(12);
+        doc.text(`Student: ${student.name}`, 14, 32);
+        doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
+        doc.text(`Total Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
+
+        // Endorsements Table
+        if (student.endorsements.length > 0) {
+            autoTable(doc, {
+                startY: 54,
+                head: [['Endorsement', 'Date Awarded', 'Awarded By']],
+                body: student.endorsements.map(e => [e.name, e.dateAwarded, e.awardedBy]),
+                headStyles: { fillColor: [22, 163, 74] },
+            });
+        }
+
+        // Training Log Table
+        if (student.trainingLogs.length > 0) {
+             autoTable(doc, {
+                startY: (doc as any).lastAutoTable.finalY + 10,
+                head: [['Date', 'Aircraft', 'Duration (hrs)', 'Instructor', 'Notes']],
+                body: student.trainingLogs.map(log => [
+                    log.date,
+                    log.aircraft,
+                    log.flightDuration,
+                    log.instructorName,
+                    log.instructorNotes,
+                ]),
+                headStyles: { fillColor: [22, 163, 74] },
+                columnStyles: {
+                    4: { cellWidth: 'auto' },
+                }
+            });
+        }
         
-        csvContent += "\n\n";
-    
-        csvContent += "Training Log\n";
-        const headers = ["Date", "Aircraft", "Flight Duration (hrs)", "Instructor", "Notes"];
-        csvContent += headers.join(",") + "\n";
-    
-        student.trainingLogs.forEach((log: TrainingLogEntry) => {
-          const row = [
-            log.date,
-            log.aircraft,
-            log.flightDuration,
-            log.instructorName,
-            log.instructorNotes,
-          ].map(escapeCsvCell).join(",");
-          csvContent += row + "\n";
-        });
-    
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        const fileName = `${student.name.replace(/\s+/g, '_').toLowerCase()}_logbook.csv`;
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const fileName = `${student.name.replace(/\s+/g, '_').toLowerCase()}_logbook.pdf`;
+        doc.save(fileName);
     };
 
     const handleArchive = () => {

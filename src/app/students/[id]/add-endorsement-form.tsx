@@ -21,7 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { userData, trainingExercisesData } from '@/lib/mock-data';
+import { userData, trainingExercisesData } from '@/lib/data-provider';
 import type { Role } from '@/lib/types';
 
 const endorsementFormSchema = z.object({

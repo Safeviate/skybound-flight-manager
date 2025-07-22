@@ -22,7 +22,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import type { Role } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 

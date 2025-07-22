@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { aircraftData } from '@/lib/mock-data';
+import { aircraftData } from '@/lib/data-provider';
 
 export function GanttAircraftColumn() {
   return (

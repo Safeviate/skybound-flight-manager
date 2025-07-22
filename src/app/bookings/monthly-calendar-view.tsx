@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Booking } from '@/lib/types';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { CalendarIcon, Plane } from 'lucide-react';
-import { aircraftData } from '@/lib/mock-data';
+import { aircraftData } from '@/lib/data-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MonthlyCalendarViewProps {

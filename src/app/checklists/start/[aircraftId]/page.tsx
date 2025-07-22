@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import type { Checklist, Aircraft } from '@/lib/types';
-import { checklistData, aircraftData } from '@/lib/mock-data';
+import { checklistData, aircraftData } from '@/lib/data-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';

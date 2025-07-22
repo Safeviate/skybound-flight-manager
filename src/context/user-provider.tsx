@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert } from '@/lib/types';
-import { userData, mockAlerts } from '@/lib/mock-data';
+import { userData, allAlerts } from '@/lib/data-provider';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 interface UserContextType {
@@ -44,7 +44,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUser(userWithPermissions);
         
         // Simulate acknowledging alerts
-        mockAlerts.forEach(alert => {
+        allAlerts.forEach(alert => {
             if (!alert.readBy.includes(userToLogin.name)) {
                 alert.readBy.push(userToLogin.name);
             }

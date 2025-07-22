@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import type { SafetyReport } from '@/lib/types';
 import { UserPlus, X, User as UserIcon } from 'lucide-react';
 

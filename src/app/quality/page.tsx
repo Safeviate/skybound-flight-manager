@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/mock-data';
+import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/data-provider';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';

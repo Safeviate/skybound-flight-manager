@@ -21,7 +21,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { aircraftData, userData } from '@/lib/mock-data';
+import { aircraftData, userData } from '@/lib/data-provider';
 import type { Role } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 

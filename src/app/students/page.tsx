@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronRight, PlusCircle, Archive, RotateCw } from 'lucide-react';
-import { userData } from '@/lib/mock-data';
+import { userData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';

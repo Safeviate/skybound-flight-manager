@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { aircraftData, bookingData } from '@/lib/mock-data';
+import { aircraftData, bookingData } from '@/lib/data-provider';
 import type { Booking } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';

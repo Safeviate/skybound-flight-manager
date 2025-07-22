@@ -4,12 +4,11 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/mock-data';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format, parseISO, isBefore, differenceInDays } from 'date-fns';
+import { format, parseISO, isBefore, differenceInDays, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +18,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getExpiryBadge } from '@/lib/utils.tsx';
+import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/data-provider';
 
 export default function MyProfilePage() {
     const { user, loading } = useUser();
@@ -62,7 +62,7 @@ export default function MyProfilePage() {
             setBookings(prevBookings => 
                 prevBookings.map(booking => {
                     const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
-                    if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Upcoming') {
+                    if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Approved') {
                         return { ...booking, isChecklistComplete: true };
                     }
                     return booking;
@@ -91,7 +91,7 @@ export default function MyProfilePage() {
         if (!day) return [];
         return userBookings
         .filter(booking => isSameDay(parseISO(booking.date), day))
-        .sort((a, b) => a.time.localeCompare(b.time));
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
     };
 
     const bookedDays = userBookings.map(b => parseISO(b.date));
@@ -267,14 +267,14 @@ export default function MyProfilePage() {
                             const preFlightChecklist = relatedAircraft ? checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === relatedAircraft.id) : undefined;
                             return (
                                 <TableRow key={booking.id}>
-                                    <TableCell>{booking.time}</TableCell>
+                                    <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
                                     <TableCell className="font-medium">{booking.aircraft}</TableCell>
                                     <TableCell>{user.role === 'Instructor' ? booking.student : booking.instructor}</TableCell>
                                     <TableCell>
                                     <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        {booking.purpose === 'Training' && booking.status === 'Upcoming' && preFlightChecklist && (
+                                        {booking.purpose === 'Training' && booking.status === 'Approved' && preFlightChecklist && (
                                             <Dialog>
                                                 <DialogTrigger asChild>
                                                     <Button variant="outline" size="sm">
