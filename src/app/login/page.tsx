@@ -5,11 +5,14 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { userData, allAlerts, companyData } from '@/lib/data-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LogIn, Rocket, AlertTriangle, Info, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { User as AppUser, Role, Alert } from '@/lib/types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -35,6 +38,9 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [alertsToShow, setAlertsToShow] = useState<Alert[]>([]);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { toast } = useToast();
 
   // For this demo, we assume a single company ("skybound") on the login page.
   // In a real multi-tenant app, this might be determined by the URL (e.g., skybound.yourapp.com)
@@ -65,13 +71,24 @@ export default function LoginPage() {
     setAcknowledged(true);
   };
 
-  const handleLogin = (userId: string) => {
-    login(userId);
-    const redirectPath = searchParams.get('redirect');
-    if (redirectPath) {
-        router.push(redirectPath);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const foundUser = userData.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (foundUser) {
+        login(foundUser.id);
+        const redirectPath = searchParams.get('redirect');
+        if (redirectPath) {
+            router.push(redirectPath);
+        } else {
+            router.push('/');
+        }
     } else {
-        router.push('/');
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: 'No user found with that email address.',
+        });
     }
   };
   
@@ -84,15 +101,6 @@ export default function LoginPage() {
         default: return 'outline'
     }
   }
-
-  const representativeUsers: AppUser[] = [];
-  const roles = new Set<Role>();
-  userData.forEach(user => {
-    if (!roles.has(user.role)) {
-        roles.add(user.role);
-        representativeUsers.push(user);
-    }
-  });
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
@@ -133,35 +141,47 @@ export default function LoginPage() {
             </CardContent>
         </Card>
       ) : (
-        <Card className="w-full max-w-lg">
-            <CardHeader>
-            <CardTitle className="text-2xl">Select a User Role</CardTitle>
-            <CardDescription>
-                Choose a user to simulate logging in. This will adjust the application's UI and permissions based on the selected user's role.
-            </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-            {representativeUsers.map((user) => (
-                <div
-                key={user.id}
-                className="flex items-center justify-between rounded-md border p-4"
-                >
-                <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-muted">
-                        <UserIcon className="h-6 w-6 text-muted-foreground" />
+        <Card className="w-full max-w-md">
+            <form onSubmit={handleLogin}>
+                <CardHeader>
+                    <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                    <CardDescription>
+                        Enter your credentials to sign in to your account.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input 
+                            id="email" 
+                            type="email" 
+                            placeholder="m@example.com" 
+                            required 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
                     </div>
-                    <div>
-                    <p className="font-semibold">{user.name}</p>
-                    <Badge variant={getRoleVariant(user.role)}>{user.role}</Badge>
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input 
+                            id="password" 
+                            type="password" 
+                            required 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
-                </div>
-                <Button onClick={() => handleLogin(user.id)} size="sm">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Log In As
-                </Button>
-                </div>
-            ))}
-            </CardContent>
+                </CardContent>
+                <CardFooter className="flex flex-col gap-4">
+                    <Button type="submit" className="w-full">
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center px-4">
+                        For demo purposes, you can use any email from the mock user data (e.g., admin@skybound.com) and any password.
+                    </p>
+                </CardFooter>
+            </form>
         </Card>
       )}
     </div>
