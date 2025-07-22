@@ -40,6 +40,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   
   const isComplete = progress === 100;
   const isMaintenance = checklist.category === 'Post-Maintenance';
+  const isPostFlight = checklist.category === 'Post-Flight';
 
   const handleResetClick = () => {
       onReset(checklist.id);
@@ -49,8 +50,10 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
       if (!isComplete) {
           return { text: 'Complete All Items', disabled: true, icon: <CheckCircle /> }
       }
-      if (isMaintenance) {
-        return { text: 'Submit & Complete Maintenance', disabled: false, onClick: () => onUpdate(checklist, parseFloat(hobbsValue)), icon: <Wrench /> }
+      if (isMaintenance || isPostFlight) {
+        let buttonText = isMaintenance ? 'Submit & Complete Maintenance' : 'Submit & Complete Flight';
+        let icon = isMaintenance ? <Wrench /> : <CheckCircle />;
+        return { text: buttonText, disabled: false, onClick: () => onUpdate(checklist, parseFloat(hobbsValue)), icon: icon }
       }
       return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
   }
@@ -144,7 +147,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   }
 
   return (
-    <Card className={`flex flex-col ${isComplete && !isMaintenance ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''} ${isComplete && isMaintenance ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}>
+    <Card className={`flex flex-col ${isComplete && !isMaintenance && !isPostFlight ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''} ${isComplete && (isMaintenance || isPostFlight) ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
@@ -177,9 +180,9 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
             </div>
           ))}
         </div>
-        {isMaintenance && isComplete && (
+        {(isMaintenance || isPostFlight) && isComplete && (
             <div className="space-y-2">
-                <Label htmlFor="hobbs">Post-Maintenance Hobbs Hours</Label>
+                <Label htmlFor="hobbs">{isMaintenance ? 'Post-Maintenance' : 'Final'} Hobbs Hours</Label>
                 <Input 
                     id="hobbs" 
                     type="number" 
