@@ -257,6 +257,9 @@ export default function AircraftPage() {
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                    <DialogHeader>
+                                        <DialogTitle>{maintenanceChecklist.title}</DialogTitle>
+                                    </DialogHeader>
                                     <ChecklistCard 
                                         checklist={maintenanceChecklist}
                                         aircraft={aircraft}
@@ -304,6 +307,9 @@ export default function AircraftPage() {
                                         </DropdownMenuItem>
                                         </DialogTrigger>
                                         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                        <DialogHeader>
+                                            <DialogTitle>{preFlightChecklist.title}</DialogTitle>
+                                        </DialogHeader>
                                         <ChecklistCard 
                                             checklist={preFlightChecklist}
                                             aircraft={aircraft}
@@ -323,6 +329,9 @@ export default function AircraftPage() {
                                         </DropdownMenuItem>
                                         </DialogTrigger>
                                         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                        <DialogHeader>
+                                            <DialogTitle>{postFlightChecklist.title}</DialogTitle>
+                                        </DialogHeader>
                                         <ChecklistCard 
                                             checklist={postFlightChecklist}
                                             aircraft={aircraft}
