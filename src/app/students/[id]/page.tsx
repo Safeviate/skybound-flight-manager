@@ -53,34 +53,36 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     }
 
     const handleDownloadLogbook = () => {
-        if (!student || !student.endorsements || !student.trainingLogs) return;
-
+        if (!student) return;
+    
         const doc = new jsPDF();
-
+        let startY = 54;
+    
         // Title
         doc.setFontSize(20);
         doc.text("Student Training Log", 14, 22);
-
+    
         // Student Info
         doc.setFontSize(12);
         doc.text(`Student: ${student.name}`, 14, 32);
         doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
         doc.text(`Total Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
-
+    
         // Endorsements Table
-        if (student.endorsements.length > 0) {
+        if (student.endorsements && student.endorsements.length > 0) {
             autoTable(doc, {
-                startY: 54,
+                startY: startY,
                 head: [['Endorsement', 'Date Awarded', 'Awarded By']],
                 body: student.endorsements.map(e => [e.name, e.dateAwarded, e.awardedBy]),
-                headStyles: { fillColor: [22, 163, 74] },
+                headStyles: { fillColor: [34, 197, 94] }, // A green color
             });
+            startY = (doc as any).lastAutoTable.finalY + 10;
         }
-
+    
         // Training Log Table
-        if (student.trainingLogs.length > 0) {
+        if (student.trainingLogs && student.trainingLogs.length > 0) {
              autoTable(doc, {
-                startY: (doc as any).lastAutoTable.finalY + 10,
+                startY: startY,
                 head: [['Date', 'Aircraft', 'Duration (hrs)', 'Instructor', 'Notes']],
                 body: student.trainingLogs.map(log => [
                     log.date,
@@ -89,7 +91,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                     log.instructorName,
                     log.instructorNotes,
                 ]),
-                headStyles: { fillColor: [22, 163, 74] },
+                headStyles: { fillColor: [34, 197, 94] },
                 columnStyles: {
                     4: { cellWidth: 'auto' },
                 }
