@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -24,12 +24,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { ChecklistCard } from '../checklists/checklist-card';
 import Link from 'next/link';
 import QRCode from 'qrcode.react';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
   const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
+  const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
+  const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
+  const { toast } = useToast();
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -110,6 +115,25 @@ export default function AircraftPage() {
       })
     );
   };
+
+  const handleEditHobbs = (aircraft: Aircraft) => {
+    setEditingHobbsId(aircraft.id);
+    setHobbsInputValue(aircraft.hours);
+  };
+  
+  const handleSaveHobbs = (aircraftId: string) => {
+      setFleet(prevFleet =>
+          prevFleet.map(ac =>
+              ac.id === aircraftId ? { ...ac, hours: hobbsInputValue } : ac
+          )
+      );
+      const updatedAircraft = fleet.find(ac => ac.id === aircraftId);
+      toast({
+          title: "Hobbs Hours Updated",
+          description: `Hobbs hours for ${updatedAircraft?.tailNumber} set to ${hobbsInputValue.toFixed(1)}.`,
+      });
+      setEditingHobbsId(null);
+  };
   
   const getStatusVariant = (status: Aircraft['status']) => {
     switch (status) {
@@ -166,6 +190,8 @@ export default function AircraftPage() {
                 {fleet.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
                   const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
+                  const isEditing = editingHobbsId === aircraft.id;
+
                   return (
                   <TableRow key={aircraft.id}>
                     <TableCell className="font-medium">
@@ -177,7 +203,28 @@ export default function AircraftPage() {
                     <TableCell>
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
                     </TableCell>
-                    <TableCell>{aircraft.hours.toFixed(1)}</TableCell>
+                    <TableCell>
+                        {isEditing ? (
+                             <div className="flex items-center gap-2">
+                                <Input 
+                                    type="number" 
+                                    value={hobbsInputValue}
+                                    onChange={(e) => setHobbsInputValue(parseFloat(e.target.value))}
+                                    className="w-24 h-8"
+                                />
+                                <Button size="icon" className="h-8 w-8" onClick={() => handleSaveHobbs(aircraft.id)}>
+                                    <Save className="h-4 w-4" />
+                                </Button>
+                             </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                {aircraft.hours.toFixed(1)}
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
+                                    <Edit className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        )}
+                    </TableCell>
                     <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
                     <TableCell className="text-right">
