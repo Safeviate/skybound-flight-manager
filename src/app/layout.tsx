@@ -9,6 +9,7 @@ import { UserProvider } from '@/context/user-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
 import Footer from '@/components/layout/footer';
+import { DynamicThemeApplicator } from '@/components/dynamic-theme-applicator';
 
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
         >
           <UserProvider>
             <SettingsProvider>
+              <DynamicThemeApplicator />
               <SidebarProvider>
                   <Sidebar>
                       <Nav />

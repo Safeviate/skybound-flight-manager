@@ -3,7 +3,17 @@ import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist,
 import { getNextService } from './utils.tsx';
 
 export const companyData: Company[] = [
-    { id: 'skybound', name: 'SkyBound', trademark: 'Safeviate' },
+    { 
+        id: 'skybound', 
+        name: 'SkyBound', 
+        trademark: 'Safeviate',
+        theme: {
+            primary: '217.2 91.2% 59.8%',
+            background: '0 0% 94.1%',
+            card: '0 0% 100%',
+            accent: '39 100% 50%',
+        }
+    },
 ];
 
 export const airportData: Airport[] = [
