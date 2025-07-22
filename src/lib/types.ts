@@ -324,7 +324,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Accountable Manager': ['Super User'],
     'Admin': ['Super User'],
     'Operations Manager': ['Super User'],
-    'HR Manager': ['Super User'],
+    'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
     'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
     'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
     'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],

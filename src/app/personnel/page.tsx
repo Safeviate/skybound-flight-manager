@@ -19,11 +19,15 @@ import { userData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUser } from '@/context/user-provider';
 
 
 export default function PersonnelPage() {
+    const { user } = useUser();
     const personnelList = userData.filter(u => u.role !== 'Student');
     
+    const canEditPersonnel = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
+
     const getRoleVariant = (role: Role) => {
         switch (role) {
             case 'Instructor':
@@ -50,23 +54,25 @@ export default function PersonnelPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Personnel Roster</CardTitle>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Personnel
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Add New Personnel</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to add a new person to the roster.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <NewPersonnelForm />
-                </DialogContent>
-            </Dialog>
+            {canEditPersonnel && (
+              <Dialog>
+                  <DialogTrigger asChild>
+                      <Button>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add Personnel
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-2xl">
+                      <DialogHeader>
+                          <DialogTitle>Add New Personnel</DialogTitle>
+                          <DialogDescription>
+                              Fill out the form below to add a new person to the roster.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <NewPersonnelForm />
+                  </DialogContent>
+              </Dialog>
+            )}
           </CardHeader>
           <CardContent>
             <Table>
