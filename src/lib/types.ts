@@ -1,5 +1,6 @@
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -7,6 +8,12 @@ export type Airport = {
     lat: number;
     lon: number;
   };
+};
+
+export type Company = {
+  id: string;
+  name: string;
+  trademark?: string;
 };
 
 export type Aircraft = {

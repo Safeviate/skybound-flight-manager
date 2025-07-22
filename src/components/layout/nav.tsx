@@ -63,7 +63,7 @@ const settingsNavItems = [
 export default function Nav() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const { user, logout } = useUser();
+  const { user, company, logout } = useUser();
   const router = useRouter();
   const userPermissions = user?.permissions || [];
 
@@ -94,7 +94,7 @@ export default function Nav() {
       <SidebarHeader>
         <div className="flex items-center gap-2 p-2">
             <Rocket className="h-8 w-8 text-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">SkyBound</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

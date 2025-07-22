@@ -1,4 +1,5 @@
 
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Sidebar, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';

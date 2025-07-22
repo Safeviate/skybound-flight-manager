@@ -2,12 +2,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, Alert } from '@/lib/types';
-import { userData, allAlerts } from '@/lib/data-provider';
+import type { User, Alert, Company } from '@/lib/types';
+import { userData, allAlerts, companyData } from '@/lib/data-provider';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 interface UserContextType {
   user: User | null;
+  company: Company | null;
   loading: boolean;
   login: (userId: string) => void;
   logout: () => void;
@@ -17,6 +18,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +29,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (foundUser) {
             const permissions = ROLE_PERMISSIONS[foundUser.role] || [];
             setUser({ ...foundUser, permissions });
+            const foundCompany = companyData.find(c => c.id === foundUser.companyId);
+            setCompany(foundCompany || null);
         }
       }
     } catch (error) {
@@ -43,6 +47,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const userWithPermissions = { ...userToLogin, permissions };
         setUser(userWithPermissions);
         
+        const foundCompany = companyData.find(c => c.id === userToLogin.companyId);
+        setCompany(foundCompany || null);
+
         // Simulate acknowledging alerts
         allAlerts.forEach(alert => {
             if (!alert.readBy.includes(userToLogin.name)) {
@@ -57,6 +64,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     } else {
         setUser(null);
+        setCompany(null);
         try {
             localStorage.removeItem('currentUserId');
         } catch (error) {
@@ -67,6 +75,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
+    setCompany(null);
     try {
         localStorage.removeItem('currentUserId');
     } catch (error) {
@@ -75,7 +84,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout }}>
+    <UserContext.Provider value={{ user, company, loading, login, logout }}>
       {children}
     </UserContext.Provider>
   );

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
-import { userData, allAlerts } from '@/lib/data-provider';
+import { userData, allAlerts, companyData } from '@/lib/data-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,10 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [alertsToShow, setAlertsToShow] = useState<Alert[]>([]);
   const [acknowledged, setAcknowledged] = useState(false);
+
+  // For this demo, we assume a single company ("skybound") on the login page.
+  // In a real multi-tenant app, this might be determined by the URL (e.g., skybound.yourapp.com)
+  const company = companyData.find(c => c.id === 'skybound');
 
   useEffect(() => {
     try {
@@ -94,7 +98,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
          <Rocket className="h-8 w-8 text-primary" />
-         <span className="text-xl font-semibold">SkyBound</span>
+         <span className="text-xl font-semibold">{company?.name || 'SkyBound'}</span>
       </div>
       
       {!acknowledged ? (

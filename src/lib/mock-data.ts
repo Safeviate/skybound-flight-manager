@@ -1,6 +1,10 @@
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company } from './types';
 import { getNextService } from './utils.tsx';
+
+export const companyData: Company[] = [
+    { id: 'skybound', name: 'SkyBound', trademark: 'Safeviate' },
+];
 
 export const airportData: Airport[] = [
   { id: 'KPAO', name: 'Palo Alto Airport', coords: { lat: 37.4613, lon: -122.1148 } },

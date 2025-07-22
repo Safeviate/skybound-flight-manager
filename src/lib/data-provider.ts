@@ -14,9 +14,10 @@ import {
   mockAlerts,
   userData as mockUserData,
   airportData as mockAirportData,
-  trainingExercisesData as mockTrainingExercisesData
+  trainingExercisesData as mockTrainingExercisesData,
+  companyData as mockCompanyData,
 } from './mock-data';
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company } from './types';
 
 
 const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
@@ -38,4 +39,4 @@ export const qualityAuditData: QualityAudit[] = useMockData ? mockQualityAuditDa
 export const auditScheduleData: AuditScheduleItem[] = useMockData ? mockAuditScheduleData : [];
 export const auditChecklistData: AuditChecklist[] = useMockData ? mockAuditChecklistData : [];
 export const allAlerts: Alert[] = useMockData ? mockAlerts : [];
-
+export const companyData: Company[] = useMockData ? mockCompanyData : [];
