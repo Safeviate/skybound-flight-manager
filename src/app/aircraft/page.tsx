@@ -38,7 +38,7 @@ export default function AircraftPage() {
   const { toast } = useToast();
   const { user } = useUser();
 
-  const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
+  const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklists(prevChecklists =>
@@ -208,7 +208,7 @@ export default function AircraftPage() {
                       <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
                     </TableCell>
                     <TableCell>
-                        {isEditing && canEditAircraft ? (
+                        {isEditing && canUpdateHobbs ? (
                              <div className="flex items-center gap-2">
                                 <Input 
                                     type="number" 
@@ -223,7 +223,7 @@ export default function AircraftPage() {
                         ) : (
                             <div className="flex items-center gap-2">
                                 {aircraft.hours.toFixed(1)}
-                                {canEditAircraft && (
+                                {canUpdateHobbs && (
                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
                                         <Edit className="h-3 w-3" />
                                     </Button>
@@ -318,5 +318,3 @@ export default function AircraftPage() {
     </div>
   );
 }
-
-    

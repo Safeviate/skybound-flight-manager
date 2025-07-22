@@ -43,6 +43,7 @@ export type TrainingLogEntry = {
 export type Permission =
   | 'Aircraft:View'
   | 'Aircraft:Edit'
+  | 'Aircraft:UpdateHobbs'
   | 'Bookings:View'
   | 'Bookings:Edit'
   | 'Bookings:Approve'
@@ -66,6 +67,7 @@ export type Permission =
 export const ALL_PERMISSIONS: Permission[] = [
     'Aircraft:View',
     'Aircraft:Edit',
+    'Aircraft:UpdateHobbs',
     'Bookings:View',
     'Bookings:Edit',
     'Bookings:Approve',
@@ -325,8 +327,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'HR Manager': ['Super User'],
     'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
     'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Alerts:Edit'],
-    'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Checklists:Edit'],
+    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
+    'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
     'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
     'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
     'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Bookings:Approve', 'Students:View', 'Checklists:View'],
