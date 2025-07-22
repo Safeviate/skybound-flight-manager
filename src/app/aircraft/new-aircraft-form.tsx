@@ -131,7 +131,7 @@ export function NewAircraftForm() {
             name="hours"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Flight Hours</FormLabel>
+                <FormLabel>Hobbs Hours</FormLabel>
                 <FormControl>
                     <Input type="number" placeholder="1250.5" {...field} />
                 </FormControl>
