@@ -58,24 +58,39 @@ export default function AircraftPage() {
     }
 
     if (updatedChecklist.category === 'Post-Flight') {
-        // Find the completed booking this checklist belongs to.
-        // In a real app this link would be more direct.
         const relatedBooking = bookings.find(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' && b.isChecklistComplete);
 
         if(relatedBooking) {
             setBookings(prevBookings => 
                 prevBookings.map(booking => 
-                    booking.id === relatedBooking.id ? { ...booking, isPostFlightChecklistComplete: true } : booking
+                    booking.id === relatedBooking.id ? { ...booking, status: 'Completed', isPostFlightChecklistComplete: true } : booking
+                )
+            );
+
+            const startTime = relatedBooking.startTime.split(':').map(Number);
+            const endTime = relatedBooking.endTime.split(':').map(Number);
+            const durationHours = (endTime[0] * 60 + endTime[1] - (startTime[0] * 60 + startTime[1])) / 60;
+            
+            if (durationHours > 0) {
+                 setFleet(prevFleet =>
+                    prevFleet.map(ac => 
+                        ac.id === aircraft.id ? { ...ac, hours: ac.hours + durationHours, isPostFlightPending: false } : ac
+                    )
+                );
+            } else {
+                 setFleet(prevFleet =>
+                    prevFleet.map(ac => 
+                        ac.id === aircraft.id ? { ...ac, isPostFlightPending: false } : ac
+                    )
+                );
+            }
+        } else {
+             setFleet(prevFleet =>
+                prevFleet.map(ac => 
+                    ac.id === aircraft.id ? { ...ac, isPostFlightPending: false } : ac
                 )
             );
         }
-
-        // Mark the aircraft as ready for the next flight
-        setFleet(prevFleet =>
-            prevFleet.map(ac => 
-                ac.id === aircraft.id ? { ...ac, isPostFlightPending: false } : ac
-            )
-        );
     }
   };
   
