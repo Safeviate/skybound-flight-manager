@@ -31,7 +31,7 @@ import {
   Cog,
   QrCode,
 } from 'lucide-react';
-import type { Permission } from '@/lib/types';
+import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 
 
@@ -40,6 +40,7 @@ const navItems: {
   label: string;
   icon: React.ElementType;
   requiredPermissions?: Permission[];
+  requiredFeature?: Feature;
 }[] = [
   { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -52,7 +53,7 @@ const navItems: {
   { href: '/checklists', label: 'Checklist Templates', icon: ClipboardCheck, requiredPermissions: ['Checklists:View', 'Checklists:Edit'] },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
-  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'] },
+  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
 ];
 
 const settingsNavItems = [
@@ -66,6 +67,7 @@ export default function Nav() {
   const { user, company, logout } = useUser();
   const router = useRouter();
   const userPermissions = user?.permissions || [];
+  const companyFeatures = company?.enabledFeatures || [];
 
   const handleLogout = () => {
     logout();
@@ -85,8 +87,15 @@ export default function Nav() {
     }
     return requiredPermissions.some(p => userPermissions.includes(p));
   };
+  
+  const hasFeature = (requiredFeature?: Feature) => {
+    if (!requiredFeature) {
+        return true; // No specific feature required
+    }
+    return companyFeatures.includes(requiredFeature);
+  };
 
-  const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions));
+  const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
   const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
 
   return (

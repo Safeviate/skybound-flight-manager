@@ -1,5 +1,5 @@
 
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company, Feature } from './types';
 import { getNextService } from './utils.tsx';
 
 export const companyData: Company[] = [
@@ -12,7 +12,8 @@ export const companyData: Company[] = [
             background: '0 0% 94.1%',
             card: '0 0% 100%',
             accent: '39 100% 50%',
-        }
+        },
+        enabledFeatures: ['AdvancedAnalytics'],
     },
 ];
 

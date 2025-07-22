@@ -2,6 +2,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -33,11 +34,14 @@ export type ThemeColors = {
   ring: string;
 };
 
+export type Feature = 'AdvancedAnalytics' | 'AIAuditAnalysis' | 'CustomChecklists';
+
 export type Company = {
   id: string;
   name: string;
   trademark?: string;
   theme?: Partial<ThemeColors>;
+  enabledFeatures?: Feature[];
 };
 
 export type Aircraft = {
