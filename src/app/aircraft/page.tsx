@@ -102,7 +102,7 @@ export default function AircraftPage() {
         }
     }
 
-    if (updatedChecklist.category === 'Maintenance' && hobbs !== undefined) {
+    if (updatedChecklist.category === 'Post-Maintenance' && hobbs !== undefined) {
       setFleet(prevFleet =>
         prevFleet.map(ac =>
           ac.id === aircraft.id ? { ...ac, hours: hobbs, status: 'Available' } : ac
@@ -206,7 +206,7 @@ export default function AircraftPage() {
                 {fleet.map((aircraft) => {
                   const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
                   const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
-                  const maintenanceChecklist = checklists.find(c => c.category === 'Maintenance' && c.aircraftId === aircraft.id);
+                  const maintenanceChecklist = checklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
                   const isEditing = editingHobbsId === aircraft.id;
 
                   return (

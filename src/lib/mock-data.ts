@@ -140,107 +140,42 @@ const genericPostFlightItems = [
     { id: 'post-7', text: 'Aircraft - Chocked and tied down', completed: false },
 ];
 
+const postMaintenanceItems = [
+    { id: 'm-1', text: 'Engine - Oil change, filter check', completed: false },
+    { id: 'm-2', text: 'Propeller - Inspect for nicks and security', completed: false },
+    { id: 'm-3', text: 'Landing Gear - Check tires, brakes, struts', completed: false },
+    { id: 'm-4', text: 'Control Systems - Inspect cables and pulleys', completed: false },
+    { id: 'm-5', text: 'Logbooks - Entry completed and signed', completed: false },
+];
+
 // Checklist Data
 export const checklistData: Checklist[] = [
-    // Aircraft 1: Cessna 172
-    {
-        id: 'cl-1-pre',
-        companyId: 'skybound',
-        title: 'Cessna 172 Pre-Flight Inspection',
-        category: 'Pre-Flight',
-        aircraftId: '1',
-        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
-    },
-     {
-        id: 'cl-1-post',
-        companyId: 'skybound',
-        title: 'Cessna 172 Post-Flight Secure',
-        category: 'Post-Flight',
-        aircraftId: '1',
-        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
-    },
-    // Aircraft 2: Piper PA-28
-    {
-        id: 'cl-2-pre',
-        companyId: 'skybound',
-        title: 'Piper PA-28 Pre-Flight Inspection',
-        category: 'Pre-Flight',
-        aircraftId: '2',
-        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
-    },
-    {
-        id: 'cl-2-post',
-        companyId: 'skybound',
-        title: 'Piper PA-28 Post-Flight Secure',
-        category: 'Post-Flight',
-        aircraftId: '2',
-        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
-    },
-    // Aircraft 3: Diamond DA40
-    {
-        id: 'cl-3-pre',
-        companyId: 'skybound',
-        title: 'Diamond DA40 Pre-Flight Inspection',
-        category: 'Pre-Flight',
-        aircraftId: '3',
-        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
-    },
-    {
-        id: 'cl-3-post',
-        companyId: 'skybound',
-        title: 'Diamond DA40 Post-Flight Secure',
-        category: 'Post-Flight',
-        aircraftId: '3',
-        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
-    },
-    // Aircraft 4: Cirrus SR22
-    {
-        id: 'cl-4-pre',
-        companyId: 'skybound',
-        title: 'Cirrus SR22 Pre-Flight Inspection',
-        category: 'Pre-Flight',
-        aircraftId: '4',
-        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
-    },
-    {
-        id: 'cl-4-post',
-        companyId: 'skybound',
-        title: 'Cirrus SR22 Post-Flight Secure',
-        category: 'Post-Flight',
-        aircraftId: '4',
-        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
-    },
-    // Aircraft 5: Beechcraft G36
-    {
-        id: 'cl-5-pre',
-        companyId: 'skybound',
-        title: 'Beechcraft G36 Pre-Flight Inspection',
-        category: 'Pre-Flight',
-        aircraftId: '5',
-        items: JSON.parse(JSON.stringify(genericPreFlightItems)),
-    },
-    {
-        id: 'cl-5-post',
-        companyId: 'skybound',
-        title: 'Beechcraft G36 Post-Flight Secure',
-        category: 'Post-Flight',
-        aircraftId: '5',
-        items: JSON.parse(JSON.stringify(genericPostFlightItems)),
-    },
-    // Generic Maintenance
-     {
-        id: 'cl-maint-1',
-        companyId: 'skybound',
-        title: '100-Hour Inspection',
-        category: 'Maintenance',
-        items: [
-            { id: 'm-1', text: 'Engine - Oil change, filter check', completed: false },
-            { id: 'm-2', text: 'Propeller - Inspect for nicks and security', completed: false },
-            { id: 'm-3', text: 'Landing Gear - Check tires, brakes, struts', completed: false },
-            { id: 'm-4', text: 'Control Systems - Inspect cables and pulleys', completed: false },
-            { id: 'm-5', text: 'Logbooks - Entry completed and signed', completed: false },
-        ]
-    },
+    ...aircraftData.flatMap(ac => [
+        {
+            id: `cl-${ac.id}-pre`,
+            companyId: 'skybound',
+            title: `${ac.model} Pre-Flight Inspection`,
+            category: 'Pre-Flight' as const,
+            aircraftId: ac.id,
+            items: JSON.parse(JSON.stringify(genericPreFlightItems)),
+        },
+        {
+            id: `cl-${ac.id}-post`,
+            companyId: 'skybound',
+            title: `${ac.model} Post-Flight Secure`,
+            category: 'Post-Flight' as const,
+            aircraftId: ac.id,
+            items: JSON.parse(JSON.stringify(genericPostFlightItems)),
+        },
+        {
+            id: `cl-${ac.id}-maint`,
+            companyId: 'skybound',
+            title: `${ac.model} Post-Maintenance Inspection`,
+            category: 'Post-Maintenance' as const,
+            aircraftId: ac.id,
+            items: JSON.parse(JSON.stringify(postMaintenanceItems)),
+        }
+    ])
 ];
 
 export const completedChecklistData: CompletedChecklist[] = [

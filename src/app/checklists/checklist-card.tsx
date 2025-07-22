@@ -39,7 +39,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
   const isComplete = progress === 100;
-  const isMaintenance = checklist.category === 'Maintenance';
+  const isMaintenance = checklist.category === 'Post-Maintenance';
 
   const handleResetClick = () => {
       onReset(checklist.id);

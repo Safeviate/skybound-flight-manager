@@ -3,6 +3,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -314,7 +315,7 @@ export type Checklist = {
     id: string;
     companyId: string;
     title: string;
-    category: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
+    category: 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
     items: ChecklistItem[];
     aircraftId?: string;
 };
@@ -324,7 +325,7 @@ export type CompletedChecklist = {
     companyId: string;
     checklistId: string;
     checklistName: string;
-    checklistType: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
+    checklistType: 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
     aircraftId: string;
     completedBy: string;
     completionDate: string;

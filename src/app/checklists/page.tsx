@@ -65,7 +65,7 @@ export default function ChecklistsPage() {
 
   const preFlightChecklists = checklists.filter(c => c.category === 'Pre-Flight');
   const postFlightChecklists = checklists.filter(c => c.category === 'Post-Flight');
-  const maintenanceChecklists = checklists.filter(c => c.category === 'Maintenance');
+  const maintenanceChecklists = checklists.filter(c => c.category === 'Post-Maintenance');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -101,7 +101,7 @@ export default function ChecklistsPage() {
                 <TabsList className="mb-4">
                     <TabsTrigger value="pre-flight">Pre-Flight</TabsTrigger>
                     <TabsTrigger value="post-flight">Post-Flight</TabsTrigger>
-                    <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+                    <TabsTrigger value="post-maintenance">Post-Maintenance</TabsTrigger>
                 </TabsList>
                 <TabsContent value="pre-flight">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -131,7 +131,7 @@ export default function ChecklistsPage() {
                         ))}
                     </div>
                 </TabsContent>
-                <TabsContent value="maintenance">
+                <TabsContent value="post-maintenance">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {maintenanceChecklists.map(checklist => (
                             <ChecklistCard 
