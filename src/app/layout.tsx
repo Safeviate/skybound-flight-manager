@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
+import Footer from '@/components/layout/footer';
 
 
 export const metadata: Metadata = {
@@ -41,7 +42,10 @@ export default function RootLayout({
                       <Nav />
                   </Sidebar>
                   <SidebarInset>
-                      {children}
+                      <div className="flex-1 flex flex-col">
+                        {children}
+                      </div>
+                      <Footer />
                   </SidebarInset>
               </SidebarProvider>
               <Toaster />
