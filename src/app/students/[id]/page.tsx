@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { userData } from '@/lib/data-provider';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,7 +66,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         doc.setFontSize(12);
         doc.text(`Student: ${student.name}`, 14, 32);
         doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
-        doc.text(`Total Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
+        doc.text(`Total Hobbs Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
     
         // Endorsements Table
         if (student.endorsements && student.endorsements.length > 0) {
@@ -144,6 +144,10 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">Flight Hours: {student.flightHours?.toFixed(1)}</span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <Book className="h-5 w-5 text-muted-foreground" />
+                            <span className="font-medium">Hobbs Hours: {student.flightHours?.toFixed(1)}</span>
                         </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
@@ -302,3 +306,5 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     </div>
   );
 }
+
+    
