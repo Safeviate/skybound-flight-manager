@@ -33,6 +33,8 @@ export type TrainingLogEntry = {
   id:string;
   date: string;
   aircraft: string;
+  startHobbs: number;
+  endHobbs: number;
   flightDuration: number;
   instructorNotes: string;
   instructorName: string;

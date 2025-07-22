@@ -45,11 +45,11 @@ const studentEndorsements: { [key: string]: Endorsement[] } = {
 
 const studentTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
     's1': [
-        { id: 'l1', date: '2024-08-10', aircraft: 'N12345', flightDuration: 1.5, instructorName: 'Mike Ross', instructorNotes: 'Excellent handling of slow flight and stalls. Needs to work on consistency during landings.' },
-        { id: 'l2', date: '2024-08-12', aircraft: 'N12345', flightDuration: 1.2, instructorName: 'Mike Ross', instructorNotes: 'Practiced emergency procedures. Good situational awareness, but needs to be quicker on the checklists.' },
+        { id: 'l1', date: '2024-08-10', aircraft: 'N12345', startHobbs: 1249.0, endHobbs: 1250.5, flightDuration: 1.5, instructorName: 'Mike Ross', instructorNotes: 'Excellent handling of slow flight and stalls. Needs to work on consistency during landings.' },
+        { id: 'l2', date: '2024-08-12', aircraft: 'N12345', startHobbs: 1250.5, endHobbs: 1251.7, flightDuration: 1.2, instructorName: 'Mike Ross', instructorNotes: 'Practiced emergency procedures. Good situational awareness, but needs to be quicker on the checklists.' },
     ],
     's2': [
-        { id: 'l3', date: '2024-08-11', aircraft: 'N67890', flightDuration: 1.8, instructorName: 'Sarah Connor', instructorNotes: 'First flight focusing on basic maneuvers. Very smooth on the controls.' },
+        { id: 'l3', date: '2024-08-11', aircraft: 'N67890', startHobbs: 474.0, endHobbs: 475.8, flightDuration: 1.8, instructorName: 'Sarah Connor', instructorNotes: 'First flight focusing on basic maneuvers. Very smooth on the controls.' },
     ],
     's3': [],
     's4': [],

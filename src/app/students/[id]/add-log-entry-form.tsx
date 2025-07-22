@@ -32,8 +32,11 @@ const logEntryFormSchema = z.object({
   aircraft: z.string({
     required_error: 'Please select an aircraft.',
   }),
-  flightDuration: z.coerce.number().min(0.1, {
-    message: 'Flight duration must be at least 0.1 hours.',
+  startHobbs: z.coerce.number().min(0, {
+      message: 'Hobbs hours must be a positive number.'
+  }),
+  endHobbs: z.coerce.number().min(0, {
+      message: 'Hobbs hours must be a positive number.'
   }),
   instructor: z.string({
     required_error: 'Please select the instructor.',
@@ -41,6 +44,9 @@ const logEntryFormSchema = z.object({
   instructorNotes: z.string().min(10, {
     message: 'Notes must be at least 10 characters long.',
   }),
+}).refine(data => data.endHobbs > data.startHobbs, {
+    message: 'End Hobbs must be greater than Start Hobbs.',
+    path: ['endHobbs'],
 });
 
 type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
@@ -59,9 +65,11 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
   const availableAircraft = aircraftData.filter(ac => ac.status !== 'In Maintenance');
 
   function onSubmit(data: LogEntryFormValues) {
+    const flightDuration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
     console.log({
       studentId,
       ...data,
+      flightDuration,
       date: format(data.date, 'yyyy-MM-dd'),
     });
     toast({
@@ -115,44 +123,57 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
                     </FormItem>
                 )}
             />
-             <FormField
+            <FormField
                 control={form.control}
-                name="flightDuration"
+                name="aircraft"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Flight Duration (hrs)</FormLabel>
+                    <FormLabel>Aircraft</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an aircraft" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {availableAircraft.map((ac) => (
+                            <SelectItem key={ac.id} value={ac.tailNumber}>
+                            {ac.model} ({ac.tailNumber})
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="startHobbs"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Start Hobbs</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="1.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="1234.5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="endHobbs"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>End Hobbs</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="0.1" placeholder="1235.5" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
         </div>
-        <FormField
-          control={form.control}
-          name="aircraft"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Aircraft</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an aircraft" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableAircraft.map((ac) => (
-                    <SelectItem key={ac.id} value={ac.tailNumber}>
-                      {ac.model} ({ac.tailNumber})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="instructor"

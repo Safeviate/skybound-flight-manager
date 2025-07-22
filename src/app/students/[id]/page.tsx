@@ -83,17 +83,19 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
         if (student.trainingLogs && student.trainingLogs.length > 0) {
              autoTable(doc, {
                 startY: startY,
-                head: [['Date', 'Aircraft', 'Duration (hrs)', 'Instructor', 'Notes']],
+                head: [['Date', 'Aircraft', 'Hobbs Start', 'Hobbs End', 'Duration', 'Instructor', 'Notes']],
                 body: student.trainingLogs.map(log => [
                     log.date,
                     log.aircraft,
-                    log.flightDuration,
+                    log.startHobbs.toFixed(1),
+                    log.endHobbs.toFixed(1),
+                    log.flightDuration.toFixed(1),
                     log.instructorName,
                     log.instructorNotes,
                 ]),
                 headStyles: { fillColor: [34, 197, 94] },
                 columnStyles: {
-                    4: { cellWidth: 'auto' },
+                    6: { cellWidth: 'auto' },
                 }
             });
         }
@@ -143,7 +145,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                         </div>
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Flight Hours: {student.flightHours?.toFixed(1)}</span>
+                            <span className="font-medium">Total Flight Hours: {student.flightHours?.toFixed(1)}</span>
                         </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
@@ -244,7 +246,7 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle>Training Log</CardTitle>
-                            <CardDescription>Total Hobbs: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
+                             <CardDescription>Total Flight Hours: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
@@ -282,7 +284,8 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground gap-4">
                                         <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
-                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration} hrs</span>
+                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
+                                        <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
                                     </div>
                                     <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
                                 </div>
@@ -302,5 +305,3 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     </div>
   );
 }
-
-    
