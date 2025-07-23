@@ -23,17 +23,13 @@ export default function CorporatePage() {
     const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
         const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
-        // This function will now ALWAYS write to Firebase, regardless of the mock data config.
         try {
-            // 1. Create the user in Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
             const newUserId = userCredential.user.uid;
 
-            // 2. Create the company document in Firestore
             const companyDocRef = doc(db, 'companies', companyId);
             await setDoc(companyDocRef, { ...newCompanyData, id: companyId });
 
-            // 3. Create the user document in the users subcollection for that company
             const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
             const finalUserData: Omit<User, 'password'> = {
                 ...adminData,
@@ -49,7 +45,6 @@ export default function CorporatePage() {
                 description: `The company "${newCompanyData.name}" has been created. Redirecting to login...`
             });
 
-            // Redirect to login page on success
             router.push('/login');
 
         } catch (error: any) {
@@ -76,19 +71,21 @@ export default function CorporatePage() {
             <Rocket className="h-8 w-8 text-primary" />
             <span className="text-xl font-semibold">SkyBound Flight Manager</span>
         </div>
+        <div className="absolute top-8 right-8">
+            <Button asChild variant="outline">
+                <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login to Your Account
+                </Link>
+            </Button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl items-center">
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
                     Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your organization or log in to continue.
                 </p>
-                <Button asChild>
-                    <Link href="/login">
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Login to Your Account
-                    </Link>
-                </Button>
             </div>
             <Card>
                 <CardHeader>
