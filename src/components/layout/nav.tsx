@@ -73,7 +73,7 @@ export default function Nav() {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push('/corporate');
   };
 
   const handleLinkClick = () => {
@@ -96,6 +96,10 @@ export default function Nav() {
     }
     return companyFeatures.includes(requiredFeature);
   };
+
+  if (!user) {
+    return null; // Don't render nav if not logged in
+  }
 
   const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
   const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));

@@ -10,11 +10,12 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
 import Footer from '@/components/layout/footer';
 import { DynamicThemeApplicator } from '@/components/dynamic-theme-applicator';
+import { AppContent } from './app-content';
 
 
 export const metadata: Metadata = {
-  title: 'SkyBound Flight Manager',
-  description: 'Flight school management system',
+  title: 'Safeviate',
+  description: 'Modern Aviation Management',
 };
 
 export default function RootLayout({
@@ -40,17 +41,9 @@ export default function RootLayout({
           <UserProvider>
             <SettingsProvider>
               <DynamicThemeApplicator />
-              <SidebarProvider>
-                  <Sidebar>
-                      <Nav />
-                  </Sidebar>
-                  <SidebarInset>
-                      <div className="flex-1 flex flex-col">
-                        {children}
-                      </div>
-                      <Footer />
-                  </SidebarInset>
-              </SidebarProvider>
+              <AppContent>
+                {children}
+              </AppContent>
               <Toaster />
             </SettingsProvider>
           </UserProvider>

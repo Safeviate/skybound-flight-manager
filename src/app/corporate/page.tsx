@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Rocket, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,12 +9,12 @@ import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import { addCompany, addUser } from '@/lib/data-provider';
 
 export default function CorporatePage() {
-    const [companies, setCompanies] = useState([]);
     const { toast } = useToast();
 
-    const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>) => {
+    const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
         const newCompanyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-');
         
         const newCompany: Company = {
@@ -29,13 +28,11 @@ export default function CorporatePage() {
             companyId: newCompanyId,
             role: 'Admin',
             permissions: ROLE_PERMISSIONS['Admin'],
+            password: password,
         };
         
-        // In a real app, this would be an API call to save both records.
-        // For this demo, we can't update the mock data file directly.
-        // We'll just show a success message.
-        console.log("New Company Added:", newCompany);
-        console.log("New Admin User Added:", newAdminUser);
+        addCompany(newCompany);
+        addUser(newAdminUser);
 
         toast({
             title: "Company Registered!",

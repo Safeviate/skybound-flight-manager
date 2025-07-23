@@ -40,3 +40,16 @@ export const auditScheduleData: AuditScheduleItem[] = useMockData ? mockAuditSch
 export const auditChecklistData: AuditChecklist[] = useMockData ? mockAuditChecklistData : [];
 export const allAlerts: Alert[] = useMockData ? mockAlerts : [];
 export const companyData: Company[] = useMockData ? mockCompanyData : [];
+
+// Functions to modify mock data in memory
+export function addCompany(newCompany: Company) {
+    if (useMockData) {
+        companyData.push(newCompany);
+    }
+}
+
+export function addUser(newUser: User) {
+    if (useMockData) {
+        userData.push(newUser);
+    }
+}

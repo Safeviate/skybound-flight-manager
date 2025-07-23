@@ -39,13 +39,19 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>) => void;
+  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => void;
 }
 
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
+    defaultValues: {
+        primaryColor: '#2563eb',
+        backgroundColor: '#f4f4f5',
+        accentColor: '#f59e0b',
+        enableAdvancedAnalytics: false,
+    }
   });
 
   function handleFormSubmit(data: CompanyFormValues) {
@@ -65,7 +71,8 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         phone: '', // Can be added later
     };
 
-    onSubmit(newCompany, newAdmin);
+    onSubmit(newCompany, newAdmin, data.adminPassword);
+    form.reset();
   }
 
   return (
@@ -114,7 +121,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                             <FormLabel className="text-xs">Primary</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} value={field.value ?? '#4287f5'} />
+                                <Input type="color" {...field} />
                             </FormControl>
                         </FormItem>
                     )}
@@ -126,7 +133,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                              <FormLabel className="text-xs">Background</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} value={field.value ?? '#f0f0f0'} />
+                                <Input type="color" {...field} />
                             </FormControl>
                         </FormItem>
                     )}
@@ -138,7 +145,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                              <FormLabel className="text-xs">Accent</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} value={field.value ?? '#ffa500'}/>
+                                <Input type="color" {...field} />
                             </FormControl>
                         </FormItem>
                     )}

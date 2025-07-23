@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company } from '@/lib/types';
 import { userData, allAlerts, companyData } from '@/lib/data-provider';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface UserContextType {
   user: User | null;
@@ -22,6 +23,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const getUnacknowledgedAlerts = useCallback((currentUser: User): Alert[] => {
     if (!currentUser) return [];
@@ -82,7 +84,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
         console.error("Could not access sessionStorage to clear user session.");
     }
-  }, []);
+    router.push('/corporate');
+  }, [router]);
   
   const updateUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);
