@@ -22,6 +22,12 @@ import { getExpiryBadge, calculateFlightHours } from '@/lib/utils.tsx';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData, userData } from '@/lib/data-provider';
 import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
 
+const FLIGHT_TIME_LIMITS = {
+    daily: 8,
+    weekly: 30,
+    monthly: 100,
+};
+
 export default function MyProfilePage() {
     const { user, company, loading } = useUser();
     const router = useRouter();
@@ -168,18 +174,59 @@ export default function MyProfilePage() {
         isBefore(parseISO(risk.reviewDate), thirtyDaysFromNow)
     );
 
-    const personalAlerts: { type: string, date: string, daysUntil: number }[] = [];
+    const personalAlerts: { type: string; date?: string; daysUntil?: number; details: string; variant: 'warning' | 'destructive' }[] = [];
+
     if (user.medicalExpiry) {
         const daysUntil = differenceInDays(parseISO(user.medicalExpiry), today);
         if (daysUntil <= 60) {
-            personalAlerts.push({ type: 'Medical Certificate', date: user.medicalExpiry, daysUntil });
+            personalAlerts.push({ 
+                type: 'Medical Certificate Expiry', 
+                date: user.medicalExpiry, 
+                daysUntil,
+                details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
+                variant: daysUntil > 30 ? 'warning' : 'destructive',
+            });
         }
     }
     if (user.licenseExpiry) {
         const daysUntil = differenceInDays(parseISO(user.licenseExpiry), today);
         if (daysUntil <= 60) {
-            personalAlerts.push({ type: 'Pilot License', date: user.licenseExpiry, daysUntil });
+            personalAlerts.push({ 
+                type: 'Pilot License Expiry', 
+                date: user.licenseExpiry, 
+                daysUntil,
+                details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
+                variant: daysUntil > 30 ? 'warning' : 'destructive',
+             });
         }
+    }
+
+    // Fatigue Alerts
+    const hours24 = calculateFlightHours(userLogs, 1);
+    const hours7d = calculateFlightHours(userLogs, 7);
+    const hours30d = calculateFlightHours(userLogs, 30);
+
+    const dutyThreshold = 0.75; // 75% warning threshold
+    if (hours24 / FLIGHT_TIME_LIMITS.daily >= dutyThreshold) {
+        personalAlerts.push({
+            type: 'Approaching Daily Duty Limit',
+            details: `Logged ${hours24} of ${FLIGHT_TIME_LIMITS.daily} hours`,
+            variant: (hours24 / FLIGHT_TIME_LIMITS.daily) >= 0.9 ? 'destructive' : 'warning',
+        });
+    }
+     if (hours7d / FLIGHT_TIME_LIMITS.weekly >= dutyThreshold) {
+        personalAlerts.push({
+            type: 'Approaching Weekly Duty Limit',
+            details: `Logged ${hours7d} of ${FLIGHT_TIME_LIMITS.weekly} hours`,
+            variant: (hours7d / FLIGHT_TIME_LIMITS.weekly) >= 0.9 ? 'destructive' : 'warning',
+        });
+    }
+     if (hours30d / FLIGHT_TIME_LIMITS.monthly >= dutyThreshold) {
+        personalAlerts.push({
+            type: 'Approaching Monthly Duty Limit',
+            details: `Logged ${hours30d} of ${FLIGHT_TIME_LIMITS.monthly} hours`,
+            variant: (hours30d / FLIGHT_TIME_LIMITS.monthly) >= 0.9 ? 'destructive' : 'warning',
+        });
     }
 
     const totalTasks = discussionRequests.length + riskReviews.length + personalAlerts.length;
@@ -360,16 +407,16 @@ export default function MyProfilePage() {
                                      <div className="space-y-2">
                                         <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
                                         <ul className="space-y-2">
-                                            {personalAlerts.map(({ type, date, daysUntil }) => (
-                                                <li key={type}>
-                                                     <div className="block p-3 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                                            {personalAlerts.map(({ type, date, details, variant }, index) => (
+                                                <li key={index}>
+                                                     <div className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
                                                         <div className="flex items-start justify-between">
                                                             <div className="flex items-start gap-3">
-                                                                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+                                                                <AlertTriangle className={`h-5 w-5 ${variant === 'destructive' ? 'text-red-500' : 'text-amber-500'} mt-0.5`} />
                                                                 <div>
-                                                                    <p className="font-semibold">{type} Expiry</p>
+                                                                    <p className="font-semibold">{type}</p>
                                                                     <p className="text-sm text-muted-foreground">
-                                                                        {daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired'} on {format(parseISO(date), 'MMM d, yyyy')}
+                                                                        {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -441,3 +488,4 @@ export default function MyProfilePage() {
     </div>
   );
 }
+
