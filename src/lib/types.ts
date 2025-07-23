@@ -1,4 +1,5 @@
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -437,7 +438,7 @@ export type AuditScheduleItem = {
 
 export type Alert = {
   id: string;
-  companyId: string;
+  companyId?: string;
   number: number;
   type: 'Red Tag' | 'Yellow Tag';
   title: string;

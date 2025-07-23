@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
-import { allAlerts as initialAlerts } from '@/lib/data-provider';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {
@@ -16,8 +15,11 @@ import {
 } from "@/components/ui/collapsible"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { NewAlertForm } from './new-alert-form';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -36,37 +38,74 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 function AlertsPage() {
-  const { user, loading } = useUser();
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
+  const { user, company, loading } = useUser();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    async function fetchAlerts() {
+        if (!company) return;
+        try {
+            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+            const q = query(alertsCollection, orderBy('date', 'desc'));
+            const querySnapshot = await getDocs(q);
+            const fetchedAlerts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+            setAlerts(fetchedAlerts);
+        } catch (error) {
+            console.error("Error fetching alerts: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not fetch alerts from the database.'
+            });
+        }
+    }
+    if (company) {
+        fetchAlerts();
+    }
+  }, [company, toast]);
   
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
 
-  const handleNewAlert = (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
-    if (!user) return;
+  const handleNewAlert = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
+    if (!user || !company) return;
 
+    // In a real app, number generation should be handled server-side to avoid race conditions.
+    // For this client-side example, we'll calculate it based on fetched data.
     const lastAlertOfType = alerts
         .filter(a => a.type === data.type)
         .sort((a,b) => b.number - a.number)[0];
 
-    const newAlert: Alert = {
+    const newAlertData = {
         ...data,
-        id: `alert-${Date.now()}`,
+        companyId: company.id,
         number: (lastAlertOfType?.number || 0) + 1,
         author: user.name,
         date: format(new Date(), 'yyyy-MM-dd'),
-        readBy: [user.name], // Creator has implicitly read it
+        readBy: [user.name],
     };
 
-    setAlerts(prev => [newAlert, ...prev]);
-    setIsDialogOpen(false);
+    try {
+        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        const docRef = await addDoc(alertsCollection, newAlertData);
+        setAlerts(prev => [{ ...newAlertData, id: docRef.id }, ...prev]);
+        setIsDialogOpen(false);
+    } catch (error) {
+        console.error("Error creating new alert:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to create the alert in the database.'
+        });
+    }
   }
 
   if (loading || !user) {
@@ -131,7 +170,7 @@ function AlertsPage() {
                                     </CollapsibleTrigger>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-xs text-muted-foreground">Issued by {alert.author} on {alert.date}</p>
+                                    <p className="text-xs text-muted-foreground">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
                                 </CardContent>
                             </Card>
                             <CollapsibleContent>
