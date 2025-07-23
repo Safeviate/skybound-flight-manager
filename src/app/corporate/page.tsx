@@ -9,35 +9,69 @@ import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { addCompany, addUser } from '@/lib/data-provider';
+import { doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
+import { addCompany as addMockCompany, addUser as addMockUser } from '@/lib/data-provider';
+import config from '@/config';
+
 
 export default function CorporatePage() {
     const { toast } = useToast();
 
-    const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
-        const newCompanyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-');
+    const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+        const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
-        const newCompany: Company = {
-            ...newCompanyData,
-            id: newCompanyId,
-        };
+        if (config.useMockData) {
+            const newCompany: Company = { ...newCompanyData, id: companyId };
+            const newAdminUser: User = { ...adminData, id: `user-${Date.now()}`, companyId, role: 'Admin', permissions: ROLE_PERMISSIONS['Admin'], password: password };
+            addMockCompany(newCompany);
+            addMockUser(newAdminUser);
+            toast({ title: "Company Registered (Mock)!", description: `The company "${newCompany.name}" has been created in the mock data.` });
+            return;
+        }
 
-        const newAdminUser: User = {
-            ...adminData,
-            id: `user-${Date.now()}`,
-            companyId: newCompanyId,
-            role: 'Admin',
-            permissions: ROLE_PERMISSIONS['Admin'],
-            password: password,
-        };
-        
-        addCompany(newCompany);
-        addUser(newAdminUser);
+        // --- Real Firestore Logic ---
+        try {
+            // 1. Create the user in Firebase Authentication
+            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
+            const newUserId = userCredential.user.uid;
 
-        toast({
-            title: "Company Registered!",
-            description: `The company "${newCompany.name}" has been created. You can now log in with the admin user.`
-        });
+            // 2. Create the company document in Firestore
+            const companyDocRef = doc(db, 'companies', companyId);
+            await setDoc(companyDocRef, { ...newCompanyData, id: companyId });
+
+            // 3. Create the user document in the users subcollection for that company
+            const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+            const finalUserData: Omit<User, 'password'> = {
+                ...adminData,
+                id: newUserId,
+                companyId: companyId,
+                role: 'Admin',
+                permissions: ROLE_PERMISSIONS['Admin'],
+            };
+            await setDoc(userDocRef, finalUserData);
+
+            toast({
+                title: "Company Registered Successfully!",
+                description: `The company "${newCompany.name}" has been created. You can now log in.`
+            });
+
+        } catch (error: any) {
+            console.error("Error creating company:", error);
+            const errorCode = error.code;
+            let errorMessage = "An unknown error occurred.";
+            if (errorCode === 'auth/email-already-in-use') {
+                errorMessage = "This email address is already in use by another account.";
+            } else if (errorCode === 'auth/weak-password') {
+                errorMessage = "The password is too weak. Please use at least 6 characters.";
+            }
+            toast({
+                variant: 'destructive',
+                title: "Registration Failed",
+                description: errorMessage,
+            });
+        }
     };
 
 
