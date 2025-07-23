@@ -3,9 +3,11 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert, Company } from '@/lib/types';
-import { userData, allAlerts, companyData } from '@/lib/data-provider';
-import { ROLE_PERMISSIONS } from '@/lib/types';
+import { allAlerts } from '@/lib/data-provider';
 import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -31,93 +33,66 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlertIds') || '[]');
         return allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
     } catch (e) {
-        // If sessionStorage is not available, all alerts are considered unacknowledged.
         return allAlerts;
     }
   }, []);
 
-  const login = useCallback(async (email: string, password?: string): Promise<boolean> => {
-    // In a real app, you would make an API call to your backend for authentication.
-    // For this mock, we'll find the user by email.
-    const userToLogin = userData.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const fetchUserData = async (firebaseUser: any): Promise<[User | null, Company | null]> => {
+    if (!firebaseUser) return [null, null];
 
-    // Password check (for a real app, this would be a hashed comparison on the server)
-    if (userToLogin && userToLogin.password === password) {
-        const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
-        const userWithPermissions = { ...userToLogin, permissions };
-        setUser(userWithPermissions);
-        
-        const foundCompany = companyData.find(c => c.id === userToLogin.companyId);
-        setCompany(foundCompany || null);
+    const companiesRef = collection(db, "companies");
+    const q = query(companiesRef);
+    const querySnapshot = await getDocs(q);
 
-        try {
-            sessionStorage.setItem('currentUserId', userToLogin.id);
-        } catch (error) {
-            console.error("Could not access sessionStorage to set user session.");
+    for (const companyDoc of querySnapshot.docs) {
+        const userDocRef = doc(db, `companies/${companyDoc.id}/users`, firebaseUser.uid);
+        const userSnap = await getDoc(userDocRef);
+
+        if (userSnap.exists()) {
+            const userData = userSnap.data() as User;
+            const companyData = companyDoc.data() as Company;
+            return [userData, companyData];
         }
-        return true;
     }
-    
-    // If password check fails, but the user was just verified via 2FA, allow login
-    // This is a simplified demo flow. A real app would manage session state differently.
-    if (user && user.email === email && password === undefined) {
-        return true;
-    }
+    return [null, null];
+  };
 
-    // If login fails
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            const [userData, companyData] = await fetchUserData(firebaseUser);
+            setUser(userData);
+            setCompany(companyData);
+        } else {
+            setUser(null);
+            setCompany(null);
+        }
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = async (email: string, password?: string): Promise<boolean> => {
+    if (!password) return false;
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        return true;
+    } catch (error) {
+        console.error("Login failed:", error);
+        return false;
+    }
+  };
+
+  const logout = useCallback(async () => {
+    await signOut(auth);
     setUser(null);
     setCompany(null);
-    try {
-        sessionStorage.removeItem('currentUserId');
-    } catch (error) {
-        console.error("Could not access sessionStorage to clear user session.");
-    }
-    return false;
-  }, [user]);
-
-  const logout = useCallback(() => {
-    setUser(null);
-    setCompany(null);
-    try {
-        sessionStorage.removeItem('currentUserId');
-        sessionStorage.removeItem('acknowledgedAlertIds');
-    } catch (error) {
-        console.error("Could not access sessionStorage to clear user session.");
-    }
     router.push('/corporate');
   }, [router]);
   
   const updateUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);
-    // In a real app, you would also update the userData array or make an API call
-    const userIndex = userData.findIndex(u => u.id === updatedUser.id);
-    if (userIndex !== -1) {
-        userData[userIndex] = updatedUser;
-    }
-  }, []);
-  
-  // Re-hydrate user from sessionStorage on initial load
-  useEffect(() => {
-    const rehydrateUser = async () => {
-        try {
-            const storedUserId = sessionStorage.getItem('currentUserId');
-            if (storedUserId) {
-                const userToLogin = userData.find(u => u.id === storedUserId);
-                 if (userToLogin) {
-                    const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
-                    const userWithPermissions = { ...userToLogin, permissions };
-                    setUser(userWithPermissions);
-                    const foundCompany = companyData.find(c => c.id === userToLogin.companyId);
-                    setCompany(foundCompany || null);
-                }
-            }
-        } catch (error) {
-            console.error("Could not access sessionStorage. User session will not persist.");
-        } finally {
-            setLoading(false);
-        }
-    }
-    rehydrateUser();
   }, []);
 
   return (
