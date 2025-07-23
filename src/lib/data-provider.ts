@@ -18,9 +18,10 @@ import {
   companyData as mockCompanyData,
 } from './mock-data';
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company } from './types';
+import config from '@/config';
 
 
-const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+const useMockData = config.useMockData;
 
 // In a real application, the 'false' branch of these conditions
 // would contain functions to fetch data from a live database (e.g., Firestore).
