@@ -15,9 +15,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Company } from '@/lib/types';
+import type { Company, User } from '@/lib/types';
 import { Paintbrush } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 const companyFormSchema = z.object({
   name: z.string().min(2, {
@@ -30,12 +31,15 @@ const companyFormSchema = z.object({
   backgroundColor: z.string().optional(),
   accentColor: z.string().optional(),
   enableAdvancedAnalytics: z.boolean().default(false),
+  adminName: z.string().min(2, 'Admin name is required.'),
+  adminEmail: z.string().email('Please enter a valid email address.'),
+  adminPassword: z.string().min(8, 'Password must be at least 8 characters.'),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (data: Omit<Company, 'id'>) => void;
+  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>) => void;
 }
 
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
@@ -55,39 +59,48 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         },
         enabledFeatures: data.enableAdvancedAnalytics ? ['AdvancedAnalytics'] : [],
     };
-    onSubmit(newCompany);
+    const newAdmin: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'> = {
+        name: data.adminName,
+        email: data.adminEmail,
+        phone: '', // Can be added later
+    };
+
+    onSubmit(newCompany, newAdmin);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Company Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., AeroVentures Flight Academy" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="trademark"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Trademark / Slogan</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Flying High Since 2002" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
+        <div className="space-y-2">
+            <h4 className="font-semibold">Company Details</h4>
+             <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., AeroVentures Flight Academy" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            <FormField
+                control={form.control}
+                name="trademark"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Trademark / Slogan</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Flying High Since 2002" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
         <div className="space-y-2">
             <FormLabel className="flex items-center gap-2">
                 <Paintbrush className="h-4 w-4" />
@@ -101,7 +114,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                             <FormLabel className="text-xs">Primary</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} />
+                                <Input type="color" {...field} value={field.value ?? '#4287f5'} />
                             </FormControl>
                         </FormItem>
                     )}
@@ -113,7 +126,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                              <FormLabel className="text-xs">Background</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} />
+                                <Input type="color" {...field} value={field.value ?? '#f0f0f0'} />
                             </FormControl>
                         </FormItem>
                     )}
@@ -125,7 +138,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormItem>
                              <FormLabel className="text-xs">Accent</FormLabel>
                             <FormControl>
-                                <Input type="color" {...field} />
+                                <Input type="color" {...field} value={field.value ?? '#ffa500'}/>
                             </FormControl>
                         </FormItem>
                     )}
@@ -152,6 +165,52 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                 </FormItem>
             )}
         />
+        
+        <Separator />
+        
+        <div className="space-y-4">
+            <h4 className="font-semibold">Administrator Account</h4>
+            <FormField
+                control={form.control}
+                name="adminName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Admin Full Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Jane Smith" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="adminEmail"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Admin Email</FormLabel>
+                    <FormControl>
+                        <Input placeholder="admin@yourcompany.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="adminPassword"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                        <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
 
         <div className="flex justify-end pt-4">
           <Button type="submit">Register Company</Button>

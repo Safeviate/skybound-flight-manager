@@ -41,6 +41,7 @@ const personnelFormSchema = z.object({
     message: 'You have to select at least one permission.',
   }),
   email: z.string().email({ message: "Please enter a valid email."}),
+  password: z.string().min(8, "Password must be at least 8 characters.").optional(),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   medicalExpiry: z.date().optional(),
   licenseExpiry: z.date().optional(),
@@ -188,6 +189,22 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                 </FormItem>
             )}
             />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Set a password" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {existingPersonnel ? 'Leave blank to keep current password.' : 'User must have a password.'}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
         </div>
 
         <div className="space-y-2">
@@ -305,5 +322,3 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     </Form>
   );
 }
-
-    

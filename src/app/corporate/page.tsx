@@ -7,25 +7,39 @@ import { Rocket, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
-import type { Company } from '@/lib/types';
+import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 export default function CorporatePage() {
     const [companies, setCompanies] = useState([]);
     const { toast } = useToast();
 
-    const handleNewCompany = (newCompanyData: Omit<Company, 'id'>) => {
+    const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>) => {
+        const newCompanyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-');
+        
         const newCompany: Company = {
             ...newCompanyData,
-            id: newCompanyData.name.toLowerCase().replace(/\s+/g, '-'),
+            id: newCompanyId,
         };
-        // In a real app, this would be an API call.
+
+        const newAdminUser: User = {
+            ...adminData,
+            id: `user-${Date.now()}`,
+            companyId: newCompanyId,
+            role: 'Admin',
+            permissions: ROLE_PERMISSIONS['Admin'],
+        };
+        
+        // In a real app, this would be an API call to save both records.
         // For this demo, we can't update the mock data file directly.
         // We'll just show a success message.
         console.log("New Company Added:", newCompany);
+        console.log("New Admin User Added:", newAdminUser);
+
         toast({
             title: "Company Registered!",
-            description: `The company "${newCompany.name}" has been created. You can now log in with a user from that company.`
+            description: `The company "${newCompany.name}" has been created. You can now log in with the admin user.`
         });
     };
 
@@ -37,7 +51,7 @@ export default function CorporatePage() {
             <span className="text-xl font-semibold">Safeviate</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl">
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
@@ -54,7 +68,7 @@ export default function CorporatePage() {
                 <CardHeader>
                     <CardTitle>Register a New Company</CardTitle>
                     <CardDescription>
-                        Set up a new portal for your organization.
+                        Set up a new portal for your organization. This will also create the first administrator account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
