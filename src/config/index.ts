@@ -2,6 +2,11 @@ import developmentConfig from './development';
 import betaConfig from './beta';
 import { AppConfig } from './types';
 
-const config = process.env.NODE_ENV === 'production' ? betaConfig : developmentConfig;
+const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
-export default config as AppConfig;
+const config = useMockData ? developmentConfig : betaConfig;
+
+export default {
+    ...config,
+    useMockData,
+} as AppConfig;
