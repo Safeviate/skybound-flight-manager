@@ -5,12 +5,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import type { Checklist, Aircraft } from '@/lib/types';
-import { checklistData as initialChecklistData, aircraftData } from '@/lib/data-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
 
 export default function StartChecklistPage() {
   const params = useParams();
@@ -19,43 +21,64 @@ export default function StartChecklistPage() {
   const aircraftId = params.aircraftId as string;
   const { toast } = useToast();
 
+  const [aircraft, setAircraft] = useState<Aircraft | null>(null);
+  const [checklist, setChecklist] = useState<Checklist | undefined>(undefined);
+  const [isDataLoading, setIsDataLoading] = useState(true);
+
   useEffect(() => {
     if (!loading && !user) {
         const currentPath = `/checklists/start/${aircraftId}`;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    } else if (company) {
+        const fetchChecklistData = async () => {
+            setIsDataLoading(true);
+            try {
+                const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraftId);
+                const aircraftSnap = await getDoc(aircraftRef);
+                if (aircraftSnap.exists()) {
+                    setAircraft(aircraftSnap.data() as Aircraft);
+                }
+
+                // Assuming pre-flight checklists are linked via a field or have a specific ID format
+                // This logic might need adjustment based on the actual DB schema
+                const checklistRef = doc(db, `companies/${company.id}/checklist-templates`, `cl-${aircraftId}-pre`);
+                const checklistSnap = await getDoc(checklistRef);
+
+                if (checklistSnap.exists()) {
+                    const checklistTemplate = checklistSnap.data() as Checklist;
+                    setChecklist({
+                        ...checklistTemplate,
+                        id: `session-${Date.now()}`,
+                        items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching checklist data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load checklist data.'});
+            } finally {
+                setIsDataLoading(false);
+            }
+        };
+        fetchChecklistData();
     }
-  }, [user, loading, router, aircraftId]);
+  }, [user, company, loading, router, aircraftId, toast]);
 
-
-  const aircraft = aircraftData.find(a => a.id === aircraftId);
-  // Find the master checklist template for the correct company
-  const checklistTemplate = initialChecklistData.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraftId && c.companyId === company?.id);
-  
-  // Create a unique instance of the checklist for this session
-  const [checklist, setChecklist] = useState<Checklist | undefined>(() => {
-    if (!checklistTemplate) return undefined;
-    return {
-      ...checklistTemplate,
-      id: `session-${Date.now()}`, // Give this specific checklist run a unique ID
-      items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
-    };
-  });
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     setChecklist(toggledChecklist);
   };
   
-  const handleReset = (checklistId: string) => {
-    if (checklistTemplate) {
-      setChecklist({
-        ...checklistTemplate,
-        id: `session-${Date.now()}`,
-        items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
-      });
+  const handleReset = () => {
+    if (checklist) {
+      setChecklist(prev => prev ? ({
+        ...prev,
+        items: prev.items.map(item => ({ ...item, completed: false })),
+      }) : undefined);
     }
   };
   
   const handleUpdate = (updatedChecklist: Checklist) => {
+    // In a real app, this would submit the completed checklist state to the database
     setChecklist(updatedChecklist);
     toast({
         title: "Checklist Submitted",
@@ -63,10 +86,10 @@ export default function StartChecklistPage() {
     });
   };
 
-  if (loading || !user) {
+  if (loading || isDataLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
-            <p>Redirecting to login...</p>
+            <p>Loading checklist...</p>
         </div>
     );
   }

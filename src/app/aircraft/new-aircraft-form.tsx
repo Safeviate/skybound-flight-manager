@@ -21,13 +21,16 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import type { Aircraft } from '@/lib/types';
+import { getNextService } from '@/lib/utils';
+
 
 const aircraftFormSchema = z.object({
   tailNumber: z.string().min(2, {
     message: 'Registration must be at least 2 characters.',
-  }),
-  aircraftType: z.string().min(2, {
-    message: 'Aircraft type must be at least 2 characters.',
   }),
   model: z.string().min(2, {
     message: 'Model must be at least 2 characters.',
@@ -38,14 +41,19 @@ const aircraftFormSchema = z.object({
   hours: z.coerce.number().min(0, {
       message: "Hours must be a positive number.",
   }),
-  documentType: z.string({ required_error: 'Please select a document type.' }),
-  documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  airworthinessExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  insuranceExpiry: z.date({ required_error: 'An expiry date is required.' }),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
 
-export function NewAircraftForm() {
+interface NewAircraftFormProps {
+    onAircraftAdded: (newAircraft: Aircraft) => void;
+}
+
+export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
     defaultValues: {
@@ -53,12 +61,39 @@ export function NewAircraftForm() {
     }
   });
 
-  function onSubmit(data: AircraftFormValues) {
-    console.log(data);
-    toast({
-      title: 'Aircraft Added',
-      description: `Aircraft ${data.tailNumber} has been added to the fleet.`,
-    });
+  async function onSubmit(data: AircraftFormValues) {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No company context found.' });
+        return;
+    }
+    const id = data.tailNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const aircraftRef = doc(db, `companies/${company.id}/aircraft`, id);
+
+    const nextService = getNextService(data.hours);
+
+    const newAircraft: Aircraft = {
+        ...data,
+        id,
+        companyId: company.id,
+        airworthinessExpiry: format(data.airworthinessExpiry, 'yyyy-MM-dd'),
+        insuranceExpiry: format(data.insuranceExpiry, 'yyyy-MM-dd'),
+        nextServiceType: nextService.type,
+        hoursUntilService: nextService.hoursUntil,
+        location: 'KPAO', // Default location, can be changed later
+    };
+
+    try {
+        await setDoc(aircraftRef, newAircraft);
+        onAircraftAdded(newAircraft);
+        toast({
+          title: 'Aircraft Added',
+          description: `Aircraft ${data.tailNumber} has been added to the fleet.`,
+        });
+        form.reset();
+    } catch (error) {
+        console.error("Error adding aircraft:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to add aircraft to the database.' });
+    }
   }
 
   return (
@@ -70,22 +105,9 @@ export function NewAircraftForm() {
             name="tailNumber"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Registration</FormLabel>
+                <FormLabel>Tail Number</FormLabel>
                 <FormControl>
                     <Input placeholder="N12345" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="aircraftType"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aircraft Type</FormLabel>
-                <FormControl>
-                    <Input placeholder="Single-Engine Piston" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -139,69 +161,83 @@ export function NewAircraftForm() {
                 </FormItem>
             )}
             />
-        </div>
-
-        <div className="space-y-2">
-            <FormLabel>Documents</FormLabel>
-            <div className="flex flex-col md:flex-row gap-4">
-                <FormField
-                    control={form.control}
-                    name="documentType"
-                    render={({ field }) => (
-                        <FormItem className="flex-1">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+        
+            <FormField
+                control={form.control}
+                name="airworthinessExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Airworthiness Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select document type" />
-                            </SelectTrigger>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
                             </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Airworthiness">Airworthiness Certificate</SelectItem>
-                                <SelectItem value="Insurance">Insurance Policy</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
                         <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="documentExpiry"
-                    render={({ field }) => (
-                        <FormItem className="flex-1">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick expiry date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="insuranceExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Insurance Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         </div>
 
         <div className="flex justify-end">

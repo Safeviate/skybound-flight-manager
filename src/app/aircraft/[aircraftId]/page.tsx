@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,14 +9,57 @@ import { Badge } from '@/components/ui/badge';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
 import { Plane, Wrench, Hourglass, Calendar, CheckSquare } from 'lucide-react';
-import { aircraftData, completedChecklistData } from '@/lib/data-provider';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import type { Aircraft, CompletedChecklist } from '@/lib/types';
+
 
 export default function AircraftDetailPage() {
   const params = useParams();
   const aircraftId = params.aircraftId as string;
+  const { company } = useUser();
   
-  const aircraft = aircraftData.find(a => a.id === aircraftId);
-  const checklistHistory = completedChecklistData.filter(c => c.aircraftId === aircraftId);
+  const [aircraft, setAircraft] = useState<Aircraft | null>(null);
+  const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!company || !aircraftId) return;
+
+    const fetchAircraftData = async () => {
+        setLoading(true);
+        try {
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraftId);
+            const aircraftSnap = await getDoc(aircraftRef);
+
+            if (aircraftSnap.exists()) {
+                setAircraft(aircraftSnap.data() as Aircraft);
+            }
+
+            // NOTE: The 'completedChecklistData' collection doesn't exist yet.
+            // This is a placeholder for where that logic would go.
+            // For now, it will return an empty list.
+            const checklistQuery = query(collection(db, `companies/${company.id}/completedChecklists`), where('aircraftId', '==', aircraftId));
+            const checklistSnapshot = await getDocs(checklistQuery);
+            const history = checklistSnapshot.docs.map(doc => doc.data() as CompletedChecklist);
+            setChecklistHistory(history);
+        } catch (error) {
+            console.error("Error fetching aircraft details:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchAircraftData();
+  }, [company, aircraftId]);
+
+  if (loading) {
+      return (
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+            <p>Loading aircraft details...</p>
+        </main>
+      );
+  }
 
   if (!aircraft) {
     return (
@@ -128,4 +172,3 @@ export default function AircraftDetailPage() {
 }
 
 AircraftDetailPage.title = "Aircraft Details";
-

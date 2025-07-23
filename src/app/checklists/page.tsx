@@ -2,12 +2,10 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle } from 'lucide-react';
-import { checklistData as initialChecklistData } from '@/lib/data-provider';
 import type { Checklist } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,9 +13,12 @@ import { NewChecklistForm } from './new-checklist-form';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+
 
 function ChecklistsPage() {
-  const [allChecklists, setAllChecklists] = useState<Checklist[]>(initialChecklistData);
+  const [allChecklists, setAllChecklists] = useState<Checklist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user, company, loading } = useUser();
@@ -26,69 +27,69 @@ function ChecklistsPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (company) {
+        const fetchChecklists = async () => {
+            const checklistsQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
+            const snapshot = await getDocs(checklistsQuery);
+            const checklists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+            setAllChecklists(checklists);
+        };
+        fetchChecklists();
     }
-  }, [user, loading, router]);
+  }, [user, company, loading, router]);
 
-  const companyChecklists = useMemo(() => {
-    if (!company) return [];
-    return allChecklists.filter(c => c.companyId === company.id);
-  }, [allChecklists, company]);
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
-    setAllChecklists(prevChecklists =>
-      prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
-    );
+    // This is handled locally by ChecklistCard and submitted on save.
   };
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
-    handleItemToggle(updatedChecklist); // Persist final state
-    toast({
-        title: "Checklist Submitted",
-        description: `"${updatedChecklist.title}" has been completed.`
-    });
+    // This is for standalone checklist completion, which doesn't happen on this page.
   };
   
   const handleReset = (checklistId: string) => {
-    setAllChecklists(prevChecklists =>
-      prevChecklists.map(c => {
-        if (c.id === checklistId) {
-          const originalTemplate = initialChecklistData.find(template => template.id === c.id);
-          if (originalTemplate) {
-            return {
-                ...originalTemplate,
-                items: originalTemplate.items.map(item => ({ ...item, completed: false })),
-            };
-          }
-        }
-        return c;
-      })
-    );
+    // This is handled locally in the checklist card now.
   };
 
-  const handleNewChecklist = (newChecklistData: Omit<Checklist, 'id' | 'companyId' | 'items'> & { items: { text: string, completed: boolean }[] }) => {
+  const handleNewChecklist = async (newChecklistData: Omit<Checklist, 'id' | 'companyId'>) => {
     if (!company) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Cannot create checklist without a company context.'
-        });
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot create checklist without a company context.' });
         return;
     }
 
-    const checklistWithId: Checklist = {
-      ...newChecklistData,
-      id: `cl-${Date.now()}`,
-      companyId: company.id,
-      items: newChecklistData.items.map((item, index) => ({ ...item, id: `item-${Date.now()}-${index}` })),
-    };
-    setAllChecklists(prev => [...prev, checklistWithId]);
-    setIsDialogOpen(false);
+    try {
+        const id = `cl-tmpl-${Date.now()}`;
+        const checklistWithId: Checklist = {
+            ...newChecklistData,
+            id,
+            companyId: company.id,
+            items: newChecklistData.items.map((item, index) => ({ ...item, id: `item-${Date.now()}-${index}` })),
+        };
+        
+        await setDoc(doc(db, `companies/${company.id}/checklist-templates`, id), checklistWithId);
+
+        setAllChecklists(prev => [...prev, checklistWithId]);
+        setIsDialogOpen(false);
+        toast({ title: 'Checklist Template Created', description: `"${newChecklistData.title}" has been saved.`});
+    } catch(error) {
+        console.error("Error creating new checklist:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to create checklist template.'});
+    }
   };
 
-  const handleChecklistEdit = (editedChecklist: Checklist) => {
-    setAllChecklists(prevChecklists => 
-        prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
-    );
+  const handleChecklistEdit = async (editedChecklist: Checklist) => {
+    if (!company) return;
+    try {
+        const checklistRef = doc(db, `companies/${company.id}/checklist-templates`, editedChecklist.id);
+        await setDoc(checklistRef, editedChecklist, { merge: true });
+        setAllChecklists(prevChecklists => 
+            prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
+        );
+        toast({ title: 'Checklist Updated', description: 'Changes have been saved.' });
+    } catch(error) {
+        console.error("Error updating checklist:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to update checklist.' });
+    }
   };
 
   if (loading || !user) {
@@ -99,9 +100,9 @@ function ChecklistsPage() {
     );
   }
 
-  const preFlightChecklists = companyChecklists.filter(c => c.category === 'Pre-Flight');
-  const postFlightChecklists = companyChecklists.filter(c => c.category === 'Post-Flight');
-  const maintenanceChecklists = companyChecklists.filter(c => c.category === 'Post-Maintenance');
+  const preFlightChecklists = allChecklists.filter(c => c.category === 'Pre-Flight');
+  const postFlightChecklists = allChecklists.filter(c => c.category === 'Post-Flight');
+  const maintenanceChecklists = allChecklists.filter(c => c.category === 'Post-Maintenance');
 
   const headerContent = (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -147,7 +148,7 @@ function ChecklistsPage() {
                           checklist={checklist} 
                           onItemToggle={handleItemToggle}
                           onUpdate={handleChecklistUpdate}
-                          onReset={handleReset}
+                          onReset={() => {}} // Not applicable on template page
                           onEdit={handleChecklistEdit}
                       />
                   ))}
@@ -166,7 +167,7 @@ function ChecklistsPage() {
                               checklist={checklist} 
                               onItemToggle={handleItemToggle}
                               onUpdate={handleChecklistUpdate}
-                              onReset={handleReset}
+                              onReset={() => {}} // Not applicable on template page
                               onEdit={handleChecklistEdit}
                           />
                       ))}
@@ -185,7 +186,7 @@ function ChecklistsPage() {
                               checklist={checklist} 
                               onItemToggle={handleItemToggle}
                               onUpdate={handleChecklistUpdate}
-                              onReset={handleReset}
+                              onReset={() => {}} // Not applicable on template page
                               onEdit={handleChecklistEdit}
                           />
                       ))}
@@ -204,24 +205,4 @@ function ChecklistsPage() {
 }
 
 ChecklistsPage.title = 'Checklist Templates';
-ChecklistsPage.headerContent = (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Checklist
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Create New Checklist Template</DialogTitle>
-          <DialogDescription>
-            Define the title, category, and items for the new checklist template.
-          </DialogDescription>
-        </DialogHeader>
-        <NewChecklistForm onSubmit={() => {}} />
-      </DialogContent>
-    </Dialog>
-  );
-
 export default ChecklistsPage;

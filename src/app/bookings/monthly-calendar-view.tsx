@@ -1,25 +1,38 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Booking } from '@/lib/types';
+import type { Booking, Aircraft } from '@/lib/types';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { CalendarIcon, Plane } from 'lucide-react';
-import { aircraftData } from '@/lib/data-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs } from 'firebase/firestore';
 
 interface MonthlyCalendarViewProps {
   bookings: Booking[];
 }
 
 export function MonthlyCalendarView({ bookings }: MonthlyCalendarViewProps) {
-  const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
-  const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
+  const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [selectedAircraft, setSelectedAircraft] = useState<string>('all');
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+  const { company } = useUser();
+
+  useEffect(() => {
+    if (!company) return;
+    const fetchAircraft = async () => {
+        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+        const snapshot = await getDocs(aircraftQuery);
+        setAircraftData(snapshot.docs.map(doc => doc.data() as Aircraft));
+    };
+    fetchAircraft();
+  }, [company]);
 
   const filteredBookings = useMemo(() => {
     if (selectedAircraft === 'all') {
@@ -28,7 +41,7 @@ export function MonthlyCalendarView({ bookings }: MonthlyCalendarViewProps) {
     const aircraft = aircraftData.find(a => a.id === selectedAircraft);
     if (!aircraft) return bookings;
     return bookings.filter(b => b.aircraft === aircraft.tailNumber);
-  }, [bookings, selectedAircraft]);
+  }, [bookings, selectedAircraft, aircraftData]);
 
 
   const bookedDays = useMemo(() => {
@@ -76,7 +89,6 @@ export function MonthlyCalendarView({ bookings }: MonthlyCalendarViewProps) {
             selected={selectedDay}
             onSelect={setSelectedDay}
             className="rounded-md border"
-            defaultMonth={today}
             modifiers={{ booked: bookedDays }}
             modifiersClassNames={{
               booked: 'bg-primary/20 text-primary-foreground rounded-full',

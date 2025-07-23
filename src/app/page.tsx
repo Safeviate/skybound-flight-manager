@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, Users, Calendar, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/context/user-provider';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { aircraftData, bookingData, safetyReportData, userData } from '@/lib/data-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, where, orderBy, limit } from 'firebase/firestore';
 
 function Dashboard() {
   const { user, company, loading } = useUser();
   const router = useRouter();
+  const [stats, setStats] = useState<{title: string; value: string; icon: JSX.Element; href: string}[]>([]);
+  const [recentActivities, setRecentActivities] = useState<{type: string, description: string, time: string}[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -19,59 +22,45 @@ function Dashboard() {
     }
   }, [user, loading, router]);
 
-  const stats = useMemo(() => {
-    if (!company) return [];
+  useEffect(() => {
+    if (!company) return;
 
-    const companyAircraft = aircraftData.filter(ac => ac.companyId === company.id);
-    const companyStudents = userData.filter(u => u.companyId === company.id && u.role === 'Student' && u.status === 'Active');
-    const companyBookings = bookingData.filter(b => b.companyId === company.id && new Date(b.date) >= new Date());
-    const companySafetyReports = safetyReportData.filter(sr => sr.companyId === company.id && sr.status !== 'Closed');
+    const fetchDashboardData = async () => {
+        try {
+            const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+            const aircraftSnapshot = await getDocs(aircraftQuery);
 
-    return [
-      {
-        title: 'Total Aircraft',
-        value: companyAircraft.length.toString(),
-        icon: <Plane className="h-8 w-8 text-primary" />,
-        href: '/aircraft',
-      },
-      {
-        title: 'Active Students',
-        value: companyStudents.length.toString(),
-        icon: <Users className="h-8 w-8 text-primary" />,
-        href: '/students',
-      },
-      {
-        title: 'Upcoming Bookings',
-        value: companyBookings.length.toString(),
-        icon: <Calendar className="h-8 w-8 text-primary" />,
-        href: '/bookings',
-      },
-      {
-        title: 'Open Safety Reports',
-        value: companySafetyReports.length.toString(),
-        icon: <ShieldAlert className="h-8 w-8 text-destructive" />,
-        href: '/safety',
-      },
-    ];
-  }, [company]);
-  
-  const recentActivities = useMemo(() => {
-    if (!company) return [];
-    
-    // This is a simplified mock. A real implementation would fetch and sort from multiple collections.
-    const lastBooking = bookingData.filter(b => b.companyId === company.id).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-    const lastStudent = userData.filter(u => u.companyId === company.id && u.role === 'Student').sort((a,b) => (a.id > b.id ? -1 : 1))[0];
-    const lastSafetyReport = safetyReportData.filter(sr => sr.companyId === company.id).sort((a,b) => new Date(b.filedDate).getTime() - new Date(a.filedDate).getTime())[0];
-    const lastAircraftUpdate = aircraftData.find(ac => ac.companyId === company.id && ac.status === 'In Maintenance');
+            const studentsQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Student'), where('status', '==', 'Active'));
+            const studentsSnapshot = await getDocs(studentsQuery);
 
-    const activities = [];
-    if(lastBooking) activities.push({ type: 'New Booking', description: `${lastBooking.aircraft} for ${lastBooking.student}`, time: '10 min ago' });
-    if(lastStudent) activities.push({ type: 'New Student', description: `${lastStudent.name} has been registered.`, time: '1 hour ago' });
-    if(lastSafetyReport) activities.push({ type: 'Safety Report', description: `New report filed: ${lastSafetyReport.heading}`, time: '3 hours ago' });
-    if(lastAircraftUpdate) activities.push({ type: 'Aircraft Update', description: `${lastAircraftUpdate.model} is in maintenance.`, time: 'Yesterday' });
-    
-    return activities.slice(0, 4);
-    
+            const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('date', '>=', new Date().toISOString().split('T')[0]));
+            const bookingsSnapshot = await getDocs(bookingsQuery);
+
+            const safetyReportsQuery = query(collection(db, `companies/${company.id}/safety-reports`), where('status', '!=', 'Closed'));
+            const safetyReportsSnapshot = await getDocs(safetyReportsQuery);
+
+            setStats([
+                { title: 'Total Aircraft', value: aircraftSnapshot.size.toString(), icon: <Plane className="h-8 w-8 text-primary" />, href: '/aircraft' },
+                { title: 'Active Students', value: studentsSnapshot.size.toString(), icon: <Users className="h-8 w-8 text-primary" />, href: '/students' },
+                { title: 'Upcoming Bookings', value: bookingsSnapshot.size.toString(), icon: <Calendar className="h-8 w-8 text-primary" />, href: '/bookings' },
+                { title: 'Open Safety Reports', value: safetyReportsSnapshot.size.toString(), icon: <ShieldAlert className="h-8 w-8 text-destructive" />, href: '/safety' },
+            ]);
+
+            // Fetch recent activities
+            const recentBookingsQuery = query(collection(db, `companies/${company.id}/bookings`), orderBy('date', 'desc'), limit(1));
+            const lastBookingSnap = await getDocs(recentBookingsQuery);
+            const activities = [];
+            if (!lastBookingSnap.empty) {
+                const lastBooking = lastBookingSnap.docs[0].data();
+                activities.push({ type: 'New Booking', description: `${lastBooking.aircraft} for ${lastBooking.student}`, time: 'Recent' });
+            }
+            setRecentActivities(activities);
+
+        } catch (error) {
+            console.error("Error fetching dashboard data:", error);
+        }
+    };
+    fetchDashboardData();
   }, [company]);
 
 
@@ -138,13 +127,13 @@ function Dashboard() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-4">
-                {recentActivities.map((activity, index) => (
+                {recentActivities.length > 0 ? recentActivities.map((activity, index) => (
                   <li key={index}>
                     <p className="font-medium">{activity.type}</p>
                     <p className="text-sm text-muted-foreground">{activity.description}</p>
                     <p className="text-xs text-muted-foreground">{activity.time}</p>
                   </li>
-                ))}
+                )) : <p className="text-sm text-muted-foreground">No recent activity.</p>}
               </ul>
             </CardContent>
           </Card>

@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,10 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Booking, Checklist, Permission } from '@/lib/types';
+import type { Aircraft, Booking, Checklist } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData as initialAircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -28,12 +26,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
 
 function AircraftPage() {
-  const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
-  const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
-  const [fleet, setFleet] = useState<Aircraft[]>(initialAircraftData);
+  const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [fleet, setFleet] = useState<Aircraft[]>([]);
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
@@ -43,24 +42,44 @@ function AircraftPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (company) {
+        const fetchData = async () => {
+            try {
+                // Fetch Aircraft
+                const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+                const aircraftSnapshot = await getDocs(aircraftQuery);
+                const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+                setFleet(aircraftList);
+
+                // Fetch Checklists
+                const checklistQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
+                const checklistSnapshot = await getDocs(checklistQuery);
+                const checklistList = checklistSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+                setChecklists(checklistList);
+
+                // Fetch Bookings
+                const bookingQuery = query(collection(db, `companies/${company.id}/bookings`));
+                const bookingSnapshot = await getDocs(bookingQuery);
+                const bookingList = bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+                setBookings(bookingList);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch initial data.'});
+            }
+        };
+        fetchData();
     }
-  }, [user, loading, router]);
-
-
-  const companyAircraft = fleet.filter(ac => ac.companyId === company?.id);
-  const companyChecklists = checklists.filter(c => c.companyId === company?.id);
-  const companyBookings = bookings.filter(b => b.companyId === company?.id);
+  }, [user, company, loading, router, toast]);
 
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
 
-  const handleItemToggle = (toggledChecklist: Checklist) => {
-    setChecklists(prevChecklists =>
-        prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
-    );
+  const handleItemToggle = async (toggledChecklist: Checklist) => {
+    // This is a session-based update, so no DB write needed here.
+    // The state is managed locally within the ChecklistCard dialog.
   };
 
-  const handleChecklistUpdate = (updatedChecklist: Checklist, hobbs?: number) => {
-    handleItemToggle(updatedChecklist); // Ensure final state is up to date
+  const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbs?: number) => {
+    if (!company) return;
 
     const isComplete = updatedChecklist.items.every(item => item.completed);
     if (!isComplete || !updatedChecklist.aircraftId) return;
@@ -68,67 +87,39 @@ function AircraftPage() {
     const aircraft = fleet.find(ac => ac.id === updatedChecklist.aircraftId);
     if (!aircraft) return;
 
-    if (updatedChecklist.category === 'Pre-Flight') {
-         setBookings(prevBookings => 
-            prevBookings.map(booking => {
-                if (booking.aircraft === aircraft.tailNumber && booking.status === 'Approved') {
-                    return { ...booking, isChecklistComplete: true };
-                }
-                return booking;
-            })
-        )
-    }
+    const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
 
-    if (updatedChecklist.category === 'Post-Flight' && hobbs !== undefined) {
-        const relatedBooking = bookings.find(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' && b.isChecklistComplete);
-
-        if(relatedBooking) {
-            setBookings(prevBookings => 
-                prevBookings.map(booking => 
-                    booking.id === relatedBooking.id ? { ...booking, status: 'Completed', isPostFlightChecklistComplete: true } : booking
-                )
+    try {
+        if (updatedChecklist.category === 'Pre-Flight') {
+            const bookingQuery = query(
+                collection(db, `companies/${company.id}/bookings`),
+                where('aircraft', '==', aircraft.tailNumber),
+                where('status', '==', 'Approved')
             );
+            const bookingSnapshot = await getDocs(bookingQuery);
+            bookingSnapshot.forEach(async (bookingDoc) => {
+                await updateDoc(bookingDoc.ref, { isChecklistComplete: true });
+            });
+            setBookings(prev => prev.map(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' ? {...b, isChecklistComplete: true} : b));
         }
-        
-        setFleet(prevFleet =>
-            prevFleet.map(ac => 
-                ac.id === aircraft.id ? { ...ac, hours: hobbs, isPostFlightPending: false } : ac
-            )
-        );
-         toast({
-            title: "Post-Flight Complete",
-            description: `Aircraft ${aircraft.tailNumber} Hobbs hours updated to ${hobbs}.`,
-        });
-    }
 
-    if (updatedChecklist.category === 'Post-Maintenance' && hobbs !== undefined) {
-      setFleet(prevFleet =>
-        prevFleet.map(ac =>
-          ac.id === aircraft.id ? { ...ac, hours: hobbs, status: 'Available' } : ac
-        )
-      );
-      toast({
-        title: "Maintenance Complete",
-        description: `Aircraft ${aircraft.tailNumber} is now available. Hobbs hours set to ${hobbs}.`,
-      });
+        if ((updatedChecklist.category === 'Post-Flight' || updatedChecklist.category === 'Post-Maintenance') && hobbs !== undefined) {
+            const newStatus = updatedChecklist.category === 'Post-Maintenance' ? 'Available' : aircraft.status;
+            await updateDoc(aircraftRef, { hours: hobbs, status: newStatus });
+            setFleet(prev => prev.map(ac => ac.id === aircraft.id ? { ...ac, hours: hobbs, status: newStatus } : ac));
+            toast({
+                title: "Checklist Complete",
+                description: `Aircraft ${aircraft.tailNumber} Hobbs hours updated to ${hobbs}.`,
+            });
+        }
+    } catch (error) {
+        console.error("Error updating checklist state:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to complete checklist action.' });
     }
   };
   
   const handleReset = (checklistId: string) => {
-    setChecklists(prevChecklists =>
-      prevChecklists.map(c => {
-        if (c.id === checklistId) {
-          const originalTemplate = initialChecklistData.find(template => template.id === c.id);
-          if (originalTemplate) {
-            return {
-                ...originalTemplate,
-                items: originalTemplate.items.map(item => ({ ...item, completed: false })),
-            };
-          }
-        }
-        return c;
-      })
-    );
+    // This is handled locally in the checklist card now, no global state reset needed
   };
 
   const handleEditHobbs = (aircraft: Aircraft) => {
@@ -136,18 +127,26 @@ function AircraftPage() {
     setHobbsInputValue(aircraft.hours);
   };
   
-  const handleSaveHobbs = (aircraftId: string) => {
-      setFleet(prevFleet =>
-          prevFleet.map(ac =>
-              ac.id === aircraftId ? { ...ac, hours: hobbsInputValue } : ac
-          )
-      );
-      const updatedAircraft = fleet.find(ac => ac.id === aircraftId);
-      toast({
-          title: "Hobbs Hours Updated",
-          description: `Hobbs hours for ${updatedAircraft?.tailNumber} set to ${hobbsInputValue.toFixed(1)}.`,
-      });
-      setEditingHobbsId(null);
+  const handleSaveHobbs = async (aircraftId: string) => {
+      if (!company) return;
+      try {
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraftId);
+        await updateDoc(aircraftRef, { hours: hobbsInputValue });
+        setFleet(prevFleet =>
+            prevFleet.map(ac =>
+                ac.id === aircraftId ? { ...ac, hours: hobbsInputValue } : ac
+            )
+        );
+        const updatedAircraft = fleet.find(ac => ac.id === aircraftId);
+        toast({
+            title: "Hobbs Hours Updated",
+            description: `Hobbs hours for ${updatedAircraft?.tailNumber} set to ${hobbsInputValue.toFixed(1)}.`,
+        });
+        setEditingHobbsId(null);
+      } catch (error) {
+          console.error("Error saving Hobbs hours:", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not update Hobbs hours.' });
+      }
   };
   
   const getStatusVariant = (status: Aircraft['status']) => {
@@ -190,7 +189,7 @@ function AircraftPage() {
                             Fill out the form below to add a new aircraft to the fleet.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewAircraftForm />
+                    <NewAircraftForm onAircraftAdded={(newAircraft) => setFleet(prev => [...prev, newAircraft])} />
                 </DialogContent>
             </Dialog>
           </CardHeader>
@@ -208,10 +207,10 @@ function AircraftPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {companyAircraft.map((aircraft) => {
-                  const preFlightChecklist = companyChecklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
-                  const postFlightChecklist = companyChecklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
-                  const maintenanceChecklist = companyChecklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
+                {fleet.map((aircraft) => {
+                  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
+                  const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
+                  const maintenanceChecklist = checklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
                   const isEditing = editingHobbsId === aircraft.id;
 
                   return (

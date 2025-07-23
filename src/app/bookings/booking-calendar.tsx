@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, UIEvent } from 'react';
+import React, { useState, useRef, UIEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   addDays,
@@ -12,9 +12,31 @@ import { GanttAircraftColumn } from './gantt-aircraft-column';
 import { GanttTimeline } from './gantt-timeline';
 import { GanttTimelineHeader } from './gantt-timeline-header';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Booking, Aircraft } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs } from 'firebase/firestore';
 
-export function BookingCalendar() {
-  const [currentDate, setCurrentDate] = useState(new Date('2024-08-15'));
+
+interface BookingCalendarProps {
+    bookings: Booking[];
+}
+
+export function BookingCalendar({ bookings }: BookingCalendarProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
+  const { company } = useUser();
+
+  useEffect(() => {
+    if (!company) return;
+    const fetchAircraft = async () => {
+        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+        const snapshot = await getDocs(aircraftQuery);
+        setAircraft(snapshot.docs.map(doc => doc.data() as Aircraft));
+    };
+    fetchAircraft();
+  }, [company]);
+
 
   const timelineHeaderRef = useRef<HTMLDivElement>(null);
   const timelineBodyRef = useRef<HTMLDivElement>(null);
@@ -43,7 +65,7 @@ export function BookingCalendar() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentDate(new Date('2024-08-15'))}
+            onClick={() => setCurrentDate(new Date())}
           >
             Today
           </Button>
@@ -71,12 +93,12 @@ export function BookingCalendar() {
 
         {/* Bottom-left aircraft column */}
         <div className="border-r">
-          <GanttAircraftColumn />
+          <GanttAircraftColumn aircraft={aircraft} />
         </div>
 
         {/* Bottom-right timeline body */}
         <div ref={timelineBodyRef} className="overflow-x-auto" onScroll={handleScroll}>
-          <GanttTimeline currentDate={currentDate} />
+          <GanttTimeline currentDate={currentDate} bookings={bookings} aircraft={aircraft} />
         </div>
       </div>
     </div>

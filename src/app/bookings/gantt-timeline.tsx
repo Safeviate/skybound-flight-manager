@@ -2,8 +2,7 @@
 'use client';
 
 import React from 'react';
-import { aircraftData, bookingData } from '@/lib/data-provider';
-import type { Booking } from '@/lib/types';
+import type { Booking, Aircraft } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 
@@ -26,7 +25,13 @@ const getBookingVariant = (purpose: Booking['purpose']) => {
     }
 }
 
-export function GanttTimeline({ currentDate }: { currentDate: Date }) {
+interface GanttTimelineProps {
+    currentDate: Date;
+    bookings: Booking[];
+    aircraft: Aircraft[];
+}
+
+export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimelineProps) {
   const dateString = format(currentDate, 'yyyy-MM-dd');
 
   return (
@@ -40,11 +45,11 @@ export function GanttTimeline({ currentDate }: { currentDate: Date }) {
 
       {/* Booking rows */}
       <div className="relative">
-        {aircraftData.map(aircraft => {
-          const todaysBookings = bookingData.filter(b => b.aircraft === aircraft.tailNumber && b.date === dateString);
+        {aircraft.map(ac => {
+          const todaysBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.date === dateString);
           
           return (
-            <div key={aircraft.id} className="h-20 border-b relative">
+            <div key={ac.id} className="h-20 border-b relative">
               {todaysBookings.map(booking => {
                 const left = timeToPosition(booking.startTime);
                 const right = timeToPosition(booking.endTime);

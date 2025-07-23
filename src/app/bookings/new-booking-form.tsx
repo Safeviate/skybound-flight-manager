@@ -27,9 +27,13 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { aircraftData, userData, trainingExercisesData } from '@/lib/data-provider';
-import type { Booking } from '@/lib/types';
+import type { Booking, Aircraft, User } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
+import { useUser } from '@/context/user-provider';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -67,17 +71,48 @@ interface NewBookingFormProps {
 export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { user, company } = useUser();
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
   });
 
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+  const [userData, setUserData] = useState<User[]>([]);
+  const [trainingExercisesData, setTrainingExercisesData] = useState<string[]>([]); // Assuming this could be dynamic too
+
+  useEffect(() => {
+    if (!company) return;
+    const fetchPrerequisites = async () => {
+        try {
+            const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+            const aircraftSnapshot = await getDocs(aircraftQuery);
+            setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
+
+            const usersQuery = query(collection(db, `companies/${company.id}/users`));
+            const usersSnapshot = await getDocs(usersQuery);
+            setUserData(usersSnapshot.docs.map(doc => doc.data() as User));
+            
+            // Example for training exercises if they were in Firestore
+            // const exercisesQuery = query(collection(db, `companies/${company.id}/training-exercises`));
+            // const exercisesSnapshot = await getDocs(exercisesQuery);
+            // setTrainingExercisesData(exercisesSnapshot.docs.map(doc => doc.data().name));
+        } catch (error) {
+            console.error("Failed to fetch form prerequisites", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load data for form.' });
+        }
+    };
+    fetchPrerequisites();
+  }, [company, toast]);
+
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
+    if (!company) return;
     const status = 'Approved';
 
     const newBooking: Omit<Booking, 'id'> = {
         ...data,
+        companyId: company.id,
         date: format(data.date, 'yyyy-MM-dd'),
         status,
         student: data.student || 'N/A',
@@ -91,7 +126,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
     });
   }
   
-  const today = new Date('2024-08-15'); // Hardcoding date for consistent display
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const availableAircraft = aircraftData.filter(ac => {

@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import type { Checklist } from '@/lib/types';
@@ -35,11 +34,10 @@ const checklistFormSchema = z.object({
 type ChecklistFormValues = z.infer<typeof checklistFormSchema>;
 
 interface NewChecklistFormProps {
-    onSubmit: (data: Omit<Checklist, 'id' | 'companyId' | 'items'> & { items: { text: string, completed: boolean }[] }) => void;
+    onSubmit: (data: Omit<Checklist, 'id' | 'companyId'>) => void;
 }
 
 export function NewChecklistForm({ onSubmit }: NewChecklistFormProps) {
-  const { toast } = useToast();
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(checklistFormSchema),
     defaultValues: {
@@ -56,13 +54,9 @@ export function NewChecklistForm({ onSubmit }: NewChecklistFormProps) {
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ text: item.text, completed: false })),
+      items: data.items.map(item => ({ ...item, id: '', completed: false })),
     };
     onSubmit(newChecklist);
-    toast({
-      title: 'Checklist Created',
-      description: `The "${data.title}" checklist has been added.`,
-    });
   };
 
   return (

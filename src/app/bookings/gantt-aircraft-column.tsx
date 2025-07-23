@@ -2,16 +2,20 @@
 'use client';
 
 import React from 'react';
-import { aircraftData } from '@/lib/data-provider';
+import type { Aircraft } from '@/lib/types';
 
-export function GanttAircraftColumn() {
+interface GanttAircraftColumnProps {
+    aircraft: Aircraft[];
+}
+
+export function GanttAircraftColumn({ aircraft }: GanttAircraftColumnProps) {
   return (
     <div className="h-full">
-      {aircraftData.map(aircraft => (
-        <div key={aircraft.id} className="h-20 border-b flex items-center p-2">
+      {aircraft.map(ac => (
+        <div key={ac.id} className="h-20 border-b flex items-center p-2">
             <div>
-                <p className="font-semibold">{aircraft.model}</p>
-                <p className="text-sm text-muted-foreground">{aircraft.tailNumber}</p>
+                <p className="font-semibold">{ac.model}</p>
+                <p className="text-sm text-muted-foreground">{ac.tailNumber}</p>
             </div>
         </div>
       ))}

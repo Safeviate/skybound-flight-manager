@@ -8,33 +8,56 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { NewBookingForm } from './new-booking-form';
 import { useState, useEffect } from 'react';
 import type { Booking } from '@/lib/types';
-import { bookingData as initialBookingData } from '@/lib/data-provider';
 import { BookingCalendar } from './booking-calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MonthlyCalendarView } from './monthly-calendar-view';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 function BookingsPage() {
-  const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
+  const [bookingData, setBookingData] = useState<Booking[]>([]);
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (company) {
+        const fetchBookings = async () => {
+            const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+            const bookingsSnapshot = await getDocs(bookingsQuery);
+            const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+            setBookingData(bookingsList);
+        };
+        fetchBookings();
     }
-  }, [user, loading, router]);
+  }, [user, company, loading, router]);
 
 
-  const handleBookingCreated = (newBooking: Omit<Booking, 'id'>) => {
-      const bookingWithId: Booking = {
-          ...newBooking,
-          id: `booking-${Date.now()}`
-      };
-      setBookingData(prev => [...prev, bookingWithId]);
-      setIsNewBookingOpen(false);
+  const handleBookingCreated = async (newBooking: Omit<Booking, 'id'>) => {
+      if (!company) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Cannot create booking without company context.' });
+          return;
+      }
+      try {
+        const bookingsCollection = collection(db, `companies/${company.id}/bookings`);
+        const docRef = await addDoc(bookingsCollection, newBooking);
+        
+        const bookingWithId: Booking = {
+            ...newBooking,
+            id: docRef.id
+        };
+        setBookingData(prev => [...prev, bookingWithId]);
+        setIsNewBookingOpen(false);
+      } catch (error) {
+          console.error("Error creating booking:", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to save booking to database.' });
+      }
   }
 
   if (loading || !user) {
@@ -75,7 +98,7 @@ function BookingsPage() {
                     <TabsTrigger value="month">Month View</TabsTrigger>
                 </TabsList>
                 <TabsContent value="day" className="mt-4">
-                    <BookingCalendar />
+                    <BookingCalendar bookings={bookingData} />
                 </TabsContent>
                 <TabsContent value="month" className="mt-4">
                     <MonthlyCalendarView bookings={bookingData} />
