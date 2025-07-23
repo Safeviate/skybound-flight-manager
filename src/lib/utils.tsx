@@ -2,10 +2,10 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { differenceInDays, format, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import React from 'react';
-import type { RiskLikelihood, RiskSeverity } from './types';
+import type { RiskLikelihood, RiskSeverity, TrainingLogEntry } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -130,3 +130,17 @@ export const getRiskScoreColorWithOpacity = (score: number | null | undefined, o
   if (score <= 16) return `hsla(var(--orange), ${opacity})`;
   return `hsla(var(--destructive), ${opacity})`;
 }
+
+// Fatigue Risk Management
+export const calculateFlightHours = (logs: TrainingLogEntry[], periodInDays: number): number => {
+  const today = new Date('2024-08-15');
+  const startDate = subDays(today, periodInDays - 1);
+  
+  const relevantLogs = logs.filter(log => {
+    const logDate = parseISO(log.date);
+    return logDate >= startDate && logDate <= today;
+  });
+
+  const totalHours = relevantLogs.reduce((sum, log) => sum + log.flightDuration, 0);
+  return parseFloat(totalHours.toFixed(1));
+};

@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export type Airport = {
   id: string;
   name: string;
@@ -180,6 +175,7 @@ export type Booking = {
   status: 'Approved' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
   isPostFlightChecklistComplete?: boolean;
+  flightDuration?: number;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';

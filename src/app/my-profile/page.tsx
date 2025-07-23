@@ -1,12 +1,13 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport } from '@/lib/types';
+import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport, TrainingLogEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO, isBefore, differenceInDays, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
@@ -17,8 +18,9 @@ import { ChecklistCard } from '../checklists/checklist-card';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/data-provider';
+import { getExpiryBadge, calculateFlightHours } from '@/lib/utils.tsx';
+import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData, userData } from '@/lib/data-provider';
+import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
 
 export default function MyProfilePage() {
     const { user, company, loading } = useUser();
@@ -36,6 +38,24 @@ export default function MyProfilePage() {
     const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
     
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
+
+    // This is a simplified aggregation of all logs for demo purposes.
+    // In a real app, you would fetch logs specific to the user.
+    const allTrainingLogs: TrainingLogEntry[] = useMemo(() => {
+      return userData.flatMap(u => u.trainingLogs || []);
+    }, []);
+
+    const userLogs = useMemo(() => {
+      if (!user) return [];
+      if (user.role === 'Student') {
+        return user.trainingLogs || [];
+      }
+      if (user.role.includes('Instructor')) {
+        return allTrainingLogs.filter(log => log.instructorName === user.name);
+      }
+      return [];
+    }, [user, allTrainingLogs]);
+
 
     if (loading || !user) {
         return (
@@ -230,6 +250,14 @@ export default function MyProfilePage() {
                         </div>
                     </CardContent>
                 </Card>
+                
+                {(user.role === 'Student' || user.role.includes('Instructor')) && (
+                    <FatigueRiskIndicatorCard
+                        userRole={user.role}
+                        trainingLogs={userLogs}
+                    />
+                )}
+                
                 <Card>
                 <CardHeader>
                     <CardTitle>
