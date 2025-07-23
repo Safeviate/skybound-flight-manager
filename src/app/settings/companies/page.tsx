@@ -2,24 +2,60 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { companyData } from '@/lib/data-provider';
+import { companyData as initialCompanyData, addCompany, addUser } from '@/lib/data-provider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Paintbrush, Rocket } from 'lucide-react';
+import { Globe, Paintbrush, Rocket, PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewCompanyForm } from '@/app/corporate/new-company-form';
+import type { Company, User } from '@/lib/types';
+import { ROLE_PERMISSIONS } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 function CompaniesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
+  const [companies, setCompanies] = useState(initialCompanyData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && (!user || !user.permissions.includes('Super User'))) {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+    const newCompanyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-');
+    
+    const newCompany: Company = {
+        ...newCompanyData,
+        id: newCompanyId,
+    };
+
+    const newAdminUser: User = {
+        ...adminData,
+        id: `user-${Date.now()}`,
+        companyId: newCompanyId,
+        role: 'Admin',
+        permissions: ROLE_PERMISSIONS['Admin'],
+        password: password,
+    };
+    
+    addCompany(newCompany);
+    addUser(newAdminUser);
+    setCompanies(prev => [...prev, newCompany]);
+
+    toast({
+        title: "Company Registered!",
+        description: `The company "${newCompany.name}" has been created.`
+    });
+    setIsDialogOpen(false);
+  };
 
   if (loading || !user || !user.permissions.includes('Super User')) {
     return (
@@ -32,11 +68,30 @@ function CompaniesPage() {
   return (
       <main className="flex-1 p-4 md:p-8">
         <Card>
-          <CardHeader>
-            <CardTitle>Registered Companies</CardTitle>
-            <CardDescription>
-              A list of all organizations registered in the system.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Registered Companies</CardTitle>
+                <CardDescription>
+                A list of all organizations registered in the system.
+                </CardDescription>
+            </div>
+             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Company
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Register New Company</DialogTitle>
+                        <DialogDescription>
+                            Set up a new portal for an organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewCompanyForm onSubmit={handleNewCompany} />
+                </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <Table>
@@ -49,7 +104,7 @@ function CompaniesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {companyData.map((company) => (
+                {companies.map((company) => (
                   <TableRow key={company.id}>
                     <TableCell className="font-medium flex items-center gap-2">
                         <Rocket className="h-5 w-5 text-primary" />
@@ -59,9 +114,9 @@ function CompaniesPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Paintbrush className="h-4 w-4 text-muted-foreground" />
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: company.theme?.primary || 'transparent' }}></div>
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: company.theme?.background || 'transparent' }}></div>
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: company.theme?.accent || 'transparent' }}></div>
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.primary || 'transparent' }}></div>
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.background || 'transparent' }}></div>
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.accent || 'transparent' }}></div>
                       </div>
                     </TableCell>
                     <TableCell>
