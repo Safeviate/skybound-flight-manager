@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, RefreshCw, Copy } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
@@ -26,6 +26,7 @@ import type { Role, User } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -48,6 +49,7 @@ const personnelFormSchema = z.object({
   consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
     message: "You must give consent to proceed."
   }),
+  mustChangePassword: z.boolean().default(false),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -58,6 +60,7 @@ interface PersonnelFormProps {
 }
 
 export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProps) {
+  const { toast } = useToast();
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
     defaultValues: existingPersonnel ? {
@@ -67,6 +70,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     } : {
       permissions: [],
       consentDisplayContact: false,
+      mustChangePassword: true,
     }
   });
 
@@ -87,6 +91,22 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : undefined,
     };
     onSubmit(submissionData as Omit<User, 'id'>);
+  }
+
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-10);
+    form.setValue('password', newPassword, { shouldValidate: true });
+  };
+
+  const copyPassword = () => {
+    const password = form.getValues('password');
+    if (password) {
+        navigator.clipboard.writeText(password);
+        toast({
+            title: "Password Copied",
+            description: "The temporary password has been copied to your clipboard.",
+        });
+    }
   }
 
   return (
@@ -189,22 +209,49 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                 </FormItem>
             )}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Set a password" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    {existingPersonnel ? 'Leave blank to keep current password.' : 'User must have a password.'}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!existingPersonnel ? (
+                <div className="space-y-2">
+                    <FormLabel>Temporary Password</FormLabel>
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <div className="flex gap-2">
+                                    <FormControl>
+                                        <Input readOnly {...field} />
+                                    </FormControl>
+                                    <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
+                                        <Copy className="h-4 w-4" />
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={generatePassword} size="icon">
+                                        <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <FormDescription>Generate a password for the new user.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            ) : (
+                <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                        <Input type="password" {...field} placeholder="Leave blank to keep current" />
+                    </FormControl>
+                    <FormDescription>
+                        Leave blank to keep current password.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
         </div>
 
         <div className="space-y-2">

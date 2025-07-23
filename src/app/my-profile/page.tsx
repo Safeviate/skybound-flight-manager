@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle, KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport, TrainingLogEntry } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -22,10 +22,72 @@ import { getExpiryBadge, calculateFlightHours } from '@/lib/utils.tsx';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData, userData } from '@/lib/data-provider';
 import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
 import { useSettings } from '@/context/settings-provider';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const { toast } = useToast();
+
+    const handleSubmit = () => {
+        if (newPassword.length < 8) {
+            setError('Password must be at least 8 characters long.');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
+        setError('');
+        onPasswordChanged(newPassword);
+        toast({
+            title: "Password Updated",
+            description: "Your password has been changed successfully.",
+        });
+    }
+
+    return (
+        <Dialog defaultOpen>
+            <DialogContent onInteractOutside={(e) => e.preventDefault()} hideCloseButton>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><KeyRound/> Change Your Password</DialogTitle>
+                    <DialogDescription>
+                        For your security, you must change the temporary password before proceeding.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input 
+                            id="new-password"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                        <Input 
+                            id="confirm-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                    </div>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+                </div>
+                <Button onClick={handleSubmit}>Set New Password</Button>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 
 export default function MyProfilePage() {
-    const { user, company, loading } = useUser();
+    const { user, updateUser, company, loading } = useUser();
     const router = useRouter();
     const { settings } = useSettings();
 
@@ -76,6 +138,18 @@ export default function MyProfilePage() {
             </div>
         )
     }
+    
+    const handlePasswordChanged = (newPassword: string) => {
+        if (user) {
+            const updatedUser = {
+                ...user,
+                password: newPassword,
+                mustChangePassword: false,
+            };
+            // In a real app, this would be an API call
+            updateUser(updatedUser);
+        }
+    };
 
     const companyAircraft = aircraftData.filter(ac => ac.companyId === company?.id);
     const companyChecklists = checklists.filter(c => c.companyId === company?.id);
@@ -236,6 +310,9 @@ export default function MyProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {user.mustChangePassword && (
+        <ChangePasswordDialog user={user} onPasswordChanged={handlePasswordChanged} />
+      )}
       <Header title="My Profile & Roster" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>

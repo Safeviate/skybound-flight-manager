@@ -12,6 +12,7 @@ interface UserContextType {
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (updatedUser: User) => void;
   getUnacknowledgedAlerts: (user: User) => Alert[];
 }
 
@@ -83,6 +84,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
   
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+    // In a real app, you would also update the userData array or make an API call
+    const userIndex = userData.findIndex(u => u.id === updatedUser.id);
+    if (userIndex !== -1) {
+        userData[userIndex] = updatedUser;
+    }
+  }, []);
+  
   // Re-hydrate user from sessionStorage on initial load
   useEffect(() => {
     const rehydrateUser = async () => {
@@ -108,7 +118,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, company, loading, login, logout, getUnacknowledgedAlerts }}>
+    <UserContext.Provider value={{ user, company, loading, login, logout, updateUser, getUnacknowledgedAlerts }}>
       {children}
     </UserContext.Provider>
   );

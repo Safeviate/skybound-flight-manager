@@ -150,6 +150,7 @@ export type User = {
     password?: string;
     permissions: Permission[];
     consentDisplayContact?: boolean;
+    mustChangePassword?: boolean;
     // Student-specific
     instructor?: string;
     flightHours?: number;
