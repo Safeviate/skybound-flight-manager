@@ -147,6 +147,7 @@ export type User = {
     role: Role;
     email: string;
     phone: string;
+    password?: string;
     permissions: Permission[];
     consentDisplayContact?: boolean;
     // Student-specific

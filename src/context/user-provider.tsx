@@ -10,8 +10,9 @@ interface UserContextType {
   user: User | null;
   company: Company | null;
   loading: boolean;
-  login: (userId: string) => void;
+  login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
+  getUnacknowledgedAlerts: (user: User) => Alert[];
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,28 +22,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const getUnacknowledgedAlerts = useCallback((currentUser: User): Alert[] => {
+    if (!currentUser) return [];
     try {
-      const storedUserId = localStorage.getItem('currentUserId');
-      if (storedUserId) {
-        const foundUser = userData.find(u => u.id === storedUserId);
-        if (foundUser) {
-            const permissions = ROLE_PERMISSIONS[foundUser.role] || [];
-            setUser({ ...foundUser, permissions });
-            const foundCompany = companyData.find(c => c.id === foundUser.companyId);
-            setCompany(foundCompany || null);
-        }
-      }
-    } catch (error) {
-        console.error("Could not access localStorage. User session will not persist.");
-    } finally {
-        setLoading(false);
+        const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlertIds') || '[]');
+        return allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
+    } catch (e) {
+        // If sessionStorage is not available, all alerts are considered unacknowledged.
+        return allAlerts;
     }
   }, []);
 
-  const login = useCallback((userId: string) => {
-    const userToLogin = userData.find(u => u.id === userId) || null;
-    if (userToLogin) {
+  const login = useCallback(async (email: string, password?: string): Promise<boolean> => {
+    // In a real app, you would make an API call to your backend for authentication.
+    // For this mock, we'll find the user by email.
+    const userToLogin = userData.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    // Password check (for a real app, this would be a hashed comparison on the server)
+    if (userToLogin && userToLogin.password === password) {
         const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
         const userWithPermissions = { ...userToLogin, permissions };
         setUser(userWithPermissions);
@@ -50,30 +47,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const foundCompany = companyData.find(c => c.id === userToLogin.companyId);
         setCompany(foundCompany || null);
 
-        // Simulate acknowledging alerts
-        allAlerts.forEach(alert => {
-            if (!alert.readBy.includes(userToLogin.name)) {
-                alert.readBy.push(userToLogin.name);
-            }
-        });
-
         try {
-            localStorage.setItem('currentUserId', userId);
+            localStorage.setItem('currentUserId', userToLogin.id);
         } catch (error) {
             console.error("Could not access localStorage to set user session.");
         }
-    } else {
-        setUser(null);
-        setCompany(null);
-        try {
-            localStorage.removeItem('currentUserId');
-        } catch (error) {
-            console.error("Could not access localStorage to clear user session.");
-        }
+        return true;
     }
-  }, []);
-
-  const logout = useCallback(() => {
+    
+    // If login fails
     setUser(null);
     setCompany(null);
     try {
@@ -81,10 +63,46 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
         console.error("Could not access localStorage to clear user session.");
     }
+    return false;
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    setCompany(null);
+    try {
+        localStorage.removeItem('currentUserId');
+        sessionStorage.removeItem('acknowledgedAlertIds');
+    } catch (error) {
+        console.error("Could not access localStorage to clear user session.");
+    }
+  }, []);
+  
+  // Re-hydrate user from localStorage on initial load
+  useEffect(() => {
+    const rehydrateUser = async () => {
+        try {
+            const storedUserId = localStorage.getItem('currentUserId');
+            if (storedUserId) {
+                const userToLogin = userData.find(u => u.id === storedUserId);
+                 if (userToLogin) {
+                    const permissions = ROLE_PERMISSIONS[userToLogin.role] || [];
+                    const userWithPermissions = { ...userToLogin, permissions };
+                    setUser(userWithPermissions);
+                    const foundCompany = companyData.find(c => c.id === userToLogin.companyId);
+                    setCompany(foundCompany || null);
+                }
+            }
+        } catch (error) {
+            console.error("Could not access localStorage. User session will not persist.");
+        } finally {
+            setLoading(false);
+        }
+    }
+    rehydrateUser();
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, company, loading, login, logout }}>
+    <UserContext.Provider value={{ user, company, loading, login, logout, getUnacknowledgedAlerts }}>
       {children}
     </UserContext.Provider>
   );
