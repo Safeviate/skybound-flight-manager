@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -194,6 +195,13 @@ export default function LoginPage() {
             </div>
           )}
         </CardContent>
+        {step === 'login' && (
+            <CardFooter className="justify-center text-sm">
+                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                    Don't have an account? Register your company
+                </Link>
+            </CardFooter>
+        )}
       </Card>
     </div>
   );
