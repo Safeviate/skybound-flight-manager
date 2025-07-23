@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, Permission } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { aircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
+import { aircraftData as initialAircraftData, bookingData as initialBookingData, checklistData as initialChecklistData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -32,11 +32,15 @@ import { useUser } from '@/context/user-provider';
 export default function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
-  const [fleet, setFleet] = useState<Aircraft[]>(aircraftData);
+  const [fleet, setFleet] = useState<Aircraft[]>(initialAircraftData);
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, company } = useUser();
+
+  const companyAircraft = fleet.filter(ac => ac.companyId === company?.id);
+  const companyChecklists = checklists.filter(c => c.companyId === company?.id);
+  const companyBookings = bookings.filter(b => b.companyId === company?.id);
 
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
 
@@ -189,10 +193,10 @@ export default function AircraftPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fleet.map((aircraft) => {
-                  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
-                  const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
-                  const maintenanceChecklist = checklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
+                {companyAircraft.map((aircraft) => {
+                  const preFlightChecklist = companyChecklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
+                  const postFlightChecklist = companyChecklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
+                  const maintenanceChecklist = companyChecklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
                   const isEditing = editingHobbsId === aircraft.id;
 
                   return (

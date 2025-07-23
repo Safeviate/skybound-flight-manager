@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import type { Checklist, Aircraft } from '@/lib/types';
-import { checklistData, aircraftData } from '@/lib/data-provider';
+import { checklistData as initialChecklistData, aircraftData } from '@/lib/data-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
@@ -15,7 +15,7 @@ import Header from '@/components/layout/header';
 export default function StartChecklistPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const aircraftId = params.aircraftId as string;
   const { toast } = useToast();
 
@@ -28,8 +28,8 @@ export default function StartChecklistPage() {
 
 
   const aircraft = aircraftData.find(a => a.id === aircraftId);
-  // Find the master checklist template
-  const checklistTemplate = checklistData.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraftId);
+  // Find the master checklist template for the correct company
+  const checklistTemplate = initialChecklistData.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraftId && c.companyId === company?.id);
   
   // Create a unique instance of the checklist for this session
   const [checklist, setChecklist] = useState<Checklist | undefined>(() => {
@@ -78,7 +78,7 @@ export default function StartChecklistPage() {
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
             <Rocket className="w-16 h-16 text-primary mb-4" />
             <h1 className="text-2xl font-bold">Checklist Not Found</h1>
-            <p className="text-muted-foreground">The checklist for this aircraft could not be located. Please check the ID or contact support.</p>
+            <p className="text-muted-foreground">The pre-flight checklist for this aircraft could not be located in your company's templates.</p>
         </div>
       </div>
     );

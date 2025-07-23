@@ -21,7 +21,7 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData } from '@/lib/data-provider';
 
 export default function MyProfilePage() {
-    const { user, loading } = useUser();
+    const { user, company, loading } = useUser();
     const router = useRouter();
 
     useEffect(() => {
@@ -48,6 +48,10 @@ export default function MyProfilePage() {
         )
     }
 
+    const companyAircraft = aircraftData.filter(ac => ac.companyId === company?.id);
+    const companyChecklists = checklists.filter(c => c.companyId === company?.id);
+    const companyBookings = bookings.filter(b => b.companyId === company?.id);
+
     const handleItemToggle = (toggledChecklist: Checklist) => {
         setChecklists(prevChecklists =>
           prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
@@ -61,7 +65,7 @@ export default function MyProfilePage() {
         if (isComplete && updatedChecklist.aircraftId) {
             setBookings(prevBookings => 
                 prevBookings.map(booking => {
-                    const aircraft = aircraftData.find(ac => ac.id === updatedChecklist.aircraftId);
+                    const aircraft = companyAircraft.find(ac => ac.id === updatedChecklist.aircraftId);
                     if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Approved') {
                         return { ...booking, isChecklistComplete: true };
                     }
@@ -75,17 +79,20 @@ export default function MyProfilePage() {
         setChecklists(prevChecklists =>
           prevChecklists.map(c => {
             if (c.id === checklistId) {
-              return {
-                ...c,
-                items: c.items.map(item => ({ ...item, completed: false })),
-              };
+              const originalTemplate = initialChecklistData.find(t => t.id === checklistId);
+              if (originalTemplate) {
+                 return {
+                    ...originalTemplate,
+                    items: originalTemplate.items.map(item => ({ ...item, completed: false })),
+                 };
+              }
             }
             return c;
           })
         );
       };
 
-    const userBookings = bookings.filter(b => b.instructor === user.name || b.student === user.name);
+    const userBookings = companyBookings.filter(b => b.instructor === user.name || b.student === user.name);
 
     const getBookingsForDay = (day: Date | undefined) => {
         if (!day) return [];
@@ -126,7 +133,7 @@ export default function MyProfilePage() {
     }
 
     const discussionRequests = safetyReportData
-        .filter(report => report.status !== 'Closed')
+        .filter(report => report.companyId === company?.id && report.status !== 'Closed')
         .flatMap(report => (report.discussion || []).map(entry => ({ report, entry })))
         .filter(({ report, entry }) => entry.recipient === user.name);
     
@@ -134,6 +141,7 @@ export default function MyProfilePage() {
     thirtyDaysFromNow.setDate(today.getDate() + 30);
 
     const riskReviews = riskRegisterData.filter(risk =>
+        risk.companyId === company?.id &&
         risk.riskOwner === user.name &&
         risk.status === 'Open' &&
         risk.reviewDate &&
@@ -263,8 +271,8 @@ export default function MyProfilePage() {
                         </TableHeader>
                         <TableBody>
                             {selectedDayBookings.map(booking => {
-                            const relatedAircraft = aircraftData.find(a => a.tailNumber === booking.aircraft);
-                            const preFlightChecklist = relatedAircraft ? checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === relatedAircraft.id) : undefined;
+                            const relatedAircraft = companyAircraft.find(a => a.tailNumber === booking.aircraft);
+                            const preFlightChecklist = relatedAircraft ? companyChecklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === relatedAircraft.id) : undefined;
                             return (
                                 <TableRow key={booking.id}>
                                     <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
