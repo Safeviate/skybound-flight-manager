@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { companyData as initialCompanyData } from '@/lib/data-provider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Paintbrush, Rocket, PlusCircle } from 'lucide-react';
@@ -23,13 +22,14 @@ import config from '@/config';
 function CompaniesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>(initialCompanyData);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   async function fetchCompanies() {
       if (config.useMockData) {
-          setCompanies(initialCompanyData);
+          // This path is for mock data, which we are not using.
+          // setCompanies(initialCompanyData); 
           return;
       }
       try {
