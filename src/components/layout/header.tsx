@@ -2,20 +2,12 @@
 'use client';
 import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Search, User as UserIcon } from 'lucide-react';
-import { Input } from '../ui/input';
-import Link from 'next/link';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { PersonalInformationCard } from '@/app/my-profile/personal-information-card';
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user } = useUser();
@@ -38,27 +30,27 @@ export default function Header({ title, children }: { title: string, children?: 
         
         <div className="flex items-center gap-4">
           {otherChildren}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <div className="h-10 w-10 flex items-center justify-center">
-                    <UserIcon className="h-5 w-5" />
-                </div>
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user?.name || 'My Account'}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <Link href="/my-profile">
-                <DropdownMenuItem>
-                    My Profile
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {user && (
+            <Dialog>
+              <DialogTrigger asChild>
+                 <Button variant="secondary" size="icon" className="rounded-full">
+                  <div className="h-10 w-10 flex items-center justify-center">
+                      <UserIcon className="h-5 w-5" />
+                  </div>
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Personal Information</DialogTitle>
+                  <DialogDescription>
+                    Your personal details and document status.
+                  </DialogDescription>
+                </DialogHeader>
+                <PersonalInformationCard user={user} />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
     </header>
