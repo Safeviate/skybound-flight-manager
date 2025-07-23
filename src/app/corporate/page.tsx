@@ -44,7 +44,7 @@ export default function CorporatePage() {
 
             toast({
                 title: "Company Registered Successfully!",
-                description: `The company "${newCompany.name}" has been created. You can now log in.`
+                description: `The company "${newCompanyData.name}" has been created. You can now log in.`
             });
 
         } catch (error: any) {
@@ -69,14 +69,14 @@ export default function CorporatePage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
         <div className="absolute top-8 left-8 flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
-            <span className="text-xl font-semibold">Safeviate</span>
+            <span className="text-xl font-semibold">SkyBound Flight Manager</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl">
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
-                    Welcome to Safeviate, the all-in-one platform for flight school operations, safety, and compliance. Register your organization or log in to continue.
+                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your organization or log in to continue.
                 </p>
                 <Button asChild>
                     <Link href="/login">

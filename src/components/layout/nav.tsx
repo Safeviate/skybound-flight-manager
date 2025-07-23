@@ -111,7 +111,7 @@ export default function Nav() {
             <Rocket className="h-8 w-8 text-primary flex-shrink-0" />
             <div>
                 <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
-                <p className="text-xs text-sidebar-foreground/70">Development</p>
+                <p className="text-xs text-sidebar-foreground/70">Flight Manager</p>
             </div>
         </div>
       </SidebarHeader>
