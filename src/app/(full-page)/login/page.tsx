@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LogIn, KeyRound, Rocket } from 'lucide-react';
-import { companyData } from '@/lib/data-provider';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,7 +36,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 type OtpFormValues = z.infer<typeof otpFormSchema>;
 
 export default function LoginPage() {
-  const { login } = useUser();
+  const { login, company } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -47,15 +46,13 @@ export default function LoginPage() {
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
-    defaultValues: { email: 'admin@skybound.com', password: 'password' },
+    defaultValues: { email: '', password: '' },
   });
 
   const otpForm = useForm<OtpFormValues>({
     resolver: zodResolver(otpFormSchema),
     defaultValues: { otp: '' },
   });
-
-  const company = companyData.find((c) => c.id === 'skybound');
 
   async function handleLogin(data: LoginFormValues) {
     setLoginError(null);
@@ -94,7 +91,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Rocket className="h-8 w-8 text-primary" />
-        <span className="text-xl font-semibold">{company?.name || 'SkyBound'}</span>
+        <span className="text-xl font-semibold">{company?.name || 'SkyBound Flight Manager'}</span>
       </div>
 
       <Card className="w-full max-w-sm">
@@ -127,7 +124,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="admin@skybound.com" {...field} />
+                          <Input type="email" placeholder="admin@yourcompany.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -140,7 +137,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="password" {...field} />
+                          <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
