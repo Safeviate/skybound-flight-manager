@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { companyData as initialCompanyData, addCompany, addUser } from '@/lib/data-provider';
+import { companyData as initialCompanyData } from '@/lib/data-provider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Paintbrush, Rocket, PlusCircle } from 'lucide-react';
@@ -15,47 +15,93 @@ import { NewCompanyForm } from '@/app/corporate/new-company-form';
 import type { Company, User } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
+import config from '@/config';
 
 function CompaniesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [companies, setCompanies] = useState(initialCompanyData);
+  const [companies, setCompanies] = useState<Company[]>(initialCompanyData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  async function fetchCompanies() {
+      if (config.useMockData) {
+          setCompanies(initialCompanyData);
+          return;
+      }
+      try {
+        const companiesCol = collection(db, 'companies');
+        const companySnapshot = await getDocs(companiesCol);
+        const companyList = companySnapshot.docs.map(doc => doc.data() as Company);
+        setCompanies(companyList);
+      } catch (e) {
+        console.error("Error fetching companies: ", e);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch company data from the database.',
+        });
+      }
+  }
 
   useEffect(() => {
     if (!loading && (!user || !user.permissions.includes('Super User'))) {
       router.push('/');
+    } else if (user) {
+        fetchCompanies();
     }
   }, [user, loading, router]);
 
-  const handleNewCompany = (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
-    const newCompanyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-');
-    
-    const newCompany: Company = {
-        ...newCompanyData,
-        id: newCompanyId,
-    };
 
-    const newAdminUser: User = {
-        ...adminData,
-        id: `user-${Date.now()}`,
-        companyId: newCompanyId,
-        role: 'Admin',
-        permissions: ROLE_PERMISSIONS['Admin'],
-        password: password,
-    };
+  const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+    const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
-    addCompany(newCompany);
-    addUser(newAdminUser);
-    setCompanies(prev => [...prev, newCompany]);
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
+        const newUserId = userCredential.user.uid;
 
-    toast({
-        title: "Company Registered!",
-        description: `The company "${newCompany.name}" has been created.`
-    });
-    setIsDialogOpen(false);
+        const companyDocRef = doc(db, 'companies', companyId);
+        const finalCompanyData = { ...newCompanyData, id: companyId };
+        await setDoc(companyDocRef, finalCompanyData);
+        
+        const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+        const finalUserData: Omit<User, 'password'> = {
+            ...adminData,
+            id: newUserId,
+            companyId: companyId,
+            role: 'Admin',
+            permissions: ROLE_PERMISSIONS['Admin'],
+        };
+        await setDoc(userDocRef, finalUserData);
+
+        toast({
+            title: "Company Registered Successfully!",
+            description: `The company "${newCompanyData.name}" has been created.`
+        });
+        
+        setCompanies(prev => [...prev, finalCompanyData]);
+        setIsDialogOpen(false);
+
+    } catch (error: any) {
+        console.error("Error creating company:", error);
+        const errorCode = error.code;
+        let errorMessage = "An unknown error occurred.";
+        if (errorCode === 'auth/email-already-in-use') {
+            errorMessage = "This email address is already in use by another account.";
+        } else if (errorCode === 'auth/weak-password') {
+            errorMessage = "The password is too weak. Please use at least 8 characters.";
+        }
+        toast({
+            variant: 'destructive',
+            title: "Registration Failed",
+            description: errorMessage,
+        });
+    }
   };
+
 
   if (loading || !user || !user.permissions.includes('Super User')) {
     return (
