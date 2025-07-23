@@ -103,9 +103,12 @@ export default function Nav() {
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center gap-2 p-2">
-            <Rocket className="h-8 w-8 text-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
+        <div className="flex items-center gap-3 p-2">
+            <Rocket className="h-8 w-8 text-primary flex-shrink-0" />
+            <div>
+                <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
+                <p className="text-xs text-sidebar-foreground/70">Development</p>
+            </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
