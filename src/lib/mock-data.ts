@@ -86,7 +86,7 @@ const instructorTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
 export const userData: User[] = [
     // Personnel
     { id: 'p1', companyId: 'skybound', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', password: 'password', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: [] },
-    { id: 'p2', companyId: 'skybound', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', password: 'password', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] },
+    { id: 'p2', companyId: 'skybound', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', password: 'changeme', mustChangePassword: true, medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] },
     { id: 'p3', companyId: 'skybound', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', password: 'password', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: [] },
     { id: 'p4', companyId: 'skybound', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', password: 'password', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [], trainingLogs: instructorTrainingLogs['p4'] },
     { id: 'p5', companyId: 'skybound', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', password: 'password', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
