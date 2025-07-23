@@ -12,7 +12,6 @@ import { ROLE_PERMISSIONS } from '@/lib/types';
 import { doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
-import { addCompany as addMockCompany, addUser as addMockUser } from '@/lib/data-provider';
 import config from '@/config';
 
 
@@ -22,16 +21,7 @@ export default function CorporatePage() {
     const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
         const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
-        if (config.useMockData) {
-            const newCompany: Company = { ...newCompanyData, id: companyId };
-            const newAdminUser: User = { ...adminData, id: `user-${Date.now()}`, companyId, role: 'Admin', permissions: ROLE_PERMISSIONS['Admin'], password: password };
-            addMockCompany(newCompany);
-            addMockUser(newAdminUser);
-            toast({ title: "Company Registered (Mock)!", description: `The company "${newCompany.name}" has been created in the mock data.` });
-            return;
-        }
-
-        // --- Real Firestore Logic ---
+        // This function will now ALWAYS write to Firebase, regardless of the mock data config.
         try {
             // 1. Create the user in Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
@@ -64,7 +54,7 @@ export default function CorporatePage() {
             if (errorCode === 'auth/email-already-in-use') {
                 errorMessage = "This email address is already in use by another account.";
             } else if (errorCode === 'auth/weak-password') {
-                errorMessage = "The password is too weak. Please use at least 6 characters.";
+                errorMessage = "The password is too weak. Please use at least 8 characters.";
             }
             toast({
                 variant: 'destructive',
