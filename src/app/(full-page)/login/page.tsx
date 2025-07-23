@@ -4,11 +4,10 @@
 import { useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, Rocket } from 'lucide-react';
+import { LogIn, KeyRound, Rocket } from 'lucide-react';
 import { companyData } from '@/lib/data-provider';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,20 +28,30 @@ const loginFormSchema = z.object({
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
+const otpFormSchema = z.object({
+  otp: z.string().length(6, { message: 'Please enter the 6-digit code.' }),
+});
+
 type LoginFormValues = z.infer<typeof loginFormSchema>;
+type OtpFormValues = z.infer<typeof otpFormSchema>;
 
 export default function LoginPage() {
   const { login } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [step, setStep] = useState<'login' | 'otp'>('login');
+  const [email, setEmail] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
 
-  const form = useForm<LoginFormValues>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
+  });
+
+  const otpForm = useForm<OtpFormValues>({
+    resolver: zodResolver(otpFormSchema),
+    defaultValues: { otp: '' },
   });
 
   const company = companyData.find((c) => c.id === 'skybound');
@@ -52,11 +61,27 @@ export default function LoginPage() {
     const loginSuccess = await login(data.email, data.password);
 
     if (loginSuccess) {
-      const redirectPath = searchParams.get('redirect');
-      router.push(redirectPath || '/my-profile');
+      // 2FA Step
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      setGeneratedOtp(otp);
+      setEmail(data.email);
+      setStep('otp');
     } else {
       setLoginError('Invalid email or password. Please try again.');
-      form.setValue('password', '');
+      loginForm.setValue('password', '');
+    }
+  }
+
+  async function handleOtpSubmit(data: OtpFormValues) {
+    setLoginError(null);
+    if (data.otp === generatedOtp) {
+        // Final login step after 2FA success
+        await login(email); // Log in without password check this time, as it's already done
+        const redirectPath = searchParams.get('redirect');
+        router.push(redirectPath || '/my-profile');
+    } else {
+        setLoginError('Invalid verification code. Please try again.');
+        otpForm.setValue('otp', '');
     }
   }
 
@@ -69,56 +94,93 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">
+            {step === 'login' ? 'Login' : 'Two-Factor Authentication'}
+          </CardTitle>
           <CardDescription>
-            Enter your email below to login to your account.
+            {step === 'login'
+              ? 'Enter your email below to login to your account.'
+              : `A verification code has been sent to ${email}.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-4">
-              {loginError && (
-                <Alert variant="destructive">
+          {step === 'login' ? (
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                {loginError && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Login Failed</AlertTitle>
+                    <AlertDescription>{loginError}</AlertDescription>
+                  </Alert>
+                )}
+                <FormField
+                  control={loginForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="m@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
+                  {loginForm.formState.isSubmitting ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Login</>}
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <Form {...otpForm}>
+              <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-4">
+                <Alert>
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Login Failed</AlertTitle>
-                  <AlertDescription>{loginError}</AlertDescription>
+                  <AlertTitle>Your verification code is:</AlertTitle>
+                  <AlertDescription className="font-bold text-lg tracking-widest text-center py-2">
+                    {generatedOtp}
+                  </AlertDescription>
                 </Alert>
-              )}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="m@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {loginError && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Verification Failed</AlertTitle>
+                    <AlertDescription>{loginError}</AlertDescription>
+                  </Alert>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Login</>}
-              </Button>
-            </form>
-          </Form>
+                <FormField
+                  control={otpForm.control}
+                  name="otp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Verification Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter the 6-digit code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={otpForm.formState.isSubmitting}>
+                  {otpForm.formState.isSubmitting ? 'Verifying...' : <><KeyRound className="mr-2 h-4 w-4" /> Verify Code</>}
+                </Button>
+              </form>
+            </Form>
+          )}
         </CardContent>
       </Card>
     </div>
