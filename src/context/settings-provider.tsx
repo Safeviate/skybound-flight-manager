@@ -7,6 +7,9 @@ interface Settings {
   enforcePostFlightCheck: boolean;
   enforcePreFlightCheck: boolean;
   enforcePostMaintenanceCheck: boolean;
+  dutyLimitDaily: number;
+  dutyLimitWeekly: number;
+  dutyLimitMonthly: number;
 }
 
 interface SettingsContextType {
@@ -20,6 +23,9 @@ const defaultSettings: Settings = {
     enforcePostFlightCheck: true,
     enforcePreFlightCheck: true,
     enforcePostMaintenanceCheck: true,
+    dutyLimitDaily: 8,
+    dutyLimitWeekly: 30,
+    dutyLimitMonthly: 100,
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -31,7 +37,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedSettings = localStorage.getItem('operationalSettings');
       if (storedSettings) {
-        setSettings(JSON.parse(storedSettings));
+        // Merge stored settings with defaults to ensure new settings are present
+        const parsedSettings = JSON.parse(storedSettings);
+        setSettings({ ...defaultSettings, ...parsedSettings });
       }
     } catch (error) {
         // If localStorage is not available or parsing fails, it will use defaultSettings

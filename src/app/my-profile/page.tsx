@@ -21,16 +21,19 @@ import Link from 'next/link';
 import { getExpiryBadge, calculateFlightHours } from '@/lib/utils.tsx';
 import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData, userData } from '@/lib/data-provider';
 import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
+import { useSettings } from '@/context/settings-provider';
 
-const FLIGHT_TIME_LIMITS = {
-    daily: 8,
-    weekly: 30,
-    monthly: 100,
-};
 
 export default function MyProfilePage() {
     const { user, company, loading } = useUser();
     const router = useRouter();
+    const { settings } = useSettings();
+
+    const flightTimeLimits = {
+      daily: settings.dutyLimitDaily,
+      weekly: settings.dutyLimitWeekly,
+      monthly: settings.dutyLimitMonthly,
+    };
 
     useEffect(() => {
         if (!loading && !user) {
@@ -207,25 +210,25 @@ export default function MyProfilePage() {
     const hours30d = calculateFlightHours(userLogs, 30);
 
     const dutyThreshold = 0.75; // 75% warning threshold
-    if (hours24 / FLIGHT_TIME_LIMITS.daily >= dutyThreshold) {
+    if (hours24 / flightTimeLimits.daily >= dutyThreshold) {
         personalAlerts.push({
             type: 'Approaching Daily Duty Limit',
-            details: `Logged ${hours24} of ${FLIGHT_TIME_LIMITS.daily} hours`,
-            variant: (hours24 / FLIGHT_TIME_LIMITS.daily) >= 0.9 ? 'destructive' : 'warning',
+            details: `Logged ${hours24} of ${flightTimeLimits.daily} hours`,
+            variant: (hours24 / flightTimeLimits.daily) >= 0.9 ? 'destructive' : 'warning',
         });
     }
-     if (hours7d / FLIGHT_TIME_LIMITS.weekly >= dutyThreshold) {
+     if (hours7d / flightTimeLimits.weekly >= dutyThreshold) {
         personalAlerts.push({
             type: 'Approaching Weekly Duty Limit',
-            details: `Logged ${hours7d} of ${FLIGHT_TIME_LIMITS.weekly} hours`,
-            variant: (hours7d / FLIGHT_TIME_LIMITS.weekly) >= 0.9 ? 'destructive' : 'warning',
+            details: `Logged ${hours7d} of ${flightTimeLimits.weekly} hours`,
+            variant: (hours7d / flightTimeLimits.weekly) >= 0.9 ? 'destructive' : 'warning',
         });
     }
-     if (hours30d / FLIGHT_TIME_LIMITS.monthly >= dutyThreshold) {
+     if (hours30d / flightTimeLimits.monthly >= dutyThreshold) {
         personalAlerts.push({
             type: 'Approaching Monthly Duty Limit',
-            details: `Logged ${hours30d} of ${FLIGHT_TIME_LIMITS.monthly} hours`,
-            variant: (hours30d / FLIGHT_TIME_LIMITS.monthly) >= 0.9 ? 'destructive' : 'warning',
+            details: `Logged ${hours30d} of ${flightTimeLimits.monthly} hours`,
+            variant: (hours30d / flightTimeLimits.monthly) >= 0.9 ? 'destructive' : 'warning',
         });
     }
 
