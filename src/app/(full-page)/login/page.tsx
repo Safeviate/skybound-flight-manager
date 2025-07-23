@@ -173,7 +173,12 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Verification Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter the 6-digit code" {...field} />
+                        <Input 
+                            placeholder="Enter the 6-digit code" 
+                            value={field.value}
+                            onChange={field.onChange}
+                            ref={field.ref}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
