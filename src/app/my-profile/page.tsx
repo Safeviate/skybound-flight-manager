@@ -86,7 +86,7 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 }
 
 
-export default function MyProfilePage() {
+function MyProfilePage() {
     const { user, updateUser, company, loading } = useUser();
     const router = useRouter();
     const { settings } = useSettings();
@@ -130,12 +130,9 @@ export default function MyProfilePage() {
 
     if (loading || !user) {
         return (
-            <div className="flex flex-col min-h-screen">
-                <Header title="My Profile" />
-                <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                    <p>Loading...</p>
-                </main>
-            </div>
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+                <p>Loading...</p>
+            </main>
         )
     }
     
@@ -309,11 +306,10 @@ export default function MyProfilePage() {
     const totalTasks = discussionRequests.length + riskReviews.length + personalAlerts.length;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
       {user.mustChangePassword && (
         <ChangePasswordDialog user={user} onPasswordChanged={handlePasswordChanged} />
       )}
-      <Header title="Skybound Development" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
             <CardHeader>
@@ -506,6 +502,10 @@ export default function MyProfilePage() {
             </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }
+
+MyProfilePage.title = "My Profile"
+export default MyProfilePage;
+

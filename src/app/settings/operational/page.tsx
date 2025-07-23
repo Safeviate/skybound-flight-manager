@@ -2,7 +2,6 @@
 'use client';
 
 import { useSettings } from '@/context/settings-provider';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -18,7 +17,7 @@ const REGULATORY_LIMITS = {
   monthly: 100,
 };
 
-export default function OperationalSettingsPage() {
+function OperationalSettingsPage() {
   const { settings, setSettings } = useSettings();
   const { user, loading } = useUser();
   const router = useRouter();
@@ -49,18 +48,13 @@ export default function OperationalSettingsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Operational Settings" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Operational Settings" />
       <main className="flex-1 p-4 md:p-8">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
@@ -161,6 +155,8 @@ export default function OperationalSettingsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+OperationalSettingsPage.title = 'Operational Settings';
+export default OperationalSettingsPage;

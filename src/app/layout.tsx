@@ -2,13 +2,10 @@
 
 import type {Metadata} from 'next';
 import './globals.css';
-import { Sidebar, SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import Nav from '@/components/layout/nav';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
-import Footer from '@/components/layout/footer';
 import { DynamicThemeApplicator } from '@/components/dynamic-theme-applicator';
 import { AppContent } from './app-content';
 

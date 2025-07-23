@@ -1,7 +1,6 @@
 
 'use client';
 
-import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
@@ -16,7 +15,7 @@ import { MonthlyCalendarView } from './monthly-calendar-view';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 
-export default function BookingsPage() {
+function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
   const { user, loading } = useUser();
@@ -40,18 +39,13 @@ export default function BookingsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Aircraft Bookings" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Aircraft Bookings" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -90,6 +84,8 @@ export default function BookingsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+BookingsPage.title = 'Aircraft Bookings';
+export default BookingsPage;

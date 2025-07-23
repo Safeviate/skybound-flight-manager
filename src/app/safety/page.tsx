@@ -377,7 +377,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     );
 };
 
-export default function SafetyPage() {
+function SafetyPage() {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
 
@@ -567,18 +567,13 @@ export default function SafetyPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Safety Management System" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Safety Management System" />
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
@@ -859,6 +854,8 @@ export default function SafetyPage() {
         )}
 
       </main>
-    </div>
   );
 }
+
+SafetyPage.title = 'Safety Management System';
+export default SafetyPage;

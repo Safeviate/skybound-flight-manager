@@ -32,7 +32,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 
-export default function StudentsPage() {
+function StudentsPage() {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(userData.filter(u => u.role === 'Student'));
 
@@ -135,18 +135,13 @@ export default function StudentsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Student Management" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Student Management" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -187,6 +182,8 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+StudentsPage.title = "Student Management";
+export default StudentsPage;

@@ -30,7 +30,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 
 
-export default function AircraftPage() {
+function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
   const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
   const [fleet, setFleet] = useState<Aircraft[]>(initialAircraftData);
@@ -165,18 +165,13 @@ export default function AircraftPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Aircraft Management" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Aircraft Management" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -367,6 +362,8 @@ export default function AircraftPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+AircraftPage.title = 'Aircraft Management';
+export default AircraftPage;

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Globe, Paintbrush, Rocket } from 'lucide-react';
 
-export default function CompaniesPage() {
+function CompaniesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -23,18 +23,13 @@ export default function CompaniesPage() {
 
   if (loading || !user || !user.permissions.includes('Super User')) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header title="Companies" />
-        <div className="flex-1 flex items-center justify-center">
-          <p>Loading or insufficient permissions...</p>
-        </div>
-      </div>
+      <main className="flex-1 flex items-center justify-center">
+        <p>Loading or insufficient permissions...</p>
+      </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Company Management" />
       <main className="flex-1 p-4 md:p-8">
         <Card>
           <CardHeader>
@@ -81,6 +76,8 @@ export default function CompaniesPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+CompaniesPage.title = 'Company Management';
+export default CompaniesPage;

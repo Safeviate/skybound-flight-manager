@@ -3,7 +3,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, Users, Calendar, ShieldAlert } from 'lucide-react';
-import Header from '@/components/layout/header';
 import Link from 'next/link';
 import { useUser } from '@/context/user-provider';
 import { useEffect } from 'react';
@@ -43,7 +42,7 @@ const recentActivities = [
     { type: 'Aircraft Update', description: 'Piper Arrow (N54321) is now in maintenance.', time: 'Yesterday' },
 ];
 
-export default function Dashboard() {
+function Dashboard() {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -55,15 +54,13 @@ export default function Dashboard() {
 
   if (loading || !user) {
       return (
-          <div className="flex items-center justify-center min-h-screen">
+          <main className="flex items-center justify-center min-h-screen">
               <p>Loading...</p>
-          </div>
+          </main>
       )
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Dashboard" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
@@ -130,6 +127,8 @@ export default function Dashboard() {
           </Card>
         </div>
       </main>
-    </div>
   );
 }
+
+Dashboard.title = 'Dashboard';
+export default Dashboard;

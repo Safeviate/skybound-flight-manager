@@ -2,7 +2,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +19,9 @@ export default function AircraftDetailPage() {
 
   if (!aircraft) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header title="Aircraft Not Found" />
-        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-          <p>The requested aircraft could not be found.</p>
-        </main>
-      </div>
+      <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+        <p>The requested aircraft could not be found.</p>
+      </main>
     );
   }
 
@@ -39,8 +35,6 @@ export default function AircraftDetailPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title={`Aircraft Details: ${aircraft.tailNumber}`} />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader>
@@ -130,6 +124,8 @@ export default function AircraftDetailPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+AircraftDetailPage.title = "Aircraft Details";
+

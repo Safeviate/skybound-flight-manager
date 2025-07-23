@@ -5,7 +5,7 @@
 import { useEffect, useState, useActionState, useMemo, FC, Fragment } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -658,8 +658,9 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
     );
 }
 
-export default function SafetyReportInvestigationPage() {
+function SafetyReportInvestigationPage() {
   const params = useParams();
+  const router = useRouter();
   const reportId = params.reportId as string;
   const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
   const report = useMemo(() => safetyReports.find(r => r.id === reportId), [safetyReports, reportId]);
@@ -743,12 +744,9 @@ export default function SafetyReportInvestigationPage() {
 
   if (!report) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header title="Safety Report Not Found" />
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <p>The requested safety report could not be found.</p>
         </main>
-      </div>
     );
   }
 
@@ -794,10 +792,9 @@ export default function SafetyReportInvestigationPage() {
 
     return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
-
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Header title={`Investigate Report: ${report.reportNumber}`}>
+  
+  const headerContent = (
+    <>
         <Button asChild variant="outline" className="no-print">
             <Link href="/safety?tab=reports">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -816,7 +813,11 @@ export default function SafetyReportInvestigationPage() {
                 </Button>
             </a>
         </div>
-      </Header>
+    </>
+  );
+
+  return (
+    <>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <div className="no-print">
             <Accordion type="single" collapsible defaultValue="step-1" className="w-full space-y-4">
@@ -1079,6 +1080,9 @@ export default function SafetyReportInvestigationPage() {
         </div>
 
       </main>
-    </div>
+    </>
   );
 }
+
+SafetyReportInvestigationPage.title = "Safety Report Investigation";
+export default SafetyReportInvestigationPage;

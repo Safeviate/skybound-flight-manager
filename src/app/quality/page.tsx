@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/data-provider';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
@@ -78,7 +77,7 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 
 const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
 
-export default function QualityPage() {
+function QualityPage() {
   const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
@@ -145,33 +144,15 @@ export default function QualityPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Quality Assurance" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Quality Assurance">
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button>
-                    <Bot className="mr-2 h-4 w-4" />
-                    AI Audit Analysis
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-                <QualityAuditAnalyzer />
-            </DialogContent>
-        </Dialog>
-      </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
-
         <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -259,8 +240,22 @@ export default function QualityPage() {
                 <AuditChecklistsPage onAuditSubmit={handleAuditSubmit} />
             </TabsContent>
         </Tabs>
-
       </main>
-    </div>
   );
 }
+
+QualityPage.title = 'Quality Assurance';
+QualityPage.headerContent = (
+    <Dialog>
+        <DialogTrigger asChild>
+            <Button>
+                <Bot className="mr-2 h-4 w-4" />
+                AI Audit Analysis
+            </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-2xl">
+            <QualityAuditAnalyzer />
+        </DialogContent>
+    </Dialog>
+);
+export default QualityPage;

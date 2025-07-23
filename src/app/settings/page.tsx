@@ -2,7 +2,6 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import Header from "@/components/layout/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Monitor } from "lucide-react"
@@ -10,7 +9,7 @@ import { useUser } from "@/context/user-provider"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-export default function SettingsPage() {
+function SettingsPage() {
   const { setTheme } = useTheme()
   const { user, loading } = useUser();
   const router = useRouter();
@@ -23,18 +22,13 @@ export default function SettingsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Appearance Settings" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Appearance Settings" />
       <main className="flex-1 p-4 md:p-8">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
@@ -66,6 +60,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   )
 }
+
+SettingsPage.title = 'Appearance Settings';
+export default SettingsPage;

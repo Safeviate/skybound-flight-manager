@@ -23,7 +23,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 
-export default function StudentProfilePage({ params }: { params: { id: string } }) {
+function StudentProfilePage({ params }: { params: { id: string } }) {
     const student = userData.find(s => s.id === params.id);
     const { toast } = useToast();
     
@@ -35,12 +35,9 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
 
     if (!student || student.role !== 'Student') {
         return (
-            <div className="flex flex-col min-h-screen">
-                <Header title="Student Profile" />
-                <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                    <p>Student not found.</p>
-                </main>
-            </div>
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+                <p>Student not found.</p>
+            </main>
         )
     }
     
@@ -112,15 +109,6 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
     }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Student Profile">
-        {canEdit && (
-            <Button variant="outline" onClick={handleArchive}>
-                <Archive className="mr-2" />
-                Archive Student
-            </Button>
-        )}
-      </Header>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-1 space-y-8">
@@ -302,6 +290,16 @@ export default function StudentProfilePage({ params }: { params: { id: string } 
             </div>
         </div>
       </main>
-    </div>
   );
 }
+
+
+StudentProfilePage.title = 'Student Profile';
+StudentProfilePage.headerContent = (
+    <Button variant="outline">
+        <Archive className="mr-2" />
+        Archive Student
+    </Button>
+);
+
+export default StudentProfilePage;

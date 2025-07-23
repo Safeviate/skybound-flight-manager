@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +35,7 @@ const getAlertIcon = (type: Alert['type']) => {
     }
 }
 
-export default function AlertsPage() {
+function AlertsPage() {
   const { user, loading } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -72,18 +71,13 @@ export default function AlertsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Alerts & Notifications" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Alerts & Notifications" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -168,6 +162,8 @@ export default function AlertsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+AlertsPage.title = 'Alerts & Notifications';
+export default AlertsPage;

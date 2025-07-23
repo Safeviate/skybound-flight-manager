@@ -24,7 +24,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-export default function PersonnelPage() {
+function PersonnelPage() {
     const { user, loading } = useUser();
     const [personnelList, setPersonnelList] = useState(initialUserData.filter(u => u.role !== 'Student'));
     const [editingPersonnel, setEditingPersonnel] = useState<User | null>(null);
@@ -91,18 +91,13 @@ export default function PersonnelPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Personnel Management" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Personnel Management" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -191,8 +186,8 @@ export default function PersonnelPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
 
-    
+PersonnelPage.title = 'Personnel Management';
+export default PersonnelPage;

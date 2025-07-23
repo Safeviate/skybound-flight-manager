@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 
-export default function ChecklistsPage() {
+function ChecklistsPage() {
   const [allChecklists, setAllChecklists] = useState<Checklist[]>(initialChecklistData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -93,12 +93,9 @@ export default function ChecklistsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Checklist Templates" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
@@ -106,103 +103,125 @@ export default function ChecklistsPage() {
   const postFlightChecklists = companyChecklists.filter(c => c.category === 'Post-Flight');
   const maintenanceChecklists = companyChecklists.filter(c => c.category === 'Post-Maintenance');
 
+  const headerContent = (
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Checklist
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Create New Checklist Template</DialogTitle>
+          <DialogDescription>
+            Define the title, category, and items for the new checklist template. It will be associated with your company, {company?.name}.
+          </DialogDescription>
+        </DialogHeader>
+        <NewChecklistForm onSubmit={handleNewChecklist} />
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Checklist Templates">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Checklist
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Create New Checklist Template</DialogTitle>
-              <DialogDescription>
-                Define the title, category, and items for the new checklist template. It will be associated with your company, {company?.name}.
-              </DialogDescription>
-            </DialogHeader>
-            <NewChecklistForm onSubmit={handleNewChecklist} />
-          </DialogContent>
-        </Dialog>
-      </Header>
-      <main className="flex-1 p-4 md:p-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>Manage Checklist Templates</CardTitle>
-                <CardDescription>
-                    These are the master checklists used throughout the application for your company. Edit them here.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="pre-flight">
-                <TabsList className="mb-4">
-                    <TabsTrigger value="pre-flight">Pre-Flight ({preFlightChecklists.length})</TabsTrigger>
-                    <TabsTrigger value="post-flight">Post-Flight ({postFlightChecklists.length})</TabsTrigger>
-                    <TabsTrigger value="post-maintenance">Post-Maintenance ({maintenanceChecklists.length})</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pre-flight">
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {preFlightChecklists.map(checklist => (
-                        <ChecklistCard 
-                            key={checklist.id} 
-                            checklist={checklist} 
-                            onItemToggle={handleItemToggle}
-                            onUpdate={handleChecklistUpdate}
-                            onReset={handleReset}
-                            onEdit={handleChecklistEdit}
-                        />
-                    ))}
-                    </div>
-                    {preFlightChecklists.length === 0 && (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No pre-flight checklists found.</p>
-                        </div>
-                    )}
-                </TabsContent>
-                <TabsContent value="post-flight">
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {postFlightChecklists.map(checklist => (
-                            <ChecklistCard 
-                                key={checklist.id} 
-                                checklist={checklist} 
-                                onItemToggle={handleItemToggle}
-                                onUpdate={handleChecklistUpdate}
-                                onReset={handleReset}
-                                onEdit={handleChecklistEdit}
-                            />
-                        ))}
-                    </div>
-                     {postFlightChecklists.length === 0 && (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No post-flight checklists found.</p>
-                        </div>
-                    )}
-                </TabsContent>
-                <TabsContent value="post-maintenance">
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {maintenanceChecklists.map(checklist => (
-                            <ChecklistCard 
-                                key={checklist.id} 
-                                checklist={checklist} 
-                                onItemToggle={handleItemToggle}
-                                onUpdate={handleChecklistUpdate}
-                                onReset={handleReset}
-                                onEdit={handleChecklistEdit}
-                            />
-                        ))}
-                    </div>
-                    {maintenanceChecklists.length === 0 && (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No post-maintenance checklists found.</p>
-                        </div>
-                    )}
-                </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
-      </main>
-    </div>
+    <main className="flex-1 p-4 md:p-8">
+      <Card>
+          <CardHeader>
+              <CardTitle>Manage Checklist Templates</CardTitle>
+              <CardDescription>
+                  These are the master checklists used throughout the application for your company. Edit them here.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Tabs defaultValue="pre-flight">
+              <TabsList className="mb-4">
+                  <TabsTrigger value="pre-flight">Pre-Flight ({preFlightChecklists.length})</TabsTrigger>
+                  <TabsTrigger value="post-flight">Post-Flight ({postFlightChecklists.length})</TabsTrigger>
+                  <TabsTrigger value="post-maintenance">Post-Maintenance ({maintenanceChecklists.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="pre-flight">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {preFlightChecklists.map(checklist => (
+                      <ChecklistCard 
+                          key={checklist.id} 
+                          checklist={checklist} 
+                          onItemToggle={handleItemToggle}
+                          onUpdate={handleChecklistUpdate}
+                          onReset={handleReset}
+                          onEdit={handleChecklistEdit}
+                      />
+                  ))}
+                  </div>
+                  {preFlightChecklists.length === 0 && (
+                      <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                          <p className="text-muted-foreground">No pre-flight checklists found.</p>
+                      </div>
+                  )}
+              </TabsContent>
+              <TabsContent value="post-flight">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {postFlightChecklists.map(checklist => (
+                          <ChecklistCard 
+                              key={checklist.id} 
+                              checklist={checklist} 
+                              onItemToggle={handleItemToggle}
+                              onUpdate={handleChecklistUpdate}
+                              onReset={handleReset}
+                              onEdit={handleChecklistEdit}
+                          />
+                      ))}
+                  </div>
+                    {postFlightChecklists.length === 0 && (
+                      <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                          <p className="text-muted-foreground">No post-flight checklists found.</p>
+                      </div>
+                  )}
+              </TabsContent>
+              <TabsContent value="post-maintenance">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {maintenanceChecklists.map(checklist => (
+                          <ChecklistCard 
+                              key={checklist.id} 
+                              checklist={checklist} 
+                              onItemToggle={handleItemToggle}
+                              onUpdate={handleChecklistUpdate}
+                              onReset={handleReset}
+                              onEdit={handleChecklistEdit}
+                          />
+                      ))}
+                  </div>
+                  {maintenanceChecklists.length === 0 && (
+                      <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                          <p className="text-muted-foreground">No post-maintenance checklists found.</p>
+                      </div>
+                  )}
+              </TabsContent>
+              </Tabs>
+          </CardContent>
+      </Card>
+    </main>
   );
 }
+
+ChecklistsPage.title = 'Checklist Templates';
+ChecklistsPage.headerContent = (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Checklist
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Create New Checklist Template</DialogTitle>
+          <DialogDescription>
+            Define the title, category, and items for the new checklist template.
+          </DialogDescription>
+        </DialogHeader>
+        <NewChecklistForm onSubmit={() => {}} />
+      </DialogContent>
+    </Dialog>
+  );
+
+export default ChecklistsPage;

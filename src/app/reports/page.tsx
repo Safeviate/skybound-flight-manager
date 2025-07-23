@@ -44,7 +44,7 @@ const AircraftUtilizationChart = () => {
   );
 };
 
-export default function ReportsPage() {
+function ReportsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -56,18 +56,13 @@ export default function ReportsPage() {
 
   if (loading || !user) {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title="Flight Statistics" />
-            <div className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+            <p>Loading...</p>
+        </main>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title="Flight Statistics" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader>
@@ -82,6 +77,8 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
+
+ReportsPage.title = 'Flight Statistics';
+export default ReportsPage;
