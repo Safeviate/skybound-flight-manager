@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColorWithOpacity } from '@/lib/utils.tsx';
 import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -63,7 +64,7 @@ export function RiskMatrix({ risks }: RiskMatrixProps) {
                     const score = getRiskScore(l, s);
                     const cellRisks = riskMap.get(`${l}-${s}`) || [];
                     const riskCount = cellRisks.length;
-                    const cellColor = getRiskScoreColor(score, 0.4);
+                    const cellColor = getRiskScoreColorWithOpacity(score, 0.4);
 
                     const CellContent = (
                         <div

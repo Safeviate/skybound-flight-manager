@@ -115,10 +115,18 @@ export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium'
       return 'Extreme';
   }
 
-export const getRiskScoreColor = (score: number | null | undefined, opacity: number = 1): string => {
-  if (score === null || score === undefined) return `rgba(100, 116, 139, ${opacity})`; // slate-500
-  if (score <= 4) return `rgba(22, 163, 74, ${opacity})`; // green-600
-  if (score <= 9) return `rgba(234, 179, 8, ${opacity})`; // yellow-500
-  if (score <= 16) return `rgba(249, 115, 22, ${opacity})`; // orange-500
-  return `rgba(220, 38, 38, ${opacity})`; // red-600
+export const getRiskScoreColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return 'hsl(var(--muted-foreground))';
+  if (score <= 4) return `hsl(var(--success))`;
+  if (score <= 9) return `hsl(var(--warning))`;
+  if (score <= 16) return `hsl(var(--orange))`;
+  return `hsl(var(--destructive))`;
+}
+
+export const getRiskScoreColorWithOpacity = (score: number | null | undefined, opacity: number = 1): string => {
+  if (score === null || score === undefined) return `hsla(var(--muted-foreground), ${opacity})`;
+  if (score <= 4) return `hsla(var(--success), ${opacity})`;
+  if (score <= 9) return `hsla(var(--warning), ${opacity})`;
+  if (score <= 16) return `hsla(var(--orange), ${opacity})`;
+  return `hsla(var(--destructive), ${opacity})`;
 }

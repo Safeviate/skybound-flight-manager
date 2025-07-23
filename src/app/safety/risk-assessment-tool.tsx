@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColorWithOpacity } from '@/lib/utils.tsx';
 import type { RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils.tsx';
@@ -84,7 +85,7 @@ export function RiskAssessmentTool({
                               'text-center cursor-pointer border-l hover:bg-muted/50 p-1 h-8 w-8 font-medium text-foreground/80',
                               isSelected && 'ring-2 ring-primary ring-inset'
                             )}
-                            style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColor(score, 0.2) }}
+                            style={{ backgroundColor: isSelected ? 'hsl(var(--primary-foreground))' : getRiskScoreColorWithOpacity(score, 0.2) }}
                             onClick={() => handleCellClick(l, s)}
                           >
                             {score}
