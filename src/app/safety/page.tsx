@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, ReferenceLine } from 'recharts';
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
+import { useRouter } from 'next/navigation';
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -387,9 +387,16 @@ export default function SafetyPage() {
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const { toast } = useToast();
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
     { 
@@ -557,6 +564,17 @@ export default function SafetyPage() {
       </Dialog>
     );
   };
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Safety Management System" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

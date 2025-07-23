@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -17,6 +20,15 @@ const REGULATORY_LIMITS = {
 
 export default function OperationalSettingsPage() {
   const { settings, setSettings } = useSettings();
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const handleToggle = (key: keyof typeof settings) => {
     setSettings(prev => ({
@@ -34,6 +46,17 @@ export default function OperationalSettingsPage() {
       }));
     }
   };
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Operational Settings" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

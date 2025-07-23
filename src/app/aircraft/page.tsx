@@ -27,6 +27,7 @@ import QRCode from 'qrcode.react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 
 export default function AircraftPage() {
@@ -36,7 +37,15 @@ export default function AircraftPage() {
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
-  const { user, company } = useUser();
+  const { user, company, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const companyAircraft = fleet.filter(ac => ac.companyId === company?.id);
   const companyChecklists = checklists.filter(c => c.companyId === company?.id);
@@ -153,6 +162,17 @@ export default function AircraftPage() {
         return 'outline';
     }
   };
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Aircraft Management" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
   
   return (
     <div className="flex flex-col min-h-screen">

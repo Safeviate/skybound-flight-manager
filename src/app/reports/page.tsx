@@ -5,7 +5,9 @@ import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { bookingData, userData, aircraftData } from '@/lib/data-provider';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
+import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 const AircraftUtilizationChart = () => {
   const utilizationData = useMemo(() => {
@@ -43,6 +45,26 @@ const AircraftUtilizationChart = () => {
 };
 
 export default function ReportsPage() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Flight Statistics" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Flight Statistics" />

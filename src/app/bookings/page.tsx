@@ -7,16 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Booking } from '@/lib/types';
 import { bookingData as initialBookingData } from '@/lib/data-provider';
 import { BookingCalendar } from './booking-calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MonthlyCalendarView } from './monthly-calendar-view';
+import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 export default function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookingData);
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const handleBookingCreated = (newBooking: Omit<Booking, 'id'>) => {
       const bookingWithId: Booking = {
@@ -25,6 +36,17 @@ export default function BookingsPage() {
       };
       setBookingData(prev => [...prev, bookingWithId]);
       setIsNewBookingOpen(false);
+  }
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Aircraft Bookings" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
   }
 
   return (

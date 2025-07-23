@@ -48,9 +48,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user) {
-        router.push('/my-profile');
-    } else if (!loading && !user) {
+    if (!loading && !user) {
         router.push('/login');
     }
   }, [user, loading, router]);

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
@@ -18,6 +18,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { NewAlertForm } from './new-alert-form';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -36,9 +37,16 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 export default function AlertsPage() {
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
   
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
 
@@ -60,6 +68,17 @@ export default function AlertsPage() {
 
     setAlerts(prev => [newAlert, ...prev]);
     setIsDialogOpen(false);
+  }
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Alerts & Notifications" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
   }
 
   return (

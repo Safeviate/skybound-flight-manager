@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/data-provider';
@@ -18,6 +18,7 @@ import { AuditSchedule } from './audit-schedule';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuditChecklistsPage from './audit-checklists/page';
+import { useUser } from '@/context/user-provider';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -83,6 +84,14 @@ export default function QualityPage() {
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const { user, loading } = useUser();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
@@ -133,6 +142,17 @@ export default function QualityPage() {
     setAudits(prevAudits => [newAudit, ...prevAudits]);
     setActiveTab('audits');
   };
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Quality Assurance" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
 
 
   return (

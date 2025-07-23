@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,12 +30,22 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
+import { useRouter } from 'next/navigation';
 
 export default function StudentsPage() {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(userData.filter(u => u.role === 'Student'));
 
-  const { user } = useUser();
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
@@ -122,6 +132,17 @@ export default function StudentsPage() {
         </TableBody>
     </Table>
   );
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Student Management" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

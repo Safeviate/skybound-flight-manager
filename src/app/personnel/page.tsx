@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,13 +22,21 @@ import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function PersonnelPage() {
-    const { user } = useUser();
+    const { user, loading } = useUser();
     const [personnelList, setPersonnelList] = useState(initialUserData.filter(u => u.role !== 'Student'));
     const [editingPersonnel, setEditingPersonnel] = useState<User | null>(null);
     const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
     const { toast } = useToast();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
     
     const canEditPersonnel = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
 
@@ -80,6 +88,18 @@ export default function PersonnelPage() {
                 return 'outline'
         }
     }
+
+  if (loading || !user) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            <Header title="Personnel Management" />
+            <div className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Personnel Management" />
