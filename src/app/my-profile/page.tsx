@@ -313,7 +313,7 @@ export default function MyProfilePage() {
       {user.mustChangePassword && (
         <ChangePasswordDialog user={user} onPasswordChanged={handlePasswordChanged} />
       )}
-      <Header title="My Profile & Roster" />
+      <Header title="Skybound Development" />
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
             <CardHeader>
