@@ -21,5 +21,4 @@ export interface ThemeConfig {
 export interface AppConfig {
   useMockData: boolean;
   appName: string;
-  theme: ThemeConfig;
 }
