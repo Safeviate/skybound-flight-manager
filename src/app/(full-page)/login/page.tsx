@@ -175,9 +175,7 @@ export default function LoginPage() {
                       <FormControl>
                         <Input 
                             placeholder="Enter the 6-digit code" 
-                            value={field.value}
-                            onChange={field.onChange}
-                            ref={field.ref}
+                            {...field}
                         />
                       </FormControl>
                       <FormMessage />
