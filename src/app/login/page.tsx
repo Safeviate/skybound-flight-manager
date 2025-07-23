@@ -73,7 +73,7 @@ export default function LoginPage() {
     if (redirectPath) {
         router.push(redirectPath);
     } else {
-        router.push('/');
+        router.push('/my-profile');
     }
   };
   
