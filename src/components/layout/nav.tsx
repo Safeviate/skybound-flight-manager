@@ -73,7 +73,7 @@ export default function Nav() {
 
   const handleLogout = () => {
     logout();
-    router.push('/corporate');
+    router.push('/login');
   };
 
   const handleLinkClick = () => {
