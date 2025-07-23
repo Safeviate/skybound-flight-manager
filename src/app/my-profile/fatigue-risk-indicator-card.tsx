@@ -11,10 +11,10 @@ import type { Role, TrainingLogEntry } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
 
 const getProgressColor = (percentage: number) => {
-    if (percentage > 90) return 'hsl(var(--destructive))';
-    if (percentage > 75) return 'hsl(var(--orange))';
-    if (percentage > 50) return 'hsl(var(--warning))';
-    return 'hsl(var(--success))';
+    if (percentage > 90) return 'from-orange-500 to-red-600';
+    if (percentage > 75) return 'from-yellow-400 to-orange-500';
+    if (percentage > 50) return 'from-green-400 to-yellow-400';
+    return 'from-green-500 to-green-400';
 }
 
 
@@ -46,21 +46,21 @@ export function FatigueRiskIndicatorCard({ userRole, trainingLogs }: FatigueRisk
                 <div className="space-y-2">
                     <Label>Last 24 Hours</Label>
                     <div className="flex items-center gap-4">
-                        <Progress value={dailyPercentage} indicatorClassName={getProgressColor(dailyPercentage)} />
+                        <Progress value={dailyPercentage} indicatorClassName={`bg-gradient-to-r ${getProgressColor(dailyPercentage)}`} />
                         <span className="font-semibold w-24 text-right">{hours24} / {flightTimeLimits.daily} hrs</span>
                     </div>
                 </div>
                  <div className="space-y-2">
                     <Label>Last 7 Days</Label>
                     <div className="flex items-center gap-4">
-                        <Progress value={weeklyPercentage} indicatorClassName={getProgressColor(weeklyPercentage)} />
+                        <Progress value={weeklyPercentage} indicatorClassName={`bg-gradient-to-r ${getProgressColor(weeklyPercentage)}`} />
                         <span className="font-semibold w-24 text-right">{hours7d} / {flightTimeLimits.weekly} hrs</span>
                     </div>
                 </div>
                  <div className="space-y-2">
                     <Label>Last 30 Days</Label>
                     <div className="flex items-center gap-4">
-                        <Progress value={monthlyPercentage} indicatorClassName={getProgressColor(monthlyPercentage)} />
+                        <Progress value={monthlyPercentage} indicatorClassName={`bg-gradient-to-r ${getProgressColor(monthlyPercentage)}`} />
                         <span className="font-semibold w-24 text-right">{hours30d} / {flightTimeLimits.monthly} hrs</span>
                     </div>
                 </div>
