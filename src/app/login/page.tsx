@@ -10,9 +10,6 @@ import { Button } from '@/components/ui/button';
 import { LogIn, Rocket, AlertTriangle, Info, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { User as AppUser, Role, Alert } from '@/lib/types';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 
@@ -39,13 +36,11 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [alertsToShow, setAlertsToShow] = useState<Alert[]>([]);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { toast } = useToast();
 
   // For this demo, we assume a single company ("skybound") on the login page.
   // In a real multi-tenant app, this might be determined by the URL (e.g., skybound.yourapp.com)
   const company = companyData.find(c => c.id === 'skybound');
+  const companyUsers = userData.filter(u => u.companyId === company?.id);
 
   useEffect(() => {
     try {
@@ -72,32 +67,30 @@ export default function LoginPage() {
     setAcknowledged(true);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const foundUser = userData.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (foundUser) {
-        login(foundUser.id);
-        const redirectPath = searchParams.get('redirect');
-        if (redirectPath) {
-            router.push(redirectPath);
-        } else {
-            router.push('/');
-        }
+  const handleLogin = (userId: string) => {
+    login(userId);
+    const redirectPath = searchParams.get('redirect');
+    if (redirectPath) {
+        router.push(redirectPath);
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: 'No user found with that email address.',
-        });
+        router.push('/');
     }
   };
   
   const getRoleVariant = (role: AppUser['role']) => {
     switch (role) {
-        case 'Instructor': return 'primary'
+        case 'Instructor': 
+        case 'Chief Flight Instructor':
+        case 'Head Of Training':
+            return 'primary'
         case 'Maintenance': return 'destructive'
-        case 'Admin': return 'secondary'
+        case 'Admin': 
+        case 'Accountable Manager':
+        case 'Safety Manager':
+        case 'Quality Manager':
+        case 'HR Manager':
+        case 'Operations Manager':
+            return 'secondary'
         case 'Student': return 'default'
         default: return 'outline'
     }
@@ -142,50 +135,29 @@ export default function LoginPage() {
             </CardContent>
         </Card>
       ) : (
-        <Card className="w-full max-w-md">
-            <form onSubmit={handleLogin}>
-                <CardHeader>
-                    <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                    <CardDescription>
-                        Enter your credentials to sign in to your account.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input 
-                            id="email" 
-                            type="email" 
-                            placeholder="m@example.com" 
-                            required 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input 
-                            id="password" 
-                            type="password" 
-                            required 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                    <Button type="submit" className="w-full">
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Sign In
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center px-4">
-                        For demo purposes, you can use any email from the mock user data (e.g., admin@skybound.com) and any password.
-                    </p>
-                    <Link href="/corporate" className="text-xs text-muted-foreground hover:underline">
-                        Need to register a new company?
-                    </Link>
-                </CardFooter>
-            </form>
+        <Card className="w-full max-w-2xl">
+            <CardHeader>
+                <CardTitle className="text-2xl">Demo Login</CardTitle>
+                <CardDescription>
+                    Select a user profile to log in to the system.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {companyUsers.map((user) => (
+                    <button key={user.id} onClick={() => handleLogin(user.id)} className="group flex flex-col items-center text-center gap-2 p-4 rounded-lg border hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <div className="p-3 rounded-full bg-muted group-hover:bg-background">
+                            <UserIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="font-semibold text-sm">{user.name}</p>
+                        <Badge variant={getRoleVariant(user.role)}>{user.role}</Badge>
+                    </button>
+                ))}
+            </CardContent>
+            <CardFooter>
+                 <Link href="/corporate" className="text-xs text-muted-foreground hover:underline mx-auto mt-4">
+                    Need to register a new company?
+                </Link>
+            </CardFooter>
         </Card>
       )}
     </div>
