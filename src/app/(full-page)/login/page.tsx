@@ -109,84 +109,89 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           {step === 'login' ? (
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                {loginError && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Login Failed</AlertTitle>
-                    <AlertDescription>{loginError}</AlertDescription>
-                  </Alert>
-                )}
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="admin@skybound.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+            <div key="login-form">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  {loginError && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Login Failed</AlertTitle>
+                      <AlertDescription>{loginError}</AlertDescription>
+                    </Alert>
                   )}
-                />
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
-                  {loginForm.formState.isSubmitting ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Login</>}
-                </Button>
-              </form>
-            </Form>
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="admin@skybound.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
+                    {loginForm.formState.isSubmitting ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Login</>}
+                  </Button>
+                </form>
+              </Form>
+            </div>
           ) : (
-            <Form {...otpForm}>
-              <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-4">
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Your verification code is:</AlertTitle>
-                  <AlertDescription className="font-bold text-lg tracking-widest text-center py-2">
-                    {generatedOtp}
-                  </AlertDescription>
-                </Alert>
-                {loginError && (
-                  <Alert variant="destructive">
+            <div key="otp-form">
+              <Form {...otpForm}>
+                <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-4">
+                  <Alert>
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Verification Failed</AlertTitle>
-                    <AlertDescription>{loginError}</AlertDescription>
+                    <AlertTitle>Your verification code is:</AlertTitle>
+                    <AlertDescription className="font-bold text-lg tracking-widest text-center py-2">
+                      {generatedOtp}
+                    </AlertDescription>
                   </Alert>
-                )}
-                <FormField
-                  control={otpForm.control}
-                  name="otp"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Verification Code</FormLabel>
-                      <FormControl>
-                        <Input 
-                            placeholder="Enter the 6-digit code" 
-                            {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  {loginError && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Verification Failed</AlertTitle>
+                      <AlertDescription>{loginError}</AlertDescription>
+                    </Alert>
                   )}
-                />
-                <Button type="submit" className="w-full" disabled={otpForm.formState.isSubmitting}>
-                  {otpForm.formState.isSubmitting ? 'Verifying...' : <><KeyRound className="mr-2 h-4 w-4" /> Verify Code</>}
-                </Button>
-              </form>
-            </Form>
+                  <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Verification Code</FormLabel>
+                        <FormControl>
+                          <Input 
+                              placeholder="Enter the 6-digit code" 
+                              {...field}
+                              autoFocus
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={otpForm.formState.isSubmitting}>
+                    {otpForm.formState.isSubmitting ? 'Verifying...' : <><KeyRound className="mr-2 h-4 w-4" /> Verify Code</>}
+                  </Button>
+                </form>
+              </Form>
+            </div>
           )}
         </CardContent>
       </Card>
