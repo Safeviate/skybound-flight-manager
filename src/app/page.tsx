@@ -5,45 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, Users, Calendar, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/context/user-provider';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-
-const stats = [
-  {
-    title: 'Total Aircraft',
-    value: '12',
-    icon: <Plane className="h-8 w-8 text-primary" />,
-    href: '/aircraft',
-  },
-  {
-    title: 'Active Students',
-    value: '45',
-    icon: <Users className="h-8 w-8 text-primary" />,
-    href: '/students',
-  },
-  {
-    title: 'Upcoming Bookings',
-    value: '8',
-    icon: <Calendar className="h-8 w-8 text-primary" />,
-    href: '/bookings',
-  },
-  {
-    title: 'Open Safety Reports',
-    value: '2',
-    icon: <ShieldAlert className="h-8 w-8 text-destructive" />,
-    href: '/safety',
-  },
-];
-
-const recentActivities = [
-    { type: 'New Booking', description: 'Cessna 172 (N12345) for John D.', time: '10 min ago' },
-    { type: 'New Student', description: 'Jane S. has been registered.', time: '1 hour ago' },
-    { type: 'Safety Report', description: 'New report filed for runway incursion.', time: '3 hours ago' },
-    { type: 'Aircraft Update', description: 'Piper Arrow (N54321) is now in maintenance.', time: 'Yesterday' },
-];
+import { aircraftData, bookingData, safetyReportData, userData } from '@/lib/data-provider';
 
 function Dashboard() {
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
@@ -51,6 +18,62 @@ function Dashboard() {
         router.push('/login');
     }
   }, [user, loading, router]);
+
+  const stats = useMemo(() => {
+    if (!company) return [];
+
+    const companyAircraft = aircraftData.filter(ac => ac.companyId === company.id);
+    const companyStudents = userData.filter(u => u.companyId === company.id && u.role === 'Student' && u.status === 'Active');
+    const companyBookings = bookingData.filter(b => b.companyId === company.id && new Date(b.date) >= new Date());
+    const companySafetyReports = safetyReportData.filter(sr => sr.companyId === company.id && sr.status !== 'Closed');
+
+    return [
+      {
+        title: 'Total Aircraft',
+        value: companyAircraft.length.toString(),
+        icon: <Plane className="h-8 w-8 text-primary" />,
+        href: '/aircraft',
+      },
+      {
+        title: 'Active Students',
+        value: companyStudents.length.toString(),
+        icon: <Users className="h-8 w-8 text-primary" />,
+        href: '/students',
+      },
+      {
+        title: 'Upcoming Bookings',
+        value: companyBookings.length.toString(),
+        icon: <Calendar className="h-8 w-8 text-primary" />,
+        href: '/bookings',
+      },
+      {
+        title: 'Open Safety Reports',
+        value: companySafetyReports.length.toString(),
+        icon: <ShieldAlert className="h-8 w-8 text-destructive" />,
+        href: '/safety',
+      },
+    ];
+  }, [company]);
+  
+  const recentActivities = useMemo(() => {
+    if (!company) return [];
+    
+    // This is a simplified mock. A real implementation would fetch and sort from multiple collections.
+    const lastBooking = bookingData.filter(b => b.companyId === company.id).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const lastStudent = userData.filter(u => u.companyId === company.id && u.role === 'Student').sort((a,b) => (a.id > b.id ? -1 : 1))[0];
+    const lastSafetyReport = safetyReportData.filter(sr => sr.companyId === company.id).sort((a,b) => new Date(b.filedDate).getTime() - new Date(a.filedDate).getTime())[0];
+    const lastAircraftUpdate = aircraftData.find(ac => ac.companyId === company.id && ac.status === 'In Maintenance');
+
+    const activities = [];
+    if(lastBooking) activities.push({ type: 'New Booking', description: `${lastBooking.aircraft} for ${lastBooking.student}`, time: '10 min ago' });
+    if(lastStudent) activities.push({ type: 'New Student', description: `${lastStudent.name} has been registered.`, time: '1 hour ago' });
+    if(lastSafetyReport) activities.push({ type: 'Safety Report', description: `New report filed: ${lastSafetyReport.heading}`, time: '3 hours ago' });
+    if(lastAircraftUpdate) activities.push({ type: 'Aircraft Update', description: `${lastAircraftUpdate.model} is in maintenance.`, time: 'Yesterday' });
+    
+    return activities.slice(0, 4);
+    
+  }, [company]);
+
 
   if (loading || !user) {
       return (
