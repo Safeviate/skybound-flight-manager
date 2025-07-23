@@ -71,6 +71,8 @@ export function EditRiskForm({ risk, onSubmit }: EditRiskFormProps) {
     defaultValues: {
       ...risk,
       consequences: risk.consequences.join(', '),
+      existingMitigation: risk.existingMitigation || '',
+      proposedMitigation: risk.proposedMitigation || '',
       reviewDate: risk.reviewDate ? parseISO(risk.reviewDate) : new Date(),
     },
   });

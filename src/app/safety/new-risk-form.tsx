@@ -51,7 +51,7 @@ const newRiskFormSchema = z.object({
 type NewRiskFormValues = z.infer<typeof newRiskFormSchema>;
 
 interface NewRiskFormProps {
-  onSubmit: (data: Omit<Risk, 'id' | 'riskScore' | 'dateIdentified'>) => void;
+  onSubmit: (data: Omit<Risk, 'id' | 'riskScore' | 'dateIdentified' | 'status'>) => void;
 }
 
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
@@ -61,6 +61,12 @@ const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Desce
 export function NewRiskForm({ onSubmit }: NewRiskFormProps) {
   const form = useForm<NewRiskFormValues>({
     resolver: zodResolver(newRiskFormSchema),
+    defaultValues: {
+      hazard: '',
+      risk: '',
+      consequences: '',
+      mitigation: '',
+    },
   });
 
   const availableOwners = userData.filter(u => u.role !== 'Student');
