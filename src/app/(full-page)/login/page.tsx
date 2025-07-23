@@ -80,7 +80,7 @@ export default function LoginPage() {
         // Since the password was already verified, we can now complete the login.
         // We call login again, but this time it should succeed without the password check
         // because the user object is already partially authenticated in the context (a real app would handle this differently).
-        await login(email, 'password'); // Re-login to set the final user state
+        await login(email); // Re-login to set the final user state
         const redirectPath = searchParams.get('redirect');
         router.push(redirectPath || '/my-profile');
     } else {
