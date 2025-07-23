@@ -71,6 +71,16 @@ const studentTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
     's5': [],
 };
 
+const instructorTrainingLogs: { [key: string]: TrainingLogEntry[] } = {
+    'p4': [ // Laura Croft
+        { id: 'il1', date: '2024-08-14', aircraft: 'N11223', startHobbs: 300.0, endHobbs: 306.0, flightDuration: 6.0, instructorName: 'Laura Croft', instructorNotes: 'Complex cross-country simulation with student.' },
+        { id: 'il2', date: '2024-08-13', aircraft: 'N11223', startHobbs: 306.0, endHobbs: 311.0, flightDuration: 5.0, instructorName: 'Laura Croft', instructorNotes: 'Instrument approach practice in actual IMC.' },
+        { id: 'il3', date: '2024-08-12', aircraft: 'N11223', startHobbs: 311.0, endHobbs: 317.0, flightDuration: 6.0, instructorName: 'Laura Croft', instructorNotes: 'Back-to-back student flights.' },
+        { id: 'il4', date: '2024-08-11', aircraft: 'N44556', startHobbs: 2050.0, endHobbs: 2055.0, flightDuration: 5.0, instructorName: 'Laura Croft', instructorNotes: 'High-performance aircraft checkout.' },
+        { id: 'il5', date: '2024-08-10', aircraft: 'N44556', startHobbs: 2055.0, endHobbs: 2060.0, flightDuration: 5.0, instructorName: 'Laura Croft', instructorNotes: 'Mountain flying proficiency training.' },
+    ]
+};
+
 
 // Unified User Data
 export const userData: User[] = [
@@ -78,7 +88,7 @@ export const userData: User[] = [
     { id: 'p1', companyId: 'skybound', name: 'Mike Ross', role: 'Chief Flight Instructor', department: 'Flight Operations', email: 'mike.ross@skybound.com', phone: '555-0101', medicalExpiry: '2025-10-10', licenseExpiry: '2026-01-15', permissions: [] },
     { id: 'p2', companyId: 'skybound', name: 'Sarah Connor', role: 'Instructor', department: 'Flight Operations', email: 'sarah.connor@skybound.com', phone: '555-0102', medicalExpiry: '2024-08-10', licenseExpiry: '2025-04-22', permissions: [] },
     { id: 'p3', companyId: 'skybound', name: 'Hank Hill', role: 'Maintenance', department: 'Maintenance', email: 'hank.hill@skybound.com', phone: '555-0103', medicalExpiry: '2025-12-01', licenseExpiry: '2025-12-01', permissions: [] },
-    { id: 'p4', companyId: 'skybound', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [] },
+    { id: 'p4', companyId: 'skybound', name: 'Laura Croft', role: 'Instructor', department: 'Flight Operations', email: 'laura.croft@skybound.com', phone: '555-0104', medicalExpiry: '2025-07-30', licenseExpiry: '2025-07-30', permissions: [], trainingLogs: instructorTrainingLogs['p4'] },
     { id: 'p5', companyId: 'skybound', name: 'Admin User', role: 'Admin', department: 'Management', email: 'admin@skybound.com', phone: '555-0100', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
     { id: 'p6', companyId: 'skybound', name: 'John Smith', role: 'Safety Manager', department: 'Management', email: 'john.smith@skybound.com', phone: '555-0105', medicalExpiry: '2099-01-01', licenseExpiry: '2099-01-01', permissions: [] },
     { id: 'p7', companyId: 'skybound', name: 'Jessica Jones', role: 'Quality Manager', department: 'Management', email: 'jessica.jones@skybound.com', phone: '555-0106', permissions: [] },
