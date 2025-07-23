@@ -48,9 +48,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setCompany(foundCompany || null);
 
         try {
-            localStorage.setItem('currentUserId', userToLogin.id);
+            sessionStorage.setItem('currentUserId', userToLogin.id);
         } catch (error) {
-            console.error("Could not access localStorage to set user session.");
+            console.error("Could not access sessionStorage to set user session.");
         }
         return true;
     }
@@ -65,9 +65,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setCompany(null);
     try {
-        localStorage.removeItem('currentUserId');
+        sessionStorage.removeItem('currentUserId');
     } catch (error) {
-        console.error("Could not access localStorage to clear user session.");
+        console.error("Could not access sessionStorage to clear user session.");
     }
     return false;
   }, [user]);
@@ -76,18 +76,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setCompany(null);
     try {
-        localStorage.removeItem('currentUserId');
+        sessionStorage.removeItem('currentUserId');
         sessionStorage.removeItem('acknowledgedAlertIds');
     } catch (error) {
-        console.error("Could not access localStorage to clear user session.");
+        console.error("Could not access sessionStorage to clear user session.");
     }
   }, []);
   
-  // Re-hydrate user from localStorage on initial load
+  // Re-hydrate user from sessionStorage on initial load
   useEffect(() => {
     const rehydrateUser = async () => {
         try {
-            const storedUserId = localStorage.getItem('currentUserId');
+            const storedUserId = sessionStorage.getItem('currentUserId');
             if (storedUserId) {
                 const userToLogin = userData.find(u => u.id === storedUserId);
                  if (userToLogin) {
@@ -99,7 +99,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 }
             }
         } catch (error) {
-            console.error("Could not access localStorage. User session will not persist.");
+            console.error("Could not access sessionStorage. User session will not persist.");
         } finally {
             setLoading(false);
         }
