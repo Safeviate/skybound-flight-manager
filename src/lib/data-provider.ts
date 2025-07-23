@@ -27,19 +27,19 @@ const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 // For now, they return empty arrays or default values to prevent crashes.
 
 export const airportData: Airport[] = useMockData ? mockAirportData : [];
-export const aircraftData: Aircraft[] = useMockData ? mockAircraftData : [];
-export const userData: User[] = useMockData ? mockUserData : [];
-export const bookingData: Booking[] = useMockData ? mockBookingData : [];
+export let aircraftData: Aircraft[] = useMockData ? mockAircraftData : [];
+export let userData: User[] = useMockData ? mockUserData : [];
+export let bookingData: Booking[] = useMockData ? mockBookingData : [];
 export const trainingExercisesData: string[] = useMockData ? mockTrainingExercisesData : [];
-export const checklistData: Checklist[] = useMockData ? mockChecklistData : [];
-export const completedChecklistData: CompletedChecklist[] = useMockData ? mockCompletedChecklistData : [];
-export const safetyReportData: SafetyReport[] = useMockData ? mockSafetyReportData : [];
-export const riskRegisterData: Risk[] = useMockData ? mockRiskRegisterData : [];
-export const qualityAuditData: QualityAudit[] = useMockData ? mockQualityAuditData : [];
-export const auditScheduleData: AuditScheduleItem[] = useMockData ? mockAuditScheduleData : [];
-export const auditChecklistData: AuditChecklist[] = useMockData ? mockAuditChecklistData : [];
-export const allAlerts: Alert[] = useMockData ? mockAlerts : [];
-export const companyData: Company[] = useMockData ? mockCompanyData : [];
+export let checklistData: Checklist[] = useMockData ? mockChecklistData : [];
+export let completedChecklistData: CompletedChecklist[] = useMockData ? mockCompletedChecklistData : [];
+export let safetyReportData: SafetyReport[] = useMockData ? mockSafetyReportData : [];
+export let riskRegisterData: Risk[] = useMockData ? mockRiskRegisterData : [];
+export let qualityAuditData: QualityAudit[] = useMockData ? mockQualityAuditData : [];
+export let auditScheduleData: AuditScheduleItem[] = useMockData ? mockAuditScheduleData : [];
+export let auditChecklistData: AuditChecklist[] = useMockData ? mockAuditChecklistData : [];
+export let allAlerts: Alert[] = useMockData ? mockAlerts : [];
+export let companyData: Company[] = useMockData ? mockCompanyData : [];
 
 // Functions to modify mock data in memory
 export function addCompany(newCompany: Company) {
