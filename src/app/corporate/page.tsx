@@ -13,10 +13,12 @@ import { doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import config from '@/config';
+import { useRouter } from 'next/navigation';
 
 
 export default function CorporatePage() {
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
         const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -44,8 +46,11 @@ export default function CorporatePage() {
 
             toast({
                 title: "Company Registered Successfully!",
-                description: `The company "${newCompanyData.name}" has been created. You can now log in.`
+                description: `The company "${newCompanyData.name}" has been created. Redirecting to login...`
             });
+
+            // Redirect to login page on success
+            router.push('/login');
 
         } catch (error: any) {
             console.error("Error creating company:", error);
