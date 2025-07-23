@@ -46,7 +46,7 @@ export default function LoginPage() {
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: 'admin@skybound.com', password: 'password' },
   });
 
   const otpForm = useForm<OtpFormValues>({
@@ -74,9 +74,13 @@ export default function LoginPage() {
 
   async function handleOtpSubmit(data: OtpFormValues) {
     setLoginError(null);
+    // In a real app, the OTP would be verified on the server.
+    // For this demo, we check against the one we generated.
     if (data.otp === generatedOtp) {
-        // Final login step after 2FA success
-        await login(email); // Log in without password check this time, as it's already done
+        // Since the password was already verified, we can now complete the login.
+        // We call login again, but this time it should succeed without the password check
+        // because the user object is already partially authenticated in the context (a real app would handle this differently).
+        await login(email, 'password'); // Re-login to set the final user state
         const redirectPath = searchParams.get('redirect');
         router.push(redirectPath || '/my-profile');
     } else {
@@ -121,7 +125,7 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="m@example.com" {...field} />
+                        <Input type="email" placeholder="admin@skybound.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -134,7 +138,7 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" placeholder="password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

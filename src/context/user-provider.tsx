@@ -55,6 +55,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         return true;
     }
     
+    // If password check fails, but the user was just verified via 2FA, allow login
+    // This is a simplified demo flow. A real app would manage session state differently.
+    if (user && user.email === email && password === undefined) {
+        return true;
+    }
+
     // If login fails
     setUser(null);
     setCompany(null);
@@ -64,7 +70,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.error("Could not access localStorage to clear user session.");
     }
     return false;
-  }, []);
+  }, [user]);
 
   const logout = useCallback(() => {
     setUser(null);
