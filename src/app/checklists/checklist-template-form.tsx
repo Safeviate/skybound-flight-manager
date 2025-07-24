@@ -175,18 +175,11 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
                     ))}
                 </div>
              </ScrollArea>
-             {form.formState.errors.items && !form.formState.errors.items.root && (
+             {form.formState.errors.items && form.formState.errors.items.root && (
                  <p className="text-sm font-medium text-destructive mt-2">
                     {form.formState.errors.items.message}
                 </p>
              )}
-             {Array.isArray(form.formState.errors.items) && form.formState.errors.items.map((error, index) => (
-                error?.text && (
-                    <p key={index} className="text-sm font-medium text-destructive mt-2">
-                        Item #{index + 1}: {error.text.message}
-                    </p>
-                )
-            ))}
         </div>
          <Button
             type="button"
