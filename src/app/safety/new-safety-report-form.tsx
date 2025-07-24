@@ -110,6 +110,16 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
     defaultValues: {
         occurrenceDate: new Date(),
         isAnonymous: false,
+        heading: '',
+        details: '',
+        subCategory: '',
+        phaseOfFlight: '',
+        lossOfSeparationType: '',
+        raCallout: '',
+        raFollowed: undefined,
+        raNotFollowedReason: '',
+        aircraftInvolved: '',
+        location: '',
     }
   });
 
