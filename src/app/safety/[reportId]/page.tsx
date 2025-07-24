@@ -732,13 +732,12 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = async (updatedReport: SafetyReport) => {
+    // Definitive guard clause to prevent crashes.
     if (!company || !report) {
-      console.error("Cannot update report: company or report data is missing.");
-      // Optionally show a toast to the user
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: 'Could not save, required data is missing. Please refresh.',
+        description: 'Cannot save changes, required data is not loaded. Please refresh the page.',
       });
       return;
     }
@@ -1148,3 +1147,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
