@@ -30,7 +30,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 const flightOpsSubCategories = [
