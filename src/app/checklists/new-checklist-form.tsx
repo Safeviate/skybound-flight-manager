@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { Checklist, Aircraft } from '@/lib/types';
+import type { Checklist } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const checklistFormSchema = z.object({
@@ -26,9 +26,6 @@ const checklistFormSchema = z.object({
   category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance'], {
     required_error: 'Please select a category.',
   }),
-  aircraftId: z.string({
-    required_error: 'Please select an aircraft.',
-  }),
   items: z.array(z.object({ text: z.string().min(1, { message: "Item text cannot be empty."}) })).min(1, {
       message: "You must add at least one checklist item."
   }),
@@ -37,11 +34,10 @@ const checklistFormSchema = z.object({
 type ChecklistFormValues = z.infer<typeof checklistFormSchema>;
 
 interface NewChecklistFormProps {
-    onSubmit: (data: Omit<Checklist, 'id' | 'companyId'>) => void;
-    aircraftList: Aircraft[];
+    onSubmit: (data: Omit<Checklist, 'id' | 'companyId' | 'aircraftId'>) => void;
 }
 
-export function NewChecklistForm({ onSubmit, aircraftList }: NewChecklistFormProps) {
+export function NewChecklistForm({ onSubmit }: NewChecklistFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(checklistFormSchema),
     defaultValues: {
@@ -74,60 +70,34 @@ export function NewChecklistForm({ onSubmit, aircraftList }: NewChecklistFormPro
             <FormItem>
               <FormLabel>Checklist Title</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Cessna 172 Post-Flight" {...field} />
+                <Input placeholder="e.g., C172 Pre-Flight (Master)" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    <SelectItem value="Pre-Flight">Pre-Flight</SelectItem>
-                    <SelectItem value="Post-Flight">Post-Flight</SelectItem>
-                    <SelectItem value="Post-Maintenance">Post-Maintenance</SelectItem>
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-                control={form.control}
-                name="aircraftId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Aircraft</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an aircraft" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {aircraftList.map((ac) => (
-                            <SelectItem key={ac.id} value={ac.id}>
-                                {ac.model} ({ac.tailNumber})
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-        </div>
+        <FormField
+        control={form.control}
+        name="category"
+        render={({ field }) => (
+            <FormItem>
+            <FormLabel>Category</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                <SelectItem value="Pre-Flight">Pre-Flight</SelectItem>
+                <SelectItem value="Post-Flight">Post-Flight</SelectItem>
+                <SelectItem value="Post-Maintenance">Post-Maintenance</SelectItem>
+                </SelectContent>
+            </Select>
+            <FormMessage />
+            </FormItem>
+        )}
+        />
         <div>
             <FormLabel>Checklist Items</FormLabel>
             <ScrollArea className="h-60 mt-2 pr-4">
@@ -182,7 +152,7 @@ export function NewChecklistForm({ onSubmit, aircraftList }: NewChecklistFormPro
             Add Item
         </Button>
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Checklist</Button>
+          <Button type="submit">Create Template</Button>
         </div>
       </form>
     </Form>
