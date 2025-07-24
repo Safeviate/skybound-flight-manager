@@ -29,7 +29,7 @@ const checklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
-  category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance'], {
+  category: z.enum(['Pre-Flight', 'Post-Flight', 'Pre-Maintenance', 'Post-Maintenance'], {
     required_error: 'Please select a category.',
   }),
   items: z.array(checklistItemSchema).min(1, {
@@ -116,6 +116,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
                 <SelectContent>
                 <SelectItem value="Pre-Flight">Pre-Flight</SelectItem>
                 <SelectItem value="Post-Flight">Post-Flight</SelectItem>
+                <SelectItem value="Pre-Maintenance">Pre-Maintenance</SelectItem>
                 <SelectItem value="Post-Maintenance">Post-Maintenance</SelectItem>
                 </SelectContent>
             </Select>
@@ -145,7 +146,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
                             control={form.control}
                             name={`items.${index}.type`}
                             render={({ field }) => (
-                                <FormItem className="w-[180px]">
+                                <FormItem className="w-[240px]">
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                     <SelectTrigger>

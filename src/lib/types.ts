@@ -4,6 +4,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -329,7 +330,7 @@ export type Checklist = {
     id: string;
     companyId: string;
     title: string;
-    category: 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+    category: 'Pre-Flight' | 'Post-Flight' | 'Pre-Maintenance' | 'Post-Maintenance';
     items: ChecklistItem[];
     aircraftId?: string; // This is the ID of the aircraft the assigned checklist belongs to
     templateId?: string; // This is the ID of the master template it was copied from

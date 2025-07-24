@@ -29,7 +29,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onItemValueCh
   const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
   const { toast } = useToast();
 
-  const handleItemToggle = (itemId: string) => {
+  const handleItemToggleCheckbox = (itemId: string) => {
     const updatedItems = checklist.items.map(item =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
     );
@@ -110,7 +110,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onItemValueCh
                     <Checkbox
                         id={`${checklist.id}-${item.id}`}
                         checked={item.completed}
-                        onCheckedChange={() => handleItemToggle(item.id)}
+                        onCheckedChange={() => handleItemToggleCheckbox(item.id)}
                     />
                     <Label
                         htmlFor={`${checklist.id}-${item.id}`}
