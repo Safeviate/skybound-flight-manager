@@ -40,7 +40,12 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-export function EditProfileForm({ user }: { user: User }) {
+interface EditProfileFormProps {
+    user: User;
+    onUpdate?: () => void;
+}
+
+export function EditProfileForm({ user, onUpdate }: EditProfileFormProps) {
   const { toast } = useToast();
   const { updateUser } = useUser();
   const form = useForm<ProfileFormValues>({
@@ -72,6 +77,7 @@ export function EditProfileForm({ user }: { user: User }) {
           title: 'Profile Updated',
           description: 'Your information has been saved.',
         });
+        onUpdate?.();
     } else {
         toast({
           variant: 'destructive',

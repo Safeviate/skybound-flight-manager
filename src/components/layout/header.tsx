@@ -12,6 +12,7 @@ import { PersonalInformationCard } from '@/app/my-profile/personal-information-c
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user } = useUser();
   const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   const childrenArray = React.Children.toArray(children);
   const backButton = childrenArray.find(child => (child as React.ReactElement)?.props?.asChild);
@@ -31,7 +32,7 @@ export default function Header({ title, children }: { title: string, children?: 
         <div className="flex items-center gap-4">
           {otherChildren}
           {user && (
-            <Dialog>
+            <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <DialogTrigger asChild>
                  <Button variant="secondary" size="icon" className="rounded-full">
                   <div className="h-10 w-10 flex items-center justify-center">
@@ -47,7 +48,7 @@ export default function Header({ title, children }: { title: string, children?: 
                     Your personal details and document status.
                   </DialogDescription>
                 </DialogHeader>
-                <PersonalInformationCard user={user} />
+                <PersonalInformationCard user={user} onUpdate={() => setIsProfileOpen(false)} />
               </DialogContent>
             </Dialog>
           )}

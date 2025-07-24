@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +13,16 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 
 interface PersonalInformationCardProps {
     user: AppUser;
+    onUpdate?: () => void;
 }
 
-export function PersonalInformationCard({ user }: PersonalInformationCardProps) {
+export function PersonalInformationCard({ user, onUpdate }: PersonalInformationCardProps) {
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+    const handleUpdate = () => {
+        setIsDialogOpen(false);
+        onUpdate?.();
+    }
 
     const getRoleVariant = (role: AppUser['role']) => {
         switch (role) {
@@ -70,7 +78,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
                 </div>
             </div>
 
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                     <Button className="w-full mt-6">
                         <Edit className="mr-2 h-4 w-4" />
@@ -84,7 +92,7 @@ export function PersonalInformationCard({ user }: PersonalInformationCardProps) 
                             Make changes to your profile here. Click save when you're done.
                         </DialogDescription>
                     </DialogHeader>
-                    <EditProfileForm user={user} />
+                    <EditProfileForm user={user} onUpdate={handleUpdate} />
                 </DialogContent>
             </Dialog>
         </div>
