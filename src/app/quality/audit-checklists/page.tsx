@@ -109,12 +109,13 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
 
   const handleSubmit = (completedChecklist: AuditChecklist) => {
     if (!company) return;
-    const compliantItems = completedChecklist.items.filter(item => item.finding === 'Compliant').length;
-    const totalItems = completedChecklist.items.length;
-    const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
+    const applicableItems = completedChecklist.items.filter(item => item.finding !== 'Not Applicable');
+    const compliantItems = applicableItems.filter(item => item.finding === 'Compliant' || item.finding === 'Partial').length;
+    const totalApplicableItems = applicableItems.length;
+    const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
     const nonConformanceIssues: NonConformanceIssue[] = completedChecklist.items
-      .filter(item => item.finding && item.finding !== 'Compliant')
+      .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial')
       .map(item => ({
         id: `nci-${item.id}`,
         level: item.finding as NonConformanceIssue['level'],

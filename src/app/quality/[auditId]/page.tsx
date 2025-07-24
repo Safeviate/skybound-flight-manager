@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc } from 'firebase/firestore';
@@ -88,10 +88,8 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
 
   const getIssueFindingInfo = (level: NonConformanceIssue['level']) => {
     switch (level) {
-        case 'Observation': return { icon: <Microscope className="h-5 w-5 text-blue-500" />, variant: 'secondary' as const };
-        case 'Level 1 Finding': return { icon: <MessageSquareWarning className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
-        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
-        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const };
     }
   };

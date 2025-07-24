@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { AuditChecklist, AuditChecklistItem, FindingType } from '@/lib/types';
-import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2, Microscope, MessageSquareWarning, AlertTriangle } from 'lucide-react';
+import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2, Microscope, MessageSquareWarning, AlertTriangle, MinusCircle, Ban } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -117,10 +117,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
     if (itemFinding !== buttonFinding) return 'outline';
     switch(itemFinding) {
       case 'Compliant': return 'success';
-      case 'Observation': return 'secondary';
-      case 'Level 1 Finding': return 'warning';
-      case 'Level 2 Finding': return 'orange';
-      case 'Level 3 Finding': return 'destructive';
+      case 'Partial': return 'warning';
+      case 'Non-compliant': return 'destructive';
+      case 'Not Applicable': return 'secondary';
       default: return 'outline';
     }
   }
@@ -207,7 +206,7 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
               >
                 {item.text}
               </Label>
-               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 <Button 
                     size="sm" 
                     variant={getFindingButtonVariant(item.finding, 'Compliant')}
@@ -217,31 +216,24 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
                 </Button>
                  <Button 
                     size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Observation')}
-                    onClick={() => handleFindingChange(item.id, 'Observation')}
+                    variant={getFindingButtonVariant(item.finding, 'Non-compliant')}
+                    onClick={() => handleFindingChange(item.id, 'Non-compliant')}
                 >
-                    <Microscope className="mr-2 h-4 w-4" /> Observation
+                    <XCircle className="mr-2 h-4 w-4" /> Non-compliant
                 </Button>
                 <Button 
                     size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Level 1 Finding')}
-                    onClick={() => handleFindingChange(item.id, 'Level 1 Finding')}
+                    variant={getFindingButtonVariant(item.finding, 'Partial')}
+                    onClick={() => handleFindingChange(item.id, 'Partial')}
                 >
-                    <MessageSquareWarning className="mr-2 h-4 w-4" /> Level 1
+                    <MinusCircle className="mr-2 h-4 w-4" /> Partial
                 </Button>
                 <Button 
                     size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Level 2 Finding')}
-                    onClick={() => handleFindingChange(item.id, 'Level 2 Finding')}
+                    variant={getFindingButtonVariant(item.finding, 'Not Applicable')}
+                    onClick={() => handleFindingChange(item.id, 'Not Applicable')}
                 >
-                    <AlertTriangle className="mr-2 h-4 w-4" /> Level 2
-                </Button>
-                <Button 
-                    size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Level 3 Finding')}
-                    onClick={() => handleFindingChange(item.id, 'Level 3 Finding')}
-                >
-                    <AlertTriangle className="mr-2 h-4 w-4" /> Level 3
+                    <Ban className="mr-2 h-4 w-4" /> Not Applicable
                 </Button>
               </div>
               <Textarea
@@ -250,9 +242,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
                 onChange={(e) => handleNotesChange(item.id, e.target.value)}
                 className={cn(
                     "bg-background", 
-                    item.finding !== 'Compliant' && item.finding !== null && 'border-primary'
+                    (item.finding === 'Non-compliant' || item.finding === 'Partial') && 'border-primary'
                 )}
-                required={item.finding !== 'Compliant' && item.finding !== null}
+                required={item.finding === 'Non-compliant' || item.finding === 'Partial'}
               />
             </div>
           ))}
