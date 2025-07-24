@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,7 +18,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { safetyReportData as initialSafetyReports, riskRegisterData as initialRisks } from '@/lib/data-provider';
 import type { SafetyReport, Risk, GroupedRisk, Department } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
@@ -384,8 +382,8 @@ function SafetyPage() {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
 
-  const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialSafetyReports);
-  const [risks, setRisks] = useState<Risk[]>(initialRisks);
+  const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
   const [isNewReportOpen, setIsNewReportOpen] = useState(false);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
@@ -396,10 +394,36 @@ function SafetyPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+    if (company) {
+        const fetchSafetyData = async () => {
+            try {
+                const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
+                const risksQuery = query(collection(db, `companies/${company.id}/risks`));
+
+                const [reportsSnapshot, risksSnapshot] = await Promise.all([
+                    getDocs(reportsQuery),
+                    getDocs(risksQuery),
+                ]);
+
+                const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+                const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+                
+                setSafetyReports(reportsList);
+                setRisks(risksList);
+
+            } catch (error) {
+                console.error("Error fetching safety data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
+            }
+        };
+        fetchSafetyData();
+    }
+  }, [user, company, loading, router, toast]);
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
     { 
@@ -488,7 +512,6 @@ function SafetyPage() {
             delete finalReportData[key];
         }
     });
-
 
     try {
         const docRef = await addDoc(collection(db, `companies/${company.id}/safety-reports`), finalReportData);
@@ -788,7 +811,7 @@ function SafetyPage() {
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
                                         <TableCell>
                                             {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.reportNumber.replace(/[^a-zA-Z0-9-]/g, '')}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                                <Link href={`/safety/${risk.id}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
                                             ) : (
                                                 'N/A'
                                             )}
@@ -883,5 +906,3 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
-
-    
