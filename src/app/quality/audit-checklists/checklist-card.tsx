@@ -117,8 +117,12 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
     if (itemFinding !== buttonFinding) return 'outline';
     switch(itemFinding) {
       case 'Compliant': return 'success';
-      case 'Partial': return 'warning';
       case 'Non-compliant': return 'destructive';
+      case 'Partial': return 'destructive';
+      case 'Observation': return 'warning';
+      case 'Level 1 Finding': return 'warning';
+      case 'Level 2 Finding': return 'orange';
+      case 'Level 3 Finding': return 'destructive';
       case 'Not Applicable': return 'secondary';
       default: return 'outline';
     }
@@ -206,35 +210,19 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
               >
                 {item.text}
               </Label>
-               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                <Button 
-                    size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Compliant')}
-                    onClick={() => handleFindingChange(item.id, 'Compliant')}
-                >
-                    <CheckCircle className="mr-2 h-4 w-4" /> Compliant
-                </Button>
-                 <Button 
-                    size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Non-compliant')}
-                    onClick={() => handleFindingChange(item.id, 'Non-compliant')}
-                >
-                    <XCircle className="mr-2 h-4 w-4" /> Non-compliant
-                </Button>
-                <Button 
-                    size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Partial')}
-                    onClick={() => handleFindingChange(item.id, 'Partial')}
-                >
-                    <MinusCircle className="mr-2 h-4 w-4" /> Partial
-                </Button>
-                <Button 
-                    size="sm" 
-                    variant={getFindingButtonVariant(item.finding, 'Not Applicable')}
-                    onClick={() => handleFindingChange(item.id, 'Not Applicable')}
-                >
-                    <Ban className="mr-2 h-4 w-4" /> Not Applicable
-                </Button>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Compliant')} onClick={() => handleFindingChange(item.id, 'Compliant')}>Compliant</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Non-compliant')} onClick={() => handleFindingChange(item.id, 'Non-compliant')}>Non-compliant</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Partial')} onClick={() => handleFindingChange(item.id, 'Partial')}>Partial</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Not Applicable')} onClick={() => handleFindingChange(item.id, 'Not Applicable')}>Not Applicable</Button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Observation')} onClick={() => handleFindingChange(item.id, 'Observation')}>Observation</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Level 1 Finding')} onClick={() => handleFindingChange(item.id, 'Level 1 Finding')}>Level 1 Finding</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Level 2 Finding')} onClick={() => handleFindingChange(item.id, 'Level 2 Finding')}>Level 2 Finding</Button>
+                    <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Level 3 Finding')} onClick={() => handleFindingChange(item.id, 'Level 3 Finding')}>Level 3 Finding</Button>
+                </div>
               </div>
               <Textarea
                 placeholder="Add notes or evidence for non-compliance..."
@@ -242,9 +230,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
                 onChange={(e) => handleNotesChange(item.id, e.target.value)}
                 className={cn(
                     "bg-background", 
-                    (item.finding === 'Non-compliant' || item.finding === 'Partial') && 'border-primary'
+                    (item.finding !== 'Compliant' && item.finding !== null) && 'border-primary'
                 )}
-                required={item.finding === 'Non-compliant' || item.finding === 'Partial'}
+                required={item.finding !== 'Compliant' && item.finding !== null}
               />
             </div>
           ))}
@@ -272,4 +260,3 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
     </Card>
   );
 }
-

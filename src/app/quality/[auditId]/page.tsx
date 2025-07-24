@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingType } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -86,10 +86,14 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
     }
   };
 
-  const getIssueFindingInfo = (level: NonConformanceIssue['level']) => {
+  const getIssueFindingInfo = (level: FindingType) => {
     switch (level) {
         case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
         case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const };
     }
   };

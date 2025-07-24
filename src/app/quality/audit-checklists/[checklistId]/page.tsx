@@ -88,10 +88,10 @@ export default function CompleteAuditChecklistPage() {
         const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
         const nonConformanceIssues: NonConformanceIssue[] = completedChecklist.items
-            .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial')
+            .filter(item => item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && item.finding !== null)
             .map(item => ({
                 id: `nci-${item.id}`,
-                level: item.finding as NonConformanceIssue['level'],
+                level: item.finding,
                 category: 'Procedural', // This could be made more dynamic in the future
                 description: `${item.text} - Auditor Notes: ${item.notes || 'N/A'}`,
             }));
@@ -159,4 +159,3 @@ export default function CompleteAuditChecklistPage() {
 }
 
 CompleteAuditChecklistPage.title = 'Complete Audit Checklist';
-

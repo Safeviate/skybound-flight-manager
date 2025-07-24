@@ -332,7 +332,7 @@ export type CompletedChecklist = {
     completionDate: string;
 }
 
-export type FindingType = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | null;
+export type FindingType = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation' | 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | null;
 
 export type AuditChecklistItem = {
     id: string;
@@ -412,7 +412,7 @@ export const ICAO_PHASES_OF_FLIGHT = [
 
 export type NonConformanceIssue = {
   id: string;
-  level: 'Partial' | 'Non-compliant';
+  level: FindingType;
   category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
   description: string;
 };
