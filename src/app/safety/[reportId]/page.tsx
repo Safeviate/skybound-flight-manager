@@ -691,7 +691,10 @@ function SafetyReportInvestigationPage() {
             const reportSnap = await getDoc(reportRef);
 
             if (reportSnap.exists()) {
-                setReport(reportSnap.data() as SafetyReport);
+                const reportData = reportSnap.data() as SafetyReport;
+                setReport(reportData);
+                // In a real app, this would be loaded from the report object or a related collection.
+                // setCorrectiveActionPlan(reportData.correctiveActionPlan || null); 
             } else {
                 console.error("No such document!");
                 setReport(null);
@@ -708,22 +711,6 @@ function SafetyReportInvestigationPage() {
   }, [reportId, company, user, loading, router, toast]);
 
   useEffect(() => {
-    // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
-    if (reportId === 'sr1') {
-      setCorrectiveActionPlan({
-        summaryOfFindings: 'The investigation confirmed that a bird passed dangerously close to the aircraft on final approach. The flight crew exercised good judgment in reporting the incident, and the post-flight inspection correctly found no damage. The primary contributing factor was a gap in communication regarding known bird activity.',
-        rootCause: 'Failure to disseminate a general bird activity warning from ATC to the specific flight crew during pre-flight or approach briefing.',
-        correctiveActions: [
-          { action: 'Review and update the pre-flight briefing checklist to include a mandatory check for bird activity advisories.', responsiblePerson: 'Mike Ross', deadline: '2024-09-01', status: 'In Progress' },
-          { action: 'Implement a procedure for the tower to provide specific bird advisories to aircraft on final approach when activity is known.', responsiblePerson: 'John Smith', deadline: '2024-09-15', status: 'Not Started' },
-        ]
-      });
-    } else {
-        setCorrectiveActionPlan(null);
-    }
-  }, [reportId]);
-
-  useEffect(() => {
     if (generatePlanState.data && !correctiveActionPlan) {
         const data = generatePlanState.data as GenerateCorrectiveActionPlanOutput;
         const actionsWithIds = data.correctiveActions.map((action, index) => ({...action, id: `action-${index}`}));
@@ -732,7 +719,6 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = async (updatedReport: SafetyReport) => {
-    // Definitive guard clause to prevent crashes.
     if (!company || !report) {
       toast({
         variant: 'destructive',
@@ -749,7 +735,6 @@ function SafetyReportInvestigationPage() {
     } catch (error) {
         console.error("Error updating report:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
-        // Optionally revert state on error
     }
   };
   
@@ -1060,7 +1045,7 @@ function SafetyReportInvestigationPage() {
                         <AccordionContent className="p-6 pt-0">
                             <Separator className="mb-6"/>
                             <div className="space-y-6">
-                                <InvestigationTeamForm report={report} />
+                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                                 <Separator />
                                 <DiscussionSection report={report} onUpdate={handleReportUpdate} />
                                 <Separator />
@@ -1147,5 +1132,6 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
 

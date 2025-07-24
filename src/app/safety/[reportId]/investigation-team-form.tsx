@@ -22,9 +22,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { userData } from '@/lib/data-provider';
-import type { SafetyReport } from '@/lib/types';
+import type { SafetyReport, User } from '@/lib/types';
 import { UserPlus, X, User as UserIcon } from 'lucide-react';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
 
 const teamFormSchema = z.object({
   personnel: z.string().min(1, 'You must select a person to add.'),
@@ -34,28 +36,48 @@ type TeamFormValues = z.infer<typeof teamFormSchema>;
 
 interface InvestigationTeamFormProps {
   report: SafetyReport;
+  onUpdate: (updatedReport: SafetyReport) => void;
 }
 
-export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
+export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
   const [team, setTeam] = React.useState<string[]>(() => {
     const initialTeam = new Set(report.investigationTeam || []);
     if (report.submittedBy !== 'Anonymous') {
-        initialTeam.add(report.submittedBy);
+      initialTeam.add(report.submittedBy);
     }
     return Array.from(initialTeam);
   });
+  const [allPersonnel, setAllPersonnel] = React.useState<User[]>([]);
+
+  React.useEffect(() => {
+    const fetchPersonnel = async () => {
+      if (!company) return;
+      try {
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`));
+        const snapshot = await getDocs(personnelQuery);
+        setAllPersonnel(snapshot.docs.map(doc => doc.data() as User));
+      } catch (error) {
+        console.error("Error fetching personnel:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load personnel list.' });
+      }
+    };
+    fetchPersonnel();
+  }, [company, toast]);
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
   });
 
-  const availablePersonnel = userData.filter(
+  const availablePersonnel = allPersonnel.filter(
     (u) => u.role !== 'Student' && !team.includes(u.name)
   );
 
   function onAddMember(data: TeamFormValues) {
-    setTeam((prevTeam) => [...prevTeam, data.personnel]);
+    const newTeam = [...team, data.personnel];
+    setTeam(newTeam);
+    onUpdate({ ...report, investigationTeam: newTeam });
     form.reset();
     toast({
       title: 'Team Member Added',
@@ -64,7 +86,6 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
   }
 
   function onRemoveMember(memberName: string) {
-    // Prevent the original reporter from being removed
     if (memberName === report.submittedBy && report.submittedBy !== 'Anonymous') {
       toast({
         variant: 'destructive',
@@ -73,7 +94,9 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
       });
       return;
     }
-    setTeam((prevTeam) => prevTeam.filter((m) => m !== memberName));
+    const newTeam = team.filter((m) => m !== memberName);
+    setTeam(newTeam);
+    onUpdate({ ...report, investigationTeam: newTeam });
     toast({
       title: 'Team Member Removed',
       description: `${memberName} has been removed from the investigation.`,
@@ -87,7 +110,7 @@ export function InvestigationTeamForm({ report }: InvestigationTeamFormProps) {
         {team.length > 0 ? (
           <div className="flex flex-wrap gap-4">
             {team.map((memberName) => {
-              const member = userData.find((u) => u.name === memberName);
+              const member = allPersonnel.find((u) => u.name === memberName);
               const isReporter = memberName === report.submittedBy;
               return (
                 <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
