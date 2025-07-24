@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, updateDoc, addDoc } from 'firebase/firestore';
 
 
 function ChecklistsPage() {
@@ -41,6 +41,8 @@ function ChecklistsPage() {
 
   const handleItemToggle = (toggledChecklist: Checklist) => {
     // This is handled locally by ChecklistCard and submitted on save.
+    // To provide a responsive UI, we can update the state optimistically here
+    setAllChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
   };
 
   const handleChecklistUpdate = (updatedChecklist: Checklist) => {
@@ -48,7 +50,17 @@ function ChecklistsPage() {
   };
   
   const handleReset = (checklistId: string) => {
-    // This is handled locally in the checklist card now.
+     setAllChecklists(prevChecklists =>
+      prevChecklists.map(c => {
+        if (c.id === checklistId) {
+          return {
+            ...c,
+            items: c.items.map(item => ({ ...item, completed: false })),
+          };
+        }
+        return c;
+      })
+    );
   };
 
   const handleNewChecklist = async (newChecklistData: Omit<Checklist, 'id' | 'companyId'>) => {
@@ -58,17 +70,15 @@ function ChecklistsPage() {
     }
 
     try {
-        const id = `cl-tmpl-${Date.now()}`;
-        const checklistWithId: Checklist = {
+        const checklistToSave: Omit<Checklist, 'id'> = {
             ...newChecklistData,
-            id,
             companyId: company.id,
             items: newChecklistData.items.map((item, index) => ({ ...item, id: `item-${Date.now()}-${index}` })),
         };
         
-        await setDoc(doc(db, `companies/${company.id}/checklist-templates`, id), checklistWithId);
+        const docRef = await addDoc(collection(db, `companies/${company.id}/checklist-templates`), checklistToSave);
 
-        setAllChecklists(prev => [...prev, checklistWithId]);
+        setAllChecklists(prev => [...prev, { ...checklistToSave, id: docRef.id }]);
         setIsDialogOpen(false);
         toast({ title: 'Checklist Template Created', description: `"${newChecklistData.title}" has been saved.`});
     } catch(error) {
@@ -148,7 +158,7 @@ function ChecklistsPage() {
                           checklist={checklist} 
                           onItemToggle={handleItemToggle}
                           onUpdate={handleChecklistUpdate}
-                          onReset={() => {}} // Not applicable on template page
+                          onReset={handleReset}
                           onEdit={handleChecklistEdit}
                       />
                   ))}
@@ -167,7 +177,7 @@ function ChecklistsPage() {
                               checklist={checklist} 
                               onItemToggle={handleItemToggle}
                               onUpdate={handleChecklistUpdate}
-                              onReset={() => {}} // Not applicable on template page
+                              onReset={handleReset}
                               onEdit={handleChecklistEdit}
                           />
                       ))}
@@ -186,7 +196,7 @@ function ChecklistsPage() {
                               checklist={checklist} 
                               onItemToggle={handleItemToggle}
                               onUpdate={handleChecklistUpdate}
-                              onReset={() => {}} // Not applicable on template page
+                              onReset={handleReset}
                               onEdit={handleChecklistEdit}
                           />
                       ))}
