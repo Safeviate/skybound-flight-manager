@@ -272,3 +272,4 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
     </Card>
   );
 }
+
