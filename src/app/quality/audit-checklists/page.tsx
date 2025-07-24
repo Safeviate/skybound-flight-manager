@@ -207,7 +207,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
                                 </CardHeader>
                             </Card>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+                        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
                             <DialogHeader>
                                 <DialogTitle>{checklist.title}</DialogTitle>
                                 <DialogDescription>
