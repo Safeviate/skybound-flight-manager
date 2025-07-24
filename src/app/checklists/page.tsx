@@ -64,45 +64,33 @@ function AssignChecklistDialog({ onAssign, templates, aircraftList }: { onAssign
         <Button onClick={handleAssign} disabled={!aircraftId || !templateId}>Assign Checklist</Button>
       </DialogContent>
     );
-  }
+}
 
-function ChecklistsPage() {
+// Renamed from ChecklistsPage to ChecklistsManager to avoid confusion
+export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Aircraft[], refetchData: () => void }) {
   const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>([]);
-  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
   const { user, company, loading } = useUser();
-  const router = useRouter();
   const { toast } = useToast();
   const [isNewChecklistDialogOpen, setIsNewChecklistDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (company) {
-        const fetchData = async () => {
+    if (company) {
+        const fetchTemplates = async () => {
             try {
                 const templatesQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
-                const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-                
-                const [templatesSnapshot, aircraftSnapshot] = await Promise.all([
-                    getDocs(templatesQuery),
-                    getDocs(aircraftQuery)
-                ]);
-
+                const templatesSnapshot = await getDocs(templatesQuery);
                 const templates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
-                const aircraft = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
-
                 setChecklistTemplates(templates);
-                setAircraftList(aircraft);
             } catch (error) {
-                console.error("Error fetching data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Failed to load initial data.' });
+                console.error("Error fetching templates:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Failed to load checklist templates.' });
             }
         };
-        fetchData();
+        fetchTemplates();
     }
-  }, [user, company, loading, router, toast]);
+  }, [company, toast]);
 
   const handleNewChecklist = async (newChecklistData: Omit<Checklist, 'id' | 'companyId' | 'aircraftId'>) => {
     if (!company) return;
@@ -125,21 +113,26 @@ function ChecklistsPage() {
     if (!company) return;
     try {
         const templateRef = doc(db, `companies/${company.id}/checklist-templates`, updatedChecklistData.id);
-        await updateDoc(templateRef, updatedChecklistData as any);
+        
+        const batch = writeBatch(db);
+        
+        batch.update(templateRef, updatedChecklistData as any);
         
         // Find and update all assigned checklists based on this template
         const assignedChecklistsQuery = query(collection(db, `companies/${company.id}/checklists`), where('templateId', '==', updatedChecklistData.id));
         const snapshot = await getDocs(assignedChecklistsQuery);
         
-        const batch = writeBatch(db);
         snapshot.docs.forEach(doc => {
             const { id, aircraftId, templateId, companyId, ...restOfTemplate } = updatedChecklistData;
             batch.update(doc.ref, { ...restOfTemplate });
         });
+        
         await batch.commit();
         
         setChecklistTemplates(prev => prev.map(t => t.id === updatedChecklistData.id ? updatedChecklistData : t));
+        refetchData();
         setEditingTemplate(null);
+
         toast({ title: 'Template Updated', description: `"${updatedChecklistData.title}" and all its assignments have been updated.`});
     } catch(error) {
         console.error("Error updating template:", error);
@@ -164,6 +157,7 @@ function ChecklistsPage() {
 
     try {
         await addDoc(collection(db, `companies/${company.id}/checklists`), newChecklistForAircraft);
+        refetchData();
         toast({ title: 'Checklist Assigned', description: `"${template.title}" has been assigned to the selected aircraft.` });
         setIsAssignDialogOpen(false);
     } catch (error) {
@@ -175,21 +169,24 @@ function ChecklistsPage() {
   const handleDeleteTemplate = async (templateId: string) => {
     if (!company) return;
     try {
-        // First, delete the template itself
+        const batch = writeBatch(db);
+        
+        // Delete the template itself
         const templateRef = doc(db, `companies/${company.id}/checklist-templates`, templateId);
-        await deleteDoc(templateRef);
+        batch.delete(templateRef);
 
         // Then, find and delete all assigned checklists based on this template
         const assignedChecklistsQuery = query(collection(db, `companies/${company.id}/checklists`), where('templateId', '==', templateId));
         const snapshot = await getDocs(assignedChecklistsQuery);
         
-        const batch = writeBatch(db);
         snapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
         });
+        
         await batch.commit();
 
         setChecklistTemplates(prev => prev.filter(t => t.id !== templateId));
+        refetchData();
         toast({ title: 'Template Deleted', description: 'The checklist template and all its assignments have been removed.' });
     } catch (error) {
         console.error("Error deleting template:", error);
@@ -201,97 +198,84 @@ function ChecklistsPage() {
     setEditingTemplate(template);
   };
 
-
-  if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
-  }
-
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Checklist Templates</CardTitle>
-              <CardDescription>
-                  Manage master checklist templates and assign them to aircraft.
-              </CardDescription>
+    <>
+      <DialogHeader>
+        <DialogTitle>Checklist Templates</DialogTitle>
+        <DialogDescription>
+            Manage master checklist templates and assign them to aircraft.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex items-center justify-end gap-2 py-4">
+            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Assign Checklist
+                </Button>
+            </DialogTrigger>
+            <AssignChecklistDialog 
+                onAssign={handleAssignChecklist}
+                templates={checklistTemplates}
+                aircraftList={aircraftList}
+            />
+        </Dialog>
+        <Dialog open={isNewChecklistDialogOpen} onOpenChange={setIsNewChecklistDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Template
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>Create New Checklist Template</DialogTitle>
+                    <DialogDescription>
+                        This will create a master template that can be assigned to multiple aircraft.
+                    </DialogDescription>
+                </DialogHeader>
+                <ChecklistTemplateForm onSubmit={handleNewChecklist} />
+            </DialogContent>
+        </Dialog>
+      </div>
+      <div className="space-y-6">
+          {checklistTemplates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {checklistTemplates.map(checklist => (
+                    <Card key={checklist.id} className="flex flex-col">
+                        <CardHeader>
+                            <CardTitle className="text-base">{checklist.title}</CardTitle>
+                            <CardDescription>{checklist.category}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1">
+                            <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                {checklist.items.slice(0, 5).map(item => (
+                                    <li key={item.id} className="truncate">{item.text}</li>
+                                ))}
+                                {checklist.items.length > 5 && (
+                                    <li>...and {checklist.items.length - 5} more.</li>
+                                )}
+                            </ul>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditClick(checklist)}>
+                                <Edit className="h-4 w-4 mr-2"/>
+                                Edit
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteTemplate(checklist.id)}>
+                                <Trash2 className="h-4 w-4 mr-2 text-destructive"/>
+                                Delete
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                ))}
             </div>
-            <div className="flex gap-2">
-                 <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Assign Checklist
-                        </Button>
-                    </DialogTrigger>
-                    <AssignChecklistDialog 
-                        onAssign={handleAssignChecklist}
-                        templates={checklistTemplates}
-                        aircraftList={aircraftList}
-                    />
-                </Dialog>
-                <Dialog open={isNewChecklistDialogOpen} onOpenChange={setIsNewChecklistDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            New Template
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>Create New Checklist Template</DialogTitle>
-                            <DialogDescription>
-                                This will create a master template that can be assigned to multiple aircraft.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <ChecklistTemplateForm onSubmit={handleNewChecklist} />
-                    </DialogContent>
-                </Dialog>
+          ) : (
+            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">No checklist templates found. Create one to get started.</p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-              {checklistTemplates.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {checklistTemplates.map(checklist => (
-                        <Card key={checklist.id} className="flex flex-col">
-                            <CardHeader>
-                                <CardTitle className="text-base">{checklist.title}</CardTitle>
-                                <CardDescription>{checklist.category}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1">
-                                <ul className="list-disc list-inside text-sm text-muted-foreground">
-                                    {checklist.items.slice(0, 5).map(item => (
-                                        <li key={item.id} className="truncate">{item.text}</li>
-                                    ))}
-                                    {checklist.items.length > 5 && (
-                                        <li>...and {checklist.items.length - 5} more.</li>
-                                    )}
-                                </ul>
-                            </CardContent>
-                            <CardFooter className="flex justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditClick(checklist)}>
-                                    <Edit className="h-4 w-4 mr-2"/>
-                                    Edit
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeleteTemplate(checklist.id)}>
-                                    <Trash2 className="h-4 w-4 mr-2 text-destructive"/>
-                                    Delete
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No checklist templates found. Create one to get started.</p>
-                </div>
-              )}
-          </CardContent>
-      </Card>
+          )}
+      </div>
 
       {editingTemplate && (
           <Dialog open={!!editingTemplate} onOpenChange={() => setEditingTemplate(null)}>
@@ -309,11 +293,8 @@ function ChecklistsPage() {
               </DialogContent>
           </Dialog>
       )}
-    </main>
+    </>
   );
 }
-
-ChecklistsPage.title = 'Checklist Templates';
-export default ChecklistsPage;
 
     

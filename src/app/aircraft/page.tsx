@@ -29,6 +29,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { ChecklistsPage } from '../checklists/page';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -40,6 +41,7 @@ function AircraftPage() {
   const { user, company, loading } = useUser();
   const router = useRouter();
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
+  const [isChecklistManagerOpen, setIsChecklistManagerOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -223,12 +225,17 @@ function AircraftPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
             <div className="flex items-center gap-2">
-                <Button variant="outline" asChild>
-                    <Link href="/checklists">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Manage Checklist Templates
-                    </Link>
-                </Button>
+                <Dialog open={isChecklistManagerOpen} onOpenChange={setIsChecklistManagerOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Manage Checklist Templates
+                        </Button>
+                    </DialogTrigger>
+                     <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <ChecklistsPage aircraftList={fleet} refetchData={fetchData} />
+                    </DialogContent>
+                </Dialog>
                 <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
@@ -376,3 +383,5 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
+
+    
