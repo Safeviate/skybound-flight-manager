@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Booking, Checklist, ChecklistItem } from '@/lib/types';
+import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -28,6 +28,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -78,7 +79,7 @@ function AircraftPage() {
     setChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
   };
 
-  const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbs?: number) => {
+  const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbs?: number, defects?: string) => {
     if (!company) return;
 
     // Persist the final state of the checklist
@@ -112,10 +113,34 @@ function AircraftPage() {
             const newStatus = updatedChecklist.category === 'Post-Maintenance' ? 'Available' : aircraft.status;
             await updateDoc(aircraftRef, { hours: hobbs, status: newStatus });
             setFleet(prev => prev.map(ac => ac.id === aircraft.id ? { ...ac, hours: hobbs, status: newStatus } : ac));
-            toast({
-                title: "Checklist Complete",
-                description: `Aircraft ${aircraft.tailNumber} Hobbs hours updated to ${hobbs}.`,
-            });
+            
+            if (defects && defects.trim() !== '') {
+                // File a new safety report for the defect
+                const safetyReportsRef = collection(db, `companies/${company.id}/safety-reports`);
+                const newReport: Omit<SafetyReport, 'id'> = {
+                    companyId: company.id,
+                    reportNumber: `ADR-${Date.now().toString().slice(-4)}`,
+                    occurrenceDate: format(new Date(), 'yyyy-MM-dd'),
+                    filedDate: format(new Date(), 'yyyy-MM-dd'),
+                    submittedBy: user?.name || 'System',
+                    heading: `Defect reported for ${aircraft.tailNumber}`,
+                    details: defects,
+                    status: 'Open',
+                    type: 'Aircraft Defect Report',
+                    department: 'Maintenance',
+                    aircraftInvolved: aircraft.tailNumber,
+                };
+                await addDoc(safetyReportsRef, newReport);
+                toast({
+                    title: "Defect Reported",
+                    description: `A new safety report has been filed for the defects noted.`,
+                });
+            } else {
+                 toast({
+                    title: "Checklist Complete",
+                    description: `Aircraft ${aircraft.tailNumber} Hobbs hours updated to ${hobbs}.`,
+                });
+            }
         }
     } catch (error) {
         console.error("Error updating checklist state:", error);
@@ -181,6 +206,7 @@ function AircraftPage() {
   const handleAircraftAdded = (newAircraft: Aircraft) => {
     setFleet(prev => [...prev, newAircraft]);
     setIsNewAircraftDialogOpen(false);
+    fetchData(); // Refetch all data to get newly assigned checklists
   }
 
   if (loading || !user) {
@@ -350,4 +376,3 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
-

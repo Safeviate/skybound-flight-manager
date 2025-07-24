@@ -11,12 +11,13 @@ import { RotateCcw, CheckCircle, Edit, Save, X, PlusCircle, Trash2, Wrench } fro
 import { useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ChecklistCardProps {
   checklist: Checklist;
   aircraft?: Aircraft;
   onItemToggle: (checklist: Checklist) => void;
-  onUpdate: (checklist: Checklist, hobbs?: number) => void;
+  onUpdate: (checklist: Checklist, hobbs?: number, defects?: string) => void;
   onReset: (checklistId: string) => void;
   onEdit: (checklist: Checklist) => void;
 }
@@ -25,6 +26,9 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const [isEditing, setIsEditing] = useState(false);
   const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
   const [hobbsValue, setHobbsValue] = useState<string>(aircraft?.hours.toFixed(1) || '');
+  const [confirmHobbsValue, setConfirmHobbsValue] = useState<string>('');
+  const [defectsValue, setDefectsValue] = useState<string>('');
+  const [hobbsError, setHobbsError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleItemToggle = (itemId: string) => {
@@ -45,6 +49,19 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const handleResetClick = () => {
       onReset(checklist.id);
   }
+  
+  const handleSubmit = () => {
+    setHobbsError(null);
+    if (hobbsValue !== confirmHobbsValue) {
+        setHobbsError("Hobbs hours do not match.");
+        return;
+    }
+    if (parseFloat(hobbsValue) < (aircraft?.hours || 0)) {
+        setHobbsError("New Hobbs hours cannot be less than current hours.");
+        return;
+    }
+    onUpdate(checklist, parseFloat(hobbsValue), defectsValue);
+  }
 
   const getButtonState = () => {
       if (!isComplete) {
@@ -53,7 +70,10 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
       if (isMaintenance || isPostFlight) {
         let buttonText = isMaintenance ? 'Submit & Complete Maintenance' : 'Submit & Complete Flight';
         let icon = isMaintenance ? <Wrench /> : <CheckCircle />;
-        return { text: buttonText, disabled: false, onClick: () => onUpdate(checklist, parseFloat(hobbsValue)), icon: icon }
+        
+        const hobbsMismatch = hobbsValue !== confirmHobbsValue || !hobbsValue;
+        
+        return { text: buttonText, disabled: hobbsMismatch, onClick: handleSubmit, icon: icon }
       }
       return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
   }
@@ -181,15 +201,39 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
           ))}
         </div>
         {(isMaintenance || isPostFlight) && isComplete && (
-            <div className="space-y-2">
-                <Label htmlFor="hobbs">{isMaintenance ? 'Post-Maintenance' : 'Final'} Hobbs Hours</Label>
-                <Input 
-                    id="hobbs" 
-                    type="number" 
-                    value={hobbsValue} 
-                    onChange={e => setHobbsValue(e.target.value)}
-                    placeholder={aircraft?.hours.toFixed(1)}
-                />
+            <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="hobbs">{isMaintenance ? 'Post-Maintenance' : 'Final'} Hobbs Hours</Label>
+                        <Input 
+                            id="hobbs" 
+                            type="number" 
+                            value={hobbsValue} 
+                            onChange={e => setHobbsValue(e.target.value)}
+                            placeholder={aircraft?.hours.toFixed(1)}
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="confirm-hobbs">Confirm Hobbs</Label>
+                        <Input 
+                            id="confirm-hobbs" 
+                            type="number" 
+                            value={confirmHobbsValue} 
+                            onChange={e => setConfirmHobbsValue(e.target.value)}
+                            placeholder="Confirm hours"
+                        />
+                    </div>
+                </div>
+                 {hobbsError && <p className="text-sm text-destructive">{hobbsError}</p>}
+                <div className="space-y-2">
+                    <Label htmlFor="defects">Aircraft Defects (Optional)</Label>
+                    <Textarea 
+                        id="defects"
+                        value={defectsValue}
+                        onChange={(e) => setDefectsValue(e.target.value)}
+                        placeholder="Note any defects or issues found during the flight..."
+                    />
+                </div>
             </div>
         )}
       </CardContent>
