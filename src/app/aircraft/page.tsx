@@ -81,21 +81,18 @@ function AircraftPage() {
     setChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
   };
 
-  const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbs?: number, defects?: string) => {
+  const handleChecklistUpdate = async (updatedChecklist: Checklist) => {
     if (!company) return;
 
     // Persist the final state of the checklist
     const checklistRef = doc(db, `companies/${company.id}/checklists`, updatedChecklist.id);
     await updateDoc(checklistRef, { items: updatedChecklist.items });
 
-
     const isComplete = updatedChecklist.items.every(item => item.completed);
     if (!isComplete || !updatedChecklist.aircraftId) return;
     
     const aircraft = fleet.find(ac => ac.id === updatedChecklist.aircraftId);
     if (!aircraft) return;
-
-    const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
 
     try {
         if (updatedChecklist.category === 'Pre-Flight') {
@@ -110,40 +107,11 @@ function AircraftPage() {
             });
             setBookings(prev => prev.map(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' ? {...b, isChecklistComplete: true} : b));
         }
+         toast({
+            title: "Checklist Complete",
+            description: `Checklist "${updatedChecklist.title}" submitted.`,
+        });
 
-        if ((updatedChecklist.category === 'Post-Flight' || updatedChecklist.category === 'Post-Maintenance') && hobbs !== undefined) {
-            const newStatus = updatedChecklist.category === 'Post-Maintenance' ? 'Available' : aircraft.status;
-            await updateDoc(aircraftRef, { hours: hobbs, status: newStatus });
-            setFleet(prev => prev.map(ac => ac.id === aircraft.id ? { ...ac, hours: hobbs, status: newStatus } : ac));
-            
-            if (defects && defects.trim() !== '') {
-                // File a new safety report for the defect
-                const safetyReportsRef = collection(db, `companies/${company.id}/safety-reports`);
-                const newReport: Omit<SafetyReport, 'id'> = {
-                    companyId: company.id,
-                    reportNumber: `ADR-${Date.now().toString().slice(-4)}`,
-                    occurrenceDate: format(new Date(), 'yyyy-MM-dd'),
-                    filedDate: format(new Date(), 'yyyy-MM-dd'),
-                    submittedBy: user?.name || 'System',
-                    heading: `Defect reported for ${aircraft.tailNumber}`,
-                    details: defects,
-                    status: 'Open',
-                    type: 'Aircraft Defect Report',
-                    department: 'Maintenance',
-                    aircraftInvolved: aircraft.tailNumber,
-                };
-                await addDoc(safetyReportsRef, newReport);
-                toast({
-                    title: "Defect Reported",
-                    description: `A new safety report has been filed for the defects noted.`,
-                });
-            } else {
-                 toast({
-                    title: "Checklist Complete",
-                    description: `Aircraft ${aircraft.tailNumber} Hobbs hours updated to ${hobbs}.`,
-                });
-            }
-        }
     } catch (error) {
         console.error("Error updating checklist state:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to complete checklist action.' });
@@ -383,5 +351,3 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
-
-    

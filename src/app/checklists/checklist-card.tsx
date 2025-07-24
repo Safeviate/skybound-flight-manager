@@ -17,7 +17,7 @@ interface ChecklistCardProps {
   checklist: Checklist;
   aircraft?: Aircraft;
   onItemToggle: (checklist: Checklist) => void;
-  onUpdate: (checklist: Checklist, hobbs?: number, defects?: string) => void;
+  onUpdate: (checklist: Checklist) => void;
   onReset: (checklistId: string) => void;
   onEdit: (checklist: Checklist) => void;
 }
@@ -25,10 +25,6 @@ interface ChecklistCardProps {
 export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset, onEdit }: ChecklistCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
-  const [hobbsValue, setHobbsValue] = useState<string>(aircraft?.hours.toFixed(1) || '');
-  const [confirmHobbsValue, setConfirmHobbsValue] = useState<string>('');
-  const [defectsValue, setDefectsValue] = useState<string>('');
-  const [hobbsError, setHobbsError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleItemToggle = (itemId: string) => {
@@ -43,41 +39,11 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
   const isComplete = progress === 100;
-  const isMaintenance = checklist.category === 'Post-Maintenance';
-  const isPostFlight = checklist.category === 'Post-Flight';
 
   const handleResetClick = () => {
       onReset(checklist.id);
   }
   
-  const handleSubmit = () => {
-    setHobbsError(null);
-    if (hobbsValue !== confirmHobbsValue) {
-        setHobbsError("Hobbs hours do not match.");
-        return;
-    }
-    if (parseFloat(hobbsValue) < (aircraft?.hours || 0)) {
-        setHobbsError("New Hobbs hours cannot be less than current hours.");
-        return;
-    }
-    onUpdate(checklist, parseFloat(hobbsValue), defectsValue);
-  }
-
-  const getButtonState = () => {
-      if (!isComplete) {
-          return { text: 'Complete All Items', disabled: true, icon: <CheckCircle /> }
-      }
-      if (isMaintenance || isPostFlight) {
-        let buttonText = isMaintenance ? 'Submit & Complete Maintenance' : 'Submit & Complete Flight';
-        let icon = isMaintenance ? <Wrench /> : <CheckCircle />;
-        
-        const hobbsMismatch = hobbsValue !== confirmHobbsValue || !hobbsValue;
-        
-        return { text: buttonText, disabled: hobbsMismatch, onClick: handleSubmit, icon: icon }
-      }
-      return { text: 'Submit & Complete', disabled: false, onClick: () => onUpdate(checklist), icon: <CheckCircle /> };
-  }
-
   const handleEditToggle = () => {
     if (isEditing) {
       // Cancel edits, revert to original
@@ -125,8 +91,6 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
       }));
   };
 
-  const buttonState = getButtonState();
-
   if (isEditing) {
     return (
         <Card className="flex flex-col bg-muted/30">
@@ -167,7 +131,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   }
 
   return (
-    <Card className={`flex flex-col ${isComplete && !isMaintenance && !isPostFlight ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''} ${isComplete && (isMaintenance || isPostFlight) ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}>
+    <Card className={`flex flex-col ${isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
@@ -200,45 +164,9 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
             </div>
           ))}
         </div>
-        {(isMaintenance || isPostFlight) && isComplete && (
-            <div className="space-y-4 pt-4 border-t">
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="hobbs">{isMaintenance ? 'Post-Maintenance' : 'Final'} Hobbs Hours</Label>
-                        <Input 
-                            id="hobbs" 
-                            type="number" 
-                            value={hobbsValue} 
-                            onChange={e => setHobbsValue(e.target.value)}
-                            placeholder={aircraft?.hours.toFixed(1)}
-                        />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="confirm-hobbs">Confirm Hobbs</Label>
-                        <Input 
-                            id="confirm-hobbs" 
-                            type="number" 
-                            value={confirmHobbsValue} 
-                            onChange={e => setConfirmHobbsValue(e.target.value)}
-                            placeholder="Confirm hours"
-                        />
-                    </div>
-                </div>
-                 {hobbsError && <p className="text-sm text-destructive">{hobbsError}</p>}
-                <div className="space-y-2">
-                    <Label htmlFor="defects">Aircraft Defects (Optional)</Label>
-                    <Textarea 
-                        id="defects"
-                        value={defectsValue}
-                        onChange={(e) => setDefectsValue(e.target.value)}
-                        placeholder="Note any defects or issues found during the flight..."
-                    />
-                </div>
-            </div>
-        )}
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        {isComplete && !isMaintenance && (
+        {isComplete && (
             <p className="text-xs text-center text-muted-foreground p-2 bg-muted rounded-md">
                 By clicking "Submit", I confirm that I have completed this checklist in good faith and that all required documents are onboard as required by law.
             </p>
@@ -248,9 +176,9 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reset
             </Button>
-            <Button size="sm" onClick={buttonState.onClick} className="w-full" disabled={buttonState.disabled}>
-                {buttonState.icon}
-                {buttonState.text}
+            <Button size="sm" onClick={() => onUpdate(checklist)} className="w-full" disabled={!isComplete}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Submit & Complete
             </Button>
         </div>
       </CardFooter>
