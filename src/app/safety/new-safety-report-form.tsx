@@ -449,28 +449,17 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                         />
                         <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Location (Optional)</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            control={form.control}
+                            name="location"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Location (Optional)</FormLabel>
                                 <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a location if applicable" />
-                                </SelectTrigger>
+                                    <Input placeholder="e.g., KPAO, Gate 14, Maintenance Hangar" {...field} />
                                 </FormControl>
-                                <SelectContent>
-                                {airportData.map((airport) => (
-                                    <SelectItem key={airport.id} value={airport.id}>
-                                    {airport.name} ({airport.id})
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+                                <FormMessage />
+                                </FormItem>
+                            )}
                         />
                     </div>
                      <FormField
