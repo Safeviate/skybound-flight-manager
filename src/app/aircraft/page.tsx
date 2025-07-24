@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { ChecklistsPage } from '../checklists/page';
+import { ChecklistsManager } from '../checklists/page';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -213,7 +213,7 @@ function AircraftPage() {
                         </Button>
                     </DialogTrigger>
                      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <ChecklistsPage aircraftList={fleet} refetchData={fetchData} />
+                        <ChecklistsManager aircraftList={fleet} refetchData={fetchData} />
                     </DialogContent>
                 </Dialog>
                 <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>

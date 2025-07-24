@@ -66,31 +66,37 @@ function AssignChecklistDialog({ onAssign, templates, aircraftList }: { onAssign
     );
 }
 
-// Renamed from ChecklistsPage to ChecklistsManager to avoid confusion
-export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Aircraft[], refetchData: () => void }) {
+export function ChecklistsManager({ aircraftList, refetchData }: { aircraftList: Aircraft[], refetchData?: () => void }) {
   const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>([]);
-  const { user, company, loading } = useUser();
+  const { user, company } = useUser();
   const { toast } = useToast();
   const [isNewChecklistDialogOpen, setIsNewChecklistDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
+  const fetchTemplates = async () => {
+    if (!company) return;
+    try {
+        const templatesQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
+        const templatesSnapshot = await getDocs(templatesQuery);
+        const templates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+        setChecklistTemplates(templates);
+    } catch (error) {
+        console.error("Error fetching templates:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to load checklist templates.' });
+    }
+  };
+
   useEffect(() => {
     if (company) {
-        const fetchTemplates = async () => {
-            try {
-                const templatesQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
-                const templatesSnapshot = await getDocs(templatesQuery);
-                const templates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
-                setChecklistTemplates(templates);
-            } catch (error) {
-                console.error("Error fetching templates:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Failed to load checklist templates.' });
-            }
-        };
         fetchTemplates();
     }
   }, [company, toast]);
+
+  const handleRefetch = () => {
+    fetchTemplates();
+    refetchData?.();
+  };
 
   const handleNewChecklist = async (newChecklistData: Omit<Checklist, 'id' | 'companyId' | 'aircraftId'>) => {
     if (!company) return;
@@ -118,7 +124,6 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
         
         batch.update(templateRef, updatedChecklistData as any);
         
-        // Find and update all assigned checklists based on this template
         const assignedChecklistsQuery = query(collection(db, `companies/${company.id}/checklists`), where('templateId', '==', updatedChecklistData.id));
         const snapshot = await getDocs(assignedChecklistsQuery);
         
@@ -130,7 +135,7 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
         await batch.commit();
         
         setChecklistTemplates(prev => prev.map(t => t.id === updatedChecklistData.id ? updatedChecklistData : t));
-        refetchData();
+        handleRefetch();
         setEditingTemplate(null);
 
         toast({ title: 'Template Updated', description: `"${updatedChecklistData.title}" and all its assignments have been updated.`});
@@ -148,16 +153,15 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
         return;
     }
 
-    // Create a copy of the template and assign it to the aircraft
     const newChecklistForAircraft: Omit<Checklist, 'id'> = {
         ...template,
         aircraftId,
-        templateId: template.id, // Keep a reference to the original template
+        templateId: template.id,
     };
 
     try {
         await addDoc(collection(db, `companies/${company.id}/checklists`), newChecklistForAircraft);
-        refetchData();
+        handleRefetch();
         toast({ title: 'Checklist Assigned', description: `"${template.title}" has been assigned to the selected aircraft.` });
         setIsAssignDialogOpen(false);
     } catch (error) {
@@ -171,11 +175,9 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
     try {
         const batch = writeBatch(db);
         
-        // Delete the template itself
         const templateRef = doc(db, `companies/${company.id}/checklist-templates`, templateId);
         batch.delete(templateRef);
 
-        // Then, find and delete all assigned checklists based on this template
         const assignedChecklistsQuery = query(collection(db, `companies/${company.id}/checklists`), where('templateId', '==', templateId));
         const snapshot = await getDocs(assignedChecklistsQuery);
         
@@ -186,7 +188,7 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
         await batch.commit();
 
         setChecklistTemplates(prev => prev.filter(t => t.id !== templateId));
-        refetchData();
+        handleRefetch();
         toast({ title: 'Template Deleted', description: 'The checklist template and all its assignments have been removed.' });
     } catch (error) {
         console.error("Error deleting template:", error);
@@ -297,4 +299,45 @@ export function ChecklistsPage({ aircraftList, refetchData }: { aircraftList: Ai
   );
 }
 
+function ChecklistsPage() {
+    const { user, company, loading } = useUser();
+    const router = useRouter();
+    const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+
+    const fetchData = async () => {
+        if (!company) return;
+        try {
+            const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+            const aircraftSnapshot = await getDocs(aircraftQuery);
+            const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+            setAircraftList(aircraftList);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        } else if (company) {
+            fetchData();
+        }
+    }, [user, company, loading, router]);
+
+    if (loading || !user) {
+        return (
+            <main className="flex-1 flex items-center justify-center">
+                <p>Loading...</p>
+            </main>
+        );
+    }
     
+    return (
+        <main className="flex-1 p-4 md:p-8 space-y-8">
+            <ChecklistsManager aircraftList={aircraftList} refetchData={fetchData} />
+        </main>
+    )
+}
+
+ChecklistsPage.title = 'Checklist Management';
+export default ChecklistsPage;
