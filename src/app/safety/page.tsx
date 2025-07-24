@@ -473,7 +473,7 @@ function SafetyPage() {
     const { isAnonymous, ...reportData } = newReportData;
     const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type] || 'Management';
     
-    const finalReportData = {
+    let finalReportData: any = {
         companyId: company.id,
         submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
         status: 'Open' as SafetyReport['status'],
@@ -481,6 +481,14 @@ function SafetyPage() {
         department,
         ...reportData,
     };
+
+    // Remove undefined properties before sending to Firestore
+    Object.keys(finalReportData).forEach(key => {
+        if (finalReportData[key] === undefined) {
+            delete finalReportData[key];
+        }
+    });
+
 
     try {
         const docRef = await addDoc(collection(db, `companies/${company.id}/safety-reports`), finalReportData);
