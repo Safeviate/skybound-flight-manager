@@ -324,7 +324,7 @@ function MyProfilePage() {
                                 <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
                                 <ul className="space-y-2">
                                     {personalAlerts.map(({ type, date, details, variant }, index) => (
-                                        <li key={index}>
+                                        <li key={`personal-alert-${index}`}>
                                                 <div className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-start gap-3">
@@ -347,8 +347,8 @@ function MyProfilePage() {
                             <div className="space-y-2">
                                 <h4 className="font-semibold text-sm text-muted-foreground">Safety Discussion Responses</h4>
                                 <ul className="space-y-2">
-                                    {discussionRequests.map(({ report, entry }) => (
-                                        <li key={entry.id}>
+                                    {discussionRequests.map(({ report, entry }, index) => (
+                                        <li key={`discussion-${entry.id}-${index}`}>
                                             <Link href={`/safety/${report.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-start gap-3">
@@ -371,8 +371,8 @@ function MyProfilePage() {
                             <div className="space-y-2">
                                 <h4 className="font-semibold text-sm text-muted-foreground">Risk Reviews Due</h4>
                                 <ul className="space-y-2">
-                                    {riskReviews.map(risk => (
-                                            <li key={risk.id}>
+                                    {riskReviews.map((risk, index) => (
+                                            <li key={`risk-review-${risk.id}-${index}`}>
                                                 <Link href={`/safety?tab=register&risk=${risk.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-start gap-3">
@@ -508,4 +508,3 @@ function MyProfilePage() {
 
 MyProfilePage.title = "My Profile"
 export default MyProfilePage;
-
