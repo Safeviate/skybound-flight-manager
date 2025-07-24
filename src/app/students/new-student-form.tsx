@@ -60,6 +60,10 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      instructor: '',
       consentDisplayContact: 'Not Consented',
     }
   });
