@@ -43,6 +43,10 @@ export function NewAlertForm({ onSubmit }: NewAlertFormProps) {
   const { toast } = useToast();
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+    },
   });
 
   function handleFormSubmit(data: AlertFormValues) {
@@ -51,6 +55,7 @@ export function NewAlertForm({ onSubmit }: NewAlertFormProps) {
       title: 'Alert Created',
       description: `The "${data.title}" alert has been issued.`,
     });
+    form.reset();
   }
 
   return (
