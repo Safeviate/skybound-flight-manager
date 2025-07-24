@@ -1148,3 +1148,4 @@ function SafetyReportInvestigationPage() {
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
 
+
