@@ -27,11 +27,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { userData } from '@/lib/mock-data';
-import type { DiscussionEntry, SafetyReport } from '@/lib/types';
+import type { DiscussionEntry, SafetyReport, User } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
 import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon, User as UserIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const discussionFormSchema = z.object({
   recipient: z.string().min(1, 'You must select a recipient.'),
@@ -48,15 +49,26 @@ interface DiscussionSectionProps {
 
 export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) {
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, company } = useUser();
   const discussionEntries = report.discussion || [];
   const investigationTeam = report.investigationTeam || [];
+  const [personnel, setPersonnel] = React.useState<User[]>([]);
+
+  React.useEffect(() => {
+    const fetchPersonnel = async () => {
+      if (!company) return;
+      const usersRef = collection(db, `companies/${company.id}/users`);
+      const snapshot = await getDocs(usersRef);
+      setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+    };
+    fetchPersonnel();
+  }, [company]);
 
   const form = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
   });
 
-  const availableRecipients = userData.filter(
+  const availableRecipients = personnel.filter(
     (u) => investigationTeam.includes(u.name) && u.name !== user?.name
   );
 
@@ -103,7 +115,6 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
         <div className="mt-4 space-y-4">
             {discussionEntries.length > 0 ? (
                 discussionEntries.map((entry) => {
-                    const author = userData.find(u => u.name === entry.author);
                     return (
                         <div key={entry.id} className="flex gap-3">
                             <div className="h-9 w-9 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
