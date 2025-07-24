@@ -194,7 +194,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           </TabsList>
           {areas.map(area => (
             <TabsContent key={area} value={area}>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {checklistsByArea[area].map(checklist => (
                     <Dialog key={checklist.id}>
                         <DialogTrigger asChild>
@@ -206,7 +206,13 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
                             </Card>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-                           <div className="overflow-y-auto">
+                           <DialogHeader>
+                              <DialogTitle>{checklist.title}</DialogTitle>
+                              <DialogDescription>
+                                Complete the audit checklist below. Your progress is saved automatically.
+                              </DialogDescription>
+                            </DialogHeader>
+                           <div className="overflow-y-auto pr-2">
                              <ChecklistCard 
                                 checklist={checklist} 
                                 onUpdate={handleUpdate}
