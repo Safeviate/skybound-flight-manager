@@ -693,8 +693,6 @@ function SafetyReportInvestigationPage() {
             if (reportSnap.exists()) {
                 const reportData = reportSnap.data() as SafetyReport;
                 setReport(reportData);
-                // In a real app, this would be loaded from the report object or a related collection.
-                // setCorrectiveActionPlan(reportData.correctiveActionPlan || null); 
             } else {
                 console.error("No such document!");
                 setReport(null);
@@ -739,10 +737,6 @@ function SafetyReportInvestigationPage() {
   }, [company, report, toast]);
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
-    // In a real app, this would be an API call to a central store.
-    // For this mock, we can't easily update the state of the parent page.
-    // We will show a toast message and the local state will reflect the promotion.
-    // A more robust solution might use a global state manager (e.g., Context, Redux).
      toast({
         title: 'Risk Promoted to Central Register',
         description: `"${newRisk.description}" is now being tracked centrally. You can view it on the main Safety page.`,
@@ -796,13 +790,6 @@ function SafetyReportInvestigationPage() {
     );
   }
 
-  const handleInvestigationNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (report) {
-        const updatedReport = { ...report, investigationNotes: e.target.value };
-        handleReportUpdate(updatedReport);
-    }
-  };
-
   const handleIncorporateSuggestions = (text: string) => {
       if(report) {
           const updatedNotes = (report.investigationNotes || '') + '\n' + text;
@@ -812,13 +799,6 @@ function SafetyReportInvestigationPage() {
               description: "The AI suggestions have been added to your investigation notes."
           });
       }
-  };
-
-  const handleClassificationChange = (field: 'occurrenceCategory' | 'phaseOfFlight', value: string) => {
-    if (report) {
-      const updatedReport = { ...report, [field]: value };
-      handleReportUpdate(updatedReport);
-    }
   };
   
   const generateMailtoLink = () => {
@@ -949,7 +929,7 @@ function SafetyReportInvestigationPage() {
                                         <Select 
                                         name="occurrenceCategory" 
                                         defaultValue={report.occurrenceCategory}
-                                        onValueChange={(value) => handleClassificationChange('occurrenceCategory', value)}
+                                        onValueChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value })}
                                         >
                                             <SelectTrigger id="occurrenceCategory">
                                                 <SelectValue placeholder="Select Category" />
@@ -964,7 +944,7 @@ function SafetyReportInvestigationPage() {
                                     <Select 
                                         name="phaseOfFlight" 
                                         defaultValue={report.phaseOfFlight}
-                                        onValueChange={(value) => handleClassificationChange('phaseOfFlight', value)}
+                                        onValueChange={(value) => handleReportUpdate({ ...report, phaseOfFlight: value })}
                                     >
                                         <SelectTrigger id="phaseOfFlight">
                                             <SelectValue placeholder="Select Phase" />
@@ -1057,7 +1037,7 @@ function SafetyReportInvestigationPage() {
                                         placeholder="Add your investigation notes, findings, and root cause analysis here..."
                                         className="min-h-[150px]"
                                         value={report.investigationNotes || ''}
-                                        onChange={handleInvestigationNotesChange}
+                                        onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -1132,7 +1112,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-
-
-
