@@ -858,10 +858,6 @@ function SafetyReportInvestigationPage() {
                             <div className="space-y-4">
                                <div className="space-y-2">
                                     <h4 className="font-semibold">{report.heading}</h4>
-                                    <div className="flex gap-2 pt-1">
-                                        <Badge variant="outline">{report.type}</Badge>
-                                        {report.subCategory && <Badge variant="secondary">{report.subCategory}</Badge>}
-                                    </div>
                                </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div className="flex justify-between items-start flex-col">
@@ -1110,3 +1106,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
