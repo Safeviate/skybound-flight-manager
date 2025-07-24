@@ -384,7 +384,6 @@ function SafetyPage() {
 
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
-  const [isNewReportOpen, setIsNewReportOpen] = useState(false);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
@@ -489,41 +488,6 @@ function SafetyPage() {
     }
   };
   
-  const handleNewReportSubmit = async (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => {
-    if (!company) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Cannot file report without company context.' });
-        return;
-    }
-    const { isAnonymous, ...reportData } = newReportData;
-    const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type] || 'Management';
-    
-    let finalReportData: any = {
-        companyId: company.id,
-        submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
-        status: 'Open' as SafetyReport['status'],
-        filedDate: format(new Date(), 'yyyy-MM-dd'),
-        department,
-        ...reportData,
-    };
-
-    // Remove undefined properties before sending to Firestore
-    Object.keys(finalReportData).forEach(key => {
-        if (finalReportData[key] === undefined) {
-            delete finalReportData[key];
-        }
-    });
-
-    try {
-        const docRef = await addDoc(collection(db, `companies/${company.id}/safety-reports`), finalReportData);
-        const newReportWithId: SafetyReport = { ...finalReportData, id: docRef.id };
-        setSafetyReports(prev => [newReportWithId, ...prev]);
-        setIsNewReportOpen(false);
-    } catch(error) {
-        console.error("Error saving new safety report:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save report to database.' });
-    }
-  };
-  
   const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
     const newRisk: Risk = {
       ...newRiskData,
@@ -592,23 +556,12 @@ function SafetyPage() {
       );
     }
     return (
-      <Dialog open={isNewReportOpen} onOpenChange={setIsNewReportOpen}>
-        <DialogTrigger asChild>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            File New Report
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>File New Safety Report</DialogTitle>
-            <DialogDescription>
-              Describe the incident or hazard. This will be reviewed by the Safety Manager.
-            </DialogDescription>
-          </DialogHeader>
-          <NewSafetyReportForm safetyReports={safetyReports} onSubmit={handleNewReportSubmit} />
-        </DialogContent>
-      </Dialog>
+        <Button asChild>
+            <Link href="/safety/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                File New Report
+            </Link>
+        </Button>
     );
   };
 
