@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { safetyReportData as initialSafetyReports, userData } from '@/lib/data-provider';
 import type { SafetyReport, SuggestInvestigationStepsOutput, GenerateCorrectiveActionPlanOutput, CorrectiveAction, Risk as RiskRegisterEntry, FiveWhysAnalysisOutput } from '@/lib/types';
 import { suggestStepsAction, generatePlanAction, fiveWhysAnalysisAction } from './actions';
 import { AlertCircle, ArrowLeft, ArrowRight, Bot, ClipboardList, Info, Lightbulb, ListChecks, Loader2, User, Users, FileText, Target, Milestone, Upload, MoreHorizontal, CheckCircle, ShieldCheck, MapPin, PlusCircle as PlusCircleIcon, Trash2, Calendar as CalendarIcon, Edit, Save, Printer, PlusCircle, Mail } from 'lucide-react';
@@ -36,6 +35,9 @@ import { cn } from '@/lib/utils.tsx';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -661,9 +663,10 @@ function FiveWhysAnalysisResult({ data, onIncorporate }: { data: FiveWhysAnalysi
 function SafetyReportInvestigationPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, company, loading } = useUser();
   const reportId = params.reportId as string;
-  const [safetyReports, setSafetyReports] = useState(initialSafetyReports);
-  const report = useMemo(() => safetyReports.find(r => r.id === reportId), [safetyReports, reportId]);
+  const [report, setReport] = useState<SafetyReport | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const { toast } = useToast();
   
@@ -672,6 +675,37 @@ function SafetyReportInvestigationPage() {
   const [fiveWhysState, fiveWhysFormAction] = useActionState(fiveWhysAnalysisAction, { message: '', data: null, errors: null });
 
   const [correctiveActionPlan, setCorrectiveActionPlan] = useState<GenerateCorrectiveActionPlanOutput | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+        router.push('/login');
+        return;
+    }
+    
+    async function fetchReport() {
+        if (!company || !reportId) return;
+        setDataLoading(true);
+        try {
+            const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+            const reportSnap = await getDoc(reportRef);
+
+            if (reportSnap.exists()) {
+                setReport(reportSnap.data() as SafetyReport);
+            } else {
+                console.error("No such document!");
+                setReport(null);
+            }
+        } catch (error) {
+            console.error("Error fetching report:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety report.' });
+        } finally {
+            setDataLoading(false);
+        }
+    }
+    
+    fetchReport();
+  }, [reportId, company, user, loading, router, toast]);
 
   useEffect(() => {
     // This is a mock to show the CAP if it were saved. In a real app this would be loaded from a DB.
@@ -697,8 +731,17 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = (updatedReport: SafetyReport) => {
-    setSafetyReports(prevReports => prevReports.map(r => r.id === updatedReport.id ? updatedReport : r));
+  const handleReportUpdate = async (updatedReport: SafetyReport) => {
+    if (!company) return;
+    setReport(updatedReport);
+    try {
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
+        await updateDoc(reportRef, { ...updatedReport });
+    } catch (error) {
+        console.error("Error updating report:", error);
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
+        // Optionally revert state on error
+    }
   };
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
@@ -740,6 +783,15 @@ function SafetyReportInvestigationPage() {
         toast({ variant: 'destructive', title: 'Error', description: fiveWhysState.message });
     }
   }, [fiveWhysState, toast]);
+
+
+  if (loading || dataLoading) {
+    return (
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+          <p>Loading report...</p>
+        </main>
+    );
+  }
 
 
   if (!report) {
