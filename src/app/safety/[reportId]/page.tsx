@@ -451,7 +451,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
     );
 }
 
-const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: SafetyReport) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) => {
+const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk }: { report: SafetyReport, correctiveActionPlan: GenerateCorrectiveActionPlanOutput | null, onUpdate: (report: Partial<SafetyReport>) => void, onPromoteRisk: (risk: RiskRegisterEntry) => void }) => {
     return (
         <div className="space-y-8">
             <Card>
@@ -716,7 +716,7 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = useCallback(async (updatedReport: SafetyReport) => {
+  const handleReportUpdate = useCallback(async (updatedReportData: Partial<SafetyReport>) => {
     if (!company || !report) {
       toast({
         variant: 'destructive',
@@ -726,6 +726,7 @@ function SafetyReportInvestigationPage() {
       return;
     }
 
+    const updatedReport = { ...report, ...updatedReportData };
     setReport(updatedReport);
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
@@ -745,8 +746,7 @@ function SafetyReportInvestigationPage() {
 
   const handleCloseReport = () => {
     if (report) {
-      const updatedReport = { ...report, status: 'Closed' as SafetyReport['status'] };
-      handleReportUpdate(updatedReport);
+      handleReportUpdate({ status: 'Closed' as SafetyReport['status'] });
       toast({
         title: "Report Closed",
         description: `Report ${report.reportNumber} has been successfully closed and archived.`
@@ -791,14 +791,12 @@ function SafetyReportInvestigationPage() {
   }
 
   const handleIncorporateSuggestions = (text: string) => {
-      if(report) {
-          const updatedNotes = (report.investigationNotes || '') + '\n' + text;
-          handleReportUpdate({ ...report, investigationNotes: updatedNotes });
-          toast({
-              title: "Suggestions Incorporated",
-              description: "The AI suggestions have been added to your investigation notes."
-          });
-      }
+      const updatedNotes = (report.investigationNotes || '') + '\n' + text;
+      handleReportUpdate({ investigationNotes: updatedNotes });
+      toast({
+          title: "Suggestions Incorporated",
+          description: "The AI suggestions have been added to your investigation notes."
+      });
   };
   
   const generateMailtoLink = () => {
@@ -929,7 +927,7 @@ function SafetyReportInvestigationPage() {
                                         <Select 
                                         name="occurrenceCategory" 
                                         defaultValue={report.occurrenceCategory}
-                                        onValueChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value })}
+                                        onValueChange={(value) => handleReportUpdate({ occurrenceCategory: value })}
                                         >
                                             <SelectTrigger id="occurrenceCategory">
                                                 <SelectValue placeholder="Select Category" />
@@ -944,7 +942,7 @@ function SafetyReportInvestigationPage() {
                                     <Select 
                                         name="phaseOfFlight" 
                                         defaultValue={report.phaseOfFlight}
-                                        onValueChange={(value) => handleReportUpdate({ ...report, phaseOfFlight: value })}
+                                        onValueChange={(value) => handleReportUpdate({ phaseOfFlight: value })}
                                     >
                                         <SelectTrigger id="phaseOfFlight">
                                             <SelectValue placeholder="Select Phase" />
@@ -1037,7 +1035,7 @@ function SafetyReportInvestigationPage() {
                                         placeholder="Add your investigation notes, findings, and root cause analysis here..."
                                         className="min-h-[150px]"
                                         value={report.investigationNotes || ''}
-                                        onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value })}
+                                        onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value })}
                                     />
                                 </div>
                             </div>
