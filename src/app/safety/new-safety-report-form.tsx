@@ -18,8 +18,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { aircraftData, airportData } from '@/lib/data-provider';
-import type { SafetyReport, SafetyReportType } from '@/lib/types';
+import type { Aircraft, SafetyReport, SafetyReportType } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -28,6 +27,10 @@ import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useEffect, useState } from 'react';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs } from 'firebase/firestore';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -65,6 +68,9 @@ const reportFormSchema = z.object({
   occurrenceDate: z.date({
     required_error: 'An occurrence date is required.',
   }),
+  occurrenceTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+      message: "Please enter a valid time in 24-hour HH:mm format.",
+  }).optional(),
   reportType: z.enum(['Flight Operations Report', 'Ground Operations Report', 'Occupational Report', 'General Report', 'Aircraft Defect Report'], {
     required_error: 'Please select a report type.',
   }),
@@ -105,10 +111,15 @@ const getReportTypeAbbreviation = (type: SafetyReportType) => {
 
 export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReportFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+  const [airportData, setAirportData] = useState<any[]>([]); // Assuming airport data structure
+
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
         occurrenceDate: new Date(),
+        occurrenceTime: format(new Date(), 'HH:mm'),
         isAnonymous: false,
         heading: '',
         details: '',
@@ -122,6 +133,26 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         location: '',
     }
   });
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!company) return;
+      try {
+        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+        const aircraftSnapshot = await getDocs(aircraftQuery);
+        setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
+        
+        // You might have an 'airports' collection or similar
+        // const airportQuery = query(collection(db, `companies/${company.id}/airports`));
+        // const airportSnapshot = await getDocs(airportQuery);
+        // setAirportData(airportSnapshot.docs.map(doc => doc.data()));
+      } catch (error) {
+        console.error("Error fetching data for form:", error);
+      }
+    }
+    fetchData();
+  }, [company]);
+
 
   const reportType = form.watch('reportType');
   const subCategory = form.watch('subCategory');
@@ -177,45 +208,63 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                   </FormItem>
               )}
               />
-              <FormField
-              control={form.control}
-              name="occurrenceDate"
-              render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                      <FormLabel>Occurrence/Hazard Observation Date</FormLabel>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                          <FormControl>
-                              <Button
-                              variant={"outline"}
-                              className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                              )}
-                              >
-                              {field.value ? (
-                                  format(field.value, "PPP")
-                              ) : (
-                                  <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                          </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date > new Date()}
-                              initialFocus
-                          />
-                          </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                  </FormItem>
-              )}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                 <FormField
+                    control={form.control}
+                    name="occurrenceDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date > new Date()}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="occurrenceTime"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Time (24h)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="time"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+              </div>
           </div>
           {reportType === 'Flight Operations Report' && (
               <div className="grid grid-cols-2 gap-4">

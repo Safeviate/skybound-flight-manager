@@ -474,7 +474,7 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
                         </div>
                         <div className="flex justify-between items-start flex-col">
                             <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
-                            <span>{report.occurrenceDate}</span>
+                            <span>{report.occurrenceDate} {report.occurrenceTime}</span>
                         </div>
                         <div className="flex justify-between items-start flex-col">
                             <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
@@ -902,7 +902,7 @@ function SafetyReportInvestigationPage() {
                                     </div>
                                     <div className="flex justify-between items-start flex-col">
                                         <span className="font-semibold text-muted-foreground text-sm">Occurrence Date</span>
-                                        <span>{report.occurrenceDate}</span>
+                                        <span>{report.occurrenceDate} {report.occurrenceTime}</span>
                                     </div>
                                         <div className="flex justify-between items-start flex-col">
                                         <span className="font-semibold text-muted-foreground text-sm">Filed Date</span>
