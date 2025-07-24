@@ -36,7 +36,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 type OtpFormValues = z.infer<typeof otpFormSchema>;
 
 export default function LoginPage() {
-  const { login, company } = useUser();
+  const { login, company, getUnacknowledgedAlerts, user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -72,15 +72,22 @@ export default function LoginPage() {
 
   async function handleOtpSubmit(data: OtpFormValues) {
     setLoginError(null);
-    // In a real app, the OTP would be verified on the server.
-    // For this demo, we check against the one we generated.
     if (data.otp === generatedOtp) {
-        // Since the password was already verified, we can now complete the login.
-        // We call login again, but this time it should succeed without the password check
-        // because the user object is already partially authenticated in the context (a real app would handle this differently).
-        await login(email); // Re-login to set the final user state
-        const redirectPath = searchParams.get('redirect');
-        router.push(redirectPath || '/my-profile');
+        // This is a re-login to finalize the user state in the context.
+        const finalUser = await login(email); 
+        if (finalUser) {
+             // Check for unacknowledged alerts
+            const unacknowledgedAlerts = getUnacknowledgedAlerts();
+            if (unacknowledgedAlerts.length > 0) {
+                router.push('/alerts/mandatory');
+            } else {
+                const redirectPath = searchParams.get('redirect');
+                router.push(redirectPath || '/my-profile');
+            }
+        } else {
+            setLoginError('Could not finalize session. Please try logging in again.');
+            setStep('login');
+        }
     } else {
         setLoginError('Invalid verification code. Please try again.');
         otpForm.setValue('otp', '');

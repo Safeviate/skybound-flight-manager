@@ -3,20 +3,20 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert, Company } from '@/lib/types';
-import { allAlerts } from '@/lib/data-provider';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
   company: Company | null;
   loading: boolean;
-  login: (email: string, password?: string) => Promise<boolean>;
+  login: (email: string, password?: string) => Promise<User | null>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
-  getUnacknowledgedAlerts: (user: User) => Alert[];
+  getUnacknowledgedAlerts: () => Alert[];
+  acknowledgeAlerts: (alertIds: string[]) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -24,18 +24,9 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  const getUnacknowledgedAlerts = useCallback((currentUser: User): Alert[] => {
-    if (!currentUser) return [];
-    try {
-        const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlertIds') || '[]');
-        return allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
-    } catch (e) {
-        return allAlerts;
-    }
-  }, []);
 
   const fetchUserData = async (firebaseUser: any): Promise<[User | null, Company | null]> => {
     if (!firebaseUser) return [null, null];
@@ -59,13 +50,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        setLoading(true);
         if (firebaseUser) {
             const [userData, companyData] = await fetchUserData(firebaseUser);
             setUser(userData);
             setCompany(companyData);
+
+            if(companyData) {
+                const alertsCol = collection(db, `companies/${companyData.id}/alerts`);
+                const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
+                const alertsSnapshot = await getDocs(alertsQuery);
+                const fetchedAlerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+                setAllAlerts(fetchedAlerts);
+            }
+
         } else {
             setUser(null);
             setCompany(null);
+            setAllAlerts([]);
         }
         setLoading(false);
     });
@@ -73,14 +75,53 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password?: string): Promise<boolean> => {
-    if (!password) return false;
+  const getUnacknowledgedAlerts = useCallback((): Alert[] => {
+    if (!user) return [];
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        return true;
-    } catch (error) {
-        console.error("Login failed:", error);
-        return false;
+        const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlerts') || '[]');
+        return allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
+    } catch (e) {
+        return allAlerts;
+    }
+  }, [user, allAlerts]);
+
+  const acknowledgeAlerts = (alertIds: string[]) => {
+      try {
+        const acknowledged = JSON.parse(sessionStorage.getItem('acknowledgedAlerts') || '[]');
+        const newAcknowledged = [...new Set([...acknowledged, ...alertIds])];
+        sessionStorage.setItem('acknowledgedAlerts', JSON.stringify(newAcknowledged));
+      } catch (e) {
+          console.error("Could not acknowledge alerts in sessionStorage", e);
+      }
+  };
+
+
+  const login = async (email: string, password?: string): Promise<User | null> => {
+    if (password) {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // onAuthStateChanged will handle setting user state
+            // we return a promise that resolves with the user after state is set
+            return new Promise((resolve) => {
+                const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+                    if (fbUser) {
+                        const [userData] = await fetchUserData(fbUser);
+                        resolve(userData);
+                        unsubscribe();
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Login failed:", error);
+            return null;
+        }
+    } else {
+        // This case is for finalizing the login after OTP
+        if(auth.currentUser){
+            const [userData] = await fetchUserData(auth.currentUser);
+            return userData;
+        }
+        return null;
     }
   };
 
@@ -88,6 +129,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
     setUser(null);
     setCompany(null);
+    try {
+        sessionStorage.removeItem('acknowledgedAlerts');
+    } catch (e) {
+        console.error("Could not clear sessionStorage on logout", e);
+    }
     router.push('/corporate');
   }, [router]);
   
@@ -109,7 +155,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [user, company]);
 
   return (
-    <UserContext.Provider value={{ user, company, loading, login, logout, updateUser, getUnacknowledgedAlerts }}>
+    <UserContext.Provider value={{ user, company, loading, login, logout, updateUser, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );
