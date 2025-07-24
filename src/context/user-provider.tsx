@@ -7,7 +7,7 @@ import { allAlerts } from '@/lib/data-provider';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -15,7 +15,7 @@ interface UserContextType {
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
-  updateUser: (updatedUser: User) => void;
+  updateUser: (updatedData: Partial<User>) => Promise<boolean>;
   getUnacknowledgedAlerts: (user: User) => Alert[];
 }
 
@@ -91,9 +91,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     router.push('/corporate');
   }, [router]);
   
-  const updateUser = useCallback((updatedUser: User) => {
-    setUser(updatedUser);
-  }, []);
+  const updateUser = useCallback(async (updatedData: Partial<User>): Promise<boolean> => {
+    if (!user || !company) {
+        console.error("No user or company context available for update.");
+        return false;
+    }
+    try {
+        const userDocRef = doc(db, `companies/${company.id}/users`, user.id);
+        await updateDoc(userDocRef, updatedData);
+        // Update local state after successful DB write
+        setUser(prevUser => prevUser ? { ...prevUser, ...updatedData } : null);
+        return true;
+    } catch (error) {
+        console.error("Error updating user profile in Firestore:", error);
+        return false;
+    }
+  }, [user, company]);
 
   return (
     <UserContext.Provider value={{ user, company, loading, login, logout, updateUser, getUnacknowledgedAlerts }}>

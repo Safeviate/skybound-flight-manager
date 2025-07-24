@@ -22,6 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/context/user-provider';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -41,6 +42,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export function EditProfileForm({ user }: { user: User }) {
   const { toast } = useToast();
+  const { updateUser } = useUser();
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -51,15 +53,32 @@ export function EditProfileForm({ user }: { user: User }) {
     },
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    console.log({
-        ...data,
-        documentExpiry: format(data.documentExpiry, 'yyyy-MM-dd'),
-    });
-    toast({
-      title: 'Profile Updated',
-      description: 'Your information has been saved.',
-    });
+  async function onSubmit(data: ProfileFormValues) {
+    const updatedUserData: Partial<User> = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+    };
+
+    if (data.documentType === 'Medical') {
+        updatedUserData.medicalExpiry = format(data.documentExpiry, 'yyyy-MM-dd');
+    } else if (data.documentType === 'License') {
+        updatedUserData.licenseExpiry = format(data.documentExpiry, 'yyyy-MM-dd');
+    }
+    
+    const success = await updateUser(updatedUserData);
+    if (success) {
+        toast({
+          title: 'Profile Updated',
+          description: 'Your information has been saved.',
+        });
+    } else {
+        toast({
+          variant: 'destructive',
+          title: 'Update Failed',
+          description: 'Could not save your profile information. Please try again.',
+        });
+    }
   }
 
   return (
