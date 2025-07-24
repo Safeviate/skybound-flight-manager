@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Alert as AlertType } from '@/lib/types';
 import { BellRing, Check, Info, AlertTriangle } from 'lucide-react';
@@ -33,6 +33,7 @@ export default function MandatoryAlertsPage() {
   const router = useRouter();
   const { user, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
   const [alerts, setAlerts] = useState<AlertType[]>([]);
+  const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -50,10 +51,16 @@ export default function MandatoryAlertsPage() {
     }
   }, [user, loading, router, getUnacknowledgedAlerts]);
 
-  const handleAcknowledge = () => {
-    acknowledgeAlerts(alerts.map(a => a.id));
+  const handleAcknowledgeSingle = (alertId: string) => {
+    acknowledgeAlerts([alertId]);
+    setAcknowledgedOnPage(prev => [...prev, alertId]);
+  };
+  
+  const handleContinue = () => {
     router.push('/my-profile');
   };
+
+  const allAlertsAcknowledged = alerts.length > 0 && alerts.every(a => acknowledgedOnPage.includes(a.id));
 
   if (loading || alerts.length === 0) {
     return (
@@ -74,34 +81,46 @@ export default function MandatoryAlertsPage() {
                         Important Notifications
                     </CardTitle>
                     <CardDescription>
-                        Please review and acknowledge the following alerts before proceeding.
+                        Please review and acknowledge each of the following alerts before proceeding.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto p-4">
-                    {alerts.map((alert) => (
-                        <Alert key={alert.id} variant={alert.type === 'Red Tag' ? 'destructive' : 'default'} className="bg-background">
-                             <div className="flex items-start gap-4">
-                                {getAlertIcon(alert.type)}
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
-                                        <AlertTitle className="font-bold text-base">#{alert.number} - {alert.title}</AlertTitle>
+                    {alerts.map((alert) => {
+                        const isAcknowledged = acknowledgedOnPage.includes(alert.id);
+                        return (
+                            <Alert key={alert.id} variant={alert.type === 'Red Tag' ? 'destructive' : 'default'} className="bg-background">
+                                <div className="flex items-start gap-4">
+                                    {getAlertIcon(alert.type)}
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
+                                                <AlertTitle className="font-bold text-base">#{alert.number} - {alert.title}</AlertTitle>
+                                            </div>
+                                             <Button 
+                                                size="sm"
+                                                onClick={() => handleAcknowledgeSingle(alert.id)}
+                                                disabled={isAcknowledged}
+                                             >
+                                                <Check className="mr-2 h-4 w-4" />
+                                                {isAcknowledged ? 'Acknowledged' : 'Acknowledge'}
+                                            </Button>
+                                        </div>
+                                        <AlertDescription className="mt-2 text-foreground pr-24">
+                                            {alert.description}
+                                        </AlertDescription>
+                                        <p className="text-xs text-muted-foreground mt-2">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
                                     </div>
-                                    <AlertDescription className="mt-2 text-foreground">
-                                        {alert.description}
-                                    </AlertDescription>
-                                     <p className="text-xs text-muted-foreground mt-2">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
-                                </div>
-                           </div>
-                        </Alert>
-                    ))}
+                            </div>
+                            </Alert>
+                        )
+                    })}
                 </CardContent>
-                <CardContent className="border-t pt-6">
-                    <Button onClick={handleAcknowledge} className="w-full">
-                        <Check className="mr-2 h-4 w-4" />
-                        I Acknowledge These Alerts & Continue
+                <CardFooter className="border-t pt-6">
+                    <Button onClick={handleContinue} className="w-full" disabled={!allAlertsAcknowledged}>
+                        Continue to My Profile
                     </Button>
-                </CardContent>
+                </CardFooter>
             </Card>
         </main>
     </div>
