@@ -733,9 +733,16 @@ function SafetyReportInvestigationPage() {
 
   const handleReportUpdate = async (updatedReport: SafetyReport) => {
     if (!company || !report) {
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Cannot save report, user or report data is missing.'});
-        return;
+      console.error("Cannot update report: company or report data is missing.");
+      // Optionally show a toast to the user
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Could not save, required data is missing. Please refresh.',
+      });
+      return;
     }
+
     setReport(updatedReport);
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
