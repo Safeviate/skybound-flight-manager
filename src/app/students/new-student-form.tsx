@@ -33,8 +33,7 @@ const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().email().optional(),
   phone: z.string().min(10),
   instructor: z.string({
     required_error: 'Please select an instructor.',
@@ -75,22 +74,6 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
       fetchInstructors();
   }, [company]);
   
-  const generatePassword = () => {
-    const newPassword = Math.random().toString(36).slice(-10);
-    form.setValue('password', newPassword, { shouldValidate: true });
-  };
-
-  const copyPassword = () => {
-    const password = form.getValues('password');
-    if (password) {
-        navigator.clipboard.writeText(password);
-        toast({
-            title: "Password Copied",
-            description: "The temporary password has been copied to your clipboard.",
-        });
-    }
-  }
-
   function handleFormSubmit(data: StudentFormValues) {
     onSubmit({
         ...data,
@@ -121,7 +104,7 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email (Optional)</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="student@email.com" {...field} />
               </FormControl>
@@ -142,29 +125,6 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
             </FormItem>
           )}
         />
-         <div className="space-y-2">
-            <FormLabel>Temporary Password</FormLabel>
-            <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                    <FormItem>
-                        <div className="flex gap-2">
-                            <FormControl>
-                                <Input readOnly {...field} />
-                            </FormControl>
-                            <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button type="button" variant="outline" onClick={generatePassword} size="icon">
-                                <RefreshCw className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
         <FormField
           control={form.control}
           name="instructor"

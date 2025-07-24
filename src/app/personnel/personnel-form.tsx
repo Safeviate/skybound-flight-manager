@@ -41,7 +41,7 @@ const personnelFormSchema = z.object({
   permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one permission.',
   }),
-  email: z.string().email({ message: "Please enter a valid email."}),
+  email: z.string().email({ message: "Please enter a valid email."}).optional(),
   password: z.string().min(8, "Password must be at least 8 characters.").optional(),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   medicalExpiry: z.date().optional(),
@@ -50,6 +50,14 @@ const personnelFormSchema = z.object({
     message: "You must give consent to proceed."
   }),
   mustChangePassword: z.boolean().default(false),
+}).refine(data => {
+    if (data.role === 'Admin') {
+        return !!data.email && !!data.password;
+    }
+    return true;
+}, {
+    message: 'Email and password are required for Admins.',
+    path: ['email'], // Show error on one of the fields
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -185,19 +193,6 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             
             <FormField
             control={form.control}
-            name="email"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                    <Input placeholder="john.doe@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-            control={form.control}
             name="phone"
             render={({ field }) => (
                 <FormItem>
@@ -209,48 +204,66 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                 </FormItem>
             )}
             />
-            {!existingPersonnel ? (
-                <div className="space-y-2">
-                    <FormLabel>Temporary Password</FormLabel>
-                    <FormField
+
+            {(selectedRole === 'Admin' || (existingPersonnel && existingPersonnel.role === 'Admin')) && (
+                <>
+                 <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                            <Input placeholder="john.doe@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    {!existingPersonnel ? (
+                        <div className="space-y-2">
+                            <FormLabel>Temporary Password</FormLabel>
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex gap-2">
+                                            <FormControl>
+                                                <Input readOnly {...field} />
+                                            </FormControl>
+                                            <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={generatePassword} size="icon">
+                                                <RefreshCw className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <FormDescription>Generate a password for the new admin.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    ) : (
+                        <FormField
                         control={form.control}
                         name="password"
                         render={({ field }) => (
                             <FormItem>
-                                <div className="flex gap-2">
-                                    <FormControl>
-                                        <Input readOnly {...field} />
-                                    </FormControl>
-                                    <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
-                                    <Button type="button" variant="outline" onClick={generatePassword} size="icon">
-                                        <RefreshCw className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <FormDescription>Generate a password for the new user.</FormDescription>
-                                <FormMessage />
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                                <Input type="password" {...field} placeholder="Leave blank to keep current" />
+                            </FormControl>
+                            <FormDescription>
+                                Leave blank to keep current password.
+                            </FormDescription>
+                            <FormMessage />
                             </FormItem>
                         )}
-                    />
-                </div>
-            ) : (
-                <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                        <Input type="password" {...field} placeholder="Leave blank to keep current" />
-                    </FormControl>
-                    <FormDescription>
-                        Leave blank to keep current password.
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                        />
+                    )}
+                </>
             )}
         </div>
 

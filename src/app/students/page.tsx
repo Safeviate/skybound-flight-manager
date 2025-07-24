@@ -31,8 +31,6 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 function StudentsPage() {
@@ -88,8 +86,7 @@ function StudentsPage() {
     if (!company) return;
     
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, newStudentData.email, newStudentData.password!);
-        const newUserId = userCredential.user.uid;
+        const newUserId = doc(collection(db, 'temp')).id;
 
         const studentToAdd: User = {
             ...newStudentData,
@@ -113,11 +110,7 @@ function StudentsPage() {
         });
     } catch (error: any) {
         console.error("Error creating student:", error);
-        let errorMessage = "Could not create new student.";
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = "This email is already registered.";
-        }
-        toast({ variant: 'destructive', title: 'Error', description: errorMessage });
+        toast({ variant: 'destructive', title: 'Error', description: "Could not create new student." });
     }
   }
 

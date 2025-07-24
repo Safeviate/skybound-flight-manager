@@ -78,13 +78,17 @@ function PersonnelPage() {
             }
         } else {
             // Add new personnel
-            if (!personnelData.password) {
-                toast({ variant: 'destructive', title: 'Error', description: 'A password is required for new personnel.' });
-                return;
-            }
+            let newUserId = doc(collection(db, 'temp')).id; // Generate a random ID for non-auth users
+            
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
-                const newUserId = userCredential.user.uid;
+                if (personnelData.role === 'Admin') {
+                    if (!personnelData.email || !personnelData.password) {
+                        toast({ variant: 'destructive', title: 'Error', description: 'An email and password are required for new Admins.' });
+                        return;
+                    }
+                    const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
+                    newUserId = userCredential.user.uid;
+                }
 
                 const newUser: User = {
                     ...personnelData,
@@ -207,7 +211,7 @@ function PersonnelPage() {
                     <TableCell>
                       <Badge variant={getRoleVariant(person.role)}>{person.role}</Badge>
                     </TableCell>
-                    <TableCell>{person.consentDisplayContact ? person.email : '[Private]'}</TableCell>
+                    <TableCell>{person.email && person.consentDisplayContact ? person.email : '[Private]'}</TableCell>
                     <TableCell>{person.consentDisplayContact ? person.phone : '[Private]'}</TableCell>
                     <TableCell className="space-x-1 max-w-xs">
                         {person.permissions.map(p => (
