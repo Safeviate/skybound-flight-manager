@@ -78,31 +78,44 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
     fetchUsers();
   }, [company]);
 
-  const createChecklistForAircraft = async (aircraftId: string, aircraftModel: string, category: 'Pre-Flight' | 'Post-Flight') => {
+  const assignStandardChecklists = async (aircraftId: string) => {
       if (!company) return;
       
-      const baseItems: Pick<ChecklistItem, 'text' | 'completed'>[] = [
-          { text: "Documents (ARROW)", completed: false },
-          { text: "Control Locks", completed: false },
-          { text: "Master Switch", completed: false },
-          { text: "Fuel Quantity", completed: false },
-          { text: "Exterior Walk-around", completed: false },
-          { text: "Fuel Sump", completed: false },
-      ];
-
-      const checklistData: Omit<Checklist, 'id'> = {
-          companyId: company.id,
-          title: `${aircraftModel} ${category}`,
-          category: category,
-          aircraftId: aircraftId,
-          items: baseItems.map((item, index) => ({...item, id: `item-${Date.now()}-${index}`})),
-      };
-
       try {
-          await addDoc(collection(db, `companies/${company.id}/checklist-templates`), checklistData);
+          // 1. Fetch all master templates
+          const templatesRef = collection(db, `companies/${company.id}/checklist-templates`);
+          const templatesSnapshot = await getDocs(templatesRef);
+          const allTemplates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+
+          // 2. Filter for standard "Pre-Flight" and "Post-Flight" templates
+          const standardTemplates = allTemplates.filter(t => 
+              t.title.toLowerCase().includes('pre-flight') || 
+              t.title.toLowerCase().includes('post-flight')
+          );
+          
+          if (standardTemplates.length === 0) {
+              toast({ variant: 'destructive', title: 'No Standard Templates Found', description: 'Could not find master "Pre-Flight" or "Post-Flight" checklists to assign.'});
+              return;
+          }
+
+          // 3. Create and assign copies for the new aircraft
+          const assignedChecklistsRef = collection(db, `companies/${company.id}/checklists`);
+          for (const template of standardTemplates) {
+              const newChecklistForAircraft: Omit<Checklist, 'id'> = {
+                  ...template,
+                  aircraftId: aircraftId,
+                  templateId: template.id,
+              };
+              await addDoc(assignedChecklistsRef, newChecklistForAircraft);
+          }
+           toast({
+              title: 'Standard Checklists Assigned',
+              description: `Assigned ${standardTemplates.length} standard checklist(s) to the new aircraft.`
+            });
+
       } catch (error) {
-          console.error(`Error creating ${category} checklist:`, error);
-          toast({ variant: 'destructive', title: 'Checklist Creation Failed', description: `Could not create the ${category} checklist for the new aircraft.`});
+          console.error('Error assigning standard checklists:', error);
+           toast({ variant: 'destructive', title: 'Checklist Assignment Failed', description: 'Could not automatically assign standard checklists.'});
       }
   };
 
@@ -129,15 +142,14 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
 
     try {
         await setDoc(aircraftRef, newAircraft);
-
-        // Automatically create Pre-Flight and Post-Flight checklists
-        await createChecklistForAircraft(id, data.model, 'Pre-Flight');
-        await createChecklistForAircraft(id, data.model, 'Post-Flight');
+        
+        // Automatically assign standard checklists
+        await assignStandardChecklists(id);
 
         onAircraftAdded(newAircraft);
         toast({
           title: 'Aircraft Added',
-          description: `Aircraft ${data.tailNumber} and its standard checklists have been added.`,
+          description: `Aircraft ${data.tailNumber} has been added.`,
         });
         form.reset();
     } catch (error) {
