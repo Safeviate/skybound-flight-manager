@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Alert as AlertType } from '@/lib/types';
-import { BellRing, Check, Info, AlertTriangle } from 'lucide-react';
+import { BellRing, Check, Info, AlertTriangle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 
@@ -34,6 +34,7 @@ export default function MandatoryAlertsPage() {
   const { user, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
+  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -44,16 +45,24 @@ export default function MandatoryAlertsPage() {
     }
 
     const unacknowledged = getUnacknowledgedAlerts();
-    if (unacknowledged.length === 0) {
+    if (unacknowledged.length === 0 && !loading) {
       router.push('/my-profile');
     } else {
       setAlerts(unacknowledged);
     }
   }, [user, loading, router, getUnacknowledgedAlerts]);
 
-  const handleAcknowledgeSingle = (alertId: string) => {
-    acknowledgeAlerts([alertId]);
-    setAcknowledgedOnPage(prev => [...prev, alertId]);
+  const handleAcknowledgeSingle = async (alertId: string) => {
+    if (!user) return;
+    setAcknowledgingId(alertId);
+    try {
+        await acknowledgeAlerts([alertId]);
+        setAcknowledgedOnPage(prev => [...prev, alertId]);
+    } catch (error) {
+        console.error("Failed to acknowledge alert", error);
+    } finally {
+        setAcknowledgingId(null);
+    }
   };
   
   const handleContinue = () => {
@@ -62,7 +71,7 @@ export default function MandatoryAlertsPage() {
 
   const allAlertsAcknowledged = alerts.length > 0 && alerts.every(a => acknowledgedOnPage.includes(a.id));
 
-  if (loading || alerts.length === 0) {
+  if (loading || (alerts.length === 0 && !allAlertsAcknowledged)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>Loading alerts...</p>
@@ -87,6 +96,7 @@ export default function MandatoryAlertsPage() {
                 <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto p-4">
                     {alerts.map((alert) => {
                         const isAcknowledged = acknowledgedOnPage.includes(alert.id);
+                        const isAcknowledging = acknowledgingId === alert.id;
                         return (
                             <Alert key={alert.id} variant={alert.type === 'Red Tag' ? 'destructive' : 'default'} className="bg-background">
                                 <div className="flex items-start gap-4">
@@ -100,10 +110,10 @@ export default function MandatoryAlertsPage() {
                                              <Button 
                                                 size="sm"
                                                 onClick={() => handleAcknowledgeSingle(alert.id)}
-                                                disabled={isAcknowledged}
+                                                disabled={isAcknowledged || isAcknowledging}
                                              >
-                                                <Check className="mr-2 h-4 w-4" />
-                                                {isAcknowledged ? 'Acknowledged' : 'Acknowledge'}
+                                                {isAcknowledging ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                                {isAcknowledged ? 'Acknowledged' : (isAcknowledging ? 'Saving...' : 'Acknowledge')}
                                             </Button>
                                         </div>
                                         <AlertDescription className="mt-2 text-foreground pr-24">

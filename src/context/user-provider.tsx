@@ -6,7 +6,7 @@ import type { User, Alert, Company } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arrayUnion } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -16,7 +16,7 @@ interface UserContextType {
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
   getUnacknowledgedAlerts: () => Alert[];
-  acknowledgeAlerts: (alertIds: string[]) => void;
+  acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -56,7 +56,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
             setCompany(companyData);
 
-            if(companyData) {
+            if(companyData && userData) {
                 const alertsCol = collection(db, `companies/${companyData.id}/alerts`);
                 const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
                 const alertsSnapshot = await getDocs(alertsQuery);
@@ -77,22 +77,29 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const getUnacknowledgedAlerts = useCallback((): Alert[] => {
     if (!user) return [];
-    try {
-        const acknowledgedIds = JSON.parse(sessionStorage.getItem('acknowledgedAlerts') || '[]');
-        return allAlerts.filter(alert => !acknowledgedIds.includes(alert.id));
-    } catch (e) {
-        return allAlerts;
-    }
+    return allAlerts.filter(alert => !alert.readBy.includes(user.id));
   }, [user, allAlerts]);
 
-  const acknowledgeAlerts = (alertIds: string[]) => {
-      try {
-        const acknowledged = JSON.parse(sessionStorage.getItem('acknowledgedAlerts') || '[]');
-        const newAcknowledged = [...new Set([...acknowledged, ...alertIds])];
-        sessionStorage.setItem('acknowledgedAlerts', JSON.stringify(newAcknowledged));
-      } catch (e) {
-          console.error("Could not acknowledge alerts in sessionStorage", e);
-      }
+  const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
+      if (!user || !company) return;
+
+      const promises = alertIds.map(alertId => {
+          const alertRef = doc(db, `companies/${company.id}/alerts`, alertId);
+          return updateDoc(alertRef, {
+              readBy: arrayUnion(user.id)
+          });
+      });
+      
+      await Promise.all(promises);
+
+      // Refresh local alerts state to reflect the change
+      setAllAlerts(prevAlerts =>
+        prevAlerts.map(alert =>
+            alertIds.includes(alert.id)
+                ? { ...alert, readBy: [...alert.readBy, user.id] }
+                : alert
+        )
+      );
   };
 
 
@@ -129,11 +136,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
     setUser(null);
     setCompany(null);
-    try {
-        sessionStorage.removeItem('acknowledgedAlerts');
-    } catch (e) {
-        console.error("Could not clear sessionStorage on logout", e);
-    }
     router.push('/corporate');
   }, [router]);
   
