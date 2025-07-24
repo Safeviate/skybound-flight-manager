@@ -202,12 +202,6 @@ export function ChecklistsManager({ aircraftList, refetchData }: { aircraftList:
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Checklist Templates</DialogTitle>
-        <DialogDescription>
-            Manage master checklist templates and assign them to aircraft.
-        </DialogDescription>
-      </DialogHeader>
       <div className="flex items-center justify-end gap-2 py-4">
             <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
             <DialogTrigger asChild>
@@ -334,7 +328,17 @@ function ChecklistsPage() {
     
     return (
         <main className="flex-1 p-4 md:p-8 space-y-8">
-            <ChecklistsManager aircraftList={aircraftList} refetchData={fetchData} />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Checklist Templates</CardTitle>
+                    <CardDescription>
+                        Manage master checklist templates and assign them to aircraft.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChecklistsManager aircraftList={aircraftList} refetchData={fetchData} />
+                </CardContent>
+            </Card>
         </main>
     )
 }

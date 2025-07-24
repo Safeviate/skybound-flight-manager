@@ -213,6 +213,12 @@ function AircraftPage() {
                         </Button>
                     </DialogTrigger>
                      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Checklist Templates</DialogTitle>
+                            <DialogDescription>
+                                Manage master checklist templates and assign them to aircraft.
+                            </DialogDescription>
+                        </DialogHeader>
                         <ChecklistsManager aircraftList={fleet} refetchData={fetchData} />
                     </DialogContent>
                 </Dialog>
