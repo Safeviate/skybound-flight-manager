@@ -74,6 +74,14 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const { user, company } = useUser();
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
+    defaultValues: {
+        aircraft: '',
+        student: '',
+        instructor: '',
+        startTime: '',
+        endTime: '',
+        trainingExercise: '',
+    }
   });
 
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
