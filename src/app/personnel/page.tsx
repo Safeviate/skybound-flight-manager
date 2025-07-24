@@ -192,7 +192,6 @@ function PersonnelPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Permissions</TableHead>
                   {canEditPersonnel && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -213,11 +212,6 @@ function PersonnelPage() {
                     </TableCell>
                     <TableCell>{person.email && person.consentDisplayContact === 'Consented' ? person.email : '[Private]'}</TableCell>
                     <TableCell>{person.consentDisplayContact === 'Consented' ? person.phone : '[Private]'}</TableCell>
-                    <TableCell className="space-x-1 max-w-xs">
-                        {person.permissions.map(p => (
-                            <Badge key={p} variant="secondary" className="mb-1">{p}</Badge>
-                        ))}
-                    </TableCell>
                     {canEditPersonnel && (
                         <TableCell className="text-right">
                            <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
