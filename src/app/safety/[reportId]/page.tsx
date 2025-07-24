@@ -730,7 +730,7 @@ function SafetyReportInvestigationPage() {
     setReport(updatedReport);
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
-        await updateDoc(reportRef, { ...updatedReport });
+        await updateDoc(reportRef, updatedReport as any);
     } catch (error) {
         console.error("Error updating report:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
@@ -1106,4 +1106,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
