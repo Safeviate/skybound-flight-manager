@@ -64,13 +64,19 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
     fetchPersonnel();
   }, [company]);
 
+  const availableRecipients = React.useMemo(() => {
+    if (!personnel || personnel.length === 0) {
+      return [];
+    }
+    return personnel.filter(
+      (u) => investigationTeam.includes(u.name) && u.name !== user?.name
+    );
+  }, [personnel, investigationTeam, user]);
+
+
   const form = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
   });
-
-  const availableRecipients = personnel.filter(
-    (u) => investigationTeam.includes(u.name) && u.name !== user?.name
-  );
 
   function onSubmit(data: DiscussionFormValues) {
     if (!user) {
