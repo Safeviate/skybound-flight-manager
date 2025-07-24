@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
-import type { Checklist, Aircraft } from '@/lib/types';
+import type { Checklist, Aircraft, CompletedChecklist } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Rocket } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
@@ -12,6 +12,7 @@ import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 
 export default function StartChecklistPage() {
@@ -91,22 +92,28 @@ export default function StartChecklistPage() {
   };
   
  const handleUpdate = async (updatedChecklist: Checklist) => {
-    if (!company || !user || !checklist) return;
+    if (!company || !user || !checklist || !aircraft) return;
 
-    // Reset the checklist items in Firestore for the next user
-    const checklistRef = doc(db, `companies/${company.id}/checklists`, checklist.id);
-    const resetItems = checklist.items.map(item => ({ ...item, completed: false }));
-    await updateDoc(checklistRef, { items: resetItems });
+    // Log the completion of the checklist for auditing purposes
+    const completionLog: Omit<CompletedChecklist, 'id'> = {
+        checklistId: checklist.id,
+        checklistName: checklist.title,
+        checklistType: checklist.category,
+        aircraftId: aircraft.id,
+        completedBy: user.name,
+        completionDate: new Date().toISOString(),
+        companyId: company.id,
+    };
+    
+    await addDoc(collection(db, `companies/${company.id}/completedChecklists`), completionLog);
+
 
     toast({
         title: "Checklist Submitted",
         description: `"${updatedChecklist.title}" has been completed successfully.`
     });
     
-    // Optional: Log completion if needed for auditing
-    // await addDoc(collection(db, `companies/${company.id}/completedChecklists`), { ... });
-    
-    router.push('/aircraft');
+    router.push(`/aircraft/${aircraftId}`);
   };
 
   if (loading || isDataLoading) {

@@ -11,7 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { Plane, Wrench, Hourglass, Calendar, CheckSquare } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Aircraft, CompletedChecklist } from '@/lib/types';
 
 
@@ -37,12 +37,13 @@ export default function AircraftDetailPage() {
                 setAircraft(aircraftSnap.data() as Aircraft);
             }
 
-            // NOTE: The 'completedChecklistData' collection doesn't exist yet.
-            // This is a placeholder for where that logic would go.
-            // For now, it will return an empty list.
-            const checklistQuery = query(collection(db, `companies/${company.id}/completedChecklists`), where('aircraftId', '==', aircraftId));
+            const checklistQuery = query(
+                collection(db, `companies/${company.id}/completedChecklists`), 
+                where('aircraftId', '==', aircraftId),
+                orderBy('completionDate', 'desc')
+            );
             const checklistSnapshot = await getDocs(checklistQuery);
-            const history = checklistSnapshot.docs.map(doc => doc.data() as CompletedChecklist);
+            const history = checklistSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as CompletedChecklist));
             setChecklistHistory(history);
         } catch (error) {
             console.error("Error fetching aircraft details:", error);
@@ -153,7 +154,7 @@ export default function AircraftDetailPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{item.completedBy}</TableCell>
-                      <TableCell>{format(parseISO(item.completionDate), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>{format(parseISO(item.completionDate), 'MMM d, yyyy HH:mm')}</TableCell>
                     </TableRow>
                   ))
                 ) : (
