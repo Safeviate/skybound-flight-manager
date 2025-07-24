@@ -38,6 +38,9 @@ import { useTableControls } from '@/hooks/use-table-controls.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, ReferenceLine } from 'recharts';
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, addDoc, setDoc, doc } from 'firebase/firestore';
+
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
@@ -387,7 +390,7 @@ function SafetyPage() {
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
   const router = useRouter();
@@ -462,19 +465,32 @@ function SafetyPage() {
     }
   };
   
-  const handleNewReportSubmit = (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => {
+  const handleNewReportSubmit = async (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot file report without company context.' });
+        return;
+    }
     const { isAnonymous, ...reportData } = newReportData;
     const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type];
-    const newReport: SafetyReport = {
-        id: `sr-${Date.now()}`,
+    
+    const finalReportData = {
+        companyId: company.id,
         submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
-        status: 'Open',
+        status: 'Open' as SafetyReport['status'],
         filedDate: format(new Date(), 'yyyy-MM-dd'),
         department: department,
         ...reportData,
     };
-    setSafetyReports(prev => [newReport, ...prev]);
-    setIsNewReportOpen(false);
+
+    try {
+        const docRef = await addDoc(collection(db, `companies/${company.id}/safety-reports`), finalReportData);
+        const newReportWithId: SafetyReport = { ...finalReportData, id: docRef.id };
+        setSafetyReports(prev => [newReportWithId, ...prev]);
+        setIsNewReportOpen(false);
+    } catch(error) {
+        console.error("Error saving new safety report:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save report to database.' });
+    }
   };
   
   const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
@@ -859,3 +875,5 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
+    
