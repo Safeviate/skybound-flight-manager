@@ -194,16 +194,29 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           </TabsList>
           {areas.map(area => (
             <TabsContent key={area} value={area}>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {checklistsByArea[area].map(checklist => (
-                    <ChecklistCard 
-                        key={checklist.id} 
-                        checklist={checklist} 
-                        onUpdate={handleUpdate}
-                        onReset={handleReset}
-                        onEdit={handleChecklistEdit}
-                        onSubmit={handleSubmit}
-                    />
+                    <Dialog key={checklist.id}>
+                        <DialogTrigger asChild>
+                            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                <CardHeader>
+                                    <CardTitle className="text-base">{checklist.title}</CardTitle>
+                                    <CardDescription>{checklist.items.length} items</CardDescription>
+                                </CardHeader>
+                            </Card>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+                           <div className="overflow-y-auto">
+                             <ChecklistCard 
+                                checklist={checklist} 
+                                onUpdate={handleUpdate}
+                                onReset={handleReset}
+                                onEdit={handleChecklistEdit}
+                                onSubmit={handleSubmit}
+                            />
+                           </div>
+                        </DialogContent>
+                    </Dialog>
                 ))}
                 </div>
             </TabsContent>
