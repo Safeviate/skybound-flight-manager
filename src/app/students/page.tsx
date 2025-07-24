@@ -30,7 +30,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 function StudentsPage() {
@@ -198,7 +198,7 @@ function StudentsPage() {
                           Add Student
                       </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-2xl">
                       <DialogHeader>
                           <DialogTitle>Add New Student</DialogTitle>
                           <DialogDescription>
