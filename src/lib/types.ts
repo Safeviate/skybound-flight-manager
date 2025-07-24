@@ -150,7 +150,7 @@ export type User = {
     phone: string;
     password?: string;
     permissions: Permission[];
-    consentDisplayContact?: boolean;
+    consentDisplayContact?: 'Consented' | 'Not Consented';
     mustChangePassword?: boolean;
     // Student-specific
     instructor?: string;

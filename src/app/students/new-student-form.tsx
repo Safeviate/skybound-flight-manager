@@ -28,6 +28,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const studentFormSchema = z.object({
   name: z.string().min(2, {
@@ -40,8 +41,8 @@ const studentFormSchema = z.object({
   }),
   medicalExpiry: z.date({ required_error: 'An expiry date is required.' }),
   licenseExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
-    message: "You must give consent to proceed."
+  consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
+    required_error: "You must select a privacy option."
   }),
 });
 
@@ -59,7 +60,7 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
-      consentDisplayContact: false,
+      consentDisplayContact: 'Not Consented',
     }
   });
   
@@ -230,25 +231,40 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
           control={form.control}
           name="consentDisplayContact"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+            <FormItem className="space-y-3 rounded-md border p-4">
+              <FormLabel>Privacy Consent</FormLabel>
+              <FormDescription>
+                Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.
+              </FormDescription>
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="Consented" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      I consent
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="Not Consented" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      I do not consent
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Privacy Consent
-                </FormLabel>
-                <FormDescription>
-                  I consent to my contact details (email and phone number) being displayed to other users within the application for operational purposes. My details will not be shared publicly outside of this system.
-                </FormDescription>
-                 <FormMessage />
-              </div>
+              <FormMessage />
             </FormItem>
           )}
         />
+
 
         <div className="flex justify-end">
           <Button type="submit">Add Student</Button>

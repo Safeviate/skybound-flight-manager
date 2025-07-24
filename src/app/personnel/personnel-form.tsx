@@ -25,8 +25,8 @@ import { PermissionsForm } from './permissions-form';
 import type { Role, User } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import React from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -46,8 +46,8 @@ const personnelFormSchema = z.object({
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   medicalExpiry: z.date().optional(),
   licenseExpiry: z.date().optional(),
-  consentDisplayContact: z.boolean().default(false).refine(val => val === true, {
-    message: "You must give consent to proceed."
+  consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
+    required_error: "You must select a privacy option."
   }),
   mustChangePassword: z.boolean().default(false),
 }).refine(data => {
@@ -77,7 +77,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
         licenseExpiry: existingPersonnel.licenseExpiry ? parseISO(existingPersonnel.licenseExpiry) : undefined,
     } : {
       permissions: [],
-      consentDisplayContact: false,
+      consentDisplayContact: 'Not Consented',
       mustChangePassword: true,
     }
   });
@@ -355,25 +355,40 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
           control={form.control}
           name="consentDisplayContact"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+            <FormItem className="space-y-3 rounded-md border p-4">
+              <FormLabel>Privacy Consent</FormLabel>
+              <FormDescription>
+                Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.
+              </FormDescription>
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="Consented" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      I consent
+                    </FormLabel>
+                  </FormItem>
+                  <FormItem className="flex items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <RadioGroupItem value="Not Consented" />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      I do not consent
+                    </FormLabel>
+                  </FormItem>
+                </RadioGroup>
               </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Privacy Consent
-                </FormLabel>
-                <FormDescription>
-                  I consent to my contact details (email and phone number) being displayed to other users within the application for operational purposes. My details will not be shared publicly outside of this system.
-                </FormDescription>
-                 <FormMessage />
-              </div>
+              <FormMessage />
             </FormItem>
           )}
         />
+
 
         <div className="flex justify-end">
             <Button type="submit">{existingPersonnel ? 'Save Changes' : 'Add Personnel'}</Button>

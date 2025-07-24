@@ -67,7 +67,7 @@ function PersonnelPage() {
             try {
                 const userRef = doc(db, `companies/${company.id}/users`, editingPersonnel.id);
                 const { password, ...updateData } = personnelData; // Exclude password from update data for now
-                await updateDoc(userRef, updateData);
+                await updateDoc(userRef, updateData as any);
 
                 // Update local state
                 setPersonnelList(prev => prev.map(p => p.id === editingPersonnel.id ? { ...p, ...updateData } : p));
@@ -211,8 +211,8 @@ function PersonnelPage() {
                     <TableCell>
                       <Badge variant={getRoleVariant(person.role)}>{person.role}</Badge>
                     </TableCell>
-                    <TableCell>{person.email && person.consentDisplayContact ? person.email : '[Private]'}</TableCell>
-                    <TableCell>{person.consentDisplayContact ? person.phone : '[Private]'}</TableCell>
+                    <TableCell>{person.email && person.consentDisplayContact === 'Consented' ? person.email : '[Private]'}</TableCell>
+                    <TableCell>{person.consentDisplayContact === 'Consented' ? person.phone : '[Private]'}</TableCell>
                     <TableCell className="space-x-1 max-w-xs">
                         {person.permissions.map(p => (
                             <Badge key={p} variant="secondary" className="mb-1">{p}</Badge>
