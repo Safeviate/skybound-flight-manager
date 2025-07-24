@@ -24,7 +24,7 @@ const checklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
-  category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance'], {
+  category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance', 'Pre-Maintenance'], {
     required_error: 'Please select a category.',
   }),
   items: z.array(z.object({ text: z.string().min(1, { message: "Item text cannot be empty."}) })).min(1, {
@@ -103,6 +103,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
                 <SelectContent>
                 <SelectItem value="Pre-Flight">Pre-Flight</SelectItem>
                 <SelectItem value="Post-Flight">Post-Flight</SelectItem>
+                <SelectItem value="Pre-Maintenance">Pre-Maintenance</SelectItem>
                 <SelectItem value="Post-Maintenance">Post-Maintenance</SelectItem>
                 </SelectContent>
             </Select>
