@@ -54,7 +54,7 @@ export function NewChecklistForm({ onSubmit }: NewChecklistFormProps) {
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ ...item, id: '', completed: false })),
+      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, completed: false })),
     };
     onSubmit(newChecklist);
     form.reset();
