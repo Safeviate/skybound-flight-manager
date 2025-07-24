@@ -64,7 +64,13 @@ export default function CompleteAuditChecklistPage() {
             prev 
             ? { 
                 ...prev, 
-                items: prev.items.map(item => ({...item, finding: null, notes: ''})),
+                items: prev.items.map(item => ({
+                    ...item, 
+                    finding: null, 
+                    observation: '', 
+                    findingNotes: '', 
+                    evidence: ''
+                })),
                 department: '',
                 auditeeName: '',
                 auditeePosition: '',
@@ -88,12 +94,12 @@ export default function CompleteAuditChecklistPage() {
         const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
         const nonConformanceIssues: NonConformanceIssue[] = completedChecklist.items
-            .filter(item => item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && item.finding !== null)
+            .filter(item => item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable')
             .map(item => ({
                 id: `nci-${item.id}`,
                 level: item.finding,
                 category: 'Procedural', // This could be made more dynamic in the future
-                description: `${item.text} - Auditor Notes: ${item.notes || 'N/A'}`,
+                description: `${item.text} - Observation: ${item.observation || 'N/A'}. Finding: ${item.findingNotes || 'N/A'}. Evidence: ${item.evidence || 'N/A'}`,
             }));
 
         let status: QualityAudit['status'] = 'Compliant';

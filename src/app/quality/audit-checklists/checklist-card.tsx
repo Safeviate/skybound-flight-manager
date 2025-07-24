@@ -37,9 +37,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
     onUpdate({ ...checklist, items: updatedItems });
   };
   
-  const handleNotesChange = (itemId: string, notes: string) => {
+  const handleTextChange = (itemId: string, field: 'observation' | 'findingNotes' | 'evidence', value: string) => {
       const updatedItems = checklist.items.map(item => 
-        item.id === itemId ? { ...item, notes } : item
+        item.id === itemId ? { ...item, [field]: value } : item
       );
       onUpdate({ ...checklist, items: updatedItems });
   };
@@ -224,16 +224,39 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
                     <Button size="sm" variant={getFindingButtonVariant(item.finding, 'Level 3 Finding')} onClick={() => handleFindingChange(item.id, 'Level 3 Finding')}>Level 3 Finding</Button>
                 </div>
               </div>
-              <Textarea
-                placeholder="Add notes or evidence for non-compliance..."
-                value={item.notes || ''}
-                onChange={(e) => handleNotesChange(item.id, e.target.value)}
-                className={cn(
-                    "bg-background", 
-                    (item.finding !== 'Compliant' && item.finding !== null) && 'border-primary'
-                )}
-                required={item.finding !== 'Compliant' && item.finding !== null}
-              />
+              <div className="space-y-2">
+                <Label htmlFor={`observation-${item.id}`} className="text-xs">Observation</Label>
+                <Textarea
+                    id={`observation-${item.id}`}
+                    placeholder="Enter observations..."
+                    value={item.observation || ''}
+                    onChange={(e) => handleTextChange(item.id, 'observation', e.target.value)}
+                    className="bg-background text-sm"
+                />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor={`finding-${item.id}`} className="text-xs">Finding</Label>
+                <Textarea
+                    id={`finding-${item.id}`}
+                    placeholder="Describe the finding..."
+                    value={item.findingNotes || ''}
+                    onChange={(e) => handleTextChange(item.id, 'findingNotes', e.target.value)}
+                    className={cn(
+                        "bg-background text-sm", 
+                        (item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable') && 'border-primary'
+                    )}
+                />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor={`evidence-${item.id}`} className="text-xs">Notes / Evidence</Label>
+                <Textarea
+                    id={`evidence-${item.id}`}
+                    placeholder="Add notes or evidence for non-compliance..."
+                    value={item.evidence || ''}
+                    onChange={(e) => handleTextChange(item.id, 'evidence', e.target.value)}
+                    className="bg-background text-sm"
+                />
+              </div>
             </div>
           ))}
         </div>

@@ -338,7 +338,9 @@ export type AuditChecklistItem = {
     id: string;
     text: string;
     finding: FindingType;
-    notes?: string;
+    observation?: string;
+    findingNotes?: string;
+    evidence?: string;
 }
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops';
