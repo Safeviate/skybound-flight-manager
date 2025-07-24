@@ -126,7 +126,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
     });
   }
   
-  const today = new Date();
+  const today = new Date('2024-08-15');
   today.setHours(0, 0, 0, 0);
 
   const availableAircraft = aircraftData.filter(ac => {
