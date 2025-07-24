@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Booking, Checklist } from '@/lib/types';
+import type { Aircraft, Booking, Checklist, ChecklistItem } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -28,6 +28,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { NewChecklistForm } from '../checklists/new-checklist-form';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -38,44 +39,42 @@ function AircraftPage() {
   const { toast } = useToast();
   const { user, company, loading } = useUser();
   const router = useRouter();
+  const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     } else if (company) {
-        const fetchData = async () => {
-            try {
-                // Fetch Aircraft
-                const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-                const aircraftSnapshot = await getDocs(aircraftQuery);
-                const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
-                setFleet(aircraftList);
-
-                // Fetch Checklists
-                const checklistQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
-                const checklistSnapshot = await getDocs(checklistQuery);
-                const checklistList = checklistSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
-                setChecklists(checklistList);
-
-                // Fetch Bookings
-                const bookingQuery = query(collection(db, `companies/${company.id}/bookings`));
-                const bookingSnapshot = await getDocs(bookingQuery);
-                const bookingList = bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-                setBookings(bookingList);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch initial data.'});
-            }
-        };
         fetchData();
     }
-  }, [user, company, loading, router, toast]);
+  }, [user, company, loading, router]);
 
+  const fetchData = async () => {
+      if (!company) return;
+      try {
+          const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+          const aircraftSnapshot = await getDocs(aircraftQuery);
+          const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+          setFleet(aircraftList);
+
+          const checklistQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
+          const checklistSnapshot = await getDocs(checklistQuery);
+          const checklistList = checklistSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+          setChecklists(checklistList);
+
+          const bookingQuery = query(collection(db, `companies/${company.id}/bookings`));
+          const bookingSnapshot = await getDocs(bookingQuery);
+          const bookingList = bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+          setBookings(bookingList);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch initial data.'});
+      }
+  };
+  
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
 
   const handleItemToggle = async (toggledChecklist: Checklist) => {
-    // This is a session-based update, so no DB write needed here.
-    // The state is managed locally within the ChecklistCard dialog.
   };
 
   const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbs?: number) => {
@@ -119,7 +118,6 @@ function AircraftPage() {
   };
   
   const handleReset = (checklistId: string) => {
-    // This is handled locally in the checklist card now, no global state reset needed
   };
 
   const handleEditHobbs = (aircraft: Aircraft) => {
@@ -161,6 +159,30 @@ function AircraftPage() {
         return 'outline';
     }
   };
+  
+  const handleNewChecklist = async (newChecklistData: Omit<Checklist, 'id' | 'companyId'>) => {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot create checklist without a company context.' });
+        return;
+    }
+
+    try {
+        const checklistToSave: Omit<Checklist, 'id'> = {
+            ...newChecklistData,
+            companyId: company.id,
+            items: newChecklistData.items.map((item, index) => ({ ...item, id: `item-${Date.now()}-${index}`, completed: false })),
+        };
+        
+        const docRef = await addDoc(collection(db, `companies/${company.id}/checklist-templates`), checklistToSave);
+
+        setChecklists(prev => [...prev, { ...checklistToSave, id: docRef.id }]);
+        setIsChecklistDialogOpen(false);
+        toast({ title: 'Checklist Template Created', description: `"${newChecklistData.title}" has been saved.`});
+    } catch(error) {
+        console.error("Error creating new checklist:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to create checklist template.'});
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -175,23 +197,42 @@ function AircraftPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Aircraft
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Add New Aircraft</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to add a new aircraft to the fleet.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <NewAircraftForm onAircraftAdded={(newAircraft) => setFleet(prev => [...prev, newAircraft])} />
-                </DialogContent>
-            </Dialog>
+            <div className="flex items-center gap-2">
+                 <Dialog open={isChecklistDialogOpen} onOpenChange={setIsChecklistDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            New Checklist
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-xl">
+                        <DialogHeader>
+                            <DialogTitle>Create New Checklist Template</DialogTitle>
+                            <DialogDescription>
+                                Define a new checklist and assign it to an aircraft.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <NewChecklistForm onSubmit={handleNewChecklist} aircraftList={fleet} />
+                    </DialogContent>
+                </Dialog>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Aircraft
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Add New Aircraft</DialogTitle>
+                            <DialogDescription>
+                                Fill out the form below to add a new aircraft to the fleet.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <NewAircraftForm onAircraftAdded={(newAircraft) => setFleet(prev => [...prev, newAircraft])} />
+                    </DialogContent>
+                </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
