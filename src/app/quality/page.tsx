@@ -182,6 +182,7 @@ function QualityPage() {
         const docRef = await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
         setAudits(prevAudits => [{ ...newAuditData, id: docRef.id }, ...prevAudits]);
         setActiveTab('audits');
+        router.push('/quality?tab=audits');
     } catch (error) {
         console.error("Error submitting audit:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit audit.' });

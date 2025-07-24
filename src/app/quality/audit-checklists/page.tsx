@@ -4,17 +4,16 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import type { AuditChecklist, QualityAudit, NonConformanceIssue, FindingType } from '@/lib/types';
-import { ChecklistCard } from './checklist-card';
+import type { AuditChecklist, QualityAudit } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewChecklistForm } from './new-checklist-form';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { format } from 'date-fns';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, addDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc } from 'firebase/firestore';
+import Link from 'next/link';
 
 interface AuditChecklistsPageProps {
   onAuditSubmit: (newAudit: QualityAudit) => void;
@@ -42,31 +41,6 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
     fetchChecklists();
   }, [company, toast]);
 
-  const handleUpdate = async (updatedChecklist: AuditChecklist) => {
-    setChecklists(prev => prev.map(c => c.id === updatedChecklist.id ? updatedChecklist : c));
-    if (!company) return;
-    try {
-        const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, updatedChecklist.id);
-        await setDoc(checklistRef, updatedChecklist, { merge: true });
-    } catch (error) {
-        console.error("Error updating checklist state:", error);
-    }
-  };
-  
-  const handleReset = (checklistId: string) => {
-    setChecklists(prevChecklists =>
-      prevChecklists.map(c => {
-        if (c.id === checklistId) {
-          return {
-            ...c,
-            items: c.items.map(item => ({ ...item, finding: null, notes: '' })),
-          };
-        }
-        return c;
-      })
-    );
-  };
-
   const handleNewChecklist = async (newChecklistData: Omit<AuditChecklist, 'id' | 'items' | 'companyId'> & { items: { text: string }[] }) => {
     if (!company) return;
     const newChecklist: Omit<AuditChecklist, 'id'> = {
@@ -92,63 +66,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save checklist.'});
     }
   };
-
-  const handleChecklistEdit = async (editedChecklist: AuditChecklist) => {
-    setChecklists(prevChecklists => 
-        prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
-    );
-    if (!company) return;
-    try {
-        const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, editedChecklist.id);
-        await setDoc(checklistRef, editedChecklist, { merge: true });
-    } catch (error) {
-        console.error("Error updating checklist:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save checklist edits.'});
-    }
-  };
-
-  const handleSubmit = (completedChecklist: AuditChecklist) => {
-    if (!company) return;
-    const applicableItems = completedChecklist.items.filter(item => item.finding !== 'Not Applicable');
-    const compliantItems = applicableItems.filter(item => item.finding === 'Compliant' || item.finding === 'Partial').length;
-    const totalApplicableItems = applicableItems.length;
-    const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
-
-    const nonConformanceIssues: NonConformanceIssue[] = completedChecklist.items
-      .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial')
-      .map(item => ({
-        id: `nci-${item.id}`,
-        level: item.finding as NonConformanceIssue['level'],
-        category: 'Procedural', 
-        description: `${item.text} - Auditor Notes: ${item.notes || 'N/A'}`,
-      }));
-
-    let status: QualityAudit['status'] = 'Compliant';
-    if (nonConformanceIssues.length > 0) {
-        status = complianceScore < 80 ? 'Non-Compliant' : 'With Findings';
-    }
-    
-    const newAudit: QualityAudit = {
-        id: `QA-${Date.now().toString().slice(-4)}`,
-        companyId: company.id,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        type: 'Internal',
-        auditor: completedChecklist.auditor || 'Unknown',
-        area: completedChecklist.department as any || 'General',
-        status,
-        complianceScore,
-        nonConformanceIssues,
-        summary: `Audit based on template "${completedChecklist.title}". Conducted by ${completedChecklist.auditor} on auditee ${completedChecklist.auditeeName} (${completedChecklist.auditeePosition}).`,
-    };
-
-    onAuditSubmit(newAudit);
-    toast({
-      title: 'Audit Submitted',
-      description: `A new quality audit record has been created with a score of ${complianceScore}%.`,
-    });
-    handleReset(completedChecklist.id);
-  };
-
+  
   const checklistsByArea = checklists.reduce((acc, checklist) => {
     const area = checklist.area;
     if (!acc[area]) {
@@ -196,35 +114,16 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           </TabsList>
           {areas.map(area => (
             <TabsContent key={area} value={area}>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {checklistsByArea[area].map(checklist => (
-                    <Dialog key={checklist.id}>
-                        <DialogTrigger asChild>
-                            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                                <CardHeader>
-                                    <CardTitle className="text-base">{checklist.title}</CardTitle>
-                                    <CardDescription>{checklist.items.length} items</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
-                            <DialogHeader>
-                                <DialogTitle>{checklist.title}</DialogTitle>
-                                <DialogDescription>
-                                Complete the audit checklist below. Your progress is saved automatically.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="overflow-y-auto pr-2">
-                                <ChecklistCard 
-                                    checklist={checklist} 
-                                    onUpdate={handleUpdate}
-                                    onReset={handleReset}
-                                    onEdit={handleChecklistEdit}
-                                    onSubmit={handleSubmit}
-                                />
-                           </div>
-                        </DialogContent>
-                    </Dialog>
+                    <Link key={checklist.id} href={`/quality/audit-checklists/${checklist.id}`}>
+                        <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+                            <CardHeader>
+                                <CardTitle className="text-base">{checklist.title}</CardTitle>
+                                <CardDescription>{checklist.items.length} items</CardDescription>
+                            </CardHeader>
+                        </Card>
+                    </Link>
                 ))}
                 </div>
             </TabsContent>
