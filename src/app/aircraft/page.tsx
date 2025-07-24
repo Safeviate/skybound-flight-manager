@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, ChecklistItem } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
@@ -197,6 +197,12 @@ function AircraftPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
             <div className="flex items-center gap-2">
+                <Button variant="outline" asChild>
+                    <Link href="/checklists">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Manage Checklist Templates
+                    </Link>
+                </Button>
                 <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
