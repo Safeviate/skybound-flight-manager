@@ -632,18 +632,8 @@ function SafetyPage() {
                            </Link>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
-                        <TableCell className="max-w-xs">
-                          <div className="flex flex-col">
-                            <span className="font-medium truncate">{report.heading}</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                                {report.subCategory && (
-                                    <Badge variant="secondary" className="w-fit">
-                                        {report.subCategory}
-                                    </Badge>
-                                )}
-                            </div>
-                            <span className="text-muted-foreground truncate hidden sm:inline">{report.details}</span>
-                          </div>
+                        <TableCell className="max-w-xs font-medium truncate">
+                            {report.heading}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
                         <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
