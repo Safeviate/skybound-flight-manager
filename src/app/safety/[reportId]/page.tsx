@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useMemo, FC, Fragment } from 'react';
+import { useEffect, useState, useActionState, useMemo, FC, Fragment, useCallback } from 'react';
 import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
@@ -718,7 +718,7 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = async (updatedReport: SafetyReport) => {
+  const handleReportUpdate = useCallback(async (updatedReport: SafetyReport) => {
     if (!company || !report) {
       toast({
         variant: 'destructive',
@@ -736,7 +736,7 @@ function SafetyReportInvestigationPage() {
         console.error("Error updating report:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
     }
-  };
+  }, [company, report, toast]);
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
     // In a real app, this would be an API call to a central store.
@@ -1132,6 +1132,7 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
 
 
