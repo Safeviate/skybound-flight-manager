@@ -137,11 +137,14 @@ function ChecklistsPage() {
   return (
     <main className="flex-1 p-4 md:p-8">
       <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
               <CardTitle>Manage Checklist Templates</CardTitle>
               <CardDescription>
                   These are the master checklists used throughout the application for your company. Edit them here.
               </CardDescription>
+            </div>
+            {headerContent}
           </CardHeader>
           <CardContent>
               <Tabs defaultValue="pre-flight">
