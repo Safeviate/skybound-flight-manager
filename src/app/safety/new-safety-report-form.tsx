@@ -184,32 +184,34 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     <CardDescription>Start by providing the basic information about the occurrence.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                        control={form.control}
-                        name="reportType"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Report Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a report type" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
-                                <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
-                                <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
-                                <SelectItem value="Occupational Report">Occupational Report</SelectItem>
-                                <SelectItem value="General Report">General Report</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <div className="grid grid-cols-2 gap-2">
+                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="md:col-span-3">
+                            <FormField
+                            control={form.control}
+                            name="reportType"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Report Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a report type" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
+                                    <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                                    <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
+                                    <SelectItem value="Occupational Report">Occupational Report</SelectItem>
+                                    <SelectItem value="General Report">General Report</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-2 gap-2">
                             <FormField
                                 control={form.control}
                                 name="occurrenceDate"
