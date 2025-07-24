@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { auditChecklistData } from '@/lib/data-provider';
 import type { AuditChecklist, QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,28 +12,54 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, addDoc, setDoc } from 'firebase/firestore';
 
 interface AuditChecklistsPageProps {
   onAuditSubmit: (newAudit: QualityAudit) => void;
 }
 
 export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPageProps) {
-  const [checklists, setChecklists] = useState<AuditChecklist[]>(auditChecklistData);
+  const [checklists, setChecklists] = useState<AuditChecklist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { company } = useUser();
 
-  const handleUpdate = (updatedChecklist: AuditChecklist) => {
+  useEffect(() => {
+    if (!company) return;
+    const fetchChecklists = async () => {
+      try {
+        const checklistsRef = collection(db, `companies/${company.id}/audit-checklists`);
+        const snapshot = await getDocs(checklistsRef);
+        const checklistList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditChecklist));
+        setChecklists(checklistList);
+      } catch (error) {
+        console.error("Error fetching audit checklists:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load checklists.' });
+      }
+    };
+    fetchChecklists();
+  }, [company, toast]);
+
+  const handleUpdate = async (updatedChecklist: AuditChecklist) => {
     setChecklists(prev => prev.map(c => c.id === updatedChecklist.id ? updatedChecklist : c));
+    if (!company) return;
+    try {
+        const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, updatedChecklist.id);
+        await setDoc(checklistRef, updatedChecklist, { merge: true });
+    } catch (error) {
+        console.error("Error updating checklist state:", error);
+    }
   };
   
   const handleReset = (checklistId: string) => {
     setChecklists(prevChecklists =>
       prevChecklists.map(c => {
         if (c.id === checklistId) {
-          const originalTemplate = auditChecklistData.find(t => t.id === checklistId);
           return {
-            ...(originalTemplate || c),
-            items: (originalTemplate || c).items.map(item => ({ ...item, isCompliant: null, notes: '' })),
+            ...c,
+            items: c.items.map(item => ({ ...item, isCompliant: null, notes: '' })),
           };
         }
         return c;
@@ -42,10 +67,11 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
     );
   };
 
-  const handleNewChecklist = (newChecklistData: Omit<AuditChecklist, 'id' | 'items'> & { items: { text: string }[] }) => {
-    const newChecklist: AuditChecklist = {
+  const handleNewChecklist = async (newChecklistData: Omit<AuditChecklist, 'id' | 'items' | 'companyId'> & { items: { text: string }[] }) => {
+    if (!company) return;
+    const newChecklist: Omit<AuditChecklist, 'id'> = {
       ...newChecklistData,
-      id: `acl-${Date.now()}`,
+      companyId: company.id,
       items: newChecklistData.items.map((item, index) => ({ 
           ...item, 
           id: `item-${Date.now()}-${index}`,
@@ -53,21 +79,36 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           notes: '',
       })),
     };
-    setChecklists(prev => [...prev, newChecklist]);
-    setIsDialogOpen(false);
-    toast({
-      title: 'Audit Checklist Created',
-      description: `The "${newChecklist.title}" checklist has been added.`,
-    });
+    try {
+        const docRef = await addDoc(collection(db, `companies/${company.id}/audit-checklists`), newChecklist);
+        setChecklists(prev => [...prev, { ...newChecklist, id: docRef.id }]);
+        setIsDialogOpen(false);
+        toast({
+          title: 'Audit Checklist Created',
+          description: `The "${newChecklist.title}" checklist has been added.`,
+        });
+    } catch (error) {
+        console.error("Error creating new checklist:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save checklist.'});
+    }
   };
 
-  const handleChecklistEdit = (editedChecklist: AuditChecklist) => {
+  const handleChecklistEdit = async (editedChecklist: AuditChecklist) => {
     setChecklists(prevChecklists => 
         prevChecklists.map(c => c.id === editedChecklist.id ? editedChecklist : c)
     );
+    if (!company) return;
+    try {
+        const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, editedChecklist.id);
+        await setDoc(checklistRef, editedChecklist, { merge: true });
+    } catch (error) {
+        console.error("Error updating checklist:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save checklist edits.'});
+    }
   };
 
   const handleSubmit = (completedChecklist: AuditChecklist) => {
+    if (!company) return;
     const compliantItems = completedChecklist.items.filter(item => item.isCompliant === true).length;
     const totalItems = completedChecklist.items.length;
     const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
@@ -76,7 +117,6 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
       .filter(item => item.isCompliant === false)
       .map(item => ({
         id: `nci-${item.id}`,
-        // A real implementation might have a more detailed category system
         category: 'Procedural', 
         description: `${item.text} - Auditor Notes: ${item.notes || 'N/A'}`,
       }));
@@ -88,6 +128,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
     
     const newAudit: QualityAudit = {
         id: `QA-${Date.now().toString().slice(-4)}`,
+        companyId: company.id,
         date: format(new Date(), 'yyyy-MM-dd'),
         type: 'Internal',
         auditor: completedChecklist.auditor || 'Unknown',
@@ -103,7 +144,6 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
       title: 'Audit Submitted',
       description: `A new quality audit record has been created with a score of ${complianceScore}%.`,
     });
-    // Reset the checklist after submission
     handleReset(completedChecklist.id);
   };
 

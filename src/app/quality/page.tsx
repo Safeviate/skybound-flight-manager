@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { qualityAuditData as initialAuditData, auditScheduleData as initialScheduleData } from '@/lib/data-provider';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
@@ -18,6 +17,9 @@ import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuditChecklistsPage from './audit-checklists/page';
 import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, getDocs, doc, setDoc, addDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -78,18 +80,45 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
 
 function QualityPage() {
-  const [audits, setAudits] = useState<QualityAudit[]>(initialAuditData);
-  const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialScheduleData);
+  const [audits, setAudits] = useState<QualityAudit[]>([]);
+  const [schedule, setSchedule] = useState<AuditScheduleItem[]>([]);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+    if (company) {
+        const fetchData = async () => {
+            try {
+                const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
+                const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+
+                const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
+                    getDocs(auditsQuery),
+                    getDocs(scheduleQuery),
+                ]);
+                
+                const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
+                setAudits(auditsList);
+
+                const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
+                setSchedule(scheduleList);
+
+            } catch (error) {
+                console.error("Error fetching quality data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
+            }
+        };
+        fetchData();
+    }
+  }, [user, company, loading, router, toast]);
 
 
   const getStatusVariant = (status: QualityAudit['status']) => {
@@ -101,15 +130,25 @@ function QualityPage() {
     }
   };
   
-  const handleScheduleUpdate = (updatedItem: AuditScheduleItem) => {
-    setSchedule(prevSchedule => {
-      const existingItem = prevSchedule.find(item => item.id === updatedItem.id);
-      if (existingItem) {
-        return prevSchedule.map(item => item.id === updatedItem.id ? updatedItem : item);
-      } else {
-        return [...prevSchedule, updatedItem];
-      }
-    });
+  const handleScheduleUpdate = async (updatedItem: AuditScheduleItem) => {
+    if (!company) return;
+    
+    const existingIndex = schedule.findIndex(item => item.id === updatedItem.id);
+    if (existingIndex > -1) {
+      const newSchedule = [...schedule];
+      newSchedule[existingIndex] = updatedItem;
+      setSchedule(newSchedule);
+    } else {
+      setSchedule([...schedule, updatedItem]);
+    }
+    
+    try {
+        const scheduleRef = doc(db, `companies/${company.id}/audit-schedule-items`, updatedItem.id);
+        await setDoc(scheduleRef, updatedItem, { merge: true });
+    } catch(error) {
+        console.error("Error updating schedule item:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not save schedule update.' });
+    }
   };
 
   const handleAreaUpdate = (index: number, newName: string) => {
@@ -119,7 +158,8 @@ function QualityPage() {
         newAreas[index] = newName;
         return newAreas;
     });
-    // Also update schedule items that used the old name
+    // This part is tricky without a dedicated 'areas' collection.
+    // For now, we update local state. A real app might have a collection for audit areas.
     setSchedule(prevSchedule =>
       prevSchedule.map(item => (item.area === oldName ? { ...item, area: newName } : item))
     );
@@ -133,13 +173,19 @@ function QualityPage() {
   const handleAreaDelete = (index: number) => {
     const areaToDelete = auditAreas[index];
     setAuditAreas(prev => prev.filter((_, i) => i !== index));
-    // Remove schedule items associated with the deleted area
     setSchedule(prevSchedule => prevSchedule.filter(item => item.area !== areaToDelete));
   };
   
-  const handleAuditSubmit = (newAudit: QualityAudit) => {
-    setAudits(prevAudits => [newAudit, ...prevAudits]);
-    setActiveTab('audits');
+  const handleAuditSubmit = async (newAuditData: Omit<QualityAudit, 'id'>) => {
+    if (!company) return;
+    try {
+        const docRef = await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
+        setAudits(prevAudits => [{ ...newAuditData, id: docRef.id }, ...prevAudits]);
+        setActiveTab('audits');
+    } catch (error) {
+        console.error("Error submitting audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit audit.' });
+    }
   };
 
   if (loading || !user) {

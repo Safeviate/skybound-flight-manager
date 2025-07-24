@@ -4,16 +4,67 @@
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { qualityAuditData } from '@/lib/data-provider';
 import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, CheckCircle, ListChecks } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useUser } from '@/context/user-provider';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function QualityAuditDetailPage({ params }: { params: { auditId: string } }) {
   const router = useRouter();
-  const audit = qualityAuditData.find(a => a.id === params.auditId);
+  const { user, company, loading: userLoading } = useUser();
+  const { toast } = useToast();
+  const [audit, setAudit] = useState<QualityAudit | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (userLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    if (!company) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchAudit = async () => {
+      setLoading(true);
+      try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, params.auditId);
+        const auditSnap = await getDoc(auditRef);
+
+        if (auditSnap.exists()) {
+          setAudit(auditSnap.data() as QualityAudit);
+        } else {
+          toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
+        }
+      } catch (error) {
+        console.error("Error fetching audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAudit();
+  }, [params.auditId, user, company, userLoading, router, toast]);
+
+  if (loading || userLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header title="Loading Audit..." />
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+          <p>Loading audit details...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!audit) {
     return (
