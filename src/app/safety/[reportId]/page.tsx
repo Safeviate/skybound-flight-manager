@@ -732,7 +732,10 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = async (updatedReport: SafetyReport) => {
-    if (!company || !report) return;
+    if (!company || !report) {
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Cannot save report, user or report data is missing.'});
+        return;
+    }
     setReport(updatedReport);
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
