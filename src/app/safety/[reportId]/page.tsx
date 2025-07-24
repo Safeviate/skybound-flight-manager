@@ -732,7 +732,7 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = async (updatedReport: SafetyReport) => {
-    if (!company) return;
+    if (!company || !report) return;
     setReport(updatedReport);
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, updatedReport.id);
@@ -1138,3 +1138,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
