@@ -54,6 +54,8 @@ export type Aircraft = {
   insuranceExpiry: string;
   location: string; // Airport ID
   isPostFlightPending?: boolean;
+  primaryStudentId?: string;
+  primaryInstructorId?: string;
 };
 
 export type Endorsement = {
@@ -146,7 +148,7 @@ export type User = {
     companyId: string;
     name: string;
     role: Role;
-    email: string;
+    email?: string;
     phone: string;
     password?: string;
     permissions: Permission[];

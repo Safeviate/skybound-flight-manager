@@ -23,9 +23,10 @@ import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import type { Aircraft } from '@/lib/types';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import type { Aircraft, User } from '@/lib/types';
 import { getNextService } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 
 const aircraftFormSchema = z.object({
@@ -43,6 +44,8 @@ const aircraftFormSchema = z.object({
   }),
   airworthinessExpiry: z.date({ required_error: 'An expiry date is required.' }),
   insuranceExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  primaryStudentId: z.string().optional(),
+  primaryInstructorId: z.string().optional(),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
@@ -54,12 +57,26 @@ interface NewAircraftFormProps {
 export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
+  const [users, setUsers] = useState<User[]>([]);
+  
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
     defaultValues: {
         status: 'Available',
     }
   });
+
+  useEffect(() => {
+    if (!company) return;
+
+    const fetchUsers = async () => {
+        const usersQuery = query(collection(db, `companies/${company.id}/users`));
+        const usersSnapshot = await getDocs(usersQuery);
+        setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
+    };
+
+    fetchUsers();
+  }, [company]);
 
   async function onSubmit(data: AircraftFormValues) {
     if (!company) {
@@ -95,6 +112,9 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to add aircraft to the database.' });
     }
   }
+
+  const students = users.filter(u => u.role === 'Student');
+  const instructors = users.filter(u => u.role === 'Instructor' || u.role === 'Chief Flight Instructor' || u.role === 'Head Of Training');
 
   return (
     <Form {...form}>
@@ -235,6 +255,50 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                             </PopoverContent>
                         </Popover>
                         <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="primaryStudentId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Student (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a student" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {students.map(student => (
+                                <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="primaryInstructorId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Primary Instructor (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an instructor" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {instructors.map(instructor => (
+                                <SelectItem key={instructor.id} value={instructor.id}>{instructor.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
                     </FormItem>
                 )}
             />
