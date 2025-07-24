@@ -244,14 +244,13 @@ function AircraftPage() {
                   <TableHead>Hobbs Hours</TableHead>
                   <TableHead>Airworthiness Expiry</TableHead>
                   <TableHead>Insurance Expiry</TableHead>
+                  <TableHead>Checklists</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fleet.map((aircraft) => {
-                  const preFlightChecklist = checklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === aircraft.id);
-                  const postFlightChecklist = checklists.find(c => c.category === 'Post-Flight' && c.aircraftId === aircraft.id);
-                  const maintenanceChecklist = checklists.find(c => c.category === 'Post-Maintenance' && c.aircraftId === aircraft.id);
+                  const aircraftChecklists = checklists.filter(c => c.aircraftId === aircraft.id);
                   const isEditing = editingHobbsId === aircraft.id;
 
                   return (
@@ -291,109 +290,65 @@ function AircraftPage() {
                     </TableCell>
                     <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
                     <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
+                    <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                                    View ({aircraftChecklists.length})
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
+                                {aircraftChecklists.length > 0 ? (
+                                    aircraftChecklists.map(checklist => (
+                                        <Dialog key={checklist.id}>
+                                            <DialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                    {checklist.title}
+                                                </DropdownMenuItem>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                                <DialogHeader>
+                                                    <DialogTitle>{checklist.title}</DialogTitle>
+                                                </DialogHeader>
+                                                <ChecklistCard 
+                                                    checklist={checklist}
+                                                    aircraft={aircraft}
+                                                    onItemToggle={handleItemToggle}
+                                                    onUpdate={handleChecklistUpdate}
+                                                    onReset={handleReset}
+                                                    onEdit={() => {}}
+                                                />
+                                            </DialogContent>
+                                        </Dialog>
+                                    ))
+                                ) : (
+                                    <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
                     <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                            {maintenanceChecklist && aircraft.status === 'In Maintenance' && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="destructive" size="sm">
-                                            <Wrench className="mr-2 h-4 w-4" />
-                                            Post-Maint.
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                    <DialogHeader>
-                                        <DialogTitle>{maintenanceChecklist.title}</DialogTitle>
-                                    </DialogHeader>
-                                    <ChecklistCard 
-                                        checklist={maintenanceChecklist}
-                                        aircraft={aircraft}
-                                        onItemToggle={handleItemToggle}
-                                        onUpdate={handleChecklistUpdate}
-                                        onReset={handleReset}
-                                        onEdit={() => {}}
-                                    />
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <QrCode className="h-4 w-4" />
-                                        <span className="sr-only">Show QR Code</span>
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-xs">
-                                <DialogHeader>
-                                    <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
-                                    <DialogDescription>
-                                        Scan this code with the in-app scanner to start the pre-flight checklist.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex items-center justify-center p-4">
-                                    <QRCode value={aircraft.id} size={200} />
-                                </div>
-                                </DialogContent>
-                            </Dialog>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <ClipboardCheck className="h-4 w-4" />
-                                        <span className="sr-only">Open checklists</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
-                                    {preFlightChecklist && (
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                            {preFlightChecklist.title}
-                                        </DropdownMenuItem>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                        <DialogHeader>
-                                            <DialogTitle>{preFlightChecklist.title}</DialogTitle>
-                                        </DialogHeader>
-                                        <ChecklistCard 
-                                            checklist={preFlightChecklist}
-                                            aircraft={aircraft}
-                                            onItemToggle={handleItemToggle}
-                                            onUpdate={handleChecklistUpdate}
-                                            onReset={handleReset}
-                                            onEdit={() => {}}
-                                        />
-                                        </DialogContent>
-                                    </Dialog>
-                                    )}
-                                    {postFlightChecklist && (
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                            {postFlightChecklist.title}
-                                        </DropdownMenuItem>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                        <DialogHeader>
-                                            <DialogTitle>{postFlightChecklist.title}</DialogTitle>
-                                        </DialogHeader>
-                                        <ChecklistCard 
-                                            checklist={postFlightChecklist}
-                                            aircraft={aircraft}
-                                            onItemToggle={handleItemToggle}
-                                            onUpdate={handleChecklistUpdate}
-                                            onReset={handleReset}
-                                            onEdit={() => {}}
-                                        />
-                                        </DialogContent>
-                                    </Dialog>
-                                    )}
-                                    {!preFlightChecklist && !postFlightChecklist && (
-                                        <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <QrCode className="h-4 w-4" />
+                                    <span className="sr-only">Show QR Code</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-xs">
+                            <DialogHeader>
+                                <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
+                                <DialogDescription>
+                                    Scan this code with the in-app scanner to start the pre-flight checklist.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex items-center justify-center p-4">
+                                <QRCode value={aircraft.id} size={200} />
+                            </div>
+                            </DialogContent>
+                        </Dialog>
                     </TableCell>
                   </TableRow>
                 )})}
@@ -407,3 +362,4 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
+
