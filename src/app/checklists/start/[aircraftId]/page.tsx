@@ -11,7 +11,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
 export default function StartChecklistPage() {
@@ -22,7 +22,7 @@ export default function StartChecklistPage() {
   const { toast } = useToast();
 
   const [aircraft, setAircraft] = useState<Aircraft | null>(null);
-  const [checklist, setChecklist] = useState<Checklist | undefined>(undefined);
+  const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   useEffect(() => {
@@ -35,23 +35,36 @@ export default function StartChecklistPage() {
             try {
                 const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraftId);
                 const aircraftSnap = await getDoc(aircraftRef);
-                if (aircraftSnap.exists()) {
-                    setAircraft(aircraftSnap.data() as Aircraft);
+                
+                if (!aircraftSnap.exists()) {
+                    toast({ variant: 'destructive', title: 'Error', description: 'Aircraft not found.'});
+                    setIsDataLoading(false);
+                    return;
                 }
 
-                // Assuming pre-flight checklists are linked via a field or have a specific ID format
-                // This logic might need adjustment based on the actual DB schema
-                const checklistRef = doc(db, `companies/${company.id}/checklist-templates`, `cl-${aircraftId}-pre`);
-                const checklistSnap = await getDoc(checklistRef);
+                const fetchedAircraft = aircraftSnap.data() as Aircraft;
+                setAircraft(fetchedAircraft);
 
-                if (checklistSnap.exists()) {
-                    const checklistTemplate = checklistSnap.data() as Checklist;
-                    setChecklist({
-                        ...checklistTemplate,
-                        id: `session-${Date.now()}`,
-                        items: checklistTemplate.items.map(item => ({ ...item, id: `item-inst-${item.id}`, completed: false })),
+                // Fetch the assigned pre-flight checklist for this aircraft
+                const checklistQuery = query(
+                    collection(db, `companies/${company.id}/checklists`), 
+                    where('aircraftId', '==', aircraftId),
+                    where('category', '==', 'Pre-Flight')
+                );
+                
+                const checklistSnapshot = await getDocs(checklistQuery);
+
+                if (!checklistSnapshot.empty) {
+                    const assignedChecklist = checklistSnapshot.docs[0].data() as Checklist;
+                     setChecklist({
+                        ...assignedChecklist,
+                        id: checklistSnapshot.docs[0].id, // Use the actual document ID
+                        items: assignedChecklist.items.map(item => ({ ...item, completed: false })), // Reset items for new session
                     });
+                } else {
+                     setChecklist(null);
                 }
+
             } catch (error) {
                 console.error("Error fetching checklist data:", error);
                 toast({ variant: 'destructive', title: 'Error', description: 'Could not load checklist data.'});
@@ -73,17 +86,27 @@ export default function StartChecklistPage() {
       setChecklist(prev => prev ? ({
         ...prev,
         items: prev.items.map(item => ({ ...item, completed: false })),
-      }) : undefined);
+      }) : null);
     }
   };
   
-  const handleUpdate = (updatedChecklist: Checklist) => {
-    // In a real app, this would submit the completed checklist state to the database
-    setChecklist(updatedChecklist);
+ const handleUpdate = async (updatedChecklist: Checklist) => {
+    if (!company || !user || !checklist) return;
+
+    // Reset the checklist items in Firestore for the next user
+    const checklistRef = doc(db, `companies/${company.id}/checklists`, checklist.id);
+    const resetItems = checklist.items.map(item => ({ ...item, completed: false }));
+    await updateDoc(checklistRef, { items: resetItems });
+
     toast({
         title: "Checklist Submitted",
-        description: `"${updatedChecklist.title}" has been completed.`
+        description: `"${updatedChecklist.title}" has been completed successfully.`
     });
+    
+    // Optional: Log completion if needed for auditing
+    // await addDoc(collection(db, `companies/${company.id}/completedChecklists`), { ... });
+    
+    router.push('/aircraft');
   };
 
   if (loading || isDataLoading) {
@@ -100,8 +123,10 @@ export default function StartChecklistPage() {
         <Header title="Checklist Not Found" />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
             <Rocket className="w-16 h-16 text-primary mb-4" />
-            <h1 className="text-2xl font-bold">Checklist Not Found</h1>
-            <p className="text-muted-foreground">The pre-flight checklist for this aircraft could not be located in your company's templates.</p>
+            <h1 className="text-2xl font-bold">Pre-Flight Checklist Not Found</h1>
+            <p className="text-muted-foreground">
+                A "Pre-Flight" checklist has not been assigned to this aircraft ({aircraft?.tailNumber || aircraftId}).
+            </p>
         </div>
       </div>
     );
