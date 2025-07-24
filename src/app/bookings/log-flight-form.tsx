@@ -16,8 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import type { Booking, User } from '@/lib/types';
-import { userData } from '@/lib/data-provider';
+import type { Booking, User, TrainingLogEntry, Aircraft } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 const logFlightFormSchema = z.object({
   flightDuration: z.coerce.number().min(0.1, {
@@ -37,38 +40,72 @@ interface LogFlightFormProps {
 
 export function LogFlightForm({ booking, onFlightLogged }: LogFlightFormProps) {
   const { toast } = useToast();
-  const student = userData.find(s => s.name === booking.student);
+  const { company } = useUser();
 
   const form = useForm<LogFlightFormValues>({
     resolver: zodResolver(logFlightFormSchema),
   });
 
-  function onSubmit(data: LogFlightFormValues) {
-    if (!student) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Student not found for this booking.',
-        });
+  async function onSubmit(data: LogFlightFormValues) {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
         return;
     }
-    // In a real application, this would save to a database
-    // and update the booking status.
-    console.log({
-      studentId: student.id,
-      bookingId: booking.id,
-      date: booking.date,
-      aircraft: booking.aircraft,
-      instructor: booking.instructor,
-      ...data,
-    });
 
-    toast({
-      title: 'Flight Logged',
-      description: `Training session for ${student.name} has been logged.`,
-    });
-    
-    onFlightLogged();
+    try {
+        const studentRef = doc(db, `companies/${company.id}/users`, booking.student);
+        const studentSnap = await getDoc(studentRef);
+
+        if (!studentSnap.exists()) {
+             toast({ variant: 'destructive', title: 'Error', description: 'Student not found for this booking.' });
+             return;
+        }
+        const studentData = studentSnap.data() as User;
+        
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, booking.aircraft.replace(/[^A-Z0-9]/g, ''));
+        const aircraftSnap = await getDoc(aircraftRef);
+        const aircraftData = aircraftSnap.exists() ? aircraftSnap.data() as Aircraft : null;
+
+        // 1. Create a training log entry
+        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+            date: booking.date,
+            aircraft: booking.aircraft,
+            flightDuration: data.flightDuration,
+            instructorName: booking.instructor,
+            instructorNotes: data.instructorNotes,
+            // Hobbs would typically be part of the form, but we'll omit for simplicity
+            startHobbs: aircraftData ? aircraftData.hours : 0,
+            endHobbs: aircraftData ? aircraftData.hours + data.flightDuration : data.flightDuration,
+        };
+        
+        // 2. Update student's flight hours and logbook
+        await updateDoc(studentRef, {
+            flightHours: (studentData.flightHours || 0) + data.flightDuration,
+            trainingLogs: arrayUnion({ ...newLogEntry, id: `log-${Date.now()}` }),
+        });
+        
+        // 3. Update aircraft's Hobbs hours
+        if (aircraftData) {
+            await updateDoc(aircraftRef, {
+                hours: aircraftData.hours + data.flightDuration,
+            });
+        }
+
+        // 4. Update booking status to 'Completed'
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, booking.id);
+        await updateDoc(bookingRef, { status: 'Completed', flightDuration: data.flightDuration });
+
+        toast({
+          title: 'Flight Logged',
+          description: `Training session for ${studentData.name} has been logged.`,
+        });
+        
+        onFlightLogged();
+
+    } catch (error) {
+        console.error("Error logging flight:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not log flight. Please try again.' });
+    }
   }
 
   return (
