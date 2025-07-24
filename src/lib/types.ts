@@ -6,6 +6,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -327,16 +328,6 @@ export type ChecklistItem = {
     value: string;
 };
 
-export type Checklist = {
-    id: string;
-    companyId: string;
-    title: string;
-    category: 'Pre-Flight' | 'Post-Flight' | 'Pre-Maintenance' | 'Post-Maintenance';
-    items: ChecklistItem[];
-    aircraftId?: string; // This is the ID of the aircraft the assigned checklist belongs to
-    templateId?: string; // This is the ID of the master template it was copied from
-};
-
 export type CompletedChecklist = {
     id: string;
     companyId: string;
@@ -348,10 +339,12 @@ export type CompletedChecklist = {
     completionDate: string;
 }
 
+export type FindingType = 'Compliant' | 'Observation' | 'Level 1 Finding' | 'Level 2 Finding' | null;
+
 export type AuditChecklistItem = {
     id: string;
     text: string;
-    isCompliant: boolean | null;
+    finding: FindingType;
     notes?: string;
 }
 
@@ -426,6 +419,7 @@ export const ICAO_PHASES_OF_FLIGHT = [
 
 export type NonConformanceIssue = {
   id: string;
+  level: 'Observation' | 'Level 1 Finding' | 'Level 2 Finding';
   category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
   description: string;
 };

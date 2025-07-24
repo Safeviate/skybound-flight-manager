@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc } from 'firebase/firestore';
@@ -86,13 +86,12 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
     }
   };
 
-  const getIssueCategoryIcon = (category: NonConformanceIssue['category']) => {
-    switch (category) {
-        case 'Documentation': return <ListChecks className="h-5 w-5 text-blue-500" />;
-        case 'Procedural': return <ListChecks className="h-5 w-5 text-orange-500" />;
-        case 'Equipment': return <AlertTriangle className="h-5 w-5 text-red-500" />;
-        case 'Training': return <ListChecks className="h-5 w-5 text-purple-500" />;
-        default: return <ListChecks className="h-5 w-5" />;
+  const getIssueFindingInfo = (level: NonConformanceIssue['level']) => {
+    switch (level) {
+        case 'Observation': return { icon: <Microscope className="h-5 w-5 text-blue-500" />, variant: 'secondary' as const };
+        case 'Level 1 Finding': return { icon: <MessageSquareWarning className="h-5 w-5 text-orange-500" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-500" />, variant: 'destructive' as const };
+        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const };
     }
   };
 
@@ -144,10 +143,10 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Non-Conformance Issues
+                    Audit Findings
                 </CardTitle>
                 <CardDescription>
-                    The following issues were identified during the audit. Corrective actions should be tracked.
+                    The following issues and observations were identified during the audit.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -155,24 +154,27 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-1/3">Category</TableHead>
+                                <TableHead className="w-1/3">Finding Level</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead className="w-32">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {audit.nonConformanceIssues.map(issue => (
+                            {audit.nonConformanceIssues.map(issue => {
+                                const { icon, variant } = getIssueFindingInfo(issue.level);
+                                return (
                                 <TableRow key={issue.id}>
                                     <TableCell className="font-medium flex items-center gap-2">
-                                        {getIssueCategoryIcon(issue.category)}
-                                        {issue.category}
+                                        {icon}
+                                        <Badge variant={variant}>{issue.level}</Badge>
                                     </TableCell>
                                     <TableCell>{issue.description}</TableCell>
                                     <TableCell>
                                         <Badge variant="outline">Open</Badge>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                                )
+                            })}
                         </TableBody>
                     </Table>
                 ) : (

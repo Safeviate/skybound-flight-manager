@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import type { AuditChecklist, AuditChecklistItem } from '@/lib/types';
-import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2 } from 'lucide-react';
+import type { AuditChecklist, AuditChecklistItem, FindingType } from '@/lib/types';
+import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2, Microscope, MessageSquareWarning } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,9 +30,9 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
   const [editableChecklist, setEditableChecklist] = useState<AuditChecklist>(checklist);
   const { toast } = useToast();
 
-  const handleItemToggle = (itemId: string, status: boolean) => {
+  const handleFindingChange = (itemId: string, finding: FindingType) => {
     const updatedItems = checklist.items.map(item =>
-      item.id === itemId ? { ...item, isCompliant: status } : item
+      item.id === itemId ? { ...item, finding } : item
     );
     onUpdate({ ...checklist, items: updatedItems });
   };
@@ -44,8 +44,8 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
       onUpdate({ ...checklist, items: updatedItems });
   };
 
-  const completedItems = useMemo(() => checklist.items.filter(item => item.isCompliant !== null).length, [checklist.items]);
-  const compliantItems = useMemo(() => checklist.items.filter(item => item.isCompliant === true).length, [checklist.items]);
+  const completedItems = useMemo(() => checklist.items.filter(item => item.finding !== null).length, [checklist.items]);
+  const compliantItems = useMemo(() => checklist.items.filter(item => item.finding === 'Compliant').length, [checklist.items]);
   const totalItems = checklist.items.length;
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   const complianceRate = totalItems > 0 ? (compliantItems / totalItems) * 100 : 0;
@@ -98,7 +98,7 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
       const newItem: AuditChecklistItem = {
           id: `item-${Date.now()}`,
           text: 'New item',
-          isCompliant: null,
+          finding: null,
       };
       setEditableChecklist(prev => ({
           ...prev,
@@ -112,6 +112,17 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
           items: prev.items.filter(item => item.id !== itemId)
       }));
   };
+
+  const getFindingButtonVariant = (itemFinding: FindingType, buttonFinding: FindingType) => {
+    if (itemFinding !== buttonFinding) return 'outline';
+    switch(itemFinding) {
+      case 'Compliant': return 'success';
+      case 'Observation': return 'secondary';
+      case 'Level 1 Finding': return 'warning';
+      case 'Level 2 Finding': return 'destructive';
+      default: return 'outline';
+    }
+  }
 
 
   if (isEditing) {
@@ -191,33 +202,49 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
             <div key={item.id} className="space-y-3 p-3 border rounded-lg bg-muted/30">
               <Label
                 htmlFor={`${checklist.id}-${item.id}`}
-                className={cn("flex-1 text-sm", item.isCompliant !== null && 'text-muted-foreground')}
+                className={cn("flex-1 text-sm", item.finding !== null && 'text-muted-foreground')}
               >
                 {item.text}
               </Label>
-               <div className="flex gap-2">
+               <div className="grid grid-cols-2 gap-2">
                 <Button 
                     size="sm" 
-                    variant={item.isCompliant === true ? 'success' : 'outline'} 
-                    onClick={() => handleItemToggle(item.id, true)}
-                    className="w-full"
+                    variant={getFindingButtonVariant(item.finding, 'Compliant')}
+                    onClick={() => handleFindingChange(item.id, 'Compliant')}
                 >
                     <CheckCircle className="mr-2 h-4 w-4" /> Compliant
                 </Button>
+                 <Button 
+                    size="sm" 
+                    variant={getFindingButtonVariant(item.finding, 'Observation')}
+                    onClick={() => handleFindingChange(item.id, 'Observation')}
+                >
+                    <Microscope className="mr-2 h-4 w-4" /> Observation
+                </Button>
                 <Button 
                     size="sm" 
-                    variant={item.isCompliant === false ? 'destructive' : 'outline'} 
-                    onClick={() => handleItemToggle(item.id, false)}
-                    className="w-full"
+                    variant={getFindingButtonVariant(item.finding, 'Level 1 Finding')}
+                    onClick={() => handleFindingChange(item.id, 'Level 1 Finding')}
                 >
-                    <XCircle className="mr-2 h-4 w-4" /> Non-Compliant
+                    <MessageSquareWarning className="mr-2 h-4 w-4" /> Level 1
+                </Button>
+                <Button 
+                    size="sm" 
+                    variant={getFindingButtonVariant(item.finding, 'Level 2 Finding')}
+                    onClick={() => handleFindingChange(item.id, 'Level 2 Finding')}
+                >
+                    <MessageSquareWarning className="mr-2 h-4 w-4" /> Level 2
                 </Button>
               </div>
               <Textarea
-                placeholder="Add notes or evidence..."
+                placeholder="Add notes or evidence for non-compliance..."
                 value={item.notes || ''}
                 onChange={(e) => handleNotesChange(item.id, e.target.value)}
-                className="bg-background"
+                className={cn(
+                    "bg-background", 
+                    item.finding !== 'Compliant' && item.finding !== null && 'border-primary'
+                )}
+                required={item.finding !== 'Compliant' && item.finding !== null}
               />
             </div>
           ))}

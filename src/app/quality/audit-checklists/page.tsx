@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import type { AuditChecklist, QualityAudit, NonConformanceIssue } from '@/lib/types';
+import type { AuditChecklist, QualityAudit, NonConformanceIssue, FindingType } from '@/lib/types';
 import { ChecklistCard } from './checklist-card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewChecklistForm } from './new-checklist-form';
@@ -59,7 +59,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
         if (c.id === checklistId) {
           return {
             ...c,
-            items: c.items.map(item => ({ ...item, isCompliant: null, notes: '' })),
+            items: c.items.map(item => ({ ...item, finding: null, notes: '' })),
           };
         }
         return c;
@@ -75,7 +75,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
       items: newChecklistData.items.map((item, index) => ({ 
           ...item, 
           id: `item-${Date.now()}-${index}`,
-          isCompliant: null,
+          finding: null,
           notes: '',
       })),
     };
@@ -109,14 +109,15 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
 
   const handleSubmit = (completedChecklist: AuditChecklist) => {
     if (!company) return;
-    const compliantItems = completedChecklist.items.filter(item => item.isCompliant === true).length;
+    const compliantItems = completedChecklist.items.filter(item => item.finding === 'Compliant').length;
     const totalItems = completedChecklist.items.length;
     const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
 
     const nonConformanceIssues: NonConformanceIssue[] = completedChecklist.items
-      .filter(item => item.isCompliant === false)
+      .filter(item => item.finding && item.finding !== 'Compliant')
       .map(item => ({
         id: `nci-${item.id}`,
+        level: item.finding as NonConformanceIssue['level'],
         category: 'Procedural', 
         description: `${item.text} - Auditor Notes: ${item.notes || 'N/A'}`,
       }));
@@ -194,7 +195,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           </TabsList>
           {areas.map(area => (
             <TabsContent key={area} value={area}>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2">
                 {checklistsByArea[area].map(checklist => (
                     <Dialog key={checklist.id}>
                         <DialogTrigger asChild>
@@ -206,20 +207,20 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
                             </Card>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-                           <DialogHeader>
-                              <DialogTitle>{checklist.title}</DialogTitle>
-                              <DialogDescription>
+                            <DialogHeader>
+                                <DialogTitle>{checklist.title}</DialogTitle>
+                                <DialogDescription>
                                 Complete the audit checklist below. Your progress is saved automatically.
-                              </DialogDescription>
+                                </DialogDescription>
                             </DialogHeader>
-                           <div className="overflow-y-auto pr-2">
-                             <ChecklistCard 
-                                checklist={checklist} 
-                                onUpdate={handleUpdate}
-                                onReset={handleReset}
-                                onEdit={handleChecklistEdit}
-                                onSubmit={handleSubmit}
-                            />
+                            <div className="overflow-y-auto pr-2">
+                                <ChecklistCard 
+                                    checklist={checklist} 
+                                    onUpdate={handleUpdate}
+                                    onReset={handleReset}
+                                    onEdit={handleChecklistEdit}
+                                    onSubmit={handleSubmit}
+                                />
                            </div>
                         </DialogContent>
                     </Dialog>
