@@ -15,21 +15,27 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Copy, RefreshCw } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { userData } from '@/lib/data-provider';
-import type { Role } from '@/lib/types';
+import type { Role, User } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
+  email: z.string().email(),
+  password: z.string().min(8),
+  phone: z.string().min(10),
   instructor: z.string({
     required_error: 'Please select an instructor.',
   }),
@@ -42,33 +48,61 @@ const studentFormSchema = z.object({
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
-export function NewStudentForm() {
+interface NewStudentFormProps {
+    onSubmit: (data: Omit<User, 'id'>) => void;
+}
+
+export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
+  const { company } = useUser();
+  const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
+  
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       consentDisplayContact: false,
     }
   });
+  
+  useEffect(() => {
+      const fetchInstructors = async () => {
+          if (!company) return;
+          const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+          const q = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
+          const snapshot = await getDocs(q);
+          setInstructors(snapshot.docs.map(doc => doc.data() as User));
+      }
+      fetchInstructors();
+  }, [company]);
+  
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-10);
+    form.setValue('password', newPassword, { shouldValidate: true });
+  };
 
-  const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-  const availableInstructors = userData.filter(p => instructorRoles.includes(p.role));
+  const copyPassword = () => {
+    const password = form.getValues('password');
+    if (password) {
+        navigator.clipboard.writeText(password);
+        toast({
+            title: "Password Copied",
+            description: "The temporary password has been copied to your clipboard.",
+        });
+    }
+  }
 
-  function onSubmit(data: StudentFormValues) {
-    console.log({
+  function handleFormSubmit(data: StudentFormValues) {
+    onSubmit({
         ...data,
         medicalExpiry: format(data.medicalExpiry, 'yyyy-MM-dd'),
         licenseExpiry: format(data.licenseExpiry, 'yyyy-MM-dd'),
-    });
-    toast({
-      title: 'Student Added',
-      description: `${data.name} has been added to the roster.`,
-    });
+    } as unknown as Omit<User, 'id'>);
+    form.reset();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -84,6 +118,55 @@ export function NewStudentForm() {
         />
         <FormField
           control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="student@email.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="555-123-4567" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <div className="space-y-2">
+            <FormLabel>Temporary Password</FormLabel>
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem>
+                        <div className="flex gap-2">
+                            <FormControl>
+                                <Input readOnly {...field} />
+                            </FormControl>
+                            <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" variant="outline" onClick={generatePassword} size="icon">
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+        <FormField
+          control={form.control}
           name="instructor"
           render={({ field }) => (
             <FormItem>
@@ -95,7 +178,7 @@ export function NewStudentForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {availableInstructors.map((instructor) => (
+                  {instructors.map((instructor) => (
                     <SelectItem key={instructor.id} value={instructor.name}>
                       {instructor.name}
                     </SelectItem>

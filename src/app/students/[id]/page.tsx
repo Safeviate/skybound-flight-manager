@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { userData } from '@/lib/data-provider';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Endorsement, TrainingLogEntry, Permission } from '@/lib/types';
+import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -21,33 +20,82 @@ import { AddLogEntryForm } from './add-log-entry-form';
 import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import { useRouter } from 'next/navigation';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function StudentProfilePage({ params }: { params: { id: string } }) {
-    const student = userData.find(s => s.id === params.id);
+    const { user: currentUser, company, loading: userLoading } = useUser();
     const { toast } = useToast();
+    const router = useRouter();
+    const [student, setStudent] = useState<StudentUser | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (userLoading) return;
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+        if (!company) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchStudent = async () => {
+            setLoading(true);
+            const studentRef = doc(db, `companies/${company.id}/users`, params.id);
+            const studentSnap = await getDoc(studentRef);
+
+            if (studentSnap.exists() && studentSnap.data().role === 'Student') {
+                setStudent(studentSnap.data() as StudentUser);
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: 'Student not found.' });
+            }
+            setLoading(false);
+        };
+        fetchStudent();
+
+    }, [params.id, currentUser, company, userLoading, router, toast]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
-    
-    const { user } = useUser();
-    const userPermissions = user?.permissions || [];
-    const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
-    if (!student || student.role !== 'Student') {
-        return (
-            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                <p>Student not found.</p>
-            </main>
-        )
-    }
+    useEffect(() => {
+        setProgress(student?.progress || 0);
+    }, [student]);
     
+    const canEdit = currentUser?.permissions.includes('Super User') || currentUser?.permissions.includes('Students:Edit');
+
+    const handleUpdate = async (updateData: Partial<StudentUser>) => {
+        if (!student || !company) return;
+        const studentRef = doc(db, `companies/${company.id}/users`, student.id);
+        try {
+            await updateDoc(studentRef, updateData);
+            setStudent(prev => prev ? { ...prev, ...updateData } : null);
+        } catch (error) {
+            console.error("Failed to update student:", error);
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes.' });
+        }
+    }
+
     const handleProgressSave = () => {
-        console.log(`Saving progress for ${student.name}: ${progress}%`);
+        handleUpdate({ progress });
         toast({
             title: "Progress Updated",
-            description: `${student.name}'s training progress has been set to ${progress}%.`,
+            description: `${student?.name}'s training progress has been set to ${progress}%.`,
         });
     }
+
+    const handleAddEndorsement = (newEndorsement: Omit<Endorsement, 'id'>) => {
+        const endorsementWithId: Endorsement = { ...newEndorsement, id: `endorsement-${Date.now()}` };
+        handleUpdate({ endorsements: arrayUnion(endorsementWithId) });
+    };
+
+    const handleAddLogEntry = (newLogEntry: Omit<TrainingLogEntry, 'id'>) => {
+        const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
+        const newTotalHours = (student?.flightHours || 0) + newLogEntry.flightDuration;
+        handleUpdate({ trainingLogs: arrayUnion(entryWithId), flightHours: newTotalHours });
+    };
 
     const handleDownloadLogbook = () => {
         if (!student) return;
@@ -55,28 +103,24 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
         const doc = new jsPDF();
         let startY = 54;
     
-        // Title
         doc.setFontSize(20);
         doc.text("Student Training Log", 14, 22);
     
-        // Student Info
         doc.setFontSize(12);
         doc.text(`Student: ${student.name}`, 14, 32);
         doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
         doc.text(`Total Flight Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
     
-        // Endorsements Table
         if (student.endorsements && student.endorsements.length > 0) {
             autoTable(doc, {
                 startY: startY,
                 head: [['Endorsement', 'Date Awarded', 'Awarded By']],
                 body: student.endorsements.map(e => [e.name, e.dateAwarded, e.awardedBy]),
-                headStyles: { fillColor: [34, 197, 94] }, // A green color
+                headStyles: { fillColor: [34, 197, 94] },
             });
             startY = (doc as any).lastAutoTable.finalY + 10;
         }
     
-        // Training Log Table
         if (student.trainingLogs && student.trainingLogs.length > 0) {
              autoTable(doc, {
                 startY: startY,
@@ -102,10 +146,28 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
     };
 
     const handleArchive = () => {
+        handleUpdate({ status: 'Archived' });
         toast({
             title: "Student Archived",
-            description: `${student.name} has been moved to the archives.`,
+            description: `${student?.name} has been moved to the archives.`,
         });
+        router.push('/students');
+    }
+
+    if (loading || userLoading) {
+        return (
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+                <p>Loading student profile...</p>
+            </main>
+        )
+    }
+
+    if (!student) {
+        return (
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
+                <p>Student not found.</p>
+            </main>
+        )
     }
 
   return (
@@ -195,7 +257,7 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
                                             Fill out the form to add a new endorsement for {student.name}.
                                         </DialogDescription>
                                     </DialogHeader>
-                                    <AddEndorsementForm studentId={student.id} />
+                                    <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
                                 </DialogContent>
                             </Dialog>
                         )}
@@ -256,7 +318,7 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
                                                 Record details of the training session for {student.name}.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <AddLogEntryForm studentId={student.id} />
+                                        <AddLogEntryForm studentId={student.id} onSubmit={handleAddLogEntry} />
                                     </DialogContent>
                                 </Dialog>
                             )}

@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -15,7 +14,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ChevronRight, PlusCircle, Archive, RotateCw } from 'lucide-react';
-import { userData } from '@/lib/data-provider';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
@@ -31,20 +29,33 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 function StudentsPage() {
   const { toast } = useToast();
-  const [students, setStudents] = useState<User[]>(userData.filter(u => u.role === 'Student'));
-
-  const { user, loading } = useUser();
+  const [students, setStudents] = useState<User[]>([]);
+  const { user, company, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    } else if (company) {
+        fetchStudents();
     }
-  }, [user, loading, router]);
-
+  }, [user, company, loading, router]);
+  
+  const fetchStudents = async () => {
+      if (!company) return;
+      const studentsQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Student'));
+      const snapshot = await getDocs(studentsQuery);
+      const studentList = snapshot.docs.map(doc => doc.data() as User);
+      setStudents(studentList);
+  };
 
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
@@ -52,24 +63,64 @@ function StudentsPage() {
   const activeStudents = students.filter(s => s.status === 'Active');
   const archivedStudents = students.filter(s => s.status === 'Archived');
 
-  const handleArchive = (studentId: string) => {
-    // In a real app, this would be an API call.
-    setStudents(prev => prev.map(s => s.id === studentId ? {...s, status: 'Archived'} : s));
-    const student = students.find(s => s.id === studentId);
-    toast({
-        title: "Student Archived",
-        description: `${student?.name} has been moved to archives.`
-    });
+  const handleStatusChange = async (studentId: string, newStatus: 'Active' | 'Archived') => {
+    if (!company) return;
+    const studentRef = doc(db, `companies/${company.id}/users`, studentId);
+    try {
+        await updateDoc(studentRef, { status: newStatus });
+        setStudents(prev => prev.map(s => s.id === studentId ? {...s, status: newStatus} : s));
+        const student = students.find(s => s.id === studentId);
+        toast({
+            title: `Student ${newStatus === 'Active' ? 'Reactivated' : 'Archived'}`,
+            description: `${student?.name} has been moved to ${newStatus === 'Active' ? 'the active roster' : 'archives'}.`
+        });
+    } catch (error) {
+        console.error(`Error updating student status:`, error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'Could not update the student status.'
+        });
+    }
+  }
+  
+  const handleNewStudent = async (newStudentData: Omit<User, 'id'>) => {
+    if (!company) return;
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, newStudentData.email, newStudentData.password!);
+        const newUserId = userCredential.user.uid;
+
+        const studentToAdd: User = {
+            ...newStudentData,
+            id: newUserId,
+            companyId: company.id,
+            role: 'Student',
+            status: 'Active',
+            permissions: ROLE_PERMISSIONS['Student'],
+            flightHours: 0,
+            progress: 0,
+            endorsements: [],
+            trainingLogs: [],
+        };
+        delete studentToAdd.password;
+
+        await setDoc(doc(db, `companies/${company.id}/users`, newUserId), studentToAdd);
+        setStudents(prev => [...prev, studentToAdd]);
+        toast({
+            title: 'Student Added',
+            description: `${newStudentData.name} has been added to the roster.`
+        });
+    } catch (error: any) {
+        console.error("Error creating student:", error);
+        let errorMessage = "Could not create new student.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "This email is already registered.";
+        }
+        toast({ variant: 'destructive', title: 'Error', description: errorMessage });
+    }
   }
 
-  const handleReactivate = (studentId: string) => {
-    setStudents(prev => prev.map(s => s.id === studentId ? {...s, status: 'Active'} : s));
-    const student = students.find(s => s.id === studentId);
-    toast({
-        title: "Student Reactivated",
-        description: `${student?.name} has been moved to the active roster.`
-    });
-  }
 
   const StudentTable = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
      <Table>
@@ -112,12 +163,12 @@ function StudentsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     {isArchived ? (
-                                        <DropdownMenuItem onClick={() => handleReactivate(student.id)}>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Active')}>
                                             <RotateCw className="mr-2 h-4 w-4" />
                                             Reactivate
                                         </DropdownMenuItem>
                                     ) : (
-                                        <DropdownMenuItem onClick={() => handleArchive(student.id)}>
+                                        <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Archived')}>
                                             <Archive className="mr-2 h-4 w-4" />
                                             Archive
                                         </DropdownMenuItem>
@@ -158,10 +209,10 @@ function StudentsPage() {
                       <DialogHeader>
                           <DialogTitle>Add New Student</DialogTitle>
                           <DialogDescription>
-                              Fill out the form below to add a new student.
+                              Fill out the form below to add a new student. This will create a user account for them.
                           </DialogDescription>
                       </DialogHeader>
-                      <NewStudentForm />
+                      <NewStudentForm onSubmit={handleNewStudent} />
                   </DialogContent>
               </Dialog>
             )}

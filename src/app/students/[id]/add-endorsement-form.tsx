@@ -21,11 +21,16 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { userData, trainingExercisesData } from '@/lib/data-provider';
-import type { Role } from '@/lib/types';
+import { trainingExercisesData } from '@/lib/data-provider';
+import type { Role, User, Endorsement } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { useUser } from '@/context/user-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 
 const endorsementFormSchema = z.object({
-  endorsementName: z.string({
+  name: z.string({
     required_error: 'Please select an endorsement type.',
   }),
   awardedBy: z.string({
@@ -38,8 +43,16 @@ const endorsementFormSchema = z.object({
 
 type EndorsementFormValues = z.infer<typeof endorsementFormSchema>;
 
-export function AddEndorsementForm({ studentId }: { studentId: string }) {
+interface AddEndorsementFormProps {
+    studentId: string;
+    onSubmit: (data: Omit<Endorsement, 'id'>) => void;
+}
+
+export function AddEndorsementForm({ studentId, onSubmit }: AddEndorsementFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
+  const [instructors, setInstructors] = useState<User[]>([]);
+  
   const form = useForm<EndorsementFormValues>({
     resolver: zodResolver(endorsementFormSchema),
     defaultValues: {
@@ -47,27 +60,37 @@ export function AddEndorsementForm({ studentId }: { studentId: string }) {
     },
   });
 
-  const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-  const availableInstructors = userData.filter(p => instructorRoles.includes(p.role));
+  useEffect(() => {
+    const fetchInstructors = async () => {
+        if (!company) return;
+        const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+        const q = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
+        const snapshot = await getDocs(q);
+        setInstructors(snapshot.docs.map(doc => doc.data() as User));
+    }
+    fetchInstructors();
+  }, [company]);
 
-  function onSubmit(data: EndorsementFormValues) {
-    console.log({
-      studentId,
+
+  function handleFormSubmit(data: EndorsementFormValues) {
+    const newEndorsement = {
       ...data,
       dateAwarded: format(data.dateAwarded, 'yyyy-MM-dd'),
-    });
+    };
+    onSubmit(newEndorsement);
     toast({
       title: 'Endorsement Added',
-      description: `${data.endorsementName} has been awarded.`,
+      description: `${data.name} has been awarded.`,
     });
+    form.reset();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="endorsementName"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Endorsement / Exercise</FormLabel>
@@ -102,7 +125,7 @@ export function AddEndorsementForm({ studentId }: { studentId: string }) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {availableInstructors.map((instructor) => (
+                  {instructors.map((instructor) => (
                     <SelectItem key={instructor.id} value={instructor.name}>
                       {instructor.name}
                     </SelectItem>

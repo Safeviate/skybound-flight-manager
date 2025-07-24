@@ -21,9 +21,13 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import { aircraftData, userData } from '@/lib/data-provider';
-import type { Role } from '@/lib/types';
+import type { Role, User, Aircraft, TrainingLogEntry } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 
 const logEntryFormSchema = z.object({
   date: z.date({
@@ -38,7 +42,7 @@ const logEntryFormSchema = z.object({
   endHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
-  instructor: z.string({
+  instructorName: z.string({
     required_error: 'Please select the instructor.',
   }),
   instructorNotes: z.string().min(10, {
@@ -51,8 +55,17 @@ const logEntryFormSchema = z.object({
 
 type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
 
-export function AddLogEntryForm({ studentId }: { studentId: string }) {
+interface AddLogEntryFormProps {
+    studentId: string;
+    onSubmit: (data: Omit<TrainingLogEntry, 'id'>) => void;
+}
+
+export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
   const { toast } = useToast();
+  const { company } = useUser();
+  const [instructors, setInstructors] = useState<User[]>([]);
+  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
+
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
     defaultValues: {
@@ -60,27 +73,42 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
     },
   });
 
-  const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-  const availableInstructors = userData.filter(p => instructorRoles.includes(p.role));
-  const availableAircraft = aircraftData.filter(ac => ac.status !== 'In Maintenance');
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!company) return;
+        const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+        const instQuery = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
+        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'In Maintenance'));
+        
+        const [instSnapshot, acSnapshot] = await Promise.all([getDocs(instQuery), getDocs(acQuery)]);
+        
+        setInstructors(instSnapshot.docs.map(doc => doc.data() as User));
+        setAircraft(acSnapshot.docs.map(doc => doc.data() as Aircraft));
+    };
+    fetchData();
+  }, [company]);
 
-  function onSubmit(data: LogEntryFormValues) {
+  function handleFormSubmit(data: LogEntryFormValues) {
     const flightDuration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
-    console.log({
-      studentId,
+    
+    const newEntry = {
       ...data,
       flightDuration,
       date: format(data.date, 'yyyy-MM-dd'),
-    });
+    };
+    
+    onSubmit(newEntry);
+    
     toast({
       title: 'Training Log Added',
       description: `A new entry has been added to the student's log.`,
     });
+    form.reset();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
             <FormField
                 control={form.control}
@@ -136,7 +164,7 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {availableAircraft.map((ac) => (
+                        {aircraft.map((ac) => (
                             <SelectItem key={ac.id} value={ac.tailNumber}>
                             {ac.model} ({ac.tailNumber})
                             </SelectItem>
@@ -176,7 +204,7 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
         </div>
         <FormField
           control={form.control}
-          name="instructor"
+          name="instructorName"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Instructor</FormLabel>
@@ -187,7 +215,7 @@ export function AddLogEntryForm({ studentId }: { studentId: string }) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {availableInstructors.map((instructor) => (
+                  {instructors.map((instructor) => (
                     <SelectItem key={instructor.id} value={instructor.name}>
                       {instructor.name}
                     </SelectItem>
