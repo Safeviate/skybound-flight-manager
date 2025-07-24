@@ -80,6 +80,18 @@ function AircraftPage() {
   const handleItemToggle = async (toggledChecklist: Checklist) => {
     setChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
   };
+  
+  const handleItemValueChange = (checklistId: string, itemId: string, value: string) => {
+    setChecklists(prev => {
+        return prev.map(c => {
+            if (c.id === checklistId) {
+                const newItems = c.items.map(item => item.id === itemId ? { ...item, value } : item);
+                return { ...c, items: newItems };
+            }
+            return c;
+        });
+    });
+  };
 
   const handleChecklistUpdate = async (updatedChecklist: Checklist) => {
     if (!company) return;
@@ -122,7 +134,7 @@ function AircraftPage() {
     const checklistToReset = checklists.find(c => c.id === checklistId);
     if (!checklistToReset) return;
 
-    const resetItems = checklistToReset.items.map(item => ({...item, completed: false}));
+    const resetItems = checklistToReset.items.map(item => ({...item, completed: false, value: ''}));
     const updatedChecklist = {...checklistToReset, items: resetItems };
 
     setChecklists(prev => prev.map(c => c.id === checklistId ? updatedChecklist : c));
@@ -305,6 +317,7 @@ function AircraftPage() {
                                                     checklist={checklist}
                                                     aircraft={aircraft}
                                                     onItemToggle={handleItemToggle}
+                                                    onItemValueChange={handleItemValueChange}
                                                     onUpdate={handleChecklistUpdate}
                                                     onReset={handleReset}
                                                     onEdit={() => {}}

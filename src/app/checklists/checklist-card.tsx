@@ -6,23 +6,25 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import type { Aircraft, Checklist, ChecklistItem } from '@/lib/types';
+import type { Aircraft, Checklist, ChecklistItem, ChecklistItemType } from '@/lib/types';
 import { RotateCcw, CheckCircle, Edit, Save, X, PlusCircle, Trash2, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface ChecklistCardProps {
   checklist: Checklist;
   aircraft?: Aircraft;
   onItemToggle: (checklist: Checklist) => void;
+  onItemValueChange: (checklistId: string, itemId: string, value: string) => void;
   onUpdate: (checklist: Checklist) => void;
   onReset: (checklistId: string) => void;
   onEdit: (checklist: Checklist) => void;
 }
 
-export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onReset, onEdit }: ChecklistCardProps) {
+export function ChecklistCard({ checklist, aircraft, onItemToggle, onItemValueChange, onUpdate, onReset, onEdit }: ChecklistCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableChecklist, setEditableChecklist] = useState<Checklist>(checklist);
   const { toast } = useToast();
@@ -33,8 +35,15 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
     );
     onItemToggle({ ...checklist, items: updatedItems });
   };
+  
+  const isItemCompleted = (item: ChecklistItem) => {
+    if (item.type !== 'Checkbox') {
+        return !!item.value;
+    }
+    return item.completed;
+  }
 
-  const completedItems = useMemo(() => checklist.items.filter(item => item.completed).length, [checklist.items]);
+  const completedItems = useMemo(() => checklist.items.filter(isItemCompleted).length, [checklist.items]);
   const totalItems = checklist.items.length;
   const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
@@ -77,6 +86,8 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
           id: `item-${Date.now()}`,
           text: 'New item',
           completed: false,
+          type: 'Checkbox',
+          value: '',
       };
       setEditableChecklist(prev => ({
           ...prev,
@@ -90,6 +101,47 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
           items: prev.items.filter(item => item.id !== itemId)
       }));
   };
+
+  const renderItemInput = (item: ChecklistItem) => {
+    switch(item.type) {
+        case 'Checkbox':
+            return (
+                 <div key={item.id} className="flex items-center space-x-3">
+                    <Checkbox
+                        id={`${checklist.id}-${item.id}`}
+                        checked={item.completed}
+                        onCheckedChange={() => handleItemToggle(item.id)}
+                    />
+                    <Label
+                        htmlFor={`${checklist.id}-${item.id}`}
+                        className={`flex-1 text-sm ${item.completed ? 'text-muted-foreground line-through' : ''}`}
+                    >
+                        {item.text}
+                    </Label>
+                </div>
+            );
+        case 'Confirm preflight hobbs':
+        case 'Confirm postflight hobbs':
+        case 'Confirm premaintenance hobbs':
+        case 'Confirm post maintenance hobbs':
+             return (
+                 <div key={item.id} className="space-y-2">
+                    <Label htmlFor={`${checklist.id}-${item.id}`} className="text-sm">{item.text}</Label>
+                    <Input 
+                        id={`${checklist.id}-${item.id}`}
+                        type="number" 
+                        step="0.1"
+                        value={item.value || ''}
+                        onChange={(e) => onItemValueChange(checklist.id, item.id, e.target.value)}
+                        placeholder="Enter Hobbs hours"
+                    />
+                 </div>
+             );
+        default:
+            return null;
+    }
+  }
+
 
   if (isEditing) {
     return (
@@ -131,7 +183,7 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
   }
 
   return (
-    <Card className={`flex flex-col ${isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
+    <Card className={cn("flex flex-col", isComplete && 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800')}>
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
@@ -147,22 +199,8 @@ export function ChecklistCard({ checklist, aircraft, onItemToggle, onUpdate, onR
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <Progress value={progress} />
-        <div className="space-y-3 overflow-y-auto pr-2 md:max-h-60">
-          {checklist.items.map(item => (
-            <div key={item.id} className="flex items-center space-x-3">
-              <Checkbox
-                id={`${checklist.id}-${item.id}`}
-                checked={item.completed}
-                onCheckedChange={() => handleItemToggle(item.id)}
-              />
-              <Label
-                htmlFor={`${checklist.id}-${item.id}`}
-                className={`flex-1 text-sm ${item.completed ? 'text-muted-foreground line-through' : ''}`}
-              >
-                {item.text}
-              </Label>
-            </div>
-          ))}
+        <div className="space-y-4 overflow-y-auto pr-2 md:max-h-60">
+          {checklist.items.map(item => renderItemInput(item))}
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">

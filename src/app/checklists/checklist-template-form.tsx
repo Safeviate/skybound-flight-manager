@@ -16,9 +16,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { Checklist } from '@/lib/types';
+import type { Checklist, ChecklistItem, ChecklistItemType } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect } from 'react';
+
+const checklistItemSchema = z.object({
+    text: z.string().min(1, { message: "Item text cannot be empty."}),
+    type: z.custom<ChecklistItemType>(),
+});
 
 const checklistFormSchema = z.object({
   title: z.string().min(3, {
@@ -27,7 +32,7 @@ const checklistFormSchema = z.object({
   category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance', 'Pre-Maintenance'], {
     required_error: 'Please select a category.',
   }),
-  items: z.array(z.object({ text: z.string().min(1, { message: "Item text cannot be empty."}) })).min(1, {
+  items: z.array(checklistItemSchema).min(1, {
       message: "You must add at least one checklist item."
   }),
 });
@@ -39,12 +44,20 @@ interface ChecklistTemplateFormProps {
     existingTemplate?: Checklist;
 }
 
+const itemTypes: ChecklistItemType[] = [
+    'Checkbox',
+    'Confirm preflight hobbs',
+    'Confirm postflight hobbs',
+    'Confirm premaintenance hobbs',
+    'Confirm post maintenance hobbs',
+];
+
 export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(checklistFormSchema),
     defaultValues: {
       title: '',
-      items: [{ text: '' }],
+      items: [{ text: '', type: 'Checkbox' }],
     },
   });
   
@@ -53,7 +66,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
         form.reset({
             title: existingTemplate.title,
             category: existingTemplate.category,
-            items: existingTemplate.items.map(item => ({ text: item.text })),
+            items: existingTemplate.items.map(item => ({ text: item.text, type: item.type })),
         });
     }
   }, [existingTemplate, form]);
@@ -66,7 +79,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, completed: false })),
+      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, completed: false, value: '' })),
     };
     onSubmit(newChecklist);
     form.reset();
@@ -116,7 +129,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
             <ScrollArea className="h-60 mt-2 pr-4">
                 <div className="space-y-3">
                     {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2">
+                    <div key={field.id} className="flex items-start gap-2">
                         <FormField
                         control={form.control}
                         name={`items.${index}.text`}
@@ -128,6 +141,26 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
                             <FormMessage />
                             </FormItem>
                         )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name={`items.${index}.type`}
+                            render={({ field }) => (
+                                <FormItem className="w-[180px]">
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {itemTypes.map(type => (
+                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                </FormItem>
+                            )}
                         />
                         <Button
                         type="button"
@@ -159,7 +192,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => append({ text: '' })}
+            onClick={() => append({ text: '', type: 'Checkbox' })}
             >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Item
@@ -171,5 +204,3 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
     </Form>
   );
 }
-
-    

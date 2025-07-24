@@ -60,7 +60,7 @@ export default function StartChecklistPage() {
                      setChecklist({
                         ...assignedChecklist,
                         id: checklistSnapshot.docs[0].id, // Use the actual document ID
-                        items: assignedChecklist.items.map(item => ({ ...item, completed: false })), // Reset items for new session
+                        items: assignedChecklist.items.map(item => ({ ...item, completed: false, value: '' })), // Reset items for new session
                     });
                 } else {
                      setChecklist(null);
@@ -82,11 +82,21 @@ export default function StartChecklistPage() {
     setChecklist(toggledChecklist);
   };
   
+   const handleItemValueChange = (checklistId: string, itemId: string, value: string) => {
+    setChecklist(prev => {
+        if (!prev || prev.id !== checklistId) return prev;
+        const newItems = prev.items.map(item => 
+            item.id === itemId ? { ...item, value } : item
+        );
+        return { ...prev, items: newItems };
+    });
+  };
+
   const handleReset = () => {
     if (checklist) {
       setChecklist(prev => prev ? ({
         ...prev,
-        items: prev.items.map(item => ({ ...item, completed: false })),
+        items: prev.items.map(item => ({ ...item, completed: false, value: '' })),
       }) : null);
     }
   };
@@ -147,6 +157,7 @@ export default function StartChecklistPage() {
             checklist={checklist} 
             aircraft={aircraft}
             onItemToggle={handleItemToggle}
+            onItemValueChange={handleItemValueChange}
             onUpdate={handleUpdate}
             onReset={handleReset}
             onEdit={() => {}} // Editing disabled on this page

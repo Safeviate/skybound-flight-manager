@@ -2,6 +2,7 @@
 
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -308,11 +309,19 @@ export type GroupedRisk = {
   risks: Risk[];
 };
 
+export type ChecklistItemType = 
+    | 'Checkbox'
+    | 'Confirm preflight hobbs'
+    | 'Confirm postflight hobbs'
+    | 'Confirm premaintenance hobbs'
+    | 'Confirm post maintenance hobbs';
 
 export type ChecklistItem = {
     id: string;
     text: string;
+    type: ChecklistItemType;
     completed: boolean;
+    value: string;
 };
 
 export type Checklist = {
