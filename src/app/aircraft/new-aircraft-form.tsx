@@ -23,8 +23,8 @@ import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import type { Aircraft, User } from '@/lib/types';
+import { doc, setDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import type { Aircraft, User, Checklist, ChecklistItem } from '@/lib/types';
 import { getNextService } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
@@ -72,11 +72,39 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
     const fetchUsers = async () => {
         const usersQuery = query(collection(db, `companies/${company.id}/users`));
         const usersSnapshot = await getDocs(usersQuery);
-        setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
+        setUsers(usersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
     };
 
     fetchUsers();
   }, [company]);
+
+  const createChecklistForAircraft = async (aircraftId: string, aircraftModel: string, category: 'Pre-Flight' | 'Post-Flight') => {
+      if (!company) return;
+      
+      const baseItems: Pick<ChecklistItem, 'text' | 'completed'>[] = [
+          { text: "Documents (ARROW)", completed: false },
+          { text: "Control Locks", completed: false },
+          { text: "Master Switch", completed: false },
+          { text: "Fuel Quantity", completed: false },
+          { text: "Exterior Walk-around", completed: false },
+          { text: "Fuel Sump", completed: false },
+      ];
+
+      const checklistData: Omit<Checklist, 'id'> = {
+          companyId: company.id,
+          title: `${aircraftModel} ${category}`,
+          category: category,
+          aircraftId: aircraftId,
+          items: baseItems.map((item, index) => ({...item, id: `item-${Date.now()}-${index}`})),
+      };
+
+      try {
+          await addDoc(collection(db, `companies/${company.id}/checklist-templates`), checklistData);
+      } catch (error) {
+          console.error(`Error creating ${category} checklist:`, error);
+          toast({ variant: 'destructive', title: 'Checklist Creation Failed', description: `Could not create the ${category} checklist for the new aircraft.`});
+      }
+  };
 
   async function onSubmit(data: AircraftFormValues) {
     if (!company) {
@@ -101,10 +129,15 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
 
     try {
         await setDoc(aircraftRef, newAircraft);
+
+        // Automatically create Pre-Flight and Post-Flight checklists
+        await createChecklistForAircraft(id, data.model, 'Pre-Flight');
+        await createChecklistForAircraft(id, data.model, 'Post-Flight');
+
         onAircraftAdded(newAircraft);
         toast({
           title: 'Aircraft Added',
-          description: `Aircraft ${data.tailNumber} has been added to the fleet.`,
+          description: `Aircraft ${data.tailNumber} and its standard checklists have been added.`,
         });
         form.reset();
     } catch (error) {
