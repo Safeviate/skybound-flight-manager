@@ -54,7 +54,7 @@ function Dashboard() {
                 getDocs(aircraftQuery),
                 getDocs(studentsQuery),
                 getDocs(bookingsQuery),
-                getDocs(safetyReportsSnapshot),
+                getDocs(safetyReportsQuery),
             ]);
 
             setStats([
