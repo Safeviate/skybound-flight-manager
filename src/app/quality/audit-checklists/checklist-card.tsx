@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { AuditChecklist, AuditChecklistItem, FindingType } from '@/lib/types';
-import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2, Microscope, MessageSquareWarning } from 'lucide-react';
+import { RotateCcw, CheckCircle, XCircle, Edit, Save, X, PlusCircle, Trash2, Microscope, MessageSquareWarning, AlertTriangle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
@@ -119,7 +119,8 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
       case 'Compliant': return 'success';
       case 'Observation': return 'secondary';
       case 'Level 1 Finding': return 'warning';
-      case 'Level 2 Finding': return 'destructive';
+      case 'Level 2 Finding': return 'orange';
+      case 'Level 3 Finding': return 'destructive';
       default: return 'outline';
     }
   }
@@ -206,7 +207,7 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
               >
                 {item.text}
               </Label>
-               <div className="grid grid-cols-2 gap-2">
+               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 <Button 
                     size="sm" 
                     variant={getFindingButtonVariant(item.finding, 'Compliant')}
@@ -233,7 +234,14 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
                     variant={getFindingButtonVariant(item.finding, 'Level 2 Finding')}
                     onClick={() => handleFindingChange(item.id, 'Level 2 Finding')}
                 >
-                    <MessageSquareWarning className="mr-2 h-4 w-4" /> Level 2
+                    <AlertTriangle className="mr-2 h-4 w-4" /> Level 2
+                </Button>
+                <Button 
+                    size="sm" 
+                    variant={getFindingButtonVariant(item.finding, 'Level 3 Finding')}
+                    onClick={() => handleFindingChange(item.id, 'Level 3 Finding')}
+                >
+                    <AlertTriangle className="mr-2 h-4 w-4" /> Level 3
                 </Button>
               </div>
               <Textarea
