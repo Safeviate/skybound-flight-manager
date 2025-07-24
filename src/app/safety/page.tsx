@@ -471,14 +471,14 @@ function SafetyPage() {
         return;
     }
     const { isAnonymous, ...reportData } = newReportData;
-    const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type];
+    const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type] || 'Management';
     
     const finalReportData = {
         companyId: company.id,
         submittedBy: isAnonymous ? 'Anonymous' : (user?.name || 'System'),
         status: 'Open' as SafetyReport['status'],
         filedDate: format(new Date(), 'yyyy-MM-dd'),
-        department: department,
+        department,
         ...reportData,
     };
 
