@@ -47,7 +47,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
-import type { DiscussionEntry } from '@/lib/types';
+import type { DiscussionEntry, InvestigationDiaryEntry } from '@/lib/types';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -118,6 +118,11 @@ const discussionFormSchema = z.object({
 
 type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
 
+const diaryFormSchema = z.object({
+  entryText: z.string().min(1, 'Diary entry cannot be empty.'),
+});
+
+type DiaryFormValues = z.infer<typeof diaryFormSchema>;
 
 function SafetyReportInvestigationPage() {
   const params = useParams();
@@ -178,6 +183,10 @@ function SafetyReportInvestigationPage() {
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
   });
+  
+  const diaryForm = useForm<DiaryFormValues>({
+    resolver: zodResolver(diaryFormSchema),
+  });
 
   const availableRecipients = React.useMemo(() => {
     if (!personnel || personnel.length === 0 || !report) {
@@ -215,6 +224,33 @@ function SafetyReportInvestigationPage() {
       description: `Your message has been sent to ${data.recipient}.`,
     });
   }
+  
+  const handleNewDiaryEntry = (data: DiaryFormValues) => {
+    if (!user || !report) {
+        toast({ variant: 'destructive', title: 'You must be logged in to post.'});
+        return;
+    }
+
+    const newEntry: InvestigationDiaryEntry = {
+        id: `diary-${Date.now()}`,
+        author: user.name,
+        date: new Date().toISOString(),
+        entryText: data.entryText,
+    };
+    
+    const updatedReport = {
+        ...report,
+        investigationDiary: [...(report.investigationDiary || []), newEntry],
+    };
+
+    handleReportUpdate(updatedReport);
+    diaryForm.reset();
+    setIsDiaryDialogOpen(false); // Close dialog on submit
+    toast({
+      title: 'Diary Entry Added',
+      description: 'Your entry has been added to the investigation diary.',
+    });
+  };
 
   useEffect(() => {
     setIsIcaoLoading(false);
@@ -591,7 +627,7 @@ function SafetyReportInvestigationPage() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                          <CardTitle>Investigation Discussion</CardTitle>
+                            <CardTitle>Investigation Discussion</CardTitle>
                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline">
@@ -718,11 +754,45 @@ function SafetyReportInvestigationPage() {
                                     New Entry
                                 </Button>
                                 </DialogTrigger>
-                                <InvestigationDiary report={report} onUpdate={handleReportUpdate} isDialogOpen={isDiaryDialogOpen} setIsDialogOpen={setIsDiaryDialogOpen} />
+                                <DialogContent>
+                                    <DialogHeader>
+                                    <DialogTitle>Add New Diary Entry</DialogTitle>
+                                    <DialogDescription>
+                                        Record an action, decision, or note. This will be added to the chronological investigation log.
+                                    </DialogDescription>
+                                    </DialogHeader>
+                                    <Form {...diaryForm}>
+                                    <form onSubmit={diaryForm.handleSubmit(handleNewDiaryEntry)} className="space-y-4">
+                                        <FormField
+                                        control={diaryForm.control}
+                                        name="entryText"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>New Diary Entry</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                id="diaryEntry"
+                                                placeholder="Log an action, decision, or note..."
+                                                className="min-h-[100px]"
+                                                {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                        <div className="flex justify-end items-center">
+                                        <Button type="submit">
+                                            Add to Diary
+                                        </Button>
+                                        </div>
+                                    </form>
+                                    </Form>
+                                </DialogContent>
                             </Dialog>
                         </CardHeader>
                         <CardContent>
-                             <InvestigationDiary report={report} onUpdate={handleReportUpdate} isDialogOpen={isDiaryDialogOpen} setIsDialogOpen={setIsDiaryDialogOpen}/>
+                             <InvestigationDiary report={report}/>
                         </CardContent>
                     </Card>
 
@@ -760,7 +830,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-
-
-
