@@ -473,6 +473,7 @@ function MyProfilePage() {
                                                         checklist={preFlightChecklist} 
                                                         aircraft={relatedAircraft}
                                                         onItemToggle={handleItemToggle}
+                                                        onItemValueChange={() => {}}
                                                         onUpdate={handleChecklistUpdate}
                                                         onReset={handleReset}
                                                         onEdit={() => {}}
