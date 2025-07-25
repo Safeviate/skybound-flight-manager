@@ -126,28 +126,30 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
             </CardDescription>
         </div>
         <div className="flex items-center gap-2">
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={selectedChecklists.length === 0 || !canDelete}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete ({selectedChecklists.length})
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete {selectedChecklists.length} selected checklist template(s).
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteChecklists}>
-                            Yes, delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {canDelete && selectedChecklists.length > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete ({selectedChecklists.length})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete {selectedChecklists.length} selected checklist template(s).
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteChecklists}>
+                                Yes, delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
             <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
