@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo, FC, Fragment, useCallback } from 'react';
@@ -713,17 +712,15 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = (updatedReportData: Partial<SafetyReport>) => {
-    if (!report) return;
+    if (!report || !company) return;
     const newReport = { ...report, ...updatedReportData };
     setReport(newReport);
     
-    if (company) {
-        const reportRef = doc(db, `companies/${company.id}/safety-reports`, newReport.id);
-        updateDoc(reportRef, newReport).catch(error => {
-            console.error("Error updating report:", error);
-            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
-        });
-    }
+    const reportRef = doc(db, `companies/${company.id}/safety-reports`, newReport.id);
+    updateDoc(reportRef, updatedReportData).catch(error => {
+        console.error("Error updating report:", error);
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
+    });
   };
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
@@ -1086,8 +1083,8 @@ function SafetyReportInvestigationPage() {
             <PrintableReport 
                 report={report} 
                 correctiveActionPlan={correctiveActionPlan} 
-                onUpdate={handleReportUpdate} 
-                onPromoteRisk={handlePromoteRisk} 
+                onUpdate={(data) => {}} // Dummy onUpdate for print
+                onPromoteRisk={(risk) => {}} // Dummy onPromote for print
             />
         </div>
 
@@ -1098,3 +1095,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
