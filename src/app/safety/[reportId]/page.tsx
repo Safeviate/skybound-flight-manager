@@ -488,9 +488,15 @@ function SafetyReportInvestigationPage() {
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <div className="grid lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
-                             <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                        </div>
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle>Investigation Team</CardTitle>
+                                <CardDescription>Assign personnel to investigate this report.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardHeader>
                                 <CardTitle>AI Toolkit</CardTitle>
@@ -511,18 +517,39 @@ function SafetyReportInvestigationPage() {
                             </CardContent>
                         </Card>
                     </div>
-                     <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                     <InvestigationDiary report={report} onUpdate={handleReportUpdate} />
-                     <div className="space-y-2">
-                        <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
-                        <Textarea 
-                            id="investigation-notes"
-                            placeholder="Record all investigation notes, findings, and discussions here..."
-                            className="min-h-[300px]"
-                            value={report.investigationNotes || ''}
-                            onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
-                        />
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Investigation Discussion</CardTitle>
+                            <CardDescription>A forum for the investigation team to communicate.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Investigation Diary</CardTitle>
+                            <CardDescription>A chronological log of actions, decisions, and notes taken during the investigation.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <InvestigationDiary report={report} onUpdate={handleReportUpdate} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                             <CardTitle>Investigation Notes & Findings</CardTitle>
+                             <CardDescription>Record all investigation notes, findings, and discussions here. This will be used to generate the corrective action plan.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Textarea 
+                                id="investigation-notes"
+                                placeholder="Record all investigation notes, findings, and discussions here..."
+                                className="min-h-[300px]"
+                                value={report.investigationNotes || ''}
+                                onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                            />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="risk-mitigation" className="mt-6 space-y-6">
@@ -542,3 +569,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
