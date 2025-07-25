@@ -44,13 +44,23 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
       onUpdate({ ...checklist, items: updatedItems });
   };
 
-  const completedItems = useMemo(() => checklist.items.filter(item => item.finding !== null).length, [checklist.items]);
-  const compliantItems = useMemo(() => checklist.items.filter(item => item.finding === 'Compliant').length, [checklist.items]);
-  const totalItems = checklist.items.length;
-  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-  const complianceRate = totalItems > 0 ? (compliantItems / totalItems) * 100 : 0;
+  const { completedItems, complianceRate, totalItems, isComplete } = useMemo(() => {
+    const completed = checklist.items.filter(item => item.finding !== null);
+    const applicableItems = checklist.items.filter(item => item.finding !== 'Not Applicable');
+    const compliantItems = applicableItems.filter(item => item.finding === 'Compliant').length;
+    
+    const totalApplicable = applicableItems.length;
+    const rate = totalApplicable > 0 ? (compliantItems / totalApplicable) * 100 : 100;
+
+    return {
+        completedItems: completed.length,
+        complianceRate: rate,
+        totalItems: checklist.items.length,
+        isComplete: completed.length === checklist.items.length,
+    }
+  }, [checklist.items]);
   
-  const isComplete = progress === 100;
+  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   
   const handleResetClick = () => {
       onReset(checklist.id);
@@ -113,7 +123,7 @@ export function ChecklistCard({ checklist, onUpdate, onReset, onEdit, onSubmit }
       }));
   };
 
-  const getFindingButtonVariant = (itemFinding: FindingType, buttonFinding: FindingType) => {
+  const getFindingButtonVariant = (itemFinding: FindingType | null, buttonFinding: FindingType) => {
     if (itemFinding !== buttonFinding) return 'outline';
     switch(itemFinding) {
       case 'Compliant': return 'success';
