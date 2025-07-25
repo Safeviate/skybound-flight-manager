@@ -6,13 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Search, User as UserIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { PersonalInformationCard } from '@/app/my-profile/personal-information-card';
+import Link from 'next/link';
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user } = useUser();
   const router = useRouter();
-  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   const childrenArray = React.Children.toArray(children);
   const backButton = childrenArray.find(child => (child as React.ReactElement)?.props?.asChild);
@@ -32,25 +30,14 @@ export default function Header({ title, children }: { title: string, children?: 
         <div className="flex items-center gap-4">
           {otherChildren}
           {user && (
-            <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-              <DialogTrigger asChild>
-                 <Button variant="secondary" size="icon" className="rounded-full">
-                  <div className="h-10 w-10 flex items-center justify-center">
-                      <UserIcon className="h-5 w-5" />
-                  </div>
-                  <span className="sr-only">Toggle user menu</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Personal Information</DialogTitle>
-                  <DialogDescription>
-                    Your personal details and document status.
-                  </DialogDescription>
-                </DialogHeader>
-                <PersonalInformationCard user={user} onUpdate={() => setIsProfileOpen(false)} />
-              </DialogContent>
-            </Dialog>
+            <Button asChild variant="secondary" size="icon" className="rounded-full">
+                <Link href="/my-profile">
+                    <div className="h-10 w-10 flex items-center justify-center">
+                        <UserIcon className="h-5 w-5" />
+                    </div>
+                    <span className="sr-only">My Profile</span>
+                </Link>
+            </Button>
           )}
         </div>
       </div>
