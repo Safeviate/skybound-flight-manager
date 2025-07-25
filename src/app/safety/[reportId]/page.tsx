@@ -256,14 +256,14 @@ function SafetyReportInvestigationPage() {
                     <ScrollArea className="flex-1">
                         <div className="p-6">
                             <TabsContent value="triage" className="mt-0 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Report Status</label>
                                         <Select 
                                             value={report.status} 
                                             onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value })}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Set status" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -325,7 +325,7 @@ function SafetyReportInvestigationPage() {
                                             value={report.classification || ''}
                                             onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value })}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Classify event" />
                                             </SelectTrigger>
                                             <SelectContent>
