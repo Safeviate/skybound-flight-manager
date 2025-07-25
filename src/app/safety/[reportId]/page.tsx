@@ -246,7 +246,6 @@ function SafetyReportInvestigationPage() {
                 <TabsList className="grid w-full grid-cols-6 h-auto">
                     <TabsTrigger value="details">Report Details</TabsTrigger>
                     <TabsTrigger value="classification">Classification</TabsTrigger>
-                    <TabsTrigger value="forum">Forum</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
                     <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
                     <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
@@ -457,13 +456,14 @@ function SafetyReportInvestigationPage() {
                             </div>
                     )}
 
-                    <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                     <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                 </TabsContent>
-                <TabsContent value="forum" className="mt-6 space-y-6">
-                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                </TabsContent>
+                
                 <TabsContent value="investigation" className="mt-6 space-y-6">
+                    <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                    <Separator />
+                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                    <Separator />
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
@@ -481,6 +481,7 @@ function SafetyReportInvestigationPage() {
                         </div>
                     </div>
                 </TabsContent>
+
                 <TabsContent value="risk-mitigation" className="mt-6 space-y-6">
                     <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
                 </TabsContent>
@@ -499,3 +500,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
