@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -35,6 +35,7 @@ import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
 import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
+import { suggestIcaoCategoryAction } from './actions';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -105,6 +106,9 @@ function SafetyReportInvestigationPage() {
   const [report, setReport] = useState<SafetyReport | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const { toast } = useToast();
+  
+  const [icaoState, icaoFormAction] = useActionState(suggestIcaoCategoryAction, { message: '', data: null });
+  const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -137,6 +141,20 @@ function SafetyReportInvestigationPage() {
     
     fetchReport();
   }, [reportId, company, user, loading, router, toast]);
+
+  useEffect(() => {
+    setIsIcaoLoading(false);
+    if (icaoState.data?.category && report) {
+      handleReportUpdate({ ...report, occurrenceCategory: icaoState.data.category });
+      toast({
+        title: 'AI Suggestion Complete',
+        description: `Suggested category: ${icaoState.data.category}. ${icaoState.data.reasoning}`,
+      });
+    } else if (icaoState.message && !icaoState.message.includes('complete')) {
+       toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
+    }
+  }, [icaoState]);
+
 
   const handleReportUpdate = async (updatedReport: SafetyReport, showToast = true) => {
     if (!company) return;
@@ -227,7 +245,7 @@ function SafetyReportInvestigationPage() {
   return (
     <>
       <main className="flex-1 p-4 md:p-8">
-        <div className="space-y-8 max-w-4xl mx-auto">
+        <div className="space-y-8">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
@@ -313,14 +331,22 @@ function SafetyReportInvestigationPage() {
                                     </DialogContent>
                                 </Dialog>
                             </label>
-                            <Combobox
-                                options={ICAO_OPTIONS}
-                                value={report.occurrenceCategory || ''}
-                                onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
-                                placeholder="Select ICAO category..."
-                                searchPlaceholder="Search categories..."
-                                noResultsText="No category found."
-                            />
+                            <div className="flex gap-2">
+                                <Combobox
+                                    options={ICAO_OPTIONS}
+                                    value={report.occurrenceCategory || ''}
+                                    onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
+                                    placeholder="Select ICAO category..."
+                                    searchPlaceholder="Search categories..."
+                                    noResultsText="No category found."
+                                />
+                                <form action={icaoFormAction}>
+                                    <input type="hidden" name="reportText" value={report.details} />
+                                    <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
+                                        {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                                    </Button>
+                                </form>
+                            </div>
                         </div>
                             <div className="space-y-2 flex-1 min-w-[200px]">
                             <label className="text-sm font-medium">Classification</label>
@@ -462,18 +488,20 @@ function SafetyReportInvestigationPage() {
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                     <Separator />
-                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                    <Separator />
                     <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
-                            <Textarea 
-                                id="investigation-notes"
-                                placeholder="Record all investigation notes, findings, and discussions here..."
-                                className="min-h-[300px]"
-                                value={report.investigationNotes || ''}
-                                onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
-                            />
+                        <div className="space-y-6">
+                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                             <Separator />
+                            <div className="space-y-2">
+                                <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
+                                <Textarea 
+                                    id="investigation-notes"
+                                    placeholder="Record all investigation notes, findings, and discussions here..."
+                                    className="min-h-[300px]"
+                                    value={report.investigationNotes || ''}
+                                    onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-6">
                             <InvestigationStepsGenerator report={report} />
@@ -483,7 +511,7 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
 
                 <TabsContent value="risk-mitigation" className="mt-6 space-y-6">
-                    <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
+                    <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
                 </TabsContent>
                 <TabsContent value="corrective-action" className="mt-6">
                     <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />

@@ -7,6 +7,7 @@ import { generateCorrectiveActionPlan } from '@/ai/flows/generate-corrective-act
 import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow';
 import { fiveWhysAnalysis } from '@/ai/flows/five-whys-analysis-flow';
 import { suggestHazards } from '@/ai/flows/suggest-hazards-flow';
+import { suggestIcaoCategory } from '@/ai/flows/suggest-icao-category-flow';
 import type { SafetyReport, AssociatedRisk } from '@/lib/types';
 
 const reportSchema = z.object({
@@ -149,5 +150,21 @@ export async function suggestHazardsAction(prevState: any, formData: FormData) {
     } catch (error) {
         console.error(error);
         return { message: 'An error occurred during hazard suggestion.', data: null };
+    }
+}
+
+export async function suggestIcaoCategoryAction(prevState: any, formData: FormData) {
+    const reportText = formData.get('reportText');
+
+    if (!reportText || typeof reportText !== 'string') {
+        return { message: 'Invalid report data provided.', data: null };
+    }
+
+    try {
+        const result = await suggestIcaoCategory({ reportText });
+        return { message: 'ICAO category suggestion complete.', data: result };
+    } catch (error) {
+        console.error(error);
+        return { message: 'An error occurred during ICAO category suggestion.', data: null };
     }
 }

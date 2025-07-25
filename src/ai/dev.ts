@@ -8,3 +8,4 @@ import '@/ai/flows/generate-corrective-action-plan-flow.ts';
 import '@/ai/flows/promote-to-risk-register-flow.ts';
 import '@/ai/flows/five-whys-analysis-flow.ts';
 import '@/ai/flows/suggest-hazards-flow.ts';
+import '@/ai/flows/suggest-icao-category-flow.ts';
