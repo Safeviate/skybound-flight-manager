@@ -14,6 +14,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -141,6 +142,42 @@ function SafetyReportInvestigationPage() {
                 </p>
             </CardContent>
         </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Investigation Workflow</CardTitle>
+                <CardDescription>
+                    Follow these steps to conduct a thorough investigation of the safety report.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="triage">
+                    <TabsList>
+                        <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
+                        <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                        <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
+                        <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
+                        <TabsTrigger value="final-review">Final Review</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="triage" className="mt-4">
+                        {/* Content for Triage & Classification will go here */}
+                    </TabsContent>
+                    <TabsContent value="investigation" className="mt-4">
+                        {/* Content for Investigation will go here */}
+                    </TabsContent>
+                     <TabsContent value="risk-mitigation" className="mt-4">
+                        {/* Content for Risk Mitigation will go here */}
+                    </TabsContent>
+                     <TabsContent value="corrective-action" className="mt-4">
+                        {/* Content for Corrective Action will go here */}
+                    </TabsContent>
+                     <TabsContent value="final-review" className="mt-4">
+                        {/* Content for Final Review will go here */}
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
+
       </main>
     </>
   );
