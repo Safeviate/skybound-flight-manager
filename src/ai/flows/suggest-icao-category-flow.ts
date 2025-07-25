@@ -11,7 +11,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { ICAO_OCCURRENCE_CATEGORIES, ICAO_CODE_DEFINITIONS } from '@/lib/types';
+import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
+import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 
 
 const SuggestIcaoCategoryInputSchema = z.object({
