@@ -9,9 +9,9 @@ import { ROLE_PERMISSIONS } from './types';
 export const airportData: Airport[] = [];
 export let aircraftData: Aircraft[] = [
     {
-        id: 'N12345',
+        id: 'N172SP',
         companyId: 'skybound-aero',
-        tailNumber: 'N12345',
+        tailNumber: 'N172SP',
         model: 'Cessna 172 Skyhawk',
         status: 'Available',
         hours: 1253.7,
@@ -22,10 +22,10 @@ export let aircraftData: Aircraft[] = [
         location: 'KPAO',
     },
     {
-        id: 'N54321',
+        id: 'N442PA',
         companyId: 'skybound-aero',
-        tailNumber: 'N54321',
-        model: 'Piper PA-28 Cherokee',
+        tailNumber: 'N442PA',
+        model: 'Piper PA-28 Archer',
         status: 'Available',
         hours: 877.2,
         nextServiceType: 'A-Check',
@@ -35,10 +35,10 @@ export let aircraftData: Aircraft[] = [
         location: 'KPAO',
     },
     {
-        id: 'N67890',
+        id: 'N231SR',
         companyId: 'skybound-aero',
-        tailNumber: 'N67890',
-        model: 'Diamond DA40 Star',
+        tailNumber: 'N231SR',
+        model: 'Cirrus SR20',
         status: 'In Maintenance',
         hours: 2105.1,
         nextServiceType: 'C-Check',
@@ -48,10 +48,10 @@ export let aircraftData: Aircraft[] = [
         location: 'KPAO',
     },
     {
-        id: 'N11223',
+        id: 'N203ME',
         companyId: 'skybound-aero',
-        tailNumber: 'N11223',
-        model: 'Cirrus SR22',
+        tailNumber: 'N203ME',
+        model: 'Piper PA-44 Seminole',
         status: 'Available',
         hours: 540.8,
         nextServiceType: 'A-Check',
@@ -61,10 +61,10 @@ export let aircraftData: Aircraft[] = [
         location: 'KSQL',
     },
     {
-        id: 'N44556',
+        id: 'N182SK',
         companyId: 'skybound-aero',
-        tailNumber: 'N44556',
-        model: 'Beechcraft G36 Bonanza',
+        tailNumber: 'N182SK',
+        model: 'Cessna 182 Skylane',
         status: 'Booked',
         hours: 1890.0,
         nextServiceType: 'B-Check',
@@ -72,6 +72,19 @@ export let aircraftData: Aircraft[] = [
         airworthinessExpiry: '2024-12-25',
         insuranceExpiry: '2024-12-25',
         location: 'KSQL',
+    },
+    {
+        id: 'N58BE',
+        companyId: 'skybound-aero',
+        tailNumber: 'N58BE',
+        model: 'Beechcraft Baron G58',
+        status: 'Available',
+        hours: 750.5,
+        nextServiceType: 'A-Check',
+        hoursUntilService: 35.5,
+        airworthinessExpiry: '2025-10-10',
+        insuranceExpiry: '2025-10-15',
+        location: 'KPAO',
     },
 ];
 export let userData: User[] = [
@@ -167,8 +180,8 @@ export let userData: User[] = [
             { id: 'endo-2', name: 'First Solo', dateAwarded: '2024-06-01', awardedBy: 'Sophia Chen'},
         ],
         trainingLogs: [
-            { id: 'log-1', date: '2024-08-10', aircraft: 'N12345', startHobbs: 1250.5, endHobbs: 1252.0, flightDuration: 1.5, instructorName: 'Sophia Chen', instructorNotes: 'Good progress on slow flight and stalls. Needs to work on rudder coordination during turns.'},
-            { id: 'log-2', date: '2024-08-12', aircraft: 'N54321', startHobbs: 876.2, endHobbs: 877.2, flightDuration: 1.0, instructorName: 'Sophia Chen', instructorNotes: 'Solo cross-country planning was excellent. Flight execution was safe and within standards.'},
+            { id: 'log-1', date: '2024-08-10', aircraft: 'N172SP', startHobbs: 1250.5, endHobbs: 1252.0, flightDuration: 1.5, instructorName: 'Sophia Chen', instructorNotes: 'Good progress on slow flight and stalls. Needs to work on rudder coordination during turns.'},
+            { id: 'log-2', date: '2024-08-12', aircraft: 'N442PA', startHobbs: 876.2, endHobbs: 877.2, flightDuration: 1.0, instructorName: 'Sophia Chen', instructorNotes: 'Solo cross-country planning was excellent. Flight execution was safe and within standards.'},
         ],
         consentDisplayContact: 'Consented',
     },
@@ -188,7 +201,7 @@ export let userData: User[] = [
         licenseExpiry: '2026-03-15',
         endorsements: [],
         trainingLogs: [
-            { id: 'log-3', date: '2024-08-11', aircraft: 'N12345', startHobbs: 1252.5, endHobbs: 1253.7, flightDuration: 1.2, instructorName: 'William Green', instructorNotes: 'Introduced basic maneuvers. Student is picking up concepts quickly but needs to relax on the controls.'}
+            { id: 'log-3', date: '2024-08-11', aircraft: 'N172SP', startHobbs: 1252.5, endHobbs: 1253.7, flightDuration: 1.2, instructorName: 'William Green', instructorNotes: 'Introduced basic maneuvers. Student is picking up concepts quickly but needs to relax on the controls.'}
         ],
         consentDisplayContact: 'Not Consented',
     },
