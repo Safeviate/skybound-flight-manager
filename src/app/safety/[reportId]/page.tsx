@@ -240,24 +240,11 @@ function SafetyReportInvestigationPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <h3 className="font-semibold text-lg">Details of Occurrence</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-48 overflow-y-auto">
-                        {report.details}
-                    </p>
-                </CardContent>
-
-                <div className="px-6 pb-6">
-                    <Separator className="mb-6"/>
-                    <CardTitle>Investigation Workflow</CardTitle>
-                    <CardDescription>
-                        Follow these steps to conduct a thorough investigation of the safety report.
-                    </CardDescription>
-                </div>
                 
-                <Tabs defaultValue="triage" className="flex flex-col flex-1 min-h-0">
+                <Tabs defaultValue="details" className="flex flex-col flex-1 min-h-0">
                     <div className="px-6">
-                        <TabsList className="grid w-full grid-cols-5 h-auto">
+                        <TabsList className="grid w-full grid-cols-6 h-auto">
+                            <TabsTrigger value="details">Report Details</TabsTrigger>
                             <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
                             <TabsTrigger value="investigation">Investigation</TabsTrigger>
                             <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
@@ -267,6 +254,12 @@ function SafetyReportInvestigationPage() {
                     </div>
                     <ScrollArea className="flex-1">
                         <div className="p-6">
+                            <TabsContent value="details" className="mt-0 space-y-4">
+                                <h3 className="font-semibold text-lg">Details of Occurrence</h3>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                                    {report.details}
+                                </p>
+                            </TabsContent>
                             <TabsContent value="triage" className="mt-0 space-y-8">
                                 <div className="flex flex-wrap items-end gap-4">
                                     <div className="space-y-2 flex-1 min-w-[200px]">
