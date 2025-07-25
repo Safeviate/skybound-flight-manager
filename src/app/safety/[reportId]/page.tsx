@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { Combobox } from '@/components/ui/combobox';
 import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -217,7 +220,42 @@ function SafetyReportInvestigationPage() {
                                 </Select>
                             </div>
                              <div className="space-y-2">
-                                <label className="text-sm font-medium">ICAO Occurrence Category</label>
+                                <label className="text-sm font-medium flex items-center gap-1">
+                                    ICAO Occurrence Category
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5">
+                                                <Info className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-2xl">
+                                            <DialogHeader>
+                                                <DialogTitle>ICAO Occurrence Categories</DialogTitle>
+                                                <DialogDescription>
+                                                    Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-96">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Code</TableHead>
+                                                            <TableHead>Definition</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {ICAO_OPTIONS.map(option => (
+                                                            <TableRow key={option.value}>
+                                                                <TableCell className="font-mono">{option.label}</TableCell>
+                                                                <TableCell>{option.description}</TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
+                                </label>
                                 <Combobox
                                     options={ICAO_OPTIONS}
                                     value={report.occurrenceCategory || ''}

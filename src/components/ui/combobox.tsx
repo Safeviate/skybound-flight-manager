@@ -19,7 +19,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 type ComboboxOption = {
     value: string;
@@ -61,30 +60,22 @@ export function Combobox({ options, value, onChange, placeholder, searchPlacehol
             <CommandEmpty>{noResultsText || "No option found."}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
-                <Tooltip key={option.value}>
-                  <TooltipTrigger asChild>
-                    <CommandItem
-                      value={option.value}
-                      onSelect={(currentValue) => {
-                        onChange(currentValue === value ? "" : currentValue)
-                        setOpen(false)
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  </TooltipTrigger>
-                  {option.description && (
-                    <TooltipContent side="right" align="start">
-                        <p>{option.description}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue === value ? "" : currentValue)
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
               ))}
             </CommandGroup>
           </CommandList>
