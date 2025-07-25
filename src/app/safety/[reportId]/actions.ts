@@ -151,4 +151,3 @@ export async function suggestHazardsAction(prevState: any, formData: FormData) {
         return { message: 'An error occurred during hazard suggestion.', data: null };
     }
 }
-    

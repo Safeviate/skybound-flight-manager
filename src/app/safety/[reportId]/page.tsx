@@ -7,14 +7,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { SafetyReport } from '@/lib/types';
+import type { Risk, SafetyReport } from '@/lib/types';
 import { ArrowLeft, Mail, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InvestigationTeamForm } from './investigation-team-form';
+import { InitialRiskAssessment } from './initial-risk-assessment';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
+import { Combobox } from '@/components/ui/combobox';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -24,6 +29,8 @@ const getStatusVariant = (status: SafetyReport['status']) => {
     default: return 'outline';
   }
 };
+
+const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({ value: code, label: code }));
 
 function SafetyReportInvestigationPage() {
   const params = useParams();
@@ -65,6 +72,33 @@ function SafetyReportInvestigationPage() {
     
     fetchReport();
   }, [reportId, company, user, loading, router, toast]);
+
+  const handleReportUpdate = async (updatedReport: SafetyReport, showToast = true) => {
+    if (!company) return;
+    setReport(updatedReport); // Optimistic update
+    try {
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+        await setDoc(reportRef, updatedReport, { merge: true });
+        if (showToast) {
+            toast({ title: 'Report Updated', description: 'Your changes have been saved.' });
+        }
+    } catch (error) {
+        console.error("Error updating report:", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to the database.' });
+        // Optionally revert state here
+    }
+  };
+
+  const handlePromoteRisk = async (newRisk: Risk) => {
+    if (!company) return;
+    try {
+        const riskRef = doc(db, `companies/${company.id}/risks`, newRisk.id);
+        await setDoc(riskRef, newRisk);
+    } catch (error) {
+        console.error("Error promoting risk:", error);
+        toast({ variant: 'destructive', title: 'Promotion Failed', description: 'Could not save risk to the central register.' });
+    }
+  };
 
   if (loading || dataLoading) {
     return (
@@ -154,13 +188,43 @@ function SafetyReportInvestigationPage() {
                 <Tabs defaultValue="triage">
                     <TabsList>
                         <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
-                        <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                        <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
-                        <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
-                        <TabsTrigger value="final-review">Final Review</TabsTrigger>
+                        <TabsTrigger value="investigation" disabled>Investigation</TabsTrigger>
+                        <TabsTrigger value="risk-mitigation" disabled>Risk Mitigation</TabsTrigger>
+                        <TabsTrigger value="corrective-action" disabled>Corrective Action</TabsTrigger>
+                        <TabsTrigger value="final-review" disabled>Final Review</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="triage" className="mt-4">
-                        {/* Content for Triage & Classification will go here */}
+                    <TabsContent value="triage" className="mt-4 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Report Status</label>
+                                <Select 
+                                    value={report.status} 
+                                    onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Set status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Open">Open</SelectItem>
+                                        <SelectItem value="Under Review">Under Review</SelectItem>
+                                        <SelectItem value="Closed">Closed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="space-y-2">
+                                <label className="text-sm font-medium">ICAO Occurrence Category</label>
+                                <Combobox
+                                    options={ICAO_OPTIONS}
+                                    value={report.occurrenceCategory || ''}
+                                    onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
+                                    placeholder="Select ICAO category..."
+                                    searchPlaceholder="Search categories..."
+                                    noResultsText="No category found."
+                                />
+                            </div>
+                        </div>
+                        <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                        <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                     </TabsContent>
                     <TabsContent value="investigation" className="mt-4">
                         {/* Content for Investigation will go here */}

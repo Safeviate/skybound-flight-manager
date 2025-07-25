@@ -36,7 +36,7 @@ type TeamFormValues = z.infer<typeof teamFormSchema>;
 
 interface InvestigationTeamFormProps {
   report: SafetyReport;
-  onUpdate: (updatedReport: SafetyReport) => void;
+  onUpdate: (updatedReport: SafetyReport, showToast?: boolean) => void;
 }
 
 export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFormProps) {
@@ -66,13 +66,22 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
     fetchPersonnel();
   }, [company, toast]);
 
-  const form = useForm<TeamFormValues>({
-    resolver: zodResolver(teamFormSchema),
-  });
+  React.useEffect(() => {
+      const currentTeam = new Set(report.investigationTeam || []);
+      if (report.submittedBy !== 'Anonymous') {
+        currentTeam.add(report.submittedBy);
+      }
+      setTeam(Array.from(currentTeam));
+  }, [report.investigationTeam, report.submittedBy]);
+
 
   const availablePersonnel = allPersonnel.filter(
     (u) => u.role !== 'Student' && !team.includes(u.name)
   );
+
+  const form = useForm<TeamFormValues>({
+    resolver: zodResolver(teamFormSchema),
+  });
 
   function onAddMember(data: TeamFormValues) {
     const newTeam = [...team, data.personnel];
@@ -104,9 +113,12 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h4 className="font-semibold mb-2">Current Investigation Team</h4>
+    <div className="space-y-6 rounded-lg border p-4">
+        <div>
+            <h3 className="font-semibold text-lg">Investigation Team</h3>
+            <p className="text-sm text-muted-foreground">Assign personnel to investigate this report.</p>
+        </div>
+      <div className="space-y-4">
         {team.length > 0 ? (
           <div className="flex flex-wrap gap-4">
             {team.map((memberName) => {
@@ -146,7 +158,7 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
             name="personnel"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Add Team Member</FormLabel>
+                <FormLabel className="sr-only">Add Team Member</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>

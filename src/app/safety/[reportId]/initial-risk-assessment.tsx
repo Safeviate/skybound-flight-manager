@@ -1,10 +1,8 @@
 
-
 'use client';
 
 import React, { useState, useActionState, Fragment } from 'react';
 import { useFormStatus } from 'react-dom';
-import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
@@ -127,7 +125,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
   }
 
   return (
-    <Fragment>
+    <div className="space-y-4 rounded-lg border p-4">
         <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex-1">
                 <h3 className="font-semibold text-lg">Initial Risk Assessment</h3>
@@ -204,6 +202,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                         });
                                         onPromoteRisk({
                                             id: `risk-reg-${Date.now()}`,
+                                            companyId: report.companyId,
                                             dateIdentified: new Date().toISOString().split('T')[0],
                                             description: result.data.description,
                                             consequences: [risk.risk], // Use the original risk as the consequence
@@ -239,6 +238,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                 <p className="text-muted-foreground">No hazards or risks have been added yet.</p>
             </div>
         )}
-    </Fragment>
+    </div>
   );
 }
