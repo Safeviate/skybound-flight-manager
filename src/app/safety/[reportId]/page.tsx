@@ -443,7 +443,7 @@ function CorrectiveActionPlanResult({ plan, setPlan, report, onCloseReport }: Co
                     <Button variant="outline">Save Plan</Button>
                     <Button onClick={onCloseReport}>
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        Close & Archive Report
+                        Close &amp; Archive Report
                     </Button>
                 </div>
             )}
@@ -530,7 +530,7 @@ const PrintableReport = ({ report, correctiveActionPlan, onUpdate, onPromoteRisk
             </Card>
             <Card>
                 <CardHeader>
-                  <CardTitle>Risk Assessment & Mitigation</CardTitle>
+                  <CardTitle>Risk Assessment &amp; Mitigation</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-6">
                     <InitialRiskAssessment report={report} onUpdate={onUpdate} onPromoteRisk={onPromoteRisk} />
@@ -849,7 +849,7 @@ function SafetyReportInvestigationPage() {
                     <Card>
                         <AccordionTrigger className="p-6">
                            <div className="text-left">
-                                <CardTitle>Step 1: Triage & Classification</CardTitle>
+                                <CardTitle>Step 1: Triage &amp; Classification</CardTitle>
                                 <CardDescription>Review and classify the initial report details.</CardDescription>
                            </div>
                         </AccordionTrigger>
@@ -1106,3 +1106,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
