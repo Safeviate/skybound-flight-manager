@@ -228,7 +228,7 @@ function SafetyReportInvestigationPage() {
     <>
       <main className="flex-1 p-4 md:p-8">
         <div className="space-y-8 max-w-4xl mx-auto">
-            <Card className="flex flex-col h-[calc(100vh-10rem)]">
+            <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
@@ -240,258 +240,253 @@ function SafetyReportInvestigationPage() {
                         </div>
                     </div>
                 </CardHeader>
-                
-                <Tabs defaultValue="details" className="flex flex-col flex-1 min-h-0">
-                    <div className="px-6">
-                        <TabsList className="grid w-full grid-cols-6 h-auto">
-                            <TabsTrigger value="details">Report Details</TabsTrigger>
-                            <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
-                            <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                            <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
-                            <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
-                            <TabsTrigger value="final-review">Final Review</TabsTrigger>
-                        </TabsList>
-                    </div>
-                    <ScrollArea className="flex-1">
-                        <div className="p-6">
-                            <TabsContent value="details" className="mt-0 space-y-4">
-                                <h3 className="font-semibold text-lg">Details of Occurrence</h3>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
-                                    {report.details}
-                                </p>
-                            </TabsContent>
-                            <TabsContent value="triage" className="mt-0 space-y-8">
-                                <div className="flex flex-wrap items-end gap-4">
-                                    <div className="space-y-2 flex-1 min-w-[200px]">
-                                        <label className="text-sm font-medium">Report Status</label>
-                                        <Select 
-                                            value={report.status} 
-                                            onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value })}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Set status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Open">Open</SelectItem>
-                                                <SelectItem value="Under Review">Under Review</SelectItem>
-                                                <SelectItem value="Closed">Closed</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2 flex-1 min-w-[240px]">
-                                        <label className="text-sm font-medium flex items-center gap-1">
-                                            ICAO Occurrence Category
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-5 w-5">
-                                                        <Info className="h-4 w-4 text-muted-foreground" />
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-2xl">
-                                                    <DialogHeader>
-                                                        <DialogTitle>ICAO Occurrence Categories</DialogTitle>
-                                                        <DialogDescription>
-                                                            Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <ScrollArea className="h-96">
-                                                        <Table>
-                                                            <TableHeader>
-                                                                <TableRow>
-                                                                    <TableHead>Code</TableHead>
-                                                                    <TableHead>Definition</TableHead>
-                                                                </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                                {ICAO_OPTIONS.map(option => (
-                                                                    <TableRow key={option.value}>
-                                                                        <TableCell className="font-mono">{option.label}</TableCell>
-                                                                        <TableCell>{option.description}</TableCell>
-                                                                    </TableRow>
-                                                                ))}
-                                                            </TableBody>
-                                                        </Table>
-                                                    </ScrollArea>
-                                                </DialogContent>
-                                            </Dialog>
-                                        </label>
-                                        <Combobox
-                                            options={ICAO_OPTIONS}
-                                            value={report.occurrenceCategory || ''}
-                                            onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
-                                            placeholder="Select ICAO category..."
-                                            searchPlaceholder="Search categories..."
-                                            noResultsText="No category found."
-                                        />
-                                    </div>
-                                     <div className="space-y-2 flex-1 min-w-[200px]">
-                                        <label className="text-sm font-medium">Classification</label>
-                                        <Select 
-                                            value={report.classification || ''}
-                                            onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value })}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Classify event" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {CLASSIFICATION_OPTIONS.map(opt => (
-                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                
-                                {showScfFields && (
-                                    <div className="space-y-2 p-4 border bg-muted/50 rounded-lg">
-                                        <label className="text-sm font-medium">System/Component Failure Details</label>
-                                        <Select 
-                                            value={report.subCategory || ''}
-                                            onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select the affected system" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {SCF_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <Textarea
-                                          placeholder="Add any other relevant details about the system/component failure..."
-                                          value={report.eventSubcategoryDetails || ''}
-                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                                        />
-                                    </div>
-                                )}
-
-                                {showLosFields && (
-                                    <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
-                                        <label className="text-sm font-medium block mb-2">Loss of Separation Details</label>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-medium">Event Type</label>
-                                                <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}>
-                                                    <SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {LOS_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            {report.subCategory === 'Resolution Advisory (RA)' && (
-                                                <>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-medium">RA Callout</label>
-                                                         <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value }, false)}>
-                                                            <SelectTrigger><SelectValue placeholder="Select RA callout" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                {RA_CALLOUTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-medium">RA Followed?</label>
-                                                         <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value }, false)}>
-                                                            <SelectTrigger><SelectValue placeholder="Select one" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="Yes">Yes</SelectItem>
-                                                                <SelectItem value="No">No</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                        <Textarea
-                                          placeholder="Add any other relevant details about the loss of separation..."
-                                          value={report.eventSubcategoryDetails || ''}
-                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                                        />
-                                    </div>
-                                )}
-                                
-                                {showWeatherFields && (
-                                    <WeatherInputGroup report={report} onUpdate={handleReportUpdate} />
-                                )}
-
-                                {showBirdStrikeFields && (
-                                     <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
-                                        <label className="text-sm font-medium block flex items-center gap-2">
-                                            <Bird className="h-4 w-4" />
-                                            Bird Strike Details
-                                        </label>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bird-number">Number of Birds</Label>
-                                                <Select value={report.numberOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, numberOfBirds: value }, false)}>
-                                                    <SelectTrigger id="bird-number"><SelectValue placeholder="Select number" /></SelectTrigger>
-                                                    <SelectContent>{BIRD_NUMBERS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bird-size">Size of Birds</Label>
-                                                <Select value={report.sizeOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, sizeOfBirds: value }, false)}>
-                                                    <SelectTrigger id="bird-size"><SelectValue placeholder="Select size" /></SelectTrigger>
-                                                    <SelectContent>{BIRD_SIZES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bird-part">Part Struck</Label>
-                                                <Select value={report.partOfAircraftStruck || ''} onValueChange={(value) => handleReportUpdate({ ...report, partOfAircraftStruck: value }, false)}>
-                                                    <SelectTrigger id="bird-part"><SelectValue placeholder="Select part" /></SelectTrigger>
-                                                    <SelectContent>{BIRD_STRIKE_PARTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex items-center space-x-2 pt-6">
-                                                <Switch 
-                                                    id="bird-damage"
-                                                    checked={report.birdStrikeDamage}
-                                                    onCheckedChange={(checked) => handleReportUpdate({ ...report, birdStrikeDamage: checked }, false)}
-                                                />
-                                                <Label htmlFor="bird-damage">Damage Reported?</Label>
-                                            </div>
-                                        </div>
-                                         <Textarea
-                                          placeholder="Add any other relevant details about the bird strike..."
-                                          value={report.eventSubcategoryDetails || ''}
-                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                                        />
-                                     </div>
-                                )}
-
-                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                                <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
-                            </TabsContent>
-                            <TabsContent value="investigation" className="mt-0 space-y-6">
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
-                                        <Textarea 
-                                            id="investigation-notes"
-                                            placeholder="Record all investigation notes, findings, and discussions here..."
-                                            className="min-h-[300px]"
-                                            value={report.investigationNotes || ''}
-                                            onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
-                                        />
-                                    </div>
-                                    <div className="space-y-6">
-                                        <InvestigationStepsGenerator report={report} />
-                                        <FiveWhysGenerator report={report} />
-                                    </div>
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="risk-mitigation" className="mt-0 space-y-6">
-                                <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
-                            </TabsContent>
-                            <TabsContent value="corrective-action" className="mt-0">
-                                <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />
-                            </TabsContent>
-                            <TabsContent value="final-review" className="mt-0">
-                                <FinalReview report={report} onUpdate={handleReportUpdate} />
-                            </TabsContent>
-                        </div>
-                    </ScrollArea>
-                </Tabs>
             </Card>
+                
+            <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-6 h-auto">
+                    <TabsTrigger value="details">Report Details</TabsTrigger>
+                    <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                    <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
+                    <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
+                    <TabsTrigger value="final-review">Final Review</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="details" className="mt-6 space-y-4">
+                    <h3 className="font-semibold text-lg">Details of Occurrence</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                        {report.details}
+                    </p>
+                </TabsContent>
+                <TabsContent value="triage" className="mt-6 space-y-8">
+                    <div className="flex flex-wrap items-end gap-4">
+                        <div className="space-y-2 flex-1 min-w-[200px]">
+                            <label className="text-sm font-medium">Report Status</label>
+                            <Select 
+                                value={report.status} 
+                                onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value })}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Set status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Open">Open</SelectItem>
+                                    <SelectItem value="Under Review">Under Review</SelectItem>
+                                    <SelectItem value="Closed">Closed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 flex-1 min-w-[240px]">
+                            <label className="text-sm font-medium flex items-center gap-1">
+                                ICAO Occurrence Category
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5">
+                                            <Info className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-2xl">
+                                        <DialogHeader>
+                                            <DialogTitle>ICAO Occurrence Categories</DialogTitle>
+                                            <DialogDescription>
+                                                Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <ScrollArea className="h-96">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Code</TableHead>
+                                                        <TableHead>Definition</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {ICAO_OPTIONS.map(option => (
+                                                        <TableRow key={option.value}>
+                                                            <TableCell className="font-mono">{option.label}</TableCell>
+                                                            <TableCell>{option.description}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </ScrollArea>
+                                    </DialogContent>
+                                </Dialog>
+                            </label>
+                            <Combobox
+                                options={ICAO_OPTIONS}
+                                value={report.occurrenceCategory || ''}
+                                onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
+                                placeholder="Select ICAO category..."
+                                searchPlaceholder="Search categories..."
+                                noResultsText="No category found."
+                            />
+                        </div>
+                            <div className="space-y-2 flex-1 min-w-[200px]">
+                            <label className="text-sm font-medium">Classification</label>
+                            <Select 
+                                value={report.classification || ''}
+                                onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value })}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Classify event" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CLASSIFICATION_OPTIONS.map(opt => (
+                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    
+                    {showScfFields && (
+                        <div className="space-y-2 p-4 border bg-muted/50 rounded-lg">
+                            <label className="text-sm font-medium">System/Component Failure Details</label>
+                            <Select 
+                                value={report.subCategory || ''}
+                                onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select the affected system" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SCF_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <Textarea
+                                placeholder="Add any other relevant details about the system/component failure..."
+                                value={report.eventSubcategoryDetails || ''}
+                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                            />
+                        </div>
+                    )}
+
+                    {showLosFields && (
+                        <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+                            <label className="text-sm font-medium block mb-2">Loss of Separation Details</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium">Event Type</label>
+                                    <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}>
+                                        <SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger>
+                                        <SelectContent>
+                                            {LOS_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {report.subCategory === 'Resolution Advisory (RA)' && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium">RA Callout</label>
+                                                <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value }, false)}>
+                                                <SelectTrigger><SelectValue placeholder="Select RA callout" /></SelectTrigger>
+                                                <SelectContent>
+                                                    {RA_CALLOUTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium">RA Followed?</label>
+                                                <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value }, false)}>
+                                                <SelectTrigger><SelectValue placeholder="Select one" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Yes">Yes</SelectItem>
+                                                    <SelectItem value="No">No</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <Textarea
+                                placeholder="Add any other relevant details about the loss of separation..."
+                                value={report.eventSubcategoryDetails || ''}
+                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                            />
+                        </div>
+                    )}
+                    
+                    {showWeatherFields && (
+                        <WeatherInputGroup report={report} onUpdate={handleReportUpdate} />
+                    )}
+
+                    {showBirdStrikeFields && (
+                            <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+                            <label className="text-sm font-medium block flex items-center gap-2">
+                                <Bird className="h-4 w-4" />
+                                Bird Strike Details
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                                <div className="space-y-2">
+                                    <Label htmlFor="bird-number">Number of Birds</Label>
+                                    <Select value={report.numberOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, numberOfBirds: value }, false)}>
+                                        <SelectTrigger id="bird-number"><SelectValue placeholder="Select number" /></SelectTrigger>
+                                        <SelectContent>{BIRD_NUMBERS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bird-size">Size of Birds</Label>
+                                    <Select value={report.sizeOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, sizeOfBirds: value }, false)}>
+                                        <SelectTrigger id="bird-size"><SelectValue placeholder="Select size" /></SelectTrigger>
+                                        <SelectContent>{BIRD_SIZES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bird-part">Part Struck</Label>
+                                    <Select value={report.partOfAircraftStruck || ''} onValueChange={(value) => handleReportUpdate({ ...report, partOfAircraftStruck: value }, false)}>
+                                        <SelectTrigger id="bird-part"><SelectValue placeholder="Select part" /></SelectTrigger>
+                                        <SelectContent>{BIRD_STRIKE_PARTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center space-x-2 pt-6">
+                                    <Switch 
+                                        id="bird-damage"
+                                        checked={report.birdStrikeDamage}
+                                        onCheckedChange={(checked) => handleReportUpdate({ ...report, birdStrikeDamage: checked }, false)}
+                                    />
+                                    <Label htmlFor="bird-damage">Damage Reported?</Label>
+                                </div>
+                            </div>
+                                <Textarea
+                                placeholder="Add any other relevant details about the bird strike..."
+                                value={report.eventSubcategoryDetails || ''}
+                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                                />
+                            </div>
+                    )}
+
+                    <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+                </TabsContent>
+                <TabsContent value="investigation" className="mt-6 space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
+                            <Textarea 
+                                id="investigation-notes"
+                                placeholder="Record all investigation notes, findings, and discussions here..."
+                                className="min-h-[300px]"
+                                value={report.investigationNotes || ''}
+                                onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                            />
+                        </div>
+                        <div className="space-y-6">
+                            <InvestigationStepsGenerator report={report} />
+                            <FiveWhysGenerator report={report} />
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="risk-mitigation" className="mt-6 space-y-6">
+                    <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
+                </TabsContent>
+                <TabsContent value="corrective-action" className="mt-6">
+                    <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />
+                </TabsContent>
+                <TabsContent value="final-review" className="mt-6">
+                    <FinalReview report={report} onUpdate={handleReportUpdate} />
+                </TabsContent>
+            </Tabs>
         </div>
       </main>
     </>
@@ -500,3 +495,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
