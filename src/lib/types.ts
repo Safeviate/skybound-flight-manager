@@ -198,6 +198,13 @@ export type DiscussionEntry = {
   isCode?: boolean;
 };
 
+export type InvestigationDiaryEntry = {
+    id: string;
+    date: string;
+    author: string;
+    entryText: string;
+};
+
 export type AssociatedRisk = {
     id: string;
     hazard: string;
@@ -234,6 +241,7 @@ export type SafetyReport = {
   aircraftInvolved?: string;
   location?: string;
   investigationTeam?: string[];
+  investigationDiary?: InvestigationDiaryEntry[];
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];

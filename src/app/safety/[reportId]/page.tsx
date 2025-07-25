@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -36,6 +37,7 @@ import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
 import { suggestIcaoCategoryAction } from './actions';
 import { InitialRiskAssessment } from './initial-risk-assessment';
+import { InvestigationDiary } from './investigation-diary';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -510,6 +512,7 @@ function SafetyReportInvestigationPage() {
                         </Card>
                     </div>
                      <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                     <InvestigationDiary report={report} onUpdate={handleReportUpdate} />
                      <div className="space-y-2">
                         <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
                         <Textarea 
@@ -539,5 +542,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    
