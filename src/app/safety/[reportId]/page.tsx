@@ -486,10 +486,9 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                    <Separator />
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-6">
+                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                             <DiscussionSection report={report} onUpdate={handleReportUpdate} />
                              <Separator />
                             <div className="space-y-2">
@@ -528,5 +527,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    
