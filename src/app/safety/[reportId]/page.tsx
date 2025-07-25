@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { InvestigationStepsGenerator } from './investigation-steps-generator';
 import { FiveWhysGenerator } from './five-whys-generator';
+import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -257,7 +258,7 @@ function SafetyReportInvestigationPage() {
                         <TabsList className="grid w-full grid-cols-5 h-auto">
                             <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
                             <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                            <TabsTrigger value="risk-mitigation" disabled>Risk Mitigation</TabsTrigger>
+                            <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
                             <TabsTrigger value="corrective-action" disabled>Corrective Action</TabsTrigger>
                             <TabsTrigger value="final-review" disabled>Final Review</TabsTrigger>
                         </TabsList>
@@ -483,8 +484,8 @@ function SafetyReportInvestigationPage() {
                                     </div>
                                 </div>
                             </TabsContent>
-                            <TabsContent value="risk-mitigation" className="mt-0">
-                                {/* Content for Risk Mitigation will go here */}
+                            <TabsContent value="risk-mitigation" className="mt-0 space-y-6">
+                                <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
                             </TabsContent>
                             <TabsContent value="corrective-action" className="mt-0">
                                 {/* Content for Corrective Action will go here */}
@@ -504,6 +505,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-
-
