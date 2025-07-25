@@ -712,28 +712,25 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = async (updatedReportData: Partial<SafetyReport>, currentCompany: Company | null) => {
-    setReport(prev => prev ? { ...prev, ...updatedReportData } : null);
+  const handleReportUpdate = useCallback(async (updatedReportData: Partial<SafetyReport>, currentCompany: Company | null) => {
+    setReport(prev => {
+        if (!prev) return null;
+        const newReport = { ...prev, ...updatedReportData };
+        
+        // This is an async operation, but we update state synchronously
+        if (currentCompany) {
+            const reportRef = doc(db, `companies/${currentCompany.id}/safety-reports`, newReport.id);
+            updateDoc(reportRef, newReport as any).catch(error => {
+                console.error("Error updating report:", error);
+                toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
+                // Optionally revert state here, though it might cause UI flicker
+            });
+        }
+        
+        return newReport;
+    });
 
-    if (!currentCompany || !report) {
-      toast({
-        variant: 'destructive',
-        title: 'Save Failed',
-        description: 'Cannot save changes, required data is not loaded. Please refresh the page.',
-      });
-      return;
-    }
-
-    const finalReport = { ...report, ...updatedReportData };
-    try {
-        const reportRef = doc(db, `companies/${currentCompany.id}/safety-reports`, finalReport.id);
-        await updateDoc(reportRef, finalReport as any);
-    } catch (error) {
-        console.error("Error updating report:", error);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
-        setReport(report); // Revert optimistic update on failure
-    }
-  };
+  }, [toast]);
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
      toast({
