@@ -25,7 +25,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
-import { format, parseISO, isBefore } from 'date-fns';
+import { format, parseISO, isBefore, addDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Booking, Aircraft, User } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
@@ -33,6 +33,7 @@ import { useUser } from '@/context/user-provider';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { DateRange } from 'react-day-picker';
 
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -46,17 +47,35 @@ const bookingFormSchema = z.object({
   date: z.date({
     required_error: 'A date is required.',
   }),
-  startTime: z.string().regex(timeRegex, {
-      message: "Please enter a valid time in HH:mm format.",
-  }),
-  endTime: z.string().regex(timeRegex, {
-      message: "Please enter a valid time in HH:mm format.",
-  }),
+  endDate: z.date().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   purpose: z.enum(['Training', 'Maintenance', 'Private'], {
     required_error: 'Please select a purpose.',
   }),
   trainingExercise: z.string().optional(),
-}).refine(data => data.endTime > data.startTime, {
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return data.startTime && timeRegex.test(data.startTime);
+    }
+    return true;
+}, {
+    message: "Start time is required and must be in HH:mm format.",
+    path: ["startTime"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance') {
+        return data.endTime && timeRegex.test(data.endTime);
+    }
+    return true;
+}, {
+    message: "End time is required and must be in HH:mm format.",
+    path: ["endTime"],
+}).refine(data => {
+    if (data.purpose !== 'Maintenance' && data.startTime && data.endTime) {
+        return data.endTime > data.startTime;
+    }
+    return true;
+}, {
     message: "End time must be after start time.",
     path: ["endTime"],
 });
@@ -78,8 +97,6 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
         aircraft: '',
         student: '',
         instructor: '',
-        startTime: '',
-        endTime: '',
         trainingExercise: '',
     }
   });
@@ -87,6 +104,10 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [userData, setUserData] = useState<User[]>([]);
   const [trainingExercisesData, setTrainingExercisesData] = useState<string[]>([]); // Assuming this could be dynamic too
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+      from: new Date(),
+      to: addDays(new Date(), 4)
+  });
 
   useEffect(() => {
     if (!company) return;
@@ -111,6 +132,11 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
     };
     fetchPrerequisites();
   }, [company, toast]);
+  
+  useEffect(() => {
+    if (dateRange?.from) form.setValue('date', dateRange.from);
+    if (dateRange?.to) form.setValue('endDate', dateRange.to);
+  }, [dateRange, form]);
 
   const purpose = form.watch('purpose');
 
@@ -122,7 +148,10 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
         ...data,
         companyId: company.id,
         date: format(data.date, 'yyyy-MM-dd'),
+        endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
         status,
+        startTime: data.startTime || '00:00',
+        endTime: data.endTime || '23:59',
         student: data.student || 'N/A',
         instructor: data.instructor || 'N/A',
     };
@@ -234,129 +263,179 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="student"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Student</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a student (optional)" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                   {availableStudents.length > 0 ? (
-                    availableStudents.map(s => (
-                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>No students available for booking</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="instructor"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instructor</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an instructor (optional)" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableInstructors.length > 0 ? (
-                    availableInstructors.map(i => (
-                      <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                    ))
-                  ) : (
-                     <SelectItem value="none" disabled>No instructors available for booking</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-4">
+        {purpose !== 'Maintenance' && (
+            <>
             <FormField
             control={form.control}
-            name="date"
+            name="student"
             render={({ field }) => (
-                <FormItem className="flex flex-col flex-1">
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
+                <FormItem>
+                <FormLabel>Student</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                        <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                        )}
-                        >
-                        {field.value ? (
-                            format(field.value, "PPP")
-                        ) : (
-                            <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a student (optional)" />
+                    </SelectTrigger>
                     </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                            date < new Date()
-                        }
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
+                    <SelectContent>
+                    {availableStudents.length > 0 ? (
+                        availableStudents.map(s => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                        ))
+                    ) : (
+                        <SelectItem value="none" disabled>No students available for booking</SelectItem>
+                    )}
+                    </SelectContent>
+                </Select>
                 <FormMessage />
                 </FormItem>
             )}
             />
-        </div>
+            <FormField
+            control={form.control}
+            name="instructor"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Instructor</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an instructor (optional)" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {availableInstructors.length > 0 ? (
+                        availableInstructors.map(i => (
+                        <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                        ))
+                    ) : (
+                        <SelectItem value="none" disabled>No instructors available for booking</SelectItem>
+                    )}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            </>
+        )}
         <div className="flex gap-4">
-            <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col flex-1">
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                        <Input placeholder="14:00" {...field} />
-                    </FormControl>
+            {purpose === 'Maintenance' ? (
+                <FormItem className="flex flex-col flex-1">
+                    <FormLabel>Maintenance Date Range</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="date"
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !dateRange && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange?.from ? (
+                            dateRange.to ? (
+                                <>
+                                {format(dateRange.from, "LLL dd, y")} -{" "}
+                                {format(dateRange.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(dateRange.from, "LLL dd, y")
+                            )
+                            ) : (
+                            <span>Pick a date range</span>
+                            )}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={dateRange?.from}
+                            selected={dateRange}
+                            onSelect={setDateRange}
+                            numberOfMonths={2}
+                            disabled={(date) => date < new Date()}
+                        />
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col flex-1">
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                        <Input placeholder="15:30" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+                </FormItem>
+            ) : (
+                 <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col flex-1">
+                        <FormLabel>Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                    date < new Date()
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
         </div>
+        {purpose !== 'Maintenance' && (
+            <div className="flex gap-4">
+                <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col flex-1">
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                            <Input placeholder="14:00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col flex-1">
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                            <Input placeholder="15:30" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        )}
         <div className="flex justify-end pt-4">
             <Button type="submit">Create Booking</Button>
         </div>

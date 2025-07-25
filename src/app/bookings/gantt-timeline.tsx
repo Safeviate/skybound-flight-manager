@@ -4,7 +4,7 @@
 import React from 'react';
 import type { Booking, Aircraft } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
+import { format, parseISO, eachDayOfInterval, isSameDay } from 'date-fns';
 
 const HOURS_IN_DAY = 24;
 const HOUR_COLUMN_WIDTH_PX = 96;
@@ -32,8 +32,7 @@ interface GanttTimelineProps {
 }
 
 export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimelineProps) {
-  const dateString = format(currentDate, 'yyyy-MM-dd');
-
+  
   return (
     <div className="relative" style={{ minWidth: `${TOTAL_WIDTH_PX}px` }}>
       {/* Grid lines */}
@@ -46,14 +45,44 @@ export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimeline
       {/* Booking rows */}
       <div className="relative">
         {aircraft.map(ac => {
-          const todaysBookings = bookings.filter(b => b.aircraft === ac.tailNumber && b.date === dateString);
+          const todaysBookings = bookings.filter(b => {
+              if (b.aircraft !== ac.tailNumber) return false;
+
+              if (b.endDate) { // It's a multi-day booking (likely maintenance)
+                const start = parseISO(b.date);
+                const end = parseISO(b.endDate);
+                return isSameDay(currentDate, start) || isSameDay(currentDate, end) || (currentDate > start && currentDate < end);
+              } else { // It's a single day booking
+                return isSameDay(parseISO(b.date), currentDate);
+              }
+          });
           
           return (
             <div key={ac.id} className="h-20 border-b relative">
               {todaysBookings.map(booking => {
-                const left = timeToPosition(booking.startTime);
-                const right = timeToPosition(booking.endTime);
-                const width = right - left;
+                let left = 0;
+                let width = TOTAL_WIDTH_PX;
+
+                if (booking.purpose !== 'Maintenance') {
+                    left = timeToPosition(booking.startTime);
+                    const right = timeToPosition(booking.endTime);
+                    width = right - left;
+                } else {
+                    const start = parseISO(booking.date);
+                    const end = booking.endDate ? parseISO(booking.endDate) : start;
+
+                    if (isSameDay(currentDate, start) && !isSameDay(currentDate, end)) {
+                        left = timeToPosition(booking.startTime);
+                        width = TOTAL_WIDTH_PX - left;
+                    } else if (!isSameDay(currentDate, start) && isSameDay(currentDate, end)) {
+                        left = 0;
+                        width = timeToPosition(booking.endTime);
+                    } else if (isSameDay(currentDate, start) && isSameDay(currentDate, end)) {
+                        left = timeToPosition(booking.startTime);
+                        width = timeToPosition(booking.endTime) - left;
+                    }
+                }
+
 
                 return (
                   <div

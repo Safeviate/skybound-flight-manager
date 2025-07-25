@@ -174,6 +174,7 @@ export type Booking = {
   id: string;
   companyId: string;
   date: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   aircraft: string;
