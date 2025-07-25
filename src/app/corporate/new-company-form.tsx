@@ -33,7 +33,7 @@ const companyFormSchema = z.object({
   enableAdvancedAnalytics: z.boolean().default(false),
   adminName: z.string().min(2, 'Admin name is required.'),
   adminEmail: z.string().email('Please enter a valid email address.'),
-  adminPassword: z.string().min(8, 'Password must be at least 8 characters.'),
+  // Password is no longer needed in the form, it's defaulted.
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -71,7 +71,8 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         phone: '', // Can be added later
     };
 
-    onSubmit(newCompany, newAdmin, data.adminPassword);
+    // Use a default password for the demo environment
+    onSubmit(newCompany, newAdmin, "password");
     form.reset();
   }
 
@@ -198,19 +199,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     <FormLabel>Admin Email</FormLabel>
                     <FormControl>
                         <Input placeholder="admin@yourcompany.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="adminPassword"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                        <Input type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

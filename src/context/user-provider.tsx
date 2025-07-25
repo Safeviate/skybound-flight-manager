@@ -104,30 +104,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 
   const login = async (email: string, password?: string): Promise<User | null> => {
-    if (password) {
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            // onAuthStateChanged will handle setting user state
-            // we return a promise that resolves with the user after state is set
-            return new Promise((resolve) => {
-                const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-                    if (fbUser) {
-                        const [userData] = await fetchUserData(fbUser);
-                        resolve(userData);
-                        unsubscribe();
-                    }
-                });
+    // If no password is provided, we assume it's a dev login and use a dummy password.
+    const effectivePassword = password ?? "password";
+
+    try {
+        await signInWithEmailAndPassword(auth, email, effectivePassword);
+        // onAuthStateChanged will handle setting user state
+        // we return a promise that resolves with the user after state is set
+        return new Promise((resolve) => {
+            const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+                if (fbUser) {
+                    const [userData] = await fetchUserData(fbUser);
+                    resolve(userData);
+                    unsubscribe();
+                }
             });
-        } catch (error) {
-            console.error("Login failed:", error);
-            return null;
-        }
-    } else {
-        // This case is for finalizing the login after OTP
-        if(auth.currentUser){
-            const [userData] = await fetchUserData(auth.currentUser);
-            return userData;
-        }
+        });
+    } catch (error) {
+        console.error("Login failed:", error);
         return null;
     }
   };

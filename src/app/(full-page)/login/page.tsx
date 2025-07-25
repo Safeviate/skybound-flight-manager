@@ -1,98 +1,70 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, KeyRound, Rocket } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { LogIn, Rocket, Loader2, User as UserIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { User } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const loginFormSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
-});
-
-const otpFormSchema = z.object({
-  otp: z.string().length(6, { message: 'Please enter the 6-digit code.' }),
-});
-
-type LoginFormValues = z.infer<typeof loginFormSchema>;
-type OtpFormValues = z.infer<typeof otpFormSchema>;
 
 export default function LoginPage() {
-  const { login, company, getUnacknowledgedAlerts, user } = useUser();
+  const { login, company } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [step, setStep] = useState<'login' | 'otp'>('login');
-  const [email, setEmail] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loggingInUser, setLoggingInUser] = useState<string | null>(null);
 
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
-    defaultValues: { email: '', password: '' },
-  });
 
-  const otpForm = useForm<OtpFormValues>({
-    resolver: zodResolver(otpFormSchema),
-    defaultValues: { otp: '' },
-  });
+  useEffect(() => {
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const companiesSnapshot = await getDocs(collection(db, 'companies'));
+            const usersPromises = companiesSnapshot.docs.map(companyDoc => 
+                getDocs(query(collection(db, `companies/${companyDoc.id}/users`)))
+            );
+            const usersSnapshots = await Promise.all(usersPromises);
+            const users = usersSnapshots.flatMap(snapshot => snapshot.docs.map(doc => doc.data() as User));
+            setAllUsers(users);
+        } catch (error) {
+            console.error("Error fetching users for login:", error);
+            setLoginError("Could not load user profiles. Please check your connection.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchUsers();
+  }, []);
 
-  async function handleLogin(data: LoginFormValues) {
+  async function handleUserSelect(user: User) {
+    if (!user.email) {
+        setLoginError(`User ${user.name} does not have an email and cannot be logged into.`);
+        return;
+    }
+    setLoggingInUser(user.id);
     setLoginError(null);
-    const loginSuccess = await login(data.email, data.password);
+    const loginSuccess = await login(user.email);
 
     if (loginSuccess) {
-      // 2FA Step
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      setGeneratedOtp(otp);
-      setEmail(data.email);
-      setStep('otp');
+        const redirectPath = searchParams.get('redirect');
+        router.push(redirectPath || '/my-profile');
     } else {
-      setLoginError('Invalid email or password. Please try again.');
-      loginForm.setValue('password', '');
+      setLoginError('Login failed. Please try again.');
+      setLoggingInUser(null);
     }
   }
 
-  async function handleOtpSubmit(data: OtpFormValues) {
-    setLoginError(null);
-    if (data.otp === generatedOtp) {
-        // This is a re-login to finalize the user state in the context.
-        const finalUser = await login(email); 
-        if (finalUser) {
-             // Check for unacknowledged alerts
-            const unacknowledgedAlerts = getUnacknowledgedAlerts();
-            if (unacknowledgedAlerts.length > 0) {
-                router.push('/alerts/mandatory');
-            } else {
-                const redirectPath = searchParams.get('redirect');
-                router.push(redirectPath || '/my-profile');
-            }
-        } else {
-            setLoginError('Could not finalize session. Please try logging in again.');
-            setStep('login');
-        }
-    } else {
-        setLoginError('Invalid verification code. Please try again.');
-        otpForm.setValue('otp', '');
-    }
-  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
@@ -101,111 +73,59 @@ export default function LoginPage() {
         <span className="text-xl font-semibold">{company?.name || 'SkyBound Flight Manager'}</span>
       </div>
 
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {step === 'login' ? 'Login' : 'Two-Factor Authentication'}
+            Select a User to Login
           </CardTitle>
           <CardDescription>
-            {step === 'login'
-              ? 'Enter your email below to login to your account.'
-              : `A verification code has been sent to ${email}.`}
+            This is a passwordless login for development and demonstration.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {step === 'login' ? (
-            <div key="login-form">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                  {loginError && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Login Failed</AlertTitle>
-                      <AlertDescription>{loginError}</AlertDescription>
-                    </Alert>
-                  )}
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="admin@yourcompany.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting}>
-                    {loginForm.formState.isSubmitting ? 'Logging in...' : <><LogIn className="mr-2 h-4 w-4" /> Login</>}
-                  </Button>
-                </form>
-              </Form>
-            </div>
-          ) : (
-            <div key="otp-form">
-              <Form {...otpForm}>
-                <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-4">
-                  <Alert>
+            {isLoading ? (
+                 <div className="flex items-center justify-center h-40">
+                    <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                    <p>Loading user profiles...</p>
+                 </div>
+            ) : loginError ? (
+                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Your verification code is:</AlertTitle>
-                    <AlertDescription className="font-bold text-lg tracking-widest text-center py-2">
-                      {generatedOtp}
-                    </AlertDescription>
-                  </Alert>
-                  {loginError && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Verification Failed</AlertTitle>
-                      <AlertDescription>{loginError}</AlertDescription>
-                    </Alert>
-                  )}
-                  <FormField
-                    control={otpForm.control}
-                    name="otp"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Verification Code</FormLabel>
-                        <FormControl>
-                          <Input 
-                              placeholder="Enter the 6-digit code" 
-                              {...field}
-                              autoFocus
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={otpForm.formState.isSubmitting}>
-                    {otpForm.formState.isSubmitting ? 'Verifying...' : <><KeyRound className="mr-2 h-4 w-4" /> Verify Code</>}
-                  </Button>
-                </form>
-              </Form>
-            </div>
-          )}
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{loginError}</AlertDescription>
+                </Alert>
+            ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                    {allUsers.map(user => (
+                        <Button 
+                            key={user.id} 
+                            variant="outline" 
+                            className="w-full justify-start h-14"
+                            onClick={() => handleUserSelect(user)}
+                            disabled={!!loggingInUser}
+                        >
+                            {loggingInUser === user.id ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Avatar className="mr-4">
+                                    <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="user avatar" />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            )}
+                            <div className="text-left">
+                                <p className="font-semibold">{user.name}</p>
+                                <p className="text-xs text-muted-foreground">{user.role} - {user.email || 'No email'}</p>
+                            </div>
+                        </Button>
+                    ))}
+                </div>
+            )}
         </CardContent>
-        {step === 'login' && (
-            <CardFooter className="justify-center text-sm">
-                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
-                    Don't have an account? Register your company
-                </Link>
-            </CardFooter>
-        )}
+        <CardFooter className="justify-center text-sm">
+            <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                Don't have an account? Register your company
+            </Link>
+        </CardFooter>
       </Card>
     </div>
   );
