@@ -11,6 +11,9 @@ import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
 import type { AuditChecklist, QualityAudit, NonConformanceIssue, AuditArea } from '@/lib/types';
 import { ChecklistCard } from '../checklist-card';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export default function CompleteAuditChecklistPage() {
     const params = useParams();
@@ -148,7 +151,14 @@ export default function CompleteAuditChecklistPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header title={pageTitle} />
+            <Header title={pageTitle}>
+                 <Button asChild variant="outline">
+                    <Link href="/quality?tab=checklists">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Checklists
+                    </Link>
+                </Button>
+            </Header>
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center bg-muted/40">
                 <div className="w-full max-w-4xl">
                     <ChecklistCard
