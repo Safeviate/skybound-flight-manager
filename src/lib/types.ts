@@ -94,6 +94,7 @@ export type Permission =
   | 'Safety:Edit'
   | 'Quality:View'
   | 'Quality:Edit'
+  | 'Quality:Delete'
   | 'Checklists:View'
   | 'Checklists:Edit'
   | 'Alerts:View'
@@ -118,6 +119,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Safety:Edit',
     'Quality:View',
     'Quality:Edit',
+    'Quality:Delete',
     'Checklists:View',
     'Checklists:Edit',
     'Alerts:View',
@@ -394,7 +396,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Operations Manager': ['Super User'],
     'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
     'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
+    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
     'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
     'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
     'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
