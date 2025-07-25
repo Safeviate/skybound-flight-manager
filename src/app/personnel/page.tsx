@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
-import { PlusCircle, Edit } from 'lucide-react';
+import { PlusCircle, Edit, Database, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,8 +22,9 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { userData as seedUsers } from '@/lib/data-provider';
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
@@ -32,6 +33,7 @@ function PersonnelPage() {
     const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+    const [isSeeding, setIsSeeding] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -88,6 +90,46 @@ function PersonnelPage() {
         setIsNewPersonnelDialogOpen(isOpen);
     }
 
+    const handleSeedPersonnel = async () => {
+        if (!company) {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'No company selected. Cannot seed data.',
+          });
+          return;
+        }
+    
+        setIsSeeding(true);
+        try {
+          const batch = writeBatch(db);
+          const usersToSeed = seedUsers.filter(u => u.companyId === 'skybound-aero' && u.role !== 'Student');
+    
+          usersToSeed.forEach(user => {
+            const { password, ...userData } = user;
+            const userRef = doc(db, `companies/${company.id}/users`, user.id);
+            batch.set(userRef, { ...userData, companyId: company.id });
+          });
+    
+          await batch.commit();
+    
+          toast({
+            title: 'Database Seeded',
+            description: `${usersToSeed.length} personnel have been added to your company's database.`,
+          });
+          fetchPersonnel(); // Refresh the list
+        } catch (error) {
+          console.error('Error seeding database:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Seeding Failed',
+            description: 'An error occurred while trying to seed the database.',
+          });
+        } finally {
+          setIsSeeding(false);
+        }
+      };
+
     const getRoleVariant = (role: Role) => {
         switch (role) {
             case 'Instructor':
@@ -124,25 +166,33 @@ function PersonnelPage() {
               <CardTitle>Personnel Roster</CardTitle>
               <CardDescription>A list of all non-student personnel in the system.</CardDescription>
             </div>
-            {canEditPersonnel && (
-              <Dialog open={isNewPersonnelDialogOpen} onOpenChange={handleDialogClose}>
-                  <DialogTrigger asChild>
-                      <Button onClick={() => setEditingPersonnel(null)}>
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Personnel
-                      </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-4xl">
-                      <DialogHeader>
-                          <DialogTitle>{editingPersonnel ? `Edit Personnel: ${editingPersonnel.name}` : 'Add New Personnel'}</DialogTitle>
-                          <DialogDescription>
-                              {editingPersonnel ? 'Update the details for this user.' : 'Fill out the form below to add a new person to the roster.'}
-                          </DialogDescription>
-                      </DialogHeader>
-                      <PersonnelForm onSubmit={handleFormSubmit} existingPersonnel={editingPersonnel || undefined} />
-                  </DialogContent>
-              </Dialog>
-            )}
+            <div className="flex items-center gap-2">
+                {personnelList.length === 0 && (
+                    <Button onClick={handleSeedPersonnel} variant="outline" disabled={isSeeding}>
+                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                        Seed Sample Personnel
+                    </Button>
+                )}
+                {canEditPersonnel && (
+                <Dialog open={isNewPersonnelDialogOpen} onOpenChange={handleDialogClose}>
+                    <DialogTrigger asChild>
+                        <Button onClick={() => setEditingPersonnel(null)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Personnel
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-4xl">
+                        <DialogHeader>
+                            <DialogTitle>{editingPersonnel ? `Edit Personnel: ${editingPersonnel.name}` : 'Add New Personnel'}</DialogTitle>
+                            <DialogDescription>
+                                {editingPersonnel ? 'Update the details for this user.' : 'Fill out the form below to add a new person to the roster.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <PersonnelForm onSubmit={handleFormSubmit} existingPersonnel={editingPersonnel || undefined} />
+                    </DialogContent>
+                </Dialog>
+                )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>

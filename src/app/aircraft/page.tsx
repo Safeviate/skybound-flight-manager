@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2 } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
@@ -27,9 +27,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ChecklistsManager } from '../checklists/page';
+import { aircraftData as seedAircraft } from '@/lib/data-provider';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -42,6 +43,7 @@ function AircraftPage() {
   const router = useRouter();
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   const [isChecklistManagerOpen, setIsChecklistManagerOpen] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -191,6 +193,46 @@ function AircraftPage() {
     fetchData(); // Refetch all data to get newly assigned checklists
   }
 
+  const handleSeedAircraft = async () => {
+    if (!company) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No company selected. Cannot seed aircraft data.',
+      });
+      return;
+    }
+
+    setIsSeeding(true);
+    try {
+      const batch = writeBatch(db);
+      const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero');
+
+      aircraftToSeed.forEach(aircraft => {
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        batch.set(aircraftRef, { ...aircraft, companyId: company.id });
+      });
+
+      await batch.commit();
+
+      toast({
+        title: 'Aircraft Seeded',
+        description: `${aircraftToSeed.length} sample aircraft have been added to your fleet.`,
+      });
+      fetchData(); // Refresh the list
+    } catch (error) {
+      console.error('Error seeding aircraft:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Seeding Failed',
+        description: 'An error occurred while trying to seed aircraft data.',
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+
   if (loading || !user) {
     return (
         <main className="flex-1 flex items-center justify-center">
@@ -205,6 +247,12 @@ function AircraftPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
             <div className="flex items-center gap-2">
+                {fleet.length === 0 && (
+                    <Button onClick={handleSeedAircraft} variant="outline" disabled={isSeeding}>
+                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                        Seed Sample Fleet
+                    </Button>
+                )}
                 <Dialog open={isChecklistManagerOpen} onOpenChange={setIsChecklistManagerOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline">
