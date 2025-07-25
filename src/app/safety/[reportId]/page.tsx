@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
@@ -16,7 +17,6 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvestigationTeamForm } from './investigation-team-form';
-import { InitialRiskAssessment } from './initial-risk-assessment';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { Combobox } from '@/components/ui/combobox';
@@ -485,11 +485,13 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                    <div className="grid lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                        </div>
                         <Card>
                             <CardHeader>
-                                <CardTitle>AI Investigation Toolkit</CardTitle>
+                                <CardTitle>AI Toolkit</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Tabs defaultValue="steps">
@@ -537,5 +539,7 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
 
     
