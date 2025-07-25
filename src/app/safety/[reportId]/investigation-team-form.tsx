@@ -126,9 +126,6 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
               const isReporter = memberName === report.submittedBy;
               return (
                 <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
-                   <div className="h-8 w-8 flex-shrink-0 bg-secondary rounded-full flex items-center justify-center">
-                      <UserIcon className="h-5 w-5 text-muted-foreground" />
-                   </div>
                   <div>
                     <p className="font-medium text-sm">{memberName}</p>
                     <p className="text-xs text-muted-foreground">{isReporter ? 'Reporter' : member?.role}</p>
