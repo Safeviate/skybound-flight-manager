@@ -29,16 +29,6 @@ export default function Header({ title, children }: { title: string, children?: 
         
         <div className="flex items-center gap-4">
           {otherChildren}
-          {user && (
-            <Button asChild variant="secondary" size="icon" className="rounded-full">
-                <Link href="/my-profile">
-                    <div className="h-10 w-10 flex items-center justify-center">
-                        <UserIcon className="h-5 w-5" />
-                    </div>
-                    <span className="sr-only">My Profile</span>
-                </Link>
-            </Button>
-          )}
         </div>
       </div>
     </header>
