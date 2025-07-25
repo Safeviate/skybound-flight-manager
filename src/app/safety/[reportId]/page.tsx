@@ -712,13 +712,13 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = useCallback((updatedReportData: Partial<SafetyReport>, currentCompany: Company | null) => {
+  const handleReportUpdate = (updatedReportData: Partial<SafetyReport>) => {
     setReport(prev => {
         if (!prev) return null;
         const newReport = { ...prev, ...updatedReportData };
         
-        if (currentCompany) {
-            const reportRef = doc(db, `companies/${currentCompany.id}/safety-reports`, newReport.id);
+        if (company) {
+            const reportRef = doc(db, `companies/${company.id}/safety-reports`, newReport.id);
             updateDoc(reportRef, newReport as any).catch(error => {
                 console.error("Error updating report:", error);
                 toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
@@ -727,7 +727,7 @@ function SafetyReportInvestigationPage() {
         
         return newReport;
     });
-  }, [toast]);
+  };
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
      toast({
@@ -738,7 +738,7 @@ function SafetyReportInvestigationPage() {
 
   const handleCloseReport = () => {
     if (report) {
-      handleReportUpdate({ status: 'Closed' as SafetyReport['status'] }, company);
+      handleReportUpdate({ status: 'Closed' as SafetyReport['status'] });
       toast({
         title: "Report Closed",
         description: `Report ${report.reportNumber} has been successfully closed and archived.`
@@ -784,7 +784,7 @@ function SafetyReportInvestigationPage() {
 
   const handleIncorporateSuggestions = (text: string) => {
       const updatedNotes = (report.investigationNotes || '') + '\n' + text;
-      handleReportUpdate({ investigationNotes: updatedNotes }, company);
+      handleReportUpdate({ investigationNotes: updatedNotes });
       toast({
           title: "Suggestions Incorporated",
           description: "The AI suggestions have been added to your investigation notes."
@@ -915,7 +915,7 @@ function SafetyReportInvestigationPage() {
                                         <Select 
                                         name="occurrenceCategory" 
                                         defaultValue={report.occurrenceCategory}
-                                        onValueChange={(value) => handleReportUpdate({ occurrenceCategory: value }, company)}
+                                        onValueChange={(value) => handleReportUpdate({ occurrenceCategory: value })}
                                         >
                                             <SelectTrigger id="occurrenceCategory">
                                                 <SelectValue placeholder="Select Category" />
@@ -930,7 +930,7 @@ function SafetyReportInvestigationPage() {
                                     <Select 
                                         name="phaseOfFlight" 
                                         defaultValue={report.phaseOfFlight}
-                                        onValueChange={(value) => handleReportUpdate({ phaseOfFlight: value }, company)}
+                                        onValueChange={(value) => handleReportUpdate({ phaseOfFlight: value })}
                                     >
                                         <SelectTrigger id="phaseOfFlight">
                                             <SelectValue placeholder="Select Phase" />
@@ -955,7 +955,7 @@ function SafetyReportInvestigationPage() {
                         </AccordionTrigger>
                         <AccordionContent className="p-6 pt-0">
                             <Separator className="mb-6"/>
-                            <InitialRiskAssessment report={report} onUpdate={(data) => handleReportUpdate(data, company)} onPromoteRisk={handlePromoteRisk} />
+                            <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk} />
                         </AccordionContent>
                     </Card>
                 </AccordionItem>
@@ -1011,9 +1011,9 @@ function SafetyReportInvestigationPage() {
                         <AccordionContent className="p-6 pt-0">
                             <Separator className="mb-6"/>
                             <div className="space-y-6">
-                                <InvestigationTeamForm report={report} onUpdate={(data) => handleReportUpdate(data, company)} />
+                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                                 <Separator />
-                                <DiscussionSection report={report} onUpdate={(data) => handleReportUpdate(data, company)} />
+                                <DiscussionSection report={report} onUpdate={handleReportUpdate} />
                                 <Separator />
                                 <div className="space-y-2">
                                     <Label htmlFor="investigationNotes">Investigation Notes &amp; Findings</Label>
@@ -1023,7 +1023,7 @@ function SafetyReportInvestigationPage() {
                                         placeholder="Add your investigation notes, findings, and root cause analysis here..."
                                         className="min-h-[150px]"
                                         value={report.investigationNotes || ''}
-                                        onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, company)}
+                                        onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -1042,7 +1042,7 @@ function SafetyReportInvestigationPage() {
                             <Separator className="mb-6"/>
                             <MitigatedRiskAssessment 
                                 report={report} 
-                                onUpdate={(data) => handleReportUpdate(data, company)}
+                                onUpdate={handleReportUpdate}
                                 correctiveActions={correctiveActionPlan?.correctiveActions}
                             />
                         </AccordionContent>
@@ -1086,7 +1086,7 @@ function SafetyReportInvestigationPage() {
             <PrintableReport 
                 report={report} 
                 correctiveActionPlan={correctiveActionPlan} 
-                onUpdate={(data) => handleReportUpdate(data, company)} 
+                onUpdate={handleReportUpdate} 
                 onPromoteRisk={handlePromoteRisk} 
             />
         </div>
