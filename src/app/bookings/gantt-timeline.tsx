@@ -98,7 +98,12 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                         style={{ left: `${left}px`, width: `${width}px` }}
                       >
                         <p className="font-bold text-sm truncate">{booking.purpose}</p>
-                        <p className="text-xs truncate">{booking.instructor !== 'N/A' ? booking.instructor : booking.student}</p>
+                        <p className="text-xs truncate">
+                            {booking.purpose === 'Maintenance' 
+                                ? booking.maintenanceType 
+                                : (booking.instructor !== 'N/A' ? booking.instructor : booking.student)
+                            }
+                        </p>
                       </div>
                     </DialogTrigger>
                     <DialogContent>
@@ -113,14 +118,22 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                                 <span className="text-muted-foreground">Aircraft:</span>
                                 <span>{booking.aircraft}</span>
                             </div>
+                             {booking.purpose === 'Maintenance' && (
+                                <div className="grid grid-cols-2 items-center gap-4">
+                                    <span className="text-muted-foreground">Type:</span>
+                                    <span>{booking.maintenanceType}</span>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 items-center gap-4">
                                 <span className="text-muted-foreground">Date:</span>
-                                <span>{format(parseISO(booking.date), 'PPP')}</span>
+                                <span>{booking.endDate ? `${format(parseISO(booking.date), 'PPP')} to ${format(parseISO(booking.endDate), 'PPP')}` : format(parseISO(booking.date), 'PPP')}</span>
                             </div>
-                            <div className="grid grid-cols-2 items-center gap-4">
+                           {booking.purpose !== 'Maintenance' && (
+                             <div className="grid grid-cols-2 items-center gap-4">
                                 <span className="text-muted-foreground">Time:</span>
                                 <span>{booking.startTime} - {booking.endTime}</span>
                             </div>
+                           )}
                             <div className="grid grid-cols-2 items-center gap-4">
                                 <span className="text-muted-foreground">Personnel:</span>
                                 <span>{booking.instructor !== 'N/A' ? `Instr: ${booking.instructor}` : `Pilot: ${booking.student}`}</span>
