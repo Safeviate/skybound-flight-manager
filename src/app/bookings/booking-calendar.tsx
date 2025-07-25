@@ -21,9 +21,10 @@ import { collection, query, getDocs } from 'firebase/firestore';
 interface BookingCalendarProps {
     bookings: Booking[];
     onCancelBooking: (bookingId: string) => void;
+    onEditBooking: (booking: Booking) => void;
 }
 
-export function BookingCalendar({ bookings, onCancelBooking }: BookingCalendarProps) {
+export function BookingCalendar({ bookings, onCancelBooking, onEditBooking }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const { company } = useUser();
@@ -104,6 +105,7 @@ export function BookingCalendar({ bookings, onCancelBooking }: BookingCalendarPr
             bookings={bookings} 
             aircraft={aircraft} 
             onCancelBooking={onCancelBooking}
+            onEditBooking={onEditBooking}
           />
         </div>
       </div>

@@ -25,7 +25,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
-import { format, parseISO, isBefore, addDays } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Booking, Aircraft, User } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
@@ -97,28 +97,45 @@ type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
 interface NewBookingFormProps {
     onBookingCreated: (newBooking: Omit<Booking, 'id'>) => void;
+    onBookingUpdated: (updatedBooking: Booking) => void;
+    existingBooking?: Booking | null;
 }
 
-export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
+export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBooking }: NewBookingFormProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
   const { user, company } = useUser();
+  
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
-    defaultValues: {
-        aircraft: '',
-        student: '',
-        instructor: '',
-        trainingExercise: '',
-    }
   });
 
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [userData, setUserData] = useState<User[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-      from: new Date(),
-      to: addDays(new Date(), 4)
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  useEffect(() => {
+    if (existingBooking) {
+        form.reset({
+            ...existingBooking,
+            date: parseISO(existingBooking.date),
+            endDate: existingBooking.endDate ? parseISO(existingBooking.endDate) : undefined,
+            student: existingBooking.student?.startsWith('PIC:') ? undefined : existingBooking.student,
+        });
+        if (existingBooking.endDate) {
+            setDateRange({ from: parseISO(existingBooking.date), to: parseISO(existingBooking.endDate) });
+        }
+    } else {
+        form.reset({
+            aircraft: '',
+            student: '',
+            instructor: '',
+            trainingExercise: '',
+        });
+        setDateRange({ from: new Date(), to: addDays(new Date(), 4) });
+    }
+  }, [existingBooking, form]);
+
 
   useEffect(() => {
     if (!company) return;
@@ -141,38 +158,50 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   }, [company, toast]);
   
   useEffect(() => {
-    if (dateRange?.from) form.setValue('date', dateRange.from);
-    if (dateRange?.to) form.setValue('endDate', dateRange.to);
+    if (purpose === 'Maintenance') {
+        if (dateRange?.from) form.setValue('date', dateRange.from);
+        if (dateRange?.to) form.setValue('endDate', dateRange.to);
+    }
   }, [dateRange, form]);
 
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
     if (!company || !user) return;
-    const status = 'Approved';
     
     let studentName = data.student || 'N/A';
     if (data.purpose === 'Private') {
         studentName = `PIC: ${user.name}`;
     }
 
-    const newBooking: Omit<Booking, 'id'> = {
-        ...data,
-        companyId: company.id,
-        date: format(data.date, 'yyyy-MM-dd'),
-        endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
-        status,
-        startTime: data.startTime || '00:00',
-        endTime: data.endTime || '23:59',
-        student: studentName,
-        instructor: data.instructor || 'N/A',
-    };
-    onBookingCreated(newBooking);
-    
-    toast({
-      title: 'Booking Confirmed',
-      description: `Your booking has been confirmed.`,
-    });
+    if (existingBooking) {
+        const updatedBooking: Booking = {
+            ...existingBooking,
+            ...data,
+            date: format(data.date, 'yyyy-MM-dd'),
+            endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
+            startTime: data.startTime || '00:00',
+            endTime: data.endTime || '23:59',
+            student: studentName,
+            instructor: data.instructor || 'N/A',
+        };
+        onBookingUpdated(updatedBooking);
+        toast({ title: 'Booking Updated', description: 'Your booking has been successfully updated.' });
+    } else {
+        const newBooking: Omit<Booking, 'id'> = {
+            ...data,
+            companyId: company.id,
+            date: format(data.date, 'yyyy-MM-dd'),
+            endDate: data.endDate ? format(data.endDate, 'yyyy-MM-dd') : undefined,
+            status: 'Approved',
+            startTime: data.startTime || '00:00',
+            endTime: data.endTime || '23:59',
+            student: studentName,
+            instructor: data.instructor || 'N/A',
+        };
+        onBookingCreated(newBooking);
+        toast({ title: 'Booking Confirmed', description: 'Your booking has been confirmed.' });
+    }
   }
   
   const today = new Date('2024-08-15');
@@ -504,7 +533,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             </div>
         )}
         <div className="flex justify-end pt-4">
-            <Button type="submit">Create Booking</Button>
+            <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
         </div>
       </form>
     </Form>

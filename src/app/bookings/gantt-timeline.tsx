@@ -33,9 +33,10 @@ interface GanttTimelineProps {
     bookings: Booking[];
     aircraft: Aircraft[];
     onCancelBooking: (bookingId: string) => void;
+    onEditBooking: (booking: Booking) => void;
 }
 
-export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking }: GanttTimelineProps) {
+export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking, onEditBooking }: GanttTimelineProps) {
   
   return (
     <div className="relative" style={{ minWidth: `${TOTAL_WIDTH_PX}px` }}>
@@ -166,8 +167,9 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                                 <span>{getPersonnelInfo()}</span>
                             </div>
                         </div>
-                        <DialogFooter>
-                            <AlertDialog>
+                        <DialogFooter className="gap-2">
+                             <Button variant="outline" onClick={() => onEditBooking(booking)}>Change Booking</Button>
+                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive">Cancel Booking</Button>
                                 </AlertDialogTrigger>

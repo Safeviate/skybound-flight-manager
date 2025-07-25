@@ -23,6 +23,7 @@ function BookingsPage() {
   const { user, company, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -57,6 +58,20 @@ function BookingsPage() {
       }
   }
 
+  const handleBookingUpdated = async (updatedBooking: Booking) => {
+    if (!company) return;
+    try {
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, updatedBooking.id);
+        await setDoc(bookingRef, updatedBooking);
+        setBookingData(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b));
+        setEditingBooking(null);
+        setIsNewBookingOpen(false);
+    } catch (error) {
+        console.error("Error updating booking:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to update booking.' });
+    }
+  }
+
   const handleCancelBooking = async (bookingId: string) => {
     if (!company) return;
     try {
@@ -73,6 +88,16 @@ function BookingsPage() {
     }
   };
 
+  const openNewBookingDialog = () => {
+    setEditingBooking(null);
+    setIsNewBookingOpen(true);
+  }
+
+  const openEditBookingDialog = (booking: Booking) => {
+    setEditingBooking(booking);
+    setIsNewBookingOpen(true);
+  }
+
 
   if (loading || !user) {
     return (
@@ -87,23 +112,10 @@ function BookingsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Schedule</CardTitle>
-            <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        New Booking
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Create New Booking</DialogTitle>
-                        <DialogDescription>
-                            Fill out the form below to schedule an aircraft.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <NewBookingForm onBookingCreated={handleBookingCreated}/>
-                </DialogContent>
-            </Dialog>
+            <Button onClick={openNewBookingDialog}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Booking
+            </Button>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="day">
@@ -112,7 +124,11 @@ function BookingsPage() {
                     <TabsTrigger value="month">Month View</TabsTrigger>
                 </TabsList>
                 <TabsContent value="day" className="mt-4">
-                    <BookingCalendar bookings={bookingData} onCancelBooking={handleCancelBooking} />
+                    <BookingCalendar 
+                        bookings={bookingData} 
+                        onCancelBooking={handleCancelBooking}
+                        onEditBooking={openEditBookingDialog} 
+                    />
                 </TabsContent>
                 <TabsContent value="month" className="mt-4">
                     <MonthlyCalendarView bookings={bookingData} />
@@ -120,6 +136,21 @@ function BookingsPage() {
             </Tabs>
           </CardContent>
         </Card>
+        <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>{editingBooking ? 'Change Booking' : 'Create New Booking'}</DialogTitle>
+                    <DialogDescription>
+                        {editingBooking ? 'Update the details for this booking.' : 'Fill out the form below to schedule an aircraft.'}
+                    </DialogDescription>
+                </DialogHeader>
+                <NewBookingForm 
+                    onBookingCreated={handleBookingCreated}
+                    onBookingUpdated={handleBookingUpdated}
+                    existingBooking={editingBooking}
+                />
+            </DialogContent>
+        </Dialog>
       </main>
   );
 }
