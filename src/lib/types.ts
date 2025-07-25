@@ -186,6 +186,7 @@ export type Booking = {
   isPostFlightChecklistComplete?: boolean;
   flightDuration?: number;
   maintenanceType?: string;
+  trainingExercise?: string;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';

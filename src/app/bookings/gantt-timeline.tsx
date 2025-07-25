@@ -87,6 +87,32 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                     }
                 }
 
+                const getBookingTitle = () => {
+                    switch(booking.purpose) {
+                        case 'Maintenance':
+                            return booking.maintenanceType;
+                        case 'Private':
+                            return booking.trainingExercise; // Re-used for private flight type
+                        case 'Training':
+                            return booking.trainingExercise;
+                        default:
+                            return booking.purpose;
+                    }
+                }
+
+                const getPersonnelInfo = () => {
+                     switch(booking.purpose) {
+                        case 'Maintenance':
+                            return `Lead: ${booking.instructor}`; // Or whoever is assigned
+                        case 'Private':
+                            return booking.student; // This holds "PIC: User Name"
+                        case 'Training':
+                            return `${booking.instructor} / ${booking.student}`;
+                        default:
+                            return 'N/A';
+                    }
+                }
+
                 return (
                   <Dialog key={booking.id}>
                     <DialogTrigger asChild>
@@ -97,12 +123,9 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                         )}
                         style={{ left: `${left}px`, width: `${width}px` }}
                       >
-                        <p className="font-bold text-sm truncate">{booking.purpose}</p>
+                        <p className="font-bold text-sm truncate">{getBookingTitle()}</p>
                         <p className="text-xs truncate">
-                            {booking.purpose === 'Maintenance' 
-                                ? booking.maintenanceType 
-                                : (booking.instructor !== 'N/A' ? booking.instructor : booking.student)
-                            }
+                           {getPersonnelInfo()}
                         </p>
                       </div>
                     </DialogTrigger>
@@ -117,6 +140,10 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                             <div className="grid grid-cols-2 items-center gap-4">
                                 <span className="text-muted-foreground">Aircraft:</span>
                                 <span>{booking.aircraft}</span>
+                            </div>
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <span className="text-muted-foreground">Purpose:</span>
+                                <span>{booking.purpose} {booking.trainingExercise ? `(${booking.trainingExercise})` : ''}</span>
                             </div>
                              {booking.purpose === 'Maintenance' && (
                                 <div className="grid grid-cols-2 items-center gap-4">
@@ -136,7 +163,7 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                            )}
                             <div className="grid grid-cols-2 items-center gap-4">
                                 <span className="text-muted-foreground">Personnel:</span>
-                                <span>{booking.instructor !== 'N/A' ? `Instr: ${booking.instructor}` : `Pilot: ${booking.student}`}</span>
+                                <span>{getPersonnelInfo()}</span>
                             </div>
                         </div>
                         <DialogFooter>

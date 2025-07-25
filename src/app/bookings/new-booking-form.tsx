@@ -34,10 +34,12 @@ import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { DateRange } from 'react-day-picker';
+import { trainingExercisesData } from '@/lib/data-provider';
 
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const maintenanceTypes = ['A-Check', 'B-Check', 'C-Check', 'Annual Inspection', '100-Hour Inspection', 'Unscheduled Maintenance'];
+const privateFlightTypes = ['Hour Building', 'Rental', 'Personal'];
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -113,7 +115,6 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
 
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [userData, setUserData] = useState<User[]>([]);
-  const [trainingExercisesData, setTrainingExercisesData] = useState<string[]>([]); // Assuming this could be dynamic too
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
       from: new Date(),
       to: addDays(new Date(), 4)
@@ -131,10 +132,6 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             const usersSnapshot = await getDocs(usersQuery);
             setUserData(usersSnapshot.docs.map(doc => doc.data() as User));
             
-            // Example for training exercises if they were in Firestore
-            // const exercisesQuery = query(collection(db, `companies/${company.id}/training-exercises`));
-            // const exercisesSnapshot = await getDocs(exercisesQuery);
-            // setTrainingExercisesData(exercisesSnapshot.docs.map(doc => doc.data().name));
         } catch (error) {
             console.error("Failed to fetch form prerequisites", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load data for form.' });
@@ -151,8 +148,13 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const purpose = form.watch('purpose');
 
   function onSubmit(data: BookingFormValues) {
-    if (!company) return;
+    if (!company || !user) return;
     const status = 'Approved';
+    
+    let studentName = data.student || 'N/A';
+    if (data.purpose === 'Private') {
+        studentName = `PIC: ${user.name}`;
+    }
 
     const newBooking: Omit<Booking, 'id'> = {
         ...data,
@@ -162,7 +164,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
         status,
         startTime: data.startTime || '00:00',
         endTime: data.endTime || '23:59',
-        student: data.student || 'N/A',
+        student: studentName,
         instructor: data.instructor || 'N/A',
     };
     onBookingCreated(newBooking);
@@ -180,7 +182,6 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
     const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
     const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
     
-    // For maintenance bookings, we want to be able to book aircraft that are "Available" or already "Booked"
     if (purpose === 'Maintenance') {
         return !airworthinessExpired && !insuranceExpired;
     }
@@ -253,6 +254,30 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             )}
             />
         )}
+         {purpose === 'Private' && (
+            <FormField
+            control={form.control}
+            name="trainingExercise" // Reusing this field for private flight type
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Type of Flying</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {privateFlightTypes.map(ex => (
+                        <SelectItem key={ex} value={ex}>{ex}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
         <FormField
           control={form.control}
           name="aircraft"
@@ -305,7 +330,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             />
         )}
         
-        {purpose !== 'Maintenance' && (
+        {purpose === 'Training' && (
             <>
             <FormField
             control={form.control}
@@ -316,7 +341,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a student (optional)" />
+                        <SelectValue placeholder="Select a student" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -342,7 +367,7 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select an instructor (optional)" />
+                        <SelectValue placeholder="Select an instructor" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
