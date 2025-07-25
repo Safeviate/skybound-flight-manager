@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
@@ -15,7 +16,6 @@ import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AuditChecklistsPage from './audit-checklists/page';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, addDoc } from 'firebase/firestore';
@@ -204,7 +204,6 @@ function QualityPage() {
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
-                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -282,9 +281,6 @@ function QualityPage() {
                         </Table>
                     </CardContent>
                 </Card>
-            </TabsContent>
-            <TabsContent value="checklists" className="mt-4">
-                <AuditChecklistsPage onAuditSubmit={handleAuditSubmit} />
             </TabsContent>
         </Tabs>
       </main>
