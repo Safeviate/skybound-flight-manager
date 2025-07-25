@@ -167,7 +167,6 @@ export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline">Change Booking</Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive">Cancel Booking</Button>
