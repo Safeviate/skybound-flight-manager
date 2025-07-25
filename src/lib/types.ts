@@ -192,6 +192,7 @@ export type DiscussionEntry = {
   message: string;
   datePosted: string;
   replyByDate?: string;
+  isCode?: boolean;
 };
 
 export type AssociatedRisk = {

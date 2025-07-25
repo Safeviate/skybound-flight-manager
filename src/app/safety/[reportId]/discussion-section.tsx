@@ -29,15 +29,17 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import type { DiscussionEntry, SafetyReport, User } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
-import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon, User as UserIcon } from 'lucide-react';
+import { CalendarIcon, MessageSquare, Send, Reply as ReplyIcon, User as UserIcon, Code } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const discussionFormSchema = z.object({
   recipient: z.string().min(1, 'You must select a recipient.'),
-  message: z.string().min(3, 'Message must be at least 3 characters long.'),
+  message: z.string().min(1, 'Message cannot be empty.'),
   replyByDate: z.date().optional(),
+  isCode: z.boolean().optional(),
 });
 
 type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
@@ -76,6 +78,9 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
 
   const form = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
+    defaultValues: {
+      isCode: false,
+    }
   });
 
   function onSubmit(data: DiscussionFormValues) {
@@ -89,6 +94,7 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
         author: user.name,
         datePosted: new Date().toISOString(),
         ...data,
+        isCode: data.isCode,
         replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
     };
     
@@ -99,6 +105,7 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
 
     onUpdate(updatedReport);
     form.reset();
+    form.setValue('isCode', false);
     toast({
       title: 'Message Sent',
       description: `Your message has been sent to ${data.recipient}.`,
@@ -131,7 +138,13 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
                                     <p className="font-semibold text-sm">{entry.author} <ReplyIcon className="inline h-3 w-3 text-muted-foreground mx-1" /> {entry.recipient}</p>
                                     <p className="text-xs text-muted-foreground">{format(new Date(entry.datePosted), "MMM d, yyyy 'at' h:mm a")}</p>
                                 </div>
-                                <div className="p-3 rounded-md bg-muted text-sm">{entry.message}</div>
+                                {entry.isCode ? (
+                                    <pre className="p-3 rounded-md bg-gray-800 text-white text-sm font-mono whitespace-pre-wrap overflow-x-auto">
+                                        <code>{entry.message}</code>
+                                    </pre>
+                                ) : (
+                                    <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap">{entry.message}</div>
+                                )}
                                 <div className="flex items-center justify-between">
                                     {entry.replyByDate && (
                                         <div className="text-xs text-muted-foreground">
@@ -240,7 +253,27 @@ export function DiscussionSection({ report, onUpdate }: DiscussionSectionProps) 
               </FormItem>
             )}
           />
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+             <FormField
+                control={form.control}
+                name="isCode"
+                render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                    <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                    />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                    <FormLabel className="flex items-center gap-2">
+                        <Code className="h-4 w-4" />
+                        Format as code
+                    </FormLabel>
+                    </div>
+                </FormItem>
+                )}
+            />
             <Button type="submit">
                 <Send className="mr-2 h-4 w-4" />
                 Post Message
