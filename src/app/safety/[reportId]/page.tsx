@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -132,6 +132,7 @@ function SafetyReportInvestigationPage() {
   const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
 
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
+  const [isDiaryDialogOpen, setIsDiaryDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
 
   useEffect(() => {
@@ -562,7 +563,6 @@ function SafetyReportInvestigationPage() {
                         <Card className="lg:col-span-2">
                             <CardHeader>
                                 <CardTitle>Investigation Team</CardTitle>
-                                <CardDescription>Assign personnel to investigate this report.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
@@ -593,7 +593,6 @@ function SafetyReportInvestigationPage() {
                         <CardHeader className="flex flex-row items-center justify-between">
                           <div>
                             <CardTitle>Investigation Discussion</CardTitle>
-                            <CardDescription>A forum for the investigation team to communicate.</CardDescription>
                           </div>
                           <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
                                 <DialogTrigger asChild>
@@ -707,21 +706,25 @@ function SafetyReportInvestigationPage() {
                            <DiscussionSection 
                              report={report} 
                              onUpdate={handleReportUpdate} 
-                             form={discussionForm} 
-                             handleFormSubmit={handleNewDiscussionMessage}
-                             availableRecipients={availableRecipients}
-                             setIsDialogOpen={setIsDiscussionDialogOpen}
                            />
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Investigation Diary</CardTitle>
-                            <CardDescription>A chronological log of actions, decisions, and notes taken during the investigation.</CardDescription>
+                            <Dialog open={isDiaryDialogOpen} onOpenChange={setIsDiaryDialogOpen}>
+                                <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    New Entry
+                                </Button>
+                                </DialogTrigger>
+                                <InvestigationDiary report={report} onUpdate={handleReportUpdate} isDialogOpen={isDiaryDialogOpen} setIsDialogOpen={setIsDiaryDialogOpen} />
+                            </Dialog>
                         </CardHeader>
                         <CardContent>
-                             <InvestigationDiary report={report} onUpdate={handleReportUpdate} />
+                             <InvestigationDiary report={report} onUpdate={handleReportUpdate} isDialogOpen={isDiaryDialogOpen} setIsDialogOpen={setIsDiaryDialogOpen}/>
                         </CardContent>
                     </Card>
 
@@ -759,5 +762,6 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
 
