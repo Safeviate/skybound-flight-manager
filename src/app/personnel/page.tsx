@@ -24,7 +24,6 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { userData } from '@/lib/data-provider';
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
@@ -44,9 +43,10 @@ function PersonnelPage() {
     
     const fetchPersonnel = async () => {
         if (!company) return;
-        // Using local data instead of Firestore
-        const allPersonnel = userData.filter(p => p.companyId === company.id && p.role !== 'Student');
-        setPersonnelList(allPersonnel);
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        const snapshot = await getDocs(personnelQuery);
+        const personnel = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setPersonnelList(personnel);
     };
     
     const canEditPersonnel = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
@@ -58,21 +58,20 @@ function PersonnelPage() {
         }
 
         if (editingPersonnel) {
-            // Update existing personnel in local state
-            const updatedUser = { ...editingPersonnel, ...personnelData };
-            setPersonnelList(prev => prev.map(p => p.id === editingPersonnel.id ? updatedUser : p));
+            // Update existing personnel in Firestore
+            const userRef = doc(db, `companies/${company.id}/users`, editingPersonnel.id);
+            await updateDoc(userRef, personnelData as any);
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
-            // Add new personnel to local state
-            const newUser: User = {
-                ...personnelData,
-                id: `user-${Date.now()}`,
-                companyId: company.id,
-            };
-            delete newUser.password;
-            setPersonnelList(prev => [...prev, newUser]);
+            // Add new personnel to Firestore
+            // This path may require creating a user in Firebase Auth first for some roles.
+            // For simplicity, we'll assume non-admin roles can be added directly for now.
+             const newUserId = doc(collection(db, 'temp')).id;
+            const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
+            await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
             toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
         }
+        fetchPersonnel(); // Refetch to get the latest data
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
     };
