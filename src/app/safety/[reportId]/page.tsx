@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { InvestigationStepsGenerator } from './investigation-steps-generator';
 import { FiveWhysGenerator } from './five-whys-generator';
 import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
+import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -259,7 +261,7 @@ function SafetyReportInvestigationPage() {
                             <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
                             <TabsTrigger value="investigation">Investigation</TabsTrigger>
                             <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
-                            <TabsTrigger value="corrective-action" disabled>Corrective Action</TabsTrigger>
+                            <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
                             <TabsTrigger value="final-review" disabled>Final Review</TabsTrigger>
                         </TabsList>
                     </div>
@@ -488,7 +490,7 @@ function SafetyReportInvestigationPage() {
                                 <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} />
                             </TabsContent>
                             <TabsContent value="corrective-action" className="mt-0">
-                                {/* Content for Corrective Action will go here */}
+                                <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />
                             </TabsContent>
                             <TabsContent value="final-review" className="mt-0">
                                 {/* Content for Final Review will go here */}

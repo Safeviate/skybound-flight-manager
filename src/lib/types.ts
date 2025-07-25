@@ -1,5 +1,8 @@
 
 
+import type { GenerateCorrectiveActionPlanOutput } from './flows/generate-corrective-action-plan-flow';
+export type { GenerateCorrectiveActionPlanOutput } from './flows/generate-corrective-action-plan-flow';
+
 export type Airport = {
   id: string;
   name: string;
@@ -234,6 +237,7 @@ export type SafetyReport = {
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
+  correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
   // Dynamic fields based on category
   raCallout?: string;
   raFollowed?: 'Yes' | 'No';
@@ -275,13 +279,6 @@ export type CorrectiveAction = {
     deadline: string;
     status: 'Not Started' | 'In Progress' | 'Completed';
 }
-
-export type GenerateCorrectiveActionPlanOutput = {
-    summaryOfFindings: string;
-    rootCause: string;
-    correctiveActions: CorrectiveAction[];
-};
-
 
 export type RiskLikelihood = 'Rare' | 'Unlikely' | 'Possible' | 'Likely' | 'Certain';
 export type RiskSeverity = 'Insignificant' | 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
@@ -464,6 +461,3 @@ export type Alert = {
   date: string;
   readBy: string[];
 };
-
-
-
