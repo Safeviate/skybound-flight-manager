@@ -713,20 +713,17 @@ function SafetyReportInvestigationPage() {
   }, [generatePlanState.data, correctiveActionPlan]);
 
   const handleReportUpdate = (updatedReportData: Partial<SafetyReport>) => {
-    setReport(prev => {
-        if (!prev) return null;
-        const newReport = { ...prev, ...updatedReportData };
-        
-        if (company) {
-            const reportRef = doc(db, `companies/${company.id}/safety-reports`, newReport.id);
-            updateDoc(reportRef, newReport as any).catch(error => {
-                console.error("Error updating report:", error);
-                toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
-            });
-        }
-        
-        return newReport;
-    });
+    if (!report) return;
+    const newReport = { ...report, ...updatedReportData };
+    setReport(newReport);
+    
+    if (company) {
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, newReport.id);
+        updateDoc(reportRef, newReport).catch(error => {
+            console.error("Error updating report:", error);
+            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
+        });
+    }
   };
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
@@ -738,7 +735,10 @@ function SafetyReportInvestigationPage() {
 
   const handleCloseReport = () => {
     if (report) {
-      handleReportUpdate({ status: 'Closed' as SafetyReport['status'] });
+      handleReportUpdate({ 
+        status: 'Closed',
+        closedDate: new Date().toISOString().split('T')[0]
+      });
       toast({
         title: "Report Closed",
         description: `Report ${report.reportNumber} has been successfully closed and archived.`
@@ -912,8 +912,8 @@ function SafetyReportInvestigationPage() {
                                                 </Tooltip>
                                             </TooltipProvider>
                                         </div>
-                                        <Select 
-                                        name="occurrenceCategory" 
+                                        <Select
+                                        name="occurrenceCategory"
                                         defaultValue={report.occurrenceCategory}
                                         onValueChange={(value) => handleReportUpdate({ occurrenceCategory: value })}
                                         >
@@ -927,8 +927,8 @@ function SafetyReportInvestigationPage() {
                                     </div>
                                     <div className="space-y-2">
                                     <Label htmlFor="phaseOfFlight">Phase of Flight</Label>
-                                    <Select 
-                                        name="phaseOfFlight" 
+                                    <Select
+                                        name="phaseOfFlight"
                                         defaultValue={report.phaseOfFlight}
                                         onValueChange={(value) => handleReportUpdate({ phaseOfFlight: value })}
                                     >
@@ -1098,5 +1098,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    

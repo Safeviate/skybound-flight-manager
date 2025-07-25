@@ -217,6 +217,7 @@ export type SafetyReport = {
   occurrenceDate: string;
   occurrenceTime?: string;
   filedDate: string;
+  closedDate?: string;
   submittedBy: string;
   heading: string;
   details: string;

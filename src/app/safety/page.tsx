@@ -23,7 +23,7 @@ import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
-import { format, parseISO, startOfMonth } from 'date-fns';
+import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 import { NewRiskForm } from './new-risk-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -270,6 +270,30 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
         'Under Review': 'hsl(var(--warning))',
         'Closed': 'hsl(var(--success))',
     };
+    
+    const calculateAvgTimeToClose = () => {
+        const closedReports = reports.filter(r => r.status === 'Closed' && r.closedDate);
+        if (closedReports.length === 0) return { value: 'N/A', description: 'No closed reports yet' };
+
+        const totalDays = closedReports.reduce((sum, report) => {
+            const filed = parseISO(report.filedDate);
+            const closed = parseISO(report.closedDate!);
+            return sum + differenceInDays(closed, filed);
+        }, 0);
+
+        const avgDays = Math.round(totalDays / closedReports.length);
+        
+        if (isNaN(avgDays)) {
+             return { value: 'N/A', description: 'Calculation error' };
+        }
+
+        return {
+            value: `${avgDays} Days`,
+            description: `Based on ${closedReports.length} closed report(s)`
+        };
+    };
+
+    const avgTimeToClose = calculateAvgTimeToClose();
 
     return (
         <div className="space-y-8">
@@ -307,8 +331,8 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">14 Days</div>
-                        <p className="text-xs text-muted-foreground">(Mock Data)</p>
+                        <div className="text-2xl font-bold">{avgTimeToClose.value}</div>
+                        <p className="text-xs text-muted-foreground">{avgTimeToClose.description}</p>
                     </CardContent>
                 </Card>
             </div>
