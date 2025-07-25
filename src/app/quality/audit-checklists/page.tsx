@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Bot } from 'lucide-react';
 import type { AuditChecklist, QualityAudit } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewChecklistForm } from './new-checklist-form';
@@ -14,6 +14,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, addDoc } from 'firebase/firestore';
 import Link from 'next/link';
+import { AiChecklistGenerator } from './ai-checklist-generator';
 
 interface AuditChecklistsPageProps {
   onAuditSubmit: (newAudit: QualityAudit) => void;
@@ -21,7 +22,8 @@ interface AuditChecklistsPageProps {
 
 export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPageProps) {
   const [checklists, setChecklists] = useState<AuditChecklist[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const { toast } = useToast();
   const { company } = useUser();
 
@@ -50,13 +52,13 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
           ...item, 
           id: `item-${Date.now()}-${index}`,
           finding: null,
-          notes: '',
       })),
     };
     try {
         const docRef = await addDoc(collection(db, `companies/${company.id}/audit-checklists`), newChecklist);
         setChecklists(prev => [...prev, { ...newChecklist, id: docRef.id }]);
-        setIsDialogOpen(false);
+        setIsManualDialogOpen(false);
+        setIsAiDialogOpen(false);
         toast({
           title: 'Audit Checklist Created',
           description: `The "${newChecklist.title}" checklist has been added.`,
@@ -87,23 +89,42 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
                 Create and manage the master checklists used for quality audits.
             </CardDescription>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Checklist
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Create New Audit Checklist</DialogTitle>
-              <DialogDescription>
-                Define the title, area, and items for the new audit checklist template.
-              </DialogDescription>
-            </DialogHeader>
-            <NewChecklistForm onSubmit={handleNewChecklist} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Bot className="mr-2 h-4 w-4" />
+                  AI Checklist Generator
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>AI Audit Checklist Generator</DialogTitle>
+                  <DialogDescription>
+                    Provide a topic and let AI generate a starting checklist for you.
+                  </DialogDescription>
+                </DialogHeader>
+                <AiChecklistGenerator onSave={(data) => handleNewChecklist({ ...data, area: 'Management' })} />
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Checklist
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Audit Checklist</DialogTitle>
+                  <DialogDescription>
+                    Define the title, area, and items for the new audit checklist template.
+                  </DialogDescription>
+                </DialogHeader>
+                <NewChecklistForm onSubmit={handleNewChecklist} />
+              </DialogContent>
+            </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={areas[0] || 'all'}>
@@ -129,6 +150,11 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
             </TabsContent>
           ))}
         </Tabs>
+         {checklists.length === 0 && (
+          <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+            <p className="text-muted-foreground">No audit checklists found. Create one to get started.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
