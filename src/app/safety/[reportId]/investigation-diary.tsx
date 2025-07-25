@@ -91,48 +91,48 @@ export function InvestigationDiary({ report, onUpdate }: InvestigationDiaryProps
           <p className="text-sm text-muted-foreground text-center py-4">No diary entries yet.</p>
         )}
       </div>
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  New Entry
-              </Button>
-          </DialogTrigger>
-          <DialogContent>
-              <DialogHeader>
-                  <DialogTitle>Add New Diary Entry</DialogTitle>
-                  <DialogDescription>
-                      Record an action, decision, or note. This will be added to the chronological investigation log.
-                  </DialogDescription>
-              </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                      control={form.control}
-                      name="entryText"
-                      render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>New Diary Entry</FormLabel>
-                          <FormControl>
-                          <Textarea
-                              id="diaryEntry"
-                              placeholder="Log an action, decision, or note..."
-                              className="min-h-[100px]"
-                              {...field}
-                          />
-                          </FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )}
-                  />
-                  <div className="flex justify-end items-center">
-                      <Button type="submit">
-                          Add to Diary
-                      </Button>
-                  </div>
-                  </form>
-              </Form>
-          </DialogContent>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Entry
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Diary Entry</DialogTitle>
+            <DialogDescription>
+              Record an action, decision, or note. This will be added to the chronological investigation log.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="entryText"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Diary Entry</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="diaryEntry"
+                        placeholder="Log an action, decision, or note..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end items-center">
+                <Button type="submit">
+                  Add to Diary
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
       </Dialog>
     </div>
   );
