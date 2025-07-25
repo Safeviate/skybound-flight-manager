@@ -15,6 +15,7 @@ import type { GenerateAuditChecklistOutput } from '@/ai/flows/generate-audit-che
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const generatorFormSchema = z.object({
   topic: z.string().min(5, { message: 'Topic must be at least 5 characters long.' }),
@@ -115,11 +116,13 @@ export function AiChecklistGenerator({ onSave }: AiChecklistGeneratorProps) {
                     <CardDescription>Review the AI-generated checklist items. You can save this as a new template.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-2 list-disc list-inside bg-muted p-4 rounded-md">
-                        {generatedChecklist.items.map((item, index) => (
-                            <li key={index} className="text-sm">{item.text}</li>
-                        ))}
-                    </ul>
+                    <ScrollArea className="h-72">
+                        <ul className="space-y-2 list-disc list-inside bg-muted p-4 rounded-md">
+                            {generatedChecklist.items.map((item, index) => (
+                                <li key={index} className="text-sm">{item.text}</li>
+                            ))}
+                        </ul>
+                    </ScrollArea>
                 </CardContent>
                 <CardFooter>
                      <Button onClick={handleSave} className="w-full">
