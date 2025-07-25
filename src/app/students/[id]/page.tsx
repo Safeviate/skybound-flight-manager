@@ -20,11 +20,13 @@ import { AddLogEntryForm } from './add-log-entry-form';
 import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-function StudentProfilePage({ params }: { params: { id: string } }) {
+function StudentProfilePage() {
+    const params = useParams();
+    const studentId = params.id as string;
     const { user: currentUser, company, loading: userLoading } = useUser();
     const { toast } = useToast();
     const router = useRouter();
@@ -43,8 +45,9 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
         }
 
         const fetchStudent = async () => {
+            if (!studentId) return;
             setLoading(true);
-            const studentRef = doc(db, `companies/${company.id}/users`, params.id);
+            const studentRef = doc(db, `companies/${company.id}/users`, studentId);
             const studentSnap = await getDoc(studentRef);
 
             if (studentSnap.exists() && studentSnap.data().role === 'Student') {
@@ -56,7 +59,7 @@ function StudentProfilePage({ params }: { params: { id: string } }) {
         };
         fetchStudent();
 
-    }, [params.id, currentUser, company, userLoading, router, toast]);
+    }, [studentId, currentUser, company, userLoading, router, toast]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
 
