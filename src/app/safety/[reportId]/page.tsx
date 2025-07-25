@@ -486,34 +486,30 @@ function SafetyReportInvestigationPage() {
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-6">
-                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                        </div>
-                        <div className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>AI Investigation Toolkit</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <Tabs defaultValue="steps">
-                                        <TabsList className="grid w-full grid-cols-2">
-                                            <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
-                                            <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
-                                        </TabsList>
-                                        <TabsContent value="steps" className="pt-4">
-                                            <InvestigationStepsGenerator report={report} />
-                                        </TabsContent>
-                                        <TabsContent value="whys" className="pt-4">
-                                             <FiveWhysGenerator report={report} />
-                                        </TabsContent>
-                                    </Tabs>
-                                </CardContent>
-                            </Card>
-                        </div>
+                        <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>AI Investigation Toolkit</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs defaultValue="steps">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
+                                        <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="steps" className="pt-4">
+                                        <InvestigationStepsGenerator report={report} />
+                                    </TabsContent>
+                                    <TabsContent value="whys" className="pt-4">
+                                        <FiveWhysGenerator report={report} />
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
+                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                    <div className="space-y-2">
+                        <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
                         <Textarea 
                             id="investigation-notes"
                             placeholder="Record all investigation notes, findings, and discussions here..."
@@ -541,3 +537,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
