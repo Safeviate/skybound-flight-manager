@@ -485,12 +485,12 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-6">
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2 space-y-6">
                             <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                             <DiscussionSection report={report} onUpdate={handleReportUpdate} />
                         </div>
-                         <div className="space-y-6">
+                         <div className="md:col-span-1 space-y-6">
                             <Card>
                                 <CardHeader>
                                     <CardTitle>AI Investigation Toolkit</CardTitle>
