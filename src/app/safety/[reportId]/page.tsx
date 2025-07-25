@@ -256,8 +256,8 @@ function SafetyReportInvestigationPage() {
                     <ScrollArea className="flex-1">
                         <div className="p-6">
                             <TabsContent value="triage" className="mt-0 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
+                                <div className="flex flex-wrap items-end gap-4">
+                                    <div className="space-y-2 flex-1 min-w-[200px]">
                                         <label className="text-sm font-medium">Report Status</label>
                                         <Select 
                                             value={report.status} 
@@ -273,7 +273,7 @@ function SafetyReportInvestigationPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 flex-1 min-w-[240px]">
                                         <label className="text-sm font-medium flex items-center gap-1">
                                             ICAO Occurrence Category
                                             <Dialog>
@@ -319,7 +319,7 @@ function SafetyReportInvestigationPage() {
                                             noResultsText="No category found."
                                         />
                                     </div>
-                                     <div className="space-y-2">
+                                     <div className="space-y-2 flex-1 min-w-[200px]">
                                         <label className="text-sm font-medium">Classification</label>
                                         <Select 
                                             value={report.classification || ''}
@@ -425,3 +425,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
