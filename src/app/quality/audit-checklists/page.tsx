@@ -97,7 +97,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
                   AI Checklist Generator
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-xl">
+              <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>AI Audit Checklist Generator</DialogTitle>
                   <DialogDescription>

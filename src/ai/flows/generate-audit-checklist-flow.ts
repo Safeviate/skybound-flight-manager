@@ -45,6 +45,8 @@ const prompt = ai.definePrompt({
   Topic: {{{topic}}}
   Number of Items: {{{numItems}}}
 
+  For each checklist item, if it directly relates to a specific regulation (e.g., FAA 14 CFR, EASA Part-FCL, ICAO Annex), you MUST include the regulation code in parentheses at the end of the item text. For example: "Are all pilot licenses current and valid? (FAA 14 CFR §61.3)".
+
   Generate a suitable title for the checklist and exactly {{{numItems}}} checklist items related to the topic.
 
   Output the results in the required JSON format.`,
