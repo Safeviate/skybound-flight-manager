@@ -25,7 +25,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils.tsx';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays, isBefore } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Booking, Aircraft, User } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
