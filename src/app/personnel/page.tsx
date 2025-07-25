@@ -132,7 +132,7 @@ function PersonnelPage() {
                           Add Personnel
                       </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
+                  <DialogContent className="sm:max-w-4xl">
                       <DialogHeader>
                           <DialogTitle>{editingPersonnel ? `Edit Personnel: ${editingPersonnel.name}` : 'Add New Personnel'}</DialogTitle>
                           <DialogDescription>
