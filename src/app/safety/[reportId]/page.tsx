@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -26,6 +26,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -47,6 +49,41 @@ const CLASSIFICATION_OPTIONS = ['Hazard', 'Occurrence', 'Incident', 'Accident'];
 const SCF_SUBCATEGORIES = ['Landing Gear', 'Flight Controls', 'Hydraulics', 'Electrical', 'Avionics', 'Navigation', 'Other'];
 const LOS_SUBCATEGORIES = ['Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
 const RA_CALLOUTS = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
+const WEATHER_RELATED_CATEGORIES = ['WSTRW', 'TURB', 'ICE', 'CFIT', 'LOC-I', 'RI', 'RE', 'LALT', 'UIMC'];
+
+
+const WeatherInputGroup = ({ report, onUpdate }: { report: SafetyReport, onUpdate: (updatedReport: SafetyReport, showToast?: boolean) => void }) => {
+  return (
+    <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+      <label className="text-sm font-medium block flex items-center gap-2">
+        <Wind className="h-4 w-4" />
+        Weather Information
+      </label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Input 
+          placeholder="Visibility (e.g., 5 SM)" 
+          value={report.visibility || ''}
+          onChange={e => onUpdate({ ...report, visibility: Number(e.target.value) }, false)}
+        />
+        <Input 
+          placeholder="Wind Speed (knots)" 
+          value={report.windSpeed || ''}
+          onChange={e => onUpdate({ ...report, windSpeed: Number(e.target.value) }, false)}
+        />
+        <Input 
+          placeholder="Wind Direction" 
+          value={report.windDirection || ''}
+          onChange={e => onUpdate({ ...report, windDirection: Number(e.target.value) }, false)}
+        />
+      </div>
+       <Textarea 
+          placeholder="Describe overall weather conditions (e.g., METAR, general description)..."
+          value={report.weatherConditions || ''}
+          onChange={e => onUpdate({ ...report, weatherConditions: e.target.value }, false)}
+        />
+    </div>
+  );
+};
 
 
 function SafetyReportInvestigationPage() {
@@ -173,6 +210,7 @@ function SafetyReportInvestigationPage() {
   
   const showScfFields = report.occurrenceCategory === 'SCF-NP' || report.occurrenceCategory === 'SCF-PP';
   const showLosFields = report.occurrenceCategory === 'MAC';
+  const showWeatherFields = report.occurrenceCategory && WEATHER_RELATED_CATEGORIES.includes(report.occurrenceCategory);
 
   return (
     <>
@@ -354,6 +392,10 @@ function SafetyReportInvestigationPage() {
                                             )}
                                         </div>
                                     </div>
+                                )}
+                                
+                                {showWeatherFields && (
+                                    <WeatherInputGroup report={report} onUpdate={handleReportUpdate} />
                                 )}
 
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />

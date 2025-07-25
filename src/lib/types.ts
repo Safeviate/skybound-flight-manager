@@ -1,6 +1,5 @@
 
 
-
 export type Airport = {
   id: string;
   name: string;
@@ -237,6 +236,10 @@ export type SafetyReport = {
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
+  weatherConditions?: string;
+  visibility?: number;
+  windSpeed?: number;
+  windDirection?: number;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
