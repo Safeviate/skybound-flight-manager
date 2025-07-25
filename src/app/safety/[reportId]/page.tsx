@@ -5,15 +5,18 @@
 import { useEffect, useState, useActionState } from 'react';
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen } from 'lucide-react';
+import type { Risk, SafetyReport, User } from '@/lib/types';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -38,6 +41,14 @@ import { DiscussionSection } from './discussion-section';
 import { suggestIcaoCategoryAction } from './actions';
 import { InitialRiskAssessment } from './initial-risk-assessment';
 import { InvestigationDiary } from './investigation-diary';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
+import type { DiscussionEntry } from '@/lib/types';
+
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -99,6 +110,14 @@ const WeatherInputGroup = ({ report, onUpdate }: { report: SafetyReport, onUpdat
   );
 };
 
+const discussionFormSchema = z.object({
+  recipient: z.string().min(1, 'You must select a recipient.'),
+  message: z.string().min(1, 'Message cannot be empty.'),
+  replyByDate: z.date().optional(),
+});
+
+type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
+
 
 function SafetyReportInvestigationPage() {
   const params = useParams();
@@ -111,6 +130,9 @@ function SafetyReportInvestigationPage() {
   
   const [icaoState, icaoFormAction] = useActionState(suggestIcaoCategoryAction, { message: '', data: null });
   const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
+
+  const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
+  const [personnel, setPersonnel] = React.useState<User[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -141,13 +163,62 @@ function SafetyReportInvestigationPage() {
         }
     }
     
+    async function fetchPersonnel() {
+      if (!company) return;
+      const usersRef = collection(db, `companies/${company.id}/users`);
+      const snapshot = await getDocs(usersRef);
+      setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+    };
+
     fetchReport();
+    fetchPersonnel();
   }, [reportId, company, user, loading, router, toast]);
+
+  const discussionForm = useForm<DiscussionFormValues>({
+    resolver: zodResolver(discussionFormSchema),
+  });
+
+  const availableRecipients = React.useMemo(() => {
+    if (!personnel || personnel.length === 0 || !report) {
+      return [];
+    }
+    return personnel.filter(
+      (u) => report.investigationTeam?.includes(u.name) && u.name !== user?.name
+    );
+  }, [personnel, report, user]);
+
+  const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
+    if (!user || !report) {
+        toast({ variant: 'destructive', title: 'You must be logged in to post.'});
+        return;
+    }
+
+    const newEntry: DiscussionEntry = {
+        id: `d-${Date.now()}`,
+        author: user.name,
+        datePosted: new Date().toISOString(),
+        ...data,
+        replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
+    };
+    
+    const updatedReport = {
+        ...report,
+        discussion: [...(report.discussion || []), newEntry],
+    };
+
+    handleReportUpdate(updatedReport, true);
+    discussionForm.reset();
+    setIsDiscussionDialogOpen(false);
+    toast({
+      title: 'Message Sent',
+      description: `Your message has been sent to ${data.recipient}.`,
+    });
+  }
 
   useEffect(() => {
     setIsIcaoLoading(false);
     if (icaoState.data?.category && report) {
-      handleReportUpdate({ ...report, occurrenceCategory: icaoState.data.category });
+      handleReportUpdate({ ...report, occurrenceCategory: icaoState.data.category }, true);
       toast({
         title: 'AI Suggestion Complete',
         description: `Suggested category: ${icaoState.data.category}. ${icaoState.data.reasoning}`,
@@ -283,7 +354,7 @@ function SafetyReportInvestigationPage() {
                             <label className="text-sm font-medium">Report Status</label>
                             <Select 
                                 value={report.status} 
-                                onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value })}
+                                onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value }, true)}
                             >
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Set status" />
@@ -353,7 +424,7 @@ function SafetyReportInvestigationPage() {
                             <label className="text-sm font-medium">Classification</label>
                             <Select 
                                 value={report.classification || ''}
-                                onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value })}
+                                onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value }, true)}
                             >
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Classify event" />
@@ -487,7 +558,7 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <div className="grid lg:grid-cols-3 gap-6">
+                   <div className="grid lg:grid-cols-3 gap-6">
                         <Card className="lg:col-span-2">
                             <CardHeader>
                                 <CardTitle>Investigation Team</CardTitle>
@@ -517,15 +588,133 @@ function SafetyReportInvestigationPage() {
                             </CardContent>
                         </Card>
                     </div>
+
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <div>
                             <CardTitle>Investigation Discussion</CardTitle>
                             <CardDescription>A forum for the investigation team to communicate.</CardDescription>
+                          </div>
+                          <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Send className="mr-2 h-4 w-4" />
+                                        Post Message
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Post New Message</DialogTitle>
+                                        <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
+                                    </DialogHeader>
+                                    <Form {...discussionForm}>
+                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                                            <FormField
+                                                control={discussionForm.control}
+                                                name="recipient"
+                                                render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>Send To</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                        <SelectValue placeholder="Select a team member" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {availableRecipients.map((p) => (
+                                                        <SelectItem key={p.id} value={p.name}>
+                                                            {p.name}
+                                                        </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={discussionForm.control}
+                                                name="replyByDate"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <FormLabel>Reply Needed By (Optional)</FormLabel>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                            <FormControl>
+                                                                <Button
+                                                                variant={"outline"}
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                                >
+                                                                {field.value ? (
+                                                                    format(field.value, "PPP")
+                                                                ) : (
+                                                                    <span>Pick a date</span>
+                                                                )}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                </Button>
+                                                            </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                            <Calendar
+                                                                mode="single"
+                                                                selected={field.value}
+                                                                onSelect={field.onChange}
+                                                                disabled={(date) => date < new Date()}
+                                                                initialFocus
+                                                            />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <FormField
+                                            control={discussionForm.control}
+                                            name="message"
+                                            render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Message / Instruction</FormLabel>
+                                                <FormControl>
+                                                <Textarea
+                                                    id="message"
+                                                    placeholder="Type your message here..."
+                                                    className="min-h-[100px]"
+                                                    {...field}
+                                                />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <div className="flex justify-end items-center">
+                                            <Button type="submit">
+                                                <Send className="mr-2 h-4 w-4" />
+                                                Post Message
+                                            </Button>
+                                        </div>
+                                        </form>
+                                    </Form>
+                                </DialogContent>
+                            </Dialog>
                         </CardHeader>
                         <CardContent>
-                            <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                           <DiscussionSection 
+                             report={report} 
+                             onUpdate={handleReportUpdate} 
+                             form={discussionForm} 
+                             handleFormSubmit={handleNewDiscussionMessage}
+                             availableRecipients={availableRecipients}
+                             setIsDialogOpen={setIsDiscussionDialogOpen}
+                           />
                         </CardContent>
                     </Card>
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Investigation Diary</CardTitle>
@@ -535,6 +724,7 @@ function SafetyReportInvestigationPage() {
                              <InvestigationDiary report={report} onUpdate={handleReportUpdate} />
                         </CardContent>
                     </Card>
+
                     <Card>
                         <CardHeader>
                              <CardTitle>Investigation Notes & Findings</CardTitle>
@@ -569,4 +759,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
