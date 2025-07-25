@@ -244,21 +244,20 @@ function SafetyReportInvestigationPage() {
 
   return (
     <>
-      <main className="flex-1 p-4 md:p-8">
-        <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                            <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                            <CardDescription>
-                                Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                            </CardDescription>
-                        </div>
+      <main className="flex-1 p-4 md:p-8 space-y-8">
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                        <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                        <CardDescription>
+                            Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                        </CardDescription>
                     </div>
-                </CardHeader>
-            </Card>
+                </div>
+            </CardHeader>
+        </Card>
                 
             <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-6 h-auto">
@@ -490,17 +489,6 @@ function SafetyReportInvestigationPage() {
                         <div className="space-y-6">
                             <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                             <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                             <Separator />
-                            <div className="space-y-2">
-                                <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
-                                <Textarea 
-                                    id="investigation-notes"
-                                    placeholder="Record all investigation notes, findings, and discussions here..."
-                                    className="min-h-[300px]"
-                                    value={report.investigationNotes || ''}
-                                    onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
-                                />
-                            </div>
                         </div>
                          <div className="space-y-6">
                             <Card>
@@ -522,6 +510,16 @@ function SafetyReportInvestigationPage() {
                                     </Tabs>
                                 </CardContent>
                             </Card>
+                            <div className="space-y-2">
+                                <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
+                                <Textarea 
+                                    id="investigation-notes"
+                                    placeholder="Record all investigation notes, findings, and discussions here..."
+                                    className="min-h-[300px]"
+                                    value={report.investigationNotes || ''}
+                                    onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                />
+                            </div>
                         </div>
                     </div>
                 </TabsContent>
@@ -536,7 +534,6 @@ function SafetyReportInvestigationPage() {
                     <FinalReview report={report} onUpdate={handleReportUpdate} />
                 </TabsContent>
             </Tabs>
-        </div>
       </main>
     </>
   );
