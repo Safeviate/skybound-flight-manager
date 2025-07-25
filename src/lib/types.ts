@@ -227,17 +227,14 @@ export type SafetyReport = {
   type: SafetyReportType;
   department: Department;
   classification?: 'Hazard' | 'Occurrence' | 'Incident' | 'Accident';
+  occurrenceCategory?: string;
   subCategory?: string;
-  phaseOfFlight?: string;
-  lossOfSeparationType?: string;
   raCallout?: string;
   raFollowed?: 'Yes' | 'No';
-  raNotFollowedReason?: string;
   aircraftInvolved?: string;
   location?: string;
   investigationTeam?: string[];
   investigationNotes?: string;
-  occurrenceCategory?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
 };

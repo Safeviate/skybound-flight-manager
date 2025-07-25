@@ -44,6 +44,11 @@ const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({
 
 const CLASSIFICATION_OPTIONS = ['Hazard', 'Occurrence', 'Incident', 'Accident'];
 
+const SCF_SUBCATEGORIES = ['Landing Gear', 'Flight Controls', 'Hydraulics', 'Electrical', 'Avionics', 'Navigation', 'Other'];
+const LOS_SUBCATEGORIES = ['Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
+const RA_CALLOUTS = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
+
+
 function SafetyReportInvestigationPage() {
   const params = useParams();
   const router = useRouter();
@@ -165,6 +170,9 @@ function SafetyReportInvestigationPage() {
         </div>
     </>
   );
+  
+  const showScfFields = report.occurrenceCategory === 'SCF-NP' || report.occurrenceCategory === 'SCF-PP';
+  const showLosFields = report.occurrenceCategory === 'MAC';
 
   return (
     <>
@@ -290,6 +298,64 @@ function SafetyReportInvestigationPage() {
                                         </Select>
                                     </div>
                                 </div>
+                                
+                                {showScfFields && (
+                                    <div className="space-y-2 p-4 border bg-muted/50 rounded-lg">
+                                        <label className="text-sm font-medium">System/Component Failure Details</label>
+                                        <Select 
+                                            value={report.subCategory || ''}
+                                            onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select the affected system" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {SCF_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
+                                {showLosFields && (
+                                    <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+                                        <label className="text-sm font-medium block mb-2">Loss of Separation Details</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-medium">Event Type</label>
+                                                <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value })}>
+                                                    <SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {LOS_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            {report.subCategory === 'Resolution Advisory (RA)' && (
+                                                <>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium">RA Callout</label>
+                                                         <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value })}>
+                                                            <SelectTrigger><SelectValue placeholder="Select RA callout" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                {RA_CALLOUTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium">RA Followed?</label>
+                                                         <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value })}>
+                                                            <SelectTrigger><SelectValue placeholder="Select one" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Yes">Yes</SelectItem>
+                                                                <SelectItem value="No">No</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                                 <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                             </TabsContent>
