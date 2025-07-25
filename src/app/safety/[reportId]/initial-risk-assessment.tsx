@@ -206,7 +206,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                                             id: `risk-reg-${Date.now()}`,
                                             dateIdentified: new Date().toISOString().split('T')[0],
                                             description: result.data.description,
-                                            consequences: [], // AI doesn't generate this yet
+                                            consequences: [risk.risk], // Use the original risk as the consequence
                                             hazard: risk.hazard,
                                             risk: risk.risk,
                                             likelihood: risk.likelihood,
