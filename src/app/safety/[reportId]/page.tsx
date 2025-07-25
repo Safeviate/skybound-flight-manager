@@ -134,8 +134,11 @@ function SafetyReportInvestigationPage() {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-                {/* Clean slate for investigation steps */}
+            <CardContent className="space-y-4 pt-4 border-t">
+                <h3 className="font-semibold text-lg">Details of Occurrence</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">
+                    {report.details}
+                </p>
             </CardContent>
         </Card>
       </main>
