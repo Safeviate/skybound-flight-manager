@@ -1,5 +1,6 @@
 
 
+
 export type Airport = {
   id: string;
   name: string;
@@ -225,6 +226,7 @@ export type SafetyReport = {
   status: 'Open' | 'Under Review' | 'Closed';
   type: SafetyReportType;
   department: Department;
+  classification?: 'Hazard' | 'Occurrence' | 'Incident' | 'Accident';
   subCategory?: string;
   phaseOfFlight?: string;
   lossOfSeparationType?: string;

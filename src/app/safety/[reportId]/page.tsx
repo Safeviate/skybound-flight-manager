@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -40,6 +41,8 @@ const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({
     label: code,
     description: ICAO_CODE_DEFINITIONS[code] || 'No definition available.'
 }));
+
+const CLASSIFICATION_OPTIONS = ['Hazard', 'Occurrence', 'Incident', 'Accident'];
 
 function SafetyReportInvestigationPage() {
   const params = useParams();
@@ -207,7 +210,7 @@ function SafetyReportInvestigationPage() {
                     <ScrollArea className="flex-1">
                         <div className="p-6">
                             <TabsContent value="triage" className="mt-0 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Report Status</label>
                                         <Select 
@@ -269,6 +272,22 @@ function SafetyReportInvestigationPage() {
                                             searchPlaceholder="Search categories..."
                                             noResultsText="No category found."
                                         />
+                                    </div>
+                                     <div className="space-y-2">
+                                        <label className="text-sm font-medium">Classification</label>
+                                        <Select 
+                                            value={report.classification || ''}
+                                            onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Classify event" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {CLASSIFICATION_OPTIONS.map(opt => (
+                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
