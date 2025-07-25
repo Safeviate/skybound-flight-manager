@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -35,6 +34,7 @@ import { InvestigationStepsGenerator } from './investigation-steps-generator';
 import { FiveWhysGenerator } from './five-whys-generator';
 import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
+import { FinalReview } from './final-review';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -262,7 +262,7 @@ function SafetyReportInvestigationPage() {
                             <TabsTrigger value="investigation">Investigation</TabsTrigger>
                             <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
                             <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
-                            <TabsTrigger value="final-review" disabled>Final Review</TabsTrigger>
+                            <TabsTrigger value="final-review">Final Review</TabsTrigger>
                         </TabsList>
                     </div>
                     <ScrollArea className="flex-1">
@@ -493,7 +493,7 @@ function SafetyReportInvestigationPage() {
                                 <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />
                             </TabsContent>
                             <TabsContent value="final-review" className="mt-0">
-                                {/* Content for Final Review will go here */}
+                                <FinalReview report={report} onUpdate={handleReportUpdate} />
                             </TabsContent>
                         </div>
                     </ScrollArea>
