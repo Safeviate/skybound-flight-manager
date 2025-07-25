@@ -4,7 +4,6 @@
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport } from '@/lib/types';
@@ -67,18 +66,13 @@ export function FiveWhysGenerator({ report }: { report: SafetyReport }) {
   }, [state, toast]);
 
   return (
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-base">Root Cause Analysis</CardTitle>
-            <CardDescription className="text-xs">Use the 5 Whys method to drill down to the root cause of the incident.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <form action={formAction}>
-                <input type="hidden" name="report" value={JSON.stringify(report)} />
-                <SubmitButton />
-            </form>
-            {state.data && <AnalysisResult data={state.data as FiveWhysAnalysisOutput} />}
-        </CardContent>
-    </Card>
+    <div>
+      <p className="text-xs text-muted-foreground mb-2">Use the 5 Whys method to drill down to the root cause of the incident.</p>
+      <form action={formAction}>
+          <input type="hidden" name="report" value={JSON.stringify(report)} />
+          <SubmitButton />
+      </form>
+      {state.data && <AnalysisResult data={state.data as FiveWhysAnalysisOutput} />}
+    </div>
   );
 }

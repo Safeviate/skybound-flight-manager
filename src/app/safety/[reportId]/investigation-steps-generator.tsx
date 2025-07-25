@@ -4,7 +4,6 @@
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Bot, Clipboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport } from '@/lib/types';
@@ -84,20 +83,15 @@ export function InvestigationStepsGenerator({ report }: { report: SafetyReport }
   }
 
   return (
-    <Card>
-        <CardHeader>
-            <CardTitle className="text-base">AI Investigation Assistant</CardTitle>
-             <CardDescription className="text-xs">
-              Generate a structured investigation plan based on the report details.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <form action={formAction}>
-                <input type="hidden" name="report" value={JSON.stringify(report)} />
-                <SubmitButton />
-            </form>
-            {state.data && <AnalysisResult data={state.data as SuggestInvestigationStepsOutput} onCopyToClipboard={copyToClipboard} />}
-        </CardContent>
-    </Card>
+    <div>
+        <p className="text-xs text-muted-foreground mb-2">
+            Generate a structured investigation plan based on the report details.
+        </p>
+        <form action={formAction}>
+            <input type="hidden" name="report" value={JSON.stringify(report)} />
+            <SubmitButton />
+        </form>
+        {state.data && <AnalysisResult data={state.data as SuggestInvestigationStepsOutput} onCopyToClipboard={copyToClipboard} />}
+    </div>
   );
 }

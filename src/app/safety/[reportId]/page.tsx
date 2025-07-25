@@ -502,9 +502,26 @@ function SafetyReportInvestigationPage() {
                                 />
                             </div>
                         </div>
-                        <div className="space-y-6">
-                            <InvestigationStepsGenerator report={report} />
-                            <FiveWhysGenerator report={report} />
+                         <div className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>AI Investigation Toolkit</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Tabs defaultValue="steps">
+                                        <TabsList className="grid w-full grid-cols-2">
+                                            <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
+                                            <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
+                                        </TabsList>
+                                        <TabsContent value="steps" className="pt-4">
+                                            <InvestigationStepsGenerator report={report} />
+                                        </TabsContent>
+                                        <TabsContent value="whys" className="pt-4">
+                                             <FiveWhysGenerator report={report} />
+                                        </TabsContent>
+                                    </Tabs>
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
                 </TabsContent>
