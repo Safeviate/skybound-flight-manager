@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -35,6 +34,7 @@ import { FiveWhysGenerator } from './five-whys-generator';
 import { MitigatedRiskAssessment } from './mitigated-risk-assessment';
 import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generator';
 import { FinalReview } from './final-review';
+import { DiscussionSection } from './discussion-section';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -245,7 +245,8 @@ function SafetyReportInvestigationPage() {
             <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-6 h-auto">
                     <TabsTrigger value="details">Report Details</TabsTrigger>
-                    <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
+                    <TabsTrigger value="classification">Classification</TabsTrigger>
+                    <TabsTrigger value="forum">Forum</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
                     <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
                     <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
@@ -258,7 +259,7 @@ function SafetyReportInvestigationPage() {
                         {report.details}
                     </p>
                 </TabsContent>
-                <TabsContent value="triage" className="mt-6 space-y-8">
+                <TabsContent value="classification" className="mt-6 space-y-8">
                     <div className="flex flex-wrap items-end gap-4">
                         <div className="space-y-2 flex-1 min-w-[200px]">
                             <label className="text-sm font-medium">Report Status</label>
@@ -459,10 +460,13 @@ function SafetyReportInvestigationPage() {
                     <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                     <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                 </TabsContent>
+                <TabsContent value="forum" className="mt-6 space-y-6">
+                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                </TabsContent>
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
+                            <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes &amp; Findings</Label>
                             <Textarea 
                                 id="investigation-notes"
                                 placeholder="Record all investigation notes, findings, and discussions here..."
@@ -495,4 +499,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
