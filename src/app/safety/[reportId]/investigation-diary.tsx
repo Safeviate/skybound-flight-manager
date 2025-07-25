@@ -64,78 +64,76 @@ export function InvestigationDiary({ report, onUpdate }: InvestigationDiaryProps
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
-            <h3 className="text-lg font-medium flex items-center gap-2">
-            <BookOpen /> Investigation Diary
-            </h3>
-            <p className="text-sm text-muted-foreground">A chronological log of actions, decisions, and notes taken during the investigation.</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    New Entry
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New Diary Entry</DialogTitle>
-                    <DialogDescription>
-                        Record an action, decision, or note. This will be added to the chronological investigation log.
-                    </DialogDescription>
-                </DialogHeader>
-                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="entryText"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>New Diary Entry</FormLabel>
-                            <FormControl>
-                            <Textarea
-                                id="diaryEntry"
-                                placeholder="Log an action, decision, or note..."
-                                className="min-h-[100px]"
-                                {...field}
-                            />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <div className="flex justify-end items-center">
-                        <Button type="submit">
-                            Add to Diary
-                        </Button>
-                    </div>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <BookOpen /> Investigation Diary
+        </h3>
+        <p className="text-sm text-muted-foreground">A chronological log of actions, decisions, and notes taken during the investigation.</p>
       </div>
-        <div className="mt-4 space-y-4 max-h-96 overflow-y-auto pr-4 border-l">
-            {diaryEntries.length > 0 ? (
-                diaryEntries.slice().reverse().map((entry) => (
-                    <div key={entry.id} className="flex gap-3 pl-4">
-                        <div className="h-9 w-9 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
-                            <UserIcon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center justify-between">
-                                <p className="font-semibold text-sm">{entry.author}</p>
-                                <p className="text-xs text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy 'at' h:mm a")}</p>
-                            </div>
-                            <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap">{entry.entryText}</div>
-                        </div>
-                    </div>
-                ))
-            ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No diary entries yet.</p>
-            )}
-        </div>
+      <div className="mt-4 space-y-4 max-h-96 overflow-y-auto pr-4 border rounded-lg p-4">
+        {diaryEntries.length > 0 ? (
+          diaryEntries.slice().reverse().map((entry) => (
+            <div key={entry.id} className="flex gap-3">
+              <div className="h-9 w-9 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
+                <UserIcon className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-sm">{entry.author}</p>
+                  <p className="text-xs text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy 'at' h:mm a")}</p>
+                </div>
+                <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap">{entry.entryText}</div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">No diary entries yet.</p>
+        )}
+      </div>
+       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Entry
+              </Button>
+          </DialogTrigger>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Add New Diary Entry</DialogTitle>
+                  <DialogDescription>
+                      Record an action, decision, or note. This will be added to the chronological investigation log.
+                  </DialogDescription>
+              </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                      control={form.control}
+                      name="entryText"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>New Diary Entry</FormLabel>
+                          <FormControl>
+                          <Textarea
+                              id="diaryEntry"
+                              placeholder="Log an action, decision, or note..."
+                              className="min-h-[100px]"
+                              {...field}
+                          />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+                  <div className="flex justify-end items-center">
+                      <Button type="submit">
+                          Add to Diary
+                      </Button>
+                  </div>
+                  </form>
+              </Form>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
