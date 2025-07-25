@@ -37,6 +37,7 @@ import { DateRange } from 'react-day-picker';
 
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const maintenanceTypes = ['A-Check', 'B-Check', 'C-Check', 'Annual Inspection', '100-Hour Inspection', 'Unscheduled Maintenance'];
 
 const bookingFormSchema = z.object({
   aircraft: z.string({
@@ -53,6 +54,7 @@ const bookingFormSchema = z.object({
   purpose: z.enum(['Training', 'Maintenance', 'Private'], {
     required_error: 'Please select a purpose.',
   }),
+  maintenanceType: z.string().optional(),
   trainingExercise: z.string().optional(),
 }).refine(data => {
     if (data.purpose !== 'Maintenance') {
@@ -78,6 +80,14 @@ const bookingFormSchema = z.object({
 }, {
     message: "End time must be after start time.",
     path: ["endTime"],
+}).refine(data => {
+    if (data.purpose === 'Maintenance') {
+        return !!data.maintenanceType;
+    }
+    return true;
+}, {
+    message: "Maintenance type is required.",
+    path: ["maintenanceType"],
 });
 
 
@@ -169,6 +179,12 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
   const availableAircraft = aircraftData.filter(ac => {
     const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
     const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
+    
+    // For maintenance bookings, we want to be able to book aircraft that are "Available" or already "Booked"
+    if (purpose === 'Maintenance') {
+        return !airworthinessExpired && !insuranceExpired;
+    }
+    
     const isAvailable = settings.enforcePostMaintenanceCheck ? ac.status === 'Available' : ac.status !== 'In Maintenance';
     return isAvailable && !airworthinessExpired && !insuranceExpired;
   });
@@ -263,6 +279,32 @@ export function NewBookingForm({ onBookingCreated }: NewBookingFormProps) {
             </FormItem>
           )}
         />
+        
+        {purpose === 'Maintenance' && (
+             <FormField
+                control={form.control}
+                name="maintenanceType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Maintenance Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a maintenance type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {maintenanceTypes.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+        
         {purpose !== 'Maintenance' && (
             <>
             <FormField
