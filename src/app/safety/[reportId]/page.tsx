@@ -568,7 +568,7 @@ function SafetyReportInvestigationPage() {
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                             </CardContent>
                         </Card>
-                        <Card>
+                         <Card>
                             <CardHeader>
                                 <CardTitle>AI Toolkit</CardTitle>
                             </CardHeader>
@@ -591,10 +591,8 @@ function SafetyReportInvestigationPage() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                          <div>
-                            <CardTitle>Investigation Discussion</CardTitle>
-                          </div>
-                          <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                          <CardTitle>Investigation Discussion</CardTitle>
+                           <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline">
                                         <Send className="mr-2 h-4 w-4" />
@@ -762,6 +760,7 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
 
 

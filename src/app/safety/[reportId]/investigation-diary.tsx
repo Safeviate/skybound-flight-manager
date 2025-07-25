@@ -106,7 +106,6 @@ export function InvestigationDiary({ report, onUpdate, isDialogOpen, setIsDialog
   }
 
   return (
-    <>
       <div className="mt-4 space-y-4 max-h-96 overflow-y-auto pr-4 border rounded-lg p-4">
         {diaryEntries.length > 0 ? (
           diaryEntries.slice().reverse().map((entry) => (
@@ -127,6 +126,6 @@ export function InvestigationDiary({ report, onUpdate, isDialogOpen, setIsDialog
           <p className="text-sm text-muted-foreground text-center py-4">No diary entries yet.</p>
         )}
       </div>
-    </>
   );
 }
+
