@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -28,6 +28,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -50,6 +52,10 @@ const SCF_SUBCATEGORIES = ['Landing Gear', 'Flight Controls', 'Hydraulics', 'Ele
 const LOS_SUBCATEGORIES = ['Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
 const RA_CALLOUTS = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
 const WEATHER_RELATED_CATEGORIES = ['WSTRW', 'TURB', 'ICE', 'CFIT', 'LOC-I', 'RI', 'RE', 'LALT', 'UIMC'];
+
+const BIRD_STRIKE_PARTS = ['Radome', 'Windshield', 'Nose', 'Engine No. 1', 'Engine No. 2', 'Propeller', 'Wing/Rotor', 'Fuselage', 'Landing Gear', 'Tail', 'Lights', 'Other'];
+const BIRD_NUMBERS = ['1', '2-10', '11-100', 'More than 100'];
+const BIRD_SIZES = ['Small', 'Medium', 'Large'];
 
 
 const WeatherInputGroup = ({ report, onUpdate }: { report: SafetyReport, onUpdate: (updatedReport: SafetyReport, showToast?: boolean) => void }) => {
@@ -211,6 +217,7 @@ function SafetyReportInvestigationPage() {
   const showScfFields = report.occurrenceCategory === 'SCF-NP' || report.occurrenceCategory === 'SCF-PP';
   const showLosFields = report.occurrenceCategory === 'MAC';
   const showWeatherFields = report.occurrenceCategory && WEATHER_RELATED_CATEGORIES.includes(report.occurrenceCategory);
+  const showBirdStrikeFields = report.occurrenceCategory === 'BIRD';
 
   return (
     <>
@@ -396,6 +403,46 @@ function SafetyReportInvestigationPage() {
                                 
                                 {showWeatherFields && (
                                     <WeatherInputGroup report={report} onUpdate={handleReportUpdate} />
+                                )}
+
+                                {showBirdStrikeFields && (
+                                     <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+                                        <label className="text-sm font-medium block flex items-center gap-2">
+                                            <Bird className="h-4 w-4" />
+                                            Bird Strike Details
+                                        </label>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bird-number">Number of Birds</Label>
+                                                <Select value={report.numberOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, numberOfBirds: value }, false)}>
+                                                    <SelectTrigger id="bird-number"><SelectValue placeholder="Select number" /></SelectTrigger>
+                                                    <SelectContent>{BIRD_NUMBERS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bird-size">Size of Birds</Label>
+                                                <Select value={report.sizeOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, sizeOfBirds: value }, false)}>
+                                                    <SelectTrigger id="bird-size"><SelectValue placeholder="Select size" /></SelectTrigger>
+                                                    <SelectContent>{BIRD_SIZES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bird-part">Part Struck</Label>
+                                                <Select value={report.partOfAircraftStruck || ''} onValueChange={(value) => handleReportUpdate({ ...report, partOfAircraftStruck: value }, false)}>
+                                                    <SelectTrigger id="bird-part"><SelectValue placeholder="Select part" /></SelectTrigger>
+                                                    <SelectContent>{BIRD_STRIKE_PARTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex items-center space-x-2 pt-6">
+                                                <Switch 
+                                                    id="bird-damage"
+                                                    checked={report.birdStrikeDamage}
+                                                    onCheckedChange={(checked) => handleReportUpdate({ ...report, birdStrikeDamage: checked }, false)}
+                                                />
+                                                <Label htmlFor="bird-damage">Damage Reported?</Label>
+                                            </div>
+                                        </div>
+                                     </div>
                                 )}
 
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />

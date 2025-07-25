@@ -228,18 +228,23 @@ export type SafetyReport = {
   classification?: 'Hazard' | 'Occurrence' | 'Incident' | 'Accident';
   occurrenceCategory?: string;
   subCategory?: string;
-  raCallout?: string;
-  raFollowed?: 'Yes' | 'No';
   aircraftInvolved?: string;
   location?: string;
   investigationTeam?: string[];
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
+  // Dynamic fields based on category
+  raCallout?: string;
+  raFollowed?: 'Yes' | 'No';
   weatherConditions?: string;
   visibility?: number;
   windSpeed?: number;
   windDirection?: number;
+  birdStrikeDamage?: boolean;
+  numberOfBirds?: string;
+  sizeOfBirds?: string;
+  partOfAircraftStruck?: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
@@ -458,3 +463,4 @@ export type Alert = {
   date: string;
   readBy: string[];
 };
+
