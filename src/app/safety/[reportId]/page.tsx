@@ -349,7 +349,7 @@ function SafetyReportInvestigationPage() {
                                         <label className="text-sm font-medium">System/Component Failure Details</label>
                                         <Select 
                                             value={report.subCategory || ''}
-                                            onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value })}
+                                            onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select the affected system" />
@@ -358,6 +358,11 @@ function SafetyReportInvestigationPage() {
                                                 {SCF_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
+                                        <Textarea
+                                          placeholder="Add any other relevant details about the system/component failure..."
+                                          value={report.eventSubcategoryDetails || ''}
+                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                                        />
                                     </div>
                                 )}
 
@@ -367,7 +372,7 @@ function SafetyReportInvestigationPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-medium">Event Type</label>
-                                                <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value })}>
+                                                <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}>
                                                     <SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger>
                                                     <SelectContent>
                                                         {LOS_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -378,7 +383,7 @@ function SafetyReportInvestigationPage() {
                                                 <>
                                                     <div className="space-y-2">
                                                         <label className="text-xs font-medium">RA Callout</label>
-                                                         <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value })}>
+                                                         <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value }, false)}>
                                                             <SelectTrigger><SelectValue placeholder="Select RA callout" /></SelectTrigger>
                                                             <SelectContent>
                                                                 {RA_CALLOUTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -387,7 +392,7 @@ function SafetyReportInvestigationPage() {
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-xs font-medium">RA Followed?</label>
-                                                         <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value })}>
+                                                         <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value }, false)}>
                                                             <SelectTrigger><SelectValue placeholder="Select one" /></SelectTrigger>
                                                             <SelectContent>
                                                                 <SelectItem value="Yes">Yes</SelectItem>
@@ -398,6 +403,11 @@ function SafetyReportInvestigationPage() {
                                                 </>
                                             )}
                                         </div>
+                                        <Textarea
+                                          placeholder="Add any other relevant details about the loss of separation..."
+                                          value={report.eventSubcategoryDetails || ''}
+                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                                        />
                                     </div>
                                 )}
                                 
@@ -442,6 +452,11 @@ function SafetyReportInvestigationPage() {
                                                 <Label htmlFor="bird-damage">Damage Reported?</Label>
                                             </div>
                                         </div>
+                                         <Textarea
+                                          placeholder="Add any other relevant details about the bird strike..."
+                                          value={report.eventSubcategoryDetails || ''}
+                                          onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
+                                        />
                                      </div>
                                 )}
 
@@ -472,4 +487,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 

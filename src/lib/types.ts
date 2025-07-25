@@ -245,6 +245,7 @@ export type SafetyReport = {
   numberOfBirds?: string;
   sizeOfBirds?: string;
   partOfAircraftStruck?: string;
+  eventSubcategoryDetails?: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
@@ -463,4 +464,5 @@ export type Alert = {
   date: string;
   readBy: string[];
 };
+
 
