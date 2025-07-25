@@ -19,7 +19,7 @@ const GenerateAuditChecklistInputSchema = z.object({
 export type GenerateAuditChecklistInput = z.infer<typeof GenerateAuditChecklistInputSchema>;
 
 const ChecklistItemSchema = z.object({
-    text: z.string().describe('The text of a single checklist item.'),
+    text: z.string().describe('The text of a single checklist item, which must include a regulatory reference in parentheses.'),
 });
 
 const GenerateAuditChecklistOutputSchema = z.object({
@@ -40,14 +40,14 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateAuditChecklistOutputSchema},
   prompt: `You are an expert aviation quality and safety auditor.
 
-  Your task is to generate a detailed audit checklist based on a specific topic. The checklist should be practical and suitable for use in a professional aviation environment.
+  Your task is to generate a detailed audit checklist based on a specific topic. The checklist must be practical and suitable for use in a professional aviation environment.
 
   Topic: {{{topic}}}
   Number of Items: {{{numItems}}}
 
-  For each checklist item, if it directly relates to a specific regulation (e.g., FAA 14 CFR, EASA Part-FCL, ICAO Annex), you MUST include the regulation code in parentheses at the end of the item text. For example: "Are all pilot licenses current and valid? (FAA 14 CFR §61.3)".
+  **Crucial Instruction:** For every single checklist item you generate, you **MUST** include a relevant and specific regulation code in parentheses at the end of the item text. This is not optional. For example: "Are all pilot licenses current and valid? (FAA 14 CFR §61.3)". If an item is a general best practice, cite the relevant overarching safety management regulation (e.g., ICAO Annex 19, FAA 14 CFR Part 5). Do not generate any item without a regulation.
 
-  Generate a suitable title for the checklist and exactly {{{numItems}}} checklist items related to the topic.
+  Generate a suitable title for the checklist and exactly {{{numItems}}} checklist items related to the topic, each with its own regulatory reference.
 
   Output the results in the required JSON format.`,
 });
