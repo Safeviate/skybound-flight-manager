@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
@@ -36,6 +35,7 @@ import { CorrectiveActionPlanGenerator } from './corrective-action-plan-generato
 import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
 import { suggestIcaoCategoryAction } from './actions';
+import { InitialRiskAssessment } from './initial-risk-assessment';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -487,7 +487,7 @@ function SafetyReportInvestigationPage() {
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <div className="grid lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">
-                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                             <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                         </div>
                         <Card>
                             <CardHeader>
@@ -509,8 +509,8 @@ function SafetyReportInvestigationPage() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DiscussionSection report={report} onUpdate={handleReportUpdate} />
-                    <div className="space-y-2">
+                     <DiscussionSection report={report} onUpdate={handleReportUpdate} />
+                     <div className="space-y-2">
                         <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
                         <Textarea 
                             id="investigation-notes"
@@ -539,7 +539,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    
 
     
