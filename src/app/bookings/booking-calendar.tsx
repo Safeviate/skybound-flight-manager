@@ -20,9 +20,10 @@ import { collection, query, getDocs } from 'firebase/firestore';
 
 interface BookingCalendarProps {
     bookings: Booking[];
+    onCancelBooking: (bookingId: string) => void;
 }
 
-export function BookingCalendar({ bookings }: BookingCalendarProps) {
+export function BookingCalendar({ bookings, onCancelBooking }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const { company } = useUser();
@@ -98,7 +99,12 @@ export function BookingCalendar({ bookings }: BookingCalendarProps) {
 
         {/* Bottom-right timeline body */}
         <div ref={timelineBodyRef} className="overflow-x-auto" onScroll={handleScroll}>
-          <GanttTimeline currentDate={currentDate} bookings={bookings} aircraft={aircraft} />
+          <GanttTimeline 
+            currentDate={currentDate} 
+            bookings={bookings} 
+            aircraft={aircraft} 
+            onCancelBooking={onCancelBooking}
+          />
         </div>
       </div>
     </div>

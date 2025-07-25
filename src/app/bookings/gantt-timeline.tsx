@@ -4,7 +4,10 @@
 import React from 'react';
 import type { Booking, Aircraft } from '@/lib/types';
 import { cn } from '@/lib/utils.tsx';
-import { format, parseISO, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 const HOURS_IN_DAY = 24;
 const HOUR_COLUMN_WIDTH_PX = 96;
@@ -29,9 +32,10 @@ interface GanttTimelineProps {
     currentDate: Date;
     bookings: Booking[];
     aircraft: Aircraft[];
+    onCancelBooking: (bookingId: string) => void;
 }
 
-export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimelineProps) {
+export function GanttTimeline({ currentDate, bookings, aircraft, onCancelBooking }: GanttTimelineProps) {
   
   return (
     <div className="relative" style={{ minWidth: `${TOTAL_WIDTH_PX}px` }}>
@@ -46,7 +50,7 @@ export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimeline
       <div className="relative">
         {aircraft.map(ac => {
           const todaysBookings = bookings.filter(b => {
-              if (b.aircraft !== ac.tailNumber) return false;
+              if (b.aircraft !== ac.tailNumber || b.status === 'Cancelled') return false;
 
               if (b.endDate) { // It's a multi-day booking (likely maintenance)
                 const start = parseISO(b.date);
@@ -83,19 +87,69 @@ export function GanttTimeline({ currentDate, bookings, aircraft }: GanttTimeline
                     }
                 }
 
-
                 return (
-                  <div
-                    key={booking.id}
-                    className={cn(
-                      "absolute top-1/2 -translate-y-1/2 h-14 rounded-lg p-2 text-white shadow-md overflow-hidden",
-                      getBookingVariant(booking.purpose)
-                    )}
-                    style={{ left: `${left}px`, width: `${width}px` }}
-                  >
-                    <p className="font-bold text-sm truncate">{booking.purpose}</p>
-                    <p className="text-xs truncate">{booking.instructor !== 'N/A' ? booking.instructor : booking.student}</p>
-                  </div>
+                  <Dialog key={booking.id}>
+                    <DialogTrigger asChild>
+                      <div
+                        className={cn(
+                          "absolute top-1/2 -translate-y-1/2 h-14 rounded-lg p-2 text-white shadow-md overflow-hidden cursor-pointer",
+                          getBookingVariant(booking.purpose)
+                        )}
+                        style={{ left: `${left}px`, width: `${width}px` }}
+                      >
+                        <p className="font-bold text-sm truncate">{booking.purpose}</p>
+                        <p className="text-xs truncate">{booking.instructor !== 'N/A' ? booking.instructor : booking.student}</p>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Booking Details</DialogTitle>
+                            <DialogDescription>
+                                {booking.purpose} booking for {booking.aircraft}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 text-sm">
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <span className="text-muted-foreground">Aircraft:</span>
+                                <span>{booking.aircraft}</span>
+                            </div>
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <span className="text-muted-foreground">Date:</span>
+                                <span>{format(parseISO(booking.date), 'PPP')}</span>
+                            </div>
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <span className="text-muted-foreground">Time:</span>
+                                <span>{booking.startTime} - {booking.endTime}</span>
+                            </div>
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <span className="text-muted-foreground">Personnel:</span>
+                                <span>{booking.instructor !== 'N/A' ? `Instr: ${booking.instructor}` : `Pilot: ${booking.student}`}</span>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline">Change Booking</Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive">Cancel Booking</Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently cancel the booking.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Close</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => onCancelBooking(booking.id)}>
+                                            Yes, Cancel Booking
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 )
               })}
             </div>
