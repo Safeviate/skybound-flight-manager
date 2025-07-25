@@ -167,12 +167,10 @@ function PersonnelPage() {
               <CardDescription>A list of all non-student personnel in the system.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                {personnelList.length === 0 && (
-                    <Button onClick={handleSeedPersonnel} variant="outline" disabled={isSeeding}>
-                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                        Seed Sample Personnel
-                    </Button>
-                )}
+                <Button onClick={handleSeedPersonnel} variant="outline" disabled={isSeeding}>
+                    {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                    Seed Sample Personnel
+                </Button>
                 {canEditPersonnel && (
                 <Dialog open={isNewPersonnelDialogOpen} onOpenChange={handleDialogClose}>
                     <DialogTrigger asChild>
@@ -246,5 +244,3 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
-
-    

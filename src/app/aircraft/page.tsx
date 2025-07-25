@@ -247,12 +247,10 @@ function AircraftPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aircraft Fleet</CardTitle>
             <div className="flex items-center gap-2">
-                {fleet.length === 0 && (
-                    <Button onClick={handleSeedAircraft} variant="outline" disabled={isSeeding}>
-                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                        Seed Sample Fleet
-                    </Button>
-                )}
+                <Button onClick={handleSeedAircraft} variant="outline" disabled={isSeeding}>
+                    {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                    Seed Sample Fleet
+                </Button>
                 <Dialog open={isChecklistManagerOpen} onOpenChange={setIsChecklistManagerOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline">
@@ -418,5 +416,3 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
-
-    
