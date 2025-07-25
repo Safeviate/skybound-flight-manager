@@ -34,7 +34,7 @@ const checklistFormSchema = z.object({
 type ChecklistFormValues = z.infer<typeof checklistFormSchema>;
 
 interface NewChecklistFormProps {
-    onSubmit: (data: Omit<AuditChecklist, 'id' | 'items'> & { items: { text: string }[] }) => void;
+    onSubmit: (data: Omit<AuditChecklist, 'id' | 'items' | 'companyId'> & { items: { text: string }[] }) => void;
 }
 
 export function NewChecklistForm({ onSubmit }: NewChecklistFormProps) {
