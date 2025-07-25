@@ -20,6 +20,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import AuditChecklistsPage from './audit-checklists/page';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -80,11 +81,12 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
 
 function QualityPage() {
+  const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>([]);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>([]);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
 
@@ -158,8 +160,6 @@ function QualityPage() {
         newAreas[index] = newName;
         return newAreas;
     });
-    // This part is tricky without a dedicated 'areas' collection.
-    // For now, we update local state. A real app might have a collection for audit areas.
     setSchedule(prevSchedule =>
       prevSchedule.map(item => (item.area === oldName ? { ...item, area: newName } : item))
     );
@@ -204,6 +204,7 @@ function QualityPage() {
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
+                <TabsTrigger value="checklists">Checklists</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -281,6 +282,9 @@ function QualityPage() {
                         </Table>
                     </CardContent>
                 </Card>
+            </TabsContent>
+            <TabsContent value="checklists" className="mt-4">
+                <AuditChecklistsPage onAuditSubmit={handleAuditSubmit} />
             </TabsContent>
         </Tabs>
       </main>

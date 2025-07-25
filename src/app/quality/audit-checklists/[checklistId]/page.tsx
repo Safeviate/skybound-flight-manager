@@ -84,7 +84,6 @@ export default function CompleteAuditChecklistPage() {
     };
 
     const handleChecklistEdit = (editedChecklist: AuditChecklist) => {
-        // In a real app, this would save to the DB as a template edit
         setChecklist(editedChecklist);
     };
 
@@ -101,7 +100,7 @@ export default function CompleteAuditChecklistPage() {
             .map(item => ({
                 id: `nci-${item.id}`,
                 level: item.finding,
-                category: 'Procedural', // This could be made more dynamic in the future
+                category: 'Procedural',
                 description: `${item.text} - Observation: ${item.observation || 'N/A'}. Finding: ${item.findingNotes || 'N/A'}. Evidence: ${item.evidence || 'N/A'}`,
             }));
 
@@ -173,5 +172,3 @@ export default function CompleteAuditChecklistPage() {
         </div>
     );
 }
-
-CompleteAuditChecklistPage.title = 'Complete Audit Checklist';
