@@ -20,6 +20,7 @@ import { InitialRiskAssessment } from './initial-risk-assessment';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ICAO_OCCURRENCE_CATEGORIES } from '@/lib/types';
 import { Combobox } from '@/components/ui/combobox';
+import { ICAO_CODE_DEFINITIONS } from '@/lib/icao-codes';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -30,7 +31,11 @@ const getStatusVariant = (status: SafetyReport['status']) => {
   }
 };
 
-const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({ value: code, label: code }));
+const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({ 
+    value: code, 
+    label: code,
+    description: ICAO_CODE_DEFINITIONS[code] || 'No definition available.'
+}));
 
 function SafetyReportInvestigationPage() {
   const params = useParams();
