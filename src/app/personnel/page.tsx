@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { userData } from '@/lib/data-provider';
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
@@ -43,15 +44,9 @@ function PersonnelPage() {
     
     const fetchPersonnel = async () => {
         if (!company) return;
-        try {
-            const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-            const snapshot = await getDocs(personnelQuery);
-            const fetchedPersonnel = snapshot.docs.map(doc => doc.data() as User);
-            setPersonnelList(fetchedPersonnel);
-        } catch (error) {
-            console.error("Error fetching personnel:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch personnel data.' });
-        }
+        // Using local data instead of Firestore
+        const allPersonnel = userData.filter(p => p.companyId === company.id && p.role !== 'Student');
+        setPersonnelList(allPersonnel);
     };
     
     const canEditPersonnel = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
@@ -63,54 +58,20 @@ function PersonnelPage() {
         }
 
         if (editingPersonnel) {
-            // Update existing personnel
-            try {
-                const userRef = doc(db, `companies/${company.id}/users`, editingPersonnel.id);
-                const { password, ...updateData } = personnelData; // Exclude password from update data for now
-                await updateDoc(userRef, updateData as any);
-
-                // Update local state
-                setPersonnelList(prev => prev.map(p => p.id === editingPersonnel.id ? { ...p, ...updateData } : p));
-                toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
-            } catch (error) {
-                console.error("Error updating personnel:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Failed to update personnel information.' });
-            }
+            // Update existing personnel in local state
+            const updatedUser = { ...editingPersonnel, ...personnelData };
+            setPersonnelList(prev => prev.map(p => p.id === editingPersonnel.id ? updatedUser : p));
+            toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
-            // Add new personnel
-            let newUserId = doc(collection(db, 'temp')).id; // Generate a random ID for non-auth users
-            
-            try {
-                if (personnelData.role === 'Admin') {
-                    if (!personnelData.email || !personnelData.password) {
-                        toast({ variant: 'destructive', title: 'Error', description: 'An email and password are required for new Admins.' });
-                        return;
-                    }
-                    const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
-                    newUserId = userCredential.user.uid;
-                }
-
-                const newUser: User = {
-                    ...personnelData,
-                    id: newUserId,
-                    companyId: company.id,
-                };
-                delete newUser.password; // Do not store password in Firestore
-
-                await setDoc(doc(db, `companies/${company.id}/users`, newUserId), newUser);
-                setPersonnelList(prev => [...prev, newUser]);
-                toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
-
-            } catch (error: any) {
-                console.error("Error creating new personnel:", error);
-                let errorMessage = "Failed to create new personnel.";
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = "This email is already in use.";
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = "The password is too weak.";
-                }
-                toast({ variant: 'destructive', title: 'Creation Failed', description: errorMessage });
-            }
+            // Add new personnel to local state
+            const newUser: User = {
+                ...personnelData,
+                id: `user-${Date.now()}`,
+                companyId: company.id,
+            };
+            delete newUser.password;
+            setPersonnelList(prev => [...prev, newUser]);
+            toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
         }
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
