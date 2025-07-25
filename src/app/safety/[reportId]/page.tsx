@@ -712,24 +712,21 @@ function SafetyReportInvestigationPage() {
     }
   }, [generatePlanState.data, correctiveActionPlan]);
 
-  const handleReportUpdate = useCallback(async (updatedReportData: Partial<SafetyReport>, currentCompany: Company | null) => {
+  const handleReportUpdate = useCallback((updatedReportData: Partial<SafetyReport>, currentCompany: Company | null) => {
     setReport(prev => {
         if (!prev) return null;
         const newReport = { ...prev, ...updatedReportData };
         
-        // This is an async operation, but we update state synchronously
         if (currentCompany) {
             const reportRef = doc(db, `companies/${currentCompany.id}/safety-reports`, newReport.id);
             updateDoc(reportRef, newReport as any).catch(error => {
                 console.error("Error updating report:", error);
                 toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save changes to the database.'});
-                // Optionally revert state here, though it might cause UI flicker
             });
         }
         
         return newReport;
     });
-
   }, [toast]);
   
   const handlePromoteRisk = (newRisk: RiskRegisterEntry) => {
