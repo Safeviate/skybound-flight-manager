@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, User } from '@/lib/types';
-import { UserPlus, X, User as UserIcon } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
@@ -113,11 +113,7 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
   }
 
   return (
-    <div className="space-y-6 rounded-lg border p-4">
-        <div>
-            <h3 className="font-semibold text-lg">Investigation Team</h3>
-            <p className="text-sm text-muted-foreground">Assign personnel to investigate this report.</p>
-        </div>
+    <div className="space-y-4">
       <div className="space-y-4">
         {team.length > 0 ? (
           <div className="flex flex-wrap gap-4">
