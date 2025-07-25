@@ -12,10 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import Link from 'next/link';
 import { AiChecklistGenerator } from './ai-checklist-generator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 interface AuditChecklistsPageProps {
@@ -26,6 +27,7 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
   const [checklists, setChecklists] = useState<AuditChecklist[]>([]);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [selectedChecklists, setSelectedChecklists] = useState<string[]>([]);
   const { toast } = useToast();
   const { user, company } = useUser();
   const canDelete = user?.permissions.includes('Quality:Delete');
@@ -73,18 +75,33 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
     }
   };
 
-  const handleDeleteChecklist = async (checklistId: string) => {
-    if (!company) return;
+  const handleDeleteChecklists = async () => {
+    if (!company || selectedChecklists.length === 0) return;
     try {
-        await deleteDoc(doc(db, `companies/${company.id}/audit-checklists`, checklistId));
-        setChecklists(prev => prev.filter(c => c.id !== checklistId));
+        const batch = writeBatch(db);
+        selectedChecklists.forEach(id => {
+            const docRef = doc(db, `companies/${company.id}/audit-checklists`, id);
+            batch.delete(docRef);
+        });
+        await batch.commit();
+
+        setChecklists(prev => prev.filter(c => !selectedChecklists.includes(c.id)));
+        setSelectedChecklists([]);
         toast({
-            title: 'Checklist Deleted',
-            description: 'The audit checklist template has been permanently removed.'
+            title: 'Checklists Deleted',
+            description: `${selectedChecklists.length} checklist(s) have been permanently removed.`
         });
     } catch (error) {
-        console.error("Error deleting checklist:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete checklist.' });
+        console.error("Error deleting checklists:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete selected checklists.' });
+    }
+  };
+
+  const handleSelectChecklist = (id: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedChecklists(prev => [...prev, id]);
+    } else {
+      setSelectedChecklists(prev => prev.filter(selectedId => selectedId !== id));
     }
   };
   
@@ -109,6 +126,28 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
             </CardDescription>
         </div>
         <div className="flex items-center gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={selectedChecklists.length === 0 || !canDelete}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete ({selectedChecklists.length})
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete {selectedChecklists.length} selected checklist template(s).
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteChecklists}>
+                            Yes, delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -156,38 +195,23 @@ export default function AuditChecklistsPage({ onAuditSubmit }: AuditChecklistsPa
             <TabsContent key={area} value={area}>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {checklistsByArea[area].map(checklist => (
-                    <Card key={checklist.id} className="flex flex-col">
-                        <CardHeader>
+                    <Card key={checklist.id} className="flex flex-col relative">
+                        {canDelete && (
+                            <Checkbox
+                                checked={selectedChecklists.includes(checklist.id)}
+                                onCheckedChange={(checked) => handleSelectChecklist(checklist.id, !!checked)}
+                                className="absolute top-4 left-4 h-5 w-5"
+                                aria-label={`Select checklist ${checklist.title}`}
+                            />
+                        )}
+                        <CardHeader className={canDelete ? "pl-12" : ""}>
                             <Link href={`/quality/audit-checklists/${checklist.id}`}>
                                 <CardTitle className="text-base cursor-pointer hover:underline">{checklist.title}</CardTitle>
                             </Link>
                             <CardDescription>{checklist.items.length} items</CardDescription>
                         </CardHeader>
                         <CardFooter>
-                            {canDelete && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" className="w-full">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the checklist template.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteChecklist(checklist.id)}>
-                                                Yes, delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
+                            
                         </CardFooter>
                     </Card>
                 ))}
