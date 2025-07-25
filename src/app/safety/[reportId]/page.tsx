@@ -30,6 +30,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { InvestigationStepsGenerator } from './investigation-steps-generator';
+import { FiveWhysGenerator } from './five-whys-generator';
 
 const getStatusVariant = (status: SafetyReport['status']) => {
   switch (status) {
@@ -49,7 +51,7 @@ const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({
 const CLASSIFICATION_OPTIONS = ['Hazard', 'Occurrence', 'Incident', 'Accident'];
 
 const SCF_SUBCATEGORIES = ['Landing Gear', 'Flight Controls', 'Hydraulics', 'Electrical', 'Avionics', 'Navigation', 'Other'];
-const LOS_SUBCATEGORIES = ['Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
+const LOS_SUBCATEGORIES = ['Close Proximity', 'Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
 const RA_CALLOUTS = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
 const WEATHER_RELATED_CATEGORIES = ['WSTRW', 'TURB', 'ICE', 'CFIT', 'LOC-I', 'RI', 'RE', 'LALT', 'UIMC'];
 
@@ -254,7 +256,7 @@ function SafetyReportInvestigationPage() {
                     <div className="px-6">
                         <TabsList className="grid w-full grid-cols-5 h-auto">
                             <TabsTrigger value="triage">Triage & Classification</TabsTrigger>
-                            <TabsTrigger value="investigation" disabled>Investigation</TabsTrigger>
+                            <TabsTrigger value="investigation">Investigation</TabsTrigger>
                             <TabsTrigger value="risk-mitigation" disabled>Risk Mitigation</TabsTrigger>
                             <TabsTrigger value="corrective-action" disabled>Corrective Action</TabsTrigger>
                             <TabsTrigger value="final-review" disabled>Final Review</TabsTrigger>
@@ -463,8 +465,23 @@ function SafetyReportInvestigationPage() {
                                 <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                                 <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                             </TabsContent>
-                            <TabsContent value="investigation" className="mt-0">
-                                {/* Content for Investigation will go here */}
+                            <TabsContent value="investigation" className="mt-0 space-y-6">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="investigation-notes" className="text-base font-semibold">Investigation Notes & Findings</Label>
+                                        <Textarea 
+                                            id="investigation-notes"
+                                            placeholder="Record all investigation notes, findings, and discussions here..."
+                                            className="min-h-[300px]"
+                                            value={report.investigationNotes || ''}
+                                            onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                        />
+                                    </div>
+                                    <div className="space-y-6">
+                                        <InvestigationStepsGenerator report={report} />
+                                        <FiveWhysGenerator report={report} />
+                                    </div>
+                                </div>
                             </TabsContent>
                             <TabsContent value="risk-mitigation" className="mt-0">
                                 {/* Content for Risk Mitigation will go here */}
@@ -487,5 +504,6 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
 
 
