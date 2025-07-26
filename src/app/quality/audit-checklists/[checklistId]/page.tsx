@@ -126,7 +126,8 @@ export default function PerformAuditPage() {
         }
 
         const sanitizedChecklistItems = checklist.items.map(item => ({
-            ...item,
+            id: item.id,
+            text: item.text,
             finding: item.finding || null,
             level: item.level || null,
             observation: item.observation || '',
@@ -339,5 +340,3 @@ export default function PerformAuditPage() {
         </>
     );
 }
-
-    
