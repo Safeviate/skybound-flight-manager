@@ -456,7 +456,6 @@ export default function QualityAuditDetailPage() {
   const [loading, setLoading] = useState(true);
   const auditId = params.auditId as string;
   const [personnel, setPersonnel] = useState<User[]>([]);
-  const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
 
   useEffect(() => {
     if (userLoading) return;
@@ -505,22 +504,6 @@ export default function QualityAuditDetailPage() {
     );
     handleAuditUpdate({ ...audit, checklistItems: updatedItems }, false);
   }
-  
-  const discussionForm = useForm<DiscussionFormValues>({
-    resolver: zodResolver(discussionFormSchema),
-  });
-  
-  const availableRecipients = React.useMemo(() => {
-    if (!personnel || personnel.length === 0 || !user) {
-      return [];
-    }
-    // Auditor and auditee should be able to discuss
-    const team = [audit?.auditor, audit?.auditeeName].filter(Boolean);
-    return personnel.filter(
-      (p) => team.includes(p.name) && p.name !== user?.name
-    );
-  }, [personnel, audit, user]);
-
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
@@ -570,34 +553,6 @@ export default function QualityAuditDetailPage() {
         description: `The audit has been closed with a compliance score of ${complianceScore}%.`,
     });
   };
-
-  const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
-    if (!user || !audit) {
-        toast({ variant: 'destructive', title: 'You must be logged in to post.'});
-        return;
-    }
-
-    const newEntry: DiscussionEntry = {
-        id: `d-${Date.now()}`,
-        author: user.name,
-        datePosted: new Date().toISOString(),
-        ...data,
-        replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
-    };
-    
-    const updatedAudit = {
-        ...audit,
-        discussion: [...(audit.discussion || []), newEntry],
-    };
-
-    handleAuditUpdate(updatedAudit, true);
-    discussionForm.reset();
-    setIsDiscussionDialogOpen(false);
-    toast({
-      title: 'Message Sent',
-      description: `Your message has been sent to ${data.recipient}.`,
-    });
-  }
   
   const handleSeedData = () => {
     if (!audit) return;
@@ -808,3 +763,6 @@ export default function QualityAuditDetailPage() {
 
 
 
+
+
+    
