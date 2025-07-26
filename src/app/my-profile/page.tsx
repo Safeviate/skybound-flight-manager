@@ -95,8 +95,8 @@ function MyProfilePage() {
     const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
     const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
     const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date('2024-08-15'));
-
-    // Move all hooks to the top level
+    
+    // Move all hooks to the top level, before any conditional returns
     const allTrainingLogs: TrainingLogEntry[] = useMemo(() => {
         return userData.flatMap(u => u.trainingLogs || []);
     }, []);
@@ -115,12 +115,7 @@ function MyProfilePage() {
     const allActionItems = useMemo(() => {
         if (!user) return [];
         const today = new Date('2024-08-15');
-        const flightTimeLimits = {
-          daily: settings.dutyLimitDaily,
-          weekly: settings.dutyLimitWeekly,
-          monthly: settings.dutyLimitMonthly,
-        };
-
+        
         // Personal alerts (expiries, fatigue)
         const personalAlerts: { type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
 
@@ -148,11 +143,10 @@ function MyProfilePage() {
                 });
             }
         }
-        // ... (Fatigue alerts can be added here similarly)
-
+        
         // Task alerts from context
         const taskAlerts = getUnacknowledgedAlerts()
-            .filter(alert => alert.type === 'Task' && alert.targetUserId === user.id)
+            .filter(alert => alert.type === 'Task') // Only get task-type alerts
             .map(alert => ({
                 type: alert.title,
                 details: alert.description,
@@ -162,7 +156,7 @@ function MyProfilePage() {
             }));
 
         return [...personalAlerts, ...taskAlerts];
-    }, [user, getUnacknowledgedAlerts, settings]);
+    }, [user, getUnacknowledgedAlerts]);
 
 
     useEffect(() => {
@@ -171,8 +165,6 @@ function MyProfilePage() {
         }
     }, [user, loading, router]);
     
-    const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
-
     if (loading || !user) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -195,6 +187,7 @@ function MyProfilePage() {
     const companyAircraft = aircraftData.filter(ac => ac.companyId === company?.id);
     const companyChecklists = checklists.filter(c => c.companyId === company?.id);
     const companyBookings = bookings.filter(b => b.companyId === company?.id);
+    const today = new Date('2024-08-15'); // Hardcoding date for consistent display
 
     const handleItemToggle = (toggledChecklist: Checklist) => {
         setChecklists(prevChecklists =>
