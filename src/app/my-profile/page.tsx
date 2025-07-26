@@ -1,11 +1,10 @@
 
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight } from 'lucide-react';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check } from 'lucide-react';
 import type { User as AppUser, Alert } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -78,7 +77,7 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 }
 
 function MyProfilePage() {
-    const { user, updateUser, loading, getUnacknowledgedAlerts } = useUser();
+    const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
     const router = useRouter();
 
     useEffect(() => {
@@ -92,12 +91,13 @@ function MyProfilePage() {
 
         const today = new Date('2024-08-15');
         
-        const personalAlerts: { type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
+        const personalAlerts: { id: string, type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
 
         if (user.medicalExpiry) {
             const daysUntil = differenceInDays(parseISO(user.medicalExpiry), today);
             if (daysUntil <= 60) {
                 personalAlerts.push({ 
+                    id: `personal-medical-${user.id}`,
                     type: 'Medical Certificate Expiry', 
                     date: user.medicalExpiry, 
                     details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
@@ -110,6 +110,7 @@ function MyProfilePage() {
             const daysUntil = differenceInDays(parseISO(user.licenseExpiry), today);
             if (daysUntil <= 60) {
                 personalAlerts.push({ 
+                    id: `personal-license-${user.id}`,
                     type: 'Pilot License Expiry', 
                     date: user.licenseExpiry, 
                     details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
@@ -121,21 +122,11 @@ function MyProfilePage() {
         
         const taskAlerts = getUnacknowledgedAlerts()
             .map(alert => {
-                 let link = alert.relatedLink;
-                 // Fallback for old CAP alerts that don't have a link
-                 if (!link && alert.type === 'Task' && alert.title.startsWith('CAP Assigned: Audit')) {
-                     const match = alert.title.match(/Audit ([a-zA-Z0-9]+)/);
-                     if (match && match[1]) {
-                         const partialId = match[1];
-                         // This assumes we can find the full ID if needed, but for now we'll just link to the general quality page
-                         // A more robust solution would be to find the full audit ID, but this is a safe fallback.
-                         link = `/quality`;
-                     }
-                 }
                 return {
+                    id: alert.id,
                     type: alert.title,
                     details: alert.description,
-                    relatedLink: link,
+                    relatedLink: alert.relatedLink,
                     variant: 'warning' as const,
                     icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />
                 }
@@ -143,6 +134,10 @@ function MyProfilePage() {
 
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
+
+     const handleAcknowledge = useCallback(async (alertId: string) => {
+        await acknowledgeAlerts([alertId]);
+    }, [acknowledgeAlerts]);
     
     if (loading || !user) {
         return (
@@ -184,15 +179,13 @@ function MyProfilePage() {
                     <CardContent className="space-y-2 max-h-96 overflow-y-auto pr-2">
                         {totalTasks > 0 ? (
                            <ul className="space-y-2">
-                                {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
-                                    <li key={`action-item-${index}`}>
-                                        <Link 
-                                            href={relatedLink || '#'}
-                                            className={cn(
-                                                'flex items-start justify-between p-3 rounded-md border transition-colors',
-                                                variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20',
-                                                relatedLink ? 'hover:bg-muted' : 'pointer-events-none'
-                                            )}
+                                {allActionItems.map(({ id, type, details, variant, relatedLink, icon, date }, index) => {
+                                    const ActionItemContent = () => (
+                                         <div className="flex items-start justify-between p-3 rounded-md border transition-colors w-full text-left"
+                                            style={{
+                                                borderColor: variant === 'destructive' ? 'hsl(var(--destructive))' : 'hsl(var(--warning))',
+                                                backgroundColor: variant === 'destructive' ? 'hsl(var(--destructive), 0.1)' : 'hsl(var(--warning), 0.1)',
+                                            }}
                                         >
                                             <div className="flex items-start gap-3">
                                                 {icon}
@@ -208,9 +201,29 @@ function MyProfilePage() {
                                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                                 </div>
                                             )}
-                                        </Link>
-                                    </li>
-                                ))}
+                                        </div>
+                                    );
+
+                                    return (
+                                        <li key={id}>
+                                            {relatedLink ? (
+                                                <Link href={relatedLink} className="block hover:opacity-80">
+                                                    <ActionItemContent />
+                                                </Link>
+                                            ) : (
+                                                 <div className="flex items-center gap-2">
+                                                    <div className="flex-1">
+                                                        <ActionItemContent />
+                                                    </div>
+                                                    <Button variant="outline" size="sm" onClick={() => handleAcknowledge(id)}>
+                                                        <Check className="mr-2 h-4 w-4" />
+                                                        Acknowledge
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         ) : (
                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
@@ -228,3 +241,5 @@ function MyProfilePage() {
 
 MyProfilePage.title = "My Profile"
 export default MyProfilePage;
+
+    
