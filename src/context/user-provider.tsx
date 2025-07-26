@@ -21,6 +21,9 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const LAST_USER_ID_KEY = 'skybound_last_user_id';
+const LAST_COMPANY_ID_KEY = 'skybound_last_company_id';
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
@@ -28,46 +31,86 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const fetchUserDataByUid = async (firebaseUser: any): Promise<[User | null, Company | null]> => {
-    if (!firebaseUser) return [null, null];
+  const fetchUserDataById = async (companyId: string, userId: string): Promise<[User | null, Company | null]> => {
+     try {
+        const companyDocRef = doc(db, 'companies', companyId);
+        const userDocRef = doc(db, `companies/${companyId}/users`, userId);
 
+        const [companySnap, userSnap] = await Promise.all([
+            getDoc(companyDocRef),
+            getDoc(userDocRef)
+        ]);
+
+        if (userSnap.exists() && companySnap.exists()) {
+            return [userSnap.data() as User, companySnap.data() as Company];
+        }
+     } catch (error) {
+        console.error("Error fetching user data by ID:", error);
+     }
+     return [null, null];
+  }
+
+
+  const fetchUserDataByEmail = async (email: string): Promise<[User | null, Company | null, string | null]> => {
     const companiesRef = collection(db, "companies");
     const q = query(companiesRef);
     const querySnapshot = await getDocs(q);
 
     for (const companyDoc of querySnapshot.docs) {
-        const userDocRef = doc(db, `companies/${companyDoc.id}/users`, firebaseUser.uid);
-        const userSnap = await getDoc(userDocRef);
-
-        if (userSnap.exists()) {
-            const userData = userSnap.data() as User;
+        const usersRef = collection(db, `companies/${companyDoc.id}/users`);
+        const userQuery = query(usersRef, where("email", "==", email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data() as User;
             const companyData = companyDoc.data() as Company;
-            return [userData, companyData];
+            return [userData, companyData, userSnapshot.docs[0].id];
         }
     }
-    return [null, null];
+    return [null, null, null];
   };
+
+  const fetchCompanyAlerts = async (companyId: string) => {
+    try {
+        const alertsCol = collection(db, `companies/${companyId}/alerts`);
+        const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
+        const alertsSnapshot = await getDocs(alertsQuery);
+        return alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+    } catch (error) {
+        console.error("Error fetching alerts:", error);
+        return [];
+    }
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        setLoading(true);
         if (firebaseUser) {
-            const [userData, companyData] = await fetchUserDataByUid(firebaseUser);
+            // Admin user with a persistent session
+            const [userData, companyData] = await fetchUserDataById(firebaseUser.photoURL || '', firebaseUser.uid);
             setUser(userData);
             setCompany(companyData);
-
-            if(companyData && userData) {
-                const alertsCol = collection(db, `companies/${companyData.id}/alerts`);
-                const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
-                const alertsSnapshot = await getDocs(alertsQuery);
-                const fetchedAlerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-                setAllAlerts(fetchedAlerts);
+            if (companyData) {
+                setAllAlerts(await fetchCompanyAlerts(companyData.id));
+                localStorage.setItem(LAST_USER_ID_KEY, firebaseUser.uid);
+                localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             }
-
         } else {
-            setUser(null);
-            setCompany(null);
-            setAllAlerts([]);
+             // Non-admin user, or user logged out
+            const lastUserId = localStorage.getItem(LAST_USER_ID_KEY);
+            const lastCompanyId = localStorage.getItem(LAST_COMPANY_ID_KEY);
+
+            if (lastUserId && lastCompanyId) {
+                const [userData, companyData] = await fetchUserDataById(lastCompanyId, lastUserId);
+                setUser(userData);
+                setCompany(companyData);
+                if (companyData) {
+                    setAllAlerts(await fetchCompanyAlerts(companyData.id));
+                }
+            } else {
+                setUser(null);
+                setCompany(null);
+                setAllAlerts([]);
+            }
         }
         setLoading(false);
     });
@@ -92,7 +135,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       
       await Promise.all(promises);
 
-      // Refresh local alerts state to reflect the change
       setAllAlerts(prevAlerts =>
         prevAlerts.map(alert =>
             alertIds.includes(alert.id)
@@ -106,22 +148,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string): Promise<boolean> => {
     setLoading(true);
     try {
-        // For the dev environment, we use a default password.
-        const userCredential = await signInWithEmailAndPassword(auth, email, "password");
-        // After successful sign-in, onAuthStateChanged will fire and handle fetching user/company data.
+        const [userData, companyData, userId] = await fetchUserDataByEmail(email);
+
+        if (userData?.role === 'Admin') {
+            await signInWithEmailAndPassword(auth, email, "password");
+            // onAuthStateChanged will handle setting state
+        } else if (userData && companyData && userId) {
+            // For non-admins, we just set the local state and localStorage
+            setUser(userData);
+            setCompany(companyData);
+            setAllAlerts(await fetchCompanyAlerts(companyData.id));
+            localStorage.setItem(LAST_USER_ID_KEY, userId);
+            localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+        } else {
+            return false;
+        }
         return true;
     } catch (error) {
-        console.error("Authentication failed:", error);
+        console.error("Authentication or login process failed:", error);
+        return false;
     } finally {
         setLoading(false);
     }
-    return false;
   };
 
   const logout = useCallback(async () => {
-    await signOut(auth);
+    if (auth.currentUser) {
+        await signOut(auth);
+    }
+    localStorage.removeItem(LAST_USER_ID_KEY);
+    localStorage.removeItem(LAST_COMPANY_ID_KEY);
     setUser(null);
     setCompany(null);
+    setAllAlerts([]);
     router.push('/login');
   }, [router]);
   
@@ -133,7 +192,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
         const userDocRef = doc(db, `companies/${company.id}/users`, user.id);
         await updateDoc(userDocRef, updatedData);
-        // Update local state after successful DB write
         setUser(prevUser => prevUser ? { ...prevUser, ...updatedData } : null);
         return true;
     } catch (error) {
