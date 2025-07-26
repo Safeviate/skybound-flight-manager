@@ -30,6 +30,10 @@ const FINDING_OPTIONS: { value: FindingType; label: string, icon: React.ReactNod
     { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
 ];
 
+const findingRow1: FindingType[] = ['Compliant', 'Non-compliant', 'Partial', 'Not Applicable'];
+const findingRow2: FindingType[] = ['Observation', 'Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding'];
+
+
 export default function PerformAuditPage() {
     const params = useParams();
     const router = useRouter();
@@ -155,14 +159,24 @@ export default function PerformAuditPage() {
                                         <RadioGroup 
                                             value={item.finding || ''} 
                                             onValueChange={(value) => handleItemChange(item.id, 'finding', value)}
-                                            className="flex flex-wrap gap-x-4 gap-y-2"
+                                            className="space-y-2"
                                         >
-                                            {FINDING_OPTIONS.map(opt => (
-                                                <div key={opt.value} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
-                                                    <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
-                                                </div>
-                                            ))}
+                                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                                {FINDING_OPTIONS.filter(o => findingRow1.includes(o.value)).map(opt => (
+                                                    <div key={opt.value} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                        <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                             <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                                {FINDING_OPTIONS.filter(o => findingRow2.includes(o.value)).map(opt => (
+                                                    <div key={opt.value} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                        <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </RadioGroup>
                                     </div>
                                     
