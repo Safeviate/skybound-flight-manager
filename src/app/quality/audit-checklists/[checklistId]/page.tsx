@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import type { AuditChecklist, AuditChecklistItem, FindingType, QualityAudit, NonConformanceIssue } from '@/lib/types';
+import type { AuditChecklist, AuditChecklistItem, FindingStatus, FindingLevel, QualityAudit, NonConformanceIssue } from '@/lib/types';
 import Header from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -21,20 +21,19 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { addDoc, collection } from 'firebase/firestore';
 import { format } from 'date-fns';
 
-const FINDING_OPTIONS: { value: FindingType; label: string, icon: React.ReactNode }[] = [
+const FINDING_OPTIONS: { value: FindingStatus; label: string, icon: React.ReactNode }[] = [
     { value: 'Compliant', label: 'Compliant', icon: <CheckCircle className="text-green-600" /> },
     { value: 'Non-compliant', label: 'Non-compliant', icon: <XCircle className="text-red-600" /> },
     { value: 'Partial', label: 'Partial Compliance', icon: <MinusCircle className="text-yellow-600" /> },
-    { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
     { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
+    { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
+];
+
+const LEVEL_OPTIONS: { value: FindingLevel; label: string, icon: React.ReactNode }[] = [
     { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
     { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
     { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
 ];
-
-const findingRow1: FindingType[] = ['Compliant', 'Non-compliant', 'Partial', 'Not Applicable'];
-const findingRow2: FindingType[] = ['Observation', 'Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding'];
-
 
 export default function PerformAuditPage() {
     const params = useParams();
@@ -92,22 +91,23 @@ export default function PerformAuditPage() {
     const handleSubmitAudit = async () => {
         if (!checklist || !company || !user) return;
         
-        const findings = checklist.items
+        const findings: NonConformanceIssue[] = checklist.items
             .filter(item => item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable')
             .map(item => ({
                 id: item.id,
-                level: item.finding,
+                finding: item.finding,
+                level: item.level,
                 category: 'Procedural', // Default category for now
                 description: item.observation || 'No details provided.',
                 regulationReference: item.regulationReference || 'N/A',
-            } as NonConformanceIssue));
+            }));
             
         const totalItems = checklist.items.length;
         const compliantItems = checklist.items.filter(i => i.finding === 'Compliant').length;
         const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
 
         let status: QualityAudit['status'] = 'Compliant';
-        if (findings.some(f => f.level === 'Non-compliant' || f.level?.includes('Level'))) {
+        if (findings.some(f => f.finding === 'Non-compliant' || f.level?.includes('Level'))) {
             status = 'Non-Compliant';
         } else if (findings.length > 0) {
             status = 'With Findings';
@@ -150,7 +150,8 @@ export default function PerformAuditPage() {
                     if (index === 0) {
                         return {
                             ...item,
-                            finding: 'Level 2 Finding',
+                            finding: 'Non-compliant',
+                            level: 'Level 2 Finding',
                             observation: 'The Training Program Manual was last updated two years ago and does not reflect recent changes to SA-CATS 141 regarding simulator training credits.',
                             evidence: 'TPM Rev 3, Dated 2022-01-15',
                             regulationReference: 'SA-CATS 141.05.2(a)'
@@ -160,12 +161,13 @@ export default function PerformAuditPage() {
                          return {
                             ...item,
                             finding: 'Observation',
+                            level: null,
                             observation: 'While all records are present, the filing system is inconsistent, making it difficult to track individual student progress efficiently.',
                             evidence: 'Reviewed 5 student files.',
                             regulationReference: 'Internal Procedure MAN-002 Sec 4.1'
                         };
                     }
-                    return { ...item, finding: 'Compliant' };
+                    return { ...item, finding: 'Compliant', level: null };
                 })
             };
         });
@@ -231,25 +233,31 @@ export default function PerformAuditPage() {
                                         <Label>Finding</Label>
                                         <RadioGroup 
                                             value={item.finding || ''} 
-                                            onValueChange={(value) => handleItemChange(item.id, 'finding', value)}
-                                            className="space-y-2"
+                                            onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}
+                                            className="flex flex-wrap gap-x-4 gap-y-2"
                                         >
-                                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                                {FINDING_OPTIONS.filter(o => findingRow1.includes(o.value)).map(opt => (
-                                                    <div key={opt.value} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
-                                                        <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                             <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                                {FINDING_OPTIONS.filter(o => findingRow2.includes(o.value)).map(opt => (
-                                                    <div key={opt.value} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
-                                                        <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            {FINDING_OPTIONS.map(opt => (
+                                                <div key={opt.value} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                    <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Level</Label>
+                                        <RadioGroup 
+                                            value={item.level || ''}
+                                            onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
+                                            className="flex flex-wrap gap-x-4 gap-y-2"
+                                        >
+                                            {LEVEL_OPTIONS.map(opt => (
+                                                <div key={opt.value} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                    <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
+                                                </div>
+                                            ))}
                                         </RadioGroup>
                                     </div>
                                     

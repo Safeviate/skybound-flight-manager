@@ -352,12 +352,14 @@ export type CompletedChecklist = {
     completionDate: string;
 }
 
-export type FindingType = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation' | 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | null;
+export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation' | null;
+export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | null;
 
 export type AuditChecklistItem = {
     id: string;
     text: string;
-    finding: FindingType;
+    finding: FindingStatus;
+    level: FindingLevel;
     observation?: string;
     findingNotes?: string;
     evidence?: string;
@@ -444,7 +446,8 @@ export type CorrectiveActionPlan = {
 
 export type NonConformanceIssue = {
   id: string;
-  level: FindingType;
+  finding: FindingStatus;
+  level: FindingLevel;
   category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
   description: string;
   regulationReference?: string;

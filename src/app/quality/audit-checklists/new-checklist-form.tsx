@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,7 +79,7 @@ export function NewChecklistForm({ onSubmit, existingTemplate }: NewChecklistFor
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, finding: null })),
+      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, finding: null, level: null })),
     };
     onSubmit(newChecklist);
   };

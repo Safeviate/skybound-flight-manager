@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingType, CorrectiveActionPlan } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, CorrectiveActionPlan } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -88,15 +89,21 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
     }
   };
 
-  const getIssueFindingInfo = (level: FindingType) => {
+  const getFindingInfo = (finding: FindingStatus) => {
+    switch (finding) {
+        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
+        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
+        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding };
+    }
+  };
+  
+  const getLevelInfo = (level: FindingLevel) => {
     switch (level) {
-        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
-        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
-        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const };
         case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
         case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
         case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
-        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const };
+        default: return null;
     }
   };
 
@@ -158,15 +165,19 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
                 {audit.nonConformanceIssues.length > 0 ? (
                     <div className="space-y-6">
                         {audit.nonConformanceIssues.map((issue, index) => {
-                             const { icon, variant } = getIssueFindingInfo(issue.level);
+                             const findingInfo = getFindingInfo(issue.finding);
+                             const levelInfo = getLevelInfo(issue.level);
                              const cap = issue.correctiveActionPlan;
                              return (
                                 <div key={issue.id} className="p-4 border rounded-lg">
                                     <div className="flex items-start gap-3">
-                                        {icon}
+                                        {findingInfo.icon}
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
-                                                <h4 className="font-semibold text-base">Finding #{index + 1}: <Badge variant={variant}>{issue.level}</Badge></h4>
+                                                <h4 className="font-semibold text-base flex items-center gap-2">Finding #{index + 1}: 
+                                                    <Badge variant={findingInfo.variant}>{findingInfo.text}</Badge>
+                                                    {levelInfo && <Badge variant={levelInfo.variant}>{issue.level}</Badge>}
+                                                </h4>
                                                 <Badge variant="outline">{issue.category}</Badge>
                                             </div>
                                             <p className="text-muted-foreground mt-1">{issue.description}</p>
