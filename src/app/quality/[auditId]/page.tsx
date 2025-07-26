@@ -77,7 +77,9 @@ export default function QualityAuditDetailPage() {
     if (!company) return;
     try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        await updateDoc(auditRef, { nonConformanceIssues: updatedAudit.nonConformanceIssues });
+        await updateDoc(auditRef, { 
+            nonConformanceIssues: updatedAudit.nonConformanceIssues,
+        });
         setAudit(updatedAudit);
     } catch (error) {
         console.error("Error updating audit:", error);
@@ -121,8 +123,8 @@ export default function QualityAuditDetailPage() {
     toast({ title: 'Success', description: `Corrective Action Plan saved and notification sent to ${responsiblePerson.name}.` });
   };
   
-  const handleCapStatusChange = (issueId: string, newStatus: CorrectiveActionPlan['status']) => {
-    if (!audit) return;
+  const handleCapStatusChange = async (issueId: string, newStatus: CorrectiveActionPlan['status']) => {
+    if (!audit || !company) return;
     const updatedIssues = audit.nonConformanceIssues.map(issue => {
         if (issue.id === issueId && issue.correctiveActionPlan) {
             return {
@@ -134,8 +136,16 @@ export default function QualityAuditDetailPage() {
     });
 
     const updatedAudit = { ...audit, nonConformanceIssues: updatedIssues };
-    updateAuditInFirestore(updatedAudit);
-    toast({ title: 'Status Updated', description: `CAP status changed to "${newStatus}".`});
+     try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        // We only update the single field to avoid race conditions with other parts of the object
+        await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
+        setAudit(updatedAudit);
+        toast({ title: 'Status Updated', description: `CAP status changed to "${newStatus}".`});
+    } catch (error) {
+        console.error("Error updating CAP status:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save status change.' });
+    }
   };
 
   if (loading || userLoading) {
@@ -329,6 +339,7 @@ export default function QualityAuditDetailPage() {
                         {audit.checklistItems.map(item => {
                             const findingInfo = getFindingInfo(item.finding);
                             const levelInfo = getLevelInfo(item.level);
+                            const hasDetails = item.observation || item.evidence || (item.regulationReference && item.regulationReference !== 'N/A');
                             return (
                                 <div key={item.id} className="p-3 border rounded-md bg-muted/30">
                                     <div className="flex items-start justify-between">
@@ -340,11 +351,11 @@ export default function QualityAuditDetailPage() {
                                             </Badge>
                                         </div>
                                     </div>
-                                    {item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && (
+                                    {hasDetails && (
                                         <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
                                             {item.observation && <p><span className="font-semibold">Observation:</span> {item.observation}</p>}
                                             {item.evidence && <p><span className="font-semibold">Evidence:</span> {item.evidence}</p>}
-                                            {item.regulationReference && <p><span className="font-semibold">Regulation:</span> {item.regulationReference}</p>}
+                                            {item.regulationReference && item.regulationReference !== 'N/A' && <p><span className="font-semibold">Regulation:</span> {item.regulationReference}</p>}
                                         </div>
                                     )}
                                 </div>
