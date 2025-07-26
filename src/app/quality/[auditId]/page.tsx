@@ -24,6 +24,7 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
   const { toast } = useToast();
   const [audit, setAudit] = useState<QualityAudit | null>(null);
   const [loading, setLoading] = useState(true);
+  const { auditId } = params;
 
   useEffect(() => {
     if (userLoading) return;
@@ -39,7 +40,7 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
     const fetchAudit = async () => {
       setLoading(true);
       try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, params.auditId);
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         const auditSnap = await getDoc(auditRef);
 
         if (auditSnap.exists()) {
@@ -56,7 +57,7 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
     };
     
     fetchAudit();
-  }, [params.auditId, user, company, userLoading, router, toast]);
+  }, [auditId, user, company, userLoading, router, toast]);
 
   if (loading || userLoading) {
     return (
