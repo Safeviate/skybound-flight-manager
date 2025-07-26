@@ -120,16 +120,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getUnacknowledgedAlerts = useCallback((): Alert[] => {
-    if (!user) return [];
-    // An alert is for a user if it has no target, or if the target matches the user's ID
-    return allAlerts.filter(alert => 
-        !alert.readBy.includes(user.id || '') && 
-        (!alert.targetUserId || alert.targetUserId === user.id)
-    );
+    if (!user || !user.id) return [];
+    
+    return allAlerts.filter(alert => {
+        const isUnread = !alert.readBy.includes(user.id!);
+        const isTargetedToUser = !alert.targetUserId || alert.targetUserId === user.id;
+        return isUnread && isTargetedToUser;
+    });
   }, [user, allAlerts]);
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
-      if (!user || !company) return;
+      if (!user || !company || !user.id) return;
 
       const promises = alertIds.map(alertId => {
           const alertRef = doc(db, `companies/${company.id}/alerts`, alertId);
@@ -143,7 +144,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setAllAlerts(prevAlerts =>
         prevAlerts.map(alert =>
             alertIds.includes(alert.id)
-                ? { ...alert, readBy: [...alert.readBy, user.id] }
+                ? { ...alert, readBy: [...alert.readBy, user.id!] }
                 : alert
         )
       );

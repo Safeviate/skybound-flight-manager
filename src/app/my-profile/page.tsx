@@ -120,14 +120,26 @@ function MyProfilePage() {
         }
         
         const taskAlerts = getUnacknowledgedAlerts()
-            .filter(alert => alert.type === 'Task')
-            .map(alert => ({
-                type: alert.title,
-                details: alert.description,
-                relatedLink: alert.relatedLink,
-                variant: 'warning' as const,
-                icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />
-            }));
+            .map(alert => {
+                 let link = alert.relatedLink;
+                 // Fallback for old CAP alerts that don't have a link
+                 if (!link && alert.type === 'Task' && alert.title.startsWith('CAP Assigned: Audit')) {
+                     const match = alert.title.match(/Audit ([a-zA-Z0-9]+)/);
+                     if (match && match[1]) {
+                         const partialId = match[1];
+                         // This assumes we can find the full ID if needed, but for now we'll just link to the general quality page
+                         // A more robust solution would be to find the full audit ID, but this is a safe fallback.
+                         link = `/quality`;
+                     }
+                 }
+                return {
+                    type: alert.title,
+                    details: alert.description,
+                    relatedLink: link,
+                    variant: 'warning' as const,
+                    icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />
+                }
+            });
 
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
