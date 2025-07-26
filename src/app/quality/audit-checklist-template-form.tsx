@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
 const auditChecklistItemSchema = z.object({
+    id: z.string().optional(),
     text: z.string().min(1, { message: "Item text cannot be empty."}),
     regulationReference: z.string().optional(),
 });
@@ -60,7 +61,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
         form.reset({
             title: existingTemplate.title,
             area: existingTemplate.area,
-            items: existingTemplate.items.map(item => ({ text: item.text, regulationReference: item.regulationReference || '' })),
+            items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
         });
     }
   }, [existingTemplate, form]);
@@ -73,7 +74,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ ...item, id: `item-${Date.now()}-${Math.random()}`, finding: null, level: null })),
+      items: data.items.map(item => ({ ...item, id: item.id || `item-${Date.now()}-${Math.random()}`, finding: null, level: null })),
     };
     onSubmit(newChecklist);
     form.reset();
