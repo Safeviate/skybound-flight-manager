@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
@@ -158,6 +158,41 @@ export default function QualityAuditDetailPage() {
       description: `Your message has been sent to ${data.recipient}.`,
     });
   }
+  
+  const handleSeedData = () => {
+    if (!audit) return;
+
+    const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
+    const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
+
+    const seededItems = audit.checklistItems.map((item, index) => {
+        let finding: FindingStatus = 'Compliant';
+        let level: FindingLevel = null;
+        let comment = 'Verified and found to be in full compliance with all relevant regulations.';
+        let reference = 'Checked against Operations Manual Rev 5.1, Section 3.2.';
+
+        // Make every 5th item non-compliant, and every 7th an observation
+        if ((index + 1) % 5 === 0) {
+            finding = 'Non-compliant';
+            level = levelOptions[Math.floor(Math.random() * 3)];
+            comment = 'A significant deviation from standard operating procedure was noted during the audit.';
+            reference = 'Observed deviation during hangar inspection on Aug 15, 2024.';
+        } else if ((index + 1) % 7 === 0) {
+            finding = 'Observation';
+            level = 'Observation';
+            comment = 'While technically compliant, the process could be improved for better efficiency and clarity.';
+            reference = 'Auditor discussion with ground crew chief.';
+        }
+
+        return { ...item, finding, level, comment, reference };
+    });
+
+    handleAuditUpdate({ ...audit, checklistItems: seededItems }, true);
+    toast({
+      title: 'Audit Seeded',
+      description: 'The audit checklist has been pre-filled with sample data.',
+    });
+  };
 
   if (loading || userLoading) {
     return (
@@ -249,10 +284,16 @@ export default function QualityAuditDetailPage() {
                 <Card>
                     <CardHeader className="flex flex-row justify-between items-center">
                         <CardTitle>Full Audit Checklist</CardTitle>
-                        <Button onClick={() => handleAuditUpdate(audit)}>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save Audit
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button onClick={handleSeedData} variant="outline">
+                              <Database className="mr-2 h-4 w-4" />
+                              Seed Data
+                          </Button>
+                          <Button onClick={() => handleAuditUpdate(audit)}>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Audit
+                          </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {audit.checklistItems && audit.checklistItems.length > 0 ? (
