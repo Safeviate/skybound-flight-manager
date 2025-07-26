@@ -16,7 +16,7 @@ import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc } from 'fire
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
-export default function AuditChecklistsPage() {
+function AuditChecklistsPage() {
     const { company } = useUser();
     const { toast } = useToast();
     const [checklistTemplates, setChecklistTemplates] = useState<AuditChecklist[]>([]);
@@ -41,7 +41,9 @@ export default function AuditChecklistsPage() {
     };
 
     useEffect(() => {
-        fetchTemplates();
+        if(company) {
+            fetchTemplates();
+        }
     }, [company]);
     
     const handleFormSubmit = async (data: Omit<AuditChecklist, 'id' | 'companyId'>) => {
@@ -175,3 +177,5 @@ AuditChecklistsPage.headerContent = (
         </Link>
     </Button>
 );
+
+export default AuditChecklistsPage;

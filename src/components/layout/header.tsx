@@ -12,24 +12,20 @@ export default function Header({ title, children }: { title: string, children?: 
   const { user } = useUser();
   const router = useRouter();
 
-  const childrenArray = React.Children.toArray(children);
-  const backButton = childrenArray.find(child => (child as React.ReactElement)?.props?.asChild);
-  const otherChildren = childrenArray.filter(child => !(child as React.ReactElement)?.props?.asChild);
-
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
       
-      {backButton}
+      <div className="flex items-center gap-2">
+        {children}
+      </div>
 
-      <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap">{title}</h1>
-      <div className="w-full flex-1 flex items-center justify-end">
-        
-        <div className="flex items-center gap-4">
-          {otherChildren}
-        </div>
+      <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap flex-1">{title}</h1>
+      
+      <div className="flex items-center justify-end gap-4">
+        {/* Future right-aligned header items can go here */}
       </div>
     </header>
   );
