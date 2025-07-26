@@ -163,7 +163,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                 AI Audit Analysis
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
+                        <DialogContent className="sm:max-w-4xl">
                              <DialogHeader>
                                 <DialogTitle>AI Audit Analysis</DialogTitle>
                                 <DialogDescription>

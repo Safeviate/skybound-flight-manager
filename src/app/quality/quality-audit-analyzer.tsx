@@ -88,7 +88,7 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
                   id="auditText"
                   name="auditText"
                   placeholder="Paste the full text of the quality audit report here..."
-                  className="min-h-[200px]"
+                  className="min-h-[150px]"
                   defaultValue={auditText}
                 />
                 {state.errors?.auditText && (
