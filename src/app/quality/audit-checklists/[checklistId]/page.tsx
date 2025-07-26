@@ -23,11 +23,11 @@ const FINDING_OPTIONS: { value: FindingType; label: string, icon: React.ReactNod
     { value: 'Compliant', label: 'Compliant', icon: <CheckCircle className="text-green-600" /> },
     { value: 'Non-compliant', label: 'Non-compliant', icon: <XCircle className="text-red-600" /> },
     { value: 'Partial', label: 'Partial Compliance', icon: <MinusCircle className="text-yellow-600" /> },
+    { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
     { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
     { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
     { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
     { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
-    { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
 ];
 
 export default function PerformAuditPage() {
