@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User as UserIcon, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText, ArrowLeft, PlusCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
-import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -126,8 +126,13 @@ export default function QualityAuditDetailPage() {
   
   const handleCapStatusChange = async (issueId: string, newStatus: CorrectiveActionPlan['status']) => {
     if (!audit || !company) return;
+
+    let responsiblePersonId: string | undefined;
+
     const updatedIssues = audit.nonConformanceIssues.map(issue => {
         if (issue.id === issueId && issue.correctiveActionPlan) {
+            const person = personnel.find(p => p.name === issue.correctiveActionPlan!.responsiblePerson);
+            responsiblePersonId = person?.id;
             return {
                 ...issue,
                 correctiveActionPlan: { ...issue.correctiveActionPlan, status: newStatus }
@@ -143,6 +148,24 @@ export default function QualityAuditDetailPage() {
         await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
         setAudit(updatedAudit);
         toast({ title: 'Status Updated', description: `CAP status changed to "${newStatus}".`});
+
+        // If the task is closed, find the corresponding alert and mark it as read
+        if (newStatus === 'Closed' && responsiblePersonId) {
+            const alertTitle = `CAP Assigned: Audit ${auditId.substring(0, 6)}...`;
+            const alertsRef = collection(db, `companies/${company.id}/alerts`);
+            const q = query(alertsRef, 
+                where('title', '==', alertTitle), 
+                where('targetUserId', '==', responsiblePersonId)
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const alertDoc = querySnapshot.docs[0];
+                await updateDoc(alertDoc.ref, {
+                    readBy: arrayUnion(responsiblePersonId)
+                });
+                toast({ title: 'Task Closed', description: `The corresponding action item has been removed from the user's list.` });
+            }
+        }
     } catch (error) {
         console.error("Error updating CAP status:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save status change.' });
