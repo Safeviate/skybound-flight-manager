@@ -4,11 +4,11 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 
 export default function QualityAuditDetailPage() {
@@ -61,6 +62,26 @@ export default function QualityAuditDetailPage() {
 
     fetchAudit();
   }, [auditId, user, company, userLoading, router, toast]);
+  
+  const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
+    if (!audit) return;
+    const updatedItems = audit.checklistItems.map(item => 
+        item.id === itemId ? { ...item, [field]: value } : item
+    );
+    setAudit({ ...audit, checklistItems: updatedItems });
+  }
+
+  const handleSaveAudit = async () => {
+    if (!audit || !company) return;
+    try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, audit.id);
+        await updateDoc(auditRef, { checklistItems: audit.checklistItems, summary: audit.summary });
+        toast({ title: 'Audit Saved', description: 'Your changes have been successfully saved.' });
+    } catch (error) {
+        console.error("Error saving audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not save audit to the database.' });
+    }
+  };
 
   if (loading || userLoading) {
     return (
@@ -84,7 +105,7 @@ export default function QualityAuditDetailPage() {
         case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
         case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
-        case 'Not Applicable': return { icon: <FileText className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
+        case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
         default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding || 'Not Set' };
     }
   };
@@ -98,8 +119,11 @@ export default function QualityAuditDetailPage() {
     }
   };
 
+  const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
+  const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
+
   return (
-      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold">Audit Report</h2>
         <Card>
           <CardHeader>
@@ -130,7 +154,12 @@ export default function QualityAuditDetailPage() {
             </div>
             <div className="space-y-2 border-t pt-6">
                 <h3 className="font-semibold">Audit Summary</h3>
-                <p className="text-muted-foreground">{audit.summary}</p>
+                <Textarea 
+                  placeholder="Enter the overall audit summary here..."
+                  className="min-h-[100px]"
+                  value={audit.summary}
+                  onChange={(e) => setAudit({ ...audit, summary: e.target.value })}
+                />
             </div>
           </CardContent>
         </Card>
@@ -147,31 +176,75 @@ export default function QualityAuditDetailPage() {
         )}
 
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row justify-between items-center">
                 <CardTitle>Full Audit Checklist</CardTitle>
+                <Button onClick={handleSaveAudit}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Audit
+                </Button>
             </CardHeader>
             <CardContent>
                 {audit.checklistItems && audit.checklistItems.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {audit.checklistItems.map(item => {
                             const findingInfo = getFindingInfo(item.finding);
                             const levelInfo = getLevelInfo(item.level);
-                            const hasDetails = item.observation || item.evidence;
                             return (
-                                <div key={item.id} className="p-3 border rounded-md">
-                                    <div className="flex items-start justify-between">
-                                        <p className="flex-1 pr-8">{item.text}</p>
-                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                            {findingInfo.icon}
-                                            <span className="ml-2">{findingInfo.text}</span>
-                                        </Badge>
+                                <div key={item.id} className="p-4 border rounded-lg space-y-4">
+                                    <div>
+                                        <p className="font-medium">{item.text}</p>
+                                        {item.regulationReference && <p className="text-xs text-muted-foreground">Ref: {item.regulationReference}</p>}
                                     </div>
-                                    {hasDetails && (
-                                        <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                                            {item.observation && <p><strong>Observation:</strong> {item.observation}</p>}
-                                            {item.evidence && <p><strong>Evidence:</strong> {item.evidence}</p>}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium">Finding</p>
+                                            <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Finding" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {findingOptions.map(opt => (
+                                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                    )}
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium">Level</p>
+                                            <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Level" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {levelOptions.map(opt => (
+                                                        <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="lg:col-span-2 space-y-2">
+                                            <p className="text-sm font-medium">Evidence / Observation Notes</p>
+                                            <Textarea 
+                                                placeholder="Record evidence or observation details..."
+                                                value={item.evidence || ''}
+                                                onChange={(e) => handleItemChange(item.id, 'evidence', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm pt-2 border-t">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold">Result:</span>
+                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                {findingInfo.icon}
+                                                <span className="ml-2">{findingInfo.text}</span>
+                                            </Badge>
+                                            {levelInfo && (
+                                                <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                  {item.level}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             )
                         })}
@@ -182,6 +255,12 @@ export default function QualityAuditDetailPage() {
                     </div>
                 )}
             </CardContent>
+             <CardFooter>
+                <Button onClick={handleSaveAudit} className="w-full">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save and Finalize Audit
+                </Button>
+            </CardFooter>
         </Card>
       </main>
   );

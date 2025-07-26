@@ -353,7 +353,7 @@ export type CompletedChecklist = {
 }
 
 export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation';
-export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | null;
+export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 
 export type AuditChecklistItem = {
     id: string;
@@ -462,7 +462,7 @@ export type QualityAudit = {
   auditor: string;
   auditeeName?: string | null;
   auditeePosition?: string | null;
-  area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
+  area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management' | 'Personnel' | 'Facilities' | 'Records';
   status: 'Open' | 'Closed' | 'Archived';
   complianceScore: number;
   checklistItems: AuditChecklistItem[];
