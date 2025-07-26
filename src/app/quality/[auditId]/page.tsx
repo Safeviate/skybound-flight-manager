@@ -77,10 +77,6 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
         onUpdate({ ...audit, nonConformanceIssues: updatedIssues }, true);
         setEditingIssue(null);
     }
-
-    const otherFindings = audit.checklistItems.filter(item => 
-        item.finding !== 'Non-compliant' && item.finding !== 'Partial'
-    );
     
     return (
         <div className="space-y-6 print:space-y-4">
@@ -96,7 +92,7 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
                 </DialogContent>
             </Dialog>
 
-            <Card>
+             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Audit Report: {audit.id}</CardTitle>
                     <CardDescription>
@@ -118,89 +114,118 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
                             <Badge variant="success" className="text-lg mt-1">Closed</Badge>
                         </div>
                     </div>
-                    <div>
-                        <h3 className="font-semibold">Audit Summary</h3>
-                        <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px]">{audit.summary || 'No summary was provided.'}</p>
-                    </div>
                 </CardContent>
             </Card>
 
-            {audit.nonConformanceIssues.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Non-Conformance Report</CardTitle>
-                        <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {audit.nonConformanceIssues.map(issue => (
-                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                <div>
-                                    <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                    <p className="font-medium mt-2">{issue.itemText}</p>
-                                    <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
-                                </div>
-                                {issue.correctiveActionPlan ? (
-                                    <div>
-                                        <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Action</TableHead>
-                                                    <TableHead>Responsible</TableHead>
-                                                    <TableHead>Due Date</TableHead>
-                                                    <TableHead>Status</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                <TableRow>
-                                                    <TableCell>{issue.correctiveActionPlan.correctiveAction}</TableCell>
-                                                    <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
-                                                    <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
-                                                    <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
-                                                </TableRow>
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-                                ) : (
-                                    <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
-                                )}
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <Tabs defaultValue="summary" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="summary">Summary &amp; Findings</TabsTrigger>
+                    <TabsTrigger value="checklist">Full Checklist</TabsTrigger>
+                    <TabsTrigger value="discussion">Discussion</TabsTrigger>
+                </TabsList>
+                <TabsContent value="summary" className="space-y-6 mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Audit Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px]">{audit.summary || 'No summary was provided.'}</p>
+                        </CardContent>
+                    </Card>
 
-            {otherFindings.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Additional Checklist Findings</CardTitle>
-                        <CardDescription>
-                            Compliant items, observations, and not-applicable items from the audit.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {otherFindings.map(item => {
-                            const { icon, variant, text } = getFindingInfo(item.finding);
-                            return (
-                                <div key={item.id} className="p-4 border rounded-lg mb-4">
-                                    <div className="flex justify-between items-start">
+                    {audit.nonConformanceIssues.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Non-Conformance Report</CardTitle>
+                                <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {audit.nonConformanceIssues.map(issue => (
+                                    <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
                                         <div>
-                                            <p className="font-medium">{item.text}</p>
-                                            <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                            <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                            <p className="font-medium mt-2">{issue.itemText}</p>
+                                            <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                            <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
                                         </div>
-                                        <Badge variant={variant} className="whitespace-nowrap">
-                                            {icon}
-                                            <span className="ml-2">{text}</span>
-                                        </Badge>
+                                        {issue.correctiveActionPlan ? (
+                                            <div>
+                                                <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Action</TableHead>
+                                                            <TableHead>Responsible</TableHead>
+                                                            <TableHead>Due Date</TableHead>
+                                                            <TableHead>Status</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        <TableRow>
+                                                            <TableCell>{issue.correctiveActionPlan.correctiveAction}</TableCell>
+                                                            <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
+                                                            <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
+                                                            <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
+                                                        </TableRow>
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        ) : (
+                                            <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
+                                        )}
                                     </div>
-                                    {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
-                                </div>
-                            )
-                        })}
-                    </CardContent>
-                </Card>
-            )}
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+                <TabsContent value="checklist" className="mt-4">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Full Audit Checklist</CardTitle>
+                            <CardDescription>
+                                A complete log of all items from the audit questionnaire.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {audit.checklistItems.map(item => {
+                                const { icon, variant, text } = getFindingInfo(item.finding);
+                                return (
+                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium">{item.text}</p>
+                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                            </div>
+                                            <Badge variant={variant} className="whitespace-nowrap">
+                                                {icon}
+                                                <span className="ml-2">{text}</span>
+                                            </Badge>
+                                        </div>
+                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                    </div>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="discussion" className="mt-4">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Discussion Forum</CardTitle>
+                            <CardDescription>
+                                A forum for auditors and auditees to discuss findings and corrective actions.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DiscussionSection 
+                                audit={audit} 
+                                onUpdate={onUpdate} 
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };
