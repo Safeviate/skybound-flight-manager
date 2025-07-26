@@ -36,7 +36,7 @@ import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-f
 
 
 const discussionFormSchema = z.object({
-  recipient: z.string().min(1, 'You must select a recipient.'),
+  recipient: z.string().optional(),
   message: z.string().min(1, 'Message cannot be empty.'),
   replyByDate: z.date().optional(),
 });
@@ -129,37 +129,44 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         const newEntry: DiscussionEntry = {
             id: `d-${Date.now()}`,
             author: user.name,
+            recipient: data.recipient || 'Team',
+            message: data.message,
             datePosted: new Date().toISOString(),
-            ...data,
             replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
         };
+
+        const cleanNewEntry = JSON.parse(JSON.stringify(newEntry));
         
         const updatedAudit = {
             ...audit,
-            discussion: [...(audit.discussion || []), newEntry],
+            discussion: [...(audit.discussion || []), cleanNewEntry],
         };
 
-        const recipientUser = personnel.find(p => p.name === data.recipient);
-        if (recipientUser) {
-            const newAlert: Omit<Alert, 'id' | 'number'> = {
-                companyId: company.id,
-                type: 'Task',
-                title: `New Message on Audit: ${audit.id.substring(0,8)}`,
-                description: `From ${user.name}: "${data.message.substring(0, 50)}..."`,
-                author: user.name,
-                date: new Date().toISOString(),
-                readBy: [],
-                targetUserId: recipientUser.id,
-                relatedLink: `/quality/${audit.id}`,
-            };
-            const alertsCollection = collection(db, `companies/${company.id}/alerts`);
-            await addDoc(alertsCollection, newAlert);
+        if (data.recipient) {
+            const recipientUser = personnel.find(p => p.name === data.recipient);
+            if (recipientUser) {
+                const newAlert: Omit<Alert, 'id' | 'number'> = {
+                    companyId: company.id,
+                    type: 'Task',
+                    title: `New Message on Audit: ${audit.id.substring(0,8)}`,
+                    description: `From ${user.name}: "${data.message.substring(0, 50)}..."`,
+                    author: user.name,
+                    date: new Date().toISOString(),
+                    readBy: [],
+                    targetUserId: recipientUser.id,
+                    relatedLink: `/quality/${audit.id}`,
+                };
+                const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+                await addDoc(alertsCollection, newAlert);
+                toast({ title: 'Message Sent', description: `Your message and a notification has been sent to ${data.recipient}.`});
+            }
+        } else {
+             toast({ title: 'Message Posted', description: `Your message has been posted to the discussion.`});
         }
 
         onUpdate(updatedAudit, true);
         discussionForm.reset();
         setIsDiscussionDialogOpen(false);
-        toast({ title: 'Message Sent', description: `Your message and a notification has been sent to ${data.recipient}.`});
     }
     
     return (
@@ -389,7 +396,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                 name="recipient"
                                                 render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel>Send To</FormLabel>
+                                                    <FormLabel>Send To (Optional)</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value || ''}>
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -817,12 +824,3 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
-
-
-
-
-
-    
-
-    
-
