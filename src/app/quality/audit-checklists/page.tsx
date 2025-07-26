@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, PlayCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface ChecklistsManagerProps {
     refetchParent?: () => void;
@@ -156,9 +157,14 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Edit
+                                     <Button asChild>
+                                        <Link href={`/quality/audit-checklists/${template.id}`}>
+                                            <PlayCircle className="h-4 w-4 mr-2" />
+                                            Start Audit
+                                        </Link>
+                                    </Button>
+                                    <Button variant="outline" size="icon" onClick={() => openDialog(template)}>
+                                        <Edit className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
