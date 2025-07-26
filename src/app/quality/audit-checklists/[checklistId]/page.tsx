@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -25,11 +24,11 @@ const FINDING_OPTIONS: { value: FindingStatus; label: string, icon: React.ReactN
     { value: 'Compliant', label: 'Compliant', icon: <CheckCircle className="text-green-600" /> },
     { value: 'Non-compliant', label: 'Non-compliant', icon: <XCircle className="text-red-600" /> },
     { value: 'Partial', label: 'Partial Compliance', icon: <MinusCircle className="text-yellow-600" /> },
-    { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
     { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
 ];
 
 const LEVEL_OPTIONS: { value: FindingLevel; label: string, icon: React.ReactNode }[] = [
+    { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
     { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
     { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
     { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
@@ -79,7 +78,17 @@ export default function PerformAuditPage() {
             if (!prev) return null;
             return {
                 ...prev,
-                items: prev.items.map(item => item.id === itemId ? { ...item, [field]: value } : item)
+                items: prev.items.map(item => {
+                    if (item.id === itemId) {
+                        const updatedItem = { ...item, [field]: value };
+                        // If finding is compliant or N/A, clear the level.
+                        if (field === 'finding' && (value === 'Compliant' || value === 'Not Applicable')) {
+                            updatedItem.level = null;
+                        }
+                        return updatedItem;
+                    }
+                    return item;
+                })
             };
         });
     };
@@ -139,35 +148,51 @@ export default function PerformAuditPage() {
     
     const handleSeedData = () => {
         if (!checklist) return;
+        const sampleObservations = [
+            "Procedure followed, but documentation could be clearer.",
+            "Equipment shows minor wear and tear, but is functional.",
+            "Staff knowledgeable, but refresher training is recommended.",
+            "Logbook entry slightly ambiguous.",
+            "Minor deviation from standard procedure noted, but did not affect safety."
+        ];
+
+        const sampleNonCompliances = [
+            { text: "Required signature missing from maintenance release form.", level: 'Level 2 Finding', reg: "SACATS 43.02.4" },
+            { text: "Fire extinguisher in hangar has an expired inspection tag.", level: 'Level 1 Finding', reg: "OHS Act 85 of 1993" },
+            { text: "Pilot flight and duty records for the previous month were not available for review.", level: 'Level 3 Finding', reg: "SACATS 121.08.1" },
+            { text: "Incorrect part number used for a minor repair, although the part was functionally equivalent.", level: 'Level 2 Finding', reg: "Internal Procedure MAN-005 Sec 2.1" },
+            { text: "Safety briefing posters in the crew room are outdated.", level: 'Observation', reg: "SMS-MANUAL Sec 3.2" }
+        ];
 
         setChecklist(prev => {
             if (!prev) return null;
+            let nonComplianceIndex = 0;
             return {
                 ...prev,
                 auditeeName: 'John Smith (Sample)',
                 auditeePosition: 'Maintenance Manager (Sample)',
                 items: prev.items.map((item, index) => {
-                    if (index === 0) {
+                    const random = Math.random();
+                    if (random < 0.25 && nonComplianceIndex < sampleNonCompliances.length) { // 25% chance of a finding
+                        const finding = sampleNonCompliances[nonComplianceIndex++];
                         return {
                             ...item,
-                            finding: 'Non-compliant',
-                            level: 'Level 2 Finding',
-                            observation: 'The Training Program Manual was last updated two years ago and does not reflect recent changes to SA-CATS 141 regarding simulator training credits.',
-                            evidence: 'TPM Rev 3, Dated 2022-01-15',
-                            regulationReference: 'SA-CATS 141.05.2(a)'
+                            finding: finding.level === 'Observation' ? 'Observation' : 'Non-compliant',
+                            level: finding.level as FindingLevel,
+                            observation: finding.text,
+                            evidence: `Reviewed document #${100 + index} and interviewed staff.`,
+                            regulationReference: finding.reg
                         };
-                    }
-                    if (index === 1) {
-                         return {
+                    } else { // 75% chance of being compliant
+                        return { 
                             ...item,
-                            finding: 'Observation',
+                            finding: 'Compliant',
                             level: null,
-                            observation: 'While all records are present, the filing system is inconsistent, making it difficult to track individual student progress efficiently.',
-                            evidence: 'Reviewed 5 student files.',
-                            regulationReference: 'Internal Procedure MAN-002 Sec 4.1'
+                            observation: '',
+                            evidence: '',
+                            regulationReference: item.regulationReference
                         };
                     }
-                    return { ...item, finding: 'Compliant', level: null };
                 })
             };
         });
@@ -244,22 +269,24 @@ export default function PerformAuditPage() {
                                             ))}
                                         </RadioGroup>
                                     </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Level</Label>
-                                        <RadioGroup 
-                                            value={item.level || ''}
-                                            onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
-                                            className="flex flex-wrap gap-x-4 gap-y-2"
-                                        >
-                                            {LEVEL_OPTIONS.map(opt => (
-                                                <div key={opt.value} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
-                                                    <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-                                    </div>
+                                    
+                                    {item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && (
+                                        <div className="space-y-2 pt-2 border-t mt-4">
+                                            <Label>Level</Label>
+                                            <RadioGroup 
+                                                value={item.level || ''}
+                                                onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
+                                                className="flex flex-wrap gap-x-4 gap-y-2"
+                                            >
+                                                {LEVEL_OPTIONS.map(opt => (
+                                                    <div key={opt.value} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                        <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </div>
+                                    )}
                                     
                                      <div className="space-y-2">
                                         <Label htmlFor={`regulation-${item.id}`}>Regulation Reference</Label>
@@ -285,3 +312,4 @@ export default function PerformAuditPage() {
         </div>
     );
 }
+
