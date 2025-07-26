@@ -117,8 +117,8 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         setEditingIssue(null);
     }
 
-    const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
-        if (!user || !audit) {
+    const handleNewDiscussionMessage = async (data: DiscussionFormValues) => {
+        if (!user || !audit || !company) {
             return;
         }
 
@@ -135,9 +135,27 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             discussion: [...(audit.discussion || []), newEntry],
         };
 
+        const recipientUser = personnel.find(p => p.name === data.recipient);
+        if (recipientUser) {
+            const newAlert: Omit<Alert, 'id' | 'number'> = {
+                companyId: company.id,
+                type: 'Task',
+                title: `New Message on Audit: ${audit.id.substring(0,8)}`,
+                description: `From ${user.name}: "${data.message.substring(0, 50)}..."`,
+                author: user.name,
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: recipientUser.id,
+                relatedLink: `/quality/${audit.id}`,
+            };
+            const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+            await addDoc(alertsCollection, newAlert);
+        }
+
         onUpdate(updatedAudit, true);
         discussionForm.reset();
         setIsDiscussionDialogOpen(false);
+        toast({ title: 'Message Sent', description: `Your message and a notification has been sent to ${data.recipient}.`});
     }
     
     return (
@@ -788,5 +806,7 @@ export default function QualityAuditDetailPage() {
 
 
 
+
+    
 
     
