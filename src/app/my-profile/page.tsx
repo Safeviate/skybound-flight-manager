@@ -79,12 +79,6 @@ function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts } = useUser();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-    }, [user, loading, router]);
-    
     const allActionItems = useMemo(() => {
         if (!user) return [];
 
@@ -129,6 +123,13 @@ function MyProfilePage() {
 
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     
     if (loading || !user) {
         return (
