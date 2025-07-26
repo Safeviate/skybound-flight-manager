@@ -7,7 +7,7 @@ import type { User, Alert, Company } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arrayUnion, onSnapshot } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -70,18 +70,27 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
     return [null, null, null];
   };
+  
+  useEffect(() => {
+    let alertsUnsubscribe: () => void = () => {};
 
-  const fetchCompanyAlerts = async (companyId: string) => {
-    try {
-        const alertsCol = collection(db, `companies/${companyId}/alerts`);
+    if (company) {
+        const alertsCol = collection(db, `companies/${company.id}/alerts`);
         const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
-        const alertsSnapshot = await getDocs(alertsQuery);
-        return alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-    } catch (error) {
-        console.error("Error fetching alerts:", error);
-        return [];
+        
+        alertsUnsubscribe = onSnapshot(alertsQuery, (snapshot) => {
+            const updatedAlerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+            setAllAlerts(updatedAlerts);
+        }, (error) => {
+            console.error("Error listening to alerts collection:", error);
+        });
     }
-  }
+
+    return () => {
+        alertsUnsubscribe(); // Cleanup the listener when company changes or component unmounts
+    };
+  }, [company]);
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -91,7 +100,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
             setCompany(companyData);
             if (companyData) {
-                setAllAlerts(await fetchCompanyAlerts(companyData.id));
                 localStorage.setItem(LAST_USER_ID_KEY, firebaseUser.uid);
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             }
@@ -104,9 +112,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 const [userData, companyData] = await fetchUserDataById(lastCompanyId, lastUserId);
                 setUser(userData);
                 setCompany(companyData);
-                if (companyData) {
-                    setAllAlerts(await fetchCompanyAlerts(companyData.id));
-                }
             } else {
                 setUser(null);
                 setCompany(null);
@@ -141,13 +146,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       
       await Promise.all(promises);
 
-      setAllAlerts(prevAlerts =>
-        prevAlerts.map(alert =>
-            alertIds.includes(alert.id)
-                ? { ...alert, readBy: [...alert.readBy, user.id!] }
-                : alert
-        )
-      );
+      // State will update automatically via onSnapshot, no need for manual update here.
   };
 
 
@@ -179,7 +178,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (userData && companyData && userId) {
             setUser(userData);
             setCompany(companyData);
-            setAllAlerts(await fetchCompanyAlerts(companyData.id));
             localStorage.setItem(LAST_USER_ID_KEY, userId);
             localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             return true;
