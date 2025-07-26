@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Database, Loader2, Bot } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
@@ -14,7 +14,6 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { auditChecklistData as seedChecklists } from '@/lib/data-provider';
 import { format } from 'date-fns';
 
 interface ChecklistsManagerProps {
@@ -77,10 +76,6 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
             toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the template.' });
         }
     };
-
-    const handleAiChecklistSave = async (data: Omit<AuditChecklist, 'id' | 'companyId'>) => {
-        await handleFormSubmit(data);
-    };
     
     const handleDelete = async (templateId: string) => {
         if (!company) return;
@@ -99,51 +94,6 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
         setEditingTemplate(template);
         setIsDialogOpen(true);
     };
-
-    const handleGenerateSampleReport = async (template: AuditChecklist) => {
-        if (!company || !user) return;
-
-        const newAuditData: Omit<QualityAudit, 'id'> = {
-            companyId: company.id,
-            date: format(new Date(), 'yyyy-MM-dd'),
-            type: 'Internal',
-            auditor: user.name,
-            area: template.area,
-            status: 'With Findings',
-            complianceScore: 85,
-            auditeeName: 'Sample Auditee',
-            auditeePosition: 'Sample Position',
-            summary: `This is a sample audit report generated from the "${template.title}" template to demonstrate functionality.`,
-            nonConformanceIssues: template.items.slice(0, 2).map((item, index) => ({
-                id: `sample-nci-${index}`,
-                level: index === 0 ? 'Level 2 Finding' : 'Observation',
-                category: 'Procedural',
-                description: `This is a sample finding for checklist item: "${item.text}"`,
-                regulationReference: 'Sample Regulation 123.45',
-                correctiveActionPlan: {
-                    rootCause: 'Sample root cause analysis points to procedural drift.',
-                    correctiveAction: 'Retrain personnel on the correct procedure.',
-                    preventativeAction: 'Update the procedure manual for clarity and reissue.',
-                    responsiblePerson: 'Quality Manager',
-                    completionDate: format(new Date(new Date().setDate(new Date().getDate() + 30)), 'yyyy-MM-dd'),
-                    status: 'Open',
-                }
-            }))
-        };
-        
-        try {
-            await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
-            toast({
-                title: 'Sample Report Generated',
-                description: `A sample audit report based on "${template.title}" has been created.`
-            });
-            refetchParent?.();
-        } catch (error) {
-            console.error("Error generating sample report:", error);
-            toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not create the sample report.' });
-        }
-    };
-
 
     return (
         <>
@@ -181,7 +131,7 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                                     <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
                                 </TabsContent>
                                 <TabsContent value="ai">
-                                    <AiChecklistGenerator onSave={handleAiChecklistSave} />
+                                    <AiChecklistGenerator onSave={handleFormSubmit} />
                                 </TabsContent>
                             </Tabs>
                         </DialogContent>
@@ -205,20 +155,14 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                                         {template.items.length > 4 && <li>...and {template.items.length - 4} more.</li>}
                                     </ul>
                                 </CardContent>
-                                <CardFooter className="flex-col items-stretch gap-2">
-                                    <Button variant="secondary" size="sm" onClick={() => handleGenerateSampleReport(template)}>
-                                        <Bot className="h-4 w-4 mr-2" />
-                                        Generate Sample Report
+                                <CardFooter className="flex justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit
                                     </Button>
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
-                                            <Edit className="h-4 w-4 mr-2" />
-                                            Edit
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
                                 </CardFooter>
                             </Card>
                         ))}

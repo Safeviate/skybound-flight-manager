@@ -11,7 +11,7 @@ import type { AuditChecklist, AuditChecklistItem, FindingType, QualityAudit, Non
 import Header from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, FileText, MessageSquareWarning, XCircle, MinusCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, MessageSquareWarning, XCircle, MinusCircle, AlertTriangle, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -136,6 +136,44 @@ export default function PerformAuditPage() {
             toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the audit findings.' });
         }
     };
+    
+    const handleSeedData = () => {
+        if (!checklist) return;
+
+        setChecklist(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                auditeeName: 'John Smith (Sample)',
+                auditeePosition: 'Maintenance Manager (Sample)',
+                items: prev.items.map((item, index) => {
+                    if (index === 0) {
+                        return {
+                            ...item,
+                            finding: 'Level 2 Finding',
+                            observation: 'The Training Program Manual was last updated two years ago and does not reflect recent changes to SA-CATS 141 regarding simulator training credits.',
+                            evidence: 'TPM Rev 3, Dated 2022-01-15',
+                            regulationReference: 'SA-CATS 141.05.2(a)'
+                        };
+                    }
+                    if (index === 1) {
+                         return {
+                            ...item,
+                            finding: 'Observation',
+                            observation: 'While all records are present, the filing system is inconsistent, making it difficult to track individual student progress efficiently.',
+                            evidence: 'Reviewed 5 student files.',
+                            regulationReference: 'Internal Procedure MAN-002 Sec 4.1'
+                        };
+                    }
+                    return { ...item, finding: 'Compliant' };
+                })
+            };
+        });
+        toast({
+            title: 'Sample Data Loaded',
+            description: 'The audit form has been populated with sample findings. You can now review and submit.'
+        });
+    };
 
     if (loading || userLoading) {
         return <div className="flex items-center justify-center h-screen"><p>Loading audit...</p></div>;
@@ -148,10 +186,14 @@ export default function PerformAuditPage() {
     return (
         <div className="flex flex-col min-h-screen">
             <Header title={`Performing Audit: ${checklist.title}`}>
+                <Button onClick={handleSeedData} variant="secondary">
+                    <Bot className="mr-2 h-4 w-4" />
+                    Seed Sample Data
+                </Button>
                 <Button asChild variant="outline">
-                    <Link href="/quality?tab=audits">
+                    <Link href="/quality?tab=checklists">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Audits
+                        Back to Checklists
                     </Link>
                 </Button>
             </Header>
