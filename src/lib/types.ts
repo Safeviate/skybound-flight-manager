@@ -451,7 +451,7 @@ export type NonConformanceIssue = {
   category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
   description: string;
   regulationReference?: string;
-  correctiveActionPlan?: CorrectiveActionPlan;
+  correctiveActionPlan?: CorrectiveActionPlan | null;
 };
 
 export type QualityAudit = {
@@ -460,8 +460,8 @@ export type QualityAudit = {
   date: string;
   type: 'Internal' | 'External';
   auditor: string;
-  auditeeName?: string;
-  auditeePosition?: string;
+  auditeeName?: string | null;
+  auditeePosition?: string | null;
   area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
   status: 'Compliant' | 'With Findings' | 'Non-Compliant';
   complianceScore: number;
