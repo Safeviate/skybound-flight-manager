@@ -3,7 +3,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { analyzeAuditAction, generateCapAction } from './actions';
+import { analyzeAuditAction } from '@/app/quality/actions';
+import { generateCapAction } from '@/app/quality/[auditId]/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -106,6 +107,11 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
   const [analysisState, analysisAction] = useActionState(analyzeAuditAction, initialAnalysisState);
   const [capState, capAction] = useActionState(generateCapAction, initialCapState);
   const { toast } = useToast();
+  const [currentAuditText, setCurrentAuditText] = useState(auditText || '');
+
+  useEffect(() => {
+    setCurrentAuditText(auditText || '');
+  }, [auditText]);
 
   useEffect(() => {
     if (analysisState.message && analysisState.message !== 'Invalid form data' && analysisState.message !== 'Analysis complete') {
@@ -139,29 +145,32 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
-                <div className="flex flex-col space-y-1.5 flex-1">
-                    <Label htmlFor="auditText">Quality Audit Report</Label>
-                    <Textarea
-                    id="auditText"
-                    name="auditText"
-                    placeholder="Paste the full text of the quality audit report here..."
-                    className="min-h-[150px] flex-1"
-                    defaultValue={auditText}
-                    />
-                    {(analysisState.errors?.auditText || capState.errors?.auditText) && (
-                        <p className="text-sm text-destructive">{(analysisState.errors?.auditText || capState.errors?.auditText)?.[0]}</p>
-                    )}
-                </div>
+                 <form action={analysisAction}>
+                    <div className="flex flex-col space-y-1.5 flex-1">
+                        <Label htmlFor="auditText">Quality Audit Report</Label>
+                        <Textarea
+                        id="auditText"
+                        name="auditText"
+                        placeholder="Paste the full text of the quality audit report here..."
+                        className="min-h-[150px] flex-1"
+                        value={currentAuditText}
+                        onChange={(e) => setCurrentAuditText(e.target.value)}
+                        />
+                        {(analysisState.errors?.auditText) && (
+                            <p className="text-sm text-destructive">{analysisState.errors.auditText[0]}</p>
+                        )}
+                    </div>
+                 </form>
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left">This analysis should be verified by a qualified Quality Manager.</p>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <form action={analysisAction} className="w-full">
-                        <input type="hidden" name="auditText" value={auditText}/>
+                        <input type="hidden" name="auditText" value={currentAuditText}/>
                         <AnalyzeButton />
                     </form>
                     <form action={capAction} className="w-full">
-                         <input type="hidden" name="auditText" value={auditText}/>
+                         <input type="hidden" name="auditText" value={currentAuditText}/>
                         <SuggestCapButton />
                     </form>
                 </div>
