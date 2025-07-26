@@ -85,8 +85,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-            // Admin user with a persistent session
-            const [userData, companyData] = await fetchUserDataById(firebaseUser.photoURL || '', firebaseUser.uid);
+            // User has a persistent session (likely a real admin)
+            const [userData, companyData] = await fetchUserDataById(firebaseUser.photoURL || 'skybound-aero', firebaseUser.uid);
             setUser(userData);
             setCompany(companyData);
             if (companyData) {
@@ -95,7 +95,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             }
         } else {
-             // Non-admin user, or user logged out
+             // Non-admin user, or user logged out, try to load from localStorage for demo persistence
             const lastUserId = localStorage.getItem(LAST_USER_ID_KEY);
             const lastCompanyId = localStorage.getItem(LAST_COMPANY_ID_KEY);
 
@@ -151,19 +151,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const [userData, companyData, userId] = await fetchUserDataByEmail(email);
 
         if (userData?.role === 'Admin') {
-            await signInWithEmailAndPassword(auth, email, "password");
-            // onAuthStateChanged will handle setting state
-        } else if (userData && companyData && userId) {
-            // For non-admins, we just set the local state and localStorage
+            try {
+                // Attempt to sign in with Firebase Auth for real admins
+                await signInWithEmailAndPassword(auth, email, "password");
+                // onAuthStateChanged will handle setting the user state
+                return true;
+            } catch (error: any) {
+                // If it fails with invalid-credential, it's likely a seeded admin.
+                // Log them in via the non-persistent method for demo purposes.
+                if (error.code === 'auth/invalid-credential') {
+                    console.warn(`Admin user '${email}' not found in Firebase Auth. Logging in with demo mode.`);
+                    // Fallthrough to the non-admin login logic below
+                } else {
+                    // For other auth errors, fail the login
+                    throw error;
+                }
+            }
+        }
+        
+        // This block now handles all non-admin users AND seeded admin users
+        if (userData && companyData && userId) {
             setUser(userData);
             setCompany(companyData);
             setAllAlerts(await fetchCompanyAlerts(companyData.id));
             localStorage.setItem(LAST_USER_ID_KEY, userId);
             localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
-        } else {
-            return false;
+            return true;
         }
-        return true;
+
+        return false;
     } catch (error) {
         console.error("Authentication or login process failed:", error);
         return false;
