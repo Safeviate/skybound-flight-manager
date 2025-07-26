@@ -8,7 +8,7 @@ import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/type
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
@@ -19,6 +19,9 @@ import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { ChecklistsManager } from './audit-checklists/page';
 import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -88,6 +91,7 @@ function QualityPage() {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = async () => {
     if (!company) return;
@@ -127,6 +131,17 @@ function QualityPage() {
         fetchData();
     }
   }, [user, company, loading, router, toast]);
+
+  const filteredAudits = audits.filter(audit => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+        audit.id.toLowerCase().includes(searchLower) ||
+        audit.area.toLowerCase().includes(searchLower) ||
+        audit.auditor.toLowerCase().includes(searchLower) ||
+        audit.status.toLowerCase().includes(searchLower) ||
+        audit.type.toLowerCase().includes(searchLower)
+    );
+  });
 
 
   const getStatusVariant = (status: QualityAudit['status']) => {
@@ -254,33 +269,63 @@ function QualityPage() {
             <TabsContent value="audits" className="mt-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Perform an Audit</CardTitle>
-                        <CardDescription>Select a checklist template to begin a new quality audit.</CardDescription>
+                        <CardTitle>Audit Reports</CardTitle>
+                        <CardDescription>Review all completed quality audit reports.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
-                            {auditChecklists.length > 0 ? (
-                                auditChecklists.map(checklist => (
-                                    <Link key={checklist.id} href={`/quality/audit-checklists/${checklist.id}`} className="block">
-                                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <ListChecks className="h-6 w-6 text-primary" />
-                                                <div>
-                                                    <p className="font-semibold">{checklist.title}</p>
-                                                    <p className="text-sm text-muted-foreground">{checklist.area} ({checklist.items.length} items)</p>
-                                                </div>
-                                            </div>
-                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                    </Link>
-                                ))
-                            ) : (
-                                <div className="text-center text-muted-foreground py-10">
-                                    <p>No audit checklist templates found.</p>
-                                    <Button variant="link" onClick={() => setActiveTab('checklists')}>Create one in the templates tab.</Button>
-                                </div>
-                            )}
+                        <div className="flex items-center py-4">
+                            <div className="relative w-full max-w-sm">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                placeholder="Search audits..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                                />
+                            </div>
                         </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead>Audit ID</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Area</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Compliance</TableHead>
+                                <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredAudits.length > 0 ? (
+                                    filteredAudits.map(audit => (
+                                    <TableRow key={audit.id}>
+                                        <TableCell className="font-mono">
+                                        <Link href={`/quality/${audit.id}`} className="hover:underline">
+                                            {audit.id.substring(0, 8)}...
+                                        </Link>
+                                        </TableCell>
+                                        <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
+                                        <TableCell>{audit.area}</TableCell>
+                                        <TableCell>{audit.type}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={audit.complianceScore >= 95 ? 'success' : audit.complianceScore >= 80 ? 'warning' : 'destructive'}>
+                                                {audit.complianceScore}%
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24">
+                                            No audit reports found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             </TabsContent>
