@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -106,8 +105,8 @@ export default function PerformAuditPage() {
         if (!checklist || !company || !user) return;
         
         const findings: NonConformanceIssue[] = checklist.items
-            .filter(item => item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable')
-            .map(item => ({
+            .filter(item => item.finding && (item.finding === 'Non-compliant' || item.finding === 'Partial' || item.finding === 'Observation'))
+            .map((item): NonConformanceIssue => ({
                 id: item.id,
                 finding: item.finding!,
                 level: item.level || null,
@@ -117,12 +116,12 @@ export default function PerformAuditPage() {
                 correctiveActionPlan: null,
             }));
             
-        const totalItems = checklist.items.length;
+        const totalApplicableItems = checklist.items.filter(i => i.finding !== 'Not Applicable').length;
         const compliantItems = checklist.items.filter(i => i.finding === 'Compliant').length;
-        const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
+        const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
         let status: QualityAudit['status'] = 'Closed';
-        if (findings.length > 0) {
+        if (findings.some(f => f.finding === 'Non-compliant' || f.finding === 'Partial')) {
             status = 'Open';
         }
 
@@ -145,7 +144,7 @@ export default function PerformAuditPage() {
             complianceScore,
             checklistItems: sanitizedChecklistItems,
             nonConformanceIssues: findings,
-            summary: `Audit of ${checklist.area} conducted by ${user.name}.`,
+            summary: `Audit of ${checklist.area} conducted by ${user.name} on ${format(new Date(), 'yyyy-MM-dd')}. The audit resulted in a compliance score of ${complianceScore}%.`,
             auditeeName: checklist.auditeeName || null,
             auditeePosition: checklist.auditeePosition || null,
         };
@@ -340,3 +339,5 @@ export default function PerformAuditPage() {
         </>
     );
 }
+
+    
