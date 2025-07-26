@@ -116,9 +116,6 @@ export default function QualityAuditDetailPage() {
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <Badge variant={getStatusVariant(audit.status)} className="text-base">
-                  {audit.status}
-                </Badge>
                  <Badge variant="outline" className="text-base flex items-center gap-1">
                   <Percent className="h-4 w-4" />
                   {audit.complianceScore}% Compliant
@@ -166,13 +163,12 @@ export default function QualityAuditDetailPage() {
                 <CardContent>
                     <div className="space-y-6">
                         {audit.nonConformanceIssues.map((issue, index) => {
-                                const findingInfo = getFindingInfo(issue.finding);
                                 const levelInfo = getLevelInfo(issue.level);
                                 const cap = issue.correctiveActionPlan;
                                 return (
                                     <div key={issue.id} className="p-4 border rounded-lg">
                                         <div className="flex items-start gap-3">
-                                            {findingInfo.icon}
+                                            {levelInfo ? levelInfo.icon : <MessageSquareWarning className="h-5 w-5 text-blue-600" />}
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
                                                     <h4 className="font-semibold text-base flex items-center gap-2">Finding #{index + 1}: 
@@ -254,3 +250,5 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
+
+    
