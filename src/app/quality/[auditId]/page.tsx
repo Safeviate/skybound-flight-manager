@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel } f
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc } from 'firebase/firestore';
@@ -84,13 +84,14 @@ export default function QualityAuditDetailPage() {
     }
   };
 
-  const getFindingInfo = (finding: FindingStatus) => {
+  const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
         case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
         case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
         case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
-        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding };
+        case 'Not Applicable': return { icon: <FileText className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
+        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding || 'Not Set' };
     }
   };
   
@@ -221,19 +222,23 @@ export default function QualityAuditDetailPage() {
                     <div className="space-y-3">
                         {audit.checklistItems.map(item => {
                             const findingInfo = getFindingInfo(item.finding);
+                            const levelInfo = getLevelInfo(item.level);
                             return (
                                 <div key={item.id} className="p-3 border rounded-md bg-muted/30">
                                     <div className="flex items-start justify-between">
                                         <p className="flex-1 pr-8">{item.text}</p>
-                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                            {findingInfo.text}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            {levelInfo && <Badge variant={levelInfo.variant}>{item.level}</Badge>}
+                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                {findingInfo.text}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                    {item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && (
+                                    {item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && (
                                         <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                                            <p><span className="font-semibold">Observation:</span> {item.observation}</p>
-                                            <p><span className="font-semibold">Evidence:</span> {item.evidence}</p>
-                                            <p><span className="font-semibold">Regulation:</span> {item.regulationReference}</p>
+                                            {item.observation && <p><span className="font-semibold">Observation:</span> {item.observation}</p>}
+                                            {item.evidence && <p><span className="font-semibold">Evidence:</span> {item.evidence}</p>}
+                                            {item.regulationReference && <p><span className="font-semibold">Regulation:</span> {item.regulationReference}</p>}
                                         </div>
                                     )}
                                 </div>
