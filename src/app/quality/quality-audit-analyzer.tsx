@@ -41,7 +41,7 @@ function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
         <CardTitle>Audit Analysis Results</CardTitle>
         <CardDescription>AI-powered assessment of the submitted quality audit report.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-2">
+      <CardContent className="grid gap-6 md:grid-cols-1">
         {resultItems.map(item => (
             <div key={item.title} className="flex items-start space-x-4">
                 <div className="flex-shrink-0">{item.icon}</div>
@@ -71,31 +71,29 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
   }, [state, toast]);
 
   return (
-    <div className="space-y-8">
-      <form action={formAction}>
-        <Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <form action={formAction} className="md:col-span-1">
+        <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle>Quality Audit Analysis Tool</CardTitle>
             <CardDescription>
               Enter a quality audit report below. Our AI will assess compliance and suggest actions.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="flex flex-col space-y-1.5 flex-1">
                 <Label htmlFor="auditText">Quality Audit Report</Label>
                 <Textarea
                   id="auditText"
                   name="auditText"
                   placeholder="Paste the full text of the quality audit report here..."
-                  className="min-h-[150px]"
+                  className="min-h-[150px] flex-1"
                   defaultValue={auditText}
                 />
                 {state.errors?.auditText && (
                   <p className="text-sm text-destructive">{state.errors.auditText[0]}</p>
                 )}
               </div>
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">This analysis should be verified by a qualified Quality Manager.</p>
@@ -103,7 +101,9 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
           </CardFooter>
         </Card>
       </form>
-      {state.data && <AnalysisResult data={state.data as AnalyzeQualityAuditOutput} />}
+      <div className="md:col-span-1">
+        {state.data && <AnalysisResult data={state.data as AnalyzeQualityAuditOutput} />}
+      </div>
     </div>
   );
 }
