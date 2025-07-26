@@ -2,29 +2,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import Header from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle, KeyRound, CheckSquare, Bell } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport, TrainingLogEntry, Alert } from '@/lib/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format, parseISO, isBefore, differenceInDays, isSameDay } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { EditProfileForm } from './edit-profile-form';
-import { ChecklistCard } from '../checklists/checklist-card';
-import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { getExpiryBadge, calculateFlightHours } from '@/lib/utils.tsx';
-import { aircraftData, checklistData as initialChecklistData, bookingData as initialBookingData, safetyReportData, riskRegisterData, userData } from '@/lib/data-provider';
-import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
-import { useSettings } from '@/context/settings-provider';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight } from 'lucide-react';
+import type { User as AppUser, Alert } from '@/lib/types';
+import { format, parseISO, differenceInDays } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PersonalInformationCard } from './personal-information-card';
+import Link from 'next/link';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -85,34 +75,20 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
     )
 }
 
-
 function MyProfilePage() {
-    const { user, updateUser, company, loading, getUnacknowledgedAlerts } = useUser();
+    const { user, updateUser, loading, getUnacknowledgedAlerts } = useUser();
     const router = useRouter();
-    const { settings } = useSettings();
 
-    const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
-    const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
-    const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date('2024-08-15'));
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
     
-    // Move all hooks to the top level, before any conditional returns
-    const allTrainingLogs: TrainingLogEntry[] = useMemo(() => {
-        return userData.flatMap(u => u.trainingLogs || []);
-    }, []);
-
-    const userLogs = useMemo(() => {
-        if (!user) return [];
-        if (user.role === 'Student') {
-            return user.trainingLogs || [];
-        }
-        if (user.role.includes('Instructor')) {
-            return allTrainingLogs.filter(log => log.instructorName === user.name);
-        }
-        return [];
-    }, [user, allTrainingLogs]);
-
+    // Hooks are all at the top level now
     const allActionItems = useMemo(() => {
         if (!user) return [];
+
         const today = new Date('2024-08-15');
         
         const personalAlerts: { type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
@@ -143,7 +119,7 @@ function MyProfilePage() {
         }
         
         const taskAlerts = getUnacknowledgedAlerts()
-            .filter(alert => alert.type === 'Task') // Only get task-type alerts
+            .filter(alert => alert.type === 'Task')
             .map(alert => ({
                 type: alert.title,
                 details: alert.description,
@@ -155,13 +131,6 @@ function MyProfilePage() {
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
 
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-    }, [user, loading, router]);
-    
     if (loading || !user) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -180,77 +149,7 @@ function MyProfilePage() {
             updateUser(updatedUser);
         }
     };
-
-    const companyAircraft = aircraftData.filter(ac => ac.companyId === company?.id);
-    const companyChecklists = checklists.filter(c => c.companyId === company?.id);
-    const companyBookings = bookings.filter(b => b.companyId === company?.id);
-    const today = new Date('2024-08-15'); // Hardcoding date for consistent display
-
-    const handleItemToggle = (toggledChecklist: Checklist) => {
-        setChecklists(prevChecklists =>
-          prevChecklists.map(c => (c.id === toggledChecklist.id ? toggledChecklist : c))
-        );
-    };
-
-    const handleChecklistUpdate = (updatedChecklist: Checklist) => {
-        handleItemToggle(updatedChecklist); // Persist final state
     
-        const isComplete = updatedChecklist.items.every(item => item.completed);
-        if (isComplete && updatedChecklist.aircraftId) {
-            setBookings(prevBookings => 
-                prevBookings.map(booking => {
-                    const aircraft = companyAircraft.find(ac => ac.id === updatedChecklist.aircraftId);
-                    if (aircraft && booking.aircraft === aircraft.tailNumber && booking.purpose === 'Training' && booking.status === 'Approved') {
-                        return { ...booking, isChecklistComplete: true };
-                    }
-                    return booking;
-                })
-            )
-        }
-      };
-      
-      const handleReset = (checklistId: string) => {
-        setChecklists(prevChecklists =>
-          prevChecklists.map(c => {
-            if (c.id === checklistId) {
-              const originalTemplate = initialChecklistData.find(t => t.id === checklistId);
-              if (originalTemplate) {
-                 return {
-                    ...originalTemplate,
-                    items: originalTemplate.items.map(item => ({ ...item, completed: false })),
-                 };
-              }
-            }
-            return c;
-          })
-        );
-      };
-
-    const userBookings = companyBookings.filter(b => b.instructor === user.name || b.student === user.name);
-
-    const getBookingsForDay = (day: Date | undefined) => {
-        if (!day) return [];
-        return userBookings
-        .filter(booking => isSameDay(parseISO(booking.date), day))
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-    };
-
-    const bookedDays = userBookings.map(b => parseISO(b.date));
-    const selectedDayBookings = getBookingsForDay(selectedDay);
-
-    const getPurposeVariant = (purpose: Booking['purpose']) => {
-        switch (purpose) {
-            case 'Training':
-                return 'default'
-            case 'Maintenance':
-                return 'destructive'
-            case 'Private':
-                return 'secondary'
-            default:
-                return 'outline'
-        }
-    }
-
     const totalTasks = allActionItems.length;
 
   return (
@@ -261,12 +160,10 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
+                <PersonalInformationCard user={user} onUpdate={() => {}}/>
+            </div>
+            <div className="xl:col-span-2 space-y-8">
                 <Card>
-                    <CardContent className="pt-6">
-                        <PersonalInformationCard user={user} onUpdate={() => {}}/>
-                    </CardContent>
-                </Card>
-                 <Card>
                     <CardHeader>
                         <CardTitle>My Action Items ({totalTasks})</CardTitle>
                         <CardDescription>Alerts and tasks assigned to you that require your attention.</CardDescription>
@@ -275,21 +172,27 @@ function MyProfilePage() {
                         {totalTasks > 0 ? (
                            <ul className="space-y-2">
                                 {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
-                                    <li key={`action-item-${index}`}>
-                                        <Link href={relatedLink || '#'} className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
-                                              <div className="flex items-start justify-between">
-                                                  <div className="flex items-start gap-3">
-                                                      {icon}
-                                                      <div>
-                                                          <p className="font-semibold">{type}</p>
-                                                          <p className="text-sm text-muted-foreground">
-                                                              {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
-                                                          </p>
-                                                      </div>
-                                                  </div>
-                                                  {relatedLink && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
-                                              </div>
-                                        </Link>
+                                    <li key={`action-item-${index}`} className={`p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-3">
+                                                {icon}
+                                                <div className="flex-1">
+                                                    {relatedLink ? (
+                                                        <Link href={relatedLink} className="font-semibold hover:underline">{type}</Link>
+                                                    ) : (
+                                                        <p className="font-semibold">{type}</p>
+                                                    )}
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {relatedLink && (
+                                                <Link href={relatedLink} className="p-1 -mr-2">
+                                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                </Link>
+                                            )}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
@@ -299,104 +202,6 @@ function MyProfilePage() {
                             </div>
                         )}
                     </CardContent>
-                </Card>
-            </div>
-            <div className="xl:col-span-2 space-y-8">
-                {(user.role === 'Student' || user.role.includes('Instructor')) && (
-                    <FatigueRiskIndicatorCard
-                        userRole={user.role}
-                        trainingLogs={userLogs}
-                    />
-                )}
-                
-                <Card>
-                <CardHeader>
-                    <CardTitle>
-                    My Roster
-                    </CardTitle>
-                    <CardDescription>Select a date to view your schedule. Dates with bookings are highlighted.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-8">
-                    <div className="flex justify-center">
-                        <Calendar
-                            mode="single"
-                            selected={selectedDay}
-                            onSelect={setSelectedDay}
-                            className="rounded-md border"
-                            defaultMonth={today}
-                            modifiers={{ booked: bookedDays }}
-                            modifiersClassNames={{
-                                booked: 'bg-accent/50 text-accent-foreground rounded-full',
-                            }}
-                        />
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-6 w-6"/>
-                            <h3 className="text-xl font-semibold">
-                                {selectedDay ? format(selectedDay, 'EEEE, MMMM d') : 'No date selected'}
-                            </h3>
-                        </div>
-                    {selectedDayBookings.length > 0 ? (
-                        <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>Time</TableHead>
-                            <TableHead>Aircraft</TableHead>
-                            <TableHead>Details</TableHead>
-                            <TableHead>Purpose</TableHead>
-                            <TableHead></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {selectedDayBookings.map(booking => {
-                            const relatedAircraft = companyAircraft.find(a => a.tailNumber === booking.aircraft);
-                            const preFlightChecklist = relatedAircraft ? companyChecklists.find(c => c.category === 'Pre-Flight' && c.aircraftId === relatedAircraft.id) : undefined;
-                            return (
-                                <TableRow key={booking.id}>
-                                    <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
-                                    <TableCell className="font-medium">{booking.aircraft}</TableCell>
-                                    <TableCell>{user.role === 'Instructor' ? booking.student : booking.instructor}</TableCell>
-                                    <TableCell>
-                                    <Badge variant={getPurposeVariant(booking.purpose)}>{booking.purpose}</Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {booking.purpose === 'Training' && booking.status === 'Approved' && preFlightChecklist && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm">
-                                                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                                                        Checklist
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                                    <ChecklistCard 
-                                                        checklist={preFlightChecklist} 
-                                                        aircraft={relatedAircraft}
-                                                        onItemToggle={handleItemToggle}
-                                                        onItemValueChange={() => {}}
-                                                        onUpdate={handleChecklistUpdate}
-                                                        onReset={handleReset}
-                                                        onEdit={() => {}}
-                                                    />
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                            })}
-                        </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">
-                                {selectedDay ? "No bookings or leave scheduled for this day." : "Select a day to see your schedule."}
-                            </p>
-                        </div>
-                    )}
-                    </div>
-                </CardContent>
                 </Card>
             </div>
         </div>
