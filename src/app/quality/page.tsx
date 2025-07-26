@@ -9,7 +9,7 @@ import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/type
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
@@ -235,6 +235,12 @@ function QualityPage() {
     );
   }
 
+  const getComplianceColor = (score: number) => {
+    if (score >= 95) return 'text-green-600';
+    if (score >= 80) return 'text-yellow-600';
+    return 'text-red-600';
+  }
+
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -326,9 +332,10 @@ function QualityPage() {
                                         <TableCell>{audit.area}</TableCell>
                                         <TableCell>{audit.type}</TableCell>
                                         <TableCell>
-                                            <Badge variant={audit.complianceScore >= 95 ? 'success' : audit.complianceScore >= 80 ? 'warning' : 'destructive'}>
+                                            <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
+                                                <Percent className="h-4 w-4" />
                                                 {audit.complianceScore}%
-                                            </Badge>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
@@ -389,3 +396,4 @@ QualityPage.headerContent = (
     </Dialog>
 );
 export default QualityPage;
+
