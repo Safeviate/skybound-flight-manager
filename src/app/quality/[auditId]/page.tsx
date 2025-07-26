@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function QualityAuditDetailPage() {
@@ -71,6 +72,18 @@ export default function QualityAuditDetailPage() {
     fetchAudit();
     fetchPersonnel();
   }, [auditId, user, company, userLoading, router, toast]);
+  
+  const updateAuditInFirestore = async (updatedAudit: QualityAudit) => {
+    if (!company) return;
+    try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        await updateDoc(auditRef, { nonConformanceIssues: updatedAudit.nonConformanceIssues });
+        setAudit(updatedAudit);
+    } catch (error) {
+        console.error("Error updating audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save changes.' });
+    }
+  };
 
   const handleCapSubmit = async (issueId: string, cap: CorrectiveActionPlan) => {
     if (!audit || !company || !user) return;
@@ -87,32 +100,42 @@ export default function QualityAuditDetailPage() {
 
     const updatedAudit = { ...audit, nonConformanceIssues: updatedIssues };
     
-    try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
+    // Create a targeted alert for the responsible person
+    const alertData: Omit<Alert, 'id'> = {
+        companyId: company.id,
+        number: Date.now(),
+        type: 'Task',
+        title: `CAP Assigned: Audit ${audit.id.substring(0, 6)}...`,
+        description: `You have been assigned a corrective action: "${cap.correctiveAction}"`,
+        author: user.name,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        readBy: [],
+        targetUserId: responsiblePerson.id,
+        relatedLink: `/quality/${auditId}`
+    };
+    await addDoc(collection(db, `companies/${company.id}/alerts`), alertData);
+    
+    await updateAuditInFirestore(updatedAudit);
 
-        // Create a targeted alert for the responsible person
-        const alertData: Omit<Alert, 'id'> = {
-            companyId: company.id,
-            number: Date.now(),
-            type: 'Task',
-            title: `CAP Assigned: Audit ${audit.id.substring(0, 6)}...`,
-            description: `You have been assigned a corrective action: "${cap.correctiveAction}"`,
-            author: user.name,
-            date: format(new Date(), 'yyyy-MM-dd'),
-            readBy: [],
-            targetUserId: responsiblePerson.id,
-            relatedLink: `/quality/${auditId}`
-        };
-        await addDoc(collection(db, `companies/${company.id}/alerts`), alertData);
+    setEditingIssueId(null);
+    toast({ title: 'Success', description: `Corrective Action Plan saved and notification sent to ${responsiblePerson.name}.` });
+  };
+  
+  const handleCapStatusChange = (issueId: string, newStatus: CorrectiveActionPlan['status']) => {
+    if (!audit) return;
+    const updatedIssues = audit.nonConformanceIssues.map(issue => {
+        if (issue.id === issueId && issue.correctiveActionPlan) {
+            return {
+                ...issue,
+                correctiveActionPlan: { ...issue.correctiveActionPlan, status: newStatus }
+            };
+        }
+        return issue;
+    });
 
-        setAudit(updatedAudit);
-        setEditingIssueId(null);
-        toast({ title: 'Success', description: `Corrective Action Plan saved and notification sent to ${responsiblePerson.name}.` });
-    } catch (error) {
-        console.error("Error saving CAP:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save Corrective Action Plan.' });
-    }
+    const updatedAudit = { ...audit, nonConformanceIssues: updatedIssues };
+    updateAuditInFirestore(updatedAudit);
+    toast({ title: 'Status Updated', description: `CAP status changed to "${newStatus}".`});
   };
 
   if (loading || userLoading) {
@@ -248,7 +271,19 @@ export default function QualityAuditDetailPage() {
                                                 <div className="grid grid-cols-3 gap-4 text-sm">
                                                     <div className="flex items-center gap-2"><UserCheck className="h-4 w-4 text-muted-foreground"/> <span>{cap.responsiblePerson}</span></div>
                                                     <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground"/> <span>Due: {format(parseISO(cap.completionDate), 'MMM d, yyyy')}</span></div>
-                                                    <div className="flex items-center gap-2"><Target className="h-4 w-4 text-muted-foreground"/> <Badge variant="outline">{cap.status}</Badge></div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Target className="h-4 w-4 text-muted-foreground"/> 
+                                                         <Select value={cap.status} onValueChange={(newStatus: CorrectiveActionPlan['status']) => handleCapStatusChange(issue.id, newStatus)}>
+                                                            <SelectTrigger className="w-[150px] h-8">
+                                                                <SelectValue placeholder="Set status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Open">Open</SelectItem>
+                                                                <SelectItem value="In Progress">In Progress</SelectItem>
+                                                                <SelectItem value="Closed">Closed</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
