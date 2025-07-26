@@ -115,7 +115,6 @@ function MyProfilePage() {
         if (!user) return [];
         const today = new Date('2024-08-15');
         
-        // Personal alerts (expiries, fatigue)
         const personalAlerts: { type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
 
         if (user.medicalExpiry) {
@@ -143,7 +142,6 @@ function MyProfilePage() {
             }
         }
         
-        // Task alerts from context
         const taskAlerts = getUnacknowledgedAlerts()
             .filter(alert => alert.type === 'Task') // Only get task-type alerts
             .map(alert => ({
@@ -278,8 +276,7 @@ function MyProfilePage() {
                            <ul className="space-y-2">
                                 {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
                                     <li key={`action-item-${index}`}>
-                                        <Link href={relatedLink || '#'} passHref>
-                                          <a className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
+                                        <Link href={relatedLink || '#'} className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
                                               <div className="flex items-start justify-between">
                                                   <div className="flex items-start gap-3">
                                                       {icon}
@@ -292,7 +289,6 @@ function MyProfilePage() {
                                                   </div>
                                                   {relatedLink && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
                                               </div>
-                                          </a>
                                         </Link>
                                     </li>
                                 ))}
