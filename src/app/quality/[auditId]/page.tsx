@@ -86,6 +86,10 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         );
     }, [personnel, user]);
 
+    const handleReply = (recipient: string) => {
+        discussionForm.setValue('recipient', recipient);
+        setIsDiscussionDialogOpen(true);
+    };
 
     const handleCapSubmit = async (data: CorrectiveActionPlan) => {
         if (!editingIssue || !company || !user) return;
@@ -476,6 +480,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         <CardContent>
                             <DiscussionSection 
                                 audit={audit} 
+                                onReply={handleReply}
                             />
                         </CardContent>
                     </Card>

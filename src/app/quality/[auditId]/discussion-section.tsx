@@ -12,9 +12,10 @@ import { useUser } from '@/context/user-provider';
 
 interface DiscussionSectionProps {
   audit: QualityAudit;
+  onReply: (recipient: string) => void;
 }
 
-export function DiscussionSection({ audit }: DiscussionSectionProps) {
+export function DiscussionSection({ audit, onReply }: DiscussionSectionProps) {
   const { user } = useUser();
   const discussionEntries = audit.discussion || [];
 
@@ -38,6 +39,12 @@ export function DiscussionSection({ audit }: DiscussionSectionProps) {
                                     <div className="text-xs text-muted-foreground">
                                         <Badge variant="warning">Reply needed by {format(new Date(entry.replyByDate), 'MMM d, yyyy')}</Badge>
                                     </div>
+                                )}
+                                {user?.name !== entry.author && (
+                                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => onReply(entry.author)}>
+                                        <ReplyIcon className="mr-2 h-3 w-3" />
+                                        Reply
+                                    </Button>
                                 )}
                             </div>
                         </div>
