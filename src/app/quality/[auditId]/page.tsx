@@ -77,6 +77,10 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
         onUpdate({ ...audit, nonConformanceIssues: updatedIssues }, true);
         setEditingIssue(null);
     }
+
+    const otherFindings = audit.checklistItems.filter(item => 
+        item.finding !== 'Non-compliant' && item.finding !== 'Partial'
+    );
     
     return (
         <div className="space-y-6 print:space-y-4">
@@ -163,6 +167,37 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
                                 )}
                             </div>
                         ))}
+                    </CardContent>
+                </Card>
+            )}
+
+            {otherFindings.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Additional Checklist Findings</CardTitle>
+                        <CardDescription>
+                            Compliant items, observations, and not-applicable items from the audit.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {otherFindings.map(item => {
+                            const { icon, variant, text } = getFindingInfo(item.finding);
+                            return (
+                                <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-medium">{item.text}</p>
+                                            <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                        </div>
+                                        <Badge variant={variant} className="whitespace-nowrap">
+                                            {icon}
+                                            <span className="ml-2">{text}</span>
+                                        </Badge>
+                                    </div>
+                                    {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                </div>
+                            )
+                        })}
                     </CardContent>
                 </Card>
             )}
