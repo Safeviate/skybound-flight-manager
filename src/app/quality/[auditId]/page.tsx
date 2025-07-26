@@ -178,6 +178,34 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
                             </CardContent>
                         </Card>
                     )}
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Additional Checklist Findings</CardTitle>
+                            <CardDescription>
+                                A log of all compliant items and observations from the audit.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {audit.checklistItems.filter(item => item.finding !== 'Non-compliant' && item.finding !== 'Partial').map(item => {
+                                const { icon, variant, text } = getFindingInfo(item.finding);
+                                return (
+                                    <div key={item.id} className="p-4 border rounded-lg mb-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium">{item.text}</p>
+                                                <p className="text-xs text-muted-foreground">{item.regulationReference || 'N/A'}</p>
+                                            </div>
+                                            <Badge variant={variant} className="whitespace-nowrap">
+                                                {icon}
+                                                <span className="ml-2">{text}</span>
+                                            </Badge>
+                                        </div>
+                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                    </div>
+                                )
+                            })}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                 <TabsContent value="checklist" className="mt-4">
                      <Card>
@@ -481,194 +509,108 @@ export default function QualityAuditDetailPage() {
             </CardContent>
             </Card>
 
-            <Tabs defaultValue="checklist" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="checklist">Audit Checklist</TabsTrigger>
-                    <TabsTrigger value="discussion">Discussion</TabsTrigger>
-                </TabsList>
-                <TabsContent value="checklist">
-                    <Card>
-                        <CardHeader className="flex flex-row justify-between items-center">
-                            <CardTitle>Full Audit Checklist</CardTitle>
-                            <div className="flex gap-2">
-                            <Button onClick={handleSeedData} variant="outline">
-                                <Database className="mr-2 h-4 w-4" />
-                                Seed Data
-                            </Button>
-                            <Button onClick={() => handleAuditUpdate(audit)}>
-                                <Save className="mr-2 h-4 w-4" />
-                                Save Progress
-                            </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {audit.checklistItems && audit.checklistItems.length > 0 ? (
-                                <div className="space-y-4">
-                                    {audit.checklistItems.map(item => {
-                                        const findingInfo = getFindingInfo(item.finding);
-                                        const levelInfo = getLevelInfo(item.level);
-                                        return (
-                                            <div key={item.id} className="p-4 border rounded-lg space-y-4">
-                                                <div>
-                                                    <p className="font-medium">{item.text}</p>
-                                                    {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <p className="text-sm font-medium">Finding</p>
-                                                        <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select Finding" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {findingOptions.map(opt => (
-                                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <p className="text-sm font-medium">Level</p>
-                                                        <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select Level" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {levelOptions.map(opt => (
-                                                                    <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <p className="text-sm font-medium">Reference</p>
-                                                    <Textarea
-                                                        placeholder="Document references, evidence, etc."
-                                                        value={item.reference || ''}
-                                                        onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
-                                                        />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <p className="text-sm font-medium">Comment</p>
-                                                    <Textarea
-                                                        placeholder="Auditor comments, observations..."
-                                                        value={item.comment || ''}
-                                                        onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
-                                                        />
-                                                </div>
-
-                                                <div className="flex items-center gap-4 text-sm pt-2 border-t">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-semibold">Result:</span>
-                                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                            {findingInfo.icon}
-                                                            <span className="ml-2">{findingInfo.text}</span>
-                                                        </Badge>
-                                                        {levelInfo && (
-                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                            {item.level}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                    <p className="text-muted-foreground font-semibold">No checklist items were recorded for this audit.</p>
-                                </div>
-                            )}
-                        </CardContent>
-                        <CardFooter>
-                            <Button onClick={handleFinalizeAudit} className="w-full" variant="destructive">
-                                <Check className="mr-2 h-4 w-4" />
-                                Save and Finalize Audit
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="discussion">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Discussion Forum</CardTitle>
-                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline">
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Post Message
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Post New Message</DialogTitle>
-                                        <DialogDescription>Your message will be visible to all members of the audit.</DialogDescription>
-                                    </DialogHeader>
-                                    <Form {...discussionForm}>
-                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
-                                        <FormField
-                                            control={discussionForm.control}
-                                            name="recipient"
-                                            render={({ field }) => (
-                                            <FormItem className="flex-1">
-                                                <FormLabel>Send To</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                    <SelectValue placeholder="Select a recipient" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {availableRecipients.map((p) => (
-                                                    <SelectItem key={p.id} value={p.name}>
-                                                        {p.name}
-                                                    </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={discussionForm.control}
-                                            name="message"
-                                            render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Message / Instruction</FormLabel>
-                                                <FormControl>
-                                                <Textarea
-                                                    placeholder="Type your message here..."
-                                                    className="min-h-[100px]"
-                                                    {...field}
-                                                />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                            )}
-                                        />
-                                        <div className="flex justify-end items-center">
-                                            <Button type="submit">
-                                                <Send className="mr-2 h-4 w-4" />
-                                                Post Message
-                                            </Button>
+            <Card>
+                <CardHeader className="flex flex-row justify-between items-center">
+                    <CardTitle>Audit Checklist</CardTitle>
+                    <div className="flex gap-2">
+                    <Button onClick={handleSeedData} variant="outline">
+                        <Database className="mr-2 h-4 w-4" />
+                        Seed Data
+                    </Button>
+                    <Button onClick={() => handleAuditUpdate(audit)}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Progress
+                    </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {audit.checklistItems && audit.checklistItems.length > 0 ? (
+                        <div className="space-y-4">
+                            {audit.checklistItems.map(item => {
+                                const findingInfo = getFindingInfo(item.finding);
+                                const levelInfo = getLevelInfo(item.level);
+                                return (
+                                    <div key={item.id} className="p-4 border rounded-lg space-y-4">
+                                        <div>
+                                            <p className="font-medium">{item.text}</p>
+                                            {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
                                         </div>
-                                        </form>
-                                    </Form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <DiscussionSection 
-                                audit={audit} 
-                                onUpdate={handleAuditUpdate} 
-                            />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-medium">Finding</p>
+                                                <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Finding" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {findingOptions.map(opt => (
+                                                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-medium">Level</p>
+                                                <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Level" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {levelOptions.map(opt => (
+                                                            <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium">Reference</p>
+                                            <Textarea
+                                                placeholder="Document references, evidence, etc."
+                                                value={item.reference || ''}
+                                                onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                                />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium">Comment</p>
+                                            <Textarea
+                                                placeholder="Auditor comments, observations..."
+                                                value={item.comment || ''}
+                                                onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                                />
+                                        </div>
+
+                                        <div className="flex items-center gap-4 text-sm pt-2 border-t">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold">Result:</span>
+                                                <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                    {findingInfo.icon}
+                                                    <span className="ml-2">{findingInfo.text}</span>
+                                                </Badge>
+                                                {levelInfo && (
+                                                    <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                    {item.level}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground font-semibold">No checklist items were recorded for this audit.</p>
+                        </div>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Button onClick={handleFinalizeAudit} className="w-full" variant="destructive">
+                        <Check className="mr-2 h-4 w-4" />
+                        Save and Finalize Audit
+                    </Button>
+                </CardFooter>
+            </Card>
         </>
         )}
       </main>
