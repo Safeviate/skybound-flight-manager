@@ -27,7 +27,7 @@ const FINDING_OPTIONS: { value: FindingStatus; label: string, icon: React.ReactN
     { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
 ];
 
-const LEVEL_OPTIONS: { value: FindingLevel; label: string, icon: React.ReactNode }[] = [
+const LEVEL_OPTIONS: { value: FindingLevel | 'Observation', label: string, icon: React.ReactNode }[] = [
     { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
     { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
     { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
@@ -85,6 +85,12 @@ export default function PerformAuditPage() {
                         if (field === 'finding' && (value === 'Compliant' || value === 'Not Applicable')) {
                             updatedItem.level = null;
                         }
+                         if (field === 'level' && value === 'Observation') {
+                            updatedItem.finding = 'Observation';
+                            updatedItem.level = null;
+                        } else if (field === 'level') {
+                            updatedItem.finding = 'Non-compliant';
+                        }
                         return updatedItem;
                     }
                     return item;
@@ -130,6 +136,7 @@ export default function PerformAuditPage() {
             area: checklist.area,
             status,
             complianceScore,
+            checklistItems: checklist.items,
             nonConformanceIssues: findings,
             summary: `Audit of ${checklist.area} conducted by ${user.name}.`,
             auditeeName: checklist.auditeeName,
@@ -173,7 +180,7 @@ export default function PerformAuditPage() {
                 auditeePosition: 'Maintenance Manager (Sample)',
                 items: prev.items.map((item, index) => {
                     const random = Math.random();
-                    if (random < 0.25 && nonComplianceIndex < sampleNonCompliances.length) { // 25% chance of a finding
+                    if (random < 0.6 && nonComplianceIndex < sampleNonCompliances.length) { 
                         const finding = sampleNonCompliances[nonComplianceIndex++];
                         return {
                             ...item,
@@ -183,7 +190,7 @@ export default function PerformAuditPage() {
                             evidence: `Reviewed document #${100 + index} and interviewed staff.`,
                             regulationReference: finding.reg
                         };
-                    } else { // 75% chance of being compliant
+                    } else {
                         return { 
                             ...item,
                             finding: 'Compliant',
@@ -263,24 +270,24 @@ export default function PerformAuditPage() {
                                         >
                                             {FINDING_OPTIONS.map(opt => (
                                                 <div key={opt.value} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                    <RadioGroupItem value={opt.value} id={`${item.id}-${opt.value}`} />
                                                     <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
                                                 </div>
                                             ))}
                                         </RadioGroup>
                                     </div>
                                     
-                                    {item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable' && (
+                                    {(item.finding === 'Non-compliant' || item.finding === 'Partial') && (
                                         <div className="space-y-2 pt-2 border-t mt-4">
                                             <Label>Level</Label>
                                             <RadioGroup 
-                                                value={item.level || ''}
-                                                onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
+                                                value={item.level || (item.finding === 'Observation' ? 'Observation' : '')}
+                                                onValueChange={(value: FindingLevel | 'Observation') => handleItemChange(item.id, 'level', value)}
                                                 className="flex flex-wrap gap-x-4 gap-y-2"
                                             >
                                                 {LEVEL_OPTIONS.map(opt => (
                                                     <div key={opt.value} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={opt.value || ''} id={`${item.id}-${opt.value}`} />
+                                                        <RadioGroupItem value={opt.value} id={`${item.id}-${opt.value}`} />
                                                         <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
                                                     </div>
                                                 ))}
@@ -312,4 +319,3 @@ export default function PerformAuditPage() {
         </div>
     );
 }
-

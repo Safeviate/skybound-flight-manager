@@ -1,7 +1,7 @@
 
 
-import type { GenerateCorrectiveActionPlanOutput } from './flows/generate-corrective-action-plan-flow';
-export type { GenerateCorrectiveActionPlanOutput } from './flows/generate-corrective-action-plan-flow';
+import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
+export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 
 export type Airport = {
   id: string;
@@ -352,13 +352,13 @@ export type CompletedChecklist = {
     completionDate: string;
 }
 
-export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation' | null;
+export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | null;
 
 export type AuditChecklistItem = {
     id: string;
     text: string;
-    finding: FindingStatus;
+    finding: FindingStatus | null;
     level: FindingLevel;
     observation?: string;
     findingNotes?: string;
@@ -465,6 +465,7 @@ export type QualityAudit = {
   area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
   status: 'Compliant' | 'With Findings' | 'Non-Compliant';
   complianceScore: number;
+  checklistItems: AuditChecklistItem[];
   nonConformanceIssues: NonConformanceIssue[];
   summary: string;
 };
