@@ -370,45 +370,7 @@ export let checklistData: Checklist[] = [];
 export let completedChecklistData: CompletedChecklist[] = [];
 export let safetyReportData: SafetyReport[] = [];
 export let riskRegisterData: Risk[] = [];
-export let qualityAuditData: QualityAudit[] = [
-    {
-        id: 'QA-2024-001',
-        companyId: 'skybound-aero',
-        date: '2024-07-15',
-        type: 'Internal',
-        auditor: 'Olivia Rodriguez',
-        auditeeName: 'Michael Brown',
-        auditeePosition: 'Maintenance Lead',
-        area: 'Maintenance',
-        status: 'With Findings',
-        complianceScore: 92,
-        summary: 'An internal audit of the maintenance department focusing on tooling calibration and documentation. Most procedures were found to be compliant, however, some minor non-conformities were noted regarding the calibration log for torque wrenches.',
-        nonConformanceIssues: [
-            {
-                id: 'nci-1',
-                level: 'Level 2 Finding',
-                category: 'Records',
-                description: 'The calibration log for torque wrench #TW-015 was found to be out of date. Last calibration recorded was on 2023-05-20, exceeding the 12-month calibration interval.',
-                regulationReference: 'SACAA CATS 44.02.5(a)(2)',
-                correctiveActionPlan: {
-                    rootCause: 'Oversight in the manual tracking system for tool calibration schedules.',
-                    correctiveAction: 'Immediately send torque wrench #TW-015 for calibration. Update the log upon its return.',
-                    preventativeAction: 'Implement a digital tracking system with automated reminders for all calibrated tooling. Perform a full audit of all tool calibration records.',
-                    responsiblePerson: 'Michael Brown',
-                    completionDate: '2024-08-30',
-                    status: 'In Progress',
-                }
-            },
-            {
-                id: 'nci-2',
-                level: 'Observation',
-                category: 'Facilities',
-                description: 'The chemical storage cabinet, while correctly labeled, was noted to be cluttered, which could lead to difficulty in quickly accessing specific materials.',
-                regulationReference: 'General Housekeeping Best Practices',
-            }
-        ],
-    }
-];
+export let qualityAuditData: QualityAudit[] = [];
 export let auditScheduleData: AuditScheduleItem[] = [];
 export let auditChecklistData: AuditChecklist[] = [
     {
@@ -438,4 +400,3 @@ export let allAlerts: Alert[] = [];
 export let companyData: Company[] = [];
 
 // Functions to modify data are now handled by components writing to Firestore.
-

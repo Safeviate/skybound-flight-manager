@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Database, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Database, Loader2, Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
@@ -14,19 +14,19 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { auditChecklistData as seedChecklists, qualityAuditData as seedAudits } from '@/lib/data-provider';
+import { auditChecklistData as seedChecklists } from '@/lib/data-provider';
+import { format } from 'date-fns';
 
 interface ChecklistsManagerProps {
     refetchParent?: () => void;
 }
 
 export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
-    const { company } = useUser();
+    const { company, user } = useUser();
     const { toast } = useToast();
     const [checklistTemplates, setChecklistTemplates] = useState<AuditChecklist[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<AuditChecklist | null>(null);
-    const [isSeeding, setIsSeeding] = useState(false);
 
     const fetchTemplates = async () => {
         if (!company) return;
@@ -100,43 +100,50 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
         setIsDialogOpen(true);
     };
 
-    const handleSeedData = async () => {
-        if (!company) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No company context found.' });
-            return;
-        }
-        setIsSeeding(true);
+    const handleGenerateSampleReport = async (template: AuditChecklist) => {
+        if (!company || !user) return;
+
+        const newAuditData: Omit<QualityAudit, 'id'> = {
+            companyId: company.id,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            type: 'Internal',
+            auditor: user.name,
+            area: template.area,
+            status: 'With Findings',
+            complianceScore: 85,
+            auditeeName: 'Sample Auditee',
+            auditeePosition: 'Sample Position',
+            summary: `This is a sample audit report generated from the "${template.title}" template to demonstrate functionality.`,
+            nonConformanceIssues: template.items.slice(0, 2).map((item, index) => ({
+                id: `sample-nci-${index}`,
+                level: index === 0 ? 'Level 2 Finding' : 'Observation',
+                category: 'Procedural',
+                description: `This is a sample finding for checklist item: "${item.text}"`,
+                regulationReference: 'Sample Regulation 123.45',
+                correctiveActionPlan: {
+                    rootCause: 'Sample root cause analysis points to procedural drift.',
+                    correctiveAction: 'Retrain personnel on the correct procedure.',
+                    preventativeAction: 'Update the procedure manual for clarity and reissue.',
+                    responsiblePerson: 'Quality Manager',
+                    completionDate: format(new Date(new Date().setDate(new Date().getDate() + 30)), 'yyyy-MM-dd'),
+                    status: 'Open',
+                }
+            }))
+        };
+        
         try {
-            const batch = writeBatch(db);
-
-            // Seed checklists
-            seedChecklists.forEach(checklist => {
-                const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, checklist.id);
-                batch.set(checklistRef, { ...checklist, companyId: company.id });
-            });
-
-            // Seed a completed audit report
-            seedAudits.forEach(audit => {
-                const auditRef = doc(db, `companies/${company.id}/quality-audits`, audit.id);
-                batch.set(auditRef, { ...audit, companyId: company.id });
-            });
-
-            await batch.commit();
-
+            await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
             toast({
-                title: 'Sample Data Seeded',
-                description: 'Sample checklists and an audit report have been added.'
+                title: 'Sample Report Generated',
+                description: `A sample audit report based on "${template.title}" has been created.`
             });
-
-            fetchTemplates();
             refetchParent?.();
         } catch (error) {
-            console.error("Error seeding data:", error);
-            toast({ variant: 'destructive', title: 'Seeding Failed', description: 'Could not add sample data.' });
-        } finally {
-            setIsSeeding(false);
+            console.error("Error generating sample report:", error);
+            toast({ variant: 'destructive', title: 'Generation Failed', description: 'Could not create the sample report.' });
         }
     };
+
 
     return (
         <>
@@ -148,11 +155,10 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button onClick={handleSeedData} variant="outline" disabled={isSeeding}>
-                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                        Seed Sample Data
-                    </Button>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
+                        if (!isOpen) setEditingTemplate(null);
+                        setIsDialogOpen(isOpen);
+                    }}>
                         <DialogTrigger asChild>
                             <Button onClick={() => openDialog()}>
                                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -199,14 +205,20 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                                         {template.items.length > 4 && <li>...and {template.items.length - 4} more.</li>}
                                     </ul>
                                 </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Edit
+                                <CardFooter className="flex-col items-stretch gap-2">
+                                    <Button variant="secondary" size="sm" onClick={() => handleGenerateSampleReport(template)}>
+                                        <Bot className="h-4 w-4 mr-2" />
+                                        Generate Sample Report
                                     </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
                                 </CardFooter>
                             </Card>
                         ))}
