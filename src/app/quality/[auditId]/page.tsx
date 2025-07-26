@@ -4,14 +4,14 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,8 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
     const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
     const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
-    const { user } = useUser();
+    const { user, company } = useUser();
+    const { toast } = useToast();
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
     });
@@ -86,8 +87,27 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     }, [personnel, user]);
 
 
-    const handleCapSubmit = (data: CorrectiveActionPlan) => {
-        if (!editingIssue) return;
+    const handleCapSubmit = async (data: CorrectiveActionPlan) => {
+        if (!editingIssue || !company || !user) return;
+
+        // Create an alert for the responsible person
+        const responsibleUser = personnel.find(p => p.name === data.responsiblePerson);
+        if (responsibleUser) {
+             const newAlert: Omit<Alert, 'id' | 'number'> = {
+                companyId: company.id,
+                type: 'Task',
+                title: `Audit CAP Assigned: ${audit.id.substring(0,8)}`,
+                description: `Action required for finding: "${editingIssue.itemText}"`,
+                author: user.name, // The person assigning the task
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: responsibleUser.id,
+                relatedLink: `/quality/${audit.id}`,
+            };
+            const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+            await addDoc(alertsCollection, newAlert);
+            toast({ title: 'Task Assigned', description: `An alert has been sent to ${responsibleUser.name}.`});
+        }
         
         const updatedIssues = audit.nonConformanceIssues.map(issue => 
             issue.id === editingIssue.id ? { ...issue, correctiveActionPlan: data } : issue
