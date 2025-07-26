@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel } from '@/lib/types';
@@ -18,13 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
-export default function QualityAuditDetailPage({ params }: { params: { auditId: string } }) {
+export default function QualityAuditDetailPage() {
   const router = useRouter();
+  const params = useParams();
   const { user, company, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [audit, setAudit] = useState<QualityAudit | null>(null);
   const [loading, setLoading] = useState(true);
-  const { auditId } = params;
+  const auditId = params.auditId as string;
 
   useEffect(() => {
     if (userLoading) return;
