@@ -111,7 +111,7 @@ const WeatherInputGroup = ({ report, onUpdate }: { report: SafetyReport, onUpdat
 };
 
 const discussionFormSchema = z.object({
-  recipient: z.string().min(1, 'You must select a recipient.'),
+  recipient: z.string().optional(),
   message: z.string().min(1, 'Message cannot be empty.'),
   replyByDate: z.date().optional(),
 });
@@ -189,7 +189,7 @@ function SafetyReportInvestigationPage() {
   });
 
   const availableRecipients = React.useMemo(() => {
-    if (!personnel || personnel.length === 0 || !report) {
+    if (!personnel || personnel.length === 0 || !report || !report.investigationTeam) {
       return [];
     }
     return personnel.filter(
@@ -198,7 +198,7 @@ function SafetyReportInvestigationPage() {
   }, [personnel, report, user]);
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
-    if (!user || !report) {
+    if (!user || !report || !company) {
         toast({ variant: 'destructive', title: 'You must be logged in to post.'});
         return;
     }
@@ -206,8 +206,9 @@ function SafetyReportInvestigationPage() {
     const newEntry: DiscussionEntry = {
         id: `d-${Date.now()}`,
         author: user.name,
+        recipient: data.recipient || 'Team',
+        message: data.message,
         datePosted: new Date().toISOString(),
-        ...data,
         replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
     };
     
@@ -219,10 +220,18 @@ function SafetyReportInvestigationPage() {
     handleReportUpdate(updatedReport, true);
     discussionForm.reset();
     setIsDiscussionDialogOpen(false);
-    toast({
-      title: 'Message Sent',
-      description: `Your message has been sent to ${data.recipient}.`,
-    });
+
+    if (data.recipient) {
+      toast({
+        title: 'Message Sent',
+        description: `Your message has been sent to ${data.recipient}.`,
+      });
+    } else {
+      toast({
+        title: 'Message Posted',
+        description: `Your message has been posted to the team.`
+      });
+    }
   }
   
   const handleNewDiaryEntry = (data: DiaryFormValues) => {
@@ -648,7 +657,7 @@ function SafetyReportInvestigationPage() {
                                                 name="recipient"
                                                 render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel>Send To</FormLabel>
+                                                    <FormLabel>Send To (Optional)</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value || ''}>
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -833,4 +842,45 @@ function SafetyReportInvestigationPage() {
 }
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
+SafetyReportInvestigationPage.headerContent = function HeaderActions() {
+    const { report } = (this as any).type.getInitialProps ? (this as any).type.getInitialProps().pageProps : { report: null };
+    const generateMailtoLink = () => {
+    if (!report) return "";
+
+    const subject = `Safety Report: ${report.reportNumber} - ${report.heading}`;
+    let body = `A safety report requires your attention.\n\n`;
+    body += `Report Number: ${report.reportNumber}\n`;
+    body += `Heading: ${report.heading}\n`;
+    body += `Status: ${report.status}\n`;
+    body += `Date of Occurrence: ${report.occurrenceDate}\n\n`;
+    body += `Details:\n${report.details}\n\n`;
+    body += `Link to report: ${typeof window !== 'undefined' ? window.location.href : ''}`;
+
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+    return (
+    <>
+        <Button asChild variant="outline" className="no-print">
+            <Link href="/safety?tab=reports">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to All Reports
+            </Link>
+        </Button>
+        <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => window.print()} className="no-print">
+                <Printer className="mr-2 h-4 w-4" />
+                Print Report
+            </Button>
+            <a href={generateMailtoLink()}>
+                 <Button variant="outline" className="no-print">
+                    <Mail className="mr-2 h-4 w-4" />
+                    Email Report
+                </Button>
+            </a>
+        </div>
+    </>
+  );
+}
+
 export default SafetyReportInvestigationPage;
+
