@@ -32,6 +32,7 @@ import { CalendarIcon } from 'lucide-react';
 import { DiscussionSection } from './discussion-section';
 import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
 import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
+import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 
 
 const discussionFormSchema = z.object({
@@ -68,6 +69,7 @@ const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Lev
 const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[] }) => {
     const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
     const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
+    const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
     const { user } = useUser();
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
@@ -121,15 +123,18 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     
     return (
         <div className="space-y-6 print:space-y-4">
-            <Dialog open={!!editingIssue} onOpenChange={() => setEditingIssue(null)}>
-                <DialogContent>
+            <Dialog open={!!editingIssue} onOpenChange={(isOpen) => { if (!isOpen) { setEditingIssue(null); setSuggestedCap(null); }}}>
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>Corrective Action Plan</DialogTitle>
                         <DialogDescription>
                             Create a corrective action plan for the finding: "{editingIssue?.itemText}"
                         </DialogDescription>
                     </DialogHeader>
-                    <CorrectiveActionPlanForm onSubmit={handleCapSubmit} />
+                    <CorrectiveActionPlanForm 
+                        onSubmit={handleCapSubmit} 
+                        suggestedCap={suggestedCap}
+                    />
                 </DialogContent>
             </Dialog>
 
@@ -202,13 +207,13 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                         </Button>
                                                     </DialogTrigger>
                                                     <DialogContent className="sm:max-w-2xl">
-                                                        <DialogHeader>
-                                                            <DialogTitle>AI Audit Analysis</DialogTitle>
-                                                            <DialogDescription>
-                                                                The AI will analyze the provided audit report text for compliance, non-conformance, and areas of excellence.
-                                                            </DialogDescription>
-                                                        </DialogHeader>
-                                                        <QualityAuditAnalyzer auditText={issueText} />
+                                                         <QualityAuditAnalyzer 
+                                                            auditText={issueText}
+                                                            onCapSuggested={(cap) => {
+                                                                setSuggestedCap(cap);
+                                                                setEditingIssue(issue);
+                                                            }}
+                                                         />
                                                     </DialogContent>
                                                 </Dialog>
                                             </div>

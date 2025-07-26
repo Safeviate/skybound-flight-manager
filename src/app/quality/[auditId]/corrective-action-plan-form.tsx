@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +28,7 @@ import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 
 
 const capFormSchema = z.object({
@@ -51,9 +53,10 @@ type CapFormValues = z.infer<typeof capFormSchema>;
 
 interface CorrectiveActionPlanFormProps {
     onSubmit: (data: CorrectiveActionPlan) => void;
+    suggestedCap?: GenerateQualityCapOutput | null;
 }
 
-export function CorrectiveActionPlanForm({ onSubmit }: CorrectiveActionPlanFormProps) {
+export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveActionPlanFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [personnel, setPersonnel] = useState<User[]>([]);
@@ -64,6 +67,14 @@ export function CorrectiveActionPlanForm({ onSubmit }: CorrectiveActionPlanFormP
       completionDate: new Date(),
     },
   });
+
+  useEffect(() => {
+    if (suggestedCap) {
+      form.setValue('rootCause', suggestedCap.rootCause);
+      form.setValue('correctiveAction', suggestedCap.correctiveAction);
+      form.setValue('preventativeAction', suggestedCap.preventativeAction);
+    }
+  }, [suggestedCap, form]);
 
   useEffect(() => {
     const fetchPersonnel = async () => {

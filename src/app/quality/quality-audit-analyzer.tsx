@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AnalyzeQualityAuditOutput } from '@/ai/flows/analyze-quality-audit-flow';
 import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
-import { Loader2, AlertTriangle, CheckCircle, Trophy, Edit, Bot, FileText, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, Trophy, Edit, Bot, FileText, ShieldCheck, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -75,7 +76,7 @@ function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
   );
 }
 
-function CapResult({ data }: { data: GenerateQualityCapOutput }) {
+function CapResult({ data, onAccept }: { data: GenerateQualityCapOutput, onAccept: (data: GenerateQualityCapOutput) => void }) {
   const resultItems = [
     { title: "Suggested Root Cause", value: data.rootCause, icon: <FileText className="text-primary"/> },
     { title: "Suggested Corrective Action", value: data.correctiveAction, icon: <Edit className="text-amber-600"/> },
@@ -98,12 +99,18 @@ function CapResult({ data }: { data: GenerateQualityCapOutput }) {
             </div>
         ))}
       </CardContent>
+      <CardFooter>
+          <Button className="w-full" onClick={() => onAccept(data)}>
+              <Check className="mr-2 h-4 w-4" />
+              Apply Suggestion to Plan
+          </Button>
+      </CardFooter>
     </Card>
   );
 }
 
 
-export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
+export function QualityAuditAnalyzer({ auditText, onCapSuggested }: { auditText?: string, onCapSuggested: (data: GenerateQualityCapOutput) => void }) {
   const [analysisState, analysisAction] = useActionState(analyzeAuditAction, initialAnalysisState);
   const [capState, capAction] = useActionState(generateCapAction, initialCapState);
   const { toast } = useToast();
@@ -133,18 +140,17 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
     }
   }, [capState, toast]);
 
-
   return (
     <ScrollArea className="h-[70vh] pr-6">
-        <div className="space-y-8">
+        <DialogHeader>
+            <DialogTitle>AI Audit Analysis</DialogTitle>
+            <DialogDescription>
+            The AI can analyze the audit text for compliance or suggest a corrective action plan.
+            </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-8 py-4">
             <Card className="h-full flex flex-col">
-            <CardHeader>
-                <CardTitle>Quality Audit Analysis Tool</CardTitle>
-                <CardDescription>
-                Enter a quality audit report below. Our AI can analyze the text or suggest a corrective action plan.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
+            <CardContent className="flex-1 flex flex-col pt-6">
                  <form action={analysisAction}>
                     <div className="flex flex-col space-y-1.5 flex-1">
                         <Label htmlFor="auditText">Quality Audit Report</Label>
@@ -178,7 +184,7 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
             </Card>
 
             {analysisState.data && <AnalysisResult data={analysisState.data as AnalyzeQualityAuditOutput} />}
-            {capState.data && <CapResult data={capState.data as GenerateQualityCapOutput} />}
+            {capState.data && <CapResult data={capState.data as GenerateQualityCapOutput} onAccept={onCapSuggested} />}
         </div>
     </ScrollArea>
   );
