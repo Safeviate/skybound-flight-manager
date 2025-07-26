@@ -75,6 +75,11 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
             toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the template.' });
         }
     };
+
+    const handleAiChecklistSave = async (data: Omit<AuditChecklist, 'id' | 'companyId'>) => {
+        // This is now a dedicated handler for the AI-generated checklist
+        await handleFormSubmit(data);
+    };
     
     const handleDelete = async (templateId: string) => {
         if (!company) return;
@@ -126,7 +131,7 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                                 <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
                             </TabsContent>
                             <TabsContent value="ai">
-                                <AiChecklistGenerator onSave={handleFormSubmit} />
+                                <AiChecklistGenerator onSave={handleAiChecklistSave} />
                             </TabsContent>
                         </Tabs>
                     </DialogContent>
