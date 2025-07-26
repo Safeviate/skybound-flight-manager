@@ -91,6 +91,14 @@ function AuditChecklistsPage() {
 
     return (
         <main className="flex-1 p-4 md:p-8">
+             <div className="flex items-center gap-4 mb-4">
+                <Button asChild variant="outline">
+                    <Link href="/quality">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Quality Dashboard
+                    </Link>
+                </Button>
+            </div>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -169,13 +177,5 @@ function AuditChecklistsPage() {
 }
 
 AuditChecklistsPage.title = "Audit Checklists";
-AuditChecklistsPage.headerContent = (
-    <Button asChild variant="outline">
-        <Link href="/quality">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Quality Dashboard
-        </Link>
-    </Button>
-);
 
 export default AuditChecklistsPage;
