@@ -48,23 +48,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return [null, null];
   };
 
-  const fetchUserByEmail = async (email: string): Promise<[User | null, Company | null]> => {
-      const companiesSnapshot = await getDocs(collection(db, 'companies'));
-
-      for (const companyDoc of companiesSnapshot.docs) {
-          const usersRef = collection(db, `companies/${companyDoc.id}/users`);
-          const q = query(usersRef, where('email', '==', email));
-          const userSnapshot = await getDocs(q);
-          if (!userSnapshot.empty) {
-              const userData = userSnapshot.docs[0].data() as User;
-              const companyData = companyDoc.data() as Company;
-              return [userData, companyData];
-          }
-      }
-      return [null, null];
-  }
-
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         setLoading(true);
@@ -121,40 +104,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 
   const login = async (email: string): Promise<boolean> => {
-    // This is a simplified, passwordless login for development purposes.
-    // It finds the user by email and sets them as the current user.
     setLoading(true);
     try {
-        const [userData, companyData] = await fetchUserByEmail(email);
-        if (userData && companyData) {
-            setUser(userData);
-            setCompany(companyData);
-            
-            // Fetch alerts for the logged-in user's company
-            const alertsCol = collection(db, `companies/${companyData.id}/alerts`);
-            const alertsQuery = query(alertsCol, orderBy('date', 'desc'));
-            const alertsSnapshot = await getDocs(alertsQuery);
-            const fetchedAlerts = alertsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Alert));
-            setAllAlerts(fetchedAlerts);
-            
-            setLoading(false);
-            return true;
-        }
+        // For the dev environment, we use a default password.
+        const userCredential = await signInWithEmailAndPassword(auth, email, "password");
+        // After successful sign-in, onAuthStateChanged will fire and handle fetching user/company data.
+        return true;
     } catch (error) {
-        console.error("Passwordless login failed:", error);
+        console.error("Authentication failed:", error);
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
     return false;
   };
 
   const logout = useCallback(async () => {
-    // Keep signOut for sessions that might have been started via traditional auth
-    if (auth.currentUser) {
-      await signOut(auth);
-    }
+    await signOut(auth);
     setUser(null);
     setCompany(null);
-    router.push('/corporate');
+    router.push('/login');
   }, [router]);
   
   const updateUser = useCallback(async (updatedData: Partial<User>): Promise<boolean> => {
