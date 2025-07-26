@@ -79,6 +79,12 @@ function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts } = useUser();
     const router = useRouter();
 
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     const allActionItems = useMemo(() => {
         if (!user) return [];
 
@@ -123,12 +129,6 @@ function MyProfilePage() {
 
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-    }, [user, loading, router]);
     
     if (loading || !user) {
         return (
@@ -173,25 +173,23 @@ function MyProfilePage() {
                                 {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
                                     <li key={`action-item-${index}`}>
                                         <Link 
-                                            href={relatedLink || '#'} 
-                                            className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : 'pointer-events-none'}`}
+                                            href={relatedLink || '#'}
+                                            className={`flex items-start justify-between p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : 'pointer-events-none'}`}
                                         >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start gap-3">
-                                                    {icon}
-                                                    <div className="flex-1">
-                                                        <p className="font-semibold">{type}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
-                                                        </p>
-                                                    </div>
+                                            <div className="flex items-start gap-3">
+                                                {icon}
+                                                <div className="flex-1">
+                                                    <p className="font-semibold">{type}</p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
+                                                    </p>
                                                 </div>
-                                                {relatedLink && (
-                                                    <div className="p-1 -mr-2">
-                                                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                                )}
                                             </div>
+                                            {relatedLink && (
+                                                <div className="p-1 -mr-2">
+                                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                </div>
+                                            )}
                                         </Link>
                                     </li>
                                 ))}
