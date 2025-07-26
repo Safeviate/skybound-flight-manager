@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,6 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { ChecklistsManager } from './audit-checklists/page';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +85,6 @@ const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', '
 function QualityPage() {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>([]);
-  const [auditChecklists, setAuditChecklists] = useState<AuditChecklist[]>([]);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>([]);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
@@ -100,12 +98,10 @@ function QualityPage() {
     try {
         const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
         const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
-        const checklistsQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
 
-        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot] = await Promise.all([
+        const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
             getDocs(auditsQuery),
             getDocs(scheduleQuery),
-            getDocs(checklistsQuery),
         ]);
         
         const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
@@ -113,9 +109,6 @@ function QualityPage() {
 
         const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
         setSchedule(scheduleList);
-
-        const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditChecklist));
-        setAuditChecklists(checklistsList);
 
     } catch (error) {
         console.error("Error fetching quality data:", error);
@@ -201,19 +194,6 @@ function QualityPage() {
     setSchedule(prevSchedule => prevSchedule.filter(item => item.area !== areaToDelete));
   };
   
-  const handleAuditSubmit = async (newAuditData: Omit<QualityAudit, 'id'>) => {
-    if (!company) return;
-    try {
-        const docRef = await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
-        setAudits(prevAudits => [{ ...newAuditData, id: docRef.id }, ...prevAudits]);
-        setActiveTab('audits');
-        router.push('/quality?tab=audits');
-    } catch (error) {
-        console.error("Error submitting audit:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit audit.' });
-    }
-  };
-
   const handleArchiveAudit = async (auditId: string) => {
     if (!company) return;
     const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
@@ -245,10 +225,9 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
-                <TabsTrigger value="checklists">Checklist Templates</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -369,13 +348,6 @@ function QualityPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
-            <TabsContent value="checklists" className="mt-4">
-                <Card>
-                    <CardContent className="pt-6">
-                        <ChecklistsManager refetchParent={fetchData} />
-                    </CardContent>
-                </Card>
-            </TabsContent>
         </Tabs>
       </main>
   );
@@ -396,4 +368,3 @@ QualityPage.headerContent = (
     </Dialog>
 );
 export default QualityPage;
-
