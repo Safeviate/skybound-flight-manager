@@ -20,7 +20,6 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import AuditChecklistsPage from './audit-checklists/page';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -204,7 +203,6 @@ function QualityPage() {
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
-                <TabsTrigger value="checklists">Checklists</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -282,9 +280,6 @@ function QualityPage() {
                         </Table>
                     </CardContent>
                 </Card>
-            </TabsContent>
-            <TabsContent value="checklists" className="mt-4">
-                <AuditChecklistsPage onAuditSubmit={handleAuditSubmit} />
             </TabsContent>
         </Tabs>
       </main>
