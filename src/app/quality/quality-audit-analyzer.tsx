@@ -71,8 +71,8 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
   }, [state, toast]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <form action={formAction} className="md:col-span-1">
+    <div className="space-y-8">
+      <form action={formAction}>
         <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle>Quality Audit Analysis Tool</CardTitle>
@@ -101,9 +101,7 @@ export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
           </CardFooter>
         </Card>
       </form>
-      <div className="md:col-span-1">
-        {state.data && <AnalysisResult data={state.data as AnalyzeQualityAuditOutput} />}
-      </div>
+      {state.data && <AnalysisResult data={state.data as AnalyzeQualityAuditOutput} />}
     </div>
   );
 }
