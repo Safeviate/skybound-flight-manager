@@ -15,7 +15,7 @@ import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, updateDoc, writeBatch, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -197,11 +197,32 @@ function QualityPage() {
   
   const handleArchiveAudit = async (auditId: string) => {
     if (!company) return;
-    const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+    
     try {
-        await updateDoc(auditRef, { status: 'Archived' });
+        const batch = writeBatch(db);
+
+        // 1. Update the audit status to 'Archived'
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        batch.update(auditRef, { status: 'Archived' });
+        
+        // 2. Find and delete all alerts related to this audit
+        const alertsRef = collection(db, `companies/${company.id}/alerts`);
+        const alertsQuery = query(alertsRef, where("relatedLink", "==", `/quality/${auditId}`));
+        const alertsSnapshot = await getDocs(alertsQuery);
+        alertsSnapshot.forEach(alertDoc => {
+            batch.delete(alertDoc.ref);
+        });
+
+        // 3. Commit the batch
+        await batch.commit();
+
         setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Archived' } : a));
-        toast({ title: 'Audit Archived', description: 'The audit report has been archived.' });
+        
+        toast({
+            title: 'Audit Archived',
+            description: `The audit and its ${alertsSnapshot.size} related notification(s) have been removed.`,
+        });
+
     } catch (error) {
         console.error("Error archiving audit:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive audit.' });
