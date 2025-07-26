@@ -119,21 +119,6 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         setIsDiscussionDialogOpen(false);
     }
     
-    const auditReportText = React.useMemo(() => {
-        if (!audit) return '';
-        let text = `Audit Report: ${audit.id}\n`;
-        text += `Date: ${audit.date}\n`;
-        text += `Auditor: ${audit.auditor}\n`;
-        text += `Area: ${audit.area}\n`;
-        text += `Summary: ${audit.summary}\n\n`;
-        text += `Non-Conformances:\n`;
-        audit.nonConformanceIssues.forEach(issue => {
-            text += `- ${issue.itemText} (Level: ${issue.level}, Ref: ${issue.regulationReference})\n`;
-            text += `  Comment: ${issue.comment}\n`;
-        });
-        return text;
-    }, [audit]);
-    
     return (
         <div className="space-y-6 print:space-y-4">
             <Dialog open={!!editingIssue} onOpenChange={() => setEditingIssue(null)}>
@@ -156,23 +141,6 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
                         </CardDescription>
                     </div>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Bot className="mr-2 h-4 w-4" />
-                                AI Audit Analysis
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-4xl">
-                             <DialogHeader>
-                                <DialogTitle>AI Audit Analysis</DialogTitle>
-                                <DialogDescription>
-                                    The AI will analyze the provided audit report text for compliance, non-conformance, and areas of excellence.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <QualityAuditAnalyzer auditText={auditReportText} />
-                        </DialogContent>
-                    </Dialog>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
@@ -215,53 +183,75 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                 <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {audit.nonConformanceIssues.map(issue => (
-                                    <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
-                                        <div>
-                                            <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                            <p className="font-medium mt-2">{issue.itemText}</p>
-                                            <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                            <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
-                                        </div>
-                                        {issue.correctiveActionPlan ? (
-                                            <div className="space-y-4">
-                                                <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
-                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                    <div>
-                                                        <p className="font-medium text-muted-foreground">Root Cause</p>
-                                                        <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                                        <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                                        <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
-                                                    </div>
+                                {audit.nonConformanceIssues.map(issue => {
+                                    const issueText = `Non-Conformance: ${issue.itemText}\nLevel: ${issue.level}\nRegulation: ${issue.regulationReference}\n\nAuditor Comment:\n${issue.comment}`;
+                                    return (
+                                        <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                                    <p className="font-medium mt-2">{issue.itemText}</p>
+                                                    <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
                                                 </div>
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Responsible Person</TableHead>
-                                                            <TableHead>Due Date</TableHead>
-                                                            <TableHead>Status</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        <TableRow>
-                                                            <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
-                                                            <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
-                                                            <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
-                                                        </TableRow>
-                                                    </TableBody>
-                                                </Table>
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm">
+                                                            <Bot className="mr-2 h-4 w-4" />
+                                                            AI Analysis
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-2xl">
+                                                        <DialogHeader>
+                                                            <DialogTitle>AI Audit Analysis</DialogTitle>
+                                                            <DialogDescription>
+                                                                The AI will analyze the provided audit report text for compliance, non-conformance, and areas of excellence.
+                                                            </DialogDescription>
+                                                        </DialogHeader>
+                                                        <QualityAuditAnalyzer auditText={issueText} />
+                                                    </DialogContent>
+                                                </Dialog>
                                             </div>
-                                        ) : (
-                                            <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
-                                        )}
-                                    </div>
-                                ))}
+                                            {issue.correctiveActionPlan ? (
+                                                <div className="space-y-4">
+                                                    <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
+                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <p className="font-medium text-muted-foreground">Root Cause</p>
+                                                            <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-muted-foreground">Corrective Action</p>
+                                                            <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-muted-foreground">Preventative Action</p>
+                                                            <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>Responsible Person</TableHead>
+                                                                <TableHead>Due Date</TableHead>
+                                                                <TableHead>Status</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            <TableRow>
+                                                                <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
+                                                                <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
+                                                                <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
+                                                            </TableRow>
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            ) : (
+                                                <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </CardContent>
                         </Card>
                     )}
