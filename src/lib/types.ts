@@ -463,7 +463,7 @@ export type QualityAudit = {
   auditeeName?: string | null;
   auditeePosition?: string | null;
   area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
-  status: 'Compliant' | 'With Findings' | 'Non-Compliant';
+  status: 'Compliant' | 'With Findings' | 'Non-Compliant' | 'Archived';
   complianceScore: number;
   checklistItems: AuditChecklistItem[];
   nonConformanceIssues: NonConformanceIssue[];

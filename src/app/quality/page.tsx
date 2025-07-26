@@ -8,20 +8,21 @@ import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/type
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { ChecklistsManager } from './audit-checklists/page';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -132,7 +133,9 @@ function QualityPage() {
     }
   }, [user, company, loading, router, toast]);
 
-  const filteredAudits = audits.filter(audit => {
+  const activeAudits = audits.filter(audit => audit.status !== 'Archived');
+
+  const filteredAudits = activeAudits.filter(audit => {
     const searchLower = searchTerm.toLowerCase();
     return (
         audit.id.toLowerCase().includes(searchLower) ||
@@ -149,6 +152,7 @@ function QualityPage() {
       case 'Compliant': return 'success';
       case 'With Findings': return 'warning';
       case 'Non-Compliant': return 'destructive';
+      case 'Archived': return 'secondary';
       default: return 'outline';
     }
   };
@@ -207,6 +211,19 @@ function QualityPage() {
     } catch (error) {
         console.error("Error submitting audit:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit audit.' });
+    }
+  };
+
+  const handleArchiveAudit = async (auditId: string) => {
+    if (!company) return;
+    const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+    try {
+        await updateDoc(auditRef, { status: 'Archived' });
+        setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Archived' } : a));
+        toast({ title: 'Audit Archived', description: 'The audit report has been archived.' });
+    } catch (error) {
+        console.error("Error archiving audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive audit.' });
     }
   };
 
@@ -293,6 +310,7 @@ function QualityPage() {
                                 <TableHead>Type</TableHead>
                                 <TableHead>Compliance</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -315,11 +333,26 @@ function QualityPage() {
                                         <TableCell>
                                             <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
                                         </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
+                                                        <Archive className="mr-2 h-4 w-4" />
+                                                        Archive
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
                                     </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center h-24">
+                                        <TableCell colSpan={7} className="text-center h-24">
                                             No audit reports found.
                                         </TableCell>
                                     </TableRow>
