@@ -448,11 +448,12 @@ export type CorrectiveActionPlan = {
 
 export type NonConformanceIssue = {
   id: string;
+  itemText: string;
+  regulationReference?: string;
   finding: FindingStatus;
   level: FindingLevel;
-  category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
-  description: string;
-  regulationReference?: string;
+  comment?: string;
+  reference?: string;
   correctiveActionPlan?: CorrectiveActionPlan | null;
 };
 
@@ -464,7 +465,7 @@ export type QualityAudit = {
   auditor: string;
   auditeeName?: string | null;
   auditeePosition?: string | null;
-  area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management' | 'Personnel' | 'Facilities' | 'Records';
+  area: AuditArea;
   status: 'Open' | 'Closed' | 'Archived';
   complianceScore: number;
   checklistItems: AuditChecklistItem[];

@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
@@ -40,6 +40,97 @@ const discussionFormSchema = z.object({
 
 type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
 
+const getFindingInfo = (finding: FindingStatus | null) => {
+    switch (finding) {
+        case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
+        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
+        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
+        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
+        case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
+        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding || 'Not Set' };
+    }
+};
+
+const getLevelInfo = (level: FindingLevel) => {
+    switch (level) {
+        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
+        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
+        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
+        default: return null;
+    }
+};
+
+const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
+const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
+
+const AuditReportView = ({ audit }: { audit: QualityAudit }) => {
+    return (
+        <div className="space-y-6 print:space-y-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-2xl">Audit Report: {audit.id}</CardTitle>
+                    <CardDescription>
+                    This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Compliance Score</p>
+                            <p className="text-3xl font-bold text-primary">{audit.complianceScore}%</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Non-Conformances</p>
+                            <p className="text-3xl font-bold text-destructive">{audit.nonConformanceIssues.length}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Status</p>
+                            <Badge variant="success" className="text-lg mt-1">Closed</Badge>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold">Audit Summary</h3>
+                        <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px]">{audit.summary || 'No summary was provided.'}</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {audit.nonConformanceIssues.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Non-Conformance Report</CardTitle>
+                        <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Finding</TableHead>
+                                    <TableHead>Level</TableHead>
+                                    <TableHead>Reference</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {audit.nonConformanceIssues.map(issue => (
+                                    <TableRow key={issue.id}>
+                                        <TableCell>
+                                            <p className="font-medium">{issue.itemText}</p>
+                                            <p className="text-xs text-muted-foreground">{issue.comment}</p>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs">{issue.regulationReference || 'N/A'}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+};
 
 export default function QualityAuditDetailPage() {
   const router = useRouter();
@@ -130,6 +221,39 @@ export default function QualityAuditDetailPage() {
         toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to the database.' });
     }
   };
+  
+   const handleFinalizeAudit = () => {
+    if (!audit) return;
+
+    const totalApplicableItems = audit.checklistItems.filter(item => item.finding !== 'Not Applicable').length;
+    const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant').length;
+    const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
+
+    const nonConformanceIssues = audit.checklistItems
+        .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial')
+        .map(item => ({
+            id: item.id,
+            itemText: item.text,
+            regulationReference: item.regulationReference,
+            finding: item.finding!,
+            level: item.level!,
+            comment: item.comment,
+            reference: item.reference
+        }));
+
+    const finalAudit: QualityAudit = {
+      ...audit,
+      status: 'Closed',
+      complianceScore,
+      nonConformanceIssues,
+    };
+
+    handleAuditUpdate(finalAudit, true);
+    toast({
+        title: 'Audit Finalized',
+        description: `The audit has been closed with a compliance score of ${complianceScore}%.`,
+    });
+  };
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
     if (!user || !audit) {
@@ -210,259 +334,244 @@ export default function QualityAuditDetailPage() {
     );
   }
 
-  const getFindingInfo = (finding: FindingStatus | null) => {
-    switch (finding) {
-        case 'Compliant': return { icon: <CheckCircle className="h-5 w-5 text-green-600" />, variant: 'success' as const, text: 'Compliant' };
-        case 'Partial': return { icon: <MinusCircle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const, text: 'Partial Compliance' };
-        case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
-        case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
-        case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
-        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding || 'Not Set' };
-    }
-  };
+  const isAuditClosed = audit.status === 'Closed' || audit.status === 'Archived';
   
-  const getLevelInfo = (level: FindingLevel) => {
-    switch (level) {
-        case 'Level 1 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-yellow-600" />, variant: 'warning' as const };
-        case 'Level 2 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-orange-600" />, variant: 'orange' as const };
-        case 'Level 3 Finding': return { icon: <AlertTriangle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const };
-        default: return null;
-    }
-  };
-
-  const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
-  const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
-
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold">Audit Report</h2>
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-2xl">Quality Audit Report: {audit.id}</CardTitle>
-                <CardDescription>
-                  Detailed report for the {audit.type} audit conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
-                </CardDescription>
-              </div>
-              <Badge variant="outline">{audit.status}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-6">
-              <div>
-                <p className="font-semibold text-muted-foreground">Area Audited</p>
-                <p>{audit.area}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Audit Type</p>
-                <p>{audit.type}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Lead Auditor</p>
-                <p>{audit.auditor}</p>
-              </div>
-            </div>
-            <div className="space-y-2 border-t pt-6">
-                <h3 className="font-semibold">Audit Summary</h3>
-                <Textarea 
-                  placeholder="Enter the overall audit summary here..."
-                  className="min-h-[100px]"
-                  value={audit.summary}
-                  onChange={(e) => handleAuditUpdate({ ...audit, summary: e.target.value }, false)}
-                />
-            </div>
-          </CardContent>
-        </Card>
+        {isAuditClosed ? (
+            <AuditReportView audit={audit} />
+        ) : (
+        <>
+            <h2 className="text-2xl font-bold">Audit Questionnaire</h2>
+            <Card>
+            <CardHeader>
+                <div className="flex items-start justify-between">
+                <div>
+                    <CardTitle className="text-2xl">Quality Audit: {audit.id}</CardTitle>
+                    <CardDescription>
+                    Conducting {audit.type} audit on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
+                    </CardDescription>
+                </div>
+                <Badge variant="outline">{audit.status}</Badge>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-6">
+                <div>
+                    <p className="font-semibold text-muted-foreground">Area Audited</p>
+                    <p>{audit.area}</p>
+                </div>
+                <div>
+                    <p className="font-semibold text-muted-foreground">Audit Type</p>
+                    <p>{audit.type}</p>
+                </div>
+                <div>
+                    <p className="font-semibold text-muted-foreground">Lead Auditor</p>
+                    <p>{audit.auditor}</p>
+                </div>
+                </div>
+                <div className="space-y-2 border-t pt-6">
+                    <h3 className="font-semibold">Audit Summary</h3>
+                    <Textarea 
+                    placeholder="Enter the overall audit summary here..."
+                    className="min-h-[100px]"
+                    value={audit.summary}
+                    onChange={(e) => handleAuditUpdate({ ...audit, summary: e.target.value }, false)}
+                    />
+                </div>
+            </CardContent>
+            </Card>
 
-        <Tabs defaultValue="checklist" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="checklist">Audit Checklist</TabsTrigger>
-                <TabsTrigger value="discussion">Discussion</TabsTrigger>
-            </TabsList>
-            <TabsContent value="checklist">
-                <Card>
-                    <CardHeader className="flex flex-row justify-between items-center">
-                        <CardTitle>Full Audit Checklist</CardTitle>
-                        <div className="flex gap-2">
-                          <Button onClick={handleSeedData} variant="outline">
-                              <Database className="mr-2 h-4 w-4" />
-                              Seed Data
-                          </Button>
-                          <Button onClick={() => handleAuditUpdate(audit)}>
-                              <Save className="mr-2 h-4 w-4" />
-                              Save Audit
-                          </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {audit.checklistItems && audit.checklistItems.length > 0 ? (
-                            <div className="space-y-4">
-                                {audit.checklistItems.map(item => {
-                                    const findingInfo = getFindingInfo(item.finding);
-                                    const levelInfo = getLevelInfo(item.level);
-                                    return (
-                                        <div key={item.id} className="p-4 border rounded-lg space-y-4">
-                                            <div>
-                                                <p className="font-medium">{item.text}</p>
-                                                {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <p className="text-sm font-medium">Finding</p>
-                                                    <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Finding" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {findingOptions.map(opt => (
-                                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+            <Tabs defaultValue="checklist" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="checklist">Audit Checklist</TabsTrigger>
+                    <TabsTrigger value="discussion">Discussion</TabsTrigger>
+                </TabsList>
+                <TabsContent value="checklist">
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <CardTitle>Full Audit Checklist</CardTitle>
+                            <div className="flex gap-2">
+                            <Button onClick={handleSeedData} variant="outline">
+                                <Database className="mr-2 h-4 w-4" />
+                                Seed Data
+                            </Button>
+                            <Button onClick={() => handleAuditUpdate(audit)}>
+                                <Save className="mr-2 h-4 w-4" />
+                                Save Progress
+                            </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {audit.checklistItems && audit.checklistItems.length > 0 ? (
+                                <div className="space-y-4">
+                                    {audit.checklistItems.map(item => {
+                                        const findingInfo = getFindingInfo(item.finding);
+                                        const levelInfo = getLevelInfo(item.level);
+                                        return (
+                                            <div key={item.id} className="p-4 border rounded-lg space-y-4">
+                                                <div>
+                                                    <p className="font-medium">{item.text}</p>
+                                                    {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <p className="text-sm font-medium">Finding</p>
+                                                        <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Finding" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {findingOptions.map(opt => (
+                                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <p className="text-sm font-medium">Level</p>
+                                                        <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Level" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {levelOptions.map(opt => (
+                                                                    <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <p className="text-sm font-medium">Level</p>
-                                                    <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Level" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {levelOptions.map(opt => (
-                                                                <SelectItem key={opt} value={opt!}>{opt}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <p className="text-sm font-medium">Reference</p>
+                                                    <Textarea
+                                                        placeholder="Document references, evidence, etc."
+                                                        value={item.reference || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                                        />
                                                 </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <p className="text-sm font-medium">Reference</p>
-                                                <Textarea
-                                                    placeholder="Document references, evidence, etc."
-                                                    value={item.reference || ''}
-                                                    onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
-                                                    />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <p className="text-sm font-medium">Comment</p>
-                                                <Textarea
-                                                    placeholder="Auditor comments, observations..."
-                                                    value={item.comment || ''}
-                                                    onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
-                                                    />
-                                            </div>
+                                                <div className="space-y-2">
+                                                    <p className="text-sm font-medium">Comment</p>
+                                                    <Textarea
+                                                        placeholder="Auditor comments, observations..."
+                                                        value={item.comment || ''}
+                                                        onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                                        />
+                                                </div>
 
-                                            <div className="flex items-center gap-4 text-sm pt-2 border-t">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-semibold">Result:</span>
-                                                    <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                        {findingInfo.icon}
-                                                        <span className="ml-2">{findingInfo.text}</span>
-                                                    </Badge>
-                                                    {levelInfo && (
-                                                        <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                        {item.level}
+                                                <div className="flex items-center gap-4 text-sm pt-2 border-t">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold">Result:</span>
+                                                        <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                            {findingInfo.icon}
+                                                            <span className="ml-2">{findingInfo.text}</span>
                                                         </Badge>
-                                                    )}
+                                                        {levelInfo && (
+                                                            <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                            {item.level}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground font-semibold">No checklist items were recorded for this audit.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                        <CardFooter>
+                            <Button onClick={handleFinalizeAudit} className="w-full" variant="destructive">
+                                <Check className="mr-2 h-4 w-4" />
+                                Save and Finalize Audit
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="discussion">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Discussion Forum</CardTitle>
+                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Send className="mr-2 h-4 w-4" />
+                                        Post Message
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Post New Message</DialogTitle>
+                                        <DialogDescription>Your message will be visible to all members of the audit.</DialogDescription>
+                                    </DialogHeader>
+                                    <Form {...discussionForm}>
+                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
+                                        <FormField
+                                            control={discussionForm.control}
+                                            name="recipient"
+                                            render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel>Send To</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                    <SelectValue placeholder="Select a recipient" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {availableRecipients.map((p) => (
+                                                    <SelectItem key={p.id} value={p.name}>
+                                                        {p.name}
+                                                    </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={discussionForm.control}
+                                            name="message"
+                                            render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Message / Instruction</FormLabel>
+                                                <FormControl>
+                                                <Textarea
+                                                    placeholder="Type your message here..."
+                                                    className="min-h-[100px]"
+                                                    {...field}
+                                                />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <div className="flex justify-end items-center">
+                                            <Button type="submit">
+                                                <Send className="mr-2 h-4 w-4" />
+                                                Post Message
+                                            </Button>
                                         </div>
-                                    )
-                                })}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground font-semibold">No checklist items were recorded for this audit.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                    <CardFooter>
-                        <Button onClick={() => handleAuditUpdate(audit)} className="w-full">
-                            <Save className="mr-2 h-4 w-4" />
-                            Save and Finalize Audit
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </TabsContent>
-            <TabsContent value="discussion">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Discussion Forum</CardTitle>
-                        <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="outline">
-                                    <Send className="mr-2 h-4 w-4" />
-                                    Post Message
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Post New Message</DialogTitle>
-                                    <DialogDescription>Your message will be visible to all members of the audit.</DialogDescription>
-                                </DialogHeader>
-                                <Form {...discussionForm}>
-                                    <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
-                                    <FormField
-                                        control={discussionForm.control}
-                                        name="recipient"
-                                        render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <FormLabel>Send To</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                <SelectValue placeholder="Select a recipient" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {availableRecipients.map((p) => (
-                                                <SelectItem key={p.id} value={p.name}>
-                                                    {p.name}
-                                                </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={discussionForm.control}
-                                        name="message"
-                                        render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Message / Instruction</FormLabel>
-                                            <FormControl>
-                                            <Textarea
-                                                placeholder="Type your message here..."
-                                                className="min-h-[100px]"
-                                                {...field}
-                                            />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                        )}
-                                    />
-                                    <div className="flex justify-end items-center">
-                                        <Button type="submit">
-                                            <Send className="mr-2 h-4 w-4" />
-                                            Post Message
-                                        </Button>
-                                    </div>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </CardHeader>
-                    <CardContent>
-                        <DiscussionSection 
-                            audit={audit} 
-                            onUpdate={handleAuditUpdate} 
-                        />
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+                                        </form>
+                                    </Form>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            <DiscussionSection 
+                                audit={audit} 
+                                onUpdate={handleAuditUpdate} 
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </>
+        )}
       </main>
   );
 }
