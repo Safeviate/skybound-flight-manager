@@ -3,17 +3,19 @@
 
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingType } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import type { QualityAudit, NonConformanceIssue, FindingType, CorrectiveActionPlan } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export default function QualityAuditDetailPage({ params }: { params: { auditId: string } }) {
   const router = useRouter();
@@ -101,7 +103,7 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
   return (
     <div className="flex flex-col min-h-screen">
       <Header title={`Audit Details: ${audit.id}`} />
-      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-4xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -119,20 +121,20 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-6">
               <div>
-                <p className="font-semibold text-muted-foreground">Area</p>
+                <p className="font-semibold text-muted-foreground">Area Audited</p>
                 <p>{audit.area}</p>
               </div>
               <div>
-                <p className="font-semibold text-muted-foreground">Type</p>
+                <p className="font-semibold text-muted-foreground">Audit Type</p>
                 <p>{audit.type}</p>
               </div>
               <div>
-                <p className="font-semibold text-muted-foreground">Auditor</p>
+                <p className="font-semibold text-muted-foreground">Lead Auditor</p>
                 <p>{audit.auditor}</p>
               </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Compliance Score</p>
-                <p className="font-bold text-lg">{audit.complianceScore}%</p>
+               <div>
+                <p className="font-semibold text-muted-foreground">Auditee</p>
+                <p>{audit.auditeeName} ({audit.auditeePosition})</p>
               </div>
             </div>
             <div className="space-y-2 border-t pt-6">
@@ -146,40 +148,51 @@ export default function QualityAuditDetailPage({ params }: { params: { auditId: 
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Audit Findings
+                    Audit Findings & Corrective Actions
                 </CardTitle>
                 <CardDescription>
-                    The following issues and observations were identified during the audit.
+                    The following issues, observations, and corrective action plans were identified during the audit.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 {audit.nonConformanceIssues.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-1/3">Finding Level</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="w-32">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {audit.nonConformanceIssues.map(issue => {
-                                const { icon, variant } = getIssueFindingInfo(issue.level);
-                                return (
-                                <TableRow key={issue.id}>
-                                    <TableCell className="font-medium flex items-center gap-2">
+                    <div className="space-y-6">
+                        {audit.nonConformanceIssues.map((issue, index) => {
+                             const { icon, variant } = getIssueFindingInfo(issue.level);
+                             const cap = issue.correctiveActionPlan;
+                             return (
+                                <div key={issue.id} className="p-4 border rounded-lg">
+                                    <div className="flex items-start gap-3">
                                         {icon}
-                                        <Badge variant={variant}>{issue.level}</Badge>
-                                    </TableCell>
-                                    <TableCell>{issue.description}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline">Open</Badge>
-                                    </TableCell>
-                                </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-semibold text-base">Finding #{index + 1}: <Badge variant={variant}>{issue.level}</Badge></h4>
+                                                <Badge variant="outline">{issue.category}</Badge>
+                                            </div>
+                                            <p className="text-muted-foreground mt-1">{issue.description}</p>
+                                            <p className="text-xs text-muted-foreground mt-2"><span className="font-semibold">Regulation:</span> {issue.regulationReference || 'N/A'}</p>
+                                        </div>
+                                    </div>
+
+                                    {cap && (
+                                        <div className="mt-4 pt-4 border-t space-y-4">
+                                            <h5 className="font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary"/> Corrective Action Plan</h5>
+                                            <div className="space-y-2 text-sm p-3 bg-muted rounded-md">
+                                                <p><span className="font-semibold">Root Cause:</span> {cap.rootCause}</p>
+                                                <p><span className="font-semibold">Corrective Action:</span> {cap.correctiveAction}</p>
+                                                <p><span className="font-semibold">Preventative Action:</span> {cap.preventativeAction}</p>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-4 text-sm">
+                                                <div className="flex items-center gap-2"><UserCheck className="h-4 w-4 text-muted-foreground"/> <span>{cap.responsiblePerson}</span></div>
+                                                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground"/> <span>Due: {format(parseISO(cap.completionDate), 'MMM d, yyyy')}</span></div>
+                                                <div className="flex items-center gap-2"><Target className="h-4 w-4 text-muted-foreground"/> <Badge variant="outline">{cap.status}</Badge></div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg">
                          <CheckCircle className="h-10 w-10 text-success mb-2" />

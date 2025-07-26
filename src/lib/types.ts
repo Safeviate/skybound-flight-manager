@@ -361,6 +361,7 @@ export type AuditChecklistItem = {
     observation?: string;
     findingNotes?: string;
     evidence?: string;
+    regulationReference?: string;
 }
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops';
@@ -432,11 +433,22 @@ export const ICAO_PHASES_OF_FLIGHT = [
 ].sort();
 
 
+export type CorrectiveActionPlan = {
+  rootCause: string;
+  correctiveAction: string;
+  preventativeAction: string;
+  responsiblePerson: string;
+  completionDate: string;
+  status: 'Open' | 'Closed' | 'In Progress';
+};
+
 export type NonConformanceIssue = {
   id: string;
   level: FindingType;
   category: 'Documentation' | 'Procedural' | 'Equipment' | 'Training';
   description: string;
+  regulationReference?: string;
+  correctiveActionPlan?: CorrectiveActionPlan;
 };
 
 export type QualityAudit = {
@@ -445,6 +457,8 @@ export type QualityAudit = {
   date: string;
   type: 'Internal' | 'External';
   auditor: string;
+  auditeeName?: string;
+  auditeePosition?: string;
   area: 'Flight Operations' | 'Maintenance' | 'Ground Ops' | 'Management';
   status: 'Compliant' | 'With Findings' | 'Non-Compliant';
   complianceScore: number;

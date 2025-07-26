@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import type { AuditChecklist, AuditChecklistItem, FindingType } from '@/lib/types';
+import type { AuditChecklist, AuditChecklistItem, FindingType, QualityAudit, NonConformanceIssue } from '@/lib/types';
 import Header from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { addDoc, collection } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 const FINDING_OPTIONS: { value: FindingType; label: string, icon: React.ReactNode }[] = [
     { value: 'Compliant', label: 'Compliant', icon: <CheckCircle className="text-green-600" /> },
@@ -88,18 +90,47 @@ export default function PerformAuditPage() {
     };
     
     const handleSubmitAudit = async () => {
-        if (!checklist || !company) return;
+        if (!checklist || !company || !user) return;
         
-        // In a real app, you would generate a new audit record.
-        // For this demo, we'll just update the template with the auditor's name.
-        const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, checklist.id);
+        const findings = checklist.items
+            .filter(item => item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable')
+            .map(item => ({
+                id: item.id,
+                level: item.finding,
+                category: 'Procedural', // Default category for now
+                description: item.observation || 'No details provided.',
+                regulationReference: item.regulationReference || 'N/A',
+            } as NonConformanceIssue));
+            
+        const totalItems = checklist.items.length;
+        const compliantItems = checklist.items.filter(i => i.finding === 'Compliant').length;
+        const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
+
+        let status: QualityAudit['status'] = 'Compliant';
+        if (findings.some(f => f.level === 'Non-compliant' || f.level?.includes('Level'))) {
+            status = 'Non-Compliant';
+        } else if (findings.length > 0) {
+            status = 'With Findings';
+        }
+
+        const newAuditData: Omit<QualityAudit, 'id'> = {
+            companyId: company.id,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            type: 'Internal', // Assuming internal for now
+            auditor: user.name,
+            area: checklist.area,
+            status,
+            complianceScore,
+            nonConformanceIssues: findings,
+            summary: `Audit of ${checklist.area} conducted by ${user.name}.`,
+            auditeeName: checklist.auditeeName,
+            auditeePosition: checklist.auditeePosition,
+        };
+
         try {
-            await updateDoc(checklistRef, {
-                ...checklist,
-                auditor: user?.name,
-            });
+            const docRef = await addDoc(collection(db, `companies/${company.id}/quality-audits`), newAuditData);
             toast({ title: 'Audit Submitted', description: 'The audit findings have been recorded.' });
-            router.push('/quality?tab=audits');
+            router.push(`/quality/${docRef.id}`);
         } catch (error) {
             console.error("Error submitting audit:", error);
             toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the audit findings.' });
@@ -180,8 +211,12 @@ export default function PerformAuditPage() {
                                         </RadioGroup>
                                     </div>
                                     
+                                     <div className="space-y-2">
+                                        <Label htmlFor={`regulation-${item.id}`}>Regulation Reference</Label>
+                                        <Input id={`regulation-${item.id}`} placeholder="e.g., CAR 121.01.2" value={item.regulationReference || ''} onChange={(e) => handleItemChange(item.id, 'regulationReference', e.target.value)} />
+                                    </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor={`observation-${item.id}`}>Observation / Notes</Label>
+                                        <Label htmlFor={`observation-${item.id}`}>Observation / Finding Details</Label>
                                         <Textarea id={`observation-${item.id}`} placeholder="Describe any observations, non-conformities, or comments..." value={item.observation || ''} onChange={(e) => handleItemChange(item.id, 'observation', e.target.value)} />
                                     </div>
                                     <div className="space-y-2">
