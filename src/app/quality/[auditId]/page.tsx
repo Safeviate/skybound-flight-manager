@@ -64,8 +64,25 @@ const getLevelInfo = (level: FindingLevel) => {
 const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
-const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void }) => {
+const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[] }) => {
     const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
+    const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
+    const { user } = useUser();
+    const discussionForm = useForm<DiscussionFormValues>({
+        resolver: zodResolver(discussionFormSchema),
+    });
+
+    const availableRecipients = React.useMemo(() => {
+        if (!personnel || personnel.length === 0 || !user) {
+        return [];
+        }
+        // Auditor and auditee should be able to discuss
+        const team = [audit?.auditor, audit?.auditeeName].filter(Boolean);
+        return personnel.filter(
+        (p) => team.includes(p.name) && p.name !== user?.name
+        );
+    }, [personnel, audit, user]);
+
 
     const handleCapSubmit = (data: CorrectiveActionPlan) => {
         if (!editingIssue) return;
@@ -76,6 +93,29 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
 
         onUpdate({ ...audit, nonConformanceIssues: updatedIssues }, true);
         setEditingIssue(null);
+    }
+
+    const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
+        if (!user || !audit) {
+            return;
+        }
+
+        const newEntry: DiscussionEntry = {
+            id: `d-${Date.now()}`,
+            author: user.name,
+            datePosted: new Date().toISOString(),
+            ...data,
+            replyByDate: data.replyByDate ? data.replyByDate.toISOString() : undefined,
+        };
+        
+        const updatedAudit = {
+            ...audit,
+            discussion: [...(audit.discussion || []), newEntry],
+        };
+
+        onUpdate(updatedAudit, true);
+        discussionForm.reset();
+        setIsDiscussionDialogOpen(false);
     }
     
     return (
@@ -239,16 +279,124 @@ const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (
                 </TabsContent>
                 <TabsContent value="discussion" className="mt-4">
                      <Card>
-                        <CardHeader>
-                            <CardTitle>Discussion Forum</CardTitle>
-                            <CardDescription>
-                                A forum for auditors and auditees to discuss findings and corrective actions.
-                            </CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Discussion Forum</CardTitle>
+                                <CardDescription>
+                                    A forum for auditors and auditees to discuss findings and corrective actions.
+                                </CardDescription>
+                            </div>
+                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Send className="mr-2 h-4 w-4" />
+                                        Post Message
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Post New Message</DialogTitle>
+                                        <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
+                                    </DialogHeader>
+                                    <Form {...discussionForm}>
+                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                                            <FormField
+                                                control={discussionForm.control}
+                                                name="recipient"
+                                                render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>Send To</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                        <SelectValue placeholder="Select a team member" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {availableRecipients.map((p) => (
+                                                        <SelectItem key={p.id} value={p.name}>
+                                                            {p.name}
+                                                        </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={discussionForm.control}
+                                                name="replyByDate"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <FormLabel>Reply Needed By (Optional)</FormLabel>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                            <FormControl>
+                                                                <Button
+                                                                variant={"outline"}
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                                >
+                                                                {field.value ? (
+                                                                    format(field.value, "PPP")
+                                                                ) : (
+                                                                    <span>Pick a date</span>
+                                                                )}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                </Button>
+                                                            </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                            <Calendar
+                                                                mode="single"
+                                                                selected={field.value}
+                                                                onSelect={field.onChange}
+                                                                disabled={(date) => date < new Date()}
+                                                                initialFocus
+                                                            />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <FormField
+                                            control={discussionForm.control}
+                                            name="message"
+                                            render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Message / Instruction</FormLabel>
+                                                <FormControl>
+                                                <Textarea
+                                                    id="message"
+                                                    placeholder="Type your message here..."
+                                                    className="min-h-[100px]"
+                                                    {...field}
+                                                />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <div className="flex justify-end items-center">
+                                            <Button type="submit">
+                                                <Send className="mr-2 h-4 w-4" />
+                                                Post Message
+                                            </Button>
+                                        </div>
+                                        </form>
+                                    </Form>
+                                </DialogContent>
+                            </Dialog>
                         </CardHeader>
                         <CardContent>
                             <DiscussionSection 
                                 audit={audit} 
-                                onUpdate={onUpdate} 
                             />
                         </CardContent>
                     </Card>
@@ -466,7 +614,7 @@ export default function QualityAuditDetailPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         {isAuditClosed ? (
-            <AuditReportView audit={audit} onUpdate={handleAuditUpdate} />
+            <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} />
         ) : (
         <>
             <h2 className="text-2xl font-bold">Audit Questionnaire</h2>

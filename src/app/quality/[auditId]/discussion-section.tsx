@@ -12,10 +12,9 @@ import { useUser } from '@/context/user-provider';
 
 interface DiscussionSectionProps {
   audit: QualityAudit;
-  onUpdate: (updatedReport: QualityAudit) => void;
 }
 
-export function DiscussionSection({ audit, onUpdate }: DiscussionSectionProps) {
+export function DiscussionSection({ audit }: DiscussionSectionProps) {
   const { user } = useUser();
   const discussionEntries = audit.discussion || [];
 
