@@ -318,44 +318,6 @@ function SafetyReportInvestigationPage() {
     );
   }
   
-  const generateMailtoLink = () => {
-    if (!report) return "";
-
-    const subject = `Safety Report: ${report.reportNumber} - ${report.heading}`;
-    let body = `A safety report requires your attention.\n\n`;
-    body += `Report Number: ${report.reportNumber}\n`;
-    body += `Heading: ${report.heading}\n`;
-    body += `Status: ${report.status}\n`;
-    body += `Date of Occurrence: ${report.occurrenceDate}\n\n`;
-    body += `Details:\n${report.details}\n\n`;
-    body += `Link to report: ${window.location.href}`;
-
-    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-  
-  const headerContent = (
-    <>
-        <Button asChild variant="outline" className="no-print">
-            <Link href="/safety?tab=reports">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to All Reports
-            </Link>
-        </Button>
-        <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => window.print()} className="no-print">
-                <Printer className="mr-2 h-4 w-4" />
-                Print Report
-            </Button>
-            <a href={generateMailtoLink()}>
-                 <Button variant="outline" className="no-print">
-                    <Mail className="mr-2 h-4 w-4" />
-                    Email Report
-                </Button>
-            </a>
-        </div>
-    </>
-  );
-  
   const showScfFields = report.occurrenceCategory === 'SCF-NP' || report.occurrenceCategory === 'SCF-PP';
   const showLosFields = report.occurrenceCategory === 'MAC';
   const showWeatherFields = report.occurrenceCategory && WEATHER_RELATED_CATEGORIES.includes(report.occurrenceCategory);
@@ -883,4 +845,3 @@ SafetyReportInvestigationPage.headerContent = function HeaderActions() {
 }
 
 export default SafetyReportInvestigationPage;
-
