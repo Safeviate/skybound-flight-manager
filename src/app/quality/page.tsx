@@ -53,7 +53,8 @@ const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
 const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     const conformanceCounts: { [key: string]: number } = {};
     data.flatMap(audit => audit.nonConformanceIssues).forEach(issue => {
-        conformanceCounts[issue.category] = (conformanceCounts[issue.category] || 0) + 1;
+        const category = issue.regulationReference?.split(' ')[0] || 'Uncategorized';
+        conformanceCounts[category] = (conformanceCounts[category] || 0) + 1;
     });
 
     const chartData = Object.keys(conformanceCounts).map(key => ({
