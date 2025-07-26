@@ -104,6 +104,7 @@ export function AiChecklistGenerator({ onSave }: AiChecklistGeneratorProps) {
                 {AUDIT_AREAS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
+            {!area && <p className="text-sm text-muted-foreground">Please select an audit area to enable saving.</p>}
           </div>
           <div className="max-h-60 overflow-y-auto space-y-2 rounded-md border p-4">
             {state.data.items.map((item, index) => (
