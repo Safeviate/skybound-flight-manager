@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check } from 'lucide-react';
-import type { User as AppUser, Alert } from '@/lib/types';
+import type { User as AppUser, Alert, QualityAudit } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -16,6 +17,8 @@ import { Label } from '@/components/ui/label';
 import { PersonalInformationCard } from './personal-information-card';
 import Link from 'next/link';
 import { cn } from '@/lib/utils.tsx';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -77,14 +80,24 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 }
 
 function MyProfilePage() {
-    const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
+    const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts, company } = useUser();
     const router = useRouter();
+    const [audits, setAudits] = useState<QualityAudit[]>([]);
+
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
         }
-    }, [user, loading, router]);
+        if (company) {
+            const fetchAudits = async () => {
+                const q = query(collection(db, `companies/${company.id}/quality-audits`));
+                const snapshot = await getDocs(q);
+                setAudits(snapshot.docs.map(doc => doc.data() as QualityAudit));
+            };
+            fetchAudits();
+        }
+    }, [user, loading, router, company]);
     
     const allActionItems = useMemo(() => {
         if (!user) return [];
@@ -120,7 +133,7 @@ function MyProfilePage() {
             }
         }
         
-        const taskAlerts = getUnacknowledgedAlerts()
+        const taskAlerts = getUnacknowledgedAlerts(audits)
             .map(alert => {
                 return {
                     id: alert.id,
@@ -133,7 +146,7 @@ function MyProfilePage() {
             });
 
         return [...personalAlerts, ...taskAlerts];
-    }, [user, getUnacknowledgedAlerts]);
+    }, [user, getUnacknowledgedAlerts, audits]);
 
      const handleAcknowledge = useCallback(async (alertId: string) => {
         await acknowledgeAlerts([alertId]);

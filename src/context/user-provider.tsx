@@ -3,7 +3,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, Alert, Company } from '@/lib/types';
+import type { User, Alert, Company, QualityAudit } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -16,7 +16,7 @@ interface UserContextType {
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
-  getUnacknowledgedAlerts: () => Alert[];
+  getUnacknowledgedAlerts: (audits: QualityAudit[]) => Alert[];
   acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
 }
 
@@ -124,13 +124,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const getUnacknowledgedAlerts = useCallback((): Alert[] => {
+  const getUnacknowledgedAlerts = useCallback((audits: QualityAudit[]): Alert[] => {
     if (!user || !user.id) return [];
     
     return allAlerts.filter(alert => {
         const isUnread = !alert.readBy.includes(user.id!);
         const isTargetedToUser = !alert.targetUserId || alert.targetUserId === user.id;
 
+        // Hide alerts for closed quality audits
+        if (alert.relatedLink?.startsWith('/quality/')) {
+            const auditId = alert.relatedLink.split('/')[2];
+            const relatedAudit = audits.find(a => a.id === auditId);
+            if (relatedAudit?.status === 'Closed') {
+                return false;
+            }
+        }
+        
         // This is the new filtering logic for old CAP alerts
         if (alert.type === 'Task' && alert.title.startsWith('CAP Assigned:') && !alert.relatedLink) {
             return false; // Hide old alerts with broken links
