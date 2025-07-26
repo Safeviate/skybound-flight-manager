@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import type { AuditChecklist, AuditChecklistItem, FindingType } from '@/lib/type
 import Header from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, FileText, MessageSquareWarning, XCircle, MinusCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, MessageSquareWarning, XCircle, MinusCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,9 @@ const FINDING_OPTIONS: { value: FindingType; label: string, icon: React.ReactNod
     { value: 'Non-compliant', label: 'Non-compliant', icon: <XCircle className="text-red-600" /> },
     { value: 'Partial', label: 'Partial Compliance', icon: <MinusCircle className="text-yellow-600" /> },
     { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
+    { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
+    { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
+    { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
     { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
 ];
 
@@ -151,7 +155,7 @@ export default function PerformAuditPage() {
                                         <RadioGroup 
                                             value={item.finding || ''} 
                                             onValueChange={(value) => handleItemChange(item.id, 'finding', value)}
-                                            className="flex flex-wrap gap-4"
+                                            className="flex flex-wrap gap-x-4 gap-y-2"
                                         >
                                             {FINDING_OPTIONS.map(opt => (
                                                 <div key={opt.value} className="flex items-center space-x-2">
@@ -182,4 +186,3 @@ export default function PerformAuditPage() {
         </div>
     );
 }
-
