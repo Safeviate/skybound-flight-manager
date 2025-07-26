@@ -2,23 +2,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
-import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { ChecklistsManager } from './audit-checklists/page';
+import Link from 'next/link';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -81,6 +81,7 @@ const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', '
 function QualityPage() {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>([]);
+  const [auditChecklists, setAuditChecklists] = useState<AuditChecklist[]>([]);
   const [schedule, setSchedule] = useState<AuditScheduleItem[]>([]);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
@@ -93,10 +94,12 @@ function QualityPage() {
     try {
         const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
         const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+        const checklistsQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
 
-        const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
+        const [auditsSnapshot, scheduleSnapshot, checklistsSnapshot] = await Promise.all([
             getDocs(auditsQuery),
             getDocs(scheduleQuery),
+            getDocs(checklistsQuery),
         ]);
         
         const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
@@ -104,6 +107,9 @@ function QualityPage() {
 
         const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
         setSchedule(scheduleList);
+
+        const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditChecklist));
+        setAuditChecklists(checklistsList);
 
     } catch (error) {
         console.error("Error fetching quality data:", error);
@@ -201,9 +207,10 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                <TabsTrigger value="audits">Audits</TabsTrigger>
+                <TabsTrigger value="checklists">Checklist Templates</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -243,6 +250,39 @@ function QualityPage() {
                         </CardContent>
                     </Card>
                 </div>
+            </TabsContent>
+            <TabsContent value="audits" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Perform an Audit</CardTitle>
+                        <CardDescription>Select a checklist template to begin a new quality audit.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            {auditChecklists.length > 0 ? (
+                                auditChecklists.map(checklist => (
+                                    <Link key={checklist.id} href={`/quality/audit-checklists/${checklist.id}`} className="block">
+                                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <ListChecks className="h-6 w-6 text-primary" />
+                                                <div>
+                                                    <p className="font-semibold">{checklist.title}</p>
+                                                    <p className="text-sm text-muted-foreground">{checklist.area} ({checklist.items.length} items)</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="text-center text-muted-foreground py-10">
+                                    <p>No audit checklist templates found.</p>
+                                    <Button variant="link" onClick={() => setActiveTab('checklists')}>Create one in the templates tab.</Button>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
                 <Card>
