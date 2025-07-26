@@ -641,6 +641,10 @@ export default function QualityAuditDetailPage() {
                     <p className="font-semibold text-muted-foreground">Lead Auditor</p>
                     <p>{audit.auditor}</p>
                 </div>
+                 <div>
+                    <p className="font-semibold text-muted-foreground">Auditee</p>
+                    <p>{audit.auditeeName || 'N/A'}</p>
+                </div>
                 </div>
                 <div className="space-y-2 border-t pt-6">
                     <h3 className="font-semibold">Audit Summary</h3>
