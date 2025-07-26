@@ -102,7 +102,7 @@ export default function QualityAuditDetailPage() {
             date: format(new Date(), 'yyyy-MM-dd'),
             readBy: [],
             targetUserId: responsiblePerson.id,
-            relatedLink: `/quality/${audit.id}`
+            relatedLink: `/quality/${auditId}`
         };
         await addDoc(collection(db, `companies/${company.id}/alerts`), alertData);
 
