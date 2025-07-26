@@ -83,6 +83,7 @@ function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts, company } = useUser();
     const router = useRouter();
     const [audits, setAudits] = useState<QualityAudit[]>([]);
+    const [visitedAlerts, setVisitedAlerts] = useState<string[]>([]);
 
 
     useEffect(() => {
@@ -151,6 +152,10 @@ function MyProfilePage() {
      const handleAcknowledge = useCallback(async (alertId: string) => {
         await acknowledgeAlerts([alertId]);
     }, [acknowledgeAlerts]);
+
+    const handleLinkClick = (alertId: string) => {
+        setVisitedAlerts(prev => [...prev, alertId]);
+    }
     
     if (loading || !user) {
         return (
@@ -223,7 +228,7 @@ function MyProfilePage() {
                                         <li key={id} className="flex items-center gap-2">
                                             <div className="flex-1">
                                                 {relatedLink ? (
-                                                    <Link href={relatedLink} className="block hover:opacity-80">
+                                                    <Link href={relatedLink} className="block hover:opacity-80" onClick={() => handleLinkClick(id)}>
                                                         <ActionItemContent />
                                                     </Link>
                                                 ) : (
@@ -231,7 +236,12 @@ function MyProfilePage() {
                                                 )}
                                             </div>
                                             {!isPersonalAlert && (
-                                                <Button variant="outline" size="sm" onClick={() => handleAcknowledge(id)}>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleAcknowledge(id)}
+                                                    disabled={!visitedAlerts.includes(id)}
+                                                >
                                                     <Check className="mr-2 h-4 w-4" />
                                                     Acknowledge
                                                 </Button>
