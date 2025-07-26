@@ -194,15 +194,15 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                     <div>
                                                         <p className="font-medium text-muted-foreground">Root Cause</p>
-                                                        <p>{issue.correctiveActionPlan.rootCause}</p>
+                                                        <p className="text-justify">{issue.correctiveActionPlan.rootCause}</p>
                                                     </div>
                                                     <div>
                                                         <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                                        <p>{issue.correctiveActionPlan.correctiveAction}</p>
+                                                        <p className="text-justify">{issue.correctiveActionPlan.correctiveAction}</p>
                                                     </div>
                                                     <div>
                                                         <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                                        <p>{issue.correctiveActionPlan.preventativeAction}</p>
+                                                        <p className="text-justify">{issue.correctiveActionPlan.preventativeAction}</p>
                                                     </div>
                                                 </div>
                                                 <Table>
@@ -776,4 +776,5 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
+
 
