@@ -470,6 +470,7 @@ export type QualityAudit = {
   checklistItems: AuditChecklistItem[];
   nonConformanceIssues: NonConformanceIssue[];
   summary: string;
+  discussion?: DiscussionEntry[];
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
