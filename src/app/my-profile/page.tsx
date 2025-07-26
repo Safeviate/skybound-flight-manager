@@ -177,9 +177,9 @@ function MyProfilePage() {
                                         <Link 
                                             href={relatedLink || '#'}
                                             className={cn(
-                                                'flex items-start justify-between p-3 rounded-md border',
+                                                'flex items-start justify-between p-3 rounded-md border transition-colors',
                                                 variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20',
-                                                relatedLink ? 'hover:bg-muted/50' : 'pointer-events-none'
+                                                relatedLink ? 'hover:bg-muted' : 'pointer-events-none'
                                             )}
                                         >
                                             <div className="flex items-start gap-3">
