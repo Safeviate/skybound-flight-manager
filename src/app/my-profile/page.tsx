@@ -25,6 +25,7 @@ import { useSettings } from '@/context/settings-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PersonalInformationCard } from './personal-information-card';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -311,95 +312,101 @@ function MyProfilePage() {
         <ChangePasswordDialog user={user} onPasswordChanged={handlePasswordChanged} />
       )}
       <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>My Action Items ({totalTasks})</CardTitle>
-                <CardDescription>Alerts and tasks assigned to you that require your attention.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {totalTasks > 0 ? (
-                    <>
-                        {personalAlerts.length > 0 && (
-                                <div className="space-y-2">
-                                <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
-                                <ul className="space-y-2">
-                                    {personalAlerts.map(({ type, date, details, variant }, index) => (
-                                        <li key={`personal-alert-${index}`}>
-                                                <div className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-start gap-3">
-                                                        <AlertTriangle className={`h-5 w-5 ${variant === 'destructive' ? 'text-red-500' : 'text-amber-500'} mt-0.5`} />
-                                                        <div>
-                                                            <p className="font-semibold">{type}</p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        {discussionRequests.length > 0 && (
-                            <div className="space-y-2">
-                                <h4 className="font-semibold text-sm text-muted-foreground">Safety Discussion Responses</h4>
-                                <ul className="space-y-2">
-                                    {discussionRequests.map(({ report, entry }, index) => (
-                                        <li key={`discussion-${entry.id}-${index}`}>
-                                            <Link href={`/safety/${report.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-start gap-3">
-                                                        <MessageSquareWarning className="h-5 w-5 text-yellow-500 mt-0.5" />
-                                                        <div>
-                                                            <p className="font-semibold">Reply to {entry.author}</p>
-                                                            <p className="text-sm text-muted-foreground truncate max-w-48">"{entry.message}"</p>
-                                                        </div>
-                                                    </div>
-                                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                                </div>
-                                                <Badge variant="outline" className="mt-2">{report.reportNumber}</Badge>
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        {riskReviews.length > 0 && (
-                            <div className="space-y-2">
-                                <h4 className="font-semibold text-sm text-muted-foreground">Risk Reviews Due</h4>
-                                <ul className="space-y-2">
-                                    {riskReviews.map((risk, index) => (
-                                            <li key={`risk-review-${risk.id}-${index}`}>
-                                                <Link href={`/safety?tab=register&risk=${risk.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-start gap-3">
-                                                        <ShieldCheck className="h-5 w-5 text-blue-500 mt-0.5" />
-                                                        <div>
-                                                            <p className="font-semibold">{risk.hazard}</p>
-                                                            <p className="text-sm text-muted-foreground">Review due by: {format(parseISO(risk.reviewDate!), 'MMM d, yyyy')}</p>
-                                                        </div>
-                                                    </div>
-                                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                                </div>
-                                            </Link>
-                                            </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground text-center">No outstanding alerts or tasks.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="xl:col-span-1 space-y-8">
+                <Card>
+                    <CardContent className="pt-6">
+                        <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>My Action Items ({totalTasks})</CardTitle>
+                        <CardDescription>Alerts and tasks assigned to you that require your attention.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        {totalTasks > 0 ? (
+                            <>
+                                {personalAlerts.length > 0 && (
+                                        <div className="space-y-2">
+                                        <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
+                                        <ul className="space-y-2">
+                                            {personalAlerts.map(({ type, date, details, variant }, index) => (
+                                                <li key={`personal-alert-${index}`}>
+                                                        <div className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex items-start gap-3">
+                                                                <AlertTriangle className={`h-5 w-5 ${variant === 'destructive' ? 'text-red-500' : 'text-amber-500'} mt-0.5`} />
+                                                                <div>
+                                                                    <p className="font-semibold">{type}</p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {discussionRequests.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="font-semibold text-sm text-muted-foreground">Safety Discussion Responses</h4>
+                                        <ul className="space-y-2">
+                                            {discussionRequests.map(({ report, entry }, index) => (
+                                                <li key={`discussion-${entry.id}-${index}`}>
+                                                    <Link href={`/safety/${report.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex items-start gap-3">
+                                                                <MessageSquareWarning className="h-5 w-5 text-yellow-500 mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-semibold">Reply to {entry.author}</p>
+                                                                    <p className="text-sm text-muted-foreground truncate max-w-48">"{entry.message}"</p>
+                                                                </div>
+                                                            </div>
+                                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                        <Badge variant="outline" className="mt-2">{report.reportNumber}</Badge>
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {riskReviews.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="font-semibold text-sm text-muted-foreground">Risk Reviews Due</h4>
+                                        <ul className="space-y-2">
+                                            {riskReviews.map((risk, index) => (
+                                                    <li key={`risk-review-${risk.id}-${index}`}>
+                                                        <Link href={`/safety?tab=register&risk=${risk.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex items-start gap-3">
+                                                                <ShieldCheck className="h-5 w-5 text-blue-500 mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-semibold">{risk.hazard}</p>
+                                                                    <p className="text-sm text-muted-foreground">Review due by: {format(parseISO(risk.reviewDate!), 'MMM d, yyyy')}</p>
+                                                                </div>
+                                                            </div>
+                                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                    </Link>
+                                                    </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground text-center">No outstanding alerts or tasks.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
             <div className="xl:col-span-2 space-y-8">
                 {(user.role === 'Student' || user.role.includes('Instructor')) && (
                     <FatigueRiskIndicatorCard
@@ -497,9 +504,6 @@ function MyProfilePage() {
                     </div>
                 </CardContent>
                 </Card>
-            </div>
-            <div className="xl:col-span-1">
-                {/* This space is now empty since the action items card was moved up */}
             </div>
         </div>
       </main>
