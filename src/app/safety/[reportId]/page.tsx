@@ -817,7 +817,11 @@ function SafetyReportInvestigationPage() {
                     <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
                 </TabsContent>
                 <TabsContent value="corrective-action" className="mt-6">
-                    <CorrectiveActionPlanGenerator report={report} onUpdate={handleReportUpdate} />
+                    <CorrectiveActionPlanGenerator 
+                        report={report} 
+                        personnel={personnel}
+                        onUpdate={handleReportUpdate} 
+                    />
                 </TabsContent>
                 <TabsContent value="final-review" className="mt-6">
                     <FinalReview report={report} onUpdate={handleReportUpdate} />

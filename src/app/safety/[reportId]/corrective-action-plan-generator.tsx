@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Bot, Check, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport } from '@/lib/types';
+import type { SafetyReport, User, Alert } from '@/lib/types';
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import { generatePlanAction } from './actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { useUser } from '@/context/user-provider';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const initialState = {
   message: '',
@@ -72,9 +75,18 @@ function AnalysisResult({ data, onAccept }: { data: GenerateCorrectiveActionPlan
   );
 }
 
-export function CorrectiveActionPlanGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate: (updatedReport: SafetyReport) => void; }) {
+export function CorrectiveActionPlanGenerator({ 
+    report, 
+    personnel,
+    onUpdate 
+}: { 
+    report: SafetyReport, 
+    personnel: User[],
+    onUpdate: (updatedReport: SafetyReport) => void; 
+}) {
   const [state, formAction] = useActionState(generatePlanAction, initialState);
   const { toast } = useToast();
+  const { company } = useUser();
 
   useEffect(() => {
     if (state.message && !state.message.includes('generated')) {
@@ -86,11 +98,38 @@ export function CorrectiveActionPlanGenerator({ report, onUpdate }: { report: Sa
     }
   }, [state, toast]);
 
-  const handleAcceptPlan = (plan: GenerateCorrectiveActionPlanOutput) => {
+  const handleAcceptPlan = async (plan: GenerateCorrectiveActionPlanOutput) => {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.'});
+        return;
+    }
+
     onUpdate({ ...report, correctiveActionPlan: plan });
+
+    const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+
+    for (const action of plan.correctiveActions) {
+        const responsibleUser = personnel.find(p => p.name === action.responsiblePerson);
+        if (responsibleUser) {
+            const newAlert: Omit<Alert, 'id' | 'number'> = {
+                companyId: company.id,
+                type: 'Task',
+                title: `CAP Assigned: ${report.reportNumber}`,
+                description: action.action,
+                author: 'System (Safety Dept.)',
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: responsibleUser.id,
+                relatedLink: `/safety/${report.id}`,
+            };
+
+            await addDoc(alertsCollection, newAlert);
+        }
+    }
+    
     toast({
-        title: "Plan Saved",
-        description: "The corrective action plan has been saved to the report."
+        title: "Plan Saved & Notifications Sent",
+        description: "The corrective action plan has been saved and responsible personnel have been notified."
     })
   };
 
