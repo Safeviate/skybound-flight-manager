@@ -33,6 +33,7 @@ import { DiscussionSection } from './discussion-section';
 import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
 import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
 import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
+import { AuditTeamForm } from './audit-team-form';
 
 
 const discussionFormSchema = z.object({
@@ -77,14 +78,11 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     });
 
     const availableRecipients = React.useMemo(() => {
-        if (!personnel || personnel.length === 0 || !user) {
-            return [];
-        }
-        // Allow sending to any non-student user except the current user
-        return personnel.filter(
-            (p) => p.role !== 'Student' && p.id !== user.id
-        );
-    }, [personnel, user]);
+        if (!audit.investigationTeam || !user) return [];
+        // Allow sending to any team member except the current user
+        return audit.investigationTeam.filter(name => name !== user.name);
+    }, [audit.investigationTeam, user]);
+
 
     const handleReply = (recipient: string) => {
         discussionForm.setValue('recipient', recipient);
@@ -142,8 +140,16 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             discussion: [...(audit.discussion || []), cleanNewEntry],
         };
 
-        if (data.recipient) {
-            const recipientUser = personnel.find(p => p.name === data.recipient);
+        const recipients = data.recipient
+          ? [data.recipient]
+          : audit.investigationTeam?.filter((name) => name !== user.name) || [];
+
+        if (recipients.length > 0) {
+            toast({ title: 'Message Posted', description: `A notification has been sent to relevant team members.`});
+        }
+        
+        for (const recipientName of recipients) {
+            const recipientUser = personnel.find(p => p.name === recipientName);
             if (recipientUser) {
                 const newAlert: Omit<Alert, 'id' | 'number'> = {
                     companyId: company.id,
@@ -158,11 +164,9 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                 };
                 const alertsCollection = collection(db, `companies/${company.id}/alerts`);
                 await addDoc(alertsCollection, newAlert);
-                toast({ title: 'Message Sent', description: `Your message and a notification has been sent to ${data.recipient}.`});
             }
-        } else {
-             toast({ title: 'Message Posted', description: `Your message has been posted to the discussion.`});
         }
+
 
         onUpdate(updatedAudit, true);
         discussionForm.reset();
@@ -404,9 +408,9 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {availableRecipients.map((p) => (
-                                                        <SelectItem key={p.id} value={p.name}>
-                                                            {p.name} ({p.role})
+                                                        {availableRecipients.map((name) => (
+                                                        <SelectItem key={name} value={name}>
+                                                            {name}
                                                         </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -713,6 +717,10 @@ export default function QualityAuditDetailPage() {
                     value={audit.summary}
                     onChange={(e) => handleAuditUpdate({ ...audit, summary: e.target.value }, false)}
                     />
+                </div>
+                 <div className="space-y-2 border-t pt-6">
+                    <h3 className="font-semibold">Investigation Team</h3>
+                    <AuditTeamForm audit={audit} personnel={personnel} onUpdate={handleAuditUpdate} />
                 </div>
             </CardContent>
             </Card>
