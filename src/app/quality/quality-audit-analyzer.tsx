@@ -4,8 +4,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { analyzeAuditAction } from '@/app/quality/actions';
 import { generateCapAction } from '@/app/quality/[auditId]/actions';
+import { analyzeAuditAction } from '@/app/quality/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,7 @@ import { Loader2, AlertTriangle, CheckCircle, Trophy, Edit, Bot, FileText, Shiel
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const initialAnalysisState = {
   message: '',
