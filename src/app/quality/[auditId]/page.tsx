@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel } f
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc } from 'firebase/firestore';
@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 export default function QualityAuditDetailPage() {
   const router = useRouter();
@@ -74,15 +75,6 @@ export default function QualityAuditDetailPage() {
         </main>
     );
   }
-  
-  const getStatusVariant = (status: QualityAudit['status']) => {
-    switch (status) {
-      case 'Compliant': return 'success';
-      case 'With Findings': return 'warning';
-      case 'Non-Compliant': return 'destructive';
-      default: return 'outline';
-    }
-  };
 
   const getFindingInfo = (finding: FindingStatus | null) => {
     switch (finding) {
@@ -106,6 +98,15 @@ export default function QualityAuditDetailPage() {
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Audit Report</h2>
+            <Button asChild variant="outline">
+                <Link href="/quality?tab=audits">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Audits
+                </Link>
+            </Button>
+        </div>
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -250,5 +251,3 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
-
-    
