@@ -192,15 +192,17 @@ function MyProfilePage() {
                     <CardContent className="space-y-2 max-h-96 overflow-y-auto pr-2">
                         {totalTasks > 0 ? (
                            <ul className="space-y-2">
-                                {allActionItems.map(({ id, type, details, variant, relatedLink, icon, date }, index) => {
+                                {allActionItems.map(({ id, type, details, variant, relatedLink, icon, date }) => {
+                                    const isPersonalAlert = id.startsWith('personal-');
+
                                     const ActionItemContent = () => (
-                                         <div className="flex items-start justify-between p-3 rounded-md border transition-colors w-full text-left"
+                                         <div className="flex items-start p-3 rounded-md border transition-colors w-full text-left"
                                             style={{
                                                 borderColor: variant === 'destructive' ? 'hsl(var(--destructive))' : 'hsl(var(--warning))',
                                                 backgroundColor: variant === 'destructive' ? 'hsl(var(--destructive), 0.1)' : 'hsl(var(--warning), 0.1)',
                                             }}
                                         >
-                                            <div className="flex items-start gap-3">
+                                            <div className="flex items-start gap-3 flex-1">
                                                 {icon}
                                                 <div className="flex-1">
                                                     <p className="font-semibold">{type}</p>
@@ -217,26 +219,22 @@ function MyProfilePage() {
                                         </div>
                                     );
                                     
-                                    const isPersonalAlert = id.startsWith('personal-');
-
                                     return (
-                                        <li key={id}>
-                                            {relatedLink ? (
-                                                <Link href={relatedLink} className="block hover:opacity-80">
-                                                    <ActionItemContent />
-                                                </Link>
-                                            ) : (
-                                                 <div className="flex items-center gap-2">
-                                                    <div className="flex-1">
+                                        <li key={id} className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                {relatedLink ? (
+                                                    <Link href={relatedLink} className="block hover:opacity-80">
                                                         <ActionItemContent />
-                                                    </div>
-                                                    {!isPersonalAlert && (
-                                                        <Button variant="outline" size="sm" onClick={() => handleAcknowledge(id)}>
-                                                            <Check className="mr-2 h-4 w-4" />
-                                                            Acknowledge
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                    </Link>
+                                                ) : (
+                                                    <ActionItemContent />
+                                                )}
+                                            </div>
+                                            {!isPersonalAlert && (
+                                                <Button variant="outline" size="sm" onClick={() => handleAcknowledge(id)}>
+                                                    <Check className="mr-2 h-4 w-4" />
+                                                    Acknowledge
+                                                </Button>
                                             )}
                                         </li>
                                     );
