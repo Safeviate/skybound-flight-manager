@@ -4,7 +4,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,6 +30,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { DiscussionSection } from './discussion-section';
+import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
 
 
 const discussionFormSchema = z.object({
@@ -63,9 +64,34 @@ const getLevelInfo = (level: FindingLevel) => {
 const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
-const AuditReportView = ({ audit }: { audit: QualityAudit }) => {
+const AuditReportView = ({ audit, onUpdate }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void }) => {
+    const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
+
+    const handleCapSubmit = (data: CorrectiveActionPlan) => {
+        if (!editingIssue) return;
+        
+        const updatedIssues = audit.nonConformanceIssues.map(issue => 
+            issue.id === editingIssue.id ? { ...issue, correctiveActionPlan: data } : issue
+        );
+
+        onUpdate({ ...audit, nonConformanceIssues: updatedIssues }, true);
+        setEditingIssue(null);
+    }
+    
     return (
         <div className="space-y-6 print:space-y-4">
+            <Dialog open={!!editingIssue} onOpenChange={() => setEditingIssue(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Corrective Action Plan</DialogTitle>
+                        <DialogDescription>
+                            Create a corrective action plan for the finding: "{editingIssue?.itemText}"
+                        </DialogDescription>
+                    </DialogHeader>
+                    <CorrectiveActionPlanForm onSubmit={handleCapSubmit} />
+                </DialogContent>
+            </Dialog>
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Audit Report: {audit.id}</CardTitle>
@@ -102,29 +128,41 @@ const AuditReportView = ({ audit }: { audit: QualityAudit }) => {
                         <CardDescription>Details of all non-compliant findings from this audit.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Finding</TableHead>
-                                    <TableHead>Level</TableHead>
-                                    <TableHead>Reference</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {audit.nonConformanceIssues.map(issue => (
-                                    <TableRow key={issue.id}>
-                                        <TableCell>
-                                            <p className="font-medium">{issue.itemText}</p>
-                                            <p className="text-xs text-muted-foreground">{issue.comment}</p>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
-                                        </TableCell>
-                                        <TableCell className="font-mono text-xs">{issue.regulationReference || 'N/A'}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        {audit.nonConformanceIssues.map(issue => (
+                            <div key={issue.id} className="p-4 border rounded-lg mb-4 space-y-4">
+                                <div>
+                                    <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
+                                    <p className="font-medium mt-2">{issue.itemText}</p>
+                                    <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
+                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
+                                </div>
+                                {issue.correctiveActionPlan ? (
+                                    <div>
+                                        <h4 className="font-semibold text-sm">Corrective Action Plan</h4>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Action</TableHead>
+                                                    <TableHead>Responsible</TableHead>
+                                                    <TableHead>Due Date</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow>
+                                                    <TableCell>{issue.correctiveActionPlan.correctiveAction}</TableCell>
+                                                    <TableCell>{issue.correctiveActionPlan.responsiblePerson}</TableCell>
+                                                    <TableCell>{issue.correctiveActionPlan.completionDate}</TableCell>
+                                                    <TableCell><Badge variant="outline">{issue.correctiveActionPlan.status}</Badge></TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                ) : (
+                                    <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
+                                )}
+                            </div>
+                        ))}
                     </CardContent>
                 </Card>
             )}
@@ -238,7 +276,8 @@ export default function QualityAuditDetailPage() {
             finding: item.finding!,
             level: item.level!,
             comment: item.comment,
-            reference: item.reference
+            reference: item.reference,
+            correctiveActionPlan: null,
         }));
 
     const finalAudit: QualityAudit = {
@@ -339,7 +378,7 @@ export default function QualityAuditDetailPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         {isAuditClosed ? (
-            <AuditReportView audit={audit} />
+            <AuditReportView audit={audit} onUpdate={handleAuditUpdate} />
         ) : (
         <>
             <h2 className="text-2xl font-bold">Audit Questionnaire</h2>
