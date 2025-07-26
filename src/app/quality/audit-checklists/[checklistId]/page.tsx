@@ -23,11 +23,11 @@ const FINDING_OPTIONS: { value: FindingStatus; label: string, icon: React.ReactN
     { value: 'Compliant', label: 'Compliant', icon: <CheckCircle className="text-green-600" /> },
     { value: 'Non-compliant', label: 'Non-compliant', icon: <XCircle className="text-red-600" /> },
     { value: 'Partial', label: 'Partial Compliance', icon: <MinusCircle className="text-yellow-600" /> },
+    { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
     { value: 'Not Applicable', label: 'N/A', icon: <FileText className="text-gray-500" /> },
 ];
 
-const LEVEL_OPTIONS: { value: FindingLevel | 'Observation', label: string, icon: React.ReactNode }[] = [
-    { value: 'Observation', label: 'Observation', icon: <MessageSquareWarning className="text-blue-600" /> },
+const LEVEL_OPTIONS: { value: FindingLevel; label: string, icon: React.ReactNode }[] = [
     { value: 'Level 1 Finding', label: 'Level 1 Finding', icon: <AlertTriangle className="text-yellow-600" /> },
     { value: 'Level 2 Finding', label: 'Level 2 Finding', icon: <AlertTriangle className="text-orange-500" /> },
     { value: 'Level 3 Finding', label: 'Level 3 Finding', icon: <AlertTriangle className="text-red-600" /> },
@@ -81,14 +81,13 @@ export default function PerformAuditPage() {
                     if (item.id === itemId) {
                         const updatedItem: AuditChecklistItem = { ...item, [field]: value };
                         // If finding is compliant or N/A, clear the level.
-                        if (field === 'finding' && (value === 'Compliant' || value === 'Not Applicable')) {
+                        if (field === 'finding' && (value === 'Compliant' || value === 'Not Applicable' || value === 'Observation')) {
                             updatedItem.level = null;
                         }
-                         if (field === 'level' && value === 'Observation') {
-                            updatedItem.finding = 'Observation';
+                         if (field === 'finding' && value !== 'Non-compliant' && value !== 'Partial') {
                             updatedItem.level = null;
-                        } else if (field === 'level' && value !== 'Observation' && updatedItem.finding !== 'Non-compliant' && updatedItem.finding !== 'Partial') {
-                             updatedItem.finding = 'Non-compliant';
+                         } else if (field === 'finding' && (value === 'Non-compliant' || value === 'Partial') && !updatedItem.level) {
+                            updatedItem.level = 'Level 1 Finding'; // Default to Level 1 if not set
                          }
                         return updatedItem;
                     }
@@ -109,8 +108,8 @@ export default function PerformAuditPage() {
             .filter(item => item.finding && item.finding !== 'Compliant' && item.finding !== 'Not Applicable')
             .map(item => ({
                 id: item.id,
-                finding: item.finding,
-                level: item.level,
+                finding: item.finding!,
+                level: item.level || null,
                 category: 'Procedural', // Default category for now
                 description: item.observation || 'No details provided.',
                 regulationReference: item.regulationReference || 'N/A',
@@ -128,6 +127,15 @@ export default function PerformAuditPage() {
             status = 'With Findings';
         }
 
+        const sanitizedChecklistItems = checklist.items.map(item => ({
+            ...item,
+            finding: item.finding || null,
+            level: item.level || null,
+            observation: item.observation || '',
+            evidence: item.evidence || '',
+            regulationReference: item.regulationReference || '',
+        }));
+
         const newAuditData: Omit<QualityAudit, 'id'> = {
             companyId: company.id,
             date: format(new Date(), 'yyyy-MM-dd'),
@@ -136,7 +144,7 @@ export default function PerformAuditPage() {
             area: checklist.area,
             status,
             complianceScore,
-            checklistItems: checklist.items,
+            checklistItems: sanitizedChecklistItems,
             nonConformanceIssues: findings,
             summary: `Audit of ${checklist.area} conducted by ${user.name}.`,
             auditeeName: checklist.auditeeName || null,
@@ -164,10 +172,10 @@ export default function PerformAuditPage() {
         ];
 
         const sampleNonCompliances = [
-            { text: "Required signature missing from maintenance release form.", level: 'Level 2 Finding', reg: "SACATS 43.02.4" },
-            { text: "Fire extinguisher in hangar has an expired inspection tag.", level: 'Level 1 Finding', reg: "OHS Act 85 of 1993" },
-            { text: "Pilot flight and duty records for the previous month were not available for review.", level: 'Level 3 Finding', reg: "SACATS 121.08.1" },
-            { text: "Incorrect part number used for a minor repair, although the part was functionally equivalent.", level: 'Level 2 Finding', reg: "Internal Procedure MAN-005 Sec 2.1" },
+            { text: "Required signature missing from maintenance release form.", level: 'Level 2 Finding' as FindingLevel, reg: "SACATS 43.02.4" },
+            { text: "Fire extinguisher in hangar has an expired inspection tag.", level: 'Level 1 Finding' as FindingLevel, reg: "OHS Act 85 of 1993" },
+            { text: "Pilot flight and duty records for the previous month were not available for review.", level: 'Level 3 Finding' as FindingLevel, reg: "SACATS 121.08.1" },
+            { text: "Incorrect part number used for a minor repair, although the part was functionally equivalent.", level: 'Level 2 Finding' as FindingLevel, reg: "Internal Procedure MAN-005 Sec 2.1" },
         ];
         
         let observationIndex = 0;
@@ -186,7 +194,7 @@ export default function PerformAuditPage() {
                         return {
                             ...item,
                             finding: 'Non-compliant',
-                            level: finding.level as FindingLevel,
+                            level: finding.level,
                             observation: finding.text,
                             evidence: `Reviewed document #${100 + index} and interviewed staff.`,
                             regulationReference: finding.reg
@@ -208,7 +216,7 @@ export default function PerformAuditPage() {
                             level: null,
                             observation: 'Procedure followed as required.',
                             evidence: 'No deviation noted.',
-                            regulationReference: item.regulationReference
+                            regulationReference: item.regulationReference || 'N/A'
                         };
                     }
                 })
@@ -291,17 +299,17 @@ export default function PerformAuditPage() {
                                         </RadioGroup>
                                     </div>
                                     
-                                    {(item.finding === 'Non-compliant' || item.finding === 'Partial' || item.finding === 'Observation') && (
+                                    {(item.finding === 'Non-compliant' || item.finding === 'Partial') && (
                                         <div className="space-y-2 pt-2 border-t mt-4">
                                             <Label>Level</Label>
                                             <RadioGroup 
-                                                value={item.level || (item.finding === 'Observation' ? 'Observation' : '')}
-                                                onValueChange={(value: FindingLevel | 'Observation') => handleItemChange(item.id, 'level', value)}
+                                                value={item.level || ''}
+                                                onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}
                                                 className="flex flex-wrap gap-x-4 gap-y-2"
                                             >
                                                 {LEVEL_OPTIONS.map(opt => (
                                                     <div key={opt.value} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={opt.value} id={`${item.id}-${opt.value}`} />
+                                                        <RadioGroupItem value={opt.value!} id={`${item.id}-${opt.value}`} />
                                                         <Label htmlFor={`${item.id}-${opt.value}`} className="flex items-center gap-2 cursor-pointer">{opt.icon} {opt.label}</Label>
                                                     </div>
                                                 ))}
