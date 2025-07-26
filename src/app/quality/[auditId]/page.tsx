@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { DiscussionSection } from './discussion-section';
 import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
+import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
 
 
 const discussionFormSchema = z.object({
@@ -118,6 +119,21 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         setIsDiscussionDialogOpen(false);
     }
     
+    const auditReportText = React.useMemo(() => {
+        if (!audit) return '';
+        let text = `Audit Report: ${audit.id}\n`;
+        text += `Date: ${audit.date}\n`;
+        text += `Auditor: ${audit.auditor}\n`;
+        text += `Area: ${audit.area}\n`;
+        text += `Summary: ${audit.summary}\n\n`;
+        text += `Non-Conformances:\n`;
+        audit.nonConformanceIssues.forEach(issue => {
+            text += `- ${issue.itemText} (Level: ${issue.level}, Ref: ${issue.regulationReference})\n`;
+            text += `  Comment: ${issue.comment}\n`;
+        });
+        return text;
+    }, [audit]);
+    
     return (
         <div className="space-y-6 print:space-y-4">
             <Dialog open={!!editingIssue} onOpenChange={() => setEditingIssue(null)}>
@@ -133,11 +149,24 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             </Dialog>
 
              <Card>
-                <CardHeader>
-                    <CardTitle className="text-2xl">Audit Report: {audit.id}</CardTitle>
-                    <CardDescription>
-                    This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
-                    </CardDescription>
+                <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                        <CardTitle className="text-2xl">Audit Report: {audit.id}</CardTitle>
+                        <CardDescription>
+                        This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
+                        </CardDescription>
+                    </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Bot className="mr-2 h-4 w-4" />
+                                AI Audit Analysis
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                            <QualityAuditAnalyzer auditText={auditReportText} />
+                        </DialogContent>
+                    </Dialog>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
@@ -776,5 +805,6 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
+
 
 

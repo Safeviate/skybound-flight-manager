@@ -11,7 +11,6 @@ import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
@@ -360,17 +359,4 @@ function QualityPage() {
 }
 
 QualityPage.title = 'Quality Assurance';
-QualityPage.headerContent = (
-    <Dialog>
-        <DialogTrigger asChild>
-            <Button>
-                <Bot className="mr-2 h-4 w-4" />
-                AI Audit Analysis
-            </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl">
-            <QualityAuditAnalyzer />
-        </DialogContent>
-    </Dialog>
-);
 export default QualityPage;

@@ -56,7 +56,7 @@ function AnalysisResult({ data }: { data: AnalyzeQualityAuditOutput }) {
   );
 }
 
-export function QualityAuditAnalyzer() {
+export function QualityAuditAnalyzer({ auditText }: { auditText?: string }) {
   const [state, formAction] = useActionState(analyzeAuditAction, initialState);
   const { toast } = useToast();
 
@@ -89,6 +89,7 @@ export function QualityAuditAnalyzer() {
                   name="auditText"
                   placeholder="Paste the full text of the quality audit report here..."
                   className="min-h-[200px]"
+                  defaultValue={auditText}
                 />
                 {state.errors?.auditText && (
                   <p className="text-sm text-destructive">{state.errors.auditText[0]}</p>
