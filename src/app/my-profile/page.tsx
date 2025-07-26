@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PersonalInformationCard } from './personal-information-card';
 import Link from 'next/link';
+import { cn } from '@/lib/utils.tsx';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -79,6 +80,12 @@ function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts } = useUser();
     const router = useRouter();
 
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     const allActionItems = useMemo(() => {
         if (!user) return [];
 
@@ -123,13 +130,6 @@ function MyProfilePage() {
 
         return [...personalAlerts, ...taskAlerts];
     }, [user, getUnacknowledgedAlerts]);
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-    }, [user, loading, router]);
-    
     
     if (loading || !user) {
         return (
@@ -168,14 +168,18 @@ function MyProfilePage() {
                         <CardTitle>My Action Items ({totalTasks})</CardTitle>
                         <CardDescription>Alerts and tasks assigned to you that require your attention.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <CardContent className="space-y-2 max-h-96 overflow-y-auto pr-2">
                         {totalTasks > 0 ? (
                            <ul className="space-y-2">
                                 {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
                                     <li key={`action-item-${index}`}>
                                         <Link 
                                             href={relatedLink || '#'}
-                                            className={`flex items-start justify-between p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : 'pointer-events-none'}`}
+                                            className={cn(
+                                                'flex items-start justify-between p-3 rounded-md border',
+                                                variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20',
+                                                relatedLink ? 'hover:bg-muted/50' : 'pointer-events-none'
+                                            )}
                                         >
                                             <div className="flex items-start gap-3">
                                                 {icon}
