@@ -7,7 +7,6 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import type { AuditChecklist, AuditChecklistItem, FindingStatus, FindingLevel, QualityAudit, NonConformanceIssue } from '@/lib/types';
-import Header from '@/components/layout/header';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, FileText, MessageSquareWarning, XCircle, MinusCircle, AlertTriangle, Bot } from 'lucide-react';
@@ -80,7 +79,7 @@ export default function PerformAuditPage() {
                 ...prev,
                 items: prev.items.map(item => {
                     if (item.id === itemId) {
-                        const updatedItem = { ...item, [field]: value };
+                        const updatedItem: AuditChecklistItem = { ...item, [field]: value };
                         // If finding is compliant or N/A, clear the level.
                         if (field === 'finding' && (value === 'Compliant' || value === 'Not Applicable')) {
                             updatedItem.level = null;
@@ -88,9 +87,9 @@ export default function PerformAuditPage() {
                          if (field === 'level' && value === 'Observation') {
                             updatedItem.finding = 'Observation';
                             updatedItem.level = null;
-                        } else if (field === 'level') {
-                            updatedItem.finding = 'Non-compliant';
-                        }
+                        } else if (field === 'level' && value !== 'Observation' && updatedItem.finding !== 'Non-compliant' && updatedItem.finding !== 'Partial') {
+                             updatedItem.finding = 'Non-compliant';
+                         }
                         return updatedItem;
                     }
                     return item;
@@ -115,6 +114,7 @@ export default function PerformAuditPage() {
                 category: 'Procedural', // Default category for now
                 description: item.observation || 'No details provided.',
                 regulationReference: item.regulationReference || 'N/A',
+                correctiveActionPlan: null,
             }));
             
         const totalItems = checklist.items.length;
@@ -122,7 +122,7 @@ export default function PerformAuditPage() {
         const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
 
         let status: QualityAudit['status'] = 'Compliant';
-        if (findings.some(f => f.finding === 'Non-compliant' || f.level?.includes('Level'))) {
+        if (findings.some(f => f.finding === 'Non-compliant' && f.level?.includes('Level'))) {
             status = 'Non-Compliant';
         } else if (findings.length > 0) {
             status = 'With Findings';
@@ -131,7 +131,7 @@ export default function PerformAuditPage() {
         const newAuditData: Omit<QualityAudit, 'id'> = {
             companyId: company.id,
             date: format(new Date(), 'yyyy-MM-dd'),
-            type: 'Internal', // Assuming internal for now
+            type: 'Internal',
             auditor: user.name,
             area: checklist.area,
             status,
@@ -139,8 +139,8 @@ export default function PerformAuditPage() {
             checklistItems: checklist.items,
             nonConformanceIssues: findings,
             summary: `Audit of ${checklist.area} conducted by ${user.name}.`,
-            auditeeName: checklist.auditeeName,
-            auditeePosition: checklist.auditeePosition,
+            auditeeName: checklist.auditeeName || null,
+            auditeePosition: checklist.auditeePosition || null,
         };
 
         try {
@@ -168,35 +168,46 @@ export default function PerformAuditPage() {
             { text: "Fire extinguisher in hangar has an expired inspection tag.", level: 'Level 1 Finding', reg: "OHS Act 85 of 1993" },
             { text: "Pilot flight and duty records for the previous month were not available for review.", level: 'Level 3 Finding', reg: "SACATS 121.08.1" },
             { text: "Incorrect part number used for a minor repair, although the part was functionally equivalent.", level: 'Level 2 Finding', reg: "Internal Procedure MAN-005 Sec 2.1" },
-            { text: "Safety briefing posters in the crew room are outdated.", level: 'Observation', reg: "SMS-MANUAL Sec 3.2" }
         ];
+        
+        let observationIndex = 0;
+        let nonComplianceIndex = 0;
 
         setChecklist(prev => {
             if (!prev) return null;
-            let nonComplianceIndex = 0;
             return {
                 ...prev,
                 auditeeName: 'John Smith (Sample)',
                 auditeePosition: 'Maintenance Manager (Sample)',
                 items: prev.items.map((item, index) => {
                     const random = Math.random();
-                    if (random < 0.6 && nonComplianceIndex < sampleNonCompliances.length) { 
+                    if (random < 0.3 && nonComplianceIndex < sampleNonCompliances.length) { 
                         const finding = sampleNonCompliances[nonComplianceIndex++];
                         return {
                             ...item,
-                            finding: finding.level === 'Observation' ? 'Observation' : 'Non-compliant',
+                            finding: 'Non-compliant',
                             level: finding.level as FindingLevel,
                             observation: finding.text,
                             evidence: `Reviewed document #${100 + index} and interviewed staff.`,
                             regulationReference: finding.reg
                         };
+                    } else if (random < 0.6 && observationIndex < sampleObservations.length) {
+                        const obs = sampleObservations[observationIndex++];
+                        return {
+                            ...item,
+                            finding: 'Observation',
+                            level: null,
+                            observation: obs,
+                            evidence: 'Direct observation during facility walk-through.',
+                            regulationReference: 'General Best Practice'
+                        }
                     } else {
                         return { 
                             ...item,
                             finding: 'Compliant',
                             level: null,
-                            observation: '',
-                            evidence: '',
+                            observation: 'Procedure followed as required.',
+                            evidence: 'No deviation noted.',
                             regulationReference: item.regulationReference
                         };
                     }
@@ -218,20 +229,23 @@ export default function PerformAuditPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header title={`Performing Audit: ${checklist.title}`}>
-                <Button onClick={handleSeedData} variant="secondary">
-                    <Bot className="mr-2 h-4 w-4" />
-                    Seed Sample Data
-                </Button>
-                <Button asChild variant="outline">
-                    <Link href="/quality?tab=checklists">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Checklists
-                    </Link>
-                </Button>
-            </Header>
+        <>
             <main className="flex-1 p-4 md:p-8">
+                <div className="flex items-center justify-between mb-4">
+                     <h2 className="text-2xl font-bold">Performing Audit: {checklist.title}</h2>
+                     <div className="flex gap-2">
+                        <Button onClick={handleSeedData} variant="secondary">
+                            <Bot className="mr-2 h-4 w-4" />
+                            Seed Sample Data
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link href="/quality?tab=checklists">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back to Checklists
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
                 <Card className="max-w-4xl mx-auto">
                     <CardHeader>
                         <CardTitle className="text-2xl">{checklist.title}</CardTitle>
@@ -277,7 +291,7 @@ export default function PerformAuditPage() {
                                         </RadioGroup>
                                     </div>
                                     
-                                    {(item.finding === 'Non-compliant' || item.finding === 'Partial') && (
+                                    {(item.finding === 'Non-compliant' || item.finding === 'Partial' || item.finding === 'Observation') && (
                                         <div className="space-y-2 pt-2 border-t mt-4">
                                             <Label>Level</Label>
                                             <RadioGroup 
@@ -316,6 +330,6 @@ export default function PerformAuditPage() {
                     </CardFooter>
                 </Card>
             </main>
-        </div>
+        </>
     );
 }
