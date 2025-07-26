@@ -76,15 +76,14 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     });
 
     const availableRecipients = React.useMemo(() => {
-        if (!personnel || personnel.length === 0 || !user || !audit) {
+        if (!personnel || personnel.length === 0 || !user) {
             return [];
         }
-        // Auditor and auditee should be able to discuss with each other
-        const teamNames = [audit.auditor, audit.auditeeName].filter(Boolean);
+        // Allow sending to any non-student user except the current user
         return personnel.filter(
-            (p) => teamNames.includes(p.name) && p.name !== user.name
+            (p) => p.role !== 'Student' && p.id !== user.id
         );
-    }, [personnel, audit, user]);
+    }, [personnel, user]);
 
 
     const handleCapSubmit = (data: CorrectiveActionPlan) => {
@@ -358,7 +357,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                     <SelectContent>
                                                         {availableRecipients.map((p) => (
                                                         <SelectItem key={p.id} value={p.name}>
-                                                            {p.name}
+                                                            {p.name} ({p.role})
                                                         </SelectItem>
                                                         ))}
                                                     </SelectContent>
