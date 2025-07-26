@@ -51,7 +51,7 @@ export default function QualityAuditDetailPage() {
         const auditSnap = await getDoc(auditRef);
 
         if (auditSnap.exists()) {
-            setAudit(auditSnap.data() as QualityAudit);
+            setAudit({ ...auditSnap.data(), id: auditSnap.id } as QualityAudit);
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
         }
@@ -75,10 +75,11 @@ export default function QualityAuditDetailPage() {
   
   const updateAuditInFirestore = async (updatedAudit: QualityAudit) => {
     if (!company) return;
+    const { id, ...auditData } = updatedAudit;
     try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, id);
         await updateDoc(auditRef, { 
-            nonConformanceIssues: updatedAudit.nonConformanceIssues,
+            nonConformanceIssues: auditData.nonConformanceIssues,
         });
         setAudit(updatedAudit);
     } catch (error) {
@@ -107,7 +108,7 @@ export default function QualityAuditDetailPage() {
         companyId: company.id,
         number: Date.now(),
         type: 'Task',
-        title: `CAP Assigned: Audit ${audit.id.substring(0, 6)}...`,
+        title: `CAP Assigned: Audit ${auditId.substring(0, 6)}...`,
         description: `You have been assigned a corrective action: "${cap.correctiveAction}"`,
         author: user.name,
         date: format(new Date(), 'yyyy-MM-dd'),
