@@ -4,16 +4,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Database, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
 import { AiChecklistGenerator } from './ai-checklist-generator';
-import type { AuditChecklist } from '@/lib/types';
+import type { AuditChecklist, QualityAudit } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { auditChecklistData as seedChecklists, qualityAuditData as seedAudits } from '@/lib/data-provider';
 
 interface ChecklistsManagerProps {
     refetchParent?: () => void;
@@ -25,6 +26,7 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
     const [checklistTemplates, setChecklistTemplates] = useState<AuditChecklist[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<AuditChecklist | null>(null);
+    const [isSeeding, setIsSeeding] = useState(false);
 
     const fetchTemplates = async () => {
         if (!company) return;
@@ -77,7 +79,6 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
     };
 
     const handleAiChecklistSave = async (data: Omit<AuditChecklist, 'id' | 'companyId'>) => {
-        // This is now a dedicated handler for the AI-generated checklist
         await handleFormSubmit(data);
     };
     
@@ -99,6 +100,44 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
         setIsDialogOpen(true);
     };
 
+    const handleSeedData = async () => {
+        if (!company) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No company context found.' });
+            return;
+        }
+        setIsSeeding(true);
+        try {
+            const batch = writeBatch(db);
+
+            // Seed checklists
+            seedChecklists.forEach(checklist => {
+                const checklistRef = doc(db, `companies/${company.id}/audit-checklists`, checklist.id);
+                batch.set(checklistRef, { ...checklist, companyId: company.id });
+            });
+
+            // Seed a completed audit report
+            seedAudits.forEach(audit => {
+                const auditRef = doc(db, `companies/${company.id}/quality-audits`, audit.id);
+                batch.set(auditRef, { ...audit, companyId: company.id });
+            });
+
+            await batch.commit();
+
+            toast({
+                title: 'Sample Data Seeded',
+                description: 'Sample checklists and an audit report have been added.'
+            });
+
+            fetchTemplates();
+            refetchParent?.();
+        } catch (error) {
+            console.error("Error seeding data:", error);
+            toast({ variant: 'destructive', title: 'Seeding Failed', description: 'Could not add sample data.' });
+        } finally {
+            setIsSeeding(false);
+        }
+    };
+
     return (
         <>
              <CardHeader className="flex flex-row items-center justify-between px-0 pt-0">
@@ -108,34 +147,40 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
                         Manage the master checklists used for quality audits.
                     </CardDescription>
                 </div>
-                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={() => openDialog()}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            New Template
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-3xl">
-                         <DialogHeader>
-                            <DialogTitle>{editingTemplate ? 'Edit Template' : 'Create New Template'}</DialogTitle>
-                            <DialogDescription>
-                                {editingTemplate ? 'Modify the existing template.' : 'Create a new audit checklist template manually or with AI assistance.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <Tabs defaultValue="manual">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="manual">Create Manually</TabsTrigger>
-                                <TabsTrigger value="ai">Generate with AI</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="manual">
-                                <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
-                            </TabsContent>
-                            <TabsContent value="ai">
-                                <AiChecklistGenerator onSave={handleAiChecklistSave} />
-                            </TabsContent>
-                        </Tabs>
-                    </DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-2">
+                    <Button onClick={handleSeedData} variant="outline" disabled={isSeeding}>
+                        {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                        Seed Sample Data
+                    </Button>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={() => openDialog()}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                New Template
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-3xl">
+                             <DialogHeader>
+                                <DialogTitle>{editingTemplate ? 'Edit Template' : 'Create New Template'}</DialogTitle>
+                                <DialogDescription>
+                                    {editingTemplate ? 'Modify the existing template.' : 'Create a new audit checklist template manually or with AI assistance.'}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <Tabs defaultValue="manual">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="manual">Create Manually</TabsTrigger>
+                                    <TabsTrigger value="ai">Generate with AI</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="manual">
+                                    <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                                </TabsContent>
+                                <TabsContent value="ai">
+                                    <AiChecklistGenerator onSave={handleAiChecklistSave} />
+                                </TabsContent>
+                            </Tabs>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
             <CardContent className="px-0 pb-0">
                 {checklistTemplates.length > 0 ? (

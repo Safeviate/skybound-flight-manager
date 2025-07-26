@@ -370,10 +370,72 @@ export let checklistData: Checklist[] = [];
 export let completedChecklistData: CompletedChecklist[] = [];
 export let safetyReportData: SafetyReport[] = [];
 export let riskRegisterData: Risk[] = [];
-export let qualityAuditData: QualityAudit[] = [];
+export let qualityAuditData: QualityAudit[] = [
+    {
+        id: 'QA-2024-001',
+        companyId: 'skybound-aero',
+        date: '2024-07-15',
+        type: 'Internal',
+        auditor: 'Olivia Rodriguez',
+        auditeeName: 'Michael Brown',
+        auditeePosition: 'Maintenance Lead',
+        area: 'Maintenance',
+        status: 'With Findings',
+        complianceScore: 92,
+        summary: 'An internal audit of the maintenance department focusing on tooling calibration and documentation. Most procedures were found to be compliant, however, some minor non-conformities were noted regarding the calibration log for torque wrenches.',
+        nonConformanceIssues: [
+            {
+                id: 'nci-1',
+                level: 'Level 2 Finding',
+                category: 'Records',
+                description: 'The calibration log for torque wrench #TW-015 was found to be out of date. Last calibration recorded was on 2023-05-20, exceeding the 12-month calibration interval.',
+                regulationReference: 'SACAA CATS 44.02.5(a)(2)',
+                correctiveActionPlan: {
+                    rootCause: 'Oversight in the manual tracking system for tool calibration schedules.',
+                    correctiveAction: 'Immediately send torque wrench #TW-015 for calibration. Update the log upon its return.',
+                    preventativeAction: 'Implement a digital tracking system with automated reminders for all calibrated tooling. Perform a full audit of all tool calibration records.',
+                    responsiblePerson: 'Michael Brown',
+                    completionDate: '2024-08-30',
+                    status: 'In Progress',
+                }
+            },
+            {
+                id: 'nci-2',
+                level: 'Observation',
+                category: 'Facilities',
+                description: 'The chemical storage cabinet, while correctly labeled, was noted to be cluttered, which could lead to difficulty in quickly accessing specific materials.',
+                regulationReference: 'General Housekeeping Best Practices',
+            }
+        ],
+    }
+];
 export let auditScheduleData: AuditScheduleItem[] = [];
-export let auditChecklistData: AuditChecklist[] = [];
+export let auditChecklistData: AuditChecklist[] = [
+    {
+        id: 'ac-fo-001',
+        companyId: 'skybound-aero',
+        title: 'Quarterly Flight Operations Inspection',
+        area: 'Flight Operations',
+        items: [
+            { id: '1', text: 'Are all pilot licenses and medicals current?', finding: null },
+            { id: '2', text: 'Are flight and duty time records correctly maintained? (SACAA CATS 61.14)', finding: null },
+            { id: '3', text: 'Is the operational flight planning process adequate? (SACAA CAR 91.03.1)', finding: null },
+        ]
+    },
+    {
+        id: 'ac-maint-001',
+        companyId: 'skybound-aero',
+        title: 'Annual Maintenance Facility Audit',
+        area: 'Maintenance',
+        items: [
+            { id: '1', text: 'Is all tooling and equipment properly calibrated and stored? (SACAA CATS 44.02.5)', finding: null },
+            { id: '2', text: 'Are maintenance records complete and accurately filed? (SACAA CAR 43.02.4)', finding: null },
+            { id: '3', text: 'Is the parts and materials storage secure and correctly managed?', finding: null },
+        ]
+    }
+];
 export let allAlerts: Alert[] = [];
 export let companyData: Company[] = [];
 
 // Functions to modify data are now handled by components writing to Firestore.
+
