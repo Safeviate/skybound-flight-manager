@@ -52,7 +52,6 @@ const navItems: {
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'] },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'] },
-  { href: '/checklists/scan', label: 'Scan Checklist', icon: QrCode },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
   { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
@@ -147,12 +146,6 @@ export default function Nav() {
                     </Link>
                 </SidebarMenuItem>
             ))}
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: 'Support' }}>
-                    <HelpCircle />
-                    <span>Support</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Logout' }}>
                     <LogOut />

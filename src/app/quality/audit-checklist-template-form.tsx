@@ -142,7 +142,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormControl>
-                                        <Input placeholder="Regulation Reference (e.g., FAA 14 CFR §61.3)" {...field} />
+                                        <Input placeholder="Regulation Reference (e.g., SACAA CAR 61.01.1)" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>

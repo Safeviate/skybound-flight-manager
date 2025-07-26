@@ -12,50 +12,65 @@ import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'f
 import type { AuditChecklist as Checklist } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
-import { useFormState, useFormStatus } from 'react-dom';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const initialState = {
-  message: '',
-  data: null,
-  errors: null,
-};
-
-function GenerateButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Checklist
-    </Button>
-  );
-}
-
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
-    const [state, formAction] = useFormState(generateAuditChecklist, initialState);
-    
-    useEffect(() => {
-        if (state && state.data) {
-            onGenerated(state.data);
-        }
-    }, [state, onGenerated]);
+    const [topic, setTopic] = useState('');
+    const [numItems, setNumItems] = useState('10');
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
 
+    const handleGenerate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            const result = await generateAuditChecklist({
+                topic,
+                numItems: parseInt(numItems, 10),
+            });
+            onGenerated(result);
+        } catch (error) {
+            console.error('AI Generation Error:', error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Generation Failed',
+                description: 'Could not generate the checklist. Please try again.',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
     return (
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleGenerate} className="space-y-4">
             <div className="space-y-2">
                 <Label htmlFor="topic">Audit Topic</Label>
-                <Input id="topic" name="topic" placeholder="e.g., Hangar Safety, Flight Documentation" required />
+                <Input 
+                    id="topic" 
+                    name="topic" 
+                    placeholder="e.g., Hangar Safety, Flight Documentation" 
+                    required 
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="numItems">Number of Items</Label>
-                <Input id="numItems" name="numItems" type="number" defaultValue="10" required />
+                <Input 
+                    id="numItems" 
+                    name="numItems" 
+                    type="number" 
+                    value={numItems}
+                    onChange={(e) => setNumItems(e.target.value)}
+                    required 
+                />
             </div>
-            <GenerateButton />
-             {state && state.errors && (
-                <p className="text-sm text-destructive">{JSON.stringify(state.errors)}</p>
-            )}
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+              Generate Checklist
+            </Button>
         </form>
     )
 }
@@ -94,9 +109,7 @@ export function AuditChecklistsManager() {
             toast({ title: "Template Created" });
         }
         fetchTemplates();
-        setIsDialogOpen(false);
-        setEditingTemplate(null);
-        setCreationMode(null);
+        closeDialog();
     };
 
     const handleAiGenerated = (data: { title: string; items: { text: string; regulationReference: string }[] }) => {

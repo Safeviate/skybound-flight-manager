@@ -494,3 +494,14 @@ export type Alert = {
   targetUserId?: string;
   relatedLink?: string;
 };
+
+// This type was moved here from `app/checklists/page.tsx`
+export type Checklist = {
+  id: string;
+  companyId: string;
+  title: string;
+  category: 'Pre-Flight' | 'Post-Flight' | 'Maintenance';
+  items: ChecklistItem[];
+  templateId?: string; // ID of the master template
+  aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
+};
