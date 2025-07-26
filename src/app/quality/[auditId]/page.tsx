@@ -550,10 +550,20 @@ export default function QualityAuditDetailPage() {
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
-    setAudit(updatedAudit); // Optimistic update
+
+    // Create a deep copy and remove undefined values recursively
+    const cleanAudit = JSON.parse(JSON.stringify(updatedAudit, (key, value) => {
+        return value === undefined ? null : value;
+    }));
+    
+    // Replace nulls back to undefined where Firestore allows, or keep as null
+    // For this case, we can just send the 'cleanAudit' object which has nulls instead of undefined.
+    // Firestore handles 'null' correctly. The issue was with 'undefined'.
+
+    setAudit(cleanAudit); // Optimistic update with cleaned data
     try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        await setDoc(auditRef, updatedAudit, { merge: true });
+        await setDoc(auditRef, cleanAudit, { merge: true });
         if (showToast) {
             toast({ title: 'Audit Updated', description: 'Your changes have been saved.' });
         }
@@ -815,3 +825,4 @@ export default function QualityAuditDetailPage() {
     
 
     
+
