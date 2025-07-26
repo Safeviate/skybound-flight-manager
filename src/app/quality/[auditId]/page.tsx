@@ -3,7 +3,6 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
@@ -62,23 +61,17 @@ export default function QualityAuditDetailPage() {
 
   if (loading || userLoading) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header title="Loading Audit..." />
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <p>Loading audit details...</p>
         </main>
-      </div>
     );
   }
 
   if (!audit) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header title="Audit Not Found" />
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <p>The requested quality audit could not be found.</p>
         </main>
-      </div>
     );
   }
   
@@ -111,8 +104,6 @@ export default function QualityAuditDetailPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header title={`Audit Details: ${audit.id}`} />
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-5xl mx-auto">
         <Card>
           <CardHeader>
@@ -257,6 +248,5 @@ export default function QualityAuditDetailPage() {
             </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
