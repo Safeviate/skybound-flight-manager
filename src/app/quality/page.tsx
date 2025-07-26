@@ -18,6 +18,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -200,6 +201,7 @@ function QualityPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -239,6 +241,11 @@ function QualityPage() {
                         </CardContent>
                     </Card>
                 </div>
+            </TabsContent>
+            <TabsContent value="checklists" className="mt-4">
+                <p>
+                    Navigate to <Link href="/quality/audit-checklists" className="text-primary underline">Audit Checklists</Link> to manage templates.
+                </p>
             </TabsContent>
         </Tabs>
       </main>

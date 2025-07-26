@@ -32,6 +32,7 @@ import {
   QrCode,
   Building,
   Database,
+  ListChecks,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -163,5 +164,3 @@ export default function Nav() {
     </>
   );
 }
-
-    
