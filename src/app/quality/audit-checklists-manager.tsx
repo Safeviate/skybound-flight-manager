@@ -3,18 +3,20 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { AuditChecklist as Checklist } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     const [topic, setTopic] = useState('');
@@ -82,6 +84,7 @@ export function AuditChecklistsManager() {
     const { user, company, loading } = useUser();
     const { toast } = useToast();
     const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
+    const router = useRouter();
 
     const fetchTemplates = async () => {
         if (!company) return;
@@ -95,6 +98,32 @@ export function AuditChecklistsManager() {
             fetchTemplates();
         }
     }, [company]);
+
+    const handleStartAudit = async (template: Checklist) => {
+        if (!company || !user) return;
+        const newAuditId = doc(collection(db, 'temp')).id;
+        const newAudit: QualityAudit = {
+            id: newAuditId,
+            companyId: company.id,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            type: 'Internal',
+            auditor: user.name,
+            area: template.area,
+            status: 'Open',
+            complianceScore: 0,
+            checklistItems: template.items,
+            nonConformanceIssues: [],
+            summary: '',
+        };
+
+        try {
+            await setDoc(doc(db, `companies/${company.id}/quality-audits`, newAuditId), newAudit);
+            router.push(`/quality/${newAuditId}`);
+        } catch (error) {
+            console.error("Error starting audit:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not create new audit report.'});
+        }
+    }
 
     const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
@@ -185,11 +214,14 @@ export function AuditChecklistsManager() {
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
-                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                    <Button variant="secondary" size="sm" onClick={() => handleStartAudit(template)}>
+                                        <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
                                     </Button>
-                                    <Button variant="destructive" size="sm" onClick={() => handleDelete(template.id)}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                    </Button>
+                                    <Button variant="destructive" size="icon" onClick={() => handleDelete(template.id)}>
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </CardFooter>
                             </Card>
