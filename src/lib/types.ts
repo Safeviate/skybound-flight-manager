@@ -492,3 +492,4 @@ export type Alert = {
   date: string;
   readBy: string[];
 };
+
