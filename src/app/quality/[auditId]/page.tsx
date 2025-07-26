@@ -176,7 +176,6 @@ export default function QualityAuditDetailPage() {
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
                                                     <h4 className="font-semibold text-base flex items-center gap-2">Finding #{index + 1}: 
-                                                        <Badge variant={findingInfo.variant}>{findingInfo.text}</Badge>
                                                         {levelInfo && <Badge variant={levelInfo.variant}>{issue.level}</Badge>}
                                                     </h4>
                                                     <Badge variant="outline">{issue.category}</Badge>
