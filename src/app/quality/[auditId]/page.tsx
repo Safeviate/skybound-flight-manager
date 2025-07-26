@@ -164,6 +164,12 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-2xl">
+                             <DialogHeader>
+                                <DialogTitle>AI Audit Analysis</DialogTitle>
+                                <DialogDescription>
+                                    The AI will analyze the provided audit report text for compliance, non-conformance, and areas of excellence.
+                                </DialogDescription>
+                            </DialogHeader>
                             <QualityAuditAnalyzer auditText={auditReportText} />
                         </DialogContent>
                     </Dialog>
