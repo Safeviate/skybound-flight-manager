@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { AuditArea, AuditChecklist } from '@/lib/types';
-import { DialogTrigger } from '@/components/ui/dialog';
 
 const AUDIT_AREAS: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
 

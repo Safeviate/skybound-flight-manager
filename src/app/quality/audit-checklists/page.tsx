@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
@@ -172,12 +172,18 @@ export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
     );
 }
 
-// This page is now effectively just a wrapper for the manager component,
-// but we'll keep it for routing purposes. In a larger refactor, it might be removed.
 function AuditChecklistsPageWrapper() {
     return (
       <main className="flex-1 p-4 md:p-8">
         <Card>
+            <CardHeader>
+                 <Button asChild variant="outline" className="w-fit">
+                    <Link href="/quality">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Quality Dashboard
+                    </Link>
+                </Button>
+            </CardHeader>
           <CardContent>
             <ChecklistsManager />
           </CardContent>
