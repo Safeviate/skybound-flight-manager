@@ -37,7 +37,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
   const pageComponent = Children.only(children) as React.ReactElement;
-  const pageTitle = pageComponent.props.title || 'Skybound';
+  const pageTitle = (pageComponent.type as any).title || 'Skybound';
+  const headerContent = (pageComponent.type as any).headerContent;
 
 
   if (showLayout) {
@@ -49,7 +50,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           <SidebarInset>
               <div className="flex-1 flex flex-col min-h-0">
                 <Header title={pageTitle}>
-                  {pageComponent.props.headerContent}
+                  {headerContent}
                 </Header>
                 <div className="flex-1 overflow-y-auto">
                     {children}
