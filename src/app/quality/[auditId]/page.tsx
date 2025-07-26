@@ -76,13 +76,13 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     });
 
     const availableRecipients = React.useMemo(() => {
-        if (!personnel || personnel.length === 0 || !user) {
-        return [];
+        if (!personnel || personnel.length === 0 || !user || !audit) {
+            return [];
         }
-        // Auditor and auditee should be able to discuss
-        const team = [audit?.auditor, audit?.auditeeName].filter(Boolean);
+        // Auditor and auditee should be able to discuss with each other
+        const teamNames = [audit.auditor, audit.auditeeName].filter(Boolean);
         return personnel.filter(
-        (p) => team.includes(p.name) && p.name !== user?.name
+            (p) => teamNames.includes(p.name) && p.name !== user.name
         );
     }, [personnel, audit, user]);
 
