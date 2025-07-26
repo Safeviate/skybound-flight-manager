@@ -7,10 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { QualityAuditAnalyzer } from './quality-audit-analyzer';
 import { AuditSchedule } from './audit-schedule';
@@ -18,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -202,7 +200,6 @@ function QualityPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="audits">Audits</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -242,44 +239,6 @@ function QualityPage() {
                         </CardContent>
                     </Card>
                 </div>
-            </TabsContent>
-            <TabsContent value="audits" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Quality Audits</CardTitle>
-                        <CardDescription>A log of recently completed internal and external audits.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Audit ID</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Area</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Score</TableHead>
-                                    <TableHead className="w-12"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {audits.map(audit => (
-                                    <TableRow key={audit.id} onClick={() => router.push(`/quality/${audit.id}`)} className="cursor-pointer">
-                                        <TableCell className="font-mono">{audit.id}</TableCell>
-                                        <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
-                                        <TableCell>{audit.type}</TableCell>
-                                        <TableCell>{audit.area}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">{audit.complianceScore}%</TableCell>
-                                        <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
             </TabsContent>
         </Tabs>
       </main>
