@@ -4,19 +4,23 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewChecklistForm } from './new-checklist-form';
 import { AiChecklistGenerator } from './ai-checklist-generator';
-import type { AuditChecklist, AuditChecklistItem } from '@/lib/types';
+import type { AuditChecklist } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
-function AuditChecklistsPage() {
+interface ChecklistsManagerProps {
+    refetchParent?: () => void;
+}
+
+export function ChecklistsManager({ refetchParent }: ChecklistsManagerProps) {
     const { company } = useUser();
     const { toast } = useToast();
     const [checklistTemplates, setChecklistTemplates] = useState<AuditChecklist[]>([]);
@@ -64,6 +68,7 @@ function AuditChecklistsPage() {
                 toast({ title: 'Template Created', description: `"${data.title}" has been created.` });
             }
             fetchTemplates();
+            refetchParent?.();
             setIsDialogOpen(false);
             setEditingTemplate(null);
         } catch (error) {
@@ -78,6 +83,7 @@ function AuditChecklistsPage() {
             await deleteDoc(doc(db, `companies/${company.id}/audit-checklists`, templateId));
             toast({ title: 'Template Deleted', description: 'The checklist template has been removed.' });
             fetchTemplates();
+            refetchParent?.();
         } catch (error) {
             console.error("Error deleting template:", error);
             toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete the template.' });
@@ -90,92 +96,94 @@ function AuditChecklistsPage() {
     };
 
     return (
-        <main className="flex-1 p-4 md:p-8">
-             <div className="flex items-center gap-4 mb-4">
-                <Button asChild variant="outline">
-                    <Link href="/quality">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Quality Dashboard
-                    </Link>
-                </Button>
-            </div>
-             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Audit Checklist Templates</CardTitle>
-                        <CardDescription>
-                            Manage the master checklists used for quality audits.
-                        </CardDescription>
+        <>
+             <CardHeader className="flex flex-row items-center justify-between px-0 pt-0">
+                <div>
+                    <CardTitle>Audit Checklist Templates</CardTitle>
+                    <CardDescription>
+                        Manage the master checklists used for quality audits.
+                    </CardDescription>
+                </div>
+                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button onClick={() => openDialog()}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            New Template
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-3xl">
+                         <DialogHeader>
+                            <DialogTitle>{editingTemplate ? 'Edit Template' : 'Create New Template'}</DialogTitle>
+                            <DialogDescription>
+                                {editingTemplate ? 'Modify the existing template.' : 'Create a new audit checklist template manually or with AI assistance.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Tabs defaultValue="manual">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="manual">Create Manually</TabsTrigger>
+                                <TabsTrigger value="ai">Generate with AI</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="manual">
+                                <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                            </TabsContent>
+                            <TabsContent value="ai">
+                                <AiChecklistGenerator onSave={handleFormSubmit} />
+                            </TabsContent>
+                        </Tabs>
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+                {checklistTemplates.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {checklistTemplates.map((template) => (
+                            <Card key={template.id} className="flex flex-col">
+                                <CardHeader>
+                                    <CardTitle className="text-base">{template.title}</CardTitle>
+                                    <CardDescription>{template.area} ({template.items.length} items)</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1">
+                                    <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                        {template.items.slice(0, 4).map(item => (
+                                            <li key={item.id} className="truncate">{item.text}</li>
+                                        ))}
+                                        {template.items.length > 4 && <li>...and {template.items.length - 4} more.</li>}
+                                    </ul>
+                                </CardContent>
+                                <CardFooter className="flex justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
                     </div>
-                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button onClick={() => openDialog()}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                New Template
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-3xl">
-                             <DialogHeader>
-                                <DialogTitle>{editingTemplate ? 'Edit Template' : 'Create New Template'}</DialogTitle>
-                                <DialogDescription>
-                                    {editingTemplate ? 'Modify the existing template.' : 'Create a new audit checklist template manually or with AI assistance.'}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Tabs defaultValue="manual">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="manual">Create Manually</TabsTrigger>
-                                    <TabsTrigger value="ai">Generate with AI</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="manual">
-                                    <NewChecklistForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
-                                </TabsContent>
-                                <TabsContent value="ai">
-                                    <AiChecklistGenerator onSave={handleFormSubmit} />
-                                </TabsContent>
-                            </Tabs>
-                        </DialogContent>
-                    </Dialog>
-                </CardHeader>
-                <CardContent>
-                    {checklistTemplates.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {checklistTemplates.map((template) => (
-                                <Card key={template.id} className="flex flex-col">
-                                    <CardHeader>
-                                        <CardTitle className="text-base">{template.title}</CardTitle>
-                                        <CardDescription>{template.area} ({template.items.length} items)</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-1">
-                                        <ul className="list-disc list-inside text-sm text-muted-foreground">
-                                            {template.items.slice(0, 4).map(item => (
-                                                <li key={item.id} className="truncate">{item.text}</li>
-                                            ))}
-                                            {template.items.length > 4 && <li>...and {template.items.length - 4} more.</li>}
-                                        </ul>
-                                    </CardContent>
-                                    <CardFooter className="flex justify-end gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => openDialog(template)}>
-                                            <Edit className="h-4 w-4 mr-2" />
-                                            Edit
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No checklist templates found. Create one to get started.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </main>
+                ) : (
+                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">No checklist templates found. Create one to get started.</p>
+                    </div>
+                )}
+            </CardContent>
+        </>
     );
 }
 
-AuditChecklistsPage.title = "Audit Checklists";
+// This page is now effectively just a wrapper for the manager component,
+// but we'll keep it for routing purposes. In a larger refactor, it might be removed.
+function AuditChecklistsPageWrapper() {
+    return (
+      <main className="flex-1 p-4 md:p-8">
+        <Card>
+          <CardContent>
+            <ChecklistsManager />
+          </CardContent>
+        </Card>
+      </main>
+    )
+}
 
-export default AuditChecklistsPage;
+export default AuditChecklistsPageWrapper;

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, AuditChecklist } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
+import { ChecklistsManager } from './audit-checklists/page';
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -88,6 +88,29 @@ function QualityPage() {
   const { user, company, loading } = useUser();
   const { toast } = useToast();
 
+  const fetchData = async () => {
+    if (!company) return;
+    try {
+        const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
+        const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+
+        const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
+            getDocs(auditsQuery),
+            getDocs(scheduleQuery),
+        ]);
+        
+        const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
+        setAudits(auditsList);
+
+        const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
+        setSchedule(scheduleList);
+
+    } catch (error) {
+        console.error("Error fetching quality data:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
+    }
+  };
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -95,27 +118,6 @@ function QualityPage() {
       return;
     }
     if (company) {
-        const fetchData = async () => {
-            try {
-                const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
-                const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
-
-                const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
-                    getDocs(auditsQuery),
-                    getDocs(scheduleQuery),
-                ]);
-                
-                const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
-                setAudits(auditsList);
-
-                const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
-                setSchedule(scheduleList);
-
-            } catch (error) {
-                console.error("Error fetching quality data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
-            }
-        };
         fetchData();
     }
   }, [user, company, loading, router, toast]);
@@ -243,9 +245,11 @@ function QualityPage() {
                 </div>
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
-                <p>
-                    Navigate to <Link href="/quality/audit-checklists" className="text-primary underline">Audit Checklists</Link> to manage templates.
-                </p>
+                <Card>
+                    <CardContent className="pt-6">
+                        <ChecklistsManager refetchParent={fetchData} />
+                    </CardContent>
+                </Card>
             </TabsContent>
         </Tabs>
       </main>
