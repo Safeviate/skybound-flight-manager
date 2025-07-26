@@ -485,12 +485,12 @@ export type Alert = {
   id: string;
   companyId?: string;
   number: number;
-  type: 'Red Tag' | 'Yellow Tag';
+  type: 'Red Tag' | 'Yellow Tag' | 'Task';
   title: string;
   description: string;
   author: string;
   date: string;
   readBy: string[];
+  targetUserId?: string;
+  relatedLink?: string;
 };
-
-

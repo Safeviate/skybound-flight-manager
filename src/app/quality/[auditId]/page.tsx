@@ -4,14 +4,14 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, CorrectiveActionPlan } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, CorrectiveActionPlan, User, Alert } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText, ArrowLeft, PlusCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, User as UserIcon, ShieldCheck, Calendar, BookOpen, UserCheck, Target, Percent, FileText, ArrowLeft, PlusCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -30,25 +30,7 @@ export default function QualityAuditDetailPage() {
   const [loading, setLoading] = useState(true);
   const auditId = params.auditId as string;
   const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
-
-  const fetchAudit = async () => {
-    setLoading(true);
-    try {
-      const auditRef = doc(db, `companies/${company!.id}/quality-audits`, auditId);
-      const auditSnap = await getDoc(auditRef);
-
-      if (auditSnap.exists()) {
-        setAudit(auditSnap.data() as QualityAudit);
-      } else {
-        toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
-      }
-    } catch (error) {
-      console.error("Error fetching audit:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [personnel, setPersonnel] = useState<User[]>([]);
 
   useEffect(() => {
     if (userLoading) return;
@@ -61,11 +43,43 @@ export default function QualityAuditDetailPage() {
       return;
     }
     
+    const fetchAudit = async () => {
+        setLoading(true);
+        try {
+        const auditRef = doc(db, `companies/${company!.id}/quality-audits`, auditId);
+        const auditSnap = await getDoc(auditRef);
+
+        if (auditSnap.exists()) {
+            setAudit(auditSnap.data() as QualityAudit);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
+        }
+        } catch (error) {
+        console.error("Error fetching audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
+        } finally {
+        setLoading(false);
+        }
+    };
+
+    const fetchPersonnel = async () => {
+        const q = collection(db, `companies/${company!.id}/users`);
+        const snapshot = await getDocs(q);
+        setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id } as User)));
+    };
+
     fetchAudit();
+    fetchPersonnel();
   }, [auditId, user, company, userLoading, router, toast]);
 
   const handleCapSubmit = async (issueId: string, cap: CorrectiveActionPlan) => {
-    if (!audit || !company) return;
+    if (!audit || !company || !user) return;
+    
+    const responsiblePerson = personnel.find(p => p.name === cap.responsiblePerson);
+    if (!responsiblePerson) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not find the assigned user.' });
+        return;
+    }
 
     const updatedIssues = audit.nonConformanceIssues.map(issue => 
       issue.id === issueId ? { ...issue, correctiveActionPlan: cap } : issue
@@ -76,9 +90,25 @@ export default function QualityAuditDetailPage() {
     try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
+
+        // Create a targeted alert for the responsible person
+        const alertData: Omit<Alert, 'id'> = {
+            companyId: company.id,
+            number: Date.now(),
+            type: 'Task',
+            title: `CAP Assigned: Audit ${audit.id.substring(0, 6)}...`,
+            description: `You have been assigned a corrective action: "${cap.correctiveAction}"`,
+            author: user.name,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            readBy: [],
+            targetUserId: responsiblePerson.id,
+            relatedLink: `/quality/${audit.id}`
+        };
+        await addDoc(collection(db, `companies/${company.id}/alerts`), alertData);
+
         setAudit(updatedAudit);
         setEditingIssueId(null);
-        toast({ title: 'Success', description: 'Corrective Action Plan has been saved.' });
+        toast({ title: 'Success', description: `Corrective Action Plan saved and notification sent to ${responsiblePerson.name}.` });
     } catch (error) {
         console.error("Error saving CAP:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save Corrective Action Plan.' });

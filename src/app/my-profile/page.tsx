@@ -5,9 +5,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle, KeyRound } from 'lucide-react';
+import { Mail, Phone, User as UserIcon, Briefcase, Calendar as CalendarIcon, Edit, ClipboardCheck, MessageSquareWarning, ShieldCheck, ChevronRight, AlertTriangle, KeyRound, CheckSquare, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport, TrainingLogEntry } from '@/lib/types';
+import type { Booking, Checklist, User as AppUser, Aircraft, Risk, SafetyReport, TrainingLogEntry, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO, isBefore, differenceInDays, isSameDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
@@ -88,15 +88,82 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 
 
 function MyProfilePage() {
-    const { user, updateUser, company, loading } = useUser();
+    const { user, updateUser, company, loading, getUnacknowledgedAlerts } = useUser();
     const router = useRouter();
     const { settings } = useSettings();
 
-    const flightTimeLimits = {
-      daily: settings.dutyLimitDaily,
-      weekly: settings.dutyLimitWeekly,
-      monthly: settings.dutyLimitMonthly,
-    };
+    const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
+    const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
+    const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date('2024-08-15'));
+
+    // Move all hooks to the top level
+    const allTrainingLogs: TrainingLogEntry[] = useMemo(() => {
+        return userData.flatMap(u => u.trainingLogs || []);
+    }, []);
+
+    const userLogs = useMemo(() => {
+        if (!user) return [];
+        if (user.role === 'Student') {
+            return user.trainingLogs || [];
+        }
+        if (user.role.includes('Instructor')) {
+            return allTrainingLogs.filter(log => log.instructorName === user.name);
+        }
+        return [];
+    }, [user, allTrainingLogs]);
+
+    const allActionItems = useMemo(() => {
+        if (!user) return [];
+        const today = new Date('2024-08-15');
+        const flightTimeLimits = {
+          daily: settings.dutyLimitDaily,
+          weekly: settings.dutyLimitWeekly,
+          monthly: settings.dutyLimitMonthly,
+        };
+
+        // Personal alerts (expiries, fatigue)
+        const personalAlerts: { type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
+
+        if (user.medicalExpiry) {
+            const daysUntil = differenceInDays(parseISO(user.medicalExpiry), today);
+            if (daysUntil <= 60) {
+                personalAlerts.push({ 
+                    type: 'Medical Certificate Expiry', 
+                    date: user.medicalExpiry, 
+                    details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
+                    variant: daysUntil > 30 ? 'warning' : 'destructive',
+                    icon: <AlertTriangle className={`h-5 w-5 ${daysUntil > 30 ? 'text-amber-500' : 'text-red-500'}`} />
+                });
+            }
+        }
+        if (user.licenseExpiry) {
+            const daysUntil = differenceInDays(parseISO(user.licenseExpiry), today);
+            if (daysUntil <= 60) {
+                personalAlerts.push({ 
+                    type: 'Pilot License Expiry', 
+                    date: user.licenseExpiry, 
+                    details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
+                    variant: daysUntil > 30 ? 'warning' : 'destructive',
+                    icon: <AlertTriangle className={`h-5 w-5 ${daysUntil > 30 ? 'text-amber-500' : 'text-red-500'}`} />
+                });
+            }
+        }
+        // ... (Fatigue alerts can be added here similarly)
+
+        // Task alerts from context
+        const taskAlerts = getUnacknowledgedAlerts()
+            .filter(alert => alert.type === 'Task' && alert.targetUserId === user.id)
+            .map(alert => ({
+                type: alert.title,
+                details: alert.description,
+                relatedLink: alert.relatedLink,
+                variant: 'warning' as const,
+                icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />
+            }));
+
+        return [...personalAlerts, ...taskAlerts];
+    }, [user, getUnacknowledgedAlerts, settings]);
+
 
     useEffect(() => {
         if (!loading && !user) {
@@ -105,29 +172,6 @@ function MyProfilePage() {
     }, [user, loading, router]);
     
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display of mock data
-
-    const [checklists, setChecklists] = useState<Checklist[]>(initialChecklistData);
-    const [bookings, setBookings] = useState<Booking[]>(initialBookingData);
-    
-    const [selectedDay, setSelectedDay] = useState<Date | undefined>(today);
-
-    // This is a simplified aggregation of all logs for demo purposes.
-    // In a real app, you would fetch logs specific to the user.
-    const allTrainingLogs: TrainingLogEntry[] = useMemo(() => {
-      return userData.flatMap(u => u.trainingLogs || []);
-    }, []);
-
-    const userLogs = useMemo(() => {
-      if (!user) return [];
-      if (user.role === 'Student') {
-        return user.trainingLogs || [];
-      }
-      if (user.role.includes('Instructor')) {
-        return allTrainingLogs.filter(log => log.instructorName === user.name);
-      }
-      return [];
-    }, [user, allTrainingLogs]);
-
 
     if (loading || !user) {
         return (
@@ -144,7 +188,6 @@ function MyProfilePage() {
                 password: newPassword,
                 mustChangePassword: false,
             };
-            // In a real app, this would be an API call
             updateUser(updatedUser);
         }
     };
@@ -205,21 +248,6 @@ function MyProfilePage() {
     const bookedDays = userBookings.map(b => parseISO(b.date));
     const selectedDayBookings = getBookingsForDay(selectedDay);
 
-    const getRoleVariant = (role: AppUser['role']) => {
-        switch (role) {
-            case 'Instructor':
-                return 'primary'
-            case 'Maintenance':
-                return 'destructive'
-            case 'Admin':
-                return 'secondary'
-            case 'Student':
-                return 'default'
-            default:
-                return 'outline'
-        }
-    }
-
     const getPurposeVariant = (purpose: Booking['purpose']) => {
         switch (purpose) {
             case 'Training':
@@ -233,78 +261,7 @@ function MyProfilePage() {
         }
     }
 
-    const discussionRequests = safetyReportData
-        .filter(report => report.companyId === company?.id && report.status !== 'Closed')
-        .flatMap(report => (report.discussion || []).map(entry => ({ report, entry })))
-        .filter(({ report, entry }) => entry.recipient === user.name);
-    
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-    const riskReviews = riskRegisterData.filter(risk =>
-        risk.companyId === company?.id &&
-        risk.riskOwner === user.name &&
-        risk.status === 'Open' &&
-        risk.reviewDate &&
-        isBefore(parseISO(risk.reviewDate), thirtyDaysFromNow)
-    );
-
-    const personalAlerts: { type: string; date?: string; daysUntil?: number; details: string; variant: 'warning' | 'destructive' }[] = [];
-
-    if (user.medicalExpiry) {
-        const daysUntil = differenceInDays(parseISO(user.medicalExpiry), today);
-        if (daysUntil <= 60) {
-            personalAlerts.push({ 
-                type: 'Medical Certificate Expiry', 
-                date: user.medicalExpiry, 
-                daysUntil,
-                details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
-                variant: daysUntil > 30 ? 'warning' : 'destructive',
-            });
-        }
-    }
-    if (user.licenseExpiry) {
-        const daysUntil = differenceInDays(parseISO(user.licenseExpiry), today);
-        if (daysUntil <= 60) {
-            personalAlerts.push({ 
-                type: 'Pilot License Expiry', 
-                date: user.licenseExpiry, 
-                daysUntil,
-                details: daysUntil > 0 ? `Expires in ${daysUntil} days` : 'Expired',
-                variant: daysUntil > 30 ? 'warning' : 'destructive',
-             });
-        }
-    }
-
-    // Fatigue Alerts
-    const hours24 = calculateFlightHours(userLogs, 1);
-    const hours7d = calculateFlightHours(userLogs, 7);
-    const hours30d = calculateFlightHours(userLogs, 30);
-
-    const dutyThreshold = 0.75; // 75% warning threshold
-    if (hours24 / flightTimeLimits.daily >= dutyThreshold) {
-        personalAlerts.push({
-            type: 'Approaching Daily Duty Limit',
-            details: `Logged ${hours24} of ${flightTimeLimits.daily} hours`,
-            variant: (hours24 / flightTimeLimits.daily) >= 0.9 ? 'destructive' : 'warning',
-        });
-    }
-     if (hours7d / flightTimeLimits.weekly >= dutyThreshold) {
-        personalAlerts.push({
-            type: 'Approaching Weekly Duty Limit',
-            details: `Logged ${hours7d} of ${flightTimeLimits.weekly} hours`,
-            variant: (hours7d / flightTimeLimits.weekly) >= 0.9 ? 'destructive' : 'warning',
-        });
-    }
-     if (hours30d / flightTimeLimits.monthly >= dutyThreshold) {
-        personalAlerts.push({
-            type: 'Approaching Monthly Duty Limit',
-            details: `Logged ${hours30d} of ${flightTimeLimits.monthly} hours`,
-            variant: (hours30d / flightTimeLimits.monthly) >= 0.9 ? 'destructive' : 'warning',
-        });
-    }
-
-    const totalTasks = discussionRequests.length + riskReviews.length + personalAlerts.length;
+    const totalTasks = allActionItems.length;
 
   return (
     <>
@@ -326,79 +283,26 @@ function MyProfilePage() {
                     </CardHeader>
                     <CardContent className="space-y-4 max-h-96 overflow-y-auto pr-2">
                         {totalTasks > 0 ? (
-                            <>
-                                {personalAlerts.length > 0 && (
-                                        <div className="space-y-2">
-                                        <h4 className="font-semibold text-sm text-muted-foreground">Personal Alerts</h4>
-                                        <ul className="space-y-2">
-                                            {personalAlerts.map(({ type, date, details, variant }, index) => (
-                                                <li key={`personal-alert-${index}`}>
-                                                        <div className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'}`}>
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="flex items-start gap-3">
-                                                                <AlertTriangle className={`h-5 w-5 ${variant === 'destructive' ? 'text-red-500' : 'text-amber-500'} mt-0.5`} />
-                                                                <div>
-                                                                    <p className="font-semibold">{type}</p>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                           <ul className="space-y-2">
+                                {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
+                                    <li key={`action-item-${index}`}>
+                                        <Link href={relatedLink || '#'} className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-start gap-3">
+                                                    {icon}
+                                                    <div>
+                                                        <p className="font-semibold">{type}</p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
+                                                        </p>
                                                     </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                {discussionRequests.length > 0 && (
-                                    <div className="space-y-2">
-                                        <h4 className="font-semibold text-sm text-muted-foreground">Safety Discussion Responses</h4>
-                                        <ul className="space-y-2">
-                                            {discussionRequests.map(({ report, entry }, index) => (
-                                                <li key={`discussion-${entry.id}-${index}`}>
-                                                    <Link href={`/safety/${report.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="flex items-start gap-3">
-                                                                <MessageSquareWarning className="h-5 w-5 text-yellow-500 mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-semibold">Reply to {entry.author}</p>
-                                                                    <p className="text-sm text-muted-foreground truncate max-w-48">"{entry.message}"</p>
-                                                                </div>
-                                                            </div>
-                                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                                        </div>
-                                                        <Badge variant="outline" className="mt-2">{report.reportNumber}</Badge>
-                                                    </Link>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                {riskReviews.length > 0 && (
-                                    <div className="space-y-2">
-                                        <h4 className="font-semibold text-sm text-muted-foreground">Risk Reviews Due</h4>
-                                        <ul className="space-y-2">
-                                            {riskReviews.map((risk, index) => (
-                                                    <li key={`risk-review-${risk.id}-${index}`}>
-                                                        <Link href={`/safety?tab=register&risk=${risk.id}`} className="block p-3 rounded-md border hover:bg-muted/50">
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="flex items-start gap-3">
-                                                                <ShieldCheck className="h-5 w-5 text-blue-500 mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-semibold">{risk.hazard}</p>
-                                                                    <p className="text-sm text-muted-foreground">Review due by: {format(parseISO(risk.reviewDate!), 'MMM d, yyyy')}</p>
-                                                                </div>
-                                                            </div>
-                                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                                        </div>
-                                                    </Link>
-                                                    </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </>
+                                                </div>
+                                                {relatedLink && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+                                            </div>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
                         ) : (
                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                 <p className="text-muted-foreground text-center">No outstanding alerts or tasks.</p>

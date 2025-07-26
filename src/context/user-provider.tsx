@@ -120,7 +120,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const getUnacknowledgedAlerts = useCallback((): Alert[] => {
     if (!user) return [];
-    return allAlerts.filter(alert => !alert.readBy.includes(user.id || ''));
+    // An alert is for a user if it has no target, or if the target matches the user's ID
+    return allAlerts.filter(alert => 
+        !alert.readBy.includes(user.id || '') && 
+        (!alert.targetUserId || alert.targetUserId === user.id)
+    );
   }, [user, allAlerts]);
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
