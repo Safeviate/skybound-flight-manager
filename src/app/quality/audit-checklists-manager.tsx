@@ -3,15 +3,62 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { Checklist } from '@/lib/types';
+import type { AuditChecklist as Checklist } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ChecklistTemplateForm } from '@/app/checklists/checklist-template-form';
+import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
+import { useFormState, useFormStatus } from 'react-dom';
+import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+const initialState = {
+  message: '',
+  data: null,
+  errors: null,
+};
+
+function GenerateButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+      Generate Checklist
+    </Button>
+  );
+}
+
+const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
+    const [state, formAction] = useFormState(generateAuditChecklist, initialState);
+    
+    useEffect(() => {
+        if (state && state.data) {
+            onGenerated(state.data);
+        }
+    }, [state, onGenerated]);
+
+    return (
+        <form action={formAction} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="topic">Audit Topic</Label>
+                <Input id="topic" name="topic" placeholder="e.g., Hangar Safety, Flight Documentation" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="numItems">Number of Items</Label>
+                <Input id="numItems" name="numItems" type="number" defaultValue="10" required />
+            </div>
+            <GenerateButton />
+             {state && state.errors && (
+                <p className="text-sm text-destructive">{JSON.stringify(state.errors)}</p>
+            )}
+        </form>
+    )
+}
 
 export function AuditChecklistsManager() {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>([]);
@@ -19,11 +66,11 @@ export function AuditChecklistsManager() {
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
     const { toast } = useToast();
+    const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
 
     const fetchTemplates = async () => {
         if (!company) return;
-        // In a real app, these would be specific to audits, but we reuse for now.
-        const templatesQuery = query(collection(db, `companies/${company.id}/checklist-templates`));
+        const templatesQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
         const snapshot = await getDocs(templatesQuery);
         setChecklistTemplates(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
     };
@@ -34,31 +81,48 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'aircraftId'>) => {
+    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
 
         if (editingTemplate) {
-            const templateRef = doc(db, `companies/${company.id}/checklist-templates`, editingTemplate.id);
+            const templateRef = doc(db, `companies/${company.id}/audit-checklists`, editingTemplate.id);
             await updateDoc(templateRef, data as any);
             toast({ title: "Template Updated" });
         } else {
             const newTemplate = { ...data, companyId: company.id };
-            await addDoc(collection(db, `companies/${company.id}/checklist-templates`), newTemplate);
+            await addDoc(collection(db, `companies/${company.id}/audit-checklists`), newTemplate);
             toast({ title: "Template Created" });
         }
         fetchTemplates();
         setIsDialogOpen(false);
         setEditingTemplate(null);
+        setCreationMode(null);
+    };
+
+    const handleAiGenerated = (data: { title: string; items: { text: string; regulationReference: string }[] }) => {
+        const newTemplate: Omit<Checklist, 'id' | 'companyId'> = {
+            title: data.title,
+            area: 'Management', // Default area, can be changed
+            items: data.items.map((item, index) => ({
+                id: `item-${Date.now()}-${index}`,
+                text: item.text,
+                regulationReference: item.regulationReference,
+                finding: null,
+                level: null,
+            })),
+        };
+        handleFormSubmit(newTemplate);
     };
 
     const handleEdit = (template: Checklist) => {
         setEditingTemplate(template);
+        setCreationMode('manual');
         setIsDialogOpen(true);
     };
 
     const handleDelete = async (templateId: string) => {
         if (!company) return;
-        const templateRef = doc(db, `companies/${company.id}/checklist-templates`, templateId);
+        const templateRef = doc(db, `companies/${company.id}/audit-checklists`, templateId);
         await deleteDoc(templateRef);
         fetchTemplates();
         toast({ title: "Template Deleted" });
@@ -66,7 +130,14 @@ export function AuditChecklistsManager() {
 
     const openNewDialog = () => {
         setEditingTemplate(null);
+        setCreationMode(null);
         setIsDialogOpen(true);
+    }
+    
+    const closeDialog = () => {
+        setIsDialogOpen(false);
+        setEditingTemplate(null);
+        setCreationMode(null);
     }
 
     return (
@@ -90,7 +161,7 @@ export function AuditChecklistsManager() {
                             <Card key={template.id} className="flex flex-col">
                                 <CardHeader>
                                     <CardTitle>{template.title}</CardTitle>
-                                    <CardDescription>{template.category}</CardDescription>
+                                    <CardDescription>{template.area}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1">
                                     <ul className="list-disc list-inside text-sm text-muted-foreground">
@@ -113,16 +184,31 @@ export function AuditChecklistsManager() {
                     </div>
                 ) : (
                     <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">No checklist templates found.</p>
+                        <p className="text-muted-foreground">No audit checklist templates found.</p>
                     </div>
                 )}
             </CardContent>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+             <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
                     </DialogHeader>
-                    <ChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                    {!creationMode && !editingTemplate ? (
+                         <div className="flex gap-4 pt-4">
+                            <Button variant="outline" className="w-full h-24 flex-col" onClick={() => setCreationMode('manual')}>
+                                <FileText className="h-8 w-8 mb-2" />
+                                Manual Creation
+                            </Button>
+                            <Button variant="outline" className="w-full h-24 flex-col" onClick={() => setCreationMode('ai')}>
+                                <Bot className="h-8 w-8 mb-2" />
+                                AI Generator
+                            </Button>
+                        </div>
+                    ) : creationMode === 'manual' ? (
+                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                    ) : creationMode === 'ai' ? (
+                        <AiGenerator onGenerated={handleAiGenerated} />
+                    ) : null}
                 </DialogContent>
             </Dialog>
         </Card>

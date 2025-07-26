@@ -19,7 +19,7 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ChecklistCard } from '../checklists/checklist-card';
+import { ChecklistCard } from '@/app/checklists/checklist-card';
 import Link from 'next/link';
 import QRCode from 'qrcode.react';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,6 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { ChecklistsManager } from '../checklists/page';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 
 function AircraftPage() {
@@ -42,7 +41,6 @@ function AircraftPage() {
   const { user, company, loading } = useUser();
   const router = useRouter();
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
-  const [isChecklistManagerOpen, setIsChecklistManagerOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
@@ -251,23 +249,6 @@ function AircraftPage() {
                     {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
                     Seed Sample Fleet
                 </Button>
-                <Dialog open={isChecklistManagerOpen} onOpenChange={setIsChecklistManagerOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Manage Checklist Templates
-                        </Button>
-                    </DialogTrigger>
-                     <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Checklist Templates</DialogTitle>
-                            <DialogDescription>
-                                Manage master checklist templates and assign them to aircraft.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <ChecklistsManager aircraftList={fleet} refetchData={fetchData} />
-                    </DialogContent>
-                </Dialog>
                 <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
