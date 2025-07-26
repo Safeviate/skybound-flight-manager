@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -279,19 +278,21 @@ function MyProfilePage() {
                            <ul className="space-y-2">
                                 {allActionItems.map(({ type, details, variant, relatedLink, icon, date }, index) => (
                                     <li key={`action-item-${index}`}>
-                                        <Link href={relatedLink || '#'} className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start gap-3">
-                                                    {icon}
-                                                    <div>
-                                                        <p className="font-semibold">{type}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {relatedLink && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
-                                            </div>
+                                        <Link href={relatedLink || '#'} passHref>
+                                          <a className={`block p-3 rounded-md border ${variant === 'destructive' ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'} ${relatedLink ? 'hover:bg-muted/50' : ''}`}>
+                                              <div className="flex items-start justify-between">
+                                                  <div className="flex items-start gap-3">
+                                                      {icon}
+                                                      <div>
+                                                          <p className="font-semibold">{type}</p>
+                                                          <p className="text-sm text-muted-foreground">
+                                                              {details}{date && ` on ${format(parseISO(date), 'MMM d, yyyy')}`}
+                                                          </p>
+                                                      </div>
+                                                  </div>
+                                                  {relatedLink && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+                                              </div>
+                                          </a>
                                         </Link>
                                     </li>
                                 ))}
