@@ -78,9 +78,7 @@ export default function QualityAuditDetailPage() {
     const { id, ...auditData } = updatedAudit;
     try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, id);
-        await updateDoc(auditRef, { 
-            nonConformanceIssues: auditData.nonConformanceIssues,
-        });
+        await updateDoc(auditRef, auditData as any);
         setAudit(updatedAudit);
     } catch (error) {
         console.error("Error updating audit:", error);
@@ -141,11 +139,22 @@ export default function QualityAuditDetailPage() {
         return issue;
     });
 
-    const updatedAudit = { ...audit, nonConformanceIssues: updatedIssues };
+    const allCapsClosed = updatedIssues
+      .filter(issue => issue.correctiveActionPlan)
+      .every(issue => issue.correctiveActionPlan?.status === 'Closed');
+
+    const updatedAudit: QualityAudit = { 
+        ...audit, 
+        nonConformanceIssues: updatedIssues,
+        status: allCapsClosed && updatedIssues.length > 0 ? 'Closed' : audit.status
+    };
+
      try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        // We only update the single field to avoid race conditions with other parts of the object
-        await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
+        await updateDoc(auditRef, { 
+            nonConformanceIssues: updatedIssues,
+            status: updatedAudit.status
+        });
         setAudit(updatedAudit);
         toast({ title: 'Status Updated', description: `CAP status changed to "${newStatus}".`});
 

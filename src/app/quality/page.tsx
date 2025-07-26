@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -149,9 +150,8 @@ function QualityPage() {
 
   const getStatusVariant = (status: QualityAudit['status']) => {
     switch (status) {
-      case 'Compliant': return 'success';
-      case 'With Findings': return 'warning';
-      case 'Non-Compliant': return 'destructive';
+      case 'Closed': return 'success';
+      case 'Open': return 'warning';
       case 'Archived': return 'secondary';
       default: return 'outline';
     }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -120,11 +121,9 @@ export default function PerformAuditPage() {
         const compliantItems = checklist.items.filter(i => i.finding === 'Compliant').length;
         const complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 100;
 
-        let status: QualityAudit['status'] = 'Compliant';
-        if (findings.some(f => f.finding === 'Non-compliant' && f.level?.includes('Level'))) {
-            status = 'Non-Compliant';
-        } else if (findings.length > 0) {
-            status = 'With Findings';
+        let status: QualityAudit['status'] = 'Closed';
+        if (findings.length > 0) {
+            status = 'Open';
         }
 
         const sanitizedChecklistItems = checklist.items.map(item => ({
