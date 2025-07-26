@@ -193,9 +193,9 @@ export default function QualityAuditDetailPage() {
                                 <div key={item.id} className="p-4 border rounded-lg space-y-4">
                                     <div>
                                         <p className="font-medium">{item.text}</p>
-                                        {item.regulationReference && <p className="text-xs text-muted-foreground">Ref: {item.regulationReference}</p>}
+                                        {item.regulationReference && <p className="text-xs text-muted-foreground">Regulation: {item.regulationReference}</p>}
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <p className="text-sm font-medium">Finding</p>
                                             <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
@@ -222,15 +222,24 @@ export default function QualityAuditDetailPage() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="lg:col-span-2 space-y-2">
-                                            <p className="text-sm font-medium">Evidence / Observation Notes</p>
-                                            <Textarea 
-                                                placeholder="Record evidence or observation details..."
-                                                value={item.evidence || ''}
-                                                onChange={(e) => handleItemChange(item.id, 'evidence', e.target.value)}
-                                            />
-                                        </div>
                                     </div>
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium">Reference</p>
+                                        <Textarea
+                                            placeholder="Document references, evidence, etc."
+                                            value={item.reference || ''}
+                                            onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                            />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium">Comment</p>
+                                        <Textarea
+                                            placeholder="Auditor comments, observations..."
+                                            value={item.comment || ''}
+                                            onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                            />
+                                    </div>
+
                                     <div className="flex items-center gap-4 text-sm pt-2 border-t">
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold">Result:</span>
