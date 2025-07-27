@@ -390,7 +390,7 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                             <Legend />
                             <Bar dataKey="count" name="Number of Risks">
                                 {riskLevelsData.map((entry, index) => {
-                                    const score = {Low: 1, Medium: 5, High: 10, Extreme: 17}[entry.name] || 1;
+                                    const score = {Low: 1, Medium: 5, High: 10, Extreme: 4}[entry.name] || 1;
                                     return <Cell key={`cell-${index}`} fill={getRiskScoreColor(score)} />
                                 })}
                             </Bar>
@@ -512,25 +512,46 @@ function SafetyPage() {
     }
   };
   
-  const handleNewRiskSubmit = (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
+  const handleNewRiskSubmit = async (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
+    if (!company) return;
+    const newRiskId = `risk-reg-${Date.now()}`;
     const newRisk: Risk = {
       ...newRiskData,
-      id: `risk-reg-${Date.now()}`,
+      id: newRiskId,
+      companyId: company.id,
       dateIdentified: format(new Date(), 'yyyy-MM-dd'),
       riskScore: getRiskScore(newRiskData.likelihood, newRiskData.severity),
       status: 'Open',
     };
-    setRisks(prev => [newRisk, ...prev]);
-    setIsNewRiskOpen(false);
+    try {
+        await setDoc(doc(db, `companies/${company.id}/risks`, newRiskId), newRisk);
+        setRisks(prev => [newRisk, ...prev]);
+        setIsNewRiskOpen(false);
+        toast({
+            title: 'Risk Added',
+            description: `The risk has been added to the register.`
+        });
+    } catch (error) {
+        console.error("Error creating new risk:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save new risk.' });
+    }
   };
   
-  const handleEditRiskSubmit = (updatedRiskData: Risk) => {
-    setRisks(prevRisks => prevRisks.map(r => r.id === updatedRiskData.id ? updatedRiskData : r));
-    setEditingRisk(null);
-    toast({
-        title: "Risk Updated",
-        description: "The risk details have been successfully saved."
-    });
+  const handleEditRiskSubmit = async (updatedRiskData: Risk) => {
+    if (!company) return;
+    try {
+        const riskRef = doc(db, `companies/${company.id}/risks`, updatedRiskData.id);
+        await setDoc(riskRef, updatedRiskData, { merge: true });
+        setRisks(prevRisks => prevRisks.map(r => r.id === updatedRiskData.id ? updatedRiskData : r));
+        setEditingRisk(null);
+        toast({
+            title: "Risk Updated",
+            description: "The risk details have been successfully saved."
+        });
+    } catch (error) {
+        console.error("Error updating risk:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save risk updates.' });
+    }
   };
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport }) => {

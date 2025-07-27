@@ -15,11 +15,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import type { Risk, RiskLikelihood, RiskSeverity, User } from '@/lib/types';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { userData } from '@/lib/data-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -28,6 +27,10 @@ import { format, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { getRiskScore } from '@/lib/utils.tsx';
 import { Separator } from '@/components/ui/separator';
+import { useUser } from '@/context/user-provider';
+import { useEffect, useState } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const editRiskFormSchema = z.object({
   hazard: z.string().min(3, { message: 'Hazard is required.'}),
@@ -76,8 +79,20 @@ export function EditRiskForm({ risk, onSubmit }: EditRiskFormProps) {
       reviewDate: risk.reviewDate ? parseISO(risk.reviewDate) : new Date(),
     },
   });
+  
+  const { company } = useUser();
+  const [personnel, setPersonnel] = useState<User[]>([]);
 
-  const availableOwners = userData.filter(u => u.role !== 'Student');
+  useEffect(() => {
+    const fetchPersonnel = async () => {
+        if (!company) return;
+        const q = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        const snapshot = await getDocs(q);
+        setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+    };
+    fetchPersonnel();
+  }, [company]);
+
 
   const handleInitialAssessmentChange = (
     likelihood: RiskLikelihood | null,
@@ -215,7 +230,7 @@ export function EditRiskForm({ risk, onSubmit }: EditRiskFormProps) {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {availableOwners.map(owner => <SelectItem key={owner.id} value={owner.name}>{owner.name}</SelectItem>)}
+                            {personnel.map(owner => <SelectItem key={owner.id} value={owner.name}>{owner.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <FormMessage />
