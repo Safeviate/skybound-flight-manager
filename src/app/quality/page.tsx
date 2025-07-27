@@ -25,6 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CapTracker } from './cap-tracker';
 
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -314,10 +315,11 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
                 <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+                <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -486,6 +488,9 @@ function QualityPage() {
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
                 <AuditChecklistsManager />
+            </TabsContent>
+            <TabsContent value="cap-tracker" className="mt-4">
+                <CapTracker audits={audits} />
             </TabsContent>
         </Tabs>
       </main>
