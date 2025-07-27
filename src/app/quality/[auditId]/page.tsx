@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -8,7 +7,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -205,6 +204,14 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             description: `Alerts have been sent to ${signatureUsers.join(' and ')}.`
         });
     };
+
+    const handleResetSignatures = () => {
+        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined }, true);
+        toast({
+            title: 'Signatures Cleared',
+            description: 'The signature fields for this audit have been reset.',
+        });
+    };
     
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
@@ -242,6 +249,10 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         <Button variant="outline" className="no-print" onClick={handleRequestSignatures}>
                             <Signature className="mr-2 h-4 w-4" />
                             Request Signatures
+                        </Button>
+                        <Button variant="destructive" size="sm" className="no-print" onClick={handleResetSignatures}>
+                            <Eraser className="mr-2 h-4 w-4" />
+                            Reset Signatures
                         </Button>
                          <Button variant="outline" className="no-print" onClick={() => window.print()}>
                             <Printer className="mr-2 h-4 w-4" />
