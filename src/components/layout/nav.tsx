@@ -46,7 +46,6 @@ const navItems: {
   requiredFeature?: Feature;
 }[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/my-profile', label: 'My Profile', icon: UserCircle },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'] },
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'] },

@@ -52,12 +52,6 @@ export default function Header({ title, children }: { title: string, children?: 
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/my-profile">
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>My Profile</span>
-                    </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
