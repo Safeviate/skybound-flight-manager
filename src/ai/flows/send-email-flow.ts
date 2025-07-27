@@ -35,22 +35,29 @@ const sendEmailFlow = ai.defineFlow(
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Cannot send email.';
       console.error(errorMessage);
+      // Throw an error to ensure the calling function knows about the failure.
       throw new Error(errorMessage);
     }
     const resend = new Resend(apiKey);
 
     try {
-      await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
         to,
         subject,
         react,
       });
+
+      if (error) {
+        console.error('Resend API Error:', error);
+        throw new Error(`Failed to send email: ${error.message}`);
+      }
+
     } catch (error) {
-      console.error('Failed to send email:', error);
-      // Depending on requirements, you might want to throw the error
-      // to let the caller know the email failed to send.
-      throw new Error('Email sending failed.');
+      // Catch any other exceptions during the process
+      console.error('Failed to send email with error:', error);
+      // Re-throw the error to ensure the calling function is aware of the failure.
+      throw new Error('An unexpected error occurred while sending the email.');
     }
   }
 );
