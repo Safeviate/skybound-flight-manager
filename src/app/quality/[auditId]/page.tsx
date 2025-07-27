@@ -7,7 +7,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -176,6 +176,26 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     
     return (
         <div className="space-y-6 print:space-y-4">
+            <div className="hidden print:block mb-8 border-b pb-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        {company?.logoUrl ? (
+                            <img src={company.logoUrl} alt={`${company.name} Logo`} className="h-12 w-auto" />
+                        ) : (
+                            <Rocket className="h-10 w-10 text-primary" />
+                        )}
+                        <div>
+                            <h1 className="text-2xl font-bold">{company?.name || 'SkyBound Flight Manager'}</h1>
+                            <p className="text-sm text-muted-foreground">{company?.trademark}</p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <h2 className="text-xl font-semibold">Quality Audit Report</h2>
+                        <p className="text-sm text-muted-foreground">Report ID: {audit.id}</p>
+                    </div>
+                </div>
+            </div>
+
             <Dialog open={!!editingIssue} onOpenChange={(isOpen) => { if (!isOpen) { setEditingIssue(null); setSuggestedCap(null); }}}>
                 <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
