@@ -12,8 +12,8 @@ import { Children } from 'react';
 // A helper to extract the title prop from page components
 function getPageTitle(children: React.ReactNode): string {
     const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
-    if (child && child.props && child.props.title) {
-        return child.props.title;
+    if (child && child.type && (child.type as any).title) {
+        return (child.type as any).title;
     }
     
     // Fallback logic for different page structures if needed
@@ -37,8 +37,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
   const pageComponent = Children.only(children) as React.ReactElement;
-  const pageTitle = (pageComponent.type as any).title || 'Skybound';
-  const headerContent = (pageComponent.type as any).headerContent;
+  const pageTitle = getPageTitle(children);
+  const HeaderContent = (pageComponent.type as any).headerContent;
 
 
   if (showLayout) {
@@ -50,7 +50,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           <SidebarInset>
               <div className="flex-1 flex flex-col min-h-0">
                 <Header title={pageTitle}>
-                  {headerContent}
+                  {HeaderContent && <HeaderContent />}
                 </Header>
                 <div className="flex-1 overflow-y-auto">
                     {children}
