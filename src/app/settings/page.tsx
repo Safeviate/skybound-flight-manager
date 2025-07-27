@@ -114,12 +114,9 @@ function SettingsPage() {
         backgroundColor: company.theme.background || '#f4f4f5',
         accentColor: company.theme.accent || '#f59e0b',
       });
-      // Apply theme on initial load if system theme is selected
-      if (theme === 'system') {
-          applyTheme(company.theme);
-      }
+      applyTheme(company.theme);
     }
-  }, [company, form, theme]);
+  }, [company, form]);
   
   React.useEffect(() => {
     if (!loading && !user) {
@@ -129,11 +126,6 @@ function SettingsPage() {
   
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
-    if (newTheme === 'system' && company?.theme) {
-        applyTheme(company.theme);
-    } else {
-        clearCustomTheme();
-    }
   }
 
   const handleThemeSubmit = async (data: ThemeFormValues) => {
@@ -148,9 +140,7 @@ function SettingsPage() {
     const success = await updateCompany({ theme: newThemeSettings });
     
     if (success) {
-      if (theme === 'system') {
-        applyTheme(newThemeSettings);
-      }
+      applyTheme(newThemeSettings);
       toast({
         title: 'Theme Updated',
         description: 'Your new theme colors have been saved.',
@@ -240,7 +230,7 @@ function SettingsPage() {
                         Company Theme Colors
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        Set your organization's brand colors. These will only be applied when the color mode is set to "System".
+                        Set your organization's brand colors. These will be applied on top of the selected Light or Dark color mode.
                     </p>
                     <div className="grid grid-cols-3 gap-4">
                         <FormField
