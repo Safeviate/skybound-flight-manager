@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +17,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
+import { Badge } from '@/components/ui/badge';
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
@@ -129,8 +131,7 @@ function PersonnelPage() {
                             <TableHead>Name</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Contact</TableHead>
-                            <TableHead>Medical Expiry</TableHead>
-                            <TableHead>License Expiry</TableHead>
+                            <TableHead>Documents</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -143,10 +144,17 @@ function PersonnelPage() {
                                     <div>{person.phone}</div>
                                 </TableCell>
                                 <TableCell>
-                                    {person.medicalExpiry ? getExpiryBadge(person.medicalExpiry) : 'N/A'}
-                                </TableCell>
-                                <TableCell>
-                                    {person.licenseExpiry ? getExpiryBadge(person.licenseExpiry) : 'N/A'}
+                                    {person.documents && person.documents.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                            {person.documents.map(doc => (
+                                                <Badge key={doc.id} variant="secondary" className="font-normal">
+                                                    {doc.type}: {getExpiryBadge(doc.expiryDate)}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        'N/A'
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}

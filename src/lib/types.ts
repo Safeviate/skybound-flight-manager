@@ -81,6 +81,12 @@ export type TrainingLogEntry = {
   instructorSignature?: string;
 };
 
+export type UserDocument = {
+    id: string;
+    type: string;
+    expiryDate: string;
+};
+
 export type Permission =
   | 'Aircraft:View'
   | 'Aircraft:Edit'
@@ -175,6 +181,7 @@ export type User = {
     department?: Department;
     medicalExpiry?: string | null;
     licenseExpiry?: string | null;
+    documents?: UserDocument[];
     // External Auditee specific
     externalCompanyName?: string;
     externalPosition?: string;
