@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -158,7 +158,7 @@ export default function Header({ title, children }: { title: string, children?: 
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Full Name</Label>
+                      <FormLabel>Full Name</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -175,7 +175,7 @@ export default function Header({ title, children }: { title: string, children?: 
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Phone</Label>
+                      <FormLabel>Phone</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
