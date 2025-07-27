@@ -416,7 +416,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
-    'External Auditee': ['Quality:View'],
+    'External Auditee': ['Quality:View', 'Quality:Edit'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
