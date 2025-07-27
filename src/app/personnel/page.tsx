@@ -7,24 +7,30 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { EditPersonnelForm } from './edit-personnel-form';
+
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
     const router = useRouter();
     const [personnel, setPersonnel] = useState<PersonnelUser[]>([]);
     const [isNewPersonnelOpen, setIsNewPersonnelOpen] = useState(false);
+    const [editingPersonnel, setEditingPersonnel] = useState<PersonnelUser | null>(null);
     const { toast } = useToast();
+    
+    const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
 
     useEffect(() => {
         if (!loading && !user) {
@@ -88,6 +94,22 @@ function PersonnelPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new personnel.' });
         }
     };
+    
+    const handleUpdatePersonnel = async (updatedData: PersonnelUser) => {
+        if (!company) return;
+        
+        try {
+            const userRef = doc(db, `companies/${company.id}/users`, updatedData.id);
+            const permissions = ROLE_PERMISSIONS[updatedData.role] || [];
+            await updateDoc(userRef, { ...updatedData, permissions });
+            setPersonnel(prev => prev.map(p => p.id === updatedData.id ? { ...updatedData, permissions } : p));
+            setEditingPersonnel(null);
+            toast({ title: 'Personnel Updated', description: `${updatedData.name}'s details have been saved.` });
+        } catch (error) {
+            console.error('Failed to update personnel:', error);
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update personnel details.' });
+        }
+    };
 
 
   if (loading || !user) {
@@ -106,23 +128,25 @@ function PersonnelPage() {
                     <CardTitle>Personnel Roster</CardTitle>
                     <CardDescription>A list of all active staff members.</CardDescription>
                 </div>
-                <Dialog open={isNewPersonnelOpen} onOpenChange={setIsNewPersonnelOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            New Personnel
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Add New Personnel</DialogTitle>
-                            <DialogDescription>
-                                Add a new staff member to the system. This will create their user account and send them a welcome email.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <NewPersonnelForm onSubmit={handleNewPersonnel} />
-                    </DialogContent>
-                </Dialog>
+                {canEdit && (
+                    <Dialog open={isNewPersonnelOpen} onOpenChange={setIsNewPersonnelOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                New Personnel
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Add New Personnel</DialogTitle>
+                                <DialogDescription>
+                                    Add a new staff member to the system. This will create their user account and send them a welcome email.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <NewPersonnelForm onSubmit={handleNewPersonnel} />
+                        </DialogContent>
+                    </Dialog>
+                )}
             </CardHeader>
             <CardContent>
                 <Table>
@@ -132,6 +156,7 @@ function PersonnelPage() {
                             <TableHead>Role</TableHead>
                             <TableHead>Contact</TableHead>
                             <TableHead>Documents</TableHead>
+                             {canEdit && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -156,12 +181,35 @@ function PersonnelPage() {
                                         'N/A'
                                     )}
                                 </TableCell>
+                                {canEdit && (
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => setEditingPersonnel(person)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </CardContent>
         </Card>
+        {editingPersonnel && (
+            <Dialog open={!!editingPersonnel} onOpenChange={() => setEditingPersonnel(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Personnel: {editingPersonnel.name}</DialogTitle>
+                        <DialogDescription>
+                            Update the details for this staff member.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <EditPersonnelForm 
+                        personnel={editingPersonnel} 
+                        onSubmit={handleUpdatePersonnel} 
+                    />
+                </DialogContent>
+            </Dialog>
+        )}
       </main>
   );
 }
