@@ -4,26 +4,29 @@
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { bookingData, userData, aircraftData } from '@/lib/data-provider';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { Booking, Aircraft } from '@/lib/types';
 
-const AircraftUtilizationChart = () => {
+
+const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
   const utilizationData = useMemo(() => {
-    const bookingsByAircraft = bookingData.reduce((acc, booking) => {
-      const aircraft = aircraftData.find(ac => ac.tailNumber === booking.aircraft);
-      if (aircraft) {
-        acc[aircraft.model] = (acc[aircraft.model] || 0) + 1;
+    const bookingsByAircraft = bookings.reduce((acc, booking) => {
+      const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
+      if (ac) {
+        acc[ac.model] = (acc[ac.model] || 0) + 1;
       }
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(bookingsByAircraft).map(([name, bookings]) => ({
+    return Object.entries(bookingsByAircraft).map(([name, numBookings]) => ({
       name,
-      bookings,
+      bookings: numBookings,
     }));
-  }, []);
+  }, [bookings, aircraft]);
 
   return (
     <ResponsiveContainer width="100%" height={300}>
@@ -45,8 +48,11 @@ const AircraftUtilizationChart = () => {
 };
 
 function ReportsPage() {
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const router = useRouter();
+  const [bookingData, setBookingData] = useState<Booking[]>([]);
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,7 +60,34 @@ function ReportsPage() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  useEffect(() => {
+      if (!company) return;
+
+      const fetchData = async () => {
+          setDataLoading(true);
+          try {
+              const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+              const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+              
+              const [bookingsSnapshot, aircraftSnapshot] = await Promise.all([
+                  getDocs(bookingsQuery),
+                  getDocs(aircraftQuery)
+              ]);
+
+              setBookingData(bookingsSnapshot.docs.map(doc => doc.data() as Booking));
+              setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
+          } catch (error) {
+              console.error("Error fetching report data:", error);
+          } finally {
+              setDataLoading(false);
+          }
+      };
+
+      fetchData();
+  }, [company]);
+
+
+  if (loading || dataLoading || !user) {
     return (
         <main className="flex-1 flex items-center justify-center">
             <p>Loading...</p>
@@ -72,7 +105,7 @@ function ReportsPage() {
           <CardContent>
             <div>
               <h3 className="text-lg font-semibold text-center mb-4">Aircraft Utilization by Bookings</h3>
-              <AircraftUtilizationChart />
+              <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
             </div>
           </CardContent>
         </Card>
