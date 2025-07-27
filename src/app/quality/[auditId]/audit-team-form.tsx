@@ -88,6 +88,7 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
   
   const auditorUser = personnel.find(p => p.name === audit.auditor);
   const auditeeUser = personnel.find(p => p.name === audit.auditeeName);
+  const auditeePosition = auditeeUser?.role === 'Auditee' ? auditeeUser.externalPosition : auditeeUser?.role;
 
   return (
     <Card>
@@ -105,7 +106,7 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
                     <h4 className="font-semibold text-muted-foreground">Auditee</h4>
                     <p className="text-lg font-bold">{audit.auditeeName}</p>
                     <p className="text-sm text-muted-foreground">
-                        {auditeeUser?.role}
+                        {auditeePosition}
                     </p>
                 </div>
             </div>

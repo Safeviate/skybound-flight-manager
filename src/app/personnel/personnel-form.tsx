@@ -32,7 +32,7 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student'], {
+  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student', 'Auditee'], {
       required_error: 'Please select a role.'
   }),
   department: z.string().optional(),
@@ -53,7 +53,8 @@ const personnelFormSchema = z.object({
   accessStartDate: z.date().optional(),
   accessEndDate: z.date().optional(),
 }).refine(data => {
-    if (data.role === 'Admin') {
+    // Password check is now for both Admin and Auditee
+    if (data.role === 'Admin' || data.role === 'Auditee') {
         return !!data.email && !!data.password && data.password.length >= 8;
     }
     return true;
@@ -130,7 +131,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     }
   }
 
-  const showCredentialsFields = selectedRole === 'Admin';
+  const showCredentialsFields = selectedRole === 'Admin' || selectedRole === 'Auditee';
 
   return (
     <Form {...form}>
@@ -165,6 +166,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <SelectItem value="Accountable Manager">Accountable Manager</SelectItem>
                         <SelectItem value="Admin">Admin</SelectItem>
                         <SelectItem value="Aircraft Manager">Aircraft Manager</SelectItem>
+                        <SelectItem value="Auditee">Auditee (External)</SelectItem>
                         <SelectItem value="Chief Flight Instructor">Chief Flight Instructor</SelectItem>
                         <SelectItem value="Driver">Driver</SelectItem>
                         <SelectItem value="Front Office">Front Office</SelectItem>
@@ -200,6 +202,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <SelectItem value="Flight Operations">Flight Operations</SelectItem>
                         <SelectItem value="Ground Operation">Ground Operation</SelectItem>
                         <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        <SelectItem value="External">External</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -283,18 +286,45 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             )}
         </div>
 
-        <div className="space-y-2 rounded-md border p-4">
-            <FormLabel>Documents (Optional)</FormLabel>
-            <FormDescription>
-                Record the expiry dates for the user's documents.
-            </FormDescription>
-            <div className="flex flex-col md:flex-row gap-4 pt-2">
+        {selectedRole === 'Auditee' ? (
+          <div className="space-y-4 rounded-md border p-4">
+             <FormLabel>External Auditee Details</FormLabel>
+             <FormDescription>
+                Provide details for the external user and the duration of their access.
+             </FormDescription>
+             <div className="grid grid-cols-2 gap-4 pt-2">
                 <FormField
                     control={form.control}
-                    name="medicalExpiry"
+                    name="externalCompanyName"
                     render={({ field }) => (
-                        <FormItem className="flex-1">
-                             <FormLabel>Medical Expiry</FormLabel>
+                        <FormItem>
+                        <FormLabel>Company Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Aviation Auditors Inc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="externalPosition"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Position / Title</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Lead Auditor" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="accessStartDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Access Start Date</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <FormControl>
@@ -308,7 +338,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                                     {field.value ? (
                                         format(field.value, "PPP")
                                     ) : (
-                                        <span>Pick expiry date</span>
+                                        <span>Pick start date</span>
                                     )}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
@@ -329,10 +359,10 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                 />
                  <FormField
                     control={form.control}
-                    name="licenseExpiry"
+                    name="accessEndDate"
                     render={({ field }) => (
-                        <FormItem className="flex-1">
-                             <FormLabel>License Expiry</FormLabel>
+                        <FormItem className="flex flex-col">
+                             <FormLabel>Access End Date</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                 <FormControl>
@@ -346,7 +376,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                                     {field.value ? (
                                         format(field.value, "PPP")
                                     ) : (
-                                        <span>Pick expiry date</span>
+                                        <span>Pick end date</span>
                                     )}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
@@ -365,8 +395,94 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         </FormItem>
                     )}
                 />
+             </div>
+          </div>
+        ) : (
+             <div className="space-y-2 rounded-md border p-4">
+                <FormLabel>Documents (Optional)</FormLabel>
+                <FormDescription>
+                    Record the expiry dates for the user's documents.
+                </FormDescription>
+                <div className="flex flex-col md:flex-row gap-4 pt-2">
+                    <FormField
+                        control={form.control}
+                        name="medicalExpiry"
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormLabel>Medical Expiry</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "PPP")
+                                        ) : (
+                                            <span>Pick expiry date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="licenseExpiry"
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormLabel>License Expiry</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "PPP")
+                                        ) : (
+                                            <span>Pick expiry date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             </div>
-        </div>
+        )}
 
         <PermissionsForm />
 

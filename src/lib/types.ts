@@ -134,7 +134,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Super User',
 ];
 
-export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance';
+export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External';
 
 export type Role =
   | 'Accountable Manager'
@@ -150,7 +150,8 @@ export type Role =
   | 'Operations Manager'
   | 'Quality Manager'
   | 'Safety Manager'
-  | 'Student';
+  | 'Student'
+  | 'Auditee';
 
 export type User = {
     id: string;
@@ -419,6 +420,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
+    'Auditee': ['Quality:View', 'Alerts:View'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
