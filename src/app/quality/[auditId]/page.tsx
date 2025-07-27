@@ -801,7 +801,7 @@ export default function QualityAuditDetailPage() {
                     </div>
                 </div>
                 <div className="space-y-2 border-t pt-6">
-                    <label htmlFor="audit-summary" className="font-semibold">Audit Summary</label>
+                    <Label htmlFor="audit-summary" className="font-semibold">Audit Summary</Label>
                     <Textarea 
                     id="audit-summary"
                     placeholder="Enter the overall audit summary here..."
@@ -841,7 +841,7 @@ export default function QualityAuditDetailPage() {
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium">Finding</p>
+                                                <Label className="text-sm font-medium">Finding</Label>
                                                 <Select value={item.finding || ''} onValueChange={(value: FindingStatus) => handleItemChange(item.id, 'finding', value)}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select Finding" />
@@ -854,7 +854,7 @@ export default function QualityAuditDetailPage() {
                                                 </Select>
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium">Level</p>
+                                                <Label className="text-sm font-medium">Level</Label>
                                                 <Select value={item.level || ''} onValueChange={(value: FindingLevel) => handleItemChange(item.id, 'level', value)}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select Level" />
@@ -868,7 +868,7 @@ export default function QualityAuditDetailPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-sm font-medium">Reference</p>
+                                            <Label className="text-sm font-medium">Reference</Label>
                                             <Textarea
                                                 placeholder="Document references, evidence, etc."
                                                 value={item.reference || ''}
@@ -876,7 +876,7 @@ export default function QualityAuditDetailPage() {
                                                 />
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-sm font-medium">Comment</p>
+                                            <Label className="text-sm font-medium">Comment</Label>
                                             <Textarea
                                                 placeholder="Auditor comments, observations..."
                                                 value={item.comment || ''}
@@ -922,16 +922,4 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-
-
-
-
-
-    
-
-    
-
-
-
-
 
