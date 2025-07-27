@@ -85,10 +85,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                 {spiConfigs.map(config => {
                     let spiData;
                     if (config.id === 'checklistCompletion') {
-                        spiData = Object.keys(monthlyChecklistCompletion).map(month => ({
-                            name: month,
-                            value: monthlyChecklistCompletion[month as keyof typeof monthlyChecklistCompletion]
-                        }));
+                        spiData = monthlyChecklistCompletion;
                     } else {
                         spiData = reports
                             .filter(r => config.filter(r))
@@ -101,18 +98,13 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
 
 
                     const chartData = Object.keys(spiData).map(month => {
-                        if (config.id === 'checklistCompletion') {
-                            const data = spiData as {name: string, value: number}[];
-                            return data.find(d => d.name === month) || { name: month, value: 0 };
-                        }
-                        
-                        const count = (spiData as Record<string, number>)[month];
-                        if (config.calculation === 'rate' && config.unit) {
+                        const value = spiData[month as keyof typeof spiData];
+                        if (config.calculation === 'rate' && config.unit && config.id !== 'checklistCompletion') {
                             const totalHours = monthlyFlightHours[month as keyof typeof monthlyFlightHours] || 0;
-                            const rate = totalHours > 0 ? (count / totalHours) * 100 : 0;
+                            const rate = totalHours > 0 ? ((value as number) / totalHours) * 100 : 0;
                             return { name: month, value: parseFloat(rate.toFixed(2)) };
                         }
-                        return { name: month, value: count };
+                        return { name: month, value: value as number };
                     }).reverse();
                     
                     const latestValue = chartData[0]?.value || 0;
@@ -564,7 +556,7 @@ function SafetyPage() {
         return acc;
     }, {} as Record<string, number>);
 
-  const monthlyChecklistCompletion = completedChecklists
+  const monthlyChecklistStats = completedChecklists
     .filter(c => c.checklistType === 'Pre-Flight')
     .reduce((acc, checklist) => {
         const month = format(startOfMonth(parseISO(checklist.completionDate)), 'MMM yy');
@@ -577,14 +569,14 @@ function SafetyPage() {
   
   bookings.filter(b => b.purpose === 'Training' || b.purpose === 'Private').forEach(booking => {
     const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
-    if (!monthlyChecklistCompletion[month]) {
-        monthlyChecklistCompletion[month] = { completed: 0, required: 0 };
+    if (!monthlyChecklistStats[month]) {
+        monthlyChecklistStats[month] = { completed: 0, required: 0 };
     }
-    monthlyChecklistCompletion[month].required += 1;
+    monthlyChecklistStats[month].required += 1;
   });
 
-  const checklistCompletionRate = Object.keys(monthlyChecklistCompletion).reduce((acc, month) => {
-    const data = monthlyChecklistCompletion[month];
+  const checklistCompletionRate = Object.keys(monthlyChecklistStats).reduce((acc, month) => {
+    const data = monthlyChecklistStats[month];
     acc[month] = data.required > 0 ? Math.round((data.completed / data.required) * 100) : 100;
     return acc;
   }, {} as Record<string, number>);
@@ -936,4 +928,5 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
 
