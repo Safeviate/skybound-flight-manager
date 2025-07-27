@@ -93,7 +93,13 @@ function PersonnelPage() {
                     }
 
                 } catch (error: any) {
-                     toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not create the user in the authentication system. The email may already be in use.' });
+                    let errorMessage = 'Could not create the user in the authentication system.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'This email address is already registered in the authentication system. Please use a different email or contact support if you believe this is an error.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = 'The provided password is too weak. Please use a stronger password.';
+                    }
+                     toast({ variant: 'destructive', title: 'Authentication Error', description: errorMessage });
                      return; // Stop execution if auth creation fails
                 }
             } else {
