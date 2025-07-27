@@ -187,6 +187,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
     );
 };
 
+const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
 
 function QualityPage() {
   const searchParams = useSearchParams();
