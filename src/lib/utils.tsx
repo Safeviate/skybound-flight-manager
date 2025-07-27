@@ -1,9 +1,10 @@
 
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { differenceInDays, format, parseISO, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import React from 'react';
+import React, { useCallback } from 'react';
 import type { RiskLikelihood, RiskSeverity, TrainingLogEntry } from './types';
 
 export function cn(...inputs: ClassValue[]) {
