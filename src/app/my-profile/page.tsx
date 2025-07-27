@@ -248,7 +248,6 @@ function MyProfilePage() {
                                                     variant="outline" 
                                                     size="sm" 
                                                     onClick={() => handleAcknowledge(id)}
-                                                    disabled={!visitedAlerts.includes(id)}
                                                 >
                                                     <Check className="mr-2 h-4 w-4" />
                                                     Acknowledge
