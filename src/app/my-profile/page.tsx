@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { PersonalInformationCard } from './personal-information-card';
 import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -197,17 +198,25 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Personal Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <PersonalInformationCard user={user} onUpdate={() => {}}/>
-                    </CardContent>
-                </Card>
-
-                {showFatigueCard && (
-                    <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
+                {showFatigueCard ? (
+                    <Card>
+                        <CardHeader>
+                            <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                        </CardHeader>
+                        <Separator className="my-4" />
+                        <CardContent>
+                             <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Personal Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
             <div className="xl:col-span-2 space-y-8">

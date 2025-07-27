@@ -10,6 +10,12 @@ import { calculateFlightHours } from '@/lib/utils.tsx';
 import type { Role, TrainingLogEntry } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
 
+interface FatigueRiskIndicatorCardProps {
+    userRole: Role;
+    trainingLogs: TrainingLogEntry[];
+}
+
+
 const getProgressColor = (percentage: number) => {
     if (percentage > 90) return 'from-orange-500 to-red-600';
     if (percentage > 75) return 'from-yellow-400 to-orange-500';
@@ -35,14 +41,12 @@ export function FatigueRiskIndicatorCard({ userRole, trainingLogs }: FatigueRisk
     const monthlyPercentage = (hours30d / flightTimeLimits.monthly) * 100;
   
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Flight & Duty Monitoring</CardTitle>
-                <CardDescription>
-                    Cumulative flight hours based on company and regulatory limits.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <div>
+            <CardTitle>Flight & Duty Monitoring</CardTitle>
+            <CardDescription>
+                Cumulative flight hours based on company and regulatory limits.
+            </CardDescription>
+            <div className="space-y-6 pt-6">
                 <div className="space-y-2">
                     <Label>Last 24 Hours</Label>
                     <div className="flex items-center gap-4">
@@ -64,7 +68,7 @@ export function FatigueRiskIndicatorCard({ userRole, trainingLogs }: FatigueRisk
                         <span className="font-semibold w-24 text-right">{hours30d} / {flightTimeLimits.monthly} hrs</span>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }
