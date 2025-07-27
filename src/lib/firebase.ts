@@ -13,7 +13,7 @@ const firebaseConfig = {
   apiKey: "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE", 
   authDomain: "skybound-flight-manager.firebaseapp.com",
   projectId: "skybound-flight-manager",
-  storageBucket: "skybound-flight-manager.firebasestorage.app",
+  storageBucket: "skybound-flight-manager.appspot.com",
   messagingSenderId: "270096056362",
   appId: "1:270096056362:web:4bfc002f20d91174090353"
 };
