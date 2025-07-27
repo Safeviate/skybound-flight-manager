@@ -214,6 +214,13 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             description: 'The signature fields for this audit have been reset.',
         });
     };
+
+    const canSign = (user: User | null, personName: string | null | undefined): boolean => {
+      if (!user || !personName || user.name !== personName) return false;
+      const isAuditorOrAuditee = user.name === audit.auditor || user.name === audit.auditeeName;
+      const hasSignPermission = user.permissions.includes('Quality:Sign') || user.permissions.includes('Quality:Edit');
+      return isAuditorOrAuditee && hasSignPermission;
+    };
     
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
@@ -576,7 +583,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
                         {audit.auditorSignature ? (
                             <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                        ) : user?.name === audit.auditor ? (
+                        ) : canSign(user, audit.auditor) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
@@ -586,7 +593,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
                          {audit.auditeeSignature ? (
                             <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                        ) : user?.name === audit.auditeeName ? (
+                        ) : canSign(user, audit.auditeeName) ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
@@ -925,4 +932,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 

@@ -96,6 +96,7 @@ export type Permission =
   | 'Safety:Edit'
   | 'Quality:View'
   | 'Quality:Edit'
+  | 'Quality:Sign'
   | 'Quality:Delete'
   | 'Checklists:View'
   | 'Checklists:Edit'
@@ -121,6 +122,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Safety:Edit',
     'Quality:View',
     'Quality:Edit',
+    'Quality:Sign',
     'Quality:Delete',
     'Checklists:View',
     'Checklists:Edit',
@@ -416,7 +418,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
-    'External Auditee': ['Quality:View', 'Quality:Edit'],
+    'External Auditee': ['Quality:View', 'Quality:Sign'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
