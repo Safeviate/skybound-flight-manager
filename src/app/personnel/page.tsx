@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
-import { PlusCircle, Edit, Database, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,7 +24,6 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { userData as seedUsers } from '@/lib/data-provider';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 
@@ -35,7 +34,6 @@ function PersonnelPage() {
     const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
-    const [isSeeding, setIsSeeding] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -141,55 +139,6 @@ function PersonnelPage() {
         setIsNewPersonnelDialogOpen(isOpen);
     }
 
-    const handleSeedPersonnel = async () => {
-        if (!company) {
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'No company selected. Cannot seed data.',
-          });
-          return;
-        }
-
-        if (seedUsers.length === 0) {
-            toast({
-                variant: 'destructive',
-                title: 'No Seed Data',
-                description: 'There is no sample user data available to seed.',
-            });
-            return;
-        }
-    
-        setIsSeeding(true);
-        try {
-          const batch = writeBatch(db);
-          const usersToSeed = seedUsers.filter(u => u.companyId === 'skybound-aero' && u.role !== 'Student');
-    
-          usersToSeed.forEach(user => {
-            const { password, ...userData } = user;
-            const userRef = doc(db, `companies/${company.id}/users`, user.id);
-            batch.set(userRef, { ...userData, companyId: company.id });
-          });
-    
-          await batch.commit();
-    
-          toast({
-            title: 'Database Seeded',
-            description: `${usersToSeed.length} personnel have been added to your company's database.`,
-          });
-          fetchPersonnel(); // Refresh the list
-        } catch (error) {
-          console.error('Error seeding database:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Seeding Failed',
-            description: 'An error occurred while trying to seed the database.',
-          });
-        } finally {
-          setIsSeeding(false);
-        }
-      };
-
     const getRoleVariant = (role: Role) => {
         switch (role) {
             case 'Instructor':
@@ -229,10 +178,6 @@ function PersonnelPage() {
               <CardDescription>A list of all non-student personnel in the system.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                <Button onClick={handleSeedPersonnel} variant="outline" disabled={isSeeding}>
-                    {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                    Seed Sample Personnel
-                </Button>
                 {canEditPersonnel && (
                 <Dialog open={isNewPersonnelDialogOpen} onOpenChange={handleDialogClose}>
                     <DialogTrigger asChild>
