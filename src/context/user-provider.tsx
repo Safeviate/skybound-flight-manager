@@ -139,11 +139,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 return false;
             }
         }
-        
-        // This is the new filtering logic for old CAP alerts
-        if (alert.type === 'Task' && alert.title.startsWith('CAP Assigned:') && !alert.relatedLink) {
-            return false; // Hide old alerts with broken links
-        }
 
         return isUnread && isTargetedToUser;
     });
