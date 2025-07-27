@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, collectionGroup } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -30,12 +30,10 @@ export default function LoginPage() {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const companiesSnapshot = await getDocs(collection(db, 'companies'));
-            const usersPromises = companiesSnapshot.docs.map(companyDoc => 
-                getDocs(query(collection(db, `companies/${companyDoc.id}/users`)))
-            );
-            const usersSnapshots = await Promise.all(usersPromises);
-            const users = usersSnapshots.flatMap(snapshot => snapshot.docs.map(doc => doc.data() as User));
+            // Use a collection group query to fetch all users more efficiently
+            const usersQuery = query(collectionGroup(db, 'users'));
+            const usersSnapshot = await getDocs(usersQuery);
+            const users = usersSnapshot.docs.map(doc => doc.data() as User);
             setAllUsers(users);
         } catch (error) {
             console.error("Error fetching users for login:", error);

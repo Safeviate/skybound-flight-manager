@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,30 +10,16 @@ import type { Booking, Aircraft } from '@/lib/types';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { CalendarIcon, Plane } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser } from '@/context/user-provider';
-import { db } from '@/lib/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
 
 interface MonthlyCalendarViewProps {
   bookings: Booking[];
+  aircraftData: Aircraft[];
 }
 
-export function MonthlyCalendarView({ bookings }: MonthlyCalendarViewProps) {
+export function MonthlyCalendarView({ bookings, aircraftData }: MonthlyCalendarViewProps) {
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [selectedAircraft, setSelectedAircraft] = useState<string>('all');
-  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
-  const { company } = useUser();
-
-  useEffect(() => {
-    if (!company) return;
-    const fetchAircraft = async () => {
-        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-        const snapshot = await getDocs(aircraftQuery);
-        setAircraftData(snapshot.docs.map(doc => doc.data() as Aircraft));
-    };
-    fetchAircraft();
-  }, [company]);
-
+  
   const filteredBookings = useMemo(() => {
     if (selectedAircraft === 'all') {
       return bookings;

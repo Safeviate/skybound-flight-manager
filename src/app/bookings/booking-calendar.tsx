@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, UIEvent, useEffect } from 'react';
+import React, { useState, useRef, UIEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   addDays,
@@ -13,32 +13,17 @@ import { GanttTimeline } from './gantt-timeline';
 import { GanttTimelineHeader } from './gantt-timeline-header';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Booking, Aircraft } from '@/lib/types';
-import { useUser } from '@/context/user-provider';
-import { db } from '@/lib/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
 
 
 interface BookingCalendarProps {
     bookings: Booking[];
+    aircraft: Aircraft[];
     onCancelBooking: (bookingId: string) => void;
     onEditBooking: (booking: Booking) => void;
 }
 
-export function BookingCalendar({ bookings, onCancelBooking, onEditBooking }: BookingCalendarProps) {
+export function BookingCalendar({ bookings, aircraft, onCancelBooking, onEditBooking }: BookingCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
-  const { company } = useUser();
-
-  useEffect(() => {
-    if (!company) return;
-    const fetchAircraft = async () => {
-        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-        const snapshot = await getDocs(aircraftQuery);
-        setAircraft(snapshot.docs.map(doc => doc.data() as Aircraft));
-    };
-    fetchAircraft();
-  }, [company]);
-
 
   const timelineHeaderRef = useRef<HTMLDivElement>(null);
   const timelineBodyRef = useRef<HTMLDivElement>(null);

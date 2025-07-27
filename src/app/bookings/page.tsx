@@ -7,7 +7,7 @@ import { PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useState, useEffect } from 'react';
-import type { Booking } from '@/lib/types';
+import type { Booking, Aircraft } from '@/lib/types';
 import { BookingCalendar } from './booking-calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MonthlyCalendarView } from './monthly-calendar-view';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 
 function BookingsPage() {
   const [bookingData, setBookingData] = useState<Booking[]>([]);
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
   const { user, company, loading } = useUser();
   const router = useRouter();
@@ -29,16 +30,31 @@ function BookingsPage() {
     if (!loading && !user) {
       router.push('/login');
     } else if (company) {
-        fetchBookings();
+        fetchData();
     }
   }, [user, company, loading, router]);
 
-  const fetchBookings = async () => {
+  const fetchData = async () => {
     if (!company) return;
-    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-    const bookingsSnapshot = await getDocs(bookingsQuery);
-    const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-    setBookingData(bookingsList);
+    try {
+        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+        
+        const [bookingsSnapshot, aircraftSnapshot] = await Promise.all([
+            getDocs(bookingsQuery),
+            getDocs(aircraftQuery)
+        ]);
+
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        setBookingData(bookingsList);
+
+        const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+        setAircraftData(aircraftList);
+
+    } catch(e) {
+        console.error("Error fetching booking data: ", e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data.' });
+    }
   };
 
   const handleBookingCreated = async (newBooking: Omit<Booking, 'id'>) => {
@@ -125,13 +141,14 @@ function BookingsPage() {
                 </TabsList>
                 <TabsContent value="day" className="mt-4">
                     <BookingCalendar 
-                        bookings={bookingData} 
+                        bookings={bookingData}
+                        aircraft={aircraftData}
                         onCancelBooking={handleCancelBooking}
                         onEditBooking={openEditBookingDialog} 
                     />
                 </TabsContent>
                 <TabsContent value="month" className="mt-4">
-                    <MonthlyCalendarView bookings={bookingData} />
+                    <MonthlyCalendarView bookings={bookingData} aircraftData={aircraftData} />
                 </TabsContent>
             </Tabs>
           </CardContent>
