@@ -457,7 +457,7 @@ function QualityPage() {
                             <TableHeader>
                                 <TableRow>
                                 <TableHead>Audit ID</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead>Audit Date</TableHead>
                                 <TableHead>Report Heading</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Compliance</TableHead>
