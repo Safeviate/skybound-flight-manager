@@ -10,7 +10,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import type { AuditChecklist as Checklist, QualityAudit } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     const [topic, setTopic] = useState('');
@@ -78,8 +79,58 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User) => void, personnel: User[] }) => {
+    const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleConfirm = () => {
+        const auditee = personnel.find(p => p.id === selectedAuditeeId);
+        if (auditee) {
+            onStart(template, auditee);
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="secondary" size="sm">
+                    <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Start Audit: {template.title}</DialogTitle>
+                    <DialogDescription>
+                        Please select the primary auditee for this audit. This person will be notified and responsible for responses.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="auditee-select">Select Auditee</Label>
+                    <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
+                        <SelectTrigger id="auditee-select">
+                            <SelectValue placeholder="Select a person" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {personnel.map(p => (
+                                <SelectItem key={p.id} value={p.id}>
+                                    {p.name} ({p.role})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Button onClick={handleConfirm} disabled={!selectedAuditeeId}>
+                    Confirm and Start Audit
+                </Button>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export function AuditChecklistsManager() {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>([]);
+    const [personnel, setPersonnel] = useState<User[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
@@ -90,8 +141,15 @@ export function AuditChecklistsManager() {
     const fetchTemplates = async () => {
         if (!company) return;
         const templatesQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
-        const snapshot = await getDocs(templatesQuery);
-        setChecklistTemplates(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        
+        const [templatesSnapshot, personnelSnapshot] = await Promise.all([
+            getDocs(templatesQuery),
+            getDocs(personnelQuery),
+        ]);
+
+        setChecklistTemplates(templatesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
+        setPersonnel(personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
     };
 
     useEffect(() => {
@@ -100,7 +158,7 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist) => {
+    const handleStartAudit = async (template: Checklist, auditee: User) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
@@ -110,12 +168,15 @@ export function AuditChecklistsManager() {
             date: format(new Date(), 'yyyy-MM-dd'),
             type: 'Internal',
             auditor: user.name,
+            auditeeName: auditee.name,
+            auditeePosition: auditee.role,
             area: template.area,
             status: 'Open',
             complianceScore: 0,
             checklistItems: template.items,
             nonConformanceIssues: [],
             summary: '',
+            investigationTeam: [user.name, auditee.name]
         };
 
         try {
@@ -216,9 +277,7 @@ export function AuditChecklistsManager() {
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="secondary" size="sm" onClick={() => handleStartAudit(template)}>
-                                        <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
-                                    </Button>
+                                    <StartAuditDialog template={template} onStart={handleStartAudit} personnel={personnel} />
                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                         <Edit className="mr-2 h-4 w-4" />
                                     </Button>
