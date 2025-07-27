@@ -96,7 +96,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
         return audits
             .filter(audit => audit.status === 'Open' || audit.status === 'Closed')
             .flatMap(audit =>
-                audit.nonConformanceIssues
+                (audit.nonConformanceIssues || [])
                     .filter(issue => issue.correctiveActionPlan)
                     .map(issue => ({
                         auditId: audit.id,
@@ -146,7 +146,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                                      <TableCell className="max-w-[200px] truncate">
                                         {auditTitle}
                                     </TableCell>
-                                    <TableCell className="max-w-[250px]">
+                                    <TableCell className="max-w-[200px]">
                                         <p className="font-medium truncate">{issue.itemText}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference}</p>
                                     </TableCell>
