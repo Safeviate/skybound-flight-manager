@@ -89,6 +89,8 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
       phone: '',
       externalCompanyName: '',
       externalPosition: '',
+      name: '',
+      role: undefined,
     }
   });
 
