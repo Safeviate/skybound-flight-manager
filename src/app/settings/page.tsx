@@ -8,13 +8,15 @@ import { z } from "zod"
 import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Monitor, Paintbrush } from "lucide-react"
+import { Moon, Sun, Monitor, Paintbrush, ZoomIn } from "lucide-react"
 import { useUser } from "@/context/user-provider"
 import { useRouter } from "next/navigation"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
+import { useScale } from "@/context/scale-provider"
+import { Slider } from "@/components/ui/slider"
 
 const themeFormSchema = z.object({
   primaryColor: z.string(),
@@ -70,6 +72,7 @@ function SettingsPage() {
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast()
+  const { scale, setScale } = useScale();
 
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
@@ -177,6 +180,30 @@ function SettingsPage() {
                     System
                     </Button>
                 </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <ZoomIn className="h-4 w-4" />
+                    Page Scale
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Adjust the overall size of the application UI.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium w-16 text-right">
+                      {Math.round(scale * 100)}%
+                    </span>
+                    <Slider
+                      value={[scale]}
+                      onValueChange={(value) => setScale(value[0])}
+                      min={0.8}
+                      max={1.2}
+                      step={0.01}
+                    />
+                  </div>
                 </div>
 
                 <Separator />
