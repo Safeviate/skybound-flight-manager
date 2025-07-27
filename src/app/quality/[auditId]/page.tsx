@@ -217,9 +217,8 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
 
     const canSign = (user: User | null, personName: string | null | undefined): boolean => {
       if (!user || !personName || user.name !== personName) return false;
-      const isAuditorOrAuditee = user.name === audit.auditor || user.name === audit.auditeeName;
-      const hasSignPermission = user.permissions.includes('Quality:Sign') || user.permissions.includes('Quality:Edit');
-      return isAuditorOrAuditee && hasSignPermission;
+      const hasSignPermission = user.permissions.includes('Quality:Sign') || user.permissions.includes('Super User');
+      return hasSignPermission;
     };
     
     return (
@@ -932,5 +931,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
