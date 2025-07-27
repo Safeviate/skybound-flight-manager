@@ -131,4 +131,10 @@ body {
   [role="tabpanel"][data-state="inactive"] {
     display: block !important;
   }
+  .overflow-y-auto {
+    overflow-y: visible !important;
+  }
+  .max-h-96 {
+    max-height: none !important;
+  }
 }
