@@ -60,9 +60,9 @@ const sendEmailFlow = ai.defineFlow(
         throw new Error(`Failed to send email: ${error.message}`);
       }
 
-    } catch (error: any) {
-      // Catch any other exceptions during the process
-      const errorMessage = error.message || JSON.stringify(error);
+    } catch (error) {
+      // Catch any other exceptions during the process and ensure a useful message.
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
       console.error(`Failed to send email with error: ${errorMessage}`);
       // Re-throw the error to ensure the calling function is aware of the failure.
       throw new Error(`Failed to send email: ${errorMessage}`);
