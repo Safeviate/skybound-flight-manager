@@ -1,13 +1,12 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, Signature } from 'lucide-react';
-import type { User as AppUser, Alert, QualityAudit } from '@/lib/types';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, Signature, ListChecks, Calendar } from 'lucide-react';
+import type { User as AppUser, Alert, QualityAudit, Booking } from '@/lib/types';
+import { format, parseISO, differenceInDays, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useUser } from '@/context/user-provider';
@@ -17,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { PersonalInformationCard } from './personal-information-card';
 import Link from 'next/link';
 import { cn } from '@/lib/utils.tsx';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
@@ -83,18 +82,88 @@ function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts, company } = useUser();
     const router = useRouter();
     const [visitedAlerts, setVisitedAlerts] = useState<string[]>([]);
-
+    const [auditsForSignature, setAuditsForSignature] = useState<QualityAudit[]>([]);
+    const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+    const [upcomingAudits, setUpcomingAudits] = useState<QualityAudit[]>([]);
+    const [pageDataLoading, setPageDataLoading] = useState(true);
 
     useEffect(() => {
-        if (!loading && !user) {
+        if (loading) return;
+        if (!user) {
             router.push('/login');
+            return;
         }
-    }, [user, loading, router, company]);
+
+        const fetchProfileData = async () => {
+            if (!company || !user.name) return;
+            
+            setPageDataLoading(true);
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const sevenDaysLaterStr = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+                const thirtyDaysLaterStr = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+
+                const auditsRef = collection(db, `companies/${company.id}/quality-audits`);
+                const bookingsRef = collection(db, `companies/${company.id}/bookings`);
+
+                // Query for audits needing signature
+                const signatureQuery = query(auditsRef, 
+                    where('status', '==', 'Closed'),
+                    where('investigationTeam', 'array-contains', user.name),
+                );
+                
+                // Query for upcoming audits
+                const upcomingAuditsQuery = query(auditsRef,
+                    where('status', '==', 'Open'),
+                    where('investigationTeam', 'array-contains', user.name),
+                    where('date', '<=', thirtyDaysLaterStr)
+                );
+
+                // Query for upcoming bookings
+                const bookingsQuery = query(bookingsRef,
+                    where('date', '>=', todayStr),
+                    where('date', '<=', sevenDaysLaterStr),
+                    where('status', '==', 'Approved')
+                );
+
+                const [signatureSnapshot, upcomingAuditsSnapshot, bookingsSnapshot] = await Promise.all([
+                    getDocs(signatureQuery),
+                    getDocs(upcomingAuditsQuery),
+                    getDocs(bookingsQuery),
+                ]);
+
+                const sigAudits = signatureSnapshot.docs
+                    .map(doc => doc.data() as QualityAudit)
+                    .filter(audit => 
+                        (audit.auditor === user.name && !audit.auditorSignature) ||
+                        (audit.auditeeName === user.name && !audit.auditeeSignature)
+                    );
+                setAuditsForSignature(sigAudits);
+
+                setUpcomingAudits(upcomingAuditsSnapshot.docs.map(doc => doc.data() as QualityAudit));
+                
+                const userBookings = bookingsSnapshot.docs
+                    .map(doc => doc.data() as Booking)
+                    .filter(booking => booking.instructor === user.name || booking.student === user.name);
+                setUpcomingBookings(userBookings);
+
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load all profile data.' });
+            } finally {
+                setPageDataLoading(false);
+            }
+        };
+
+        fetchProfileData();
+
+    }, [user, company, loading, router]);
     
     const allActionItems = useMemo(() => {
         if (!user) return [];
 
-        const today = new Date('2024-08-15');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
         const personalAlerts: { id: string, type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
 
@@ -132,6 +201,33 @@ function MyProfilePage() {
                 default: return <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />;
             }
         }
+        
+        const sigItems = auditsForSignature.map(audit => ({
+            id: `sig-${audit.id}`,
+            type: 'Signature Required',
+            details: `Your signature is needed on audit: ${audit.title}`,
+            relatedLink: `/quality/${audit.id}`,
+            variant: 'warning' as const,
+            icon: <Signature className="h-5 w-5 text-blue-500 mt-0.5" />,
+        }));
+        
+        const bookingItems = upcomingBookings.map(booking => ({
+            id: `booking-${booking.id}`,
+            type: `Upcoming ${booking.purpose}`,
+            details: `${booking.aircraft} at ${booking.startTime} on ${format(parseISO(booking.date), 'MMM d, yyyy')}`,
+            relatedLink: `/bookings`,
+            variant: 'warning' as const,
+            icon: <Calendar className="h-5 w-5 text-purple-500 mt-0.5" />,
+        }));
+        
+        const auditItems = upcomingAudits.map(audit => ({
+            id: `audit-${audit.id}`,
+            type: 'Upcoming Audit',
+            details: `Audit scheduled for ${format(parseISO(audit.date), 'MMM d, yyyy')}: ${audit.title}`,
+            relatedLink: `/quality/${audit.id}`,
+            variant: 'warning' as const,
+            icon: <ListChecks className="h-5 w-5 text-indigo-500 mt-0.5" />,
+        }));
 
         const taskAlerts = getUnacknowledgedAlerts([])
             .map(alert => {
@@ -145,18 +241,14 @@ function MyProfilePage() {
                 }
             });
 
-        return [...personalAlerts, ...taskAlerts];
-    }, [user, getUnacknowledgedAlerts]);
+        return [...personalAlerts, ...sigItems, ...bookingItems, ...auditItems, ...taskAlerts];
+    }, [user, auditsForSignature, upcomingBookings, upcomingAudits, getUnacknowledgedAlerts]);
 
      const handleAcknowledge = useCallback(async (alertId: string) => {
         await acknowledgeAlerts([alertId]);
     }, [acknowledgeAlerts]);
-
-    const handleLinkClick = (alertId: string) => {
-        setVisitedAlerts(prev => [...prev, alertId]);
-    }
     
-    if (loading || !user) {
+    if (loading || pageDataLoading) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
                 <p>Loading...</p>
@@ -164,6 +256,11 @@ function MyProfilePage() {
         )
     }
     
+    if (!user) {
+        // This case should be handled by the useEffect redirect, but it's a good fallback.
+        return null;
+    }
+
     const handlePasswordChanged = (newPassword: string) => {
         if (user) {
             const updatedUser = {
@@ -227,14 +324,14 @@ function MyProfilePage() {
                                         <li key={id} className="flex items-center gap-2">
                                             <div className="flex-1">
                                                 {relatedLink ? (
-                                                    <Link href={relatedLink} className="block hover:opacity-80" onClick={() => handleLinkClick(id)}>
+                                                    <Link href={relatedLink} className="block hover:opacity-80">
                                                         <ActionItemContent />
                                                     </Link>
                                                 ) : (
                                                     <ActionItemContent />
                                                 )}
                                             </div>
-                                            {!isPersonalAlert && (
+                                            {!isPersonalAlert && id.includes('sig-') === false && id.includes('booking-') === false && id.includes('audit-') === false && (
                                                 <Button 
                                                     variant="outline" 
                                                     size="sm" 
@@ -264,5 +361,3 @@ function MyProfilePage() {
 
 MyProfilePage.title = "My Profile"
 export default MyProfilePage;
-
-    
