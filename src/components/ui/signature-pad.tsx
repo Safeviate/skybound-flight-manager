@@ -1,34 +1,40 @@
 
+
 'use client';
 
 import * as React from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
-import { Eraser } from 'lucide-react';
+import { Eraser, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SignaturePadProps {
-  onEnd: (signature: string) => void;
+  onSubmit: (signature: string) => void;
   className?: string;
 }
 
-export function SignaturePad({ onEnd, className }: SignaturePadProps) {
+export function SignaturePad({ onSubmit, className }: SignaturePadProps) {
   const sigCanvas = React.useRef<SignatureCanvas>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [isSignatureEmpty, setIsSignatureEmpty] = React.useState(true);
 
   const handleClear = () => {
     sigCanvas.current?.clear();
-    onEnd('');
+    setIsSignatureEmpty(true);
   };
 
-  const handleEndStroke = () => {
-    if (sigCanvas.current) {
+  const handleSubmit = () => {
+    if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
       const signature = sigCanvas.current.toDataURL('image/png');
-      onEnd(signature);
+      onSubmit(signature);
     }
   };
+
+  const handleBeginStroke = () => {
+    setIsSignatureEmpty(false);
+  }
 
   // Debounce function
   const debounce = (func: Function, delay: number) => {
@@ -73,13 +79,17 @@ export function SignaturePad({ onEnd, className }: SignaturePadProps) {
           ref={sigCanvas}
           penColor="black"
           canvasProps={{ className: 'w-full h-auto' }}
-          onEnd={handleEndStroke}
+          onBegin={handleBeginStroke}
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex w-full justify-between">
         <Button type="button" variant="outline" size="sm" onClick={handleClear}>
           <Eraser className="mr-2 h-4 w-4" />
           Clear
+        </Button>
+         <Button type="button" size="sm" onClick={handleSubmit} disabled={isSignatureEmpty}>
+          <Check className="mr-2 h-4 w-4" />
+          Submit Signature
         </Button>
       </div>
     </div>

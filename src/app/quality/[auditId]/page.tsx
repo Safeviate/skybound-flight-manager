@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -571,7 +572,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         {audit.auditorSignature ? (
                             <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditor ? (
-                             <SignaturePad onEnd={(signature) => onUpdate({ ...audit, auditorSignature: signature })} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature })} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -581,7 +582,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                          {audit.auditeeSignature ? (
                             <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditeeName ? (
-                             <SignaturePad onEnd={(signature) => onUpdate({ ...audit, auditeeSignature: signature })} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature })} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -919,4 +920,5 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
 
