@@ -478,7 +478,7 @@ function SafetyPage() {
         unit: 'per 100 hours',
         targetDirection: '<=',
         target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
-        filter: (r: SafetyReport) => r.type.includes('Report'), // filter for all reports
+        filter: (r: SafetyReport) => r.type && r.type.includes('Report'), // filter for all reports
     },
     {
         id: 'checklistCompletion',
