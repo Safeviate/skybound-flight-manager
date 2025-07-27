@@ -24,6 +24,65 @@ const themeFormSchema = z.object({
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>
 
+const hexToHSL = (hex: string): string | null => {
+    if (!hex) return null;
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+        r = parseInt(hex[1] + hex[1], 16);
+        g = parseInt(hex[2] + hex[2], 16);
+        b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+        r = parseInt(hex.substring(1, 3), 16);
+        g = parseInt(hex.substring(3, 5), 16);
+        b = parseInt(hex.substring(5, 7), 16);
+    } else {
+        return null;
+    }
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+
+    return `${h} ${s}% ${l}%`;
+};
+
+const applyTheme = (theme: { primary?: string, background?: string, accent?: string }) => {
+    const root = document.documentElement;
+    const themeProperties = {
+        '--primary': hexToHSL(theme.primary as string),
+        '--background': hexToHSL(theme.background as string),
+        '--accent': hexToHSL(theme.accent as string),
+    };
+
+    for (const [property, value] of Object.entries(themeProperties)) {
+        if (value) {
+            root.style.setProperty(property, value);
+        } else {
+            root.style.removeProperty(property);
+        }
+    }
+}
+
+
 function SettingsPage() {
   const { setTheme } = useTheme()
   const { user, company, updateCompany, loading } = useUser();
@@ -38,7 +97,7 @@ function SettingsPage() {
       accentColor: company?.theme?.accent || '#f59e0b',
     },
   });
-
+  
   React.useEffect(() => {
     if (company?.theme) {
       form.reset({
@@ -46,6 +105,7 @@ function SettingsPage() {
         backgroundColor: company.theme.background || '#f4f4f5',
         accentColor: company.theme.accent || '#f59e0b',
       });
+      applyTheme(company.theme);
     }
   }, [company, form]);
   
@@ -65,8 +125,9 @@ function SettingsPage() {
     };
     
     const success = await updateCompany({ theme });
-
+    
     if (success) {
+      applyTheme(theme);
       toast({
         title: 'Theme Updated',
         description: 'Your new theme colors have been saved and applied.',

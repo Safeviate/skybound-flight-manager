@@ -5,7 +5,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
-import { DynamicThemeApplicator } from '@/components/dynamic-theme-applicator';
 import { AppContent } from './app-content';
 import { Inter } from 'next/font/google';
 
@@ -39,7 +38,6 @@ export default function RootLayout({
         >
           <UserProvider>
             <SettingsProvider>
-              <DynamicThemeApplicator />
               <AppContent>
                 {children}
               </AppContent>
