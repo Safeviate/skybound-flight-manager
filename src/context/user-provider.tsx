@@ -117,9 +117,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem(LAST_USER_ID_KEY, userData.id);
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             } else {
-                 console.error("Could not determine company for authenticated user.");
-                 setUser(null);
-                 setCompany(null);
+                 console.error("Could not determine company for authenticated user. This might happen if the user's profile is not yet fully created in the database. Trying a fallback search.");
+                 // A more robust fallback
+                 if(firebaseUser.email) {
+                    const [foundUser, foundCompany] = await fetchUserDataByEmail(firebaseUser.email);
+                     if (foundUser && foundCompany) {
+                        setUser(foundUser);
+                        setCompany(foundCompany);
+                     } else {
+                        setUser(null);
+                        setCompany(null);
+                     }
+                 } else {
+                    setUser(null);
+                    setCompany(null);
+                 }
             }
         } else {
             setUser(null);

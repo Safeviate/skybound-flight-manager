@@ -43,6 +43,7 @@ export default function CorporatePage() {
             
             // Store companyId in the auth user's profile for retrieval on login
             await updateProfile(userCredential.user, {
+                displayName: adminData.name,
                 photoURL: companyId
             });
 

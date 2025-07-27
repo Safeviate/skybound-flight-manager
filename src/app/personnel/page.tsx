@@ -77,7 +77,10 @@ function PersonnelPage() {
                     // Create user in Firebase Auth
                     const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email!, personnelData.password!);
                     const newUserId = userCredential.user.uid;
-                    await updateProfile(userCredential.user, { photoURL: company.id });
+                    await updateProfile(userCredential.user, { 
+                        displayName: personnelData.name,
+                        photoURL: company.id 
+                    });
 
                     // Now create the user record in Firestore
                     const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
@@ -356,5 +359,3 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
-
-    
