@@ -3,7 +3,7 @@
 import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Search, User as UserIcon, LogOut } from 'lucide-react';
+import { Search, User as UserIcon, LogOut, Edit } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -78,10 +78,18 @@ export default function Header({ title, children }: { title: string, children?: 
                         </div>
                     </CardContent>
                 </Card>
-                 <Button onClick={handleLogout} variant="outline">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                </Button>
+                 <div className="flex justify-end gap-2">
+                    <Button onClick={handleLogout} variant="outline">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/my-profile">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Update My Information
+                        </Link>
+                    </Button>
+                 </div>
             </DialogContent>
           </Dialog>
       </div>
