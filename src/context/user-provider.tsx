@@ -151,7 +151,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
 
-  const login = async (email: string): Promise<boolean> => {
+  const login = async (email: string, password?: string): Promise<boolean> => {
     setLoading(true);
     try {
         const [userData, companyData, userId] = await fetchUserDataByEmail(email);
@@ -159,7 +159,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (userData?.role === 'Admin') {
             try {
                 // Attempt to sign in with Firebase Auth for real admins
-                await signInWithEmailAndPassword(auth, email, "password");
+                if (!password) {
+                     console.error("Password is required for Admin login.");
+                     return false;
+                }
+                await signInWithEmailAndPassword(auth, email, password);
                 // onAuthStateChanged will handle setting the user state
                 return true;
             } catch (error: any) {
@@ -194,15 +198,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = useCallback(async () => {
-    if (auth.currentUser) {
-        await signOut(auth);
+    setLoading(true);
+    try {
+      if (auth.currentUser) {
+          await signOut(auth);
+      }
+    } catch (error) {
+      console.error("Error signing out from Firebase:", error);
+    } finally {
+      localStorage.removeItem(LAST_USER_ID_KEY);
+      localStorage.removeItem(LAST_COMPANY_ID_KEY);
+      setUser(null);
+      setCompany(null);
+      setAllAlerts([]);
+      setLoading(false);
+      router.push('/login');
     }
-    localStorage.removeItem(LAST_USER_ID_KEY);
-    localStorage.removeItem(LAST_COMPANY_ID_KEY);
-    setUser(null);
-    setCompany(null);
-    setAllAlerts([]);
-    router.push('/login');
   }, [router]);
   
   const updateUser = useCallback(async (updatedData: Partial<User>): Promise<boolean> => {
