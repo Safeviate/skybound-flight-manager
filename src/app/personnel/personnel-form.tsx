@@ -83,6 +83,12 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
       permissions: [],
       consentDisplayContact: 'Not Consented',
       mustChangePassword: true,
+      department: '',
+      email: '',
+      password: '',
+      phone: '',
+      externalCompanyName: '',
+      externalPosition: '',
     }
   });
 
