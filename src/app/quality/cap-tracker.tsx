@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface CapItem {
   auditId: string;
@@ -61,7 +62,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Audit</TableHead>
-              <TableHead>Finding</TableHead>
+              <TableHead>Finding &amp; Corrective Action Plan</TableHead>
               <TableHead>Responsible Person</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Status</TableHead>
@@ -82,8 +83,23 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                             </Link>
                         </TableCell>
                         <TableCell className="max-w-sm">
-                            <p>{item.finding.itemText}</p>
-                            <p className="text-xs text-muted-foreground">{item.finding.regulationReference}</p>
+                            <p className="font-semibold">{item.finding.itemText}</p>
+                            <p className="text-xs text-muted-foreground mb-2">{item.finding.regulationReference}</p>
+                            <Separator />
+                            <div className="space-y-2 mt-2 text-xs">
+                                <div>
+                                    <p className="font-medium text-muted-foreground">Root Cause</p>
+                                    <p>{cap.rootCause}</p>
+                                </div>
+                                 <div>
+                                    <p className="font-medium text-muted-foreground">Corrective Action</p>
+                                    <p>{cap.correctiveAction}</p>
+                                </div>
+                                 <div>
+                                    <p className="font-medium text-muted-foreground">Preventative Action</p>
+                                    <p>{cap.preventativeAction}</p>
+                                </div>
+                            </div>
                         </TableCell>
                         <TableCell>{cap.responsiblePerson}</TableCell>
                         <TableCell>
