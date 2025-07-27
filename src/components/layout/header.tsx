@@ -61,16 +61,35 @@ export default function Header({ title, children }: { title: string, children?: 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
   });
+  
+  const getCombinedDocuments = React.useCallback(() => {
+    if (!user) return [];
+    
+    const requiredDocs = user.requiredDocuments || [];
+    const userDocs = user.documents || [];
+    
+    // Create a map of existing user documents by type for easy lookup
+    const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
+
+    const combined = requiredDocs.map(reqDocType => {
+      // If a document of this type already exists, use it. Otherwise, create a placeholder.
+      const existingDoc = userDocsMap.get(reqDocType);
+      return existingDoc || { id: `new-${reqDocType}-${Date.now()}`, type: reqDocType, expiryDate: null };
+    });
+    
+    return combined;
+  }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && isProfileOpen) {
+      const combinedDocs = getCombinedDocuments();
       form.reset({
         name: user.name,
         phone: user.phone,
-        documents: user.documents?.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })) || [],
+        documents: combinedDocs.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })),
       });
     }
-  }, [user, form, isProfileOpen]);
+  }, [user, form, isProfileOpen, getCombinedDocuments]);
 
   const handleLogout = () => {
     logout();
@@ -78,13 +97,26 @@ export default function Header({ title, children }: { title: string, children?: 
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
-    const updatedDocs = data.documents?.map(d => ({...d, expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null}));
+    const userDocs = user?.documents || [];
+    const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
+
+    const updatedDocs = data.documents?.map(d => {
+        // Find if an original document with the same type exists
+        const originalDoc = userDocsMap.get(d.type);
+        return {
+            ...d,
+            // Preserve the original ID if it exists, otherwise it's a new placeholder ID
+            id: originalDoc ? originalDoc.id : d.id,
+            expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
+        };
+    }) || [];
 
     const success = await updateUser({
       name: data.name,
       phone: data.phone,
       documents: updatedDocs as UserDocument[],
     });
+
     if (success) {
       toast({ title: 'Profile Updated', description: 'Your information has been successfully saved.' });
       setIsProfileOpen(false);
@@ -93,20 +125,6 @@ export default function Header({ title, children }: { title: string, children?: 
     }
   };
   
-  const getCombinedDocuments = () => {
-    if (!user) return [];
-    
-    const requiredDocs = user.requiredDocuments || [];
-    const userDocs = user.documents || [];
-    
-    const combined = requiredDocs.map(reqDocType => {
-        const existingDoc = userDocs.find(d => d.type === reqDocType);
-        return existingDoc || { id: `doc-${Date.now()}-${reqDocType}`, type: reqDocType, expiryDate: '' };
-    });
-    
-    return combined;
-  };
-
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
@@ -192,22 +210,19 @@ export default function Header({ title, children }: { title: string, children?: 
                         Required Documents
                     </h4>
                     <div className="space-y-4">
-                      {user?.requiredDocuments && user.requiredDocuments.length > 0 ? (
-                        user.requiredDocuments.map((docType, index) => {
-                            const docValue = form.watch(`documents`)?.[index];
-
+                      {form.watch('documents')?.map((docItem, index) => {
                             return (
                            <FormField
-                              key={docType}
+                              key={docItem.id}
                               control={form.control}
                               name={`documents.${index}.expiryDate`}
                               render={({ field }) => {
                                 // This is a trick to re-assign the correct type to the field object
-                                const typedField = field as unknown as { value: Date | null; onChange: (date: Date | undefined) => void };
+                                const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void };
 
                                 return (
                                 <FormItem className="flex items-center justify-between">
-                                  <FormLabel className="w-1/2">{docValue?.type || docType}</FormLabel>
+                                  <FormLabel className="w-1/2">{docItem.type}</FormLabel>
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <FormControl>
@@ -235,8 +250,8 @@ export default function Header({ title, children }: { title: string, children?: 
                                 </FormItem>
                               )}}
                            />
-                        )})
-                      ) : (
+                        )})}
+                      {(form.getValues('documents') || []).length === 0 && (
                           <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
                       )}
                     </div>
