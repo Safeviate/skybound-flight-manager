@@ -11,12 +11,19 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { Resend } from 'resend';
 import * as React from 'react';
+import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 
 const SendEmailInputSchema = z.object({
   to: z.string().email(),
   subject: z.string(),
-  // We pass the component as a plain object, not a Zod schema
-  react: z.custom<React.ReactElement>(), 
+  // Pass email component data, not the component itself
+  emailData: z.object({
+    userName: z.string(),
+    companyName: z.string(),
+    userEmail: z.string().email(),
+    temporaryPassword: z.string().optional(),
+    loginUrl: z.string().url(),
+  }),
 });
 export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
 
@@ -30,7 +37,7 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.void(),
   },
-  async ({ to, subject, react }) => {
+  async ({ to, subject, emailData }) => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Cannot send email.';
@@ -45,7 +52,7 @@ const sendEmailFlow = ai.defineFlow(
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
         to,
         subject,
-        react,
+        react: <NewUserCredentialsEmail {...emailData} />,
       });
 
       if (error) {
@@ -55,9 +62,10 @@ const sendEmailFlow = ai.defineFlow(
 
     } catch (error: any) {
       // Catch any other exceptions during the process
-      console.error('Failed to send email with error:', error);
+      const errorMessage = error.message || JSON.stringify(error);
+      console.error(`Failed to send email with error: ${errorMessage}`);
       // Re-throw the error to ensure the calling function is aware of the failure.
-      throw new Error(error.message || `An unexpected error occurred while sending the email: ${JSON.stringify(error)}`);
+      throw new Error(`Failed to send email: ${errorMessage}`);
     }
   }
 );

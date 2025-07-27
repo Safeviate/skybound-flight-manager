@@ -95,13 +95,13 @@ function PersonnelPage() {
                          await sendEmail({
                             to: personnelData.email,
                             subject: `Your Access to ${company.name} Portal`,
-                            react: <NewUserCredentialsEmail
-                                userName={personnelData.name}
-                                companyName={company.name}
-                                userEmail={personnelData.email}
-                                temporaryPassword={personnelData.password}
-                                loginUrl={window.location.origin + '/login'}
-                            />,
+                            emailData: {
+                                userName: personnelData.name,
+                                companyName: company.name,
+                                userEmail: personnelData.email,
+                                temporaryPassword: personnelData.password,
+                                loginUrl: window.location.origin + '/login',
+                            }
                         });
                          toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
                     } catch (emailError) {
@@ -148,24 +148,24 @@ function PersonnelPage() {
             await sendEmail({
                 to: person.email,
                 subject: `Your Access to ${company.name} Portal`,
-                react: <NewUserCredentialsEmail
-                    userName={person.name}
-                    companyName={company.name}
-                    userEmail={person.email}
-                    temporaryPassword={temporaryPassword}
-                    loginUrl={window.location.origin + '/login'}
-                />,
+                emailData: {
+                    userName: person.name,
+                    companyName: company.name,
+                    userEmail: person.email,
+                    temporaryPassword: temporaryPassword,
+                    loginUrl: window.location.origin + '/login',
+                }
             });
             toast({
                 title: 'Invitation Sent',
                 description: `An email with a new temporary password has been sent to ${person.name}.`,
             });
-        } catch (emailError) {
+        } catch (emailError: any) {
             console.error('Failed to send invitation email:', emailError);
             toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: 'The invitation email could not be sent. Please check your email service configuration.',
+                description: emailError.message || 'The invitation email could not be sent. Please check your email service configuration.',
             });
         }
     };
