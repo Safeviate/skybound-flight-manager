@@ -61,7 +61,16 @@ const personnelFormSchema = z.object({
 }, {
     message: 'Email is required if a password is set.',
     path: ['email'],
+}).refine(data => {
+    if (data.role === 'Auditee') {
+        return !!data.externalCompanyName && !!data.externalPosition && !!data.accessStartDate && !!data.accessEndDate;
+    }
+    return true;
+}, {
+    message: 'External company, position, and access dates are required for the Auditee role.',
+    path: ['externalCompanyName'], // This error can be shown under one of the relevant fields
 });
+
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
 
@@ -235,7 +244,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <FormItem>
                         <FormLabel>Email (for login)</FormLabel>
                         <FormControl>
-                            <Input placeholder="john.doe@example.com" {...field} />
+                            <Input placeholder="john.doe@example.com" {...field} value={field.value ?? ''} />
                         </FormControl>
                          <FormDescription>Leave blank if this user does not need to log in.</FormDescription>
                         <FormMessage />
@@ -251,7 +260,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                                 <FormItem>
                                     <div className="flex gap-2">
                                         <FormControl>
-                                            <Input readOnly {...field} />
+                                            <Input readOnly {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
                                             <Copy className="h-4 w-4" />
@@ -284,7 +293,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <FormItem>
                         <FormLabel>Company Name</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Aviation Auditors Inc." {...field} />
+                            <Input placeholder="e.g., Aviation Auditors Inc." {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -297,7 +306,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <FormItem>
                         <FormLabel>Position / Title</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Lead Auditor" {...field} />
+                            <Input placeholder="e.g., Lead Auditor" {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -517,4 +526,5 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
   );
 }
 
+    
     
