@@ -34,7 +34,8 @@ import { CorrectiveActionPlanForm } from './corrective-action-plan-form';
 import { QualityAuditAnalyzer } from '../quality-audit-analyzer';
 import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-flow';
 import { AuditTeamForm } from './audit-team-form';
-
+import { SignaturePad } from '@/components/ui/signature-pad';
+import Image from 'next/image';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -174,6 +175,15 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         discussionForm.reset();
         setIsDiscussionDialogOpen(false);
     }
+
+    const handleSignature = (signatureFor: 'auditor' | 'auditee', signature: string) => {
+        if (signatureFor === 'auditor') {
+            onUpdate({ ...audit, auditorSignature: signature }, true);
+        } else {
+            onUpdate({ ...audit, auditeeSignature: signature }, true);
+        }
+        toast({ title: "Signature Saved", description: "The signature has been saved to the report."});
+    };
     
     return (
         <div className="space-y-6 print:space-y-4">
@@ -532,6 +542,40 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     </Card>
                 </TabsContent>
             </Tabs>
+             <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle>Signatures</CardTitle>
+                    <CardDescription>
+                        This audit must be signed by the Lead Auditor and the primary Auditee.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                        <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
+                        {audit.auditorSignature ? (
+                            <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white" />
+                        ) : user?.name === audit.auditor ? (
+                            <SignaturePad onEnd={(sig) => handleSignature('auditor', sig)} width={300} height={150} />
+                        ) : (
+                            <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">
+                                Awaiting signature
+                            </div>
+                        )}
+                    </div>
+                     <div className="space-y-2">
+                        <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
+                        {audit.auditeeSignature ? (
+                            <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white" />
+                        ) : user?.name === audit.auditeeName ? (
+                             <SignaturePad onEnd={(sig) => handleSignature('auditee', sig)} width={300} height={150} />
+                        ) : (
+                             <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">
+                                Awaiting signature
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };
@@ -869,5 +913,6 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
 
 

@@ -476,6 +476,8 @@ export type QualityAudit = {
   summary: string;
   discussion?: DiscussionEntry[];
   investigationTeam?: string[];
+  auditorSignature?: string;
+  auditeeSignature?: string;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
@@ -513,5 +515,6 @@ export type Checklist = {
   templateId?: string; // ID of the master template
   aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };
+
 
 
