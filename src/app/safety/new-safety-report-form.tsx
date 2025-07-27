@@ -525,10 +525,8 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                     />
                 </CardContent>
-                <CardFooter>
-                     <Button type="submit" className="w-full">Submit Report</Button>
-                </CardFooter>
              </Card>
+            <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
         </form>
     </Form>
   );
