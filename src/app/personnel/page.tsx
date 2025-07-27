@@ -35,6 +35,7 @@ function PersonnelPage() {
     const [editingPersonnel, setEditingPersonnel] = useState<User | null>(null);
     const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
     const [selectedPersonnel, setSelectedPersonnel] = useState<string[]>([]);
+    const [invitationsSent, setInvitationsSent] = useState<string[]>([]);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -69,7 +70,7 @@ function PersonnelPage() {
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
             // This is the logic for adding a new user.
-            const needsAuthAccount = personnelData.role === 'Admin';
+            const needsAuthAccount = personnelData.role === 'Admin' || personnelData.role === 'Auditee';
 
             if (needsAuthAccount) {
                  if (!personnelData.email || !personnelData.password) {
@@ -91,18 +92,7 @@ function PersonnelPage() {
                     toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
                     
                     try {
-                         await sendEmail({
-                            to: personnelData.email,
-                            subject: `Your Access to ${company.name} Portal`,
-                            emailData: {
-                                userName: personnelData.name,
-                                companyName: company.name,
-                                userEmail: personnelData.email,
-                                temporaryPassword: personnelData.password,
-                                loginUrl: window.location.origin + '/login',
-                            }
-                        });
-                         toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
+                         await handleSendInvitation(finalUserData);
                     } catch (emailError) {
                         console.error("Failed to send invitation email:", emailError);
                         toast({ variant: 'destructive', title: 'Email Failed', description: 'The user was created, but the invitation email could not be sent. Please send credentials manually.'})
@@ -129,6 +119,32 @@ function PersonnelPage() {
         fetchPersonnel();
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
+    };
+
+    const handleSendInvitation = async (person: User) => {
+        if (!person.email || !company) {
+            toast({ variant: 'destructive', title: 'Error', description: 'User has no email address.'});
+            return;
+        }
+
+        try {
+            await sendEmail({
+                to: person.email,
+                subject: `Your Access to ${company.name} Portal`,
+                emailData: {
+                    userName: person.name,
+                    companyName: company.name,
+                    userEmail: person.email,
+                    temporaryPassword: person.password, // This assumes password is on the user object after creation
+                    loginUrl: window.location.origin + '/login',
+                }
+            });
+            setInvitationsSent(prev => [...prev, person.id]);
+            toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${person.name}.` });
+        } catch (emailError) {
+            console.error("Failed to send invitation email:", emailError);
+            toast({ variant: 'destructive', title: 'Email Failed', description: 'Could not send the invitation email. Please try again or send credentials manually.' });
+        }
     };
     
     const handleEditClick = (person: User) => {
@@ -314,6 +330,17 @@ function PersonnelPage() {
                            <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </Button>
+                             {person.email && (person.role === 'Admin' || person.role === 'Auditee') && (
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    onClick={() => handleSendInvitation(person)}
+                                    disabled={invitationsSent.includes(person.id)}
+                                >
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {invitationsSent.includes(person.id) ? 'Sent' : 'Send Invite'}
+                                </Button>
+                            )}
                         </TableCell>
                     )}
                   </TableRow>
