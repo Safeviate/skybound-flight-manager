@@ -52,7 +52,7 @@ const sendEmailFlow = ai.defineFlow(
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
         to,
         subject,
-        react: <NewUserCredentialsEmail {...emailData} />,
+        react: React.createElement(NewUserCredentialsEmail, emailData),
       });
 
       if (error) {
