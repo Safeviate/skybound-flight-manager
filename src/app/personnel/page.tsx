@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -130,6 +130,44 @@ function PersonnelPage() {
         fetchPersonnel();
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
+    };
+
+    const handleSendInvitation = async (person: User) => {
+        if (!company || !person.email) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'This user does not have an email address to send an invitation to.',
+            });
+            return;
+        }
+
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+
+        try {
+            await sendEmail({
+                to: person.email,
+                subject: `Your Access to ${company.name} Portal`,
+                react: <NewUserCredentialsEmail
+                    userName={person.name}
+                    companyName={company.name}
+                    userEmail={person.email}
+                    temporaryPassword={temporaryPassword}
+                    loginUrl={window.location.origin + '/login'}
+                />,
+            });
+            toast({
+                title: 'Invitation Sent',
+                description: `An email with a new temporary password has been sent to ${person.name}.`,
+            });
+        } catch (emailError) {
+            console.error('Failed to send invitation email:', emailError);
+            toast({
+                variant: 'destructive',
+                title: 'Email Failed',
+                description: 'The invitation email could not be sent. Please check your email service configuration.',
+            });
+        }
     };
     
     const handleEditClick = (person: User) => {
@@ -313,7 +351,12 @@ function PersonnelPage() {
                     <TableCell>{person.email && person.consentDisplayContact === 'Consented' ? person.email : '[Private]'}</TableCell>
                     <TableCell>{person.consentDisplayContact === 'Consented' ? person.phone : '[Private]'}</TableCell>
                     {canEditPersonnel && (
-                        <TableCell className="text-right">
+                        <TableCell className="text-right flex items-center justify-end gap-2">
+                            {person.email && (
+                                <Button variant="outline" size="sm" onClick={() => handleSendInvitation(person)}>
+                                    <Send className="mr-2 h-4 w-4" /> Send Invitation
+                                </Button>
+                            )}
                            <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </Button>
