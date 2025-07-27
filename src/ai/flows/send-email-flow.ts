@@ -57,7 +57,7 @@ const sendEmailFlow = ai.defineFlow(
       // Catch any other exceptions during the process
       console.error('Failed to send email with error:', error);
       // Re-throw the error to ensure the calling function is aware of the failure.
-      throw new Error(error.message || 'An unexpected error occurred while sending the email.');
+      throw new Error(error.message || `An unexpected error occurred while sending the email: ${JSON.stringify(error)}`);
     }
   }
 );
