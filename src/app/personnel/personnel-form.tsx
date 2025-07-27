@@ -32,12 +32,10 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student'], {
+  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student', 'External Auditee'], {
       required_error: 'Please select a role.'
   }),
-  department: z.string({
-    required_error: 'Please select a department.'
-  }),
+  department: z.string().optional(),
   permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one permission.',
   }),
@@ -50,13 +48,15 @@ const personnelFormSchema = z.object({
     required_error: "You must select a privacy option."
   }),
   mustChangePassword: z.boolean().default(false),
+  externalCompanyName: z.string().optional(),
+  externalPosition: z.string().optional(),
 }).refine(data => {
-    if (data.role === 'Admin') {
+    if (data.role === 'Admin' || data.role === 'External Auditee') {
         return !!data.email && !!data.password;
     }
     return true;
 }, {
-    message: 'Email and password are required for Admins.',
+    message: 'Email and password are required for Admins and External Auditees.',
     path: ['email'], // Show error on one of the fields
 });
 
@@ -117,6 +117,9 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     }
   }
 
+  const isExternalAuditee = selectedRole === 'External Auditee';
+  const showCredentialsFields = selectedRole === 'Admin' || isExternalAuditee;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8 max-h-[70vh] overflow-y-auto p-1 pr-4">
@@ -161,35 +164,68 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <SelectItem value="Quality Manager">Quality Manager</SelectItem>
                         <SelectItem value="Safety Manager">Safety Manager</SelectItem>
                         <SelectItem value="Student">Student</SelectItem>
+                        <SelectItem value="External Auditee">External Auditee</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />
                 </FormItem>
             )}
             />
-             <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Department</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a department" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        <SelectItem value="Management">Management</SelectItem>
-                        <SelectItem value="Flight Operations">Flight Operations</SelectItem>
-                        <SelectItem value="Ground Operation">Ground Operation</SelectItem>
-                        <SelectItem value="Maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
+
+            {isExternalAuditee ? (
+                 <>
+                    <FormField
+                    control={form.control}
+                    name="externalCompanyName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>External Company Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., National Aviation Authority" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="externalPosition"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Position / Role</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Lead Inspector" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </>
+            ) : (
+                <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Management">Management</SelectItem>
+                            <SelectItem value="Flight Operations">Flight Operations</SelectItem>
+                            <SelectItem value="Ground Operation">Ground Operation</SelectItem>
+                            <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             )}
-            />
             
             <FormField
             control={form.control}
@@ -205,7 +241,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             )}
             />
 
-            {(selectedRole === 'Admin' || (existingPersonnel && existingPersonnel.role === 'Admin')) && (
+            {showCredentialsFields && (
                 <>
                  <FormField
                     control={form.control}
@@ -239,7 +275,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                                                 <RefreshCw className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                        <FormDescription>Generate a password for the new admin.</FormDescription>
+                                        <FormDescription>Generate a password for the new user.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}

@@ -89,20 +89,30 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
   const auditeeUser = personnel.find(p => p.name === audit.auditeeName);
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 border rounded-lg">
-            <h4 className="font-semibold text-muted-foreground">Auditor</h4>
-            <p className="text-lg font-bold">{audit.auditor}</p>
-            <p className="text-sm text-muted-foreground">{auditorUser?.role}</p>
-        </div>
-         <div className="p-4 border rounded-lg">
-            <h4 className="font-semibold text-muted-foreground">Auditee</h4>
-            <p className="text-lg font-bold">{audit.auditeeName}</p>
-             <p className="text-sm text-muted-foreground">{auditeeUser?.role}</p>
-        </div>
-      </div>
-      
-    </div>
+    <Card>
+        <CardHeader>
+            <CardTitle>Audit Team</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg bg-muted/50">
+                    <h4 className="font-semibold text-muted-foreground">Lead Auditor</h4>
+                    <p className="text-lg font-bold">{audit.auditor}</p>
+                    <p className="text-sm text-muted-foreground">{auditorUser?.role}</p>
+                </div>
+                <div className="p-4 border rounded-lg bg-muted/50">
+                    <h4 className="font-semibold text-muted-foreground">Auditee</h4>
+                    <p className="text-lg font-bold">{audit.auditeeName}</p>
+                    <p className="text-sm text-muted-foreground">
+                        {auditeeUser?.role === 'External Auditee' 
+                        ? `${auditeeUser?.externalPosition}, ${auditeeUser?.externalCompanyName}`
+                        : auditeeUser?.role
+                        }
+                    </p>
+                </div>
+            </div>
+            {/* Additional team members can be added here if needed */}
+        </CardContent>
+    </Card>
   );
 }

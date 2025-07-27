@@ -154,6 +154,8 @@ function PersonnelPage() {
             case 'HR Manager':
             case 'Operations Manager':
                 return 'secondary'
+            case 'External Auditee':
+                return 'outline'
             default:
                 return 'outline'
         }

@@ -1,6 +1,5 @@
 
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 
@@ -149,7 +148,8 @@ export type Role =
   | 'Operations Manager'
   | 'Quality Manager'
   | 'Safety Manager'
-  | 'Student';
+  | 'Student'
+  | 'External Auditee';
 
 export type User = {
     id: string;
@@ -173,6 +173,9 @@ export type User = {
     department?: Department;
     medicalExpiry?: string;
     licenseExpiry?: string;
+    // External Auditee specific
+    externalCompanyName?: string;
+    externalPosition?: string;
 };
 
 export type Booking = {
@@ -413,6 +416,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
+    'External Auditee': ['Quality:View'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [

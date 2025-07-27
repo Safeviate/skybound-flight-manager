@@ -406,33 +406,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     </Card>
                 </TabsContent>
                  <TabsContent value="team" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Audit Team</CardTitle>
-                            <CardDescription>
-                                All personnel involved in conducting and responding to this audit.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-2">
-                                {audit.investigationTeam?.map(memberName => {
-                                    const member = personnel.find(p => p.name === memberName);
-                                    let role = member?.role;
-                                    if (memberName === audit.auditor) role = "Lead Auditor";
-                                    if (memberName === audit.auditeeName) role = "Auditee";
-                                    return (
-                                        <li key={memberName} className="flex items-center gap-3 p-2 border rounded-md">
-                                            <Users className="h-5 w-5 text-muted-foreground" />
-                                            <div>
-                                                <p className="font-semibold">{memberName}</p>
-                                                <p className="text-sm text-muted-foreground">{role}</p>
-                                            </div>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <AuditTeamForm audit={audit} onUpdate={onUpdate} personnel={personnel} />
                 </TabsContent>
                 <TabsContent value="checklist" className="mt-4">
                      <Card>
@@ -614,8 +588,6 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditeeName ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature }, true)} />
-                        ) : audit.auditeeName ? (
-                            <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">External Auditee ({audit.auditeePosition})</div>
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -819,25 +791,23 @@ export default function QualityAuditDetailPage() {
                     <p className="font-semibold text-muted-foreground">Audit Type</p>
                     <p>{audit.type}</p>
                 </div>
-                <div>
-                    <p className="font-semibold text-muted-foreground">Lead Auditor</p>
-                    <p>{audit.auditor}</p>
-                </div>
                  <div className="space-y-2">
-                    <label className="text-sm font-medium">External Auditee Name (Optional)</label>
-                    <Input 
-                        placeholder="e.g., John Smith" 
+                    <label className="text-sm font-medium">Auditee (Internal/External)</label>
+                     <Select
                         value={audit.auditeeName || ''}
-                        onChange={(e) => handleAuditUpdate({ ...audit, auditeeName: e.target.value }, false)}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">External Auditee Position (Optional)</label>
-                    <Input 
-                        placeholder="e.g., CAA Inspector" 
-                        value={audit.auditeePosition || ''}
-                        onChange={(e) => handleAuditUpdate({ ...audit, auditeePosition: e.target.value }, false)}
-                    />
+                        onValueChange={(value) => handleAuditUpdate({ ...audit, auditeeName: value }, false)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select an Auditee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {personnel.map(p => (
+                               <SelectItem key={p.id} value={p.name}>
+                                   {p.name} ({p.role})
+                                </SelectItem>
+                           ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 </div>
                 <div className="space-y-2 border-t pt-6">
@@ -969,3 +939,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
