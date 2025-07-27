@@ -53,6 +53,10 @@ const sendEmailFlow = ai.defineFlow(
         to,
         subject,
         react: React.createElement(NewUserCredentialsEmail, emailData),
+        headers: {
+            // Add a unique identifier to prevent duplicate emails
+            'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
+        }
       });
 
       if (error) {
@@ -62,7 +66,7 @@ const sendEmailFlow = ai.defineFlow(
 
     } catch (error) {
       // Catch any other exceptions during the process and ensure a useful message.
-      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error, Object.getOwnPropertyNames(error));
       console.error(`Failed to send email with error: ${errorMessage}`);
       // Re-throw the error to ensure the calling function is aware of the failure.
       throw new Error(`Failed to send email: ${errorMessage}`);
