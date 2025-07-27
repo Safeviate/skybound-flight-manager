@@ -7,8 +7,133 @@ import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist,
 import { ROLE_PERMISSIONS } from './types';
 
 export const airportData: Airport[] = [];
-export let aircraftData: Aircraft[] = [];
-export let userData: User[] = [];
+export let aircraftData: Aircraft[] = [
+    {
+        id: 'N12345',
+        companyId: 'skybound-aero',
+        tailNumber: 'N12345',
+        model: 'Cessna 172 Skyhawk',
+        status: 'Available',
+        hours: 1250.5,
+        nextServiceType: 'A-Check',
+        hoursUntilService: 24.5,
+        airworthinessExpiry: '2025-06-30',
+        insuranceExpiry: '2025-08-15',
+        location: 'KPAO',
+    },
+    {
+        id: 'N67890',
+        companyId: 'skybound-aero',
+        tailNumber: 'N67890',
+        model: 'Piper PA-28 Cherokee',
+        status: 'In Maintenance',
+        hours: 850.2,
+        nextServiceType: 'B-Check',
+        hoursUntilService: 49.8,
+        airworthinessExpiry: '2025-04-22',
+        insuranceExpiry: '2025-09-01',
+        location: 'KPAO',
+    },
+    {
+        id: 'N54321',
+        companyId: 'skybound-aero',
+        tailNumber: 'N54321',
+        model: 'Diamond DA40 Star',
+        status: 'Booked',
+        hours: 450.0,
+        nextServiceType: 'A-Check',
+        hoursUntilService: 45.0,
+        airworthinessExpiry: '2025-11-10',
+        insuranceExpiry: '2025-10-20',
+        location: 'KPAO',
+    },
+    {
+        id: 'N11223',
+        companyId: 'skybound-aero',
+        tailNumber: 'N11223',
+        model: 'Cirrus SR22',
+        status: 'Available',
+        hours: 2200.8,
+        nextServiceType: 'C-Check',
+        hoursUntilService: 300.2,
+        airworthinessExpiry: '2026-01-15',
+        insuranceExpiry: '2025-07-01',
+        location: 'KPAO',
+    },
+    {
+        id: 'N44556',
+        companyId: 'skybound-aero',
+        tailNumber: 'N44556',
+        model: 'Beechcraft G36 Bonanza',
+        status: 'Available',
+        hours: 1500.0,
+        nextServiceType: 'A-Check',
+        hoursUntilService: 50.0,
+        airworthinessExpiry: '2025-09-01',
+        insuranceExpiry: '2025-09-01',
+        location: 'KPAO',
+    }
+];
+export let userData: User[] = [
+    {
+        id: 'admin-001',
+        companyId: 'skybound-aero',
+        name: 'Alex Johnson',
+        role: 'Admin',
+        email: 'alex.johnson@example.com',
+        phone: '555-0101',
+        permissions: ROLE_PERMISSIONS['Admin'],
+        department: 'Management',
+        password: 'password'
+    },
+    {
+        id: 'instructor-001',
+        companyId: 'skybound-aero',
+        name: 'Barbara Green',
+        role: 'Chief Flight Instructor',
+        email: 'barbara.green@example.com',
+        phone: '555-0102',
+        permissions: ROLE_PERMISSIONS['Chief Flight Instructor'],
+        department: 'Flight Operations',
+        password: 'password'
+    },
+    {
+        id: 'instructor-002',
+        companyId: 'skybound-aero',
+        name: 'Charles Davis',
+        role: 'Instructor',
+        email: 'charles.davis@example.com',
+        phone: '555-0103',
+        permissions: ROLE_PERMISSIONS['Instructor'],
+        department: 'Flight Operations',
+        password: 'password'
+    },
+    {
+        id: 'student-001',
+        companyId: 'skybound-aero',
+        name: 'Diana Prince',
+        role: 'Student',
+        email: 'diana.prince@example.com',
+        phone: '555-0104',
+        instructor: 'Charles Davis',
+        flightHours: 25.5,
+        progress: 45,
+        status: 'Active',
+        permissions: ROLE_PERMISSIONS['Student'],
+        password: 'password'
+    },
+    {
+        id: 'maintenance-001',
+        companyId: 'skybound-aero',
+        name: 'Edward Nigma',
+        role: 'Maintenance',
+        email: 'edward.nigma@example.com',
+        phone: '555-0105',
+        permissions: ROLE_PERMISSIONS['Maintenance'],
+        department: 'Maintenance',
+        password: 'password'
+    }
+];
 
 export let bookingData: Booking[] = [];
 export const trainingExercisesData: string[] = [
