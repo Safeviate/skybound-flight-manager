@@ -1,13 +1,11 @@
 
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Search, User as UserIcon, LogOut, Edit, X } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +14,63 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+
+const profileFormSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  phone: z.string().min(10, 'Please enter a valid phone number.'),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
-  const { user, logout } = useUser();
+  const { user, logout, updateUser } = useUser();
   const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+  });
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name,
+        phone: user.phone,
+      });
+    }
+  }, [user, form]);
 
   const handleLogout = () => {
     logout();
     router.push('/login');
+  };
+
+  const handleProfileUpdate = async (data: ProfileFormValues) => {
+    const success = await updateUser(data);
+    if (success) {
+      toast({ title: 'Profile Updated', description: 'Your information has been successfully saved.' });
+      setIsProfileOpen(false);
+    } else {
+      toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save your changes.' });
+    }
   };
 
   return (
@@ -40,24 +87,80 @@ export default function Header({ title, children }: { title: string, children?: 
       
       <div className="flex items-center justify-end gap-4">
         {children}
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="default" className="relative h-auto px-4 py-2 text-left">
-                    <div className="flex flex-col">
-                        <span>{user?.name}</span>
-                        <span className="text-xs text-primary-foreground/80 -mt-1">{user?.role}</span>
-                    </div>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+          <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="default" className="relative h-auto px-4 py-2 text-left">
+                      <div className="flex flex-col">
+                          <span>{user?.name}</span>
+                          <span className="text-xs text-primary-foreground/80 -mt-1">{user?.role}</span>
+                      </div>
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>My Personal Information</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                  </DropdownMenuItem>
+              </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>My Personal Information</DialogTitle>
+              <DialogDescription>
+                Update your contact details here.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Full Name</Label>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormItem>
+                  <Label>Email</Label>
+                  <Input value={user?.email || ''} disabled />
+                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Phone</Label>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Close
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </header>
   );
