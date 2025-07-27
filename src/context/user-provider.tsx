@@ -130,16 +130,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return allAlerts.filter(alert => {
         const isUnread = !alert.readBy.includes(user.id!);
         const isTargetedToUser = !alert.targetUserId || alert.targetUserId === user.id;
-
-        // Hide alerts for closed quality audits
-        if (alert.relatedLink?.startsWith('/quality/')) {
-            const auditId = alert.relatedLink.split('/')[2];
-            const relatedAudit = audits.find(a => a.id === auditId);
-            if (relatedAudit?.status === 'Closed') {
-                return false;
-            }
-        }
-
+        
         return isUnread && isTargetedToUser;
     });
   }, [user, allAlerts]);
