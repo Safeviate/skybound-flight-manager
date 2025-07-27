@@ -7,7 +7,10 @@ import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist,
 import { ROLE_PERMISSIONS } from './types';
 
 export const airportData: Airport[] = [];
-export let aircraftData: Aircraft[] = [];
+export let aircraftData: Aircraft[] = [
+    // This data is now seeded via the UI and fetched from Firestore.
+    // Keeping the array here to prevent breaking imports, but it should be empty.
+];
 export let userData: User[] = [];
 
 export let bookingData: Booking[] = [];

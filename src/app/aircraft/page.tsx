@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2 } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2, Trash2, MoreHorizontal } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ChecklistCard } from '@/app/checklists/checklist-card';
 import Link from 'next/link';
 import QRCode from 'qrcode.react';
@@ -27,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
@@ -78,6 +79,7 @@ function AircraftPage() {
   };
   
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
+  const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
 
   const handleItemToggle = async (toggledChecklist: Checklist) => {
     setChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
@@ -192,6 +194,25 @@ function AircraftPage() {
     setIsNewAircraftDialogOpen(false);
     fetchData(); // Refetch all data to get newly assigned checklists
   }
+  
+  const handleDeleteAircraft = async (aircraftId: string) => {
+    if (!company) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, `companies/${company.id}/aircraft`, aircraftId));
+      setFleet(prev => prev.filter(ac => ac.id !== aircraftId));
+      toast({
+        title: 'Aircraft Deleted',
+        description: 'The aircraft has been removed from the fleet.',
+      });
+    } catch (error) {
+      console.error('Error deleting aircraft:', error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete aircraft.' });
+    }
+  };
 
   const handleSeedAircraft = async () => {
     if (!company) {
@@ -203,19 +224,27 @@ function AircraftPage() {
       return;
     }
 
-    if (seedAircraft.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'No Seed Data',
-        description: 'There is no sample aircraft data available to seed.',
-      });
-      return;
-    }
-
     setIsSeeding(true);
     try {
       const batch = writeBatch(db);
-      const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero');
+      
+      const aircraftCollectionRef = collection(db, `companies/${company.id}/aircraft`);
+      // Use getDocs to check for existing aircraft to avoid duplicates if seed is run multiple times
+      const existingSnapshot = await getDocs(aircraftCollectionRef);
+      const existingIds = new Set(existingSnapshot.docs.map(d => d.id));
+
+      const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero' && !existingIds.has(ac.id));
+      
+      if (aircraftToSeed.length === 0) {
+        toast({
+            variant: 'default',
+            title: 'No New Aircraft to Seed',
+            description: 'Sample aircraft already exist in your fleet.',
+        });
+        setIsSeeding(false);
+        return;
+      }
+
 
       aircraftToSeed.forEach(aircraft => {
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
@@ -376,25 +405,56 @@ function AircraftPage() {
                         </DropdownMenu>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Dialog>
-                            <DialogTrigger asChild>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
-                                    <QrCode className="h-4 w-4" />
-                                    <span className="sr-only">Show QR Code</span>
+                                    <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-xs">
-                            <DialogHeader>
-                                <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
-                                <DialogDescription>
-                                    Scan this code with the in-app scanner to start the pre-flight checklist.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex items-center justify-center p-4">
-                                <QRCode value={aircraft.id} size={200} />
-                            </div>
-                            </DialogContent>
-                        </Dialog>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                            <QrCode className="mr-2 h-4 w-4" />
+                                            Show QR Code
+                                        </DropdownMenuItem>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-xs">
+                                        <DialogHeader>
+                                            <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
+                                            <DialogDescription>
+                                                Scan this code with the in-app scanner to start the pre-flight checklist.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="flex items-center justify-center p-4">
+                                            <QRCode value={aircraft.id} size={200} />
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                                {canEditAircraft && (
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete {aircraft.tailNumber} and all its associated data.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteAircraft(aircraft.id)}>Yes, Delete Aircraft</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )})}
@@ -408,5 +468,3 @@ function AircraftPage() {
 
 AircraftPage.title = 'Aircraft Management';
 export default AircraftPage;
-
-    
