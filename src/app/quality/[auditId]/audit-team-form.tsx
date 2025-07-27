@@ -24,6 +24,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { QualityAudit, User } from '@/lib/types';
 import { UserPlus, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const teamFormSchema = z.object({
   personnel: z.string().min(1, 'You must select a person to add.'),
@@ -104,10 +105,7 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
                     <h4 className="font-semibold text-muted-foreground">Auditee</h4>
                     <p className="text-lg font-bold">{audit.auditeeName}</p>
                     <p className="text-sm text-muted-foreground">
-                        {auditeeUser?.role === 'External Auditee' 
-                        ? `${auditeeUser?.externalPosition}, ${auditeeUser?.externalCompanyName}`
-                        : auditeeUser?.role
-                        }
+                        {auditeeUser?.role}
                     </p>
                 </div>
             </div>

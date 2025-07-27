@@ -32,7 +32,7 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student', 'External Auditee'], {
+  role: z.enum(['Accountable Manager', 'Admin', 'Aircraft Manager', 'Chief Flight Instructor', 'Driver', 'Front Office', 'Head Of Training', 'HR Manager', 'Instructor', 'Maintenance', 'Operations Manager', 'Quality Manager', 'Safety Manager', 'Student'], {
       required_error: 'Please select a role.'
   }),
   department: z.string().optional(),
@@ -53,7 +53,7 @@ const personnelFormSchema = z.object({
   accessStartDate: z.date().optional(),
   accessEndDate: z.date().optional(),
 }).refine(data => {
-    if (data.role === 'Admin' || data.role === 'External Auditee') {
+    if (data.role === 'Admin') {
         return !!data.email && !!data.password && data.password.length >= 8;
     }
     return true;
@@ -130,8 +130,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     }
   }
 
-  const isExternalAuditee = selectedRole === 'External Auditee';
-  const showCredentialsFields = selectedRole === 'Admin' || selectedRole === 'External Auditee';
+  const showCredentialsFields = selectedRole === 'Admin';
 
   return (
     <Form {...form}>
@@ -177,7 +176,6 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         <SelectItem value="Quality Manager">Quality Manager</SelectItem>
                         <SelectItem value="Safety Manager">Safety Manager</SelectItem>
                         <SelectItem value="Student">Student</SelectItem>
-                        <SelectItem value="External Auditee">External Auditee</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -185,60 +183,29 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             )}
             />
 
-            {isExternalAuditee ? (
-                 <>
-                    <FormField
-                    control={form.control}
-                    name="externalCompanyName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>External Company Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., National Aviation Authority" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="externalPosition"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Position / Role</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Lead Inspector" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </>
-            ) : (
-                <FormField
-                control={form.control}
-                name="department"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a department" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Management">Management</SelectItem>
-                            <SelectItem value="Flight Operations">Flight Operations</SelectItem>
-                            <SelectItem value="Ground Operation">Ground Operation</SelectItem>
-                            <SelectItem value="Maintenance">Maintenance</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+            <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Department</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="Management">Management</SelectItem>
+                        <SelectItem value="Flight Operations">Flight Operations</SelectItem>
+                        <SelectItem value="Ground Operation">Ground Operation</SelectItem>
+                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
             )}
+            />
             
             <FormField
             control={form.control}
@@ -312,86 +279,6 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         )}
                         />
                     )}
-                </>
-            )}
-             {isExternalAuditee && (
-                <>
-                <FormField
-                    control={form.control}
-                    name="accessStartDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Access Start Date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick start date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="accessEndDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Access End Date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick end date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 </>
             )}
         </div>
@@ -529,4 +416,3 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     </Form>
   );
 }
-

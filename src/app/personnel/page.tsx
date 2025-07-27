@@ -69,7 +69,7 @@ function PersonnelPage() {
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
             // This is the logic for adding a new user.
-            const needsAuthAccount = personnelData.role === 'Admin' || personnelData.role === 'External Auditee';
+            const needsAuthAccount = personnelData.role === 'Admin';
 
             if (needsAuthAccount) {
                  if (!personnelData.email || !personnelData.password) {
@@ -129,44 +129,6 @@ function PersonnelPage() {
         fetchPersonnel();
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
-    };
-
-    const handleSendInvitation = async (person: User) => {
-        if (!company || !person.email) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'This user does not have an email address to send an invitation to.',
-            });
-            return;
-        }
-
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-
-        try {
-            await sendEmail({
-                to: person.email,
-                subject: `Your Access to ${company.name} Portal`,
-                emailData: {
-                    userName: person.name,
-                    companyName: company.name,
-                    userEmail: person.email,
-                    temporaryPassword: temporaryPassword,
-                    loginUrl: window.location.origin + '/login',
-                }
-            });
-            toast({
-                title: 'Invitation Sent',
-                description: `An email with a new temporary password has been sent to ${person.name}.`,
-            });
-        } catch (emailError: any) {
-            console.error('Failed to send invitation email:', emailError);
-            toast({
-                variant: 'destructive',
-                title: 'Email Failed',
-                description: emailError.message || 'The invitation email could not be sent. Please check your email service configuration.',
-            });
-        }
     };
     
     const handleEditClick = (person: User) => {
@@ -238,8 +200,6 @@ function PersonnelPage() {
             case 'HR Manager':
             case 'Operations Manager':
                 return 'secondary'
-            case 'External Auditee':
-                return 'outline'
             default:
                 return 'outline'
         }

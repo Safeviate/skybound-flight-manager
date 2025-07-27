@@ -150,8 +150,7 @@ export type Role =
   | 'Operations Manager'
   | 'Quality Manager'
   | 'Safety Manager'
-  | 'Student'
-  | 'External Auditee';
+  | 'Student';
 
 export type User = {
     id: string;
@@ -420,7 +419,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Front Office': [...VIEW_ALL_PAGES],
     'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
     'Driver': ['Alerts:View'],
-    'External Auditee': ['Quality:View', 'Quality:Sign'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
