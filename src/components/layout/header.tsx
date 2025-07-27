@@ -24,12 +24,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -38,14 +37,18 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import type { UserDocument } from '@/lib/types';
+import { Label } from '@/components/ui/label';
 
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
-  phone: z.string().min(10, 'Please enter a valid phone number.'),
+  phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   homeAddress: z.string().optional(),
   nextOfKinName: z.string().optional(),
-  nextOfKinPhone: z.string().optional(),
+  nextOfKinPhone: z.string().regex(phoneRegex, 'Invalid Number!').optional().or(z.literal('')),
   nextOfKinEmail: z.string().email().optional().or(z.literal('')),
   documents: z.array(z.object({
     id: z.string(),
@@ -208,6 +211,9 @@ export default function Header({ title, children }: { title: string, children?: 
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
+                           <FormDescription>
+                            Example: +27 12 345 6789
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -250,6 +256,9 @@ export default function Header({ title, children }: { title: string, children?: 
                           <FormControl>
                             <Input placeholder="555-987-6543" {...field} />
                           </FormControl>
+                          <FormDescription>
+                            Example: +27 12 345 6789
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

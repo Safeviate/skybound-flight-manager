@@ -37,12 +37,16 @@ const documents = [
   "Logbook",
 ] as const;
 
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
+
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
   email: z.string().email(),
-  phone: z.string().min(10),
+  phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   role: z.custom<Role>((val) => typeof val === 'string' && val !== 'Student', {
       message: 'A valid role must be selected.'
   }),
@@ -140,8 +144,11 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                 <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                    <Input type="tel" placeholder="555-123-4567" {...field} />
+                    <Input type="tel" placeholder="+27 12 345 6789" {...field} />
                 </FormControl>
+                 <FormDescription>
+                  Include country code.
+                </FormDescription>
                 <FormMessage />
                 </FormItem>
             )}

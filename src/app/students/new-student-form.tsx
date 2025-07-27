@@ -30,12 +30,16 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
+
 const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
   email: z.string().email().optional(),
-  phone: z.string().min(10),
+  phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   instructor: z.string({
     required_error: 'Please select an instructor.',
   }),
@@ -125,8 +129,11 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
                 <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                    <Input type="tel" placeholder="555-123-4567" {...field} />
+                    <Input type="tel" placeholder="+27 12 345 6789" {...field} />
                 </FormControl>
+                 <FormDescription>
+                  Include country code.
+                </FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
