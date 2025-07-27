@@ -94,12 +94,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-            const [userData, companyData] = await fetchUserDataById(firebaseUser.photoURL || 'skybound-aero', firebaseUser.uid);
-            setUser(userData);
-            setCompany(companyData);
-            if (companyData) {
-                localStorage.setItem(LAST_USER_ID_KEY, firebaseUser.uid);
-                localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+            // The company ID is stored in the photoURL field during the registration process.
+            // This is a workaround to associate the auth user with their company.
+            const companyId = firebaseUser.photoURL;
+            if (companyId) {
+                const [userData, companyData] = await fetchUserDataById(companyId, firebaseUser.uid);
+                setUser(userData);
+                setCompany(companyData);
+                if (companyData) {
+                    localStorage.setItem(LAST_USER_ID_KEY, firebaseUser.uid);
+                    localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+                }
+            } else {
+                 console.error("Could not determine company for authenticated user.");
+                 setUser(null);
+                 setCompany(null);
             }
         } else {
             setUser(null);
@@ -140,33 +149,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const [userData, companyData] = await fetchUserDataByEmail(email);
-
-      if (userData?.role === 'Admin') {
-        if (!password) {
-          console.error("Password is required for Admin login.");
-          return false;
+        if (password) {
+            // This is a real login attempt with credentials
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // After successful sign-in, onAuthStateChanged will trigger and fetch user data.
+            return true;
+        } else {
+            // This is for the demo environment for non-admin users without real auth
+            const [userData, companyData] = await fetchUserDataByEmail(email);
+            if (userData && companyData) {
+                setUser(userData);
+                setCompany(companyData);
+                localStorage.setItem(LAST_USER_ID_KEY, userData.id);
+                localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+                return true;
+            }
         }
-        await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged will handle setting the user state.
-        return true;
-      }
-
-      // For non-Admin users (demo environment behavior)
-      if (userData && companyData) {
-          setUser(userData);
-          setCompany(companyData);
-          localStorage.setItem(LAST_USER_ID_KEY, userData.id);
-          localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
-          return true;
-      }
-
-      return false; // User not found
+        return false;
     } catch (error) {
-      console.error("Authentication or login process failed:", error);
-      return false;
+        console.error("Authentication or login process failed:", error);
+        // Clear any potentially partial state on failure
+        setUser(null);
+        setCompany(null);
+        return false;
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 

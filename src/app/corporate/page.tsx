@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { doc, setDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import config from '@/config';
 import { useRouter } from 'next/navigation';
@@ -39,6 +40,11 @@ export default function CorporatePage() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
             const newUserId = userCredential.user.uid;
+            
+            // Store companyId in the auth user's profile for retrieval on login
+            await updateProfile(userCredential.user, {
+                photoURL: companyId
+            });
 
             const companyDocRef = doc(db, 'companies', companyId);
             await setDoc(companyDocRef, { ...newCompanyData, id: companyId, logoUrl });
