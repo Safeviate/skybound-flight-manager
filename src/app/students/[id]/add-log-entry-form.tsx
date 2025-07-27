@@ -27,6 +27,7 @@ import { useUser } from '@/context/user-provider';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { SignaturePad } from '@/components/ui/signature-pad';
 
 
 const logEntryFormSchema = z.object({
@@ -48,6 +49,7 @@ const logEntryFormSchema = z.object({
   instructorNotes: z.string().min(10, {
     message: 'Notes must be at least 10 characters long.',
   }),
+  instructorSignature: z.string().optional(),
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
@@ -242,6 +244,19 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+            control={form.control}
+            name="instructorSignature"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Instructor Signature</FormLabel>
+                    <FormControl>
+                        <SignaturePad onEnd={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
         />
         <div className="flex justify-end pt-4">
           <Button type="submit">Add Log Entry</Button>

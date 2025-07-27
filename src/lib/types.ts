@@ -78,6 +78,7 @@ export type TrainingLogEntry = {
   flightDuration: number;
   instructorNotes: string;
   instructorName: string;
+  instructorSignature?: string;
 };
 
 export type Permission =
@@ -512,4 +513,5 @@ export type Checklist = {
   templateId?: string; // ID of the master template
   aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };
+
 

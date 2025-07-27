@@ -23,6 +23,7 @@ import autoTable from 'jspdf-autotable';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import Image from 'next/image';
 
 function StudentProfilePage() {
     const params = useParams();
@@ -341,6 +342,14 @@ function StudentProfilePage() {
                                         <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
                                     </div>
                                     <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
+                                    {log.instructorSignature && (
+                                        <div className="pt-2">
+                                            <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
+                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         ) : (
