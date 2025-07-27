@@ -48,7 +48,7 @@ export default function Header({ title, children }: { title: string, children?: 
                 <Avatar className="h-7 w-7 mr-2">
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
-                My Information
+                {user?.name}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
