@@ -26,8 +26,6 @@ export default function Header({ title, children }: { title: string, children?: 
     router.push('/login');
   };
 
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
@@ -45,9 +43,6 @@ export default function Header({ title, children }: { title: string, children?: 
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="default" className="relative h-10 px-4">
-                    <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback>{userInitial}</AvatarFallback>
-                    </Avatar>
                     <span>{user?.name}</span>
                 </Button>
             </DropdownMenuTrigger>
