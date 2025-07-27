@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department, CompletedChecklist, Booking } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
@@ -61,26 +61,17 @@ interface SafetyPerformanceIndicatorsProps {
   reports: SafetyReport[];
   spiConfigs: SpiConfig[];
   onConfigChange: (newConfigs: SpiConfig[]) => void;
+  monthlyFlightHours: Record<string, number>;
+  monthlyChecklistCompletion: Record<string, number>;
 }
 
-const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: SafetyPerformanceIndicatorsProps) => {
+const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours, monthlyChecklistCompletion }: SafetyPerformanceIndicatorsProps) => {
     const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
 
     const handleSpiUpdate = (updatedSpi: SpiConfig) => {
         onConfigChange(spiConfigs.map(spi => spi.id === updatedSpi.id ? updatedSpi : spi));
         setEditingSpi(null);
     };
-
-    const monthlyFlightHours = { // Mock data
-        'Jul 24': 320,
-        'Aug 24': 350,
-    };
-    
-    // Mock data for checklist completion
-    const monthlyChecklistCompletion = {
-        'Jul 24': 98,
-        'Aug 24': 95
-    }
 
     return (
         <Card>
@@ -134,9 +125,9 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange }: Sa
                             if (value < alert2) return { label: 'Monitor', variant: 'warning' as const };
                             return { label: 'Acceptable', variant: 'success' as const };
                         } else { // '<=' direction
-                            if (value >= alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
-                            if (value >= alert3) return { label: 'Action Required', variant: 'orange' as const };
-                            if (value >= alert2) return { label: 'Monitor', variant: 'warning' as const };
+                            if (value > alert4) return { label: 'Urgent Action', variant: 'destructive' as const };
+                            if (value > alert3) return { label: 'Action Required', variant: 'orange' as const };
+                            if (value > alert2) return { label: 'Monitor', variant: 'warning' as const };
                             return { label: 'Acceptable', variant: 'success' as const };
                         }
                     };
@@ -409,6 +400,8 @@ function SafetyPage() {
 
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [completedChecklists, setCompletedChecklists] = useState<CompletedChecklist[]>([]);
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
   const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
@@ -428,17 +421,25 @@ function SafetyPage() {
             try {
                 const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
                 const risksQuery = query(collection(db, `companies/${company.id}/risks`));
+                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+                const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
 
-                const [reportsSnapshot, risksSnapshot] = await Promise.all([
+                const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
                     getDocs(reportsQuery),
                     getDocs(risksQuery),
+                    getDocs(bookingsQuery),
+                    getDocs(checklistsQuery),
                 ]);
 
                 const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
                 const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+                const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+                const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
                 
                 setSafetyReports(reportsList);
                 setRisks(risksList);
+                setBookings(bookingsList);
+                setCompletedChecklists(checklistsList);
 
             } catch (error) {
                 console.error("Error fetching safety data:", error);
@@ -478,7 +479,7 @@ function SafetyPage() {
         unit: 'per 100 hours',
         targetDirection: '<=',
         target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
-        filter: (r: SafetyReport) => r.type && r.type.includes('Report'), // filter for all reports
+        filter: (r: SafetyReport) => r.type && r.type.includes('Report'),
     },
     {
         id: 'checklistCompletion',
@@ -554,6 +555,40 @@ function SafetyPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save risk updates.' });
     }
   };
+
+  const monthlyFlightHours = bookings
+    .filter(b => b.status === 'Completed' && b.flightDuration)
+    .reduce((acc, booking) => {
+        const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
+        acc[month] = (acc[month] || 0) + booking.flightDuration!;
+        return acc;
+    }, {} as Record<string, number>);
+
+  const monthlyChecklistCompletion = completedChecklists
+    .filter(c => c.checklistType === 'Pre-Flight')
+    .reduce((acc, checklist) => {
+        const month = format(startOfMonth(parseISO(checklist.completionDate)), 'MMM yy');
+        if (!acc[month]) {
+            acc[month] = { completed: 0, required: 0 };
+        }
+        acc[month].completed += 1;
+        return acc;
+    }, {} as Record<string, { completed: number, required: number }>);
+  
+  bookings.filter(b => b.purpose === 'Training' || b.purpose === 'Private').forEach(booking => {
+    const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
+    if (!monthlyChecklistCompletion[month]) {
+        monthlyChecklistCompletion[month] = { completed: 0, required: 0 };
+    }
+    monthlyChecklistCompletion[month].required += 1;
+  });
+
+  const checklistCompletionRate = Object.keys(monthlyChecklistCompletion).reduce((acc, month) => {
+    const data = monthlyChecklistCompletion[month];
+    acc[month] = data.required > 0 ? Math.round((data.completed / data.required) * 100) : 100;
+    return acc;
+  }, {} as Record<string, number>);
+
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport }) => {
     const { sortConfig, requestSort } = reportsControls;
@@ -863,7 +898,13 @@ function SafetyPage() {
           </TabsContent>
 
           <TabsContent value="spis">
-            <SafetyPerformanceIndicators reports={safetyReports} spiConfigs={spiConfigs} onConfigChange={setSpiConfigs} />
+            <SafetyPerformanceIndicators 
+                reports={safetyReports} 
+                spiConfigs={spiConfigs} 
+                onConfigChange={setSpiConfigs} 
+                monthlyFlightHours={monthlyFlightHours}
+                monthlyChecklistCompletion={checklistCompletionRate}
+            />
           </TabsContent>
 
           <TabsContent value="matrix">
@@ -895,3 +936,4 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
