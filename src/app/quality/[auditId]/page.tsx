@@ -503,7 +503,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     );
 };
 
-function QualityAuditDetailPage() {
+export default function QualityAuditDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user, company, loading: userLoading } = useUser();
