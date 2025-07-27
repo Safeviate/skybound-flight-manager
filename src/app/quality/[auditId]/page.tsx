@@ -37,6 +37,7 @@ import { AuditTeamForm } from './audit-team-form';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -923,3 +924,6 @@ export default function QualityAuditDetailPage() {
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
 
+
+
+    
