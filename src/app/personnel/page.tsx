@@ -76,20 +76,25 @@ function PersonnelPage() {
                     await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
 
                     toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
-
+                    
                     if (personnelData.role === 'External Auditee') {
-                        await sendEmail({
-                            to: personnelData.email,
-                            subject: `Your Access to ${company.name} Portal`,
-                            react: <NewUserCredentialsEmail
-                                userName={personnelData.name}
-                                companyName={company.name}
-                                userEmail={personnelData.email}
-                                temporaryPassword={personnelData.password}
-                                loginUrl={window.location.origin + '/login'}
-                            />,
-                        });
-                         toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
+                        try {
+                             await sendEmail({
+                                to: personnelData.email,
+                                subject: `Your Access to ${company.name} Portal`,
+                                react: <NewUserCredentialsEmail
+                                    userName={personnelData.name}
+                                    companyName={company.name}
+                                    userEmail={personnelData.email}
+                                    temporaryPassword={personnelData.password}
+                                    loginUrl={window.location.origin + '/login'}
+                                />,
+                            });
+                             toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
+                        } catch (emailError) {
+                            console.error("Failed to send invitation email:", emailError);
+                            toast({ variant: 'destructive', title: 'Email Failed', description: 'The user was created, but the invitation email could not be sent. Please send credentials manually.'})
+                        }
                     }
 
                 } catch (error: any) {
@@ -292,3 +297,5 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
+
+    
