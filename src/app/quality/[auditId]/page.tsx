@@ -844,4 +844,5 @@ QualityAuditDetailPage.headerContent = function HeaderActions() {
     )
 }
 
-export default QualityAuditDetailPage;
+
+
