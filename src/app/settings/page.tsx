@@ -5,10 +5,9 @@ import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Monitor, Paintbrush, ZoomIn } from "lucide-react"
+import { Paintbrush, ZoomIn } from "lucide-react"
 import { useUser } from "@/context/user-provider"
 import { useRouter } from "next/navigation"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -84,15 +83,7 @@ const applyTheme = (theme: { primary?: string, background?: string, accent?: str
     }
 };
 
-const clearCustomTheme = () => {
-    const root = document.documentElement;
-    root.style.removeProperty('--primary');
-    root.style.removeProperty('--background');
-    root.style.removeProperty('--accent');
-}
-
 function SettingsPage() {
-  const { theme, setTheme, systemTheme } = useTheme()
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast()
@@ -124,10 +115,6 @@ function SettingsPage() {
     }
   }, [user, loading, router]);
   
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-  }
-
   const handleThemeSubmit = async (data: ThemeFormValues) => {
     if (!company) return;
 
@@ -174,30 +161,6 @@ function SettingsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div>
-                <h3 className="font-semibold">Color Mode</h3>
-                <p className="text-sm text-muted-foreground">
-                    Select the theme for the application. "System" will match your
-                    operating system's appearance.
-                </p>
-                <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => handleThemeChange("light")}>
-                    <Sun className="mr-2 h-4 w-4" />
-                    Light
-                    </Button>
-                    <Button variant="outline" onClick={() => handleThemeChange("dark")}>
-                    <Moon className="mr-2 h-4 w-4" />
-                    Dark
-                    </Button>
-                    <Button variant="outline" onClick={() => handleThemeChange("system")}>
-                    <Monitor className="mr-2 h-4 w-4" />
-                    System
-                    </Button>
-                </div>
-                </div>
-
-                <Separator />
-
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <ZoomIn className="h-4 w-4" />
@@ -230,7 +193,7 @@ function SettingsPage() {
                         Company Theme Colors
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        Set your organization's brand colors. These will be applied on top of the selected Light or Dark color mode.
+                        Set your organization's brand colors.
                     </p>
                     <div className="grid grid-cols-3 gap-4">
                         <FormField

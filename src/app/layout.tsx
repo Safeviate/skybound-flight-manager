@@ -3,7 +3,6 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-provider';
-import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
 import { AppContent } from './app-content';
 import { Inter } from 'next/font/google';
@@ -31,12 +30,6 @@ export default function RootLayout({
       <head>
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
           <UserProvider>
             <SettingsProvider>
               <ScaleProvider>
@@ -47,7 +40,6 @@ export default function RootLayout({
               </ScaleProvider>
             </SettingsProvider>
           </UserProvider>
-        </ThemeProvider>
       </body>
     </html>
   );
