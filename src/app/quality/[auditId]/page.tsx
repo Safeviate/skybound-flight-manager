@@ -791,12 +791,12 @@ export default function QualityAuditDetailPage() {
                         <p className="font-semibold text-muted-foreground">Audit Type</p>
                         <p>{audit.type}</p>
                     </div>
-                    <div>
+                     <div>
                         <p className="font-semibold text-muted-foreground">Auditor</p>
                         <p>{audit.auditor}</p>
                     </div>
                     <div className="space-y-2 md:col-span-1">
-                        <label className="font-semibold text-muted-foreground">Auditee</label>
+                        <p className="font-semibold text-muted-foreground">Auditee</p>
                         <p>{audit.auditeeName || 'Not yet assigned'}</p>
                     </div>
                 </div>
@@ -930,6 +930,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
