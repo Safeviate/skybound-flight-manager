@@ -155,7 +155,7 @@ function PersonnelPage() {
                             <TableHead>Name</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Contact</TableHead>
-                            <TableHead>Documents</TableHead>
+                            <TableHead>Required Documents</TableHead>
                              {canEdit && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
@@ -169,11 +169,11 @@ function PersonnelPage() {
                                     <div>{person.phone}</div>
                                 </TableCell>
                                 <TableCell>
-                                    {person.documents && person.documents.length > 0 ? (
+                                    {person.requiredDocuments && person.requiredDocuments.length > 0 ? (
                                         <div className="flex flex-wrap gap-1">
-                                            {person.documents.map(doc => (
-                                                <Badge key={doc.id} variant="secondary" className="font-normal">
-                                                    {doc.type}: {getExpiryBadge(doc.expiryDate)}
+                                            {person.requiredDocuments.map(doc => (
+                                                <Badge key={doc} variant="secondary" className="font-normal">
+                                                    {doc}
                                                 </Badge>
                                             ))}
                                         </div>
