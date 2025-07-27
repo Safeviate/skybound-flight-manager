@@ -42,6 +42,7 @@ export type Company = {
   trademark?: string;
   theme?: Partial<ThemeColors>;
   enabledFeatures?: Feature[];
+  logoUrl?: string;
 };
 
 export type Aircraft = {
