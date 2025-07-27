@@ -12,9 +12,6 @@ import { z } from 'genkit';
 import { Resend } from 'resend';
 import * as React from 'react';
 
-// Do not actually log the API key, this is just for demonstration.
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const SendEmailInputSchema = z.object({
   to: z.string().email(),
   subject: z.string(),
@@ -34,6 +31,14 @@ const sendEmailFlow = ai.defineFlow(
     outputSchema: z.void(),
   },
   async ({ to, subject, react }) => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      const errorMessage = 'Resend API key is not configured. Cannot send email.';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    const resend = new Resend(apiKey);
+
     try {
       await resend.emails.send({
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
