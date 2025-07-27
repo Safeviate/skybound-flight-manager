@@ -146,7 +146,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                                      <TableCell className="max-w-[200px] truncate">
                                         {auditTitle}
                                     </TableCell>
-                                    <TableCell className="max-w-[200px]">
+                                    <TableCell className="max-w-[200px] truncate">
                                         <p className="font-medium truncate">{issue.itemText}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference}</p>
                                     </TableCell>
@@ -493,7 +493,7 @@ function QualityPage() {
                             <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ComplianceChart data={audits} />
+                            <ComplianceChart data={activeAudits} />
                         </CardContent>
                     </Card>
                     <Card>
@@ -502,7 +502,7 @@ function QualityPage() {
                             <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <NonConformanceChart data={audits} />
+                            <NonConformanceChart data={activeAudits} />
                         </CardContent>
                     </Card>
                 </div>
@@ -552,7 +552,7 @@ function QualityPage() {
                                 {showArchived && (
                                     <TableHead className="w-12">
                                         <Checkbox 
-                                            onCheckedChange={handleSelectAll}
+                                            onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                                             checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
                                             aria-label="Select all"
                                         />
@@ -634,7 +634,7 @@ function QualityPage() {
                 </Card>
             </TabsContent>
              <TabsContent value="cap-tracker" className="mt-4">
-                <CapTracker audits={audits} onStatusChange={handleCapStatusChange} />
+                <CapTracker audits={activeAudits} onStatusChange={handleCapStatusChange} />
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
                 <AuditChecklistsManager />
