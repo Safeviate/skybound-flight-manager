@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle, Users } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,11 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 
 const getAlertVariant = (type: Alert['type']) => {
     switch (type) {
@@ -82,15 +85,15 @@ function AlertsPage() {
     // For this client-side example, we'll calculate it based on fetched data.
     const lastAlertOfType = alerts
         .filter(a => a.type === data.type)
-        .sort((a,b) => b.number - a.number)[0];
+        .sort((a,b) => b.number! - a.number!)[0];
 
-    const newAlertData = {
+    const newAlertData: Alert = {
         ...data,
         companyId: company.id,
         number: (lastAlertOfType?.number || 0) + 1,
         author: user.name,
         date: format(new Date(), 'yyyy-MM-dd'),
-        readBy: [user.name],
+        readBy: [user.id],
     };
 
     try {
@@ -107,6 +110,28 @@ function AlertsPage() {
         });
     }
   }
+  
+  const handleDeleteAlert = async (alertId: string) => {
+    if (!company) return;
+    
+    try {
+      const alertRef = doc(db, 'companies', company.id, 'alerts', alertId);
+      await deleteDoc(alertRef);
+      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      toast({
+        title: 'Alert Deleted',
+        description: 'The alert has been successfully deleted.',
+      });
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the alert.',
+      });
+    }
+  };
+
 
   if (loading || !user) {
     return (
@@ -153,7 +178,7 @@ function AlertsPage() {
                         <Collapsible key={alert.id} className="w-full">
                             <Card className="hover:bg-muted/50 transition-colors">
                                 <CardHeader className="flex flex-row items-start justify-between gap-4">
-                                   <div className="flex items-start gap-4">
+                                   <div className="flex items-start gap-4 flex-1">
                                         {getAlertIcon(alert.type)}
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -163,11 +188,46 @@ function AlertsPage() {
                                             <CardDescription className="mt-2">{alert.description}</CardDescription>
                                         </div>
                                    </div>
+                                   <div className="flex items-center">
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size="icon">
                                         <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
                                       </Button>
                                     </CollapsibleTrigger>
+                                     {canCreateAlerts && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete the alert "{alert.title}".
+                                                        </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteAlert(alert.id)}>
+                                                            Yes, delete alert
+                                                        </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                     )}
+                                   </div>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-xs text-muted-foreground">Issued by {alert.author} on {format(parseISO(alert.date), 'MMM d, yyyy')}</p>
