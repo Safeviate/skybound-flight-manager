@@ -74,66 +74,7 @@ export let aircraftData: Aircraft[] = [
         location: 'KPAO',
     }
 ];
-export let userData: User[] = [
-    {
-        id: 'admin-001',
-        companyId: 'skybound-aero',
-        name: 'Alex Johnson',
-        role: 'Admin',
-        email: 'alex.johnson@example.com',
-        phone: '555-0101',
-        permissions: ROLE_PERMISSIONS['Admin'],
-        department: 'Management',
-        password: 'password'
-    },
-    {
-        id: 'instructor-001',
-        companyId: 'skybound-aero',
-        name: 'Barbara Green',
-        role: 'Chief Flight Instructor',
-        email: 'barbara.green@example.com',
-        phone: '555-0102',
-        permissions: ROLE_PERMISSIONS['Chief Flight Instructor'],
-        department: 'Flight Operations',
-        password: 'password'
-    },
-    {
-        id: 'instructor-002',
-        companyId: 'skybound-aero',
-        name: 'Charles Davis',
-        role: 'Instructor',
-        email: 'charles.davis@example.com',
-        phone: '555-0103',
-        permissions: ROLE_PERMISSIONS['Instructor'],
-        department: 'Flight Operations',
-        password: 'password'
-    },
-    {
-        id: 'student-001',
-        companyId: 'skybound-aero',
-        name: 'Diana Prince',
-        role: 'Student',
-        email: 'diana.prince@example.com',
-        phone: '555-0104',
-        instructor: 'Charles Davis',
-        flightHours: 25.5,
-        progress: 45,
-        status: 'Active',
-        permissions: ROLE_PERMISSIONS['Student'],
-        password: 'password'
-    },
-    {
-        id: 'maintenance-001',
-        companyId: 'skybound-aero',
-        name: 'Edward Nigma',
-        role: 'Maintenance',
-        email: 'edward.nigma@example.com',
-        phone: '555-0105',
-        permissions: ROLE_PERMISSIONS['Maintenance'],
-        department: 'Maintenance',
-        password: 'password'
-    }
-];
+export let userData: User[] = [];
 
 export let bookingData: Booking[] = [];
 export const trainingExercisesData: string[] = [
