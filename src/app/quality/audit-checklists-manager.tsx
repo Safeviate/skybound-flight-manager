@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where } from 'firebase/firestore';
 import type { AuditChecklist as Checklist, QualityAudit, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
@@ -320,4 +319,3 @@ export function AuditChecklistsManager() {
         </Card>
     );
 }
-
