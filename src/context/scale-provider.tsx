@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -30,10 +31,8 @@ export function ScaleProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('appScale', scale.toString());
         // Use a CSS variable to apply the scale globally
-        const wrapper = document.getElementById('app-wrapper');
-        if (wrapper) {
-            wrapper.style.setProperty('--app-scale', scale.toString());
-        }
+        document.documentElement.style.fontSize = `${scale * 100}%`;
+
       } catch (error) {
         console.error("Could not access localStorage for scale settings.");
       }
