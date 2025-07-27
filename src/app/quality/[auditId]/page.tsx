@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -503,7 +502,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     );
 };
 
-export default function QualityAuditDetailPage() {
+function QualityAuditDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user, company, loading: userLoading } = useUser();
@@ -845,3 +844,6 @@ QualityAuditDetailPage.headerContent = function HeaderActions() {
         </Button>
     )
 };
+
+export default QualityAuditDetailPage;
+
