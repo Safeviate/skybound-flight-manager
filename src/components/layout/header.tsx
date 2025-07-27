@@ -40,14 +40,8 @@ export default function Header({ title, children }: { title: string, children?: 
 
       <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap flex-1">{title}</h1>
       
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-end gap-2">
         {children}
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/my-profile">
-            <UserIcon />
-            <span className="sr-only">My Profile</span>
-          </Link>
-        </Button>
       </div>
     </header>
   );

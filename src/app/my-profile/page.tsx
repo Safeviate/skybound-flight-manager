@@ -4,11 +4,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar } from 'lucide-react';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar, Edit } from 'lucide-react';
 import type { User as AppUser, Alert, QualityAudit, Booking, Role } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -198,23 +198,16 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
-                {showFatigueCard ? (
+                {showFatigueCard && (
                     <Card>
                         <CardHeader>
-                            <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                            <CardTitle>Flight & Duty Monitoring</CardTitle>
+                            <CardDescription>
+                                Cumulative flight hours based on company and regulatory limits.
+                            </CardDescription>
                         </CardHeader>
-                        <Separator className="my-4" />
                         <CardContent>
                              <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <PersonalInformationCard user={user} onUpdate={() => {}}/>
                         </CardContent>
                     </Card>
                 )}
@@ -299,5 +292,34 @@ function MyProfilePage() {
   );
 }
 
-MyProfilePage.title = "My Profile"
+MyProfilePage.title = "My Profile";
+
+MyProfilePage.headerContent = function HeaderActions() {
+    const { user, updateUser } = useUser();
+    
+    if (!user) return null;
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Update Information
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Your Profile</DialogTitle>
+                    <DialogDescription>
+                        View and update your personal information and document expiry dates.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <PersonalInformationCard user={user} onUpdate={() => {}} />
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export default MyProfilePage;
