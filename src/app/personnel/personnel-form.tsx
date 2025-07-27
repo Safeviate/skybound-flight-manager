@@ -92,6 +92,10 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
       externalPosition: '',
       name: '',
       role: undefined,
+      medicalExpiry: undefined,
+      licenseExpiry: undefined,
+      accessStartDate: undefined,
+      accessEndDate: undefined,
     }
   });
 
