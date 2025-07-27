@@ -170,6 +170,10 @@ export type User = {
     permissions: Permission[];
     consentDisplayContact?: 'Consented' | 'Not Consented';
     mustChangePassword?: boolean;
+    homeAddress?: string;
+    nextOfKinName?: string;
+    nextOfKinPhone?: string;
+    nextOfKinEmail?: string;
     // Student-specific
     instructor?: string;
     flightHours?: number;

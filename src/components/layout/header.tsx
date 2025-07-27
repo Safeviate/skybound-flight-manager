@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { LogOut, User as UserIcon, FileText } from 'lucide-react';
@@ -43,6 +43,10 @@ import type { UserDocument } from '@/lib/types';
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().min(10, 'Please enter a valid phone number.'),
+  homeAddress: z.string().optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
+  nextOfKinEmail: z.string().email().optional().or(z.literal('')),
   documents: z.array(z.object({
     id: z.string(),
     type: z.string(),
@@ -62,17 +66,15 @@ export default function Header({ title, children }: { title: string, children?: 
     resolver: zodResolver(profileFormSchema),
   });
   
-  const getCombinedDocuments = React.useCallback(() => {
+  const getCombinedDocuments = useCallback(() => {
     if (!user) return [];
     
     const requiredDocs = user.requiredDocuments || [];
     const userDocs = user.documents || [];
     
-    // Create a map of existing user documents by type for easy lookup
     const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
 
     const combined = requiredDocs.map(reqDocType => {
-      // If a document of this type already exists, use it. Otherwise, create a placeholder.
       const existingDoc = userDocsMap.get(reqDocType);
       return existingDoc || { id: `new-${reqDocType}-${Date.now()}`, type: reqDocType, expiryDate: null };
     });
@@ -86,6 +88,10 @@ export default function Header({ title, children }: { title: string, children?: 
       form.reset({
         name: user.name,
         phone: user.phone,
+        homeAddress: user.homeAddress || '',
+        nextOfKinName: user.nextOfKinName || '',
+        nextOfKinPhone: user.nextOfKinPhone || '',
+        nextOfKinEmail: user.nextOfKinEmail || '',
         documents: combinedDocs.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })),
       });
     }
@@ -101,11 +107,9 @@ export default function Header({ title, children }: { title: string, children?: 
     const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
 
     const updatedDocs = data.documents?.map(d => {
-        // Find if an original document with the same type exists
         const originalDoc = userDocsMap.get(d.type);
         return {
             ...d,
-            // Preserve the original ID if it exists, otherwise it's a new placeholder ID
             id: originalDoc ? originalDoc.id : d.id,
             expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
         };
@@ -114,6 +118,10 @@ export default function Header({ title, children }: { title: string, children?: 
     const success = await updateUser({
       name: data.name,
       phone: data.phone,
+      homeAddress: data.homeAddress,
+      nextOfKinName: data.nextOfKinName,
+      nextOfKinPhone: data.nextOfKinPhone,
+      nextOfKinEmail: data.nextOfKinEmail,
       documents: updatedDocs as UserDocument[],
     });
 
@@ -162,7 +170,7 @@ export default function Header({ title, children }: { title: string, children?: 
                   </DropdownMenuItem>
               </DropdownMenuContent>
           </DropdownMenu>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>My Personal Information</DialogTitle>
               <DialogDescription>
@@ -201,6 +209,63 @@ export default function Header({ title, children }: { title: string, children?: 
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="homeAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Home Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+                
+                <h4 className="font-medium text-sm">Next of Kin Details</h4>
+                 <FormField
+                  control={form.control}
+                  name="nextOfKinName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jane Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="nextOfKinPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="555-987-6543" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="nextOfKinEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="jane.doe@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <Separator />
 
@@ -217,7 +282,6 @@ export default function Header({ title, children }: { title: string, children?: 
                               control={form.control}
                               name={`documents.${index}.expiryDate`}
                               render={({ field }) => {
-                                // This is a trick to re-assign the correct type to the field object
                                 const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void };
 
                                 return (
