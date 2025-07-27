@@ -20,15 +20,28 @@ export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+    const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
         const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
+        let logoUrl = '';
+        if (logoFile) {
+            const reader = new FileReader();
+            reader.readAsDataURL(logoFile);
+            await new Promise<void>((resolve, reject) => {
+                reader.onload = () => {
+                    logoUrl = reader.result as string;
+                    resolve();
+                };
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
             const newUserId = userCredential.user.uid;
 
             const companyDocRef = doc(db, 'companies', companyId);
-            await setDoc(companyDocRef, { ...newCompanyData, id: companyId });
+            await setDoc(companyDocRef, { ...newCompanyData, id: companyId, logoUrl });
 
             const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
             const finalUserData: Omit<User, 'password'> = {

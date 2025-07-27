@@ -30,6 +30,7 @@ const companyFormSchema = z.object({
   primaryColor: z.string().optional(),
   backgroundColor: z.string().optional(),
   accentColor: z.string().optional(),
+  logo: z.any().optional(),
   enableAdvancedAnalytics: z.boolean().default(false),
   adminName: z.string().min(2, 'Admin name is required.'),
   adminEmail: z.string().email('Please enter a valid email address.'),
@@ -39,7 +40,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => void;
+  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
 }
 
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
@@ -71,8 +72,10 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         phone: '', // Can be added later
     };
 
+    const logoFile = data.logo?.[0];
+
     // Use a default password for the demo environment
-    onSubmit(newCompany, newAdmin, "password");
+    onSubmit(newCompany, newAdmin, "password", logoFile);
     form.reset();
   }
 
@@ -109,7 +112,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
             <FormLabel className="flex items-center gap-2">
                 <Paintbrush className="h-4 w-4" />
                 Theme Colors (Optional)
@@ -152,6 +155,19 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     )}
                 />
             </div>
+             <FormField
+                control={form.control}
+                name="logo"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Company Logo</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" {...form.register('logo')} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
         </div>
 
         <FormField
