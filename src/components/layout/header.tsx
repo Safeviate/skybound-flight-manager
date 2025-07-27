@@ -46,7 +46,7 @@ const profileFormSchema = z.object({
   documents: z.array(z.object({
     id: z.string(),
     type: z.string(),
-    expiryDate: z.date(),
+    expiryDate: z.date().nullable(),
   })).optional(),
 });
 
@@ -67,7 +67,7 @@ export default function Header({ title, children }: { title: string, children?: 
       form.reset({
         name: user.name,
         phone: user.phone,
-        documents: user.documents?.map(d => ({ ...d, expiryDate: parseISO(d.expiryDate) })) || [],
+        documents: user.documents?.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })) || [],
       });
     }
   }, [user, form, isProfileOpen]);
@@ -78,12 +78,12 @@ export default function Header({ title, children }: { title: string, children?: 
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
-    const updatedDocs = data.documents?.map(d => ({...d, expiryDate: format(d.expiryDate, 'yyyy-MM-dd')}));
+    const updatedDocs = data.documents?.map(d => ({...d, expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null}));
 
     const success = await updateUser({
       name: data.name,
       phone: data.phone,
-      documents: updatedDocs,
+      documents: updatedDocs as UserDocument[],
     });
     if (success) {
       toast({ title: 'Profile Updated', description: 'Your information has been successfully saved.' });
@@ -203,7 +203,7 @@ export default function Header({ title, children }: { title: string, children?: 
                               name={`documents.${index}.expiryDate`}
                               render={({ field }) => {
                                 // This is a trick to re-assign the correct type to the field object
-                                const typedField = field as unknown as { value: Date; onChange: (date: Date) => void };
+                                const typedField = field as unknown as { value: Date | null; onChange: (date: Date | undefined) => void };
 
                                 return (
                                 <FormItem className="flex items-center justify-between">
@@ -226,7 +226,7 @@ export default function Header({ title, children }: { title: string, children?: 
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar
                                         mode="single"
-                                        selected={typedField.value}
+                                        selected={typedField.value || undefined}
                                         onSelect={typedField.onChange}
                                         initialFocus
                                       />

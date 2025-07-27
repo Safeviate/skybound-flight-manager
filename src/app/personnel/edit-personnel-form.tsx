@@ -47,12 +47,11 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   consentDisplayContact: z.enum(['Consented', 'Not Consented']),
-  licenseExpiry: z.date().nullable(),
   requiredDocuments: z.array(z.string()).optional(),
   documents: z.array(z.object({
       id: z.string(),
       type: z.string(),
-      expiryDate: z.date(),
+      expiryDate: z.date().nullable(),
   })).optional(),
 });
 
@@ -89,9 +88,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   useEffect(() => {
     form.reset({
         ...personnel,
-        medicalExpiry: personnel.medicalExpiry ? parseISO(personnel.medicalExpiry) : null,
-        licenseExpiry: personnel.licenseExpiry ? parseISO(personnel.licenseExpiry) : null,
-        documents: personnel.documents?.map(d => ({...d, expiryDate: parseISO(d.expiryDate)})) || [],
+        documents: personnel.documents?.map(d => ({...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null})) || [],
     })
   }, [personnel, form]);
 
@@ -99,9 +96,9 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     const updatedPersonnel = {
         ...personnel,
         ...data,
-        medicalExpiry: null, // Ensure it's removed
-        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
-        documents: data.documents?.map(d => ({...d, expiryDate: format(d.expiryDate, 'yyyy-MM-dd')})) || [],
+        medicalExpiry: null,
+        licenseExpiry: null,
+        documents: data.documents?.map(d => ({...d, expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null})) || [],
     } as User;
     onSubmit(updatedPersonnel);
   }

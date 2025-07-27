@@ -84,7 +84,7 @@ export type TrainingLogEntry = {
 export type UserDocument = {
     id: string;
     type: string;
-    expiryDate: string;
+    expiryDate: string | null;
 };
 
 export type Permission =
@@ -187,6 +187,7 @@ export type User = {
     externalPosition?: string;
     accessStartDate?: string;
     accessEndDate?: string;
+    requiredDocuments?: string[];
 };
 
 export type Booking = {
