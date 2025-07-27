@@ -36,6 +36,7 @@ import type { GenerateQualityCapOutput } from '@/ai/flows/generate-quality-cap-f
 import { AuditTeamForm } from './audit-team-form';
 import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -613,6 +614,8 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditeeName ? (
                              <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature }, true)} />
+                        ) : audit.auditeeName ? (
+                            <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">External Auditee ({audit.auditeePosition})</div>
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -820,9 +823,21 @@ export default function QualityAuditDetailPage() {
                     <p className="font-semibold text-muted-foreground">Lead Auditor</p>
                     <p>{audit.auditor}</p>
                 </div>
-                 <div>
-                    <p className="font-semibold text-muted-foreground">Auditee</p>
-                    <p>{audit.auditeeName || 'N/A'}</p>
+                 <div className="space-y-2">
+                    <FormLabel>External Auditee Name (Optional)</FormLabel>
+                    <Input 
+                        placeholder="e.g., John Smith" 
+                        value={audit.auditeeName || ''}
+                        onChange={(e) => handleAuditUpdate({ ...audit, auditeeName: e.target.value }, false)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <FormLabel>External Auditee Position (Optional)</FormLabel>
+                    <Input 
+                        placeholder="e.g., CAA Inspector" 
+                        value={audit.auditeePosition || ''}
+                        onChange={(e) => handleAuditUpdate({ ...audit, auditeePosition: e.target.value }, false)}
+                    />
                 </div>
                 </div>
                 <div className="space-y-2 border-t pt-6">
@@ -953,3 +968,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
 
 
+
+
+    
