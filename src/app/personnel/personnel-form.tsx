@@ -50,6 +50,8 @@ const personnelFormSchema = z.object({
   mustChangePassword: z.boolean().default(false),
   externalCompanyName: z.string().optional(),
   externalPosition: z.string().optional(),
+  accessStartDate: z.date().optional(),
+  accessEndDate: z.date().optional(),
 }).refine(data => {
     if (data.role === 'Admin' || data.role === 'External Auditee') {
         return !!data.email && !!data.password;
@@ -75,6 +77,8 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
         ...existingPersonnel,
         medicalExpiry: existingPersonnel.medicalExpiry ? parseISO(existingPersonnel.medicalExpiry) : undefined,
         licenseExpiry: existingPersonnel.licenseExpiry ? parseISO(existingPersonnel.licenseExpiry) : undefined,
+        accessStartDate: existingPersonnel.accessStartDate ? parseISO(existingPersonnel.accessStartDate) : undefined,
+        accessEndDate: existingPersonnel.accessEndDate ? parseISO(existingPersonnel.accessEndDate) : undefined,
     } : {
       permissions: [],
       consentDisplayContact: 'Not Consented',
@@ -97,6 +101,8 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
         ...data,
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : undefined,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : undefined,
+        accessStartDate: data.accessStartDate ? format(data.accessStartDate, 'yyyy-MM-dd') : undefined,
+        accessEndDate: data.accessEndDate ? format(data.accessEndDate, 'yyyy-MM-dd') : undefined,
     };
     onSubmit(submissionData as Omit<User, 'id'>);
   }
@@ -299,6 +305,86 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
                         )}
                         />
                     )}
+                </>
+            )}
+             {isExternalAuditee && (
+                <>
+                <FormField
+                    control={form.control}
+                    name="accessStartDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Access Start Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick start date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="accessEndDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Access End Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick end date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 </>
             )}
         </div>

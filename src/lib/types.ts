@@ -178,6 +178,8 @@ export type User = {
     // External Auditee specific
     externalCompanyName?: string;
     externalPosition?: string;
+    accessStartDate?: string;
+    accessEndDate?: string;
 };
 
 export type Booking = {
