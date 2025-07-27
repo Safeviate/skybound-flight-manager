@@ -849,10 +849,6 @@ export default function QualityAuditDetailPage() {
                     onChange={(e) => handleAuditUpdate({ ...audit, summary: e.target.value }, false)}
                     />
                 </div>
-                 <div className="space-y-2 border-t pt-6">
-                    <h3 className="font-semibold">Investigation Team</h3>
-                    <AuditTeamForm audit={audit} personnel={personnel} onUpdate={handleAuditUpdate} />
-                </div>
             </CardContent>
             </Card>
 
