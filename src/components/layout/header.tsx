@@ -73,28 +73,31 @@ export default function Header({ title, children }: { title: string, children?: 
   const getCombinedDocuments = useCallback(() => {
     if (!user) return [];
 
-    const requiredDocs = new Set(user.requiredDocuments || []);
-    const userDocs = user.documents || [];
+    const requiredDocTypes = new Set(user.requiredDocuments || []);
+    const existingDocs = user.documents || [];
     
-    const combinedDocs = new Map<string, UserDocument>();
+    const combined = new Map<string, UserDocument>();
 
-    // Add all existing user documents first
-    userDocs.forEach(doc => {
-        // Only keep existing documents if they are still required OR have an expiry date
-        if (requiredDocs.has(doc.type) || doc.expiryDate) {
-            combinedDocs.set(doc.type, doc);
+    // First, add all required documents, ensuring they have a placeholder if not present.
+    requiredDocTypes.forEach(type => {
+        const existing = existingDocs.find(d => d.type === type);
+        if (existing) {
+            combined.set(type, existing);
+        } else {
+            combined.set(type, { id: `new-${type}-${Date.now()}`, type, expiryDate: null });
         }
     });
 
-    // Add any missing required documents
-    requiredDocs.forEach(reqDocType => {
-        if (!combinedDocs.has(reqDocType)) {
-            combinedDocs.set(reqDocType, { id: `new-${reqDocType}-${Date.now()}`, type: reqDocType, expiryDate: null });
+    // Then, add any existing documents that have an expiry date, even if no longer required.
+    existingDocs.forEach(doc => {
+        if (doc.expiryDate && !combined.has(doc.type)) {
+            combined.set(doc.type, doc);
         }
     });
-    
-    return Array.from(combinedDocs.values());
+
+    return Array.from(combined.values());
   }, [user]);
+
 
   useEffect(() => {
     if (user && isProfileOpen) {
@@ -119,17 +122,16 @@ export default function Header({ title, children }: { title: string, children?: 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     if (!user) return;
     
-    const combinedDocs = getCombinedDocuments();
+    const requiredDocTypes = new Set(user.requiredDocuments || []);
 
-    const updatedDocs = combinedDocs.map(cd => {
-        const formDataDoc = data.documents?.find(d => d.type === cd.type);
-        return {
-            id: cd.id,
-            type: cd.type,
-            expiryDate: formDataDoc?.expiryDate ? format(formDataDoc.expiryDate, 'yyyy-MM-dd') : null
-        };
-    }).filter(d => d.expiryDate || (user.requiredDocuments || []).includes(d.type));
-
+    const updatedDocs = (data.documents || []).map(d => ({
+        id: d.id,
+        type: d.type,
+        expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
+    })).filter(d => 
+        // Keep the document if it's required OR if it has an expiry date set.
+        requiredDocTypes.has(d.type) || d.expiryDate
+    );
 
     const success = await updateUser({
       name: data.name,
