@@ -26,7 +26,6 @@ function PersonnelPage() {
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
-        {/* The personnel page content will be built here. */}
       </main>
   );
 }
