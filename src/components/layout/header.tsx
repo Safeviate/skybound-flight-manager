@@ -22,6 +22,7 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user, logout } = useUser();
   const router = useRouter();
+  const [isInfoOpen, setIsInfoOpen] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -42,7 +43,7 @@ export default function Header({ title, children }: { title: string, children?: 
       
       <div className="flex items-center justify-end gap-4">
         {children}
-         <Dialog>
+         <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
             <DialogTrigger asChild>
                 <Button variant="default" className="relative h-auto px-4 py-2 text-left">
                     <div className="flex flex-col">
@@ -83,7 +84,7 @@ export default function Header({ title, children }: { title: string, children?: 
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                     </Button>
-                    <Button asChild>
+                    <Button asChild onClick={() => setIsInfoOpen(false)}>
                         <Link href="/my-profile">
                             <Edit className="mr-2 h-4 w-4" />
                             Update My Information
