@@ -69,9 +69,10 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
 
-    // For Resend sandbox, redirect emails to the verified account owner.
+    // For Resend sandbox, you can only send to the verified email.
+    // To test, we send it to the verified email, but we can see who it was intended for in the subject.
     const recipient = 'barry@safeviate.com';
-    const finalSubject = `[Test to: ${to}] ${subject}`;
+    const finalSubject = `[Test Email for: ${to}] ${subject}`;
 
 
     try {
