@@ -10,7 +10,7 @@ import { getAuth } from "firebase/auth";
 // Replace this with your actual Firebase config object
 const firebaseConfig = {
   // Replace "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE" with the actual "apiKey" from your Firebase project's settings.
-  apiKey: "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE", 
+  apiKey: "AIzaSyAdO8csz94jyQa8hxvGvruxjt-_cjWqhE0", 
   authDomain: "skybound-flight-manager.firebaseapp.com",
   projectId: "skybound-flight-manager",
   storageBucket: "skybound-flight-manager.appspot.com",
