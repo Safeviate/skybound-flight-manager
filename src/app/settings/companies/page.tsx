@@ -22,7 +22,7 @@ import { EditCompanyForm } from './edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function CompaniesPage() {
-  const { user, loading, setCompany } = useUser();
+  const { user, loading, setCompany, updateCompany } = useUser();
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
@@ -123,29 +123,19 @@ function CompaniesPage() {
     }
 
     const finalData = { ...editingCompany, ...updatedData, logoUrl };
+    
+    const success = await updateCompany(finalData);
 
-    try {
-        const companyDocRef = doc(db, 'companies', editingCompany.id);
-        await updateDoc(companyDocRef, finalData);
-        
-        setCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalData : c));
-        
-        // If the updated company is the current user's company, update the context
-        if (user?.companyId === editingCompany.id) {
-            setCompany(finalData);
-        }
-        
-        toast({
+    if (success) {
+      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalData : c));
+      toast({
             title: 'Company Updated',
             description: `${editingCompany.name} has been updated.`,
-        });
-
-        setIsEditDialogOpen(false);
-        setEditingCompany(null);
-
-    } catch (error) {
-        console.error("Error updating company:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save company updates.'});
+      });
+      setIsEditDialogOpen(false);
+      setEditingCompany(null);
+    } else {
+       toast({ variant: 'destructive', title: 'Error', description: 'Could not save company updates.'});
     }
   };
 
@@ -197,7 +187,6 @@ function CompaniesPage() {
                 <TableRow>
                   <TableHead>Company Name</TableHead>
                   <TableHead>Trademark</TableHead>
-                  <TableHead>Theme Colors</TableHead>
                   <TableHead>Enabled Features</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -210,14 +199,6 @@ function CompaniesPage() {
                         {company.name}
                     </TableCell>
                     <TableCell>{company.trademark}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Paintbrush className="h-4 w-4 text-muted-foreground" />
-                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.primary || 'transparent' }}></div>
-                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.background || 'transparent' }}></div>
-                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: company.theme?.accent || 'transparent' }}></div>
-                      </div>
-                    </TableCell>
                     <TableCell>
                       {company.enabledFeatures?.map(feature => (
                         <Badge key={feature} variant="secondary">{feature}</Badge>

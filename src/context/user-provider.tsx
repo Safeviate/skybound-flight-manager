@@ -7,7 +7,7 @@ import type { User, Alert, Company, QualityAudit } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arrayUnion, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arrayUnion, onSnapshot, setDoc } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -17,6 +17,7 @@ interface UserContextType {
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
+  updateCompany: (updatedData: Partial<Company>) => Promise<boolean>;
   getUnacknowledgedAlerts: (audits: QualityAudit[]) => Alert[];
   acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
 }
@@ -118,21 +119,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem(LAST_USER_ID_KEY, userData.id);
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             } else {
-                 console.error("Could not determine company for authenticated user. This might happen if the user's profile is not yet fully created in the database. Trying a fallback search.");
-                 // A more robust fallback
-                 if(firebaseUser.email) {
-                    const [foundUser, foundCompany] = await fetchUserDataByEmail(firebaseUser.email);
-                     if (foundUser && foundCompany) {
-                        setUser(foundUser);
-                        setCompany(foundCompany);
-                     } else {
-                        setUser(null);
-                        setCompany(null);
-                     }
-                 } else {
-                    setUser(null);
-                    setCompany(null);
-                 }
+                 console.error("Could not determine company for authenticated user.");
+                 setUser(null);
+                 setCompany(null);
             }
         } else {
             setUser(null);
@@ -236,8 +225,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, company]);
 
+  const updateCompany = useCallback(async (updatedData: Partial<Company>): Promise<boolean> => {
+    if (!company) {
+        console.error("No company context available for update.");
+        return false;
+    }
+    try {
+        const companyDocRef = doc(db, `companies`, company.id);
+        await setDoc(companyDocRef, updatedData, { merge: true });
+        setCompany(prevCompany => prevCompany ? { ...prevCompany, ...updatedData } : null);
+        return true;
+    } catch (error) {
+        console.error("Error updating company profile in Firestore:", error);
+        return false;
+    }
+  }, [company]);
+
+
   return (
-    <UserContext.Provider value={{ user, company, setCompany, loading, login, logout, updateUser, getUnacknowledgedAlerts, acknowledgeAlerts }}>
+    <UserContext.Provider value={{ user, company, setCompany, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );

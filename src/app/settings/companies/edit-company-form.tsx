@@ -25,9 +25,6 @@ const companyFormSchema = z.object({
   trademark: z.string().min(2, {
     message: 'Trademark must be at least 2 characters.',
   }),
-  primaryColor: z.string(),
-  backgroundColor: z.string(),
-  accentColor: z.string(),
   logo: z.any().optional(),
 });
 
@@ -48,9 +45,6 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
       form.reset({
         name: company.name,
         trademark: company.trademark,
-        primaryColor: company.theme?.primary || '#2563eb',
-        backgroundColor: company.theme?.background || '#f4f4f5',
-        accentColor: company.theme?.accent || '#f59e0b',
       });
     }
   }, [company, form]);
@@ -59,11 +53,6 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
     const updatedCompany: Partial<Company> = {
         name: data.name,
         trademark: data.trademark,
-        theme: {
-            primary: data.primaryColor,
-            background: data.backgroundColor,
-            accent: data.accentColor,
-        },
     };
     const logoFile = data.logo?.[0];
     onSubmit(updatedCompany, logoFile);
@@ -103,48 +92,6 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         </div>
 
         <div className="space-y-4">
-          <FormLabel className="flex items-center gap-2">
-            <Paintbrush className="h-4 w-4" />
-            Theme Colors
-          </FormLabel>
-          <div className="grid grid-cols-3 gap-2">
-            <FormField
-              control={form.control}
-              name="primaryColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Primary</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="backgroundColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Background</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="accentColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Accent</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
           <FormField
             control={form.control}
             name="logo"
