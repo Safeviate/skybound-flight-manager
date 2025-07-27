@@ -27,6 +27,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
+const documents = [
+  "Passport",
+  "Visa",
+  "Identification",
+  "Drivers License",
+  "Pilot License",
+  "Medical Certificate",
+  "Logbook",
+] as const;
+
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
@@ -39,6 +49,7 @@ const personnelFormSchema = z.object({
   consentDisplayContact: z.enum(['Consented', 'Not Consented']),
   medicalExpiry: z.date().nullable(),
   licenseExpiry: z.date().nullable(),
+  requiredDocuments: z.array(z.string()).optional(),
   documents: z.array(z.object({
       id: z.string(),
       type: z.string(),
@@ -240,6 +251,59 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                 )}
             />
         </div>
+
+        <Separator />
+        
+        <FormField
+            control={form.control}
+            name="requiredDocuments"
+            render={() => (
+                <FormItem>
+                <div className="mb-4">
+                    <FormLabel className="text-base">Required Documents</FormLabel>
+                    <FormDescription>
+                    Select the documents this user is required to upload. They will be notified.
+                    </FormDescription>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {documents.map((item) => (
+                    <FormField
+                        key={item}
+                        control={form.control}
+                        name="requiredDocuments"
+                        render={({ field }) => {
+                        return (
+                            <FormItem
+                            key={item}
+                            className="flex flex-row items-center space-x-3 space-y-0"
+                            >
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value?.includes(item)}
+                                onCheckedChange={(checked) => {
+                                    return checked
+                                    ? field.onChange([...(field.value || []), item])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                            (value) => value !== item
+                                        )
+                                        )
+                                }}
+                                />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                                {item}
+                            </FormLabel>
+                            </FormItem>
+                        )
+                        }}
+                    />
+                    ))}
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
         
         <Separator />
 
