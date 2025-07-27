@@ -199,6 +199,10 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
                         </CardDescription>
                     </div>
+                    <Button variant="outline" className="no-print" onClick={() => window.print()}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Report
+                    </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
@@ -502,7 +506,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     );
 };
 
-function QualityAuditDetailPage() {
+export default function QualityAuditDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user, company, loading: userLoading } = useUser();
@@ -835,15 +839,3 @@ function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-
-QualityAuditDetailPage.headerContent = function HeaderActions() {
-    return (
-        <Button variant="outline" className="no-print" onClick={() => window.print()}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print Report
-        </Button>
-    )
-};
-
-export default QualityAuditDetailPage;
-
