@@ -82,8 +82,8 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
   function handleFormSubmit(data: StudentFormValues) {
     onSubmit({
         ...data,
-        medicalExpiry: format(data.medicalExpiry, 'yyyy-MM-dd'),
-        licenseExpiry: format(data.licenseExpiry, 'yyyy-MM-dd'),
+        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
+        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
     } as unknown as Omit<User, 'id'>);
     form.reset();
   }

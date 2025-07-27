@@ -112,10 +112,10 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
   function handleFormSubmit(data: PersonnelFormValues) {
     const submissionData = {
         ...data,
-        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : undefined,
-        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : undefined,
-        accessStartDate: data.accessStartDate ? format(data.accessStartDate, 'yyyy-MM-dd') : undefined,
-        accessEndDate: data.accessEndDate ? format(data.accessEndDate, 'yyyy-MM-dd') : undefined,
+        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
+        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
+        accessStartDate: data.accessStartDate ? format(data.accessStartDate, 'yyyy-MM-dd') : null,
+        accessEndDate: data.accessEndDate ? format(data.accessEndDate, 'yyyy-MM-dd') : null,
     };
     onSubmit(submissionData as Omit<User, 'id'>);
   }
@@ -517,6 +517,3 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     </Form>
   );
 }
-
-    
-    
