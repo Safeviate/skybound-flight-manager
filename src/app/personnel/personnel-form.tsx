@@ -61,14 +61,6 @@ const personnelFormSchema = z.object({
 }, {
     message: 'Email is required if a password is set.',
     path: ['email'],
-}).refine(data => {
-    if (data.role === 'Auditee') {
-        return !!data.externalCompanyName && !!data.externalPosition && !!data.accessStartDate && !!data.accessEndDate;
-    }
-    return true;
-}, {
-    message: 'External company, position, and access dates are required for the Auditee role.',
-    path: ['externalCompanyName'], // This error can be shown under one of the relevant fields
 });
 
 
