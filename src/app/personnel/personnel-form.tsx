@@ -39,8 +39,8 @@ const personnelFormSchema = z.object({
   permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one permission.',
   }),
-  email: z.string().email({ message: "Please enter a valid email."}).optional(),
-  password: z.string().min(8, "Password must be at least 8 characters.").optional(),
+  email: z.string().email({ message: "Please enter a valid email."}).optional().or(z.literal('')),
+  password: z.string().optional(),
   phone: z.string().min(10, { message: "Please enter a valid phone number."}),
   medicalExpiry: z.date().optional(),
   licenseExpiry: z.date().optional(),
@@ -54,12 +54,12 @@ const personnelFormSchema = z.object({
   accessEndDate: z.date().optional(),
 }).refine(data => {
     if (data.role === 'Admin' || data.role === 'External Auditee') {
-        return !!data.email && !!data.password;
+        return !!data.email && !!data.password && data.password.length >= 8;
     }
     return true;
 }, {
-    message: 'Email and password are required for Admins and External Auditees.',
-    path: ['email'], // Show error on one of the fields
+    message: 'Email and a password of at least 8 characters are required for Admins and External Auditees.',
+    path: ['password'], // Show error on one of the fields
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;

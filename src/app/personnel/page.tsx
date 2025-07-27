@@ -73,7 +73,9 @@ function PersonnelPage() {
                     const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
                     const newUserId = userCredential.user.uid;
                     const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
-                    await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
+                    
+                    const finalUserData = { ...personnelData, id: newUserId, companyId: company.id };
+                    await setDoc(newUserRef, finalUserData);
 
                     toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
                     
