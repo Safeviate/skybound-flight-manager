@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -30,6 +30,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -113,7 +115,7 @@ export default function Header({ title, children }: { title: string, children?: 
             <DialogHeader>
               <DialogTitle>My Personal Information</DialogTitle>
               <DialogDescription>
-                Update your contact details here.
+                Update your contact details and view required documents.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -158,6 +160,25 @@ export default function Header({ title, children }: { title: string, children?: 
                 </DialogFooter>
               </form>
             </Form>
+            
+            <Separator />
+
+            <div>
+                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Required Documents
+                </h4>
+                {user?.requiredDocuments && user.requiredDocuments.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                        {user.requiredDocuments.map(doc => (
+                            <Badge key={doc} variant="secondary">{doc}</Badge>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
+                )}
+            </div>
+
           </DialogContent>
         </Dialog>
       </div>
