@@ -53,13 +53,13 @@ const personnelFormSchema = z.object({
   accessStartDate: z.date().optional(),
   accessEndDate: z.date().optional(),
 }).refine(data => {
-    if (data.role === 'Admin') {
+    if (data.role === 'Admin' || data.role === 'External Auditee') {
         return !!data.email && !!data.password && data.password.length >= 8;
     }
     return true;
 }, {
-    message: 'Email and a password of at least 8 characters are required for Admins.',
-    path: ['password'], // Show error on one of the fields
+    message: 'Email and a password of at least 8 characters are required for roles requiring system access.',
+    path: ['password'],
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -97,7 +97,6 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
   const selectedRole = form.watch('role');
 
   React.useEffect(() => {
-    // Do not auto-update permissions if we are editing an existing user
     if (selectedRole && !existingPersonnel) {
       const permissionsForRole = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', permissionsForRole);
@@ -132,7 +131,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
   }
 
   const isExternalAuditee = selectedRole === 'External Auditee';
-  const showCredentialsFields = selectedRole === 'Admin';
+  const showCredentialsFields = selectedRole === 'Admin' || selectedRole === 'External Auditee';
 
   return (
     <Form {...form}>

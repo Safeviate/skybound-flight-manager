@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -70,8 +70,9 @@ function PersonnelPage() {
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
             // This is the logic for adding a new user.
-            // We separate users that need an auth account from those who don't.
-            if (personnelData.role === 'Admin') {
+            const needsAuthAccount = personnelData.role === 'Admin' || personnelData.role === 'External Auditee';
+
+            if (needsAuthAccount) {
                 // This path is for users requiring authentication.
                 if (!personnelData.email || !personnelData.password) {
                     toast({ variant: 'destructive', title: 'Missing Information', description: 'Email and password are required for this role.'});
@@ -80,38 +81,38 @@ function PersonnelPage() {
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
                     const newUserId = userCredential.user.uid;
+                    // Add companyId to the auth user profile for easy lookup on login
+                    await updateProfile(userCredential.user, { photoURL: company.id });
+
                     const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
-                    
                     const finalUserData = { ...personnelData, id: newUserId, companyId: company.id };
                     await setDoc(newUserRef, finalUserData);
 
                     toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
                     
-                    if (personnelData.role === 'External Auditee') {
-                        try {
-                             await sendEmail({
-                                to: personnelData.email,
-                                subject: `Your Access to ${company.name} Portal`,
-                                react: <NewUserCredentialsEmail
-                                    userName={personnelData.name}
-                                    companyName={company.name}
-                                    userEmail={personnelData.email}
-                                    temporaryPassword={personnelData.password}
-                                    loginUrl={window.location.origin + '/login'}
-                                />,
-                            });
-                             toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
-                        } catch (emailError) {
-                            console.error("Failed to send invitation email:", emailError);
-                            toast({ variant: 'destructive', title: 'Email Failed', description: 'The user was created, but the invitation email could not be sent. Please send credentials manually.'})
-                        }
+                    try {
+                         await sendEmail({
+                            to: personnelData.email,
+                            subject: `Your Access to ${company.name} Portal`,
+                            react: <NewUserCredentialsEmail
+                                userName={personnelData.name}
+                                companyName={company.name}
+                                userEmail={personnelData.email}
+                                temporaryPassword={personnelData.password}
+                                loginUrl={window.location.origin + '/login'}
+                            />,
+                        });
+                         toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
+                    } catch (emailError) {
+                        console.error("Failed to send invitation email:", emailError);
+                        toast({ variant: 'destructive', title: 'Email Failed', description: 'The user was created, but the invitation email could not be sent. Please send credentials manually.'})
                     }
                 } catch (error: any) {
                     let errorMessage = 'Could not create the user in the authentication system.';
                     if (error.code === 'auth/email-already-in-use') {
-                        errorMessage = 'This email address is already registered in the authentication system. Please use a different email or contact support if you believe this is an error.';
+                        errorMessage = 'This email address is already registered. Please use a different email.';
                     } else if (error.code === 'auth/weak-password') {
-                        errorMessage = 'The provided password is too weak. Please use a stronger password.';
+                        errorMessage = 'The provided password is too weak.';
                     }
                      toast({ variant: 'destructive', title: 'Authentication Error', description: errorMessage });
                      return; // Stop execution if auth creation fails
@@ -125,8 +126,7 @@ function PersonnelPage() {
             }
         }
         
-        // This runs after either path (update or add) completes.
-        fetchPersonnel(); // Refetch to get the latest data
+        fetchPersonnel();
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
     };
@@ -335,4 +335,3 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
-    
