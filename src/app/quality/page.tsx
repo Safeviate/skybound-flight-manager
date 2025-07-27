@@ -9,7 +9,7 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -82,25 +82,27 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     );
 };
 
-const INITIAL_AUDIT_AREAS = ['Flight Operations', 'Maintenance', 'Ground Ops', 'Management', 'Safety Systems', 'External (FAA)'];
-
 type CapTrackerItem = {
     auditId: string;
+    auditTitle: string;
     issue: NonConformanceIssue;
     plan: CorrectiveActionPlan;
 };
 
 const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStatusChange: (auditId: string, issueId: string, newStatus: CorrectiveActionPlan['status']) => void }) => {
     const allCaps: CapTrackerItem[] = useMemo(() => {
-        return audits.flatMap(audit =>
-            audit.nonConformanceIssues
-                .filter(issue => issue.correctiveActionPlan)
-                .map(issue => ({
-                    auditId: audit.id,
-                    issue: issue,
-                    plan: issue.correctiveActionPlan!,
-                }))
-        );
+        return audits
+            .filter(audit => audit.status === 'Open' || audit.status === 'Closed')
+            .flatMap(audit =>
+                audit.nonConformanceIssues
+                    .filter(issue => issue.correctiveActionPlan)
+                    .map(issue => ({
+                        auditId: audit.id,
+                        auditTitle: audit.title,
+                        issue: issue,
+                        plan: issue.correctiveActionPlan!,
+                    }))
+            );
     }, [audits]);
 
     const getStatusVariant = (status: CorrectiveActionPlan['status']) => {
@@ -123,6 +125,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                     <TableHeader>
                         <TableRow>
                             <TableHead>Audit ID</TableHead>
+                            <TableHead>Report Heading</TableHead>
                             <TableHead>Non-Conformance</TableHead>
                             <TableHead>Responsible Person</TableHead>
                             <TableHead>Due Date</TableHead>
@@ -131,14 +134,17 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                     </TableHeader>
                     <TableBody>
                         {allCaps.length > 0 ? (
-                            allCaps.map(({ auditId, issue, plan }) => (
+                            allCaps.map(({ auditId, auditTitle, issue, plan }) => (
                                 <TableRow key={`${auditId}-${issue.id}`}>
                                     <TableCell>
                                         <Link href={`/quality/${auditId}`} className="hover:underline">
                                             {auditId.substring(0, 8)}...
                                         </Link>
                                     </TableCell>
-                                    <TableCell className="max-w-sm">
+                                     <TableCell className="max-w-[200px] truncate">
+                                        {auditTitle}
+                                    </TableCell>
+                                    <TableCell className="max-w-[250px]">
                                         <p className="font-medium truncate">{issue.itemText}</p>
                                         <p className="text-xs text-muted-foreground">{issue.regulationReference}</p>
                                     </TableCell>
@@ -169,7 +175,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                             ))
                         ) : (
                              <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">
+                                <TableCell colSpan={6} className="text-center h-24">
                                     No active Corrective Action Plans found.
                                 </TableCell>
                             </TableRow>
@@ -192,6 +198,7 @@ function QualityPage() {
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchData = async () => {
     if (!company) return;
@@ -228,12 +235,14 @@ function QualityPage() {
   }, [user, company, loading, router, toast]);
 
   const activeAudits = audits.filter(audit => audit.status !== 'Archived');
+  const archivedAudits = audits.filter(audit => audit.status === 'Archived');
+  const displayedAudits = showArchived ? archivedAudits : activeAudits;
 
-  const filteredAudits = activeAudits.filter(audit => {
+  const filteredAudits = displayedAudits.filter(audit => {
     const searchLower = searchTerm.toLowerCase();
     return (
         audit.id.toLowerCase().includes(searchLower) ||
-        audit.area.toLowerCase().includes(searchLower) ||
+        audit.title.toLowerCase().includes(searchLower) ||
         audit.auditor.toLowerCase().includes(searchLower) ||
         audit.status.toLowerCase().includes(searchLower) ||
         audit.type.toLowerCase().includes(searchLower)
@@ -325,6 +334,22 @@ function QualityPage() {
     } catch (error) {
         console.error("Error archiving audit:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive audit.' });
+    }
+  };
+  
+  const handleRestoreAudit = async (auditId: string) => {
+    if (!company) return;
+    try {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        await updateDoc(auditRef, { status: 'Closed' });
+        setAudits(prev => prev.map(a => a.id === auditId ? { ...a, status: 'Closed' } : a));
+        toast({
+            title: 'Audit Restored',
+            description: 'The audit has been restored to a closed state.',
+        });
+    } catch (error) {
+        console.error("Error restoring audit:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to restore audit.' });
     }
   };
 
@@ -442,7 +467,7 @@ function QualityPage() {
                         <CardDescription>Review all completed quality audit reports.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center py-4">
+                        <div className="flex items-center justify-between py-4">
                             <div className="relative w-full max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
@@ -452,6 +477,19 @@ function QualityPage() {
                                 className="pl-10"
                                 />
                             </div>
+                             <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+                                {showArchived ? (
+                                    <>
+                                        <ListChecks className="mr-2 h-4 w-4" />
+                                        Show Active Audits
+                                    </>
+                                ) : (
+                                    <>
+                                        <Archive className="mr-2 h-4 w-4" />
+                                        Show Archived Audits
+                                    </>
+                                )}
+                            </Button>
                         </div>
                         <Table>
                             <TableHeader>
@@ -494,10 +532,17 @@ function QualityPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent>
-                                                    <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
-                                                        <Archive className="mr-2 h-4 w-4" />
-                                                        Archive
-                                                    </DropdownMenuItem>
+                                                    {showArchived ? (
+                                                        <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
+                                                            <RotateCcw className="mr-2 h-4 w-4" />
+                                                            Restore
+                                                        </DropdownMenuItem>
+                                                    ) : (
+                                                        <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
+                                                            <Archive className="mr-2 h-4 w-4" />
+                                                            Archive
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
