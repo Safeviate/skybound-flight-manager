@@ -26,16 +26,28 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
+import type { UserDocument } from '@/lib/types';
+
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().min(10, 'Please enter a valid phone number.'),
+  documents: z.array(z.object({
+    id: z.string(),
+    type: z.string(),
+    expiryDate: z.date(),
+  })).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -55,9 +67,10 @@ export default function Header({ title, children }: { title: string, children?: 
       form.reset({
         name: user.name,
         phone: user.phone,
+        documents: user.documents?.map(d => ({ ...d, expiryDate: parseISO(d.expiryDate) })) || [],
       });
     }
-  }, [user, form]);
+  }, [user, form, isProfileOpen]);
 
   const handleLogout = () => {
     logout();
@@ -65,13 +78,33 @@ export default function Header({ title, children }: { title: string, children?: 
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
-    const success = await updateUser(data);
+    const updatedDocs = data.documents?.map(d => ({...d, expiryDate: format(d.expiryDate, 'yyyy-MM-dd')}));
+
+    const success = await updateUser({
+      name: data.name,
+      phone: data.phone,
+      documents: updatedDocs,
+    });
     if (success) {
       toast({ title: 'Profile Updated', description: 'Your information has been successfully saved.' });
       setIsProfileOpen(false);
     } else {
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save your changes.' });
     }
+  };
+  
+  const getCombinedDocuments = () => {
+    if (!user) return [];
+    
+    const requiredDocs = user.requiredDocuments || [];
+    const userDocs = user.documents || [];
+    
+    const combined = requiredDocs.map(reqDocType => {
+        const existingDoc = userDocs.find(d => d.type === reqDocType);
+        return existingDoc || { id: `doc-${Date.now()}-${reqDocType}`, type: reqDocType, expiryDate: '' };
+    });
+    
+    return combined;
   };
 
   return (
@@ -150,6 +183,65 @@ export default function Header({ title, children }: { title: string, children?: 
                     </FormItem>
                   )}
                 />
+                
+                <Separator />
+
+                <div>
+                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        Required Documents
+                    </h4>
+                    <div className="space-y-4">
+                      {user?.requiredDocuments && user.requiredDocuments.length > 0 ? (
+                        user.requiredDocuments.map((docType, index) => (
+                           <FormField
+                              key={docType}
+                              control={form.control}
+                              name={`documents.${index}.expiryDate`}
+                              render={({ field }) => {
+                                const docValue = form.getValues(`documents.${index}`);
+                                if (docValue?.type !== docType) {
+                                  // This is to ensure we are editing the correct document
+                                  return null;
+                                }
+
+                                return (
+                                <FormItem className="flex items-center justify-between">
+                                  <FormLabel className="w-1/2">{docType}</FormLabel>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <FormControl>
+                                        <Button
+                                          variant={"outline"}
+                                          className={cn(
+                                            "w-1/2 pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                          )}
+                                        >
+                                          {field.value ? format(field.value, "PPP") : <span>Set expiry</span>}
+                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                      </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </FormItem>
+                              )}}
+                           />
+                        ))
+                      ) : (
+                          <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
+                      )}
+                    </div>
+                </div>
+
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">
@@ -160,25 +252,6 @@ export default function Header({ title, children }: { title: string, children?: 
                 </DialogFooter>
               </form>
             </Form>
-            
-            <Separator />
-
-            <div>
-                <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    Required Documents
-                </h4>
-                {user?.requiredDocuments && user.requiredDocuments.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                        {user.requiredDocuments.map(doc => (
-                            <Badge key={doc} variant="secondary">{doc}</Badge>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
-                )}
-            </div>
-
           </DialogContent>
         </Dialog>
       </div>
