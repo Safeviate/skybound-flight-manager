@@ -93,8 +93,16 @@
   * {
     @apply border-border;
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    transform: scale(var(--app-scale, 1));
+    transform-origin: top left;
+    width: calc(100vw / var(--app-scale, 1));
+    height: calc(100vh / var(--app-scale, 1));
+    overflow: auto;
   }
 }
 
