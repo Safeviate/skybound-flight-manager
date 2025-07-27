@@ -82,21 +82,12 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 function MyProfilePage() {
     const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts, company } = useUser();
     const router = useRouter();
-    const [audits, setAudits] = useState<QualityAudit[]>([]);
     const [visitedAlerts, setVisitedAlerts] = useState<string[]>([]);
 
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
-        }
-        if (company) {
-            const fetchAudits = async () => {
-                const q = query(collection(db, `companies/${company.id}/quality-audits`));
-                const snapshot = await getDocs(q);
-                setAudits(snapshot.docs.map(doc => doc.data() as QualityAudit));
-            };
-            fetchAudits();
         }
     }, [user, loading, router, company]);
     
@@ -142,7 +133,7 @@ function MyProfilePage() {
             }
         }
 
-        const taskAlerts = getUnacknowledgedAlerts(audits)
+        const taskAlerts = getUnacknowledgedAlerts([])
             .map(alert => {
                 return {
                     id: alert.id,
@@ -155,7 +146,7 @@ function MyProfilePage() {
             });
 
         return [...personalAlerts, ...taskAlerts];
-    }, [user, getUnacknowledgedAlerts, audits]);
+    }, [user, getUnacknowledgedAlerts]);
 
      const handleAcknowledge = useCallback(async (alertId: string) => {
         await acknowledgeAlerts([alertId]);
