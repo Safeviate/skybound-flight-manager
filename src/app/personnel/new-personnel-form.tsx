@@ -25,6 +25,11 @@ import type { Role, User, UserDocument } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 
+const documentSchema = z.object({
+  type: z.string().min(1, { message: "Document type is required." }),
+  expiryDate: z.date({ required_error: "An expiry date is required." }),
+});
+
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
@@ -37,6 +42,7 @@ const personnelFormSchema = z.object({
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
+  documents: z.array(documentSchema).optional(),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -62,6 +68,8 @@ const personnelRoles: Role[] = [
     'Safety Manager',
 ];
 
+const documentTypes = ['Passport', 'Visa', 'Identification', 'Drivers License', 'Pilot License', 'Medical Certificate', 'Logbook'];
+
 export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
   
   const form = useForm<PersonnelFormValues>({
@@ -71,13 +79,25 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
       email: '',
       phone: '',
       consentDisplayContact: 'Not Consented',
+      documents: [],
     }
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'documents',
+  });
+
   function handleFormSubmit(data: PersonnelFormValues) {
+    const documents = data.documents?.map(doc => ({
+        ...doc,
+        id: `doc-${Date.now()}-${Math.random()}`,
+        expiryDate: format(doc.expiryDate, 'yyyy-MM-dd')
+    })) || [];
+
     onSubmit({
         ...data,
-        documents: []
+        documents
     } as unknown as Omit<User, 'id'>);
     form.reset();
   }
@@ -188,6 +208,93 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
             </FormItem>
           )}
         />
+        
+        <Separator />
+
+        <div>
+            <FormLabel>Documents</FormLabel>
+            <FormDescription className="mb-4">
+                Add any relevant documents for this user, such as licenses or medical certificates.
+            </FormDescription>
+            <div className="space-y-4">
+                {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-end gap-2 p-4 border rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 flex-1">
+                            <FormField
+                                control={form.control}
+                                name={`documents.${index}.type`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Document Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {documentTypes.map(type => (
+                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`documents.${index}.expiryDate`}
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Expiry Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                    >
+                                                        {field.value ? format(field.value, "PPP") : <span>Pick expiry date</span>}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => remove(index)}
+                        >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                ))}
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => append({ type: '', expiryDate: new Date() })}
+                >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Document
+                </Button>
+            </div>
+        </div>
 
 
         <div className="flex justify-end">
