@@ -824,7 +824,7 @@ export default function QualityAuditDetailPage() {
                     <p>{audit.auditor}</p>
                 </div>
                  <div className="space-y-2">
-                    <FormLabel>External Auditee Name (Optional)</FormLabel>
+                    <label className="text-sm font-medium">External Auditee Name (Optional)</label>
                     <Input 
                         placeholder="e.g., John Smith" 
                         value={audit.auditeeName || ''}
@@ -832,7 +832,7 @@ export default function QualityAuditDetailPage() {
                     />
                 </div>
                 <div className="space-y-2">
-                    <FormLabel>External Auditee Position (Optional)</FormLabel>
+                    <label className="text-sm font-medium">External Auditee Position (Optional)</label>
                     <Input 
                         placeholder="e.g., CAA Inspector" 
                         value={audit.auditeePosition || ''}
@@ -969,5 +969,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
 
 
+
+    
 
     
