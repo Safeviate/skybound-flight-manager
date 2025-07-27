@@ -67,8 +67,14 @@ function PersonnelPage() {
             await updateDoc(userRef, personnelData as any);
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
-            // Add new personnel
-            if ((personnelData.role === 'Admin' || personnelData.role === 'External Auditee') && personnelData.email && personnelData.password) {
+            // This is the logic for adding a new user.
+            // We separate users that need an auth account from those who don't.
+            if ((personnelData.role === 'Admin' || personnelData.role === 'External Auditee')) {
+                // This path is for users requiring authentication.
+                if (!personnelData.email || !personnelData.password) {
+                    toast({ variant: 'destructive', title: 'Missing Information', description: 'Email and password are required for this role.'});
+                    return;
+                }
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
                     const newUserId = userCredential.user.uid;
@@ -98,7 +104,6 @@ function PersonnelPage() {
                             toast({ variant: 'destructive', title: 'Email Failed', description: 'The user was created, but the invitation email could not be sent. Please send credentials manually.'})
                         }
                     }
-
                 } catch (error: any) {
                     let errorMessage = 'Could not create the user in the authentication system.';
                     if (error.code === 'auth/email-already-in-use') {
@@ -110,13 +115,15 @@ function PersonnelPage() {
                      return; // Stop execution if auth creation fails
                 }
             } else {
-                // For roles not requiring auth, just add to Firestore
+                // This path is for users NOT requiring authentication.
                 const newUserId = doc(collection(db, 'temp')).id;
                 const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
                 await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
                 toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
             }
         }
+        
+        // This runs after either path (update or add) completes.
         fetchPersonnel(); // Refetch to get the latest data
         setEditingPersonnel(null);
         setIsNewPersonnelDialogOpen(false);
