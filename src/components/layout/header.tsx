@@ -42,8 +42,11 @@ export default function Header({ title, children }: { title: string, children?: 
         {children}
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="default" className="relative h-10 px-4">
-                    <span>{user?.name}</span>
+                <Button variant="default" className="relative h-auto px-4 py-2 text-left">
+                    <div className="flex flex-col">
+                        <span>{user?.name}</span>
+                        <span className="text-xs text-primary-foreground/80 -mt-1">{user?.role}</span>
+                    </div>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
