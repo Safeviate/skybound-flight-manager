@@ -195,7 +195,7 @@ function SettingsPage() {
                             onValueChange={(value) => setScale(value[0])}
                             min={0.8}
                             max={1.2}
-                            step={0.05}
+                            step={0.01}
                         />
                         <span className="font-semibold text-muted-foreground w-16 text-right">
                             {Math.round(scale * 100)}%
