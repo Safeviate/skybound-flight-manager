@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -280,8 +280,9 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             </Card>
 
             <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 no-print">
+                <TabsList className="grid w-full grid-cols-4 no-print">
                     <TabsTrigger value="summary">Summary &amp; Findings</TabsTrigger>
+                    <TabsTrigger value="team">Audit Team</TabsTrigger>
                     <TabsTrigger value="checklist">Full Checklist</TabsTrigger>
                     <TabsTrigger value="discussion">Discussion</TabsTrigger>
                 </TabsList>
@@ -400,6 +401,35 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                     </div>
                                 )
                             })}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="team" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Audit Team</CardTitle>
+                            <CardDescription>
+                                All personnel involved in conducting and responding to this audit.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-2">
+                                {audit.investigationTeam?.map(memberName => {
+                                    const member = personnel.find(p => p.name === memberName);
+                                    let role = member?.role;
+                                    if (memberName === audit.auditor) role = "Lead Auditor";
+                                    if (memberName === audit.auditeeName) role = "Auditee";
+                                    return (
+                                        <li key={memberName} className="flex items-center gap-3 p-2 border rounded-md">
+                                            <Users className="h-5 w-5 text-muted-foreground" />
+                                            <div>
+                                                <p className="font-semibold">{memberName}</p>
+                                                <p className="text-sm text-muted-foreground">{role}</p>
+                                            </div>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -572,7 +602,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         {audit.auditorSignature ? (
                             <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditor ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature })} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -582,7 +612,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                          {audit.auditeeSignature ? (
                             <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                         ) : user?.name === audit.auditeeName ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature })} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -920,5 +950,6 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
 
 
