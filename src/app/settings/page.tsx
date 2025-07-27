@@ -105,7 +105,6 @@ function SettingsPage() {
         backgroundColor: company.theme.background || '#f4f4f5',
         accentColor: company.theme.accent || '#f59e0b',
       });
-      applyTheme(company.theme);
     }
   }, [company, form]);
   
