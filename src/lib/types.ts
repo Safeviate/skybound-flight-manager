@@ -461,6 +461,7 @@ export type NonConformanceIssue = {
 export type QualityAudit = {
   id: string;
   companyId: string;
+  title: string;
   date: string;
   type: 'Internal' | 'External';
   auditor: string;
@@ -511,3 +512,4 @@ export type Checklist = {
   templateId?: string; // ID of the master template
   aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };
+

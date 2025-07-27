@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -105,6 +106,7 @@ export function AuditChecklistsManager() {
         const newAudit: QualityAudit = {
             id: newAuditId,
             companyId: company.id,
+            title: template.title,
             date: format(new Date(), 'yyyy-MM-dd'),
             type: 'Internal',
             auditor: user.name,
@@ -259,3 +261,4 @@ export function AuditChecklistsManager() {
         </Card>
     );
 }
+
