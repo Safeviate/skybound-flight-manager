@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -671,7 +672,7 @@ function SafetyPage() {
                   <TableBody>
                     {reportsControls.items.map((report) => (
                       <TableRow key={report.id}>
-                        <TableCell className="font-mono">
+                        <TableCell>
                            <Link href={`/safety/${report.id}`} className="hover:underline">
                                 {report.reportNumber}
                            </Link>
@@ -799,7 +800,7 @@ function SafetyPage() {
                                         <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
                                         <TableCell>
                                             {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.id}`} className="font-mono hover:underline">{risk.reportNumber}</Link>
+                                                <Link href={`/safety/${risk.id}`} className="hover:underline">{risk.reportNumber}</Link>
                                             ) : (
                                                 'N/A'
                                             )}

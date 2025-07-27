@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
@@ -401,7 +402,7 @@ function SafetyReportInvestigationPage() {
                                                 <TableBody>
                                                     {ICAO_OPTIONS.map(option => (
                                                         <TableRow key={option.value}>
-                                                            <TableCell className="font-mono">{option.label}</TableCell>
+                                                            <TableCell>{option.label}</TableCell>
                                                             <TableCell>{option.description}</TableCell>
                                                         </TableRow>
                                                     ))}

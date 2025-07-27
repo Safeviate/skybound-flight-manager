@@ -134,7 +134,7 @@ const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStat
                             allCaps.map(({ auditId, issue, plan }) => (
                                 <TableRow key={`${auditId}-${issue.id}`}>
                                     <TableCell>
-                                        <Link href={`/quality/${auditId}`} className="font-mono hover:underline">
+                                        <Link href={`/quality/${auditId}`} className="hover:underline">
                                             {auditId.substring(0, 8)}...
                                         </Link>
                                     </TableCell>
@@ -469,7 +469,7 @@ function QualityPage() {
                                 {filteredAudits.length > 0 ? (
                                     filteredAudits.map(audit => (
                                     <TableRow key={audit.id}>
-                                        <TableCell className="font-mono">
+                                        <TableCell>
                                         <Link href={`/quality/${audit.id}`} className="hover:underline">
                                             {audit.id.substring(0, 8)}...
                                         </Link>
