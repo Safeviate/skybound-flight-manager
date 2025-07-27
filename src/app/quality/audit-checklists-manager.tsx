@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,10 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     const [topic, setTopic] = useState('');
@@ -78,14 +82,15 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
+    const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
     const [isOpen, setIsOpen] = useState(false);
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
-        if (auditee) {
-            onStart(template, auditee);
+        if (auditee && auditDate) {
+            onStart(template, auditee, auditDate);
             setIsOpen(false);
         }
     };
@@ -101,25 +106,52 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
-                        Please select the primary auditee for this audit. This person will be notified and responsible for responses.
+                        Please select the primary auditee and date for this audit.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="auditee-select">Select Auditee</Label>
-                    <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
-                        <SelectTrigger id="auditee-select">
-                            <SelectValue placeholder="Select a person" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {personnel.map(p => (
-                                <SelectItem key={p.id} value={p.id}>
-                                    {p.name} ({p.role})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="auditee-select">Select Auditee</Label>
+                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
+                            <SelectTrigger id="auditee-select">
+                                <SelectValue placeholder="Select a person" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {personnel.map(p => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                        {p.name} ({p.role})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Select Audit Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !auditDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                mode="single"
+                                selected={auditDate}
+                                onSelect={setAuditDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
-                <Button onClick={handleConfirm} disabled={!selectedAuditeeId}>
+                <Button onClick={handleConfirm} disabled={!selectedAuditeeId || !auditDate}>
                     Confirm and Start Audit
                 </Button>
             </DialogContent>
@@ -157,14 +189,14 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist, auditee: User) => {
+    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
             id: newAuditId,
             companyId: company.id,
             title: template.title,
-            date: format(new Date(), 'yyyy-MM-dd'),
+            date: format(auditDate, 'yyyy-MM-dd'),
             type: 'Internal',
             auditor: user.name,
             auditeeName: auditee.name,
