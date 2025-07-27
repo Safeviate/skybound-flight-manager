@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import type { UserDocument } from '@/lib/types';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -107,12 +108,20 @@ export default function Header({ title, children }: { title: string, children?: 
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     if (!user) return;
-
-    const updatedDocs = data.documents?.map(d => ({
-        ...d,
-        expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
-    })) || [];
     
+    // Get the latest state of combined documents
+    const combinedDocs = getCombinedDocuments();
+
+    // Map the form data but use the combinedDocs as the source of truth for what should exist
+    const updatedDocs = combinedDocs.map(cd => {
+        const formDataDoc = data.documents?.find(d => d.type === cd.type);
+        return {
+            id: cd.id,
+            type: cd.type,
+            expiryDate: formDataDoc?.expiryDate ? format(formDataDoc.expiryDate, 'yyyy-MM-dd') : null
+        };
+    });
+
     const success = await updateUser({
       name: data.name,
       phone: data.phone,
@@ -176,159 +185,162 @@ export default function Header({ title, children }: { title: string, children?: 
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Personal Details</h4>
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormItem>
-                      <Label>Email</Label>
-                      <Input value={user?.email || ''} disabled />
-                    </FormItem>
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                           <FormDescription>
-                            Example: +27 12 345 6789
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="homeAddress"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Home Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St, Anytown, USA" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                     <h4 className="font-medium text-sm">Next of Kin Details</h4>
-                     <FormField
-                      control={form.control}
-                      name="nextOfKinName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Jane Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="nextOfKinPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="555-987-6543" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Example: +27 12 345 6789
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="nextOfKinEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="jane.doe@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <Separator />
-
-                <div>
-                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        Required Documents
-                    </h4>
+              <form onSubmit={form.handleSubmit(handleProfileUpdate)}>
+                <ScrollArea className="h-[60vh] pr-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div className="space-y-4">
-                      {form.watch('documents')?.map((docItem, index) => {
-                            return (
-                           <FormField
-                              key={docItem.id}
-                              control={form.control}
-                              name={`documents.${index}.expiryDate`}
-                              render={({ field }) => {
-                                const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void };
-
-                                return (
-                                <FormItem className="flex items-center justify-between">
-                                  <FormLabel className="w-1/2">{docItem.type}</FormLabel>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <FormControl>
-                                        <Button
-                                          variant={"outline"}
-                                          className={cn(
-                                            "w-1/2 pl-3 text-left font-normal",
-                                            !typedField.value && "text-muted-foreground"
-                                          )}
-                                        >
-                                          {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}
-                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                      </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={typedField.value || undefined}
-                                        onSelect={typedField.onChange}
-                                        initialFocus
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                </FormItem>
-                              )}}
-                           />
-                        )})}
-                      {(form.getValues('documents') || []).length === 0 && (
-                          <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
-                      )}
+                      <h4 className="font-medium text-sm">Personal Details</h4>
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormItem>
+                        <Label>Email</Label>
+                        <Input value={user?.email || ''} disabled />
+                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Example: +27 12 345 6789
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="homeAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Home Address</FormLabel>
+                            <FormControl>
+                              <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                </div>
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-sm">Next of Kin Details</h4>
+                      <FormField
+                        control={form.control}
+                        name="nextOfKinName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Jane Doe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="nextOfKinPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="555-987-6543" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Example: +27 12 345 6789
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="nextOfKinEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="jane.doe@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Separator />
 
-                <DialogFooter>
+                  <div>
+                      <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          Required Documents
+                      </h4>
+                      <div className="space-y-4">
+                        {form.watch('documents')?.map((docItem, index) => {
+                              return (
+                            <FormField
+                                key={docItem.id}
+                                control={form.control}
+                                name={`documents.${index}.expiryDate`}
+                                render={({ field }) => {
+                                  const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void };
+
+                                  return (
+                                  <FormItem className="flex items-center justify-between">
+                                    <FormLabel className="w-1/2">{docItem.type}</FormLabel>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <FormControl>
+                                          <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                              "w-1/2 pl-3 text-left font-normal",
+                                              !typedField.value && "text-muted-foreground"
+                                            )}
+                                          >
+                                            {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                          </Button>
+                                        </FormControl>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                          mode="single"
+                                          selected={typedField.value || undefined}
+                                          onSelect={typedField.onChange}
+                                          initialFocus
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                  </FormItem>
+                                )}}
+                            />
+                          )})}
+                        {(form.getValues('documents') || []).length === 0 && (
+                            <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
+                        )}
+                      </div>
+                  </div>
+                </div>
+                </ScrollArea>
+                <DialogFooter className="pt-4">
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">
                       Close
