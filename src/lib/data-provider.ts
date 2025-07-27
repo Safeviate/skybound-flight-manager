@@ -372,31 +372,9 @@ export let safetyReportData: SafetyReport[] = [];
 export let riskRegisterData: Risk[] = [];
 export let qualityAuditData: QualityAudit[] = [];
 export let auditScheduleData: AuditScheduleItem[] = [];
-export let auditChecklistData: AuditChecklist[] = [
-    {
-        id: 'ac-fo-001',
-        companyId: 'skybound-aero',
-        title: 'Quarterly Flight Operations Inspection',
-        area: 'Flight Operations',
-        items: [
-            { id: '1', text: 'Are all pilot licenses and medicals current?', finding: null },
-            { id: '2', text: 'Are flight and duty time records correctly maintained? (SACAA CATS 61.14)', finding: null },
-            { id: '3', text: 'Is the operational flight planning process adequate? (SACAA CAR 91.03.1)', finding: null },
-        ]
-    },
-    {
-        id: 'ac-maint-001',
-        companyId: 'skybound-aero',
-        title: 'Annual Maintenance Facility Audit',
-        area: 'Maintenance',
-        items: [
-            { id: '1', text: 'Is all tooling and equipment properly calibrated and stored? (SACAA CATS 44.02.5)', finding: null },
-            { id: '2', text: 'Are maintenance records complete and accurately filed? (SACAA CAR 43.02.4)', finding: null },
-            { id: '3', text: 'Is the parts and materials storage secure and correctly managed?', finding: null },
-        ]
-    }
-];
+export let auditChecklistData: AuditChecklist[] = [];
 export let allAlerts: Alert[] = [];
 export let companyData: Company[] = [];
 
 // Functions to modify data are now handled by components writing to Firestore.
+
