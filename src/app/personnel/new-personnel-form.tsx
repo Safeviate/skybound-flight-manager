@@ -25,12 +25,6 @@ import type { Role, User, UserDocument } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 
-const documentSchema = z.object({
-    id: z.string().optional(),
-    type: z.string().min(1, 'Document type cannot be empty.'),
-    expiryDate: z.date({ required_error: 'An expiry date is required.'}),
-});
-
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
@@ -40,7 +34,6 @@ const personnelFormSchema = z.object({
   role: z.custom<Role>((val) => typeof val === 'string' && val !== 'Student', {
       message: 'A valid role must be selected.'
   }),
-  documents: z.array(documentSchema).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -78,25 +71,13 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
       email: '',
       phone: '',
       consentDisplayContact: 'Not Consented',
-      documents: [],
     }
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'documents',
-  });
-  
   function handleFormSubmit(data: PersonnelFormValues) {
-    const formattedDocuments = data.documents?.map(doc => ({
-        ...doc,
-        id: `doc-${Date.now()}-${Math.random()}`,
-        expiryDate: format(doc.expiryDate, 'yyyy-MM-dd')
-    }));
-
     onSubmit({
         ...data,
-        documents: formattedDocuments
+        documents: []
     } as unknown as Omit<User, 'id'>);
     form.reset();
   }
@@ -170,82 +151,6 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
             />
         </div>
         
-        <Separator />
-        
-        <div>
-            <FormLabel>Documents & Qualifications</FormLabel>
-            <FormDescription className="mb-4">Add any relevant documents, licenses, or medical certificates with their expiry dates.</FormDescription>
-            <div className="space-y-4">
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-end gap-2 p-4 border rounded-lg">
-                        <FormField
-                            control={form.control}
-                            name={`documents.${index}.type`}
-                            render={({ field }) => (
-                                <FormItem className="flex-1">
-                                <FormLabel>Document Type</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Class 1 Medical" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name={`documents.${index}.expiryDate`}
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col flex-1">
-                                    <FormLabel>Expiry Date</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full pl-3 text-left font-normal",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                            >
-                                            {field.value ? (
-                                                format(field.value, "PPP")
-                                            ) : (
-                                                <span>Pick expiry date</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive"/>
-                        </Button>
-                    </div>
-                ))}
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => append({ type: '', expiryDate: new Date() })}
-                >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Document
-                </Button>
-            </div>
-        </div>
-
         <FormField
           control={form.control}
           name="consentDisplayContact"
