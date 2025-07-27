@@ -191,7 +191,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         </div>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-xl font-semibold">Quality Audit Report</h2>
+                        <h2 className="text-xl font-semibold">{audit.title}</h2>
                         <p className="text-sm text-muted-foreground">Report ID: {audit.id}</p>
                     </div>
                 </div>
@@ -868,3 +868,4 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
