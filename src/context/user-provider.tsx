@@ -53,20 +53,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 
   const fetchUserDataByEmail = async (email: string): Promise<[User | null, Company | null, string | null]> => {
-    const companiesRef = collection(db, "companies");
-    const q = query(companiesRef);
-    const querySnapshot = await getDocs(q);
+    const companiesColRef = collection(db, 'companies');
+    const companiesSnapshot = await getDocs(companiesColRef);
 
-    for (const companyDoc of querySnapshot.docs) {
-        const usersRef = collection(db, `companies/${companyDoc.id}/users`);
-        const userQuery = query(usersRef, where("email", "==", email));
-        const userSnapshot = await getDocs(userQuery);
-        
-        if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data() as User;
-            const companyData = companyDoc.data() as Company;
-            return [userData, companyData, userSnapshot.docs[0].id];
-        }
+    for (const companyDoc of companiesSnapshot.docs) {
+      const usersColRef = collection(db, 'companies', companyDoc.id, 'users');
+      const userQuery = query(usersColRef, where('email', '==', email));
+      const userSnapshot = await getDocs(userQuery);
+
+      if (!userSnapshot.empty) {
+        const userData = userSnapshot.docs[0].data() as User;
+        const companyData = companyDoc.data() as Company;
+        return [userData, companyData, userSnapshot.docs[0].id];
+      }
     }
     return [null, null, null];
   };
@@ -95,7 +94,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-            // User has a persistent session (likely a real admin)
             const [userData, companyData] = await fetchUserDataById(firebaseUser.photoURL || 'skybound-aero', firebaseUser.uid);
             setUser(userData);
             setCompany(companyData);
@@ -104,19 +102,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             }
         } else {
-             // Non-admin user, or user logged out, try to load from localStorage for demo persistence
-            const lastUserId = localStorage.getItem(LAST_USER_ID_KEY);
-            const lastCompanyId = localStorage.getItem(LAST_COMPANY_ID_KEY);
-
-            if (lastUserId && lastCompanyId) {
-                const [userData, companyData] = await fetchUserDataById(lastCompanyId, lastUserId);
-                setUser(userData);
-                setCompany(companyData);
-            } else {
-                setUser(null);
-                setCompany(null);
-                setAllAlerts([]);
-            }
+            setUser(null);
+            setCompany(null);
+            setAllAlerts([]);
         }
         setLoading(false);
     });
@@ -146,56 +134,42 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
       
       await Promise.all(promises);
-
-      // State will update automatically via onSnapshot, no need for manual update here.
   };
 
 
   const login = async (email: string, password?: string): Promise<boolean> => {
     setLoading(true);
     try {
-        const [userData, companyData, userId] = await fetchUserDataByEmail(email);
+      const [userData, companyData] = await fetchUserDataByEmail(email);
 
-        if (userData?.role === 'Admin') {
-            try {
-                // Attempt to sign in with Firebase Auth for real admins
-                if (!password) {
-                     console.error("Password is required for Admin login.");
-                     return false;
-                }
-                await signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged will handle setting the user state
-                return true;
-            } catch (error: any) {
-                // If it fails with invalid-credential, it's likely a seeded admin.
-                // Log them in via the non-persistent method for demo purposes.
-                if (error.code === 'auth/invalid-credential') {
-                    console.warn(`Admin user '${email}' not found in Firebase Auth. Logging in with demo mode.`);
-                    // Fallthrough to the non-admin login logic below
-                } else {
-                    // For other auth errors, fail the login
-                    throw error;
-                }
-            }
+      if (userData?.role === 'Admin') {
+        if (!password) {
+          console.error("Password is required for Admin login.");
+          return false;
         }
-        
-        // This block now handles all non-admin users AND seeded admin users
-        if (userData && companyData && userId) {
-            setUser(userData);
-            setCompany(companyData);
-            localStorage.setItem(LAST_USER_ID_KEY, userId);
-            localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
-            return true;
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged will handle setting the user state.
+        return true;
+      }
 
-        return false;
+      // For non-Admin users (demo environment behavior)
+      if (userData && companyData) {
+          setUser(userData);
+          setCompany(companyData);
+          localStorage.setItem(LAST_USER_ID_KEY, userData.id);
+          localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+          return true;
+      }
+
+      return false; // User not found
     } catch (error) {
-        console.error("Authentication or login process failed:", error);
-        return false;
+      console.error("Authentication or login process failed:", error);
+      return false;
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
+
 
   const logout = useCallback(async () => {
     setLoading(true);
