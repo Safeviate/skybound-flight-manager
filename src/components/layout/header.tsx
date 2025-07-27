@@ -103,7 +103,7 @@ export default function Header({ title, children }: { title: string, children?: 
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
-    const userDocs = user?.documents || [];
+    const userDocs = getCombinedDocuments();
     const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
 
     const updatedDocs = data.documents?.map(d => {
@@ -170,7 +170,7 @@ export default function Header({ title, children }: { title: string, children?: 
                   </DropdownMenuItem>
               </DropdownMenuContent>
           </DropdownMenu>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>My Personal Information</DialogTitle>
               <DialogDescription>
@@ -179,93 +179,96 @@ export default function Header({ title, children }: { title: string, children?: 
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm">Personal Details</h4>
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
+                      <Label>Email</Label>
+                      <Input value={user?.email || ''} disabled />
                     </FormItem>
-                  )}
-                />
-                <FormItem>
-                  <Label>Email</Label>
-                  <Input value={user?.email || ''} disabled />
-                </FormItem>
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="homeAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Home Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123 Main St, Anytown, USA" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Separator />
-                
-                <h4 className="font-medium text-sm">Next of Kin Details</h4>
-                 <FormField
-                  control={form.control}
-                  name="nextOfKinName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Jane Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="nextOfKinPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="555-987-6543" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="nextOfKinEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="jane.doe@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="homeAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Home Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-4">
+                     <h4 className="font-medium text-sm">Next of Kin Details</h4>
+                     <FormField
+                      control={form.control}
+                      name="nextOfKinName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jane Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="nextOfKinPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="555-987-6543" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="nextOfKinEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="jane.doe@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
                 
                 <Separator />
 
