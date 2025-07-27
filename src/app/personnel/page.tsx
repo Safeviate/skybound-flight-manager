@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { User, Role } from '@/lib/types';
-import { PlusCircle, Edit } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PersonnelForm } from './personnel-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,16 +22,20 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
     const [personnelList, setPersonnelList] = useState<User[]>([]);
     const [editingPersonnel, setEditingPersonnel] = useState<User | null>(null);
     const [isNewPersonnelDialogOpen, setIsNewPersonnelDialogOpen] = useState(false);
+    const [selectedPersonnel, setSelectedPersonnel] = useState<string[]>([]);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -138,6 +142,48 @@ function PersonnelPage() {
         }
         setIsNewPersonnelDialogOpen(isOpen);
     }
+    
+    const handleDeleteSelected = async () => {
+        if (!company || selectedPersonnel.length === 0) return;
+
+        const batch = writeBatch(db);
+        selectedPersonnel.forEach(id => {
+            const userRef = doc(db, `companies/${company.id}/users`, id);
+            batch.delete(userRef);
+        });
+
+        try {
+            await batch.commit();
+            toast({
+                title: 'Personnel Deleted',
+                description: `${selectedPersonnel.length} user(s) have been successfully deleted.`
+            });
+            setSelectedPersonnel([]);
+            fetchPersonnel();
+        } catch (error) {
+            console.error("Error deleting personnel:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Deletion Failed',
+                description: 'Could not delete the selected personnel.'
+            });
+        }
+    };
+
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedPersonnel(personnelList.map(p => p.id));
+        } else {
+            setSelectedPersonnel([]);
+        }
+    };
+    
+    const handleSelectOne = (id: string, checked: boolean) => {
+        setSelectedPersonnel(prev => 
+            checked ? [...prev, id] : prev.filter(pid => pid !== id)
+        );
+    };
 
     const getRoleVariant = (role: Role) => {
         switch (role) {
@@ -178,6 +224,30 @@ function PersonnelPage() {
               <CardDescription>A list of all non-student personnel in the system.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+                {selectedPersonnel.length > 0 && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                             <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Selected ({selectedPersonnel.length})
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete {selectedPersonnel.length} user(s).
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteSelected}>
+                                    Yes, delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
                 {canEditPersonnel && (
                 <Dialog open={isNewPersonnelDialogOpen} onOpenChange={handleDialogClose}>
                     <DialogTrigger asChild>
@@ -203,6 +273,13 @@ function PersonnelPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                     <Checkbox
+                        checked={personnelList.length > 0 && selectedPersonnel.length === personnelList.length}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Email</TableHead>
@@ -212,7 +289,14 @@ function PersonnelPage() {
               </TableHeader>
               <TableBody>
                 {personnelList.map((person) => (
-                  <TableRow key={person.id}>
+                  <TableRow key={person.id} data-state={selectedPersonnel.includes(person.id) && "selected"}>
+                     <TableCell>
+                        <Checkbox
+                            checked={selectedPersonnel.includes(person.id)}
+                            onCheckedChange={(checked) => handleSelectOne(person.id, !!checked)}
+                            aria-label="Select row"
+                        />
+                     </TableCell>
                     <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                             <Avatar>
@@ -251,5 +335,4 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
-
     
