@@ -69,12 +69,16 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
 
+    // For Resend sandbox, redirect emails to the verified account owner.
+    const recipient = 'barry@safeviate.com';
+    const finalSubject = `[Test to: ${to}] ${subject}`;
+
 
     try {
       const { data, error } = await resend.emails.send({
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
-        to,
-        subject,
+        to: recipient,
+        subject: finalSubject,
         html: htmlBody,
         headers: {
             'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
