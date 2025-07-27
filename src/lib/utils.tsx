@@ -53,9 +53,9 @@ export const getExpiryBadge = (
     if (daysUntil < 0) {
         variant = 'destructive'; // Expired - Red
     } else if (daysUntil <= orangeWarningDays) {
-        variant = 'orange'; // Expires in 1 month - Orange
+        variant = 'orange'; // Expires soon - Orange
     } else if (daysUntil <= yellowWarningDays) {
-        variant = 'warning'; // Expires in 2 months - Yellow
+        variant = 'warning'; // Expires later - Yellow
     } else {
         variant = 'success'; // Not expired - Green
     }
@@ -148,3 +148,5 @@ export const calculateFlightHours = (logs: TrainingLogEntry[], periodInDays: num
   const totalHours = relevantLogs.reduce((sum, log) => sum + log.flightDuration, 0);
   return parseFloat(totalHours.toFixed(1));
 };
+
+    
