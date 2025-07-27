@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar, Edit } from 'lucide-react';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar, Edit, ChevronDown } from 'lucide-react';
 import type { User as AppUser, Alert, QualityAudit, Booking, Role } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,11 @@ import { PersonalInformationCard } from './personal-information-card';
 import { FatigueRiskIndicatorCard } from './fatigue-risk-indicator-card';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPasswordChanged: (newPassword: string) => void }) {
     const [newPassword, setNewPassword] = useState('');
@@ -198,38 +203,42 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
-                 <Card>
-                    <CardHeader className="flex flex-row items-start justify-between">
-                        <div>
-                            <CardTitle>Your Information</CardTitle>
-                            <CardDescription>
-                                Your personal details and document status.
-                            </CardDescription>
-                        </div>
-                         <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Update
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle>Your Profile</DialogTitle>
-                                    <DialogDescription>
-                                        View and update your personal information and document expiry dates.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="py-4">
-                                    <PersonalInformationCard user={user} onUpdate={() => {}} />
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </CardHeader>
-                    <CardContent>
-                        <PersonalInformationCard user={user} onUpdate={() => {}} />
-                    </CardContent>
-                </Card>
+                <Collapsible defaultOpen>
+                    <Card>
+                        <CardHeader className="flex flex-row items-start justify-between">
+                            <CollapsibleTrigger className="flex-1 text-left">
+                                <CardTitle>Your Information</CardTitle>
+                                <CardDescription>
+                                    Your personal details and document status.
+                                </CardDescription>
+                            </CollapsibleTrigger>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Update
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-2xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Your Profile</DialogTitle>
+                                        <DialogDescription>
+                                            View and update your personal information and document expiry dates.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="py-4">
+                                        <PersonalInformationCard user={user} onUpdate={() => {}} />
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CollapsibleContent>
+                            <CardContent>
+                                <PersonalInformationCard user={user} onUpdate={() => {}} />
+                            </CardContent>
+                        </CollapsibleContent>
+                    </Card>
+                </Collapsible>
                 {showFatigueCard && (
                     <Card>
                         <CardHeader>
@@ -327,5 +336,3 @@ function MyProfilePage() {
 MyProfilePage.title = "My Profile";
 
 export default MyProfilePage;
-
-    
