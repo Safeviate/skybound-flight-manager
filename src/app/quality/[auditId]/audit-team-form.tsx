@@ -84,77 +84,25 @@ export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps
       description: `${memberName} has been removed from the investigation.`,
     });
   }
+  
+  const auditorUser = personnel.find(p => p.name === audit.auditor);
+  const auditeeUser = personnel.find(p => p.name === audit.auditeeName);
 
   return (
     <div className="space-y-4">
-      <div className="space-y-4">
-        {team.length > 0 ? (
-          <div className="flex flex-wrap gap-4">
-            {team.map((memberName) => {
-              const member = personnel.find((u) => u.name === memberName);
-              const isAuditor = memberName === audit.auditor;
-              const isAuditee = memberName === audit.auditeeName;
-              
-              let role = member?.role;
-              if (isAuditor) role = "Auditor";
-              if (isAuditee) role = "Auditee";
-              
-              return (
-                <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
-                  <div>
-                    <p className="font-medium text-sm">{memberName}</p>
-                    <p className="text-xs text-muted-foreground">{role}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 ml-2"
-                    onClick={() => onRemoveMember(memberName)}
-                    disabled={isAuditor || isAuditee}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No personnel assigned yet.</p>
-        )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 border rounded-lg">
+            <h4 className="font-semibold text-muted-foreground">Auditor</h4>
+            <p className="text-lg font-bold">{audit.auditor}</p>
+            <p className="text-sm text-muted-foreground">{auditorUser?.role}</p>
+        </div>
+         <div className="p-4 border rounded-lg">
+            <h4 className="font-semibold text-muted-foreground">Auditee</h4>
+            <p className="text-lg font-bold">{audit.auditeeName}</p>
+             <p className="text-sm text-muted-foreground">{auditeeUser?.role}</p>
+        </div>
       </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onAddMember)} className="flex items-end gap-2">
-          <FormField
-            control={form.control}
-            name="personnel"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel className="sr-only">Add Team Member</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select personnel to add" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {availablePersonnel.map((p) => (
-                      <SelectItem key={p.id} value={p.name}>
-                        {p.name} ({p.role})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add
-          </Button>
-        </form>
-      </Form>
+      
     </div>
   );
 }
