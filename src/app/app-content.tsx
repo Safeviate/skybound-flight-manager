@@ -20,7 +20,6 @@ function getPageTitle(children: React.ReactNode): string {
     const pageComponent = child?.props?.children?.[0]?.props?.childProp?.segment;
     if (pageComponent) {
        switch(pageComponent) {
-         case 'my-profile': return 'My Profile';
          case 'dashboard': return 'Dashboard';
          // Add other cases as needed
        }
@@ -37,6 +36,9 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
   const pageTitle = getPageTitle(children);
+  const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
+  const headerContent = child?.type && (child.type as any).headerContent;
+
   
   if (showLayout) {
     return (
@@ -46,7 +48,9 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           </Sidebar>
           <SidebarInset>
               <div className="flex-1 flex flex-col min-h-0">
-                <Header title={pageTitle} />
+                <Header title={pageTitle}>
+                    {headerContent && React.createElement(headerContent)}
+                </Header>
                 <div className="flex-1 overflow-y-auto">
                     {children}
                 </div>
@@ -59,5 +63,3 @@ export function AppContent({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
-
-    
