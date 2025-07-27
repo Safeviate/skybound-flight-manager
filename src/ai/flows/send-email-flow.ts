@@ -83,11 +83,11 @@ const sendEmailFlow = ai.defineFlow(
 
       if (error) {
         console.error('Resend API Error:', error);
-        throw new Error(`Failed to send email: ${error.message}`);
+        throw error;
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error, Object.getOwnPropertyNames(error));
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
       console.error(`Failed to send email with error: ${errorMessage}`);
       throw new Error(`Failed to send email: ${errorMessage}`);
     }
