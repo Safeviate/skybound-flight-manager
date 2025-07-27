@@ -7,7 +7,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/context/settings-provider';
 import { AppContent } from './app-content';
 import { Inter } from 'next/font/google';
-import { ScaleProvider } from '@/context/scale-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -37,16 +36,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ScaleProvider>
-            <UserProvider>
-              <SettingsProvider>
-                <AppContent>
-                  {children}
-                </AppContent>
-                <Toaster />
-              </SettingsProvider>
-            </UserProvider>
-          </ScaleProvider>
+          <UserProvider>
+            <SettingsProvider>
+              <AppContent>
+                {children}
+              </AppContent>
+              <Toaster />
+            </SettingsProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

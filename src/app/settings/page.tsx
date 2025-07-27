@@ -15,8 +15,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
-import { useScale } from "@/context/scale-provider"
-import { Slider } from "@/components/ui/slider"
 
 const themeFormSchema = z.object({
   primaryColor: z.string(),
@@ -72,7 +70,6 @@ function SettingsPage() {
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast()
-  const { scale, setScale } = useScale();
 
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
@@ -180,27 +177,6 @@ function SettingsPage() {
                     System
                     </Button>
                 </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                    <h3 className="font-semibold">Page Scale</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Adjust the overall size of the application to better fit your screen.
-                    </p>
-                    <div className="flex items-center gap-4 pt-2">
-                        <Slider
-                            value={[scale]}
-                            onValueChange={(value) => setScale(value[0])}
-                            min={0.8}
-                            max={1.2}
-                            step={0.01}
-                        />
-                        <span className="font-semibold text-muted-foreground w-16 text-right">
-                            {Math.round(scale * 100)}%
-                        </span>
-                    </div>
                 </div>
 
                 <Separator />
