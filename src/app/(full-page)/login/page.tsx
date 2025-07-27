@@ -25,7 +25,7 @@ export default function LoginPage() {
   useEffect(() => {
     // If a user is already logged in, redirect them away from the login page.
     if (user) {
-        router.push('/my-profile');
+        router.push('/');
     }
   }, [user, router]);
 
@@ -38,7 +38,7 @@ export default function LoginPage() {
 
     if (loginSuccess) {
         const redirectPath = searchParams.get('redirect');
-        router.push(redirectPath || '/my-profile');
+        router.push(redirectPath || '/');
     } else {
       setLoginError('Login failed. Please check your email and password.');
       setIsLoading(false);

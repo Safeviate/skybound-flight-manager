@@ -46,7 +46,7 @@ export default function MandatoryAlertsPage() {
 
     const unacknowledged = getUnacknowledgedAlerts();
     if (unacknowledged.length === 0 && !loading) {
-      router.push('/my-profile');
+      router.push('/');
     } else {
       setAlerts(unacknowledged);
     }
@@ -66,7 +66,7 @@ export default function MandatoryAlertsPage() {
   };
   
   const handleContinue = () => {
-    router.push('/my-profile');
+    router.push('/');
   };
 
   const allAlertsAcknowledged = alerts.length > 0 && alerts.every(a => acknowledgedOnPage.includes(a.id));
@@ -128,7 +128,7 @@ export default function MandatoryAlertsPage() {
                 </CardContent>
                 <CardFooter className="border-t pt-6">
                     <Button onClick={handleContinue} className="w-full" disabled={!allAlertsAcknowledged}>
-                        Continue to My Profile
+                        Continue to Dashboard
                     </Button>
                 </CardFooter>
             </Card>
@@ -138,4 +138,3 @@ export default function MandatoryAlertsPage() {
 }
 
 MandatoryAlertsPage.title = 'Mandatory Alerts';
-
