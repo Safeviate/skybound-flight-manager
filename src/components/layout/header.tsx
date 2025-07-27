@@ -46,7 +46,7 @@ const profileFormSchema = z.object({
   documents: z.array(z.object({
     id: z.string(),
     type: z.string(),
-    expiryDate: z.date().nullable(),
+    expiryDate: z.date().nullable().optional(),
   })).optional(),
 });
 
