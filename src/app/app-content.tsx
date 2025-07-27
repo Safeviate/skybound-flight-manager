@@ -36,11 +36,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const noLayoutRoutes = ['/login', '/corporate'];
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
-  const pageComponent = Children.only(children) as React.ReactElement;
   const pageTitle = getPageTitle(children);
-  const HeaderContent = (pageComponent.type as any).headerContent;
-
-
+  
   if (showLayout) {
     return (
       <SidebarProvider>
@@ -49,9 +46,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           </Sidebar>
           <SidebarInset>
               <div className="flex-1 flex flex-col min-h-0">
-                <Header title={pageTitle}>
-                  {HeaderContent && <HeaderContent />}
-                </Header>
+                <Header title={pageTitle} />
                 <div className="flex-1 overflow-y-auto">
                     {children}
                 </div>
@@ -64,3 +59,5 @@ export function AppContent({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+    

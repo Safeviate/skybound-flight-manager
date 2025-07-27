@@ -198,6 +198,38 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
+                 <Card>
+                    <CardHeader className="flex flex-row items-start justify-between">
+                        <div>
+                            <CardTitle>Your Information</CardTitle>
+                            <CardDescription>
+                                Your personal details and document status.
+                            </CardDescription>
+                        </div>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Update
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Your Profile</DialogTitle>
+                                    <DialogDescription>
+                                        View and update your personal information and document expiry dates.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <PersonalInformationCard user={user} onUpdate={() => {}} />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </CardHeader>
+                    <CardContent>
+                        <PersonalInformationCard user={user} onUpdate={() => {}} />
+                    </CardContent>
+                </Card>
                 {showFatigueCard && (
                     <Card>
                         <CardHeader>
@@ -294,32 +326,6 @@ function MyProfilePage() {
 
 MyProfilePage.title = "My Profile";
 
-MyProfilePage.headerContent = function HeaderActions() {
-    const { user, updateUser } = useUser();
-    
-    if (!user) return null;
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Update Information
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Your Profile</DialogTitle>
-                    <DialogDescription>
-                        View and update your personal information and document expiry dates.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <PersonalInformationCard user={user} onUpdate={() => {}} />
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
 export default MyProfilePage;
+
+    
