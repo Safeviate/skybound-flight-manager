@@ -67,8 +67,32 @@ const hexToHSL = (hex: string): string | null => {
     return `${h} ${s}% ${l}%`;
 };
 
+const applyTheme = (theme: { primary?: string, background?: string, accent?: string }) => {
+    const root = document.documentElement;
+    const themeProperties = {
+        '--primary': hexToHSL(theme.primary as string),
+        '--background': hexToHSL(theme.background as string),
+        '--accent': hexToHSL(theme.accent as string),
+    };
+
+    for (const [property, value] of Object.entries(themeProperties)) {
+        if (value) {
+            root.style.setProperty(property, value);
+        } else {
+            root.style.removeProperty(property);
+        }
+    }
+};
+
+const clearCustomTheme = () => {
+    const root = document.documentElement;
+    root.style.removeProperty('--primary');
+    root.style.removeProperty('--background');
+    root.style.removeProperty('--accent');
+}
+
 function SettingsPage() {
-  const { setTheme } = useTheme()
+  const { theme, setTheme, systemTheme } = useTheme()
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast()
@@ -90,46 +114,46 @@ function SettingsPage() {
         backgroundColor: company.theme.background || '#f4f4f5',
         accentColor: company.theme.accent || '#f59e0b',
       });
+      // Apply theme on initial load if system theme is selected
+      if (theme === 'system') {
+          applyTheme(company.theme);
+      }
     }
-  }, [company, form]);
+  }, [company, form, theme]);
   
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  const applyTheme = (theme: { primary?: string, background?: string, accent?: string }) => {
-    const root = document.documentElement;
-    const themeProperties = {
-        '--primary': hexToHSL(theme.primary as string),
-        '--background': hexToHSL(theme.background as string),
-        '--accent': hexToHSL(theme.accent as string),
-    };
-
-    for (const [property, value] of Object.entries(themeProperties)) {
-        if (value) {
-            root.style.setProperty(property, value);
-        }
+  
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    if (newTheme === 'system' && company?.theme) {
+        applyTheme(company.theme);
+    } else {
+        clearCustomTheme();
     }
   }
-  
+
   const handleThemeSubmit = async (data: ThemeFormValues) => {
     if (!company) return;
 
-    const theme = {
+    const newThemeSettings = {
       primary: data.primaryColor,
       background: data.backgroundColor,
       accent: data.accentColor,
     };
     
-    const success = await updateCompany({ theme });
+    const success = await updateCompany({ theme: newThemeSettings });
     
     if (success) {
-      applyTheme(theme);
+      if (theme === 'system') {
+        applyTheme(newThemeSettings);
+      }
       toast({
         title: 'Theme Updated',
-        description: 'Your new theme colors have been saved and applied.',
+        description: 'Your new theme colors have been saved.',
       });
     } else {
       toast({
@@ -167,15 +191,15 @@ function SettingsPage() {
                     operating system's appearance.
                 </p>
                 <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => setTheme("light")}>
+                    <Button variant="outline" onClick={() => handleThemeChange("light")}>
                     <Sun className="mr-2 h-4 w-4" />
                     Light
                     </Button>
-                    <Button variant="outline" onClick={() => setTheme("dark")}>
+                    <Button variant="outline" onClick={() => handleThemeChange("dark")}>
                     <Moon className="mr-2 h-4 w-4" />
                     Dark
                     </Button>
-                    <Button variant="outline" onClick={() => setTheme("system")}>
+                    <Button variant="outline" onClick={() => handleThemeChange("system")}>
                     <Monitor className="mr-2 h-4 w-4" />
                     System
                     </Button>
@@ -216,7 +240,7 @@ function SettingsPage() {
                         Company Theme Colors
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        Set your organization's brand colors. These will be applied throughout the application.
+                        Set your organization's brand colors. These will only be applied when the color mode is set to "System".
                     </p>
                     <div className="grid grid-cols-3 gap-4">
                         <FormField
