@@ -84,111 +84,6 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     );
 };
 
-type CapTrackerItem = {
-    auditId: string;
-    auditTitle: string;
-    issue: NonConformanceIssue;
-    plan: CorrectiveActionPlan;
-};
-
-const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStatusChange: (auditId: string, issueId: string, newStatus: CorrectiveActionPlan['status']) => void }) => {
-    const allCaps: CapTrackerItem[] = useMemo(() => {
-        return audits
-            .filter(audit => audit.status !== 'Archived')
-            .flatMap(audit =>
-                (audit.nonConformanceIssues || [])
-                    .filter(issue => issue.correctiveActionPlan)
-                    .map(issue => ({
-                        auditId: audit.id,
-                        auditTitle: audit.title,
-                        issue: issue,
-                        plan: issue.correctiveActionPlan!,
-                    }))
-            );
-    }, [audits]);
-
-    const getStatusVariant = (status: CorrectiveActionPlan['status']) => {
-        switch (status) {
-            case 'Open': return 'destructive';
-            case 'In Progress': return 'warning';
-            case 'Closed': return 'success';
-            default: return 'outline';
-        }
-    }
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Corrective Action Plan (CAP) Tracker</CardTitle>
-                <CardDescription>A centralized view of all active corrective action plans across all audits.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Audit ID</TableHead>
-                            <TableHead>Report Heading</TableHead>
-                            <TableHead>Non-Conformance</TableHead>
-                            <TableHead>Responsible Person</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {allCaps.length > 0 ? (
-                            allCaps.map(({ auditId, auditTitle, issue, plan }) => (
-                                <TableRow key={`${auditId}-${issue.id}`}>
-                                    <TableCell>
-                                        <Link href={`/quality/${auditId}`} className="hover:underline">
-                                            {auditId.substring(0, 8)}...
-                                        </Link>
-                                    </TableCell>
-                                     <TableCell className="max-w-[200px] truncate">
-                                        {auditTitle}
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px] truncate">
-                                        <p className="font-medium truncate">{issue.itemText}</p>
-                                        <p className="text-xs text-muted-foreground">{issue.regulationReference}</p>
-                                    </TableCell>
-                                    <TableCell>{plan.responsiblePerson}</TableCell>
-                                    <TableCell>{format(parseISO(plan.completionDate), 'MMM d, yyyy')}</TableCell>
-                                    <TableCell>
-                                         <Select 
-                                            value={plan.status} 
-                                            onValueChange={(newStatus: CorrectiveActionPlan['status']) => onStatusChange(auditId, issue.id, newStatus)}
-                                         >
-                                            <SelectTrigger className="w-32">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Open">
-                                                    <Badge variant="destructive" className="w-full justify-center">Open</Badge>
-                                                </SelectItem>
-                                                 <SelectItem value="In Progress">
-                                                    <Badge variant="warning" className="w-full justify-center">In Progress</Badge>
-                                                </SelectItem>
-                                                 <SelectItem value="Closed">
-                                                    <Badge variant="success" className="w-full justify-center">Closed</Badge>
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        ) : (
-                             <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24">
-                                    No active Corrective Action Plans found.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
-};
-
 const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
 
 function QualityPage() {
@@ -360,49 +255,6 @@ function QualityPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to restore audit.' });
     }
   };
-
-  const handleCapStatusChange = async (auditId: string, issueId: string, newStatus: CorrectiveActionPlan['status']) => {
-    if (!company) return;
-
-    const auditToUpdate = audits.find(a => a.id === auditId);
-    if (!auditToUpdate) return;
-
-    const updatedIssues = auditToUpdate.nonConformanceIssues.map(issue => {
-        if (issue.id === issueId && issue.correctiveActionPlan) {
-            return {
-                ...issue,
-                correctiveActionPlan: {
-                    ...issue.correctiveActionPlan,
-                    status: newStatus,
-                },
-            };
-        }
-        return issue;
-    });
-    
-    const updatedAudit = { ...auditToUpdate, nonConformanceIssues: updatedIssues };
-    
-    // Optimistic UI update
-    setAudits(audits.map(a => a.id === auditId ? updatedAudit : a));
-    
-    try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
-        await updateDoc(auditRef, { nonConformanceIssues: updatedIssues });
-        toast({
-            title: 'CAP Status Updated',
-            description: `The status has been changed to "${newStatus}".`
-        });
-    } catch (error) {
-        console.error("Error updating CAP status:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Update Failed',
-            description: 'Could not save the new status.'
-        });
-        // Revert UI on failure
-        setAudits(audits);
-    }
-  };
   
   const handleBulkRestore = async () => {
     if (!company || selectedAudits.length === 0) return;
@@ -462,10 +314,9 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
-                <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
                 <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
@@ -632,9 +483,6 @@ function QualityPage() {
                         </Table>
                     </CardContent>
                 </Card>
-            </TabsContent>
-             <TabsContent value="cap-tracker" className="mt-4">
-                <CapTracker audits={audits} onStatusChange={handleCapStatusChange} />
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
                 <AuditChecklistsManager />
