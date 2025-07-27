@@ -193,21 +193,21 @@ export default function Header({ title, children }: { title: string, children?: 
                     </h4>
                     <div className="space-y-4">
                       {user?.requiredDocuments && user.requiredDocuments.length > 0 ? (
-                        user.requiredDocuments.map((docType, index) => (
+                        user.requiredDocuments.map((docType, index) => {
+                            const docValue = form.watch(`documents`)?.[index];
+
+                            return (
                            <FormField
                               key={docType}
                               control={form.control}
                               name={`documents.${index}.expiryDate`}
                               render={({ field }) => {
-                                const docValue = form.getValues(`documents.${index}`);
-                                if (docValue?.type !== docType) {
-                                  // This is to ensure we are editing the correct document
-                                  return null;
-                                }
+                                // This is a trick to re-assign the correct type to the field object
+                                const typedField = field as unknown as { value: Date; onChange: (date: Date) => void };
 
                                 return (
                                 <FormItem className="flex items-center justify-between">
-                                  <FormLabel className="w-1/2">{docType}</FormLabel>
+                                  <FormLabel className="w-1/2">{docValue?.type || docType}</FormLabel>
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <FormControl>
@@ -215,10 +215,10 @@ export default function Header({ title, children }: { title: string, children?: 
                                           variant={"outline"}
                                           className={cn(
                                             "w-1/2 pl-3 text-left font-normal",
-                                            !field.value && "text-muted-foreground"
+                                            !typedField.value && "text-muted-foreground"
                                           )}
                                         >
-                                          {field.value ? format(field.value, "PPP") : <span>Set expiry</span>}
+                                          {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}
                                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
                                       </FormControl>
@@ -226,8 +226,8 @@ export default function Header({ title, children }: { title: string, children?: 
                                     <PopoverContent className="w-auto p-0" align="start">
                                       <Calendar
                                         mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
+                                        selected={typedField.value}
+                                        onSelect={typedField.onChange}
                                         initialFocus
                                       />
                                     </PopoverContent>
@@ -235,7 +235,7 @@ export default function Header({ title, children }: { title: string, children?: 
                                 </FormItem>
                               )}}
                            />
-                        ))
+                        )})
                       ) : (
                           <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
                       )}
