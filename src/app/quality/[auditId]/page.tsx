@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -215,15 +215,23 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
              <Card>
                 <CardHeader className="flex flex-row justify-between items-start">
                     <div>
-                        <CardTitle className="text-2xl">Audit Report: {audit.title}</CardTitle>
+                        <CardTitle className="text-2xl">{audit.title}</CardTitle>
                         <CardDescription>
                         Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')}
                         </CardDescription>
                     </div>
-                    <Button variant="outline" className="no-print" onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Report
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button asChild variant="outline" className="no-print">
+                            <Link href="/quality?tab=audits">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back to Audits
+                            </Link>
+                        </Button>
+                        <Button variant="outline" className="no-print" onClick={() => window.print()}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print Report
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
@@ -860,8 +868,3 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-
-
-
-
-
