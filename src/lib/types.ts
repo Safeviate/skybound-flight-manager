@@ -490,7 +490,7 @@ export type AuditScheduleItem = {
 export type Alert = {
   id: string;
   companyId?: string;
-  number: number;
+  number?: number;
   type: 'Red Tag' | 'Yellow Tag' | 'Task';
   title: string;
   description: string;
