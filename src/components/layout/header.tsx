@@ -44,7 +44,7 @@ export default function Header({ title, children }: { title: string, children?: 
         {children}
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 px-4">
+                <Button variant="default" className="relative h-10 px-4">
                     <Avatar className="h-8 w-8 mr-2">
                         <AvatarFallback>{userInitial}</AvatarFallback>
                     </Avatar>
