@@ -173,8 +173,8 @@ export type User = {
     trainingLogs?: TrainingLogEntry[];
     // Personnel-specific
     department?: Department;
-    medicalExpiry?: string;
-    licenseExpiry?: string;
+    medicalExpiry?: string | null;
+    licenseExpiry?: string | null;
     // External Auditee specific
     externalCompanyName?: string;
     externalPosition?: string;
