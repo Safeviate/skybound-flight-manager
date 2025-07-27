@@ -4,8 +4,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check } from 'lucide-react';
-import type { User as AppUser, Alert, QualityAudit } from '@/lib/types';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar } from 'lucide-react';
+import type { User as AppUser, Alert, QualityAudit, Booking } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -77,23 +77,27 @@ function ChangePasswordDialog({ user, onPasswordChanged }: { user: AppUser, onPa
 }
 
 function MyProfilePage() {
-    const { user, updateUser, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
+    const { user, updateUser, company, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
     const router = useRouter();
-    const [visitedAlerts, setVisitedAlerts] = useState<string[]>([]);
-    const [audits, setAudits] = useState<QualityAudit[]>([]);
+    const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+    const [auditsForSignature, setAuditsForSignature] = useState<QualityAudit[]>([]);
+    const [upcomingAudits, setUpcomingAudits] = useState<QualityAudit[]>([]);
 
     useEffect(() => {
         if (loading) return;
         if (!user) {
             router.push('/login');
+            return;
         }
-    }, [user, loading, router]);
+        // Data fetching logic will be added here in the next step
+    }, [user, company, loading, router]);
     
     const allActionItems = useMemo(() => {
         if (!user) return [];
 
         const personalAlerts: { id: string, type: string; date?: string; details: string; variant: 'warning' | 'destructive'; relatedLink?: string; icon: React.ReactNode }[] = [];
 
+        // 1. Document Expiry Alerts
         if (user.medicalExpiry) {
             const daysUntil = differenceInDays(parseISO(user.medicalExpiry), new Date());
             if (daysUntil <= 60) {
@@ -121,7 +125,8 @@ function MyProfilePage() {
             }
         }
         
-        const taskAlerts = getUnacknowledgedAlerts(audits)
+        // 2. Unacknowledged System Alerts & Tasks
+        const taskAlerts = getUnacknowledgedAlerts([]) // Passing empty array for now
             .map(alert => ({
                 id: alert.id,
                 type: alert.title,
@@ -130,9 +135,31 @@ function MyProfilePage() {
                 variant: 'warning' as const,
                 icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />,
             }));
-            
-        return [...personalAlerts, ...taskAlerts];
-    }, [user, audits, getUnacknowledgedAlerts]);
+
+        // 3. Upcoming Bookings
+        const bookingItems = upcomingBookings.map(booking => ({
+            id: `booking-${booking.id}`,
+            type: 'Upcoming Booking',
+            details: `${booking.purpose} - ${booking.aircraft} at ${booking.startTime}`,
+            date: booking.date,
+            relatedLink: '/bookings',
+            variant: 'warning' as const,
+            icon: <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />,
+        }));
+        
+        // 4. Upcoming Audits
+        const upcomingAuditItems = upcomingAudits.map(audit => ({
+            id: `upcoming-audit-${audit.id}`,
+            type: 'Upcoming Audit',
+            details: audit.title,
+            date: audit.date,
+            relatedLink: `/quality/${audit.id}`,
+            variant: 'warning' as const,
+            icon: <ListChecks className="h-5 w-5 text-blue-500 mt-0.5" />,
+        }));
+
+        return [...personalAlerts, ...taskAlerts, ...bookingItems, ...upcomingAuditItems];
+    }, [user, getUnacknowledgedAlerts, upcomingBookings, upcomingAudits]);
 
     const handleAcknowledge = (alertId: string) => {
         acknowledgeAlerts([alertId]);
