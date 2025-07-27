@@ -396,9 +396,12 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             )}
         </div>
 
-        <div className="space-y-2">
-            <FormLabel>Documents</FormLabel>
-            <div className="flex flex-col md:flex-row gap-4">
+        <div className="space-y-2 rounded-md border p-4">
+            <FormLabel>Documents (Optional)</FormLabel>
+            <FormDescription>
+                Record the expiry dates for the user's documents.
+            </FormDescription>
+            <div className="flex flex-col md:flex-row gap-4 pt-2">
                 <FormField
                     control={form.control}
                     name="medicalExpiry"
@@ -526,3 +529,4 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     </Form>
   );
 }
+
