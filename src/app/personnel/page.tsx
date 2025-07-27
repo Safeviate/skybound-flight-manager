@@ -73,19 +73,20 @@ function PersonnelPage() {
             const needsAuthAccount = personnelData.role === 'Admin' || personnelData.role === 'External Auditee';
 
             if (needsAuthAccount) {
-                // This path is for users requiring authentication.
-                if (!personnelData.email || !personnelData.password) {
+                 if (!personnelData.email || !personnelData.password) {
                     toast({ variant: 'destructive', title: 'Missing Information', description: 'Email and password are required for this role.'});
                     return;
                 }
                 try {
+                    // Create user in Firebase Auth
                     const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
                     const newUserId = userCredential.user.uid;
-                    // Add companyId to the auth user profile for easy lookup on login
                     await updateProfile(userCredential.user, { photoURL: company.id });
 
+                    // Now create the user record in Firestore
                     const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
                     const finalUserData = { ...personnelData, id: newUserId, companyId: company.id };
+                    
                     await setDoc(newUserRef, finalUserData);
 
                     toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
@@ -115,7 +116,7 @@ function PersonnelPage() {
                         errorMessage = 'The provided password is too weak.';
                     }
                      toast({ variant: 'destructive', title: 'Authentication Error', description: errorMessage });
-                     return; // Stop execution if auth creation fails
+                     return; 
                 }
             } else {
                 // This path is for users NOT requiring authentication.
