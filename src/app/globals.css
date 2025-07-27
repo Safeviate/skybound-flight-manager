@@ -98,6 +98,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  #app-wrapper {
     transform: scale(var(--app-scale, 1));
     transform-origin: top left;
     width: calc(100vw / var(--app-scale, 1));

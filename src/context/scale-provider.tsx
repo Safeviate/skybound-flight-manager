@@ -30,7 +30,10 @@ export function ScaleProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('appScale', scale.toString());
         // Use a CSS variable to apply the scale globally
-        document.documentElement.style.setProperty('--app-scale', scale.toString());
+        const wrapper = document.getElementById('app-wrapper');
+        if (wrapper) {
+            wrapper.style.setProperty('--app-scale', scale.toString());
+        }
       } catch (error) {
         console.error("Could not access localStorage for scale settings.");
       }

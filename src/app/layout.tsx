@@ -38,14 +38,16 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ScaleProvider>
-            <UserProvider>
-              <SettingsProvider>
-                <AppContent>
-                  {children}
-                </AppContent>
-                <Toaster />
-              </SettingsProvider>
-            </UserProvider>
+            <div id="app-wrapper">
+                <UserProvider>
+                  <SettingsProvider>
+                    <AppContent>
+                      {children}
+                    </AppContent>
+                    <Toaster />
+                  </SettingsProvider>
+                </UserProvider>
+            </div>
           </ScaleProvider>
         </ThemeProvider>
       </body>
