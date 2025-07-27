@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user, logout } = useUser();
@@ -40,35 +42,48 @@ export default function Header({ title, children }: { title: string, children?: 
       
       <div className="flex items-center justify-end gap-4">
         {children}
-         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+         <Dialog>
+            <DialogTrigger asChild>
                 <Button variant="default" className="relative h-auto px-4 py-2 text-left">
                     <div className="flex flex-col">
                         <span>{user?.name}</span>
                         <span className="text-xs text-primary-foreground/80 -mt-1">{user?.role}</span>
                     </div>
                 </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
-                <Link href="/my-profile">My Information</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>My Personal Information</DialogTitle>
+                    <DialogDescription>A summary of your user profile and contact details.</DialogDescription>
+                </DialogHeader>
+                <Card>
+                    <CardContent className="pt-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="font-medium text-muted-foreground">Full Name</p>
+                                <p>{user?.name}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-muted-foreground">Role</p>
+                                <p>{user?.role}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-muted-foreground">Email Address</p>
+                                <p>{user?.email || 'Not Provided'}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-muted-foreground">Phone Number</p>
+                                <p>{user?.phone || 'Not Provided'}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Button onClick={handleLogout} variant="outline">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                </Button>
+            </DialogContent>
+          </Dialog>
       </div>
     </header>
   );
