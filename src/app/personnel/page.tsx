@@ -71,7 +71,7 @@ function PersonnelPage() {
         } else {
             // This is the logic for adding a new user.
             // We separate users that need an auth account from those who don't.
-            if ((personnelData.role === 'Admin' || personnelData.role === 'External Auditee')) {
+            if (personnelData.role === 'Admin') {
                 // This path is for users requiring authentication.
                 if (!personnelData.email || !personnelData.password) {
                     toast({ variant: 'destructive', title: 'Missing Information', description: 'Email and password are required for this role.'});

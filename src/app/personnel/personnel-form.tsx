@@ -53,12 +53,12 @@ const personnelFormSchema = z.object({
   accessStartDate: z.date().optional(),
   accessEndDate: z.date().optional(),
 }).refine(data => {
-    if (data.role === 'Admin' || data.role === 'External Auditee') {
+    if (data.role === 'Admin') {
         return !!data.email && !!data.password && data.password.length >= 8;
     }
     return true;
 }, {
-    message: 'Email and a password of at least 8 characters are required for Admins and External Auditees.',
+    message: 'Email and a password of at least 8 characters are required for Admins.',
     path: ['password'], // Show error on one of the fields
 });
 
@@ -132,7 +132,7 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
   }
 
   const isExternalAuditee = selectedRole === 'External Auditee';
-  const showCredentialsFields = selectedRole === 'Admin' || isExternalAuditee;
+  const showCredentialsFields = selectedRole === 'Admin';
 
   return (
     <Form {...form}>
