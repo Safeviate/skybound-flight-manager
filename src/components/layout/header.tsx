@@ -72,18 +72,28 @@ export default function Header({ title, children }: { title: string, children?: 
   
   const getCombinedDocuments = useCallback(() => {
     if (!user) return [];
-    
-    const requiredDocs = user.requiredDocuments || [];
+
+    const requiredDocs = new Set(user.requiredDocuments || []);
     const userDocs = user.documents || [];
     
-    const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
+    const combinedDocs = new Map<string, UserDocument>();
 
-    const combined = requiredDocs.map(reqDocType => {
-      const existingDoc = userDocsMap.get(reqDocType);
-      return existingDoc || { id: `new-${reqDocType}-${Date.now()}`, type: reqDocType, expiryDate: null };
+    // Add all existing user documents first
+    userDocs.forEach(doc => {
+        // Only keep existing documents if they are still required OR have an expiry date
+        if (requiredDocs.has(doc.type) || doc.expiryDate) {
+            combinedDocs.set(doc.type, doc);
+        }
+    });
+
+    // Add any missing required documents
+    requiredDocs.forEach(reqDocType => {
+        if (!combinedDocs.has(reqDocType)) {
+            combinedDocs.set(reqDocType, { id: `new-${reqDocType}-${Date.now()}`, type: reqDocType, expiryDate: null });
+        }
     });
     
-    return combined;
+    return Array.from(combinedDocs.values());
   }, [user]);
 
   useEffect(() => {
@@ -109,10 +119,8 @@ export default function Header({ title, children }: { title: string, children?: 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     if (!user) return;
     
-    // Get the latest state of combined documents
     const combinedDocs = getCombinedDocuments();
 
-    // Map the form data but use the combinedDocs as the source of truth for what should exist
     const updatedDocs = combinedDocs.map(cd => {
         const formDataDoc = data.documents?.find(d => d.type === cd.type);
         return {
@@ -120,7 +128,8 @@ export default function Header({ title, children }: { title: string, children?: 
             type: cd.type,
             expiryDate: formDataDoc?.expiryDate ? format(formDataDoc.expiryDate, 'yyyy-MM-dd') : null
         };
-    });
+    }).filter(d => d.expiryDate || (user.requiredDocuments || []).includes(d.type));
+
 
     const success = await updateUser({
       name: data.name,
