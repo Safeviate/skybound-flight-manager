@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 export default function LoginPage() {
-  const { login, company } = useUser();
+  const { user, login, company } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -25,25 +25,35 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loggingInUser, setLoggingInUser] = useState<string | null>(null);
 
+  useEffect(() => {
+    // If a user is already logged in, redirect them away from the login page.
+    if (user) {
+        router.push('/my-profile');
+    }
+  }, [user, router]);
+
 
   useEffect(() => {
-    const fetchUsers = async () => {
-        setIsLoading(true);
-        try {
-            // Use a collection group query to fetch all users more efficiently
-            const usersQuery = query(collectionGroup(db, 'users'));
-            const usersSnapshot = await getDocs(usersQuery);
-            const users = usersSnapshot.docs.map(doc => doc.data() as User);
-            setAllUsers(users);
-        } catch (error) {
-            console.error("Error fetching users for login:", error);
-            setLoginError("Could not load user profiles. Please check your connection.");
-        } finally {
-            setIsLoading(false);
+    // Only fetch users if no user is logged in.
+    if (!user) {
+        const fetchUsers = async () => {
+            setIsLoading(true);
+            try {
+                // Use a collection group query to fetch all users more efficiently
+                const usersQuery = query(collectionGroup(db, 'users'));
+                const usersSnapshot = await getDocs(usersQuery);
+                const users = usersSnapshot.docs.map(doc => doc.data() as User);
+                setAllUsers(users);
+            } catch (error) {
+                console.error("Error fetching users for login:", error);
+                setLoginError("Could not load user profiles. Please check your connection.");
+            } finally {
+                setIsLoading(false);
+            }
         }
+        fetchUsers();
     }
-    fetchUsers();
-  }, []);
+  }, [user]);
 
   async function handleUserSelect(user: User) {
     if (!user.email) {
@@ -52,13 +62,16 @@ export default function LoginPage() {
     }
     setLoggingInUser(user.id);
     setLoginError(null);
-    const loginSuccess = await login(user.email);
+    
+    // For this demo, we use a default password for admin roles as they require real authentication.
+    const password = (user.role === 'Admin' || user.role === 'External Auditee') ? 'password' : undefined;
+    const loginSuccess = await login(user.email, password);
 
     if (loginSuccess) {
         const redirectPath = searchParams.get('redirect');
         router.push(redirectPath || '/my-profile');
     } else {
-      setLoginError('Login failed. Please try again.');
+      setLoginError('Login failed. Please check the credentials or system status.');
       setLoggingInUser(null);
     }
   }
