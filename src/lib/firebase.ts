@@ -1,3 +1,4 @@
+
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
@@ -8,7 +9,8 @@ import { getAuth } from "firebase/auth";
 // Your web app's Firebase configuration
 // Replace this with your actual Firebase config object
 const firebaseConfig = {
-  apiKey: "AIzaSyAdO8csz94jyQa8hxvGvruxjt-_cjWqhE0",
+  // Replace "YOUR_API_KEY" with the actual "apiKey" from your Firebase project's settings.
+  apiKey: "YOUR_API_KEY", 
   authDomain: "skybound-flight-manager.firebaseapp.com",
   projectId: "skybound-flight-manager",
   storageBucket: "skybound-flight-manager.firebasestorage.app",
