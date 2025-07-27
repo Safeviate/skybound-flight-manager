@@ -97,14 +97,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             // The company ID is stored in the photoURL field during the registration process.
             // This is a workaround to associate the auth user with their company.
             const companyId = firebaseUser.photoURL;
+            let userData: User | null = null;
+            let companyData: Company | null = null;
+
             if (companyId) {
-                const [userData, companyData] = await fetchUserDataById(companyId, firebaseUser.uid);
+                [userData, companyData] = await fetchUserDataById(companyId, firebaseUser.uid);
+            }
+
+            // Fallback: If companyId lookup fails, try finding user by email across all companies.
+            if (!userData && firebaseUser.email) {
+                const [foundUser, foundCompany] = await fetchUserDataByEmail(firebaseUser.email);
+                userData = foundUser;
+                companyData = foundCompany;
+            }
+            
+            if(userData && companyData) {
                 setUser(userData);
                 setCompany(companyData);
-                if (companyData) {
-                    localStorage.setItem(LAST_USER_ID_KEY, firebaseUser.uid);
-                    localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
-                }
+                localStorage.setItem(LAST_USER_ID_KEY, userData.id);
+                localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             } else {
                  console.error("Could not determine company for authenticated user.");
                  setUser(null);
@@ -150,9 +161,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
         if (password) {
-            // This is a real login attempt with credentials
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            // After successful sign-in, onAuthStateChanged will trigger and fetch user data.
+            // This is a real login attempt with credentials for Admins or other auth users
+            await signInWithEmailAndPassword(auth, email, password);
+            // onAuthStateChanged will handle setting the user state, so we just return true
             return true;
         } else {
             // This is for the demo environment for non-admin users without real auth
@@ -168,7 +179,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         return false;
     } catch (error) {
         console.error("Authentication or login process failed:", error);
-        // Clear any potentially partial state on failure
         setUser(null);
         setCompany(null);
         return false;
