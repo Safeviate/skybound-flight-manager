@@ -24,11 +24,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
+import { useSettings } from '@/context/settings-provider';
 
 function StudentProfilePage() {
     const params = useParams();
     const studentId = params.id as string;
     const { user: currentUser, company, loading: userLoading } = useUser();
+    const { settings } = useSettings();
     const { toast } = useToast();
     const router = useRouter();
     const [student, setStudent] = useState<StudentUser | null>(null);
@@ -204,13 +206,13 @@ function StudentProfilePage() {
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
                                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                <span>Medical Exp: {getExpiryBadge(student.medicalExpiry)}</span>
+                                <span>Medical Exp: {getExpiryBadge(student.medicalExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
                             </div>
                         )}
                         {student.licenseExpiry && (
                         <div className="flex items-center space-x-3">
                             <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <span>License Exp: {getExpiryBadge(student.licenseExpiry)}</span>
+                            <span>License Exp: {getExpiryBadge(student.licenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
                         </div>
                         )}
                     </CardContent>

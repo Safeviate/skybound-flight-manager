@@ -37,7 +37,11 @@ export const getNextService = (hours: number): { type: string; hoursUntil: numbe
   return { type, hoursUntil: parseFloat(hoursUntil.toFixed(1)) };
 };
 
-export const getExpiryBadge = (expiryDate: string) => {
+export const getExpiryBadge = (
+    expiryDate: string, 
+    orangeWarningDays: number = 30, 
+    yellowWarningDays: number = 60
+) => {
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display
     today.setHours(0, 0, 0, 0); // Set to start of day for consistent comparison
     const date = parseISO(expiryDate);
@@ -47,9 +51,9 @@ export const getExpiryBadge = (expiryDate: string) => {
 
     if (daysUntil < 0) {
         variant = 'destructive'; // Expired - Red
-    } else if (daysUntil <= 30) {
+    } else if (daysUntil <= orangeWarningDays) {
         variant = 'orange'; // Expires in 1 month - Orange
-    } else if (daysUntil <= 60) {
+    } else if (daysUntil <= yellowWarningDays) {
         variant = 'warning'; // Expires in 2 months - Yellow
     } else {
         variant = 'success'; // Not expired - Green

@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { Slider } from '@/components/ui/slider';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -44,6 +45,10 @@ function OperationalSettingsPage() {
         [key]: Math.min(numericValue, max), // Ensure value does not exceed regulatory max
       }));
     }
+  };
+  
+  const handleSliderChange = (key: 'expiryWarningOrangeDays' | 'expiryWarningYellowDays', value: number[]) => {
+      setSettings(prev => ({ ...prev, [key]: value[0] }));
   };
 
   if (loading || !user) {
@@ -148,6 +153,41 @@ function OperationalSettingsPage() {
                             value={settings.dutyLimitMonthly}
                             onChange={e => handleLimitChange('dutyLimitMonthly', e.target.value, REGULATORY_LIMITS.monthly)}
                         />
+                    </div>
+                </div>
+            </div>
+            
+            <Separator />
+
+            <div className="space-y-4">
+                 <h3 className="font-semibold text-lg">Document Expiry Warnings</h3>
+                <p className="text-sm text-muted-foreground">
+                    Set the number of days before a document's expiry to show a warning.
+                </p>
+                <div className="space-y-6 pt-2">
+                    <div className="grid gap-2">
+                        <Label>Orange Warning (Expires Soon)</Label>
+                        <div className="flex items-center gap-4">
+                            <Slider
+                                value={[settings.expiryWarningOrangeDays]}
+                                onValueChange={(value) => handleSliderChange('expiryWarningOrangeDays', value)}
+                                max={90}
+                                step={5}
+                            />
+                            <span className="font-semibold w-24 text-right">{settings.expiryWarningOrangeDays} days</span>
+                        </div>
+                    </div>
+                     <div className="grid gap-2">
+                        <Label>Yellow Warning (Expires Later)</Label>
+                         <div className="flex items-center gap-4">
+                            <Slider
+                                value={[settings.expiryWarningYellowDays]}
+                                onValueChange={(value) => handleSliderChange('expiryWarningYellowDays', value)}
+                                max={180}
+                                step={10}
+                            />
+                            <span className="font-semibold w-24 text-right">{settings.expiryWarningYellowDays} days</span>
+                        </div>
                     </div>
                 </div>
             </div>

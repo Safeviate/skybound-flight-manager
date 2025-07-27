@@ -30,6 +30,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
+import { useSettings } from '@/context/settings-provider';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -39,6 +40,7 @@ function AircraftPage() {
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
   const { user, company, loading } = useUser();
+  const { settings } = useSettings();
   const router = useRouter();
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -331,8 +333,8 @@ function AircraftPage() {
                             </div>
                         )}
                     </TableCell>
-                    <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
-                    <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
+                    <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                    <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
                     <TableCell>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

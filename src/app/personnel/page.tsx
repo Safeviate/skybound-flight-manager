@@ -20,10 +20,12 @@ import { sendEmail } from '@/ai/flows/send-email-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
+import { useSettings } from '@/context/settings-provider';
 
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
+    const { settings } = useSettings();
     const router = useRouter();
     const [personnel, setPersonnel] = useState<PersonnelUser[]>([]);
     const [isNewPersonnelOpen, setIsNewPersonnelOpen] = useState(false);

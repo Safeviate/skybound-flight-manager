@@ -10,6 +10,8 @@ interface Settings {
   dutyLimitDaily: number;
   dutyLimitWeekly: number;
   dutyLimitMonthly: number;
+  expiryWarningOrangeDays: number;
+  expiryWarningYellowDays: number;
 }
 
 interface SettingsContextType {
@@ -26,6 +28,8 @@ const defaultSettings: Settings = {
     dutyLimitDaily: 8,
     dutyLimitWeekly: 30,
     dutyLimitMonthly: 100,
+    expiryWarningOrangeDays: 30,
+    expiryWarningYellowDays: 60,
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {

@@ -13,12 +13,14 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Aircraft, CompletedChecklist } from '@/lib/types';
+import { useSettings } from '@/context/settings-provider';
 
 
 export default function AircraftDetailPage() {
   const params = useParams();
   const aircraftId = params.aircraftId as string;
   const { company } = useUser();
+  const { settings } = useSettings();
   
   const [aircraft, setAircraft] = useState<Aircraft | null>(null);
   const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
@@ -110,14 +112,14 @@ export default function AircraftDetailPage() {
               <Calendar className="h-6 w-6 text-muted-foreground" />
               <div>
                 <p className="font-semibold">Airworthiness</p>
-                {getExpiryBadge(aircraft.airworthinessExpiry)}
+                {getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Calendar className="h-6 w-6 text-muted-foreground" />
               <div>
                 <p className="font-semibold">Insurance</p>
-                {getExpiryBadge(aircraft.insuranceExpiry)}
+                {getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
               </div>
             </div>
           </CardContent>
