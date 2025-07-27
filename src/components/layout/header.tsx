@@ -44,11 +44,10 @@ export default function Header({ title, children }: { title: string, children?: 
         {children}
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 rounded-md px-3">
-                <Avatar className="h-7 w-7 mr-2">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
-                {user?.name}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
