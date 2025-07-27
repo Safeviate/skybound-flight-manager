@@ -56,10 +56,12 @@ export type Aircraft = {
   hoursUntilService: number;
   airworthinessExpiry: string;
   insuranceExpiry: string;
+  certificateOfReleaseToServiceExpiry: string;
+  certificateOfRegistrationExpiry: string;
+  massAndBalanceExpiry: string;
+  radioStationLicenseExpiry: string;
   location: string; // Airport ID
   isPostFlightPending?: boolean;
-  primaryStudentId?: string;
-  primaryInstructorId?: string;
 };
 
 export type Endorsement = {

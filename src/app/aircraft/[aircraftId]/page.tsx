@@ -80,6 +80,15 @@ export default function AircraftDetailPage() {
       default: return 'outline';
     }
   };
+  
+  const documents = [
+      { label: 'Airworthiness', date: aircraft.airworthinessExpiry },
+      { label: 'Insurance', date: aircraft.insuranceExpiry },
+      { label: 'Certificate of Release to Service', date: aircraft.certificateOfReleaseToServiceExpiry },
+      { label: 'Certificate of Registration', date: aircraft.certificateOfRegistrationExpiry },
+      { label: 'Mass and Balance', date: aircraft.massAndBalanceExpiry },
+      { label: 'Radio Station License', date: aircraft.radioStationLicenseExpiry },
+  ];
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -108,20 +117,15 @@ export default function AircraftDetailPage() {
                 <p className="text-muted-foreground">{aircraft.hoursUntilService} hrs</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6 text-muted-foreground" />
-              <div>
-                <p className="font-semibold">Airworthiness</p>
-                {getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6 text-muted-foreground" />
-              <div>
-                <p className="font-semibold">Insurance</p>
-                {getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-              </div>
-            </div>
+            {documents.map(doc => (
+                <div key={doc.label} className="flex items-center gap-3">
+                    <Calendar className="h-6 w-6 text-muted-foreground" />
+                    <div>
+                        <p className="font-semibold">{doc.label}</p>
+                        {getExpiryBadge(doc.date, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                </div>
+            ))}
           </CardContent>
         </Card>
 

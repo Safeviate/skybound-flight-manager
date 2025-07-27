@@ -44,6 +44,10 @@ const aircraftFormSchema = z.object({
   }),
   airworthinessExpiry: z.date({ required_error: 'An expiry date is required.' }),
   insuranceExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  certificateOfReleaseToServiceExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  certificateOfRegistrationExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  massAndBalanceExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  radioStationLicenseExpiry: z.date({ required_error: 'An expiry date is required.' }),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
@@ -133,6 +137,10 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         companyId: company.id,
         airworthinessExpiry: format(data.airworthinessExpiry, 'yyyy-MM-dd'),
         insuranceExpiry: format(data.insuranceExpiry, 'yyyy-MM-dd'),
+        certificateOfReleaseToServiceExpiry: format(data.certificateOfReleaseToServiceExpiry, 'yyyy-MM-dd'),
+        certificateOfRegistrationExpiry: format(data.certificateOfRegistrationExpiry, 'yyyy-MM-dd'),
+        massAndBalanceExpiry: format(data.massAndBalanceExpiry, 'yyyy-MM-dd'),
+        radioStationLicenseExpiry: format(data.radioStationLicenseExpiry, 'yyyy-MM-dd'),
         nextServiceType: nextService.type,
         hoursUntilService: nextService.hoursUntil,
         location: 'KPAO', // Default location, can be changed later
@@ -155,9 +163,6 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to add aircraft to the database.' });
     }
   }
-
-  const students = users.filter(u => u.role === 'Student');
-  const instructors = users.filter(u => u.role === 'Instructor' || u.role === 'Chief Flight Instructor' || u.role === 'Head Of Training');
 
   return (
     <Form {...form}>
@@ -269,6 +274,158 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Insurance Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="certificateOfReleaseToServiceExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Certificate of Release to Service Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="certificateOfRegistrationExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Certificate of Registration Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="massAndBalanceExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Mass and Balance Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="radioStationLicenseExpiry"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Radio Station License Expiry</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                             <FormControl>
