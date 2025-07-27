@@ -47,7 +47,6 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   consentDisplayContact: z.enum(['Consented', 'Not Consented']),
-  medicalExpiry: z.date().nullable(),
   licenseExpiry: z.date().nullable(),
   requiredDocuments: z.array(z.string()).optional(),
   documents: z.array(z.object({
@@ -100,7 +99,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     const updatedPersonnel = {
         ...personnel,
         ...data,
-        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
+        medicalExpiry: null, // Ensure it's removed
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
         documents: data.documents?.map(d => ({...d, expiryDate: format(d.expiryDate, 'yyyy-MM-dd')})) || [],
     } as User;
@@ -174,44 +173,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                 </FormItem>
             )}
             />
-            <FormField
-                control={form.control}
-                name="medicalExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Medical Certificate Expiry</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick expiry date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            
             <FormField
                 control={form.control}
                 name="licenseExpiry"
