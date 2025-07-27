@@ -6,24 +6,21 @@ import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, Rocket, Loader2, User as UserIcon } from 'lucide-react';
+import { LogIn, Rocket, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, collectionGroup } from 'firebase/firestore';
-import type { User } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
   const { user, login, company } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loggingInUser, setLoggingInUser] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // If a user is already logged in, redirect them away from the login page.
@@ -32,50 +29,21 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-
-  useEffect(() => {
-    // Only fetch users if no user is logged in.
-    if (!user) {
-        const fetchUsers = async () => {
-            setIsLoading(true);
-            try {
-                // Use a collection group query to fetch all users more efficiently
-                const usersQuery = query(collectionGroup(db, 'users'));
-                const usersSnapshot = await getDocs(usersQuery);
-                const users = usersSnapshot.docs.map(doc => doc.data() as User);
-                setAllUsers(users);
-            } catch (error) {
-                console.error("Error fetching users for login:", error);
-                setLoginError("Could not load user profiles. Please check your connection.");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        fetchUsers();
-    }
-  }, [user]);
-
-  async function handleUserSelect(user: User) {
-    if (!user.email) {
-        setLoginError(`User ${user.name} does not have an email and cannot be logged into.`);
-        return;
-    }
-    setLoggingInUser(user.id);
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setIsLoading(true);
     setLoginError(null);
     
-    // For this demo, we use a default password for admin roles as they require real authentication.
-    const password = (user.role === 'Admin' || user.role === 'External Auditee') ? 'password' : undefined;
-    const loginSuccess = await login(user.email, password);
+    const loginSuccess = await login(email, password);
 
     if (loginSuccess) {
         const redirectPath = searchParams.get('redirect');
         router.push(redirectPath || '/my-profile');
     } else {
-      setLoginError('Login failed. Please check the credentials or system status.');
-      setLoggingInUser(null);
+      setLoginError('Login failed. Please check your email and password.');
+      setIsLoading(false);
     }
   }
-
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
@@ -84,53 +52,50 @@ export default function LoginPage() {
         <span className="text-xl font-semibold">{company?.name || 'SkyBound Flight Manager'}</span>
       </div>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">
-            Select a User to Login
+            Login to Your Account
           </CardTitle>
           <CardDescription>
-            This is a passwordless login for development and demonstration.
+            Enter your email and password below to login.
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {isLoading ? (
-                 <div className="flex items-center justify-center h-40">
-                    <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-                    <p>Loading user profiles...</p>
-                 </div>
-            ) : loginError ? (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {loginError && (
                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
+                    <AlertTitle>Login Error</AlertTitle>
                     <AlertDescription>{loginError}</AlertDescription>
                 </Alert>
-            ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    {allUsers.map(user => (
-                        <Button 
-                            key={user.id} 
-                            variant="outline" 
-                            className="w-full justify-start h-14"
-                            onClick={() => handleUserSelect(user)}
-                            disabled={!!loggingInUser}
-                        >
-                            {loggingInUser === user.id ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Avatar className="mr-4">
-                                    <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="user avatar" />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                            )}
-                            <div className="text-left">
-                                <p className="font-semibold">{user.name}</p>
-                                <p className="text-xs text-muted-foreground">{user.role} - {user.email || 'No email'}</p>
-                            </div>
-                        </Button>
-                    ))}
-                </div>
             )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+              Login
+            </Button>
+          </form>
         </CardContent>
         <CardFooter className="justify-center text-sm">
             <Link href="/corporate" className="text-muted-foreground hover:text-primary">
