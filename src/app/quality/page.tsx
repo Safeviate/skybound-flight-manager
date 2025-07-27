@@ -458,7 +458,7 @@ function QualityPage() {
                                 <TableRow>
                                 <TableHead>Audit ID</TableHead>
                                 <TableHead>Date</TableHead>
-                                <TableHead>Area</TableHead>
+                                <TableHead>Report Heading</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Compliance</TableHead>
                                 <TableHead>Status</TableHead>
@@ -475,7 +475,7 @@ function QualityPage() {
                                         </Link>
                                         </TableCell>
                                         <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
-                                        <TableCell>{audit.area}</TableCell>
+                                        <TableCell>{audit.title}</TableCell>
                                         <TableCell>{audit.type}</TableCell>
                                         <TableCell>
                                             <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
