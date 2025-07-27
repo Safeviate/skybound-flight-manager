@@ -106,18 +106,13 @@ export default function Header({ title, children }: { title: string, children?: 
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
-    const userDocs = getCombinedDocuments();
-    const userDocsMap = new Map(userDocs.map(d => [d.type, d]));
+    if (!user) return;
 
-    const updatedDocs = data.documents?.map(d => {
-        const originalDoc = userDocsMap.get(d.type);
-        return {
-            ...d,
-            id: originalDoc ? originalDoc.id : d.id,
-            expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
-        };
-    }) || [];
-
+    const updatedDocs = data.documents?.map(d => ({
+        ...d,
+        expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
+    })) || [];
+    
     const success = await updateUser({
       name: data.name,
       phone: data.phone,
