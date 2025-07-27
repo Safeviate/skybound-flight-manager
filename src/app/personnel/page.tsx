@@ -70,16 +70,12 @@ function PersonnelPage() {
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
             // This is the logic for adding a new user.
-            const needsAuthAccount = personnelData.role === 'Admin' || personnelData.role === 'Auditee';
+            const hasAuthCredentials = personnelData.email && personnelData.password;
 
-            if (needsAuthAccount) {
-                 if (!personnelData.email || !personnelData.password) {
-                    toast({ variant: 'destructive', title: 'Missing Information', description: 'Email and password are required for this role.'});
-                    return;
-                }
+            if (hasAuthCredentials) {
                 try {
                     // Create user in Firebase Auth
-                    const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
+                    const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email!, personnelData.password!);
                     const newUserId = userCredential.user.uid;
                     await updateProfile(userCredential.user, { photoURL: company.id });
 
@@ -330,7 +326,7 @@ function PersonnelPage() {
                            <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </Button>
-                             {person.email && (person.role === 'Admin' || person.role === 'Auditee') && (
+                             {person.email && (
                                 <Button 
                                     variant="secondary" 
                                     size="sm" 

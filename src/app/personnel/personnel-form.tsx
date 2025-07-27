@@ -53,14 +53,14 @@ const personnelFormSchema = z.object({
   accessStartDate: z.date().optional(),
   accessEndDate: z.date().optional(),
 }).refine(data => {
-    // Password check is now for both Admin and Auditee
-    if (data.role === 'Admin' || data.role === 'Auditee') {
-        return !!data.email && !!data.password && data.password.length >= 8;
+    // If a password is provided, an email must also be provided.
+    if (data.password && !data.email) {
+        return false;
     }
     return true;
 }, {
-    message: 'Email and a password of at least 8 characters are required for roles requiring system access.',
-    path: ['password'],
+    message: 'Email is required if a password is set.',
+    path: ['email'],
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -134,8 +134,6 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
         });
     }
   }
-
-  const showCredentialsFields = selectedRole === 'Admin' || selectedRole === 'Auditee';
 
   return (
     <Form {...form}>
@@ -228,64 +226,46 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
             )}
             />
 
-            {showCredentialsFields && (
+            {!existingPersonnel && (
                 <>
                  <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Email (for login)</FormLabel>
                         <FormControl>
                             <Input placeholder="john.doe@example.com" {...field} />
                         </FormControl>
+                         <FormDescription>Leave blank if this user does not need to log in.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                    {!existingPersonnel ? (
-                        <div className="space-y-2">
-                            <FormLabel>Temporary Password</FormLabel>
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex gap-2">
-                                            <FormControl>
-                                                <Input readOnly {...field} />
-                                            </FormControl>
-                                            <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
-                                                <Copy className="h-4 w-4" />
-                                            </Button>
-                                            <Button type="button" variant="outline" onClick={generatePassword} size="icon">
-                                                <RefreshCw className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <FormDescription>Generate a password for the new user.</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    ) : (
+                    <div className="space-y-2">
+                        <FormLabel>Temporary Password</FormLabel>
                         <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input type="password" {...field} placeholder="Leave blank to keep current" />
-                            </FormControl>
-                            <FormDescription>
-                                Leave blank to keep current password.
-                            </FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <div className="flex gap-2">
+                                        <FormControl>
+                                            <Input readOnly {...field} />
+                                        </FormControl>
+                                        <Button type="button" variant="secondary" onClick={copyPassword} size="icon" disabled={!field.value}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                        <Button type="button" variant="outline" onClick={generatePassword} size="icon">
+                                            <RefreshCw className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <FormDescription>Generate a temporary password for the new user.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    )}
+                    </div>
                 </>
             )}
         </div>
@@ -536,3 +516,5 @@ export function PersonnelForm({ onSubmit, existingPersonnel }: PersonnelFormProp
     </Form>
   );
 }
+
+    
