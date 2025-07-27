@@ -8,15 +8,12 @@
  * - SendEmailInput - The input type for the sendEmail function.
  */
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { Resend } from 'resend';
-import * as React from 'react';
-import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 
 const SendEmailInputSchema = z.object({
   to: z.string().email(),
   subject: z.string(),
-  // Pass email component data, not the component itself
   emailData: z.object({
     userName: z.string(),
     companyName: z.string(),
@@ -42,19 +39,44 @@ const sendEmailFlow = ai.defineFlow(
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Cannot send email.';
       console.error(errorMessage);
-      // Throw an error to ensure the calling function knows about the failure.
       throw new Error(errorMessage);
     }
     const resend = new Resend(apiKey);
+
+    const { userName, companyName, loginUrl, userEmail, temporaryPassword } = emailData;
+    
+    // Construct HTML directly
+    const htmlBody = `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333;">
+        <h1 style="color: #2563eb; font-size: 24px;">Welcome to ${companyName}</h1>
+        <p style="font-size: 16px; line-height: 1.5;">Hello ${userName},</p>
+        <p style="font-size: 16px; line-height: 1.5;">
+          An account has been created for you in the ${companyName} portal. You can use the following credentials to log in and access the system.
+        </p>
+        <div style="border: 1px solid #ddd; padding: 10px 20px; margin: 20px 0; background-color: #fff; border-radius: 5px;">
+          <p style="font-size: 16px; line-height: 1.5; margin: 10px 0;"><strong>Email:</strong> ${userEmail}</p>
+          ${temporaryPassword ? `<p style="font-size: 16px; line-height: 1.5; margin: 10px 0;"><strong>Temporary Password:</strong> ${temporaryPassword}</p>` : ''}
+        </div>
+        <p style="font-size: 16px; line-height: 1.5;">
+          For security reasons, you will be required to change your temporary password upon your first login.
+        </p>
+        <a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+          Login to Your Account
+        </a>
+        <p style="margin-top: 30px; font-size: 12px; color: #777;">
+          If you have any questions, please contact your system administrator.
+        </p>
+      </div>
+    `;
+
 
     try {
       const { data, error } = await resend.emails.send({
         from: 'SkyBound Flight Manager <onboarding@resend.dev>',
         to,
         subject,
-        react: React.createElement(NewUserCredentialsEmail, emailData),
+        html: htmlBody,
         headers: {
-            // Add a unique identifier to prevent duplicate emails
             'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
         }
       });
@@ -65,10 +87,8 @@ const sendEmailFlow = ai.defineFlow(
       }
 
     } catch (error) {
-      // Catch any other exceptions during the process and ensure a useful message.
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error, Object.getOwnPropertyNames(error));
       console.error(`Failed to send email with error: ${errorMessage}`);
-      // Re-throw the error to ensure the calling function is aware of the failure.
       throw new Error(`Failed to send email: ${errorMessage}`);
     }
   }
