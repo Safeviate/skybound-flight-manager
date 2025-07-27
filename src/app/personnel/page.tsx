@@ -25,7 +25,6 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { sendEmail } from '@/ai/flows/send-email-flow';
-import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -352,11 +351,6 @@ function PersonnelPage() {
                     <TableCell>{person.consentDisplayContact === 'Consented' ? person.phone : '[Private]'}</TableCell>
                     {canEditPersonnel && (
                         <TableCell className="text-right flex items-center justify-end gap-2">
-                            {person.email && (
-                                <Button variant="outline" size="sm" onClick={() => handleSendInvitation(person)}>
-                                    <Send className="mr-2 h-4 w-4" /> Send Invitation
-                                </Button>
-                            )}
                            <Button variant="outline" size="sm" onClick={() => handleEditClick(person)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                             </Button>
