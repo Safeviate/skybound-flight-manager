@@ -18,7 +18,7 @@ import { NewAlertForm } from './new-alert-form';
 import { format, parseISO } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -81,23 +81,29 @@ function AlertsPage() {
   const handleNewAlert = async (data: Omit<Alert, 'id' | 'number' | 'readBy' | 'author' | 'date'>) => {
     if (!user || !company) return;
 
-    // In a real app, number generation should be handled server-side to avoid race conditions.
-    // For this client-side example, we'll calculate it based on fetched data.
-    const lastAlertOfType = alerts
-        .filter(a => a.type === data.type)
-        .sort((a,b) => b.number! - a.number!)[0];
-
-    const newAlertData: Alert = {
-        ...data,
-        companyId: company.id,
-        number: (lastAlertOfType?.number || 0) + 1,
-        author: user.name,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        readBy: [user.id],
-    };
-
     try {
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        
+        // Query for the last alert of the same type to determine the new number
+        const q = query(
+            alertsCollection, 
+            where('type', '==', data.type), 
+            orderBy('number', 'desc'), 
+            limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
+        const newAlertNumber = (lastAlert?.number || 0) + 1;
+
+        const newAlertData: Alert = {
+            ...data,
+            companyId: company.id,
+            number: newAlertNumber,
+            author: user.name,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            readBy: [user.id],
+        };
+
         const docRef = await addDoc(alertsCollection, newAlertData);
         setAlerts(prev => [{ ...newAlertData, id: docRef.id }, ...prev]);
         setIsDialogOpen(false);
