@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -218,7 +218,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
             </Card>
 
             <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-3 no-print">
                     <TabsTrigger value="summary">Summary &amp; Findings</TabsTrigger>
                     <TabsTrigger value="checklist">Full Checklist</TabsTrigger>
                     <TabsTrigger value="discussion">Discussion</TabsTrigger>
@@ -253,7 +253,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                 </div>
                                                 <Dialog>
                                                     <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm">
+                                                        <Button variant="outline" size="sm" className="no-print">
                                                             <Bot className="mr-2 h-4 w-4" />
                                                             AI Analysis
                                                         </Button>
@@ -304,7 +304,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                                     </Table>
                                                 </div>
                                             ) : (
-                                                <Button onClick={() => setEditingIssue(issue)}>Create Corrective Action Plan</Button>
+                                                <Button onClick={() => setEditingIssue(issue)} className="no-print">Create Corrective Action Plan</Button>
                                             )}
                                         </div>
                                     )
@@ -382,7 +382,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             </div>
                             <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline">
+                                    <Button variant="outline" className="no-print">
                                         <Send className="mr-2 h-4 w-4" />
                                         Post Message
                                     </Button>
@@ -832,3 +832,16 @@ export default function QualityAuditDetailPage() {
       </main>
   );
 }
+
+QualityAuditDetailPage.title = "Quality Audit Investigation";
+
+QualityAuditDetailPage.headerContent = function HeaderActions() {
+    return (
+        <Button variant="outline" className="no-print" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Report
+        </Button>
+    )
+}
+
+export default QualityAuditDetailPage;
