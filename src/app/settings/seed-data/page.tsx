@@ -27,6 +27,15 @@ export default function SeedDataPage() {
       return;
     }
 
+    if (seedUsers.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'No Seed Data',
+            description: 'There is no sample user data available to seed.',
+        });
+        return;
+    }
+
     setIsSeedingUsers(true);
     try {
       const batch = writeBatch(db);
@@ -64,6 +73,15 @@ export default function SeedDataPage() {
         description: 'No company selected. Cannot seed aircraft data.',
       });
       return;
+    }
+
+    if (seedAircraft.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'No Seed Data',
+            description: 'There is no sample aircraft data available to seed.',
+        });
+        return;
     }
 
     setIsSeedingAircraft(true);
@@ -143,5 +161,3 @@ export default function SeedDataPage() {
 }
 
 SeedDataPage.title = 'Seed Data';
-
-    

@@ -201,6 +201,15 @@ function AircraftPage() {
       return;
     }
 
+    if (seedAircraft.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No Seed Data',
+        description: 'There is no sample aircraft data available to seed.',
+      });
+      return;
+    }
+
     setIsSeeding(true);
     try {
       const batch = writeBatch(db);

@@ -99,6 +99,15 @@ function PersonnelPage() {
           });
           return;
         }
+
+        if (seedUsers.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'No Seed Data',
+                description: 'There is no sample user data available to seed.',
+            });
+            return;
+        }
     
         setIsSeeding(true);
         try {
