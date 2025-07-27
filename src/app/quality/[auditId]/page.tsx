@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -8,7 +7,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -77,6 +76,10 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     const discussionForm = useForm<DiscussionFormValues>({
         resolver: zodResolver(discussionFormSchema),
     });
+
+    const [isSigning, setIsSigning] = React.useState(false);
+    const [auditorSignature, setAuditorSignature] = React.useState<string | null>(null);
+    const [auditeeSignature, setAuditeeSignature] = React.useState<string | null>(null);
 
     const availableRecipients = React.useMemo(() => {
         if (!audit.investigationTeam || !user) return [];
@@ -176,17 +179,72 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         setIsDiscussionDialogOpen(false);
     }
 
-    const handleSignature = (signatureFor: 'auditor' | 'auditee', signature: string) => {
-        if (signatureFor === 'auditor') {
-            onUpdate({ ...audit, auditorSignature: signature }, true);
-        } else {
-            onUpdate({ ...audit, auditeeSignature: signature }, true);
+    const handlePrepareForPrint = () => {
+        setIsSigning(true);
+    };
+
+    const handleFinalizeAndPrint = () => {
+        // This logic simulates applying the signatures for the print view.
+        // In a real app, you might generate a PDF here.
+        const printContent = document.getElementById('printable-report-area');
+        if (printContent) {
+            // Temporarily add signatures for printing
+            const auditorSigEl = document.getElementById('auditor-sig-print');
+            const auditeeSigEl = document.getElementById('auditee-sig-print');
+            if (auditorSigEl && auditorSignature) auditorSigEl.innerHTML = `<img src="${auditorSignature}" alt="Auditor Signature" style="width:200px; height:100px;"/>`;
+            if (auditeeSigEl && auditeeSignature) auditeeSigEl.innerHTML = `<img src="${auditeeSignature}" alt="Auditee Signature" style="width:200px; height:100px;"/>`;
+
+            window.print();
+            
+            // Clean up after printing
+            if (auditorSigEl) auditorSigEl.innerHTML = '';
+            if (auditeeSigEl) auditeeSigEl.innerHTML = '';
         }
-        toast({ title: "Signature Saved", description: "The signature has been saved to the report."});
+        setIsSigning(false);
+        setAuditorSignature(null);
+        setAuditeeSignature(null);
     };
     
     return (
-        <div className="space-y-6 print:space-y-4">
+        <div id="printable-report-area" className="space-y-6 print:space-y-4">
+             {isSigning && (
+                <Card className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm no-print">
+                    <CardHeader>
+                        <CardTitle>Signature Request</CardTitle>
+                        <CardDescription>The Lead Auditor and Auditee must sign below before printing.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center gap-8">
+                         <div className="space-y-2 text-center">
+                            <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
+                            {user?.name === audit.auditor ? (
+                                <SignaturePad onEnd={setAuditorSignature} width={300} height={150} />
+                            ) : auditorSignature ? (
+                                <Image src={auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            ) : (
+                                <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                            )}
+                        </div>
+                        <div className="space-y-2 text-center">
+                            <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
+                             {user?.name === audit.auditeeName ? (
+                                <SignaturePad onEnd={setAuditeeSignature} width={300} height={150} />
+                            ) : auditeeSignature ? (
+                                <Image src={auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            ) : (
+                                <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                            )}
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-center gap-4">
+                        <Button variant="outline" onClick={() => setIsSigning(false)}>Cancel</Button>
+                        <Button onClick={handleFinalizeAndPrint} disabled={!auditorSignature || !auditeeSignature}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Finalize and Print
+                        </Button>
+                    </CardFooter>
+                </Card>
+            )}
+
             <div className="hidden print:block mb-8 border-b pb-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
@@ -238,7 +296,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                 Back to Audits
                             </Link>
                         </Button>
-                        <Button variant="outline" className="no-print" onClick={() => window.print()}>
+                        <Button variant="outline" className="no-print" onClick={handlePrepareForPrint}>
                             <Printer className="mr-2 h-4 w-4" />
                             Print Report
                         </Button>
@@ -542,7 +600,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     </Card>
                 </TabsContent>
             </Tabs>
-             <Card className="mt-6">
+             <Card className="mt-6 print:block">
                 <CardHeader>
                     <CardTitle>Signatures</CardTitle>
                     <CardDescription>
@@ -552,27 +610,11 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        {audit.auditorSignature ? (
-                            <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white" />
-                        ) : user?.name === audit.auditor ? (
-                            <SignaturePad onEnd={(sig) => handleSignature('auditor', sig)} width={300} height={150} />
-                        ) : (
-                            <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">
-                                Awaiting signature
-                            </div>
-                        )}
+                        <div id="auditor-sig-print"></div>
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                        {audit.auditeeSignature ? (
-                            <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white" />
-                        ) : user?.name === audit.auditeeName ? (
-                             <SignaturePad onEnd={(sig) => handleSignature('auditee', sig)} width={300} height={150} />
-                        ) : (
-                             <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">
-                                Awaiting signature
-                            </div>
-                        )}
+                        <div id="auditee-sig-print"></div>
                     </div>
                 </CardContent>
             </Card>
@@ -913,6 +955,3 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
-
-
-
