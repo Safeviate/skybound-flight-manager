@@ -1,9 +1,8 @@
-
 'use client';
 import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Search, User as UserIcon, LogOut, Edit } from 'lucide-react';
+import { Search, User as UserIcon, LogOut, Edit, X } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -80,6 +79,10 @@ export default function Header({ title, children }: { title: string, children?: 
                     </CardContent>
                 </Card>
                  <div className="flex justify-end gap-2">
+                    <Button onClick={() => setIsInfoOpen(false)} variant="secondary">
+                        <X className="mr-2 h-4 w-4" />
+                        Close
+                    </Button>
                     <Button onClick={handleLogout} variant="outline">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
