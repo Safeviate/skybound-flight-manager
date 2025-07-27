@@ -24,6 +24,8 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
@@ -200,6 +202,7 @@ function QualityPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
 
   const fetchData = async () => {
     if (!company) return;
@@ -249,6 +252,10 @@ function QualityPage() {
         audit.type.toLowerCase().includes(searchLower)
     );
   });
+  
+  useEffect(() => {
+    setSelectedAudits([]);
+  }, [showArchived]);
 
 
   const getStatusVariant = (status: QualityAudit['status']) => {
@@ -396,6 +403,45 @@ function QualityPage() {
         setAudits(audits);
     }
   };
+  
+  const handleBulkRestore = async () => {
+    if (!company || selectedAudits.length === 0) return;
+
+    const batch = writeBatch(db);
+    selectedAudits.forEach(auditId => {
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        batch.update(auditRef, { status: 'Closed' });
+    });
+
+    try {
+        await batch.commit();
+        setAudits(prev => prev.map(a => selectedAudits.includes(a.id) ? { ...a, status: 'Closed' } : a));
+        setSelectedAudits([]);
+        toast({
+            title: 'Audits Restored',
+            description: `${selectedAudits.length} audit(s) have been restored.`,
+        });
+    } catch (error) {
+        console.error("Error restoring audits:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to restore selected audits.' });
+    }
+  };
+  
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+        setSelectedAudits(filteredAudits.map(a => a.id));
+    } else {
+        setSelectedAudits([]);
+    }
+  }
+
+  const handleSelectOne = (auditId: string, checked: boolean) => {
+    if (checked) {
+        setSelectedAudits(prev => [...prev, auditId]);
+    } else {
+        setSelectedAudits(prev => prev.filter(id => id !== auditId));
+    }
+  }
 
 
   if (loading || !user) {
@@ -478,23 +524,40 @@ function QualityPage() {
                                 className="pl-10"
                                 />
                             </div>
-                             <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
-                                {showArchived ? (
-                                    <>
-                                        <ListChecks className="mr-2 h-4 w-4" />
-                                        Show Active Audits
-                                    </>
-                                ) : (
-                                    <>
-                                        <Archive className="mr-2 h-4 w-4" />
-                                        Show Archived Audits
-                                    </>
+                            <div className="flex items-center gap-2">
+                                {showArchived && selectedAudits.length > 0 && (
+                                     <Button variant="outline" onClick={handleBulkRestore}>
+                                        <RotateCcw className="mr-2 h-4 w-4" />
+                                        Restore Selected ({selectedAudits.length})
+                                    </Button>
                                 )}
-                            </Button>
+                                 <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+                                    {showArchived ? (
+                                        <>
+                                            <ListChecks className="mr-2 h-4 w-4" />
+                                            Show Active Audits
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Show Archived Audits
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                {showArchived && (
+                                    <TableHead className="w-12">
+                                        <Checkbox 
+                                            onCheckedChange={handleSelectAll}
+                                            checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
+                                            aria-label="Select all"
+                                        />
+                                    </TableHead>
+                                )}
                                 <TableHead>Audit ID</TableHead>
                                 <TableHead>Audit Date</TableHead>
                                 <TableHead>Report Heading</TableHead>
@@ -507,7 +570,16 @@ function QualityPage() {
                             <TableBody>
                                 {filteredAudits.length > 0 ? (
                                     filteredAudits.map(audit => (
-                                    <TableRow key={audit.id}>
+                                    <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
+                                        {showArchived && (
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedAudits.includes(audit.id)}
+                                                    onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)}
+                                                    aria-label="Select row"
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell>
                                         <Link href={`/quality/${audit.id}`} className="hover:underline">
                                             {audit.id.substring(0, 8)}...
@@ -551,7 +623,7 @@ function QualityPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center h-24">
+                                        <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
                                             No audit reports found.
                                         </TableCell>
                                     </TableRow>
