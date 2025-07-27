@@ -197,7 +197,15 @@ function MyProfilePage() {
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
-                <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Personal Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <PersonalInformationCard user={user} onUpdate={() => {}}/>
+                    </CardContent>
+                </Card>
+
                 {showFatigueCard && (
                     <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
                 )}

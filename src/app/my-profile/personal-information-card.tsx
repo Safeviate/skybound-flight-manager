@@ -46,35 +46,35 @@ export function PersonalInformationCard({ user, onUpdate }: PersonalInformationC
                     <UserIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div>
-                    <h3 className="text-2xl font-semibold">{user.name}</h3>
+                    <h3 className="text-xl font-semibold">{user.name}</h3>
                     <Badge variant={getRoleVariant(user.role)} className="mt-1">{user.role}</Badge>
                 </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-3 pt-4 border-t">
                 <div className="flex items-center space-x-3">
                     <UserIcon className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">{user.name}</span>
+                    <span className="text-sm font-medium">{user.name}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">{user.email}</span>
+                    <span className="text-sm font-medium">{user.email}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">{user.phone}</span>
+                    <span className="text-sm font-medium">{user.phone}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                     <Briefcase className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">{user.department || 'N/A'}</span>
+                    <span className="text-sm font-medium">{user.department || 'N/A'}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                     <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                    <span>Medical Exp: {user.medicalExpiry ? getExpiryBadge(user.medicalExpiry) : 'N/A'}</span>
+                    <span className="text-sm">Medical Exp: {user.medicalExpiry ? getExpiryBadge(user.medicalExpiry) : 'N/A'}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                     <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                    <span>License Exp: {user.licenseExpiry ? getExpiryBadge(user.licenseExpiry) : 'N/A'}</span>
+                    <span className="text-sm">License Exp: {user.licenseExpiry ? getExpiryBadge(user.licenseExpiry) : 'N/A'}</span>
                 </div>
             </div>
 
