@@ -94,7 +94,7 @@ type CapTrackerItem = {
 const CapTracker = ({ audits, onStatusChange }: { audits: QualityAudit[], onStatusChange: (auditId: string, issueId: string, newStatus: CorrectiveActionPlan['status']) => void }) => {
     const allCaps: CapTrackerItem[] = useMemo(() => {
         return audits
-            .filter(audit => audit.status === 'Open' || audit.status === 'Closed')
+            .filter(audit => audit.status !== 'Archived')
             .flatMap(audit =>
                 (audit.nonConformanceIssues || [])
                     .filter(issue => issue.correctiveActionPlan)
@@ -634,7 +634,7 @@ function QualityPage() {
                 </Card>
             </TabsContent>
              <TabsContent value="cap-tracker" className="mt-4">
-                <CapTracker audits={activeAudits} onStatusChange={handleCapStatusChange} />
+                <CapTracker audits={audits} onStatusChange={handleCapStatusChange} />
             </TabsContent>
             <TabsContent value="checklists" className="mt-4">
                 <AuditChecklistsManager />
