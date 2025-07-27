@@ -109,7 +109,7 @@ export default function Header({ title, children }: { title: string, children?: 
                   </DropdownMenuItem>
               </DropdownMenuContent>
           </DropdownMenu>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>My Personal Information</DialogTitle>
               <DialogDescription>
