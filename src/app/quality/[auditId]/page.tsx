@@ -215,7 +215,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
              <Card>
                 <CardHeader className="flex flex-row justify-between items-start">
                     <div>
-                        <CardTitle className="text-2xl">{audit.title}: {audit.id}</CardTitle>
+                        <CardTitle className="text-2xl">Audit Report: {audit.title}</CardTitle>
                         <CardDescription>
                         This is the final report for the {audit.type} audit on {audit.area}, conducted on {format(parseISO(audit.date), 'MMMM d, yyyy')}.
                         </CardDescription>
@@ -860,4 +860,5 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
 
