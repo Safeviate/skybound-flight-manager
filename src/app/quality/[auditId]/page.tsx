@@ -208,40 +208,48 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
              {isSigning && (
-                <Card className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm no-print">
-                    <CardHeader>
-                        <CardTitle>Signature Request</CardTitle>
-                        <CardDescription>The Lead Auditor and Auditee must sign below before printing.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center justify-center gap-8">
-                         <div className="space-y-2 text-center">
-                            <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                            {user?.name === audit.auditor ? (
-                                <SignaturePad onEnd={setAuditorSignature} width={300} height={150} />
-                            ) : auditorSignature ? (
-                                <Image src={auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                            ) : (
-                                <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
-                            )}
-                        </div>
-                        <div className="space-y-2 text-center">
-                            <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                             {user?.name === audit.auditeeName ? (
-                                <SignaturePad onEnd={setAuditeeSignature} width={300} height={150} />
-                            ) : auditeeSignature ? (
-                                <Image src={auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                            ) : (
-                                <div className="h-[150px] w-[300px] flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
-                            )}
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-center gap-4">
-                        <Button variant="outline" onClick={() => setIsSigning(false)}>Cancel</Button>
-                        <Button onClick={handleFinalizeAndPrint} disabled={!auditorSignature || !auditeeSignature}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Finalize and Print
-                        </Button>
-                    </CardFooter>
+                <Card className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm no-print overflow-y-auto">
+                   <div className="flex flex-col items-center justify-center min-h-full p-4">
+                        <Card className="w-full max-w-lg">
+                            <CardHeader>
+                                <CardTitle>Signature Request</CardTitle>
+                                <CardDescription>The Lead Auditor and Auditee must sign below before printing.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col items-center justify-center gap-8">
+                                <div className="space-y-2 text-center w-full">
+                                    <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
+                                    {user?.name === audit.auditor ? (
+                                        <SignaturePad onEnd={setAuditorSignature} />
+                                    ) : auditorSignature ? (
+                                        <div className="flex justify-center">
+                                            <Image src={auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                        </div>
+                                    ) : (
+                                        <div className="h-[150px] w-full max-w-sm mx-auto flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                                    )}
+                                </div>
+                                <div className="space-y-2 text-center w-full">
+                                    <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
+                                    {user?.name === audit.auditeeName ? (
+                                        <SignaturePad onEnd={setAuditeeSignature} />
+                                    ) : auditeeSignature ? (
+                                         <div className="flex justify-center">
+                                            <Image src={auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                        </div>
+                                    ) : (
+                                        <div className="h-[150px] w-full max-w-sm mx-auto flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-center gap-4">
+                                <Button variant="outline" onClick={() => setIsSigning(false)}>Cancel</Button>
+                                <Button onClick={handleFinalizeAndPrint} disabled={!auditorSignature || !auditeeSignature}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Finalize and Print
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                   </div>
                 </Card>
             )}
 
