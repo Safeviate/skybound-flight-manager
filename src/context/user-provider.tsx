@@ -12,6 +12,7 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arr
 interface UserContextType {
   user: User | null;
   company: Company | null;
+  setCompany: React.Dispatch<React.SetStateAction<Company | null>>;
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
@@ -236,7 +237,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [user, company]);
 
   return (
-    <UserContext.Provider value={{ user, company, loading, login, logout, updateUser, getUnacknowledgedAlerts, acknowledgeAlerts }}>
+    <UserContext.Provider value={{ user, company, setCompany, loading, login, logout, updateUser, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );

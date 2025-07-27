@@ -25,9 +25,9 @@ const companyFormSchema = z.object({
   trademark: z.string().min(2, {
     message: 'Trademark must be at least 2 characters.',
   }),
-  primaryColor: z.string().optional(),
-  backgroundColor: z.string().optional(),
-  accentColor: z.string().optional(),
+  primaryColor: z.string(),
+  backgroundColor: z.string(),
+  accentColor: z.string(),
   logo: z.any().optional(),
 });
 
@@ -105,7 +105,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         <div className="space-y-4">
           <FormLabel className="flex items-center gap-2">
             <Paintbrush className="h-4 w-4" />
-            Theme Colors (Optional)
+            Theme Colors
           </FormLabel>
           <div className="grid grid-cols-3 gap-2">
             <FormField

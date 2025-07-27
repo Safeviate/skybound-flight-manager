@@ -22,7 +22,7 @@ import { EditCompanyForm } from './edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function CompaniesPage() {
-  const { user, loading } = useUser();
+  const { user, loading, setCompany } = useUser();
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
@@ -122,13 +122,18 @@ function CompaniesPage() {
         });
     }
 
-    const finalData = { ...updatedData, logoUrl };
+    const finalData = { ...editingCompany, ...updatedData, logoUrl };
 
     try {
         const companyDocRef = doc(db, 'companies', editingCompany.id);
         await updateDoc(companyDocRef, finalData);
         
-        setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...finalData } : c));
+        setCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalData : c));
+        
+        // If the updated company is the current user's company, update the context
+        if (user?.companyId === editingCompany.id) {
+            setCompany(finalData);
+        }
         
         toast({
             title: 'Company Updated',
