@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, ListChecks, Calendar } from 'lucide-react';
-import type { User as AppUser, Alert, QualityAudit, Booking } from '@/lib/types';
+import type { User as AppUser, Alert, QualityAudit, Booking, Role } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -186,6 +186,9 @@ function MyProfilePage() {
     
     const totalTasks = allActionItems.length;
 
+    const pilotRoles: Role[] = ['Student', 'Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+    const showFatigueCard = pilotRoles.includes(user.role);
+
   return (
     <>
       {user.mustChangePassword && (
@@ -195,7 +198,9 @@ function MyProfilePage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="xl:col-span-1 space-y-8">
                 <PersonalInformationCard user={user} onUpdate={() => {}}/>
-                <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
+                {showFatigueCard && (
+                    <FatigueRiskIndicatorCard userRole={user.role} trainingLogs={user.trainingLogs || []}/>
+                )}
             </div>
             <div className="xl:col-span-2 space-y-8">
                 <Card>
