@@ -36,6 +36,7 @@ const profileFormSchema = z.object({
   }),
   documentType: z.string({ required_error: 'Please select a document type.' }),
   documentExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  documentFile: z.any().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -195,7 +196,7 @@ export function EditProfileForm({ user, onUpdate }: EditProfileFormProps) {
             </div>
              <div className="flex-1 space-y-2 pt-4">
                     <FormLabel>Upload Document</FormLabel>
-                    <Input type="file" />
+                    <Input type="file" {...form.register('documentFile')} />
                 </div>
         </div>
 
