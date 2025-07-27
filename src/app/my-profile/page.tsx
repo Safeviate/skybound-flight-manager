@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check } from 'lucide-react';
+import { KeyRound, CheckSquare, AlertTriangle, ChevronRight, Check, Signature } from 'lucide-react';
 import type { User as AppUser, Alert, QualityAudit } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -134,6 +134,14 @@ function MyProfilePage() {
             }
         }
         
+        const getIconForType = (type: Alert['type']) => {
+            switch (type) {
+                case 'Signature Request': return <Signature className="h-5 w-5 text-blue-500 mt-0.5" />;
+                case 'Task': return <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />;
+                default: return <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />;
+            }
+        }
+
         const taskAlerts = getUnacknowledgedAlerts(audits)
             .map(alert => {
                 return {
@@ -142,7 +150,7 @@ function MyProfilePage() {
                     details: alert.description,
                     relatedLink: alert.relatedLink,
                     variant: 'warning' as const,
-                    icon: <CheckSquare className="h-5 w-5 text-blue-500 mt-0.5" />
+                    icon: getIconForType(alert.type),
                 }
             });
 

@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 
@@ -475,6 +476,8 @@ export type QualityAudit = {
   summary: string;
   discussion?: DiscussionEntry[];
   investigationTeam?: string[];
+  auditorSignature?: string;
+  auditeeSignature?: string;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
@@ -492,7 +495,7 @@ export type Alert = {
   id: string;
   companyId?: string;
   number?: number;
-  type: 'Red Tag' | 'Yellow Tag' | 'Task';
+  type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request';
   title: string;
   description: string;
   author: string;

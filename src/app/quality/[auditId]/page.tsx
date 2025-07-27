@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -78,12 +79,9 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     });
 
     const [isSigning, setIsSigning] = React.useState(false);
-    const [auditorSignature, setAuditorSignature] = React.useState<string | null>(null);
-    const [auditeeSignature, setAuditeeSignature] = React.useState<string | null>(null);
 
     const availableRecipients = React.useMemo(() => {
         if (!audit.investigationTeam || !user) return [];
-        // Allow sending to any team member except the current user
         return audit.investigationTeam.filter(name => name !== user.name);
     }, [audit.investigationTeam, user]);
 
@@ -96,7 +94,6 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     const handleCapSubmit = async (data: CorrectiveActionPlan) => {
         if (!editingIssue || !company || !user) return;
 
-        // Create an alert for the responsible person
         const responsibleUser = personnel.find(p => p.name === data.responsiblePerson);
         if (responsibleUser) {
              const newAlert: Omit<Alert, 'id' | 'number'> = {
@@ -104,7 +101,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                 type: 'Task',
                 title: `Audit CAP Assigned: ${audit.id.substring(0,8)}`,
                 description: `Action required for finding: "${editingIssue.itemText}"`,
-                author: user.name, // The person assigning the task
+                author: user.name, 
                 date: new Date().toISOString(),
                 readBy: [],
                 targetUserId: responsibleUser.id,
@@ -179,100 +176,38 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
         setIsDiscussionDialogOpen(false);
     }
 
-    const handlePrepareForPrint = () => {
-        setIsSigning(true);
-    };
+    const handleRequestSignatures = async () => {
+        if (!audit || !company || !user) return;
+        const signatureUsers = [audit.auditor, audit.auditeeName].filter(Boolean) as string[];
 
-    const handleFinalizeAndPrint = () => {
-        // This logic simulates applying the signatures for the print view.
-        // In a real app, you might generate a PDF here.
-        const printContent = document.getElementById('printable-report-area');
-        if (printContent) {
-            // Temporarily add signatures for printing
-            const auditorSigEl = document.getElementById('auditor-sig-print');
-            const auditeeSigEl = document.getElementById('auditee-sig-print');
-            if (auditorSigEl && auditorSignature) auditorSigEl.innerHTML = `<img src="${auditorSignature}" alt="Auditor Signature" style="width:200px; height:100px;"/>`;
-            if (auditeeSigEl && auditeeSignature) auditeeSigEl.innerHTML = `<img src="${auditeeSignature}" alt="Auditee Signature" style="width:200px; height:100px;"/>`;
+        const alertsCollection = collection(db, `companies/${company.id}/alerts`);
 
-            window.print();
-            
-            // Clean up after printing
-            if (auditorSigEl) auditorSigEl.innerHTML = '';
-            if (auditeeSigEl) auditeeSigEl.innerHTML = '';
+        for (const sigUser of signatureUsers) {
+            const targetUser = personnel.find(p => p.name === sigUser);
+            if(targetUser) {
+                 const newAlert: Omit<Alert, 'id' | 'number'> = {
+                    companyId: company.id,
+                    type: 'Signature Request',
+                    title: `Signature Required: Audit ${audit.id.substring(0,8)}`,
+                    description: `Your signature is required on the audit report: "${audit.title}"`,
+                    author: user.name,
+                    date: new Date().toISOString(),
+                    readBy: [],
+                    targetUserId: targetUser.id,
+                    relatedLink: `/quality/${audit.id}`,
+                };
+                await addDoc(alertsCollection, newAlert);
+            }
         }
-        setIsSigning(false);
-        setAuditorSignature(null);
-        setAuditeeSignature(null);
+
+        toast({
+            title: 'Signatures Requested',
+            description: `Alerts have been sent to ${signatureUsers.join(' and ')}.`
+        });
     };
     
     return (
         <div id="printable-report-area" className="space-y-6 print:space-y-4">
-             {isSigning && (
-                <Card className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm no-print overflow-y-auto">
-                   <div className="flex flex-col items-center justify-center min-h-full p-4">
-                        <Card className="w-full max-w-lg">
-                            <CardHeader>
-                                <CardTitle>Signature Request</CardTitle>
-                                <CardDescription>The Lead Auditor and Auditee must sign below before printing.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex flex-col items-center justify-center gap-8">
-                                <div className="space-y-2 text-center w-full">
-                                    <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                                    {user?.name === audit.auditor ? (
-                                        <SignaturePad onEnd={setAuditorSignature} />
-                                    ) : auditorSignature ? (
-                                        <div className="flex justify-center">
-                                            <Image src={auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                        </div>
-                                    ) : (
-                                        <div className="h-[150px] w-full max-w-sm mx-auto flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
-                                    )}
-                                </div>
-                                <div className="space-y-2 text-center w-full">
-                                    <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                                    {user?.name === audit.auditeeName ? (
-                                        <SignaturePad onEnd={setAuditeeSignature} />
-                                    ) : auditeeSignature ? (
-                                         <div className="flex justify-center">
-                                            <Image src={auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
-                                        </div>
-                                    ) : (
-                                        <div className="h-[150px] w-full max-w-sm mx-auto flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
-                                    )}
-                                </div>
-                            </CardContent>
-                            <CardFooter className="flex justify-center gap-4">
-                                <Button variant="outline" onClick={() => setIsSigning(false)}>Cancel</Button>
-                                <Button onClick={handleFinalizeAndPrint} disabled={!auditorSignature || !auditeeSignature}>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Finalize and Print
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                   </div>
-                </Card>
-            )}
-
-            <div className="hidden print:block mb-8 border-b pb-4">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        {company?.logoUrl ? (
-                            <img src={company.logoUrl} alt={`${company.name} Logo`} className="h-12 w-auto" />
-                        ) : (
-                            <Rocket className="h-10 w-10 text-primary" />
-                        )}
-                        <div>
-                            <h1 className="text-2xl font-bold">{company?.name || 'SkyBound Flight Manager'}</h1>
-                            <p className="text-sm text-muted-foreground">{company?.trademark}</p>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <h2 className="text-xl font-semibold">{audit.title}</h2>
-                        <p className="text-sm text-muted-foreground">Report ID: {audit.id}</p>
-                    </div>
-                </div>
-            </div>
-
             <Dialog open={!!editingIssue} onOpenChange={(isOpen) => { if (!isOpen) { setEditingIssue(null); setSuggestedCap(null); }}}>
                 <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
@@ -304,7 +239,11 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                 Back to Audits
                             </Link>
                         </Button>
-                        <Button variant="outline" className="no-print" onClick={handlePrepareForPrint}>
+                        <Button variant="outline" className="no-print" onClick={handleRequestSignatures}>
+                            <Signature className="mr-2 h-4 w-4" />
+                            Request Signatures
+                        </Button>
+                         <Button variant="outline" className="no-print" onClick={() => window.print()}>
                             <Printer className="mr-2 h-4 w-4" />
                             Print Report
                         </Button>
@@ -608,7 +547,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     </Card>
                 </TabsContent>
             </Tabs>
-             <Card className="mt-6 print:block">
+             <Card className="mt-6">
                 <CardHeader>
                     <CardTitle>Signatures</CardTitle>
                     <CardDescription>
@@ -618,11 +557,23 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                 <CardContent className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
-                        <div id="auditor-sig-print"></div>
+                        {audit.auditorSignature ? (
+                            <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                        ) : user?.name === audit.auditor ? (
+                             <SignaturePad onEnd={(signature) => onUpdate({ ...audit, auditorSignature: signature })} />
+                        ) : (
+                            <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                        )}
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
-                        <div id="auditee-sig-print"></div>
+                         {audit.auditeeSignature ? (
+                            <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                        ) : user?.name === audit.auditeeName ? (
+                             <SignaturePad onEnd={(signature) => onUpdate({ ...audit, auditeeSignature: signature })} />
+                        ) : (
+                            <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -691,16 +642,11 @@ export default function QualityAuditDetailPage() {
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
     if (!company) return;
 
-    // Create a deep copy and remove undefined values recursively
     const cleanAudit = JSON.parse(JSON.stringify(updatedAudit, (key, value) => {
         return value === undefined ? null : value;
     }));
-    
-    // Replace nulls back to undefined where Firestore allows, or keep as null
-    // For this case, we can just send the 'cleanAudit' object which has nulls instead of undefined.
-    // Firestore handles 'null' correctly. The issue was with 'undefined'.
 
-    setAudit(cleanAudit); // Optimistic update with cleaned data
+    setAudit(cleanAudit); 
     try {
         const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         await setDoc(auditRef, cleanAudit, { merge: true });
@@ -759,7 +705,6 @@ export default function QualityAuditDetailPage() {
         let comment = 'Verified and found to be in full compliance with all relevant regulations.';
         let reference = 'Checked against Operations Manual Rev 5.1, Section 3.2.';
 
-        // Make every 5th item non-compliant, and every 7th an observation
         if ((index + 1) % 5 === 0) {
             finding = 'Non-compliant';
             level = levelOptions[Math.floor(Math.random() * 3)];
@@ -963,3 +908,4 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+
