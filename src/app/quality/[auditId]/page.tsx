@@ -782,33 +782,37 @@ export default function QualityAuditDetailPage() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-6">
-                <div>
-                    <p className="font-semibold text-muted-foreground">Area Audited</p>
-                    <p>{audit.area}</p>
-                </div>
-                <div>
-                    <p className="font-semibold text-muted-foreground">Audit Type</p>
-                    <p>{audit.type}</p>
-                </div>
-                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Auditee (Internal/External)</label>
-                     <Select
-                        value={audit.auditeeName || ''}
-                        onValueChange={(value) => handleAuditUpdate({ ...audit, auditeeName: value }, false)}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an Auditee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {personnel.map(p => (
-                               <SelectItem key={p.id} value={p.name}>
-                                   {p.name} ({p.role})
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm border-t pt-6">
+                    <div>
+                        <p className="font-semibold text-muted-foreground">Area Audited</p>
+                        <p>{audit.area}</p>
+                    </div>
+                    <div>
+                        <p className="font-semibold text-muted-foreground">Audit Type</p>
+                        <p>{audit.type}</p>
+                    </div>
+                    <div className="md:col-span-1">
+                        <p className="font-semibold text-muted-foreground">Auditor</p>
+                        <p>{audit.auditor}</p>
+                    </div>
+                    <div className="space-y-2 md:col-span-1">
+                        <label className="text-sm font-medium">Auditee (Internal/External)</label>
+                        <Select
+                            value={audit.auditeeName || ''}
+                            onValueChange={(value) => handleAuditUpdate({ ...audit, auditeeName: value }, false)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an Auditee" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {personnel.map(p => (
+                                <SelectItem key={p.id} value={p.name}>
+                                    {p.name} ({p.role})
                                 </SelectItem>
-                           ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 <div className="space-y-2 border-t pt-6">
                     <h3 className="font-semibold">Audit Summary</h3>
@@ -939,4 +943,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
