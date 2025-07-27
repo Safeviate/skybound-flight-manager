@@ -44,8 +44,6 @@ const aircraftFormSchema = z.object({
   }),
   airworthinessExpiry: z.date({ required_error: 'An expiry date is required.' }),
   insuranceExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  primaryStudentId: z.string().optional(),
-  primaryInstructorId: z.string().optional(),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
@@ -300,50 +298,6 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                             </PopoverContent>
                         </Popover>
                         <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="primaryStudentId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Student (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a student" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {students.map(student => (
-                                <SelectItem key={student.id} value={student.id}>{student.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="primaryInstructorId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Primary Instructor (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an instructor" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {instructors.map(instructor => (
-                                <SelectItem key={instructor.id} value={instructor.id}>{instructor.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
                     </FormItem>
                 )}
             />
