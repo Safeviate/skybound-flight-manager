@@ -25,6 +25,8 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { userData as seedUsers } from '@/lib/data-provider';
+import { sendEmail } from '@/ai/flows/send-email-flow';
+import NewUserCredentialsEmail from '@/components/emails/new-user-credentials-email';
 
 function PersonnelPage() {
     const { user, company, loading } = useUser();
@@ -65,13 +67,42 @@ function PersonnelPage() {
             await updateDoc(userRef, personnelData as any);
             toast({ title: 'Personnel Updated', description: `${personnelData.name}'s information has been saved.` });
         } else {
-            // Add new personnel to Firestore
-            // This path may require creating a user in Firebase Auth first for some roles.
-            // For simplicity, we'll assume non-admin roles can be added directly for now.
-             const newUserId = doc(collection(db, 'temp')).id;
-            const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
-            await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
-            toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
+            // Add new personnel
+            if ((personnelData.role === 'Admin' || personnelData.role === 'External Auditee') && personnelData.email && personnelData.password) {
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, personnelData.email, personnelData.password);
+                    const newUserId = userCredential.user.uid;
+                    const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
+                    await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
+
+                    toast({ title: 'Personnel Added', description: `${personnelData.name} has been added.` });
+
+                    if (personnelData.role === 'External Auditee') {
+                        await sendEmail({
+                            to: personnelData.email,
+                            subject: `Your Access to ${company.name} Portal`,
+                            react: <NewUserCredentialsEmail
+                                userName={personnelData.name}
+                                companyName={company.name}
+                                userEmail={personnelData.email}
+                                temporaryPassword={personnelData.password}
+                                loginUrl={window.location.origin + '/login'}
+                            />,
+                        });
+                         toast({ title: 'Invitation Sent', description: `An email with login details has been sent to ${personnelData.name}.` });
+                    }
+
+                } catch (error: any) {
+                     toast({ variant: 'destructive', title: 'Authentication Error', description: 'Could not create the user in the authentication system. The email may already be in use.' });
+                     return; // Stop execution if auth creation fails
+                }
+            } else {
+                // For roles not requiring auth, just add to Firestore
+                const newUserId = doc(collection(db, 'temp')).id;
+                const newUserRef = doc(db, `companies/${company.id}/users`, newUserId);
+                await setDoc(newUserRef, { ...personnelData, id: newUserId, companyId: company.id });
+                toast({ title: 'Personnel Added', description: `${personnelData.name} has been added to the roster.` });
+            }
         }
         fetchPersonnel(); // Refetch to get the latest data
         setEditingPersonnel(null);
