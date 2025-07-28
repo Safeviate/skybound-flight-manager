@@ -63,6 +63,7 @@ const reportsNavItems = [
 ]
 
 const settingsNavItems = [
+    { href: '/system/users', label: 'System Users', icon: Users, requiredPermissions: ['Super User'] },
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
