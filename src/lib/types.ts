@@ -548,7 +548,3 @@ export type Checklist = {
   templateId?: string; // ID of the master template
   aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };
-```
-  </change>
-  <change>
-    <file>/src/lib/data-provider
