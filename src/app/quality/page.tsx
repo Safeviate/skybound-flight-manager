@@ -309,204 +309,212 @@ function QualityPage() {
     if (score >= 95) return 'text-green-600';
     if (score >= 80) return 'text-yellow-600';
     return 'text-red-600';
-  }
+  };
 
 
   return (
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="audits">Audits</TabsTrigger>
-                <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
-                <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
-            </TabsList>
-            <TabsContent value="dashboard" className="space-y-8 mt-4">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Annual Audit Schedule</CardTitle>
-                        <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <AuditSchedule 
-                            auditAreas={auditAreas}
-                            schedule={schedule} 
-                            onUpdate={handleScheduleUpdate}
-                            onAreaUpdate={handleAreaUpdate}
-                            onAreaAdd={handleAreaAdd}
-                            onAreaDelete={handleAreaDelete}
-                        />
-                    </CardContent>
-                </Card>
+    <main className="flex-1 p-4 md:p-8 space-y-8">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="audits">Audits</TabsTrigger>
+              <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
+              <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dashboard" className="space-y-8 mt-4">
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Annual Audit Schedule</CardTitle>
+                      <CardDescription>Plan and track internal and external audits for the year. Click on a quarter to update the status.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <AuditSchedule 
+                          auditAreas={auditAreas}
+                          schedule={schedule} 
+                          onUpdate={handleScheduleUpdate}
+                          onAreaUpdate={handleAreaUpdate}
+                          onAreaAdd={handleAreaAdd}
+                          onAreaDelete={handleAreaDelete}
+                      />
+                  </CardContent>
+              </Card>
 
-                <div className="grid gap-8 md:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Compliance Score Over Time</CardTitle>
-                            <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ComplianceChart data={activeAudits} />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Non-Conformance Categories</CardTitle>
-                            <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <NonConformanceChart data={activeAudits} />
-                        </CardContent>
-                    </Card>
-                </div>
-                 <div className="grid gap-8 md:grid-cols-1">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Coherence Matrix</CardTitle>
-                            <CardDescription>A tabulated document listing applicable regulatory requirements and corresponding compliance processes.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                           <p className="text-sm text-muted-foreground">The full coherence matrix provides a detailed view of all regulatory requirements, the processes in place to ensure compliance, the responsible manager for each process, and audit validation details. This is a key tool for demonstrating regulatory compliance to the CAA.</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild>
-                                <Link href="/quality/coherence-matrix">
-                                    <FileText className="mr-2 h-4 w-4"/>
-                                    View Full Coherence Matrix
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                 </div>
-            </TabsContent>
-            <TabsContent value="audits" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Audit Reports</CardTitle>
-                        <CardDescription>Review all completed quality audit reports.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center justify-between py-4">
-                            <div className="relative w-full max-w-sm">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                placeholder="Search audits..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {showArchived && selectedAudits.length > 0 && (
-                                     <Button variant="outline" onClick={handleBulkRestore}>
-                                        <RotateCcw className="mr-2 h-4 w-4" />
-                                        Restore Selected ({selectedAudits.length})
-                                    </Button>
-                                )}
-                                 <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
-                                    {showArchived ? (
-                                        <>
-                                            <ListChecks className="mr-2 h-4 w-4" />
-                                            Show Active Audits
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Archive className="mr-2 h-4 w-4" />
-                                            Show Archived Audits
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                {showArchived && (
-                                    <TableHead className="w-12">
-                                        <Checkbox 
-                                            onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                                            checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
-                                            aria-label="Select all"
-                                        />
-                                    </TableHead>
-                                )}
-                                <TableHead>Audit ID</TableHead>
-                                <TableHead>Audit Date</TableHead>
-                                <TableHead>Report Heading</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Compliance</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredAudits.length > 0 ? (
-                                    filteredAudits.map(audit => (
-                                    <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
-                                        {showArchived && (
-                                            <TableCell>
-                                                <Checkbox
-                                                    checked={selectedAudits.includes(audit.id)}
-                                                    onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)}
-                                                    aria-label="Select row"
-                                                />
-                                            </TableCell>
-                                        )}
-                                        <TableCell>
-                                        <Link href={`/quality/${audit.id}`} className="hover:underline">
-                                            {audit.id.substring(0, 8)}...
-                                        </Link>
-                                        </TableCell>
-                                        <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
-                                        <TableCell>{audit.title}</TableCell>
-                                        <TableCell>{audit.type}</TableCell>
-                                        <TableCell>
-                                            <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
-                                                <Percent className="h-4 w-4" />
-                                                {audit.complianceScore}%
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    {showArchived ? (
-                                                        <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
-                                                            <RotateCcw className="mr-2 h-4 w-4" />
-                                                            Restore
-                                                        </DropdownMenuItem>
-                                                    ) : (
-                                                        <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
-                                                            <Archive className="mr-2 h-4 w-4" />
-                                                            Archive
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
-                                            No audit reports found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="checklists" className="mt-4">
-                <AuditChecklistsManager />
-            </TabsContent>
-            <TabsContent value="cap-tracker" className="mt-4">
-                <CapTracker audits={audits} />
+              <div className="grid gap-8 md:grid-cols-2">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Compliance Score Over Time</CardTitle>
+                          <CardDescription>Tracks the overall compliance score from recent audits.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <ComplianceChart data={activeAudits} />
+                      </CardContent>
+                  </Card>
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Non-Conformance Categories</CardTitle>
+                          <CardDescription>Frequency of different types of non-conformance issues.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <NonConformanceChart data={activeAudits} />
+                      </CardContent>
+                  </Card>
+              </div>
+               <div className="grid gap-8 md:grid-cols-1">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Coherence Matrix</CardTitle>
+                          <CardDescription>A tabulated document listing applicable regulatory requirements and corresponding compliance processes.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                         <p className="text-sm text-muted-foreground">The full coherence matrix provides a detailed view of all regulatory requirements, the processes in place to ensure compliance, the responsible manager for each process, and audit validation details. This is a key tool for demonstrating regulatory compliance to the CAA.</p>
+                      </CardContent>
+                      <CardFooter>
+                          <Button asChild>
+                              <Link href="/quality/coherence-matrix">
+                                  <FileText className="mr-2 h-4 w-4"/>
+                                  View Full Coherence Matrix
+                              </Link>
+                          </Button>
+                      </CardFooter>
+                  </Card>
+               </div>
+          </TabsContent>
+          <TabsContent value="audits" className="mt-4">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Audit Reports</CardTitle>
+                      <CardDescription>Review all completed quality audit reports.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <div className="flex items-center justify-between py-4">
+                          <div className="relative w-full max-w-sm">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                              placeholder="Search audits..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="pl-10"
+                              />
+                          </div>
+                          <div className="flex items-center gap-2">
+                              {showArchived && selectedAudits.length > 0 && (
+                                   <Button variant="outline" onClick={handleBulkRestore}>
+                                      <RotateCcw className="mr-2 h-4 w-4" />
+                                      Restore Selected ({selectedAudits.length})
+                                  </Button>
+                              )}
+                               <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+                                  {showArchived ? (
+                                      <>
+                                          <ListChecks className="mr-2 h-4 w-4" />
+                                          Show Active Audits
+                                      </>
+                                  ) : (
+                                      <>
+                                          <Archive className="mr-2 h-4 w-4" />
+                                          Show Archived Audits
+                                      </>
+                                  )}
+                              </Button>
+                          </div>
+                      </div>
+                      <Table>
+                          <TableHeader>
+                              <TableRow>
+                              {showArchived && (
+                                  <TableHead className="w-12">
+                                      <Checkbox 
+                                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                                          checked={selectedAudits.length > 0 && selectedAudits.length === filteredAudits.length}
+                                          aria-label="Select all"
+                                      />
+                                  </TableHead>
+                              )}
+                              <TableHead>Audit ID</TableHead>
+                              <TableHead>Audit Date</TableHead>
+                              <TableHead>Report Heading</TableHead>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Compliance</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {filteredAudits.length > 0 ? (
+                                  filteredAudits.map(audit => (
+                                  <TableRow key={audit.id} data-state={selectedAudits.includes(audit.id) && "selected"}>
+                                      {showArchived && (
+                                          <TableCell>
+                                              <Checkbox
+                                                  checked={selectedAudits.includes(audit.id)}
+                                                  onCheckedChange={(checked) => handleSelectOne(audit.id, !!checked)}
+                                                  aria-label="Select row"
+                                              />
+                                          </TableCell>
+                                      )}
+                                      <TableCell>
+                                      <Link href={`/quality/${audit.id}`} className="hover:underline">
+                                          {audit.id.substring(0, 8)}...
+                                      </Link>
+                                      </TableCell>
+                                      <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
+                                      <TableCell>{audit.title}</TableCell>
+                                      <TableCell>{audit.type}</TableCell>
+                                      <TableCell>
+                                          <div className={`flex items-center gap-1 font-semibold ${getComplianceColor(audit.complianceScore)}`}>
+                                              <Percent className="h-4 w-4" />
+                                              {audit.complianceScore}%
+                                          </div>
+                                      </TableCell>
+                                      <TableCell>
+                                          <Badge variant={getStatusVariant(audit.status)}>{audit.status}</Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                          <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                  <Button variant="ghost" size="icon">
+                                                      <MoreHorizontal className="h-4 w-4" />
+                                                  </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent>
+                                                  {showArchived ? (
+                                                      <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
+                                                          <RotateCcw className="mr-2 h-4 w-4" />
+                                                          Restore
+                                                      </DropdownMenuItem>
+                                                  ) : (
+                                                      <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
+                                                          <Archive className="mr-2 h-4 w-4" />
+                                                          Archive
+                                                      </DropdownMenuItem>
+                                                  )}
+                                              </DropdownMenuContent>
+                                          </DropdownMenu>
+                                      </TableCell>
+                                  </TableRow>
+                                  ))
+                              ) : (
+                                  <TableRow>
+                                      <TableCell colSpan={showArchived ? 8 : 7} className="text-center h-24">
+                                          No audit reports found.
+                                      </TableCell>
+                                  </TableRow>
+                              )}
+                          </TableBody>
+                      </Table>
+                  </CardContent>
+              </Card>
+          </TabsContent>
+          <TabsContent value="checklists" className="mt-4">
+              <AuditChecklistsManager />
+          </TabsContent>
+          <TabsContent value="cap-tracker" className="mt-4">
+              <CapTracker audits={audits} />
+          </TabsContent>
+      </Tabs>
+    </main>
+  );
+}
+
+QualityPage.title = 'Quality Assurance';
+export default QualityPage;
