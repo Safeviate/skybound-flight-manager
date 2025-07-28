@@ -247,7 +247,8 @@ export default function CoherenceMatrixPage() {
         const batch = writeBatch(db);
         seedComplianceData.forEach(item => {
             const docRef = doc(collection(db, `companies/${company.id}/compliance-matrix`));
-            batch.set(docRef, {...item, companyId: company.id});
+            const { findings, ...itemToSeed } = item;
+            batch.set(docRef, {...itemToSeed, companyId: company.id});
         });
         await batch.commit();
         fetchData();
