@@ -166,7 +166,7 @@ export default function CoherenceMatrixPage() {
             const [complianceSnapshot, personnelSnapshot, auditsSnapshot] = await Promise.all([
                 getDocs(complianceQuery),
                 getDocs(personnelQuery),
-                getDocs(auditsSnapshot)
+                getDocs(auditsQuery)
             ]);
 
             setComplianceItems(complianceSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ComplianceItem)));
