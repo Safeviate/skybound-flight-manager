@@ -12,13 +12,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Company, User } from '@/lib/types';
+import type { Company, User, Feature } from '@/lib/types';
 import { Paintbrush } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+
+const features: { id: Feature, label: string, description: string }[] = [
+    { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+    { id: 'AIAuditAnalysis', label: 'AI Audit Analysis', description: 'Allows users to use AI for analyzing audit reports.' },
+    { id: 'CustomChecklists', label: 'Custom Checklist Builder', description: 'Allows management to create custom checklists for aircraft.' },
+];
 
 const companyFormSchema = z.object({
   name: z.string().min(2, {
@@ -31,10 +38,9 @@ const companyFormSchema = z.object({
   backgroundColor: z.string().optional(),
   accentColor: z.string().optional(),
   logo: z.any().optional(),
-  enableAdvancedAnalytics: z.boolean().default(false),
+  enabledFeatures: z.array(z.string()).default([]),
   adminName: z.string().min(2, 'Admin name is required.'),
   adminEmail: z.string().email('Please enter a valid email address.'),
-  // Password is no longer needed in the form, it's defaulted.
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -51,7 +57,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         primaryColor: '#2563eb',
         backgroundColor: '#f4f4f5',
         accentColor: '#f59e0b',
-        enableAdvancedAnalytics: false,
+        enabledFeatures: [],
     }
   });
 
@@ -64,7 +70,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             background: data.backgroundColor,
             accent: data.accentColor,
         },
-        enabledFeatures: data.enableAdvancedAnalytics ? ['AdvancedAnalytics'] : [],
+        enabledFeatures: data.enabledFeatures as Feature[],
     };
     const newAdmin: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'> = {
         name: data.adminName,
@@ -172,20 +178,56 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
         <FormField
             control={form.control}
-            name="enableAdvancedAnalytics"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                    <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                    />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                    <FormLabel>
-                        Enable Advanced Analytics Module
-                    </FormLabel>
+            name="enabledFeatures"
+            render={() => (
+                <FormItem>
+                <div className="mb-4">
+                    <FormLabel className="text-base">Enabled Features</FormLabel>
+                    <FormDescription>
+                    Select the modules that this company will have access to.
+                    </FormDescription>
                 </div>
+                <div className="space-y-4">
+                    {features.map((item) => (
+                    <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="enabledFeatures"
+                        render={({ field }) => {
+                        return (
+                            <FormItem
+                            key={item.id}
+                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
+                            >
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                    return checked
+                                    ? field.onChange([...(field.value || []), item.id])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                            (value) => value !== item.id
+                                        )
+                                        )
+                                }}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel className="font-normal">
+                                    {item.label}
+                                </FormLabel>
+                                <FormDescription>
+                                    {item.description}
+                                </FormDescription>
+                            </div>
+                            </FormItem>
+                        )
+                        }}
+                    />
+                    ))}
+                </div>
+                <FormMessage />
                 </FormItem>
             )}
         />

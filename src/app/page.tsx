@@ -12,7 +12,7 @@ import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewCompanyForm } from '@/app/corporate/new-company-form';
-import type { Company, User as CompanyUser, SafetyReport } from '@/lib/types';
+import type { Company, User as CompanyUser, SafetyReport, Feature } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, collection, getDocs, updateDoc, query, where, getCountFromServer, Timestamp, limit, orderBy } from 'firebase/firestore';
