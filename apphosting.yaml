@@ -6,5 +6,5 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
   # Set the location for the backend server.
-  # europe-west1 is the closest region to South Africa.
-  location: europe-west1
+  # us-central1 is the default location for Firestore.
+  location: us-central1
