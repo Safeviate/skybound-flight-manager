@@ -152,5 +152,3 @@ export const complianceData: Omit<ComplianceItem, 'id'|'companyId'>[] = [
 ];
 
 // Functions to modify data are now handled by components writing to Firestore.
-
-    
