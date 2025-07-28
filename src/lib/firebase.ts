@@ -1,11 +1,11 @@
+
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-// We are commenting out the performance import to prevent a runtime error.
-// import { getPerformance } from "firebase/performance";
+import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration
 const firebaseConfigDev = {
@@ -50,10 +50,9 @@ const auth = getAuth(app);
 
 // Initialize Performance Monitoring
 // We need to check if we're in a browser environment before initializing performance.
-// Disabling this to fix a runtime error.
-// if (typeof window !== 'undefined') {
-//   getPerformance(app);
-// }
+if (typeof window !== 'undefined') {
+  getPerformance(app);
+}
 
 
 export { app, db, auth };
