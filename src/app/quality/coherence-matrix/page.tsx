@@ -11,7 +11,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
-import { PlusCircle, Edit, Save, Trash2, ArrowLeft } from 'lucide-react';
+import { PlusCircle, Edit, Save, Trash2, ArrowLeft, Database } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -265,7 +265,7 @@ export default function CoherenceMatrixPage() {
         });
         await batch.commit();
         fetchData();
-        toast({title: 'Sample Data Seeded', description: 'Sample compliance data has been added.'})
+        toast({title: 'Sample Data Seeded', description: 'The coherence matrix has been populated with Part 141 regulations.'})
     };
 
     if (loading) {
@@ -291,7 +291,10 @@ export default function CoherenceMatrixPage() {
                         </Button>
                         {canEdit && (
                             <>
-                                <Button variant="outline" onClick={handleSeedData}>Seed Sample Data</Button>
+                                <Button variant="outline" onClick={handleSeedData}>
+                                  <Database className="mr-2 h-4 w-4" />
+                                  Seed Part 141 Regulations
+                                </Button>
                                 <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingItem(null); }}>
                                     <DialogTrigger asChild>
                                         <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Requirement</Button>
@@ -354,5 +357,3 @@ export default function CoherenceMatrixPage() {
 }
 
 CoherenceMatrixPage.title = "Coherence Matrix";
-
-    
