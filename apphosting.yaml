@@ -8,3 +8,4 @@ runConfig:
   # Set the location for the backend server.
   # us-central1 is the default location for Firestore.
   location: us-central1
+
