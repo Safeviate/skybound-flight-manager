@@ -278,6 +278,10 @@ function CompaniesPage() {
   const totalUsers = companies.reduce((sum, c) => sum + c.userCount, 0);
   const totalAircraft = companies.reduce((sum, c) => sum + c.aircraftCount, 0);
   const totalOpenReports = companies.reduce((sum, c) => sum + c.openSafetyReports, 0);
+  
+  const projectId = db.app.options.projectId;
+  const deploymentUrl = `https://console.firebase.google.com/project/${projectId}/apphosting`;
+
 
   if (loading || isDataLoading || !user || !user.permissions.includes('Super User')) {
     return (
@@ -338,7 +342,7 @@ function CompaniesPage() {
                 <CardDescription>Manage deployments and rollbacks.</CardDescription>
             </CardHeader>
             <CardContent>
-                <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="w-full">
+                <a href={deploymentUrl} target="_blank" rel="noopener noreferrer" className="w-full">
                     <Button className="w-full">
                         <GitPullRequest className="mr-2 h-4 w-4" />
                         Manage Deployments
