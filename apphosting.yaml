@@ -5,3 +5,6 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # Set the location for the backend server.
+  # europe-west1 is the closest region to South Africa.
+  location: europe-west1
