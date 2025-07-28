@@ -1,191 +1,237 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, Users, Calendar, ShieldAlert } from 'lucide-react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-provider';
-import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, query, getDocs, where, orderBy, limit } from 'firebase/firestore';
-import { format, parseISO } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { NewCompanyForm } from '@/app/corporate/new-company-form';
+import type { Company, User } from '@/lib/types';
+import { ROLE_PERMISSIONS } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { doc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
+import config from '@/config';
+import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-type Activity = {
-    type: string;
-    description: string;
-    time: string;
-    icon: React.ReactNode;
-}
-
-type UpcomingBooking = {
-    id: string;
-    description: string;
-    details: string;
-    icon: React.ReactNode;
-}
-
-function Dashboard() {
-  const { user, company, loading } = useUser();
+function CompaniesPage() {
+  const { user, loading, setCompany, updateCompany } = useUser();
   const router = useRouter();
-  const [stats, setStats] = useState<{title: string; value: string; icon: JSX.Element; href: string}[]>([]);
-  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [upcomingBookings, setUpcomingBookings] = useState<UpcomingBooking[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const { toast } = useToast();
+
+  async function fetchCompanies() {
+      if (config.useMockData) {
+          // This path is for mock data, which we are not using.
+          // setCompanies(initialCompanyData); 
+          return;
+      }
+      try {
+        const companiesCol = collection(db, 'companies');
+        const companySnapshot = await getDocs(companiesCol);
+        const companyList = companySnapshot.docs.map(doc => doc.data() as Company);
+        setCompanies(companyList);
+      } catch (e) {
+        console.error("Error fetching companies: ", e);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch company data from the database.',
+        });
+      }
+  }
 
   useEffect(() => {
-    if (!loading && !user) {
-        router.push('/login');
+    if (!loading && (!user || !user.permissions.includes('Super User'))) {
+      router.push('/');
+    } else if (user) {
+        fetchCompanies();
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (!company) return;
 
-    const fetchDashboardData = async () => {
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            // Stats
-            const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-            const studentsQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Student'), where('status', '==', 'Active'));
-            const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('date', '>=', today));
-            const safetyReportsQuery = query(collection(db, `companies/${company.id}/safety-reports`), where('status', '!=', 'Closed'));
+  const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+    const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
+        const newUserId = userCredential.user.uid;
 
-            const [aircraftSnapshot, studentsSnapshot, bookingsSnapshot, safetyReportsSnapshot] = await Promise.all([
-                getDocs(aircraftQuery),
-                getDocs(studentsQuery),
-                getDocs(bookingsQuery),
-                getDocs(safetyReportsQuery),
-            ]);
+        const companyDocRef = doc(db, 'companies', companyId);
+        const finalCompanyData = { ...newCompanyData, id: companyId };
+        await setDoc(companyDocRef, finalCompanyData);
+        
+        const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+        const finalUserData: Omit<User, 'password'> = {
+            ...adminData,
+            id: newUserId,
+            companyId: companyId,
+            role: 'Admin',
+            permissions: ROLE_PERMISSIONS['Admin'],
+        };
+        await setDoc(userDocRef, finalUserData);
 
-            setStats([
-                { title: 'Total Aircraft', value: aircraftSnapshot.size.toString(), icon: <Plane className="h-8 w-8 text-primary" />, href: '/aircraft' },
-                { title: 'Active Students', value: studentsSnapshot.size.toString(), icon: <Users className="h-8 w-8 text-primary" />, href: '/students' },
-                { title: 'Upcoming Bookings', value: bookingsSnapshot.size.toString(), icon: <Calendar className="h-8 w-8 text-primary" />, href: '/bookings' },
-                { title: 'Open Safety Reports', value: safetyReportsSnapshot.size.toString(), icon: <ShieldAlert className="h-8 w-8 text-destructive" />, href: '/safety' },
-            ]);
+        toast({
+            title: "Company Registered Successfully!",
+            description: `The company "${newCompanyData.name}" has been created.`
+        });
+        
+        setCompanies(prev => [...prev, finalCompanyData]);
+        setIsNewDialogOpen(false);
 
-            // Upcoming Schedule
-            const upcomingBookingsQuery = query(
-                collection(db, `companies/${company.id}/bookings`),
-                where('date', '>=', today),
-                orderBy('date'),
-                orderBy('startTime'),
-                limit(3)
-            );
-            const upcomingBookingsSnapshot = await getDocs(upcomingBookingsQuery);
-            const bookingsList = upcomingBookingsSnapshot.docs.map(doc => {
-                const booking = doc.data();
-                const bookingDate = parseISO(booking.date);
-                const isToday = format(bookingDate, 'yyyy-MM-dd') === today;
-                const dateLabel = isToday ? 'Today' : format(bookingDate, 'MMM d');
-
-                return {
-                    id: doc.id,
-                    description: `${booking.purpose} with ${booking.student || booking.instructor}`,
-                    details: `${booking.aircraft} | ${dateLabel} at ${booking.startTime}`,
-                    icon: booking.purpose === 'Maintenance' ? <Plane className="h-5 w-5 text-accent-foreground"/> : <Calendar className="h-5 w-5 text-accent-foreground"/>
-                }
-            });
-            setUpcomingBookings(bookingsList);
-
-            // Recent Activities
-            const recentSafetyReportsQuery = query(
-                collection(db, `companies/${company.id}/safety-reports`),
-                orderBy('filedDate', 'desc'),
-                limit(3)
-            );
-            const recentSafetyReportsSnapshot = await getDocs(recentSafetyReportsQuery);
-            const activitiesList = recentSafetyReportsSnapshot.docs.map(doc => {
-                const report = doc.data();
-                return {
-                    type: 'New Safety Report',
-                    description: `${report.reportNumber} - ${report.heading}`,
-                    time: format(parseISO(report.filedDate), 'MMM d, yyyy'),
-                    icon: <ShieldAlert className="h-5 w-5 text-destructive" />
-                }
-            });
-            setRecentActivities(activitiesList);
-
-        } catch (error) {
-            console.error("Error fetching dashboard data:", error);
+    } catch (error: any) {
+        console.error("Error creating company:", error);
+        const errorCode = error.code;
+        let errorMessage = "An unknown error occurred.";
+        if (errorCode === 'auth/email-already-in-use') {
+            errorMessage = "This email address is already in use by another account.";
+        } else if (errorCode === 'auth/weak-password') {
+            errorMessage = "The password is too weak. Please use at least 8 characters.";
         }
-    };
-    fetchDashboardData();
-  }, [company]);
+        toast({
+            variant: 'destructive',
+            title: "Registration Failed",
+            description: errorMessage,
+        });
+    }
+  };
+
+  const handleEditCompany = async (updatedData: Partial<Company>, logoFile?: File) => {
+    if (!editingCompany) return;
+
+    let logoUrl = editingCompany.logoUrl;
+    if (logoFile) {
+        const reader = new FileReader();
+        reader.readAsDataURL(logoFile);
+        await new Promise<void>((resolve, reject) => {
+            reader.onload = () => {
+                logoUrl = reader.result as string;
+                resolve();
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    }
+
+    const finalData = { ...editingCompany, ...updatedData, logoUrl };
+    
+    const success = await updateCompany(finalData);
+
+    if (success) {
+      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalData : c));
+      toast({
+            title: 'Company Updated',
+            description: `${editingCompany.name} has been updated.`,
+      });
+      setIsEditDialogOpen(false);
+      setEditingCompany(null);
+    } else {
+       toast({ variant: 'destructive', title: 'Error', description: 'Could not save company updates.'});
+    }
+  };
+
+  const openEditDialog = (company: Company) => {
+    setEditingCompany(company);
+    setIsEditDialogOpen(true);
+  }
 
 
-  if (loading || !user) {
-      return (
-          <main className="flex items-center justify-center min-h-screen">
-              <p>Loading...</p>
-          </main>
-      )
+  if (loading || !user || !user.permissions.includes('Super User')) {
+    return (
+      <main className="flex-1 flex items-center justify-center">
+        <p>Loading or insufficient permissions...</p>
+      </main>
+    );
   }
 
   return (
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Link href={stat.href} key={stat.title}>
-              <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  {stat.icon}
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+      <main className="flex-1 p-4 md:p-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Registered Companies</CardTitle>
+                <CardDescription>
+                A list of all organizations registered in the system.
+                </CardDescription>
+            </div>
+             <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Company
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Register New Company</DialogTitle>
+                        <DialogDescription>
+                            Set up a new portal for an organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewCompanyForm onSubmit={handleNewCompany} />
+                </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company Name</TableHead>
+                  <TableHead>Trademark</TableHead>
+                  <TableHead>Enabled Features</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {companies.map((company) => (
+                  <TableRow key={company.id}>
+                    <TableCell className="font-medium flex items-center gap-2">
+                        {company.logoUrl ? <img src={company.logoUrl} alt={company.name} className="h-6 w-6 object-contain"/> : <Rocket className="h-5 w-5 text-primary" />}
+                        {company.name}
+                    </TableCell>
+                    <TableCell>{company.trademark}</TableCell>
+                    <TableCell>
+                      {company.enabledFeatures?.map(feature => (
+                        <Badge key={feature} variant="secondary">{feature}</Badge>
+                      ))}
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <Button variant="ghost" size="sm" onClick={() => openEditDialog(company)}>
+                            <Edit className="h-4 w-4" />
+                       </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Schedule</CardTitle>
-            </CardHeader>
-            <CardContent>
-               <ul className="space-y-4">
-                {upcomingBookings.length > 0 ? (
-                    upcomingBookings.map(booking => (
-                        <li key={booking.id} className="flex items-center space-x-4">
-                            <div className="p-2 bg-accent/20 rounded-lg">{booking.icon}</div>
-                            <div>
-                                <p className="font-medium">{booking.description}</p>
-                                <p className="text-sm text-muted-foreground">{booking.details}</p>
-                            </div>
-                        </li>
-                    ))
-                ) : (
-                    <p className="text-sm text-muted-foreground">No upcoming bookings.</p>
-                )}
-               </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-4">
-                {recentActivities.length > 0 ? recentActivities.map((activity, index) => (
-                  <li key={index} className="flex items-center space-x-4">
-                    <div className="p-2 bg-muted rounded-lg">{activity.icon}</div>
-                    <div>
-                        <p className="font-medium">{activity.type}</p>
-                        <p className="text-sm text-muted-foreground">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </li>
-                )) : <p className="text-sm text-muted-foreground">No recent activity.</p>}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+        {editingCompany && (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Company: {editingCompany.name}</DialogTitle>
+                        <DialogDescription>
+                           Update the details for this organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <EditCompanyForm company={editingCompany} onSubmit={handleEditCompany} />
+                </DialogContent>
+            </Dialog>
+        )}
       </main>
   );
 }
 
-Dashboard.title = 'Dashboard';
-export default Dashboard;
+CompaniesPage.title = 'Company Management';
+export default CompaniesPage;

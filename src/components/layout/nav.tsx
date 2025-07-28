@@ -45,7 +45,7 @@ const navItems: {
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
 }[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'] },
@@ -59,7 +59,6 @@ const navItems: {
 
 const settingsNavItems = [
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
-    { href: '/settings/companies', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
 
