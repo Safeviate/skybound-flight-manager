@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "skybound-flight-manager"
+  },
+  "targets": {
+    "skybound-flight-manager": {
+      "hosting": {
+        "app": [
+          "live"
+        ]
+      }
+    }
+  }
+}
