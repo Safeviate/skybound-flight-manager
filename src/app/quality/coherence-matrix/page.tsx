@@ -184,7 +184,7 @@ export default function CoherenceMatrixPage() {
 
     const getAuditDataForRegulation = (regulation: string) => {
         const relevantAudits = audits.filter(audit =>
-            audit.checklistItems.some(item => item.regulationReference === regulation)
+            audit.checklistItems && audit.checklistItems.some(item => item.regulationReference === regulation)
         );
 
         if (relevantAudits.length === 0) {
