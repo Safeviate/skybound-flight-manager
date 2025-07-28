@@ -446,5 +446,3 @@ function CompaniesPage() {
 
 CompaniesPage.title = 'Company Management';
 export default CompaniesPage;
-
-    
