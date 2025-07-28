@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
+import { CoherenceMatrix } from './coherence-matrix';
 
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -315,11 +316,12 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
                 <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
                 <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
+                <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -491,6 +493,9 @@ function QualityPage() {
             </TabsContent>
             <TabsContent value="cap-tracker" className="mt-4">
                 <CapTracker audits={audits} />
+            </TabsContent>
+             <TabsContent value="coherence-matrix" className="mt-4">
+                <CoherenceMatrix />
             </TabsContent>
         </Tabs>
       </main>

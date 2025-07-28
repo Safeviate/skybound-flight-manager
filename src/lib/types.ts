@@ -406,6 +406,13 @@ export type AuditChecklist = {
     auditor?: string;
 }
 
+export type SafetyObjective = {
+  id: string;
+  companyId: string;
+  objective: string;
+  target: string; // e.g., "Reduce by 10% in 2024"
+  relatedHazardArea: AuditArea;
+};
 
 export const VIEW_ALL_PAGES: Permission[] = [
     'Aircraft:View',
