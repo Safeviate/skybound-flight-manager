@@ -9,7 +9,7 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCcw } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCcw, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,7 +26,6 @@ import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
-import { CoherenceMatrix } from './coherence-matrix';
 
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -316,12 +315,11 @@ function QualityPage() {
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="audits">Audits</TabsTrigger>
                 <TabsTrigger value="checklists">Audit Checklists</TabsTrigger>
                 <TabsTrigger value="cap-tracker">CAP Tracker</TabsTrigger>
-                <TabsTrigger value="coherence-matrix">Coherence Matrix</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-8 mt-4">
                  <Card>
@@ -361,6 +359,25 @@ function QualityPage() {
                         </CardContent>
                     </Card>
                 </div>
+                 <div className="grid gap-8 md:grid-cols-1">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Coherence Matrix</CardTitle>
+                            <CardDescription>A tabulated document listing applicable regulatory requirements and corresponding compliance processes.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <p className="text-sm text-muted-foreground">The full coherence matrix provides a detailed view of all regulatory requirements, the processes in place to ensure compliance, the responsible manager for each process, and audit validation details. This is a key tool for demonstrating regulatory compliance to the CAA.</p>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild>
+                                <Link href="/quality/coherence-matrix">
+                                    <FileText className="mr-2 h-4 w-4"/>
+                                    View Full Coherence Matrix
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                 </div>
             </TabsContent>
             <TabsContent value="audits" className="mt-4">
                 <Card>
@@ -493,14 +510,3 @@ function QualityPage() {
             </TabsContent>
             <TabsContent value="cap-tracker" className="mt-4">
                 <CapTracker audits={audits} />
-            </TabsContent>
-             <TabsContent value="coherence-matrix" className="mt-4">
-                <CoherenceMatrix />
-            </TabsContent>
-        </Tabs>
-      </main>
-  );
-}
-
-QualityPage.title = 'Quality Assurance';
-export default QualityPage;

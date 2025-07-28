@@ -406,14 +406,6 @@ export type AuditChecklist = {
     auditor?: string;
 }
 
-export type SafetyObjective = {
-  id: string;
-  companyId: string;
-  objective: string;
-  target: string; // e.g., "Reduce by 10% in 2024"
-  relatedHazardArea: AuditArea;
-};
-
 export const VIEW_ALL_PAGES: Permission[] = [
     'Aircraft:View',
     'Bookings:View',
@@ -535,6 +527,17 @@ export type Alert = {
   relatedLink?: string;
 };
 
+export type ComplianceItem = {
+    id: string;
+    companyId: string;
+    regulation: string;
+    process: string;
+    responsibleManager: string;
+    lastAuditDate?: string;
+    nextAuditDate?: string;
+    findings?: string;
+};
+
 // This type was moved here from `app/checklists/page.tsx`
 export type Checklist = {
   id: string;
@@ -545,3 +548,7 @@ export type Checklist = {
   templateId?: string; // ID of the master template
   aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };
+```
+  </change>
+  <change>
+    <file>/src/lib/data-provider
