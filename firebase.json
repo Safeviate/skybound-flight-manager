@@ -1,5 +1,9 @@
 {
   "firestore": {
     "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "source": ".",
+    "frameworksBackend": {}
   }
 }
