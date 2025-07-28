@@ -1,10 +1,10 @@
 'use client' // Error components must be Client Components
-
+ 
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle } from 'lucide-react'
-
+ 
 export default function Error({
   error,
   reset,
@@ -16,7 +16,7 @@ export default function Error({
     // Log the error to an error reporting service
     console.error(error)
   }, [error])
-
+ 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-lg text-center">
