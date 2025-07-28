@@ -234,6 +234,17 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
         name: status,
         value: reportsByStatus[status],
     }));
+
+    const reportsByDepartment = reports.reduce((acc, report) => {
+        const department = report.department || 'Uncategorized';
+        acc[department] = (acc[department] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const reportsByDepartmentData = Object.keys(reportsByDepartment).map(department => ({
+        name: department,
+        value: reportsByDepartment[department],
+    }));
     
     const riskLevels = risks.filter(r => r.status === 'Open').reduce((acc, risk) => {
         const level = getRiskLevel(risk.riskScore);
@@ -254,6 +265,14 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
         'Under Review': 'hsl(var(--warning))',
         'Closed': 'hsl(var(--success))',
     };
+
+    const departmentColors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))',
+    ];
     
     const calculateAvgTimeToClose = () => {
         const closedReports = reports.filter(r => r.status === 'Closed' && r.closedDate);
@@ -359,29 +378,50 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
                     </CardContent>
                 </Card>
             </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Open Risk Level Distribution</CardTitle>
-                    <CardDescription>Number of open risks in each risk category.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={riskLevelsData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="count" name="Number of Risks">
-                                {riskLevelsData.map((entry, index) => {
-                                    const score = {Low: 1, Medium: 5, High: 10, Extreme: 4}[entry.name] || 1;
-                                    return <Cell key={`cell-${index}`} fill={getRiskScoreColor(score)} />
-                                })}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
+             <div className="grid gap-8 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Open Risk Level Distribution</CardTitle>
+                        <CardDescription>Number of open risks in each risk category.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={riskLevelsData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="count" name="Number of Risks">
+                                    {riskLevelsData.map((entry, index) => {
+                                        const score = {Low: 1, Medium: 5, High: 10, Extreme: 4}[entry.name] || 1;
+                                        return <Cell key={`cell-${index}`} fill={getRiskScoreColor(score)} />
+                                    })}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Reports by Department</CardTitle>
+                        <CardDescription>Breakdown of reports by operational area.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                           <PieChart>
+                                <Pie data={reportsByDepartmentData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                                    {reportsByDepartmentData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={departmentColors[index % departmentColors.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };
@@ -928,5 +968,6 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
 
 
