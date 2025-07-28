@@ -517,7 +517,7 @@ export type Alert = {
   id: string;
   companyId?: string;
   number?: number;
-  type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request';
+  type: 'Red Tag' | 'Yellow Tag' | 'Task' | 'Signature Request' | 'System Health';
   title: string;
   description: string;
   author: string;

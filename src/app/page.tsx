@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,24 +8,101 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2 } from 'lucide-react';
+import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2, AlertTriangle, Activity, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewCompanyForm } from '@/app/corporate/new-company-form';
 import type { Company, User as CompanyUser, SafetyReport } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, collection, getDocs, updateDoc, query, where, getCountFromServer } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, updateDoc, query, where, getCountFromServer, Timestamp, limit, orderBy } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import config from '@/config';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { subDays, formatDistanceToNow } from 'date-fns';
 
 interface CompanyWithStats extends Company {
   userCount: number;
   aircraftCount: number;
   openSafetyReports: number;
+  lastBookingDate?: Timestamp;
+}
+
+const SystemHealth = ({ companies }: { companies: CompanyWithStats[] }) => {
+  const [healthAlerts, setHealthAlerts] = useState<
+    { level: 'warning' | 'info'; message: string; companyName: string }[]
+  >([]);
+
+  useEffect(() => {
+    const alerts = [];
+    const thirtyDaysAgo = subDays(new Date(), 30);
+
+    for (const company of companies) {
+      // Alert for high number of open safety reports
+      if (company.openSafetyReports > 5) {
+        alerts.push({
+          level: 'warning' as const,
+          message: `has ${company.openSafetyReports} open safety reports, which is higher than average.`,
+          companyName: company.name,
+        });
+      }
+
+      // Alert for inactivity
+      if (company.lastBookingDate && company.lastBookingDate.toDate() < thirtyDaysAgo) {
+        alerts.push({
+          level: 'info' as const,
+          message: `has had no new bookings in over 30 days. Last booking was ${formatDistanceToNow(company.lastBookingDate.toDate(), { addSuffix: true })}.`,
+          companyName: company.name,
+        });
+      }
+    }
+    setHealthAlerts(alerts);
+  }, [companies]);
+
+  if (healthAlerts.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>System Health</CardTitle>
+          <CardDescription>Automated checks for operational issues across all companies.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-24">
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <BellOff className="h-5 w-5" />
+                <p>No system health alerts at this time.</p>
+            </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-destructive/50 bg-destructive/5">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle />
+            System Health Alerts
+        </CardTitle>
+        <CardDescription>
+            The following potential issues require your attention.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2">
+            {healthAlerts.map((alert, index) => (
+                <li key={index} className="flex items-start gap-3">
+                    <Activity className={`h-4 w-4 mt-1 ${alert.level === 'warning' ? 'text-destructive' : 'text-primary'}`} />
+                    <p className="text-sm">
+                        <span className="font-semibold">{alert.companyName}</span> {alert.message}
+                    </p>
+                </li>
+            ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
 }
 
 function CompaniesPage() {
@@ -43,17 +121,24 @@ function CompaniesPage() {
       const aircraftRef = collection(db, `companies/${companyId}/aircraft`);
       const safetyReportsRef = collection(db, `companies/${companyId}/safety-reports`);
       const openSafetyReportsQuery = query(safetyReportsRef, where('status', '!=', 'Closed'));
+      
+      const bookingsRef = collection(db, `companies/${companyId}/bookings`);
+      const lastBookingQuery = query(bookingsRef, orderBy('date', 'desc'), limit(1));
 
-      const [userSnapshot, aircraftSnapshot, openReportsSnapshot] = await Promise.all([
+      const [userSnapshot, aircraftSnapshot, openReportsSnapshot, lastBookingSnapshot] = await Promise.all([
         getCountFromServer(usersRef),
         getCountFromServer(aircraftRef),
         getCountFromServer(openSafetyReportsQuery),
+        getDocs(lastBookingQuery),
       ]);
+      
+      const lastBookingDate = lastBookingSnapshot.empty ? undefined : lastBookingSnapshot.docs[0].data().date;
 
       return {
         userCount: userSnapshot.data().count,
         aircraftCount: aircraftSnapshot.data().count,
         openSafetyReports: openReportsSnapshot.data().count,
+        lastBookingDate: lastBookingDate ? Timestamp.fromDate(new Date(lastBookingDate)) : undefined,
       };
     } catch (e) {
       console.error(`Failed to fetch stats for company ${companyId}`, e);
@@ -243,6 +328,7 @@ function CompaniesPage() {
                 </CardContent>
             </Card>
         </div>
+        <SystemHealth companies={companies} />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
