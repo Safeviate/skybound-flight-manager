@@ -1,3 +1,4 @@
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
@@ -7,5 +8,4 @@ runConfig:
   maxInstances: 1
   # Set the location for the backend server.
   # us-central1 is the default location for Firestore.
-  location: us-central1
-
+  location: europe-west4

@@ -1,9 +1,12 @@
+
 {
   "firestore": {
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
     "source": ".",
-    "frameworksBackend": {}
+    "frameworksBackend": {
+      "name": "skybound-flight-manager"
+    }
   }
 }
