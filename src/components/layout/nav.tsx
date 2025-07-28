@@ -33,6 +33,7 @@ import {
   Building,
   Database,
   ListChecks,
+  Activity,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -54,8 +55,12 @@ const navItems: {
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'] },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'] },
-  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
 ];
+
+const reportsNavItems = [
+    { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
+    { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
+]
 
 const settingsNavItems = [
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
@@ -101,6 +106,7 @@ export default function Nav() {
   }
 
   const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
+  const visibleReportsItems = reportsNavItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
   const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
 
   return (
@@ -131,6 +137,25 @@ export default function Nav() {
               </Link>
             </SidebarMenuItem>
           ))}
+          {visibleReportsItems.length > 0 && (
+            <SidebarMenuItem>
+                <div className="px-3 pt-2 pb-1 text-xs font-semibold text-sidebar-foreground/70">Reports</div>
+                {visibleReportsItems.map((item) => (
+                     <Link key={item.href} href={item.href} passHref>
+                        <SidebarMenuButton
+                            as="a"
+                            isActive={pathname === item.href}
+                            tooltip={{ children: item.label }}
+                            onClick={handleLinkClick}
+                            className="ml-2"
+                        >
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                ))}
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
