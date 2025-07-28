@@ -69,8 +69,11 @@ function MyDashboardPage() {
         }
       };
       fetchData();
+    } else if (!loading && !company && user?.permissions.includes('Super User')) {
+        // If super user lands here without a company context, send them to the main companies page
+        router.push('/');
     }
-  }, [user, company, getUnacknowledgedAlerts]);
+  }, [user, company, getUnacknowledgedAlerts, loading, router]);
 
   if (loading || dataLoading) {
     return (

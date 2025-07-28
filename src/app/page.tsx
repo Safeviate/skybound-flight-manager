@@ -7,60 +7,97 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal } from 'lucide-react';
+import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewCompanyForm } from '@/app/corporate/new-company-form';
-import type { Company, User } from '@/lib/types';
+import type { Company, User as CompanyUser, SafetyReport } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, updateDoc, query, where, getCountFromServer } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import config from '@/config';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+interface CompanyWithStats extends Company {
+  userCount: number;
+  aircraftCount: number;
+  openSafetyReports: number;
+}
+
 function CompaniesPage() {
-  const { user, loading, setCompany, updateCompany } = useUser();
+  const { user, loading, setCompany: setGlobalCompany, updateCompany } = useUser();
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithStats[]>([]);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const { toast } = useToast();
 
-  async function fetchCompanies() {
-      if (config.useMockData) {
-          // This path is for mock data, which we are not using.
-          // setCompanies(initialCompanyData); 
-          return;
-      }
-      try {
-        const companiesCol = collection(db, 'companies');
-        const companySnapshot = await getDocs(companiesCol);
-        const companyList = companySnapshot.docs.map(doc => doc.data() as Company);
-        setCompanies(companyList);
-      } catch (e) {
-        console.error("Error fetching companies: ", e);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not fetch company data from the database.',
-        });
-      }
-  }
+  const fetchStatsForCompany = async (companyId: string): Promise<Omit<CompanyWithStats, keyof Company>> => {
+    try {
+      const usersRef = collection(db, `companies/${companyId}/users`);
+      const aircraftRef = collection(db, `companies/${companyId}/aircraft`);
+      const safetyReportsRef = collection(db, `companies/${companyId}/safety-reports`);
+      const openSafetyReportsQuery = query(safetyReportsRef, where('status', '!=', 'Closed'));
+
+      const [userSnapshot, aircraftSnapshot, openReportsSnapshot] = await Promise.all([
+        getCountFromServer(usersRef),
+        getCountFromServer(aircraftRef),
+        getCountFromServer(openSafetyReportsQuery),
+      ]);
+
+      return {
+        userCount: userSnapshot.data().count,
+        aircraftCount: aircraftSnapshot.data().count,
+        openSafetyReports: openReportsSnapshot.data().count,
+      };
+    } catch (e) {
+      console.error(`Failed to fetch stats for company ${companyId}`, e);
+      return { userCount: 0, aircraftCount: 0, openSafetyReports: 0 };
+    }
+  };
+
+  const fetchCompanies = async () => {
+    setIsDataLoading(true);
+    try {
+      const companiesCol = collection(db, 'companies');
+      const companySnapshot = await getDocs(companiesCol);
+      const companyList = companySnapshot.docs.map(doc => doc.data() as Company);
+      
+      const companiesWithStats = await Promise.all(
+        companyList.map(async (company) => {
+          const stats = await fetchStatsForCompany(company.id);
+          return { ...company, ...stats };
+        })
+      );
+      
+      setCompanies(companiesWithStats);
+    } catch (e) {
+      console.error("Error fetching companies: ", e);
+      toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not fetch company data from the database.',
+      });
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && (!user || !user.permissions.includes('Super User'))) {
-      router.push('/');
+      router.push('/my-dashboard');
     } else if (user) {
         fetchCompanies();
     }
   }, [user, loading, router]);
 
 
-  const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
+  const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<CompanyUser, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
     const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
     try {
@@ -72,7 +109,7 @@ function CompaniesPage() {
         await setDoc(companyDocRef, finalCompanyData);
         
         const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
-        const finalUserData: Omit<User, 'password'> = {
+        const finalUserData: Omit<CompanyUser, 'password'> = {
             ...adminData,
             id: newUserId,
             companyId: companyId,
@@ -86,7 +123,7 @@ function CompaniesPage() {
             description: `The company "${newCompanyData.name}" has been created.`
         });
         
-        setCompanies(prev => [...prev, finalCompanyData]);
+        setCompanies(prev => [...prev, { ...finalCompanyData, userCount: 1, aircraftCount: 0, openSafetyReports: 0 }]);
         setIsNewDialogOpen(false);
 
     } catch (error: any) {
@@ -127,7 +164,7 @@ function CompaniesPage() {
     const success = await updateCompany(finalData);
 
     if (success) {
-      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalData : c));
+      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...finalData } : c));
       toast({
             title: 'Company Updated',
             description: `${editingCompany.name} has been updated.`,
@@ -138,23 +175,74 @@ function CompaniesPage() {
        toast({ variant: 'destructive', title: 'Error', description: 'Could not save company updates.'});
     }
   };
+  
+  const handleLoginAs = (company: CompanyWithStats) => {
+    toast({
+        title: `Switching to ${company.name}`,
+        description: `This would log you in as an admin for this company. (Feature not fully implemented)`,
+    });
+    setGlobalCompany(company);
+    router.push('/my-dashboard');
+  }
 
   const openEditDialog = (company: Company) => {
     setEditingCompany(company);
     setIsEditDialogOpen(true);
   }
 
+  const totalUsers = companies.reduce((sum, c) => sum + c.userCount, 0);
+  const totalAircraft = companies.reduce((sum, c) => sum + c.aircraftCount, 0);
+  const totalOpenReports = companies.reduce((sum, c) => sum + c.openSafetyReports, 0);
 
-  if (loading || !user || !user.permissions.includes('Super User')) {
+  if (loading || isDataLoading || !user || !user.permissions.includes('Super User')) {
     return (
       <main className="flex-1 flex items-center justify-center">
-        <p>Loading or insufficient permissions...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4">Loading system data...</p>
       </main>
     );
   }
 
   return (
-      <main className="flex-1 p-4 md:p-8">
+      <main className="flex-1 p-4 md:p-8 space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{companies.length}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalUsers}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Aircraft</CardTitle>
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalAircraft}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
+                    <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalOpenReports}</div>
+                </CardContent>
+            </Card>
+        </div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -186,8 +274,9 @@ function CompaniesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Company Name</TableHead>
-                  <TableHead>Trademark</TableHead>
-                  <TableHead>Enabled Features</TableHead>
+                  <TableHead>Users</TableHead>
+                  <TableHead>Aircraft</TableHead>
+                  <TableHead>Open Reports</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -198,16 +287,31 @@ function CompaniesPage() {
                         {company.logoUrl ? <img src={company.logoUrl} alt={company.name} className="h-6 w-6 object-contain"/> : <Rocket className="h-5 w-5 text-primary" />}
                         {company.name}
                     </TableCell>
-                    <TableCell>{company.trademark}</TableCell>
+                    <TableCell>{company.userCount}</TableCell>
+                    <TableCell>{company.aircraftCount}</TableCell>
                     <TableCell>
-                      {company.enabledFeatures?.map(feature => (
-                        <Badge key={feature} variant="secondary">{feature}</Badge>
-                      ))}
+                        <Badge variant={company.openSafetyReports > 0 ? 'destructive' : 'success'}>
+                            {company.openSafetyReports}
+                        </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="sm" onClick={() => openEditDialog(company)}>
-                            <Edit className="h-4 w-4" />
-                       </Button>
+                       <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onSelect={() => handleLoginAs(company)}>
+                                    <User className="mr-2 h-4 w-4"/>
+                                    Login As Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => openEditDialog(company)}>
+                                    <Edit className="mr-2 h-4 w-4"/>
+                                    Edit Company
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
