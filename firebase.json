@@ -6,7 +6,8 @@
   "hosting": {
     "source": ".",
     "frameworksBackend": {
-      "name": "skybound-flight-manager"
+      "name": "skybound-flight-manager",
+      "region": "europe-west4"
     }
   }
 }

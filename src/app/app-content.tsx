@@ -7,11 +7,13 @@ import Nav from '@/components/layout/nav';
 import Footer from '@/components/layout/footer';
 import { useUser } from '@/context/user-provider';
 import Header from '@/components/layout/header';
-import { Children } from 'react';
+import React, { Children } from 'react';
 
 // A helper to extract the title prop from page components
 function getPageTitle(children: React.ReactNode): string {
-    const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
+    const childrenArray = Children.toArray(children);
+    const child = childrenArray[0] as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
+    
     if (child && child.type && (child.type as any).title) {
         return (child.type as any).title;
     }
@@ -36,7 +38,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
   const pageTitle = getPageTitle(children);
-  const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
+  const childArray = Children.toArray(children);
+  const child = childArray[0] as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
   const headerContent = child?.type && (child.type as any).headerContent;
 
   
