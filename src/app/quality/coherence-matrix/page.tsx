@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { ComplianceItem, User } from '@/lib/types';
+import type { ComplianceItem, User, QualityAudit } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -22,7 +22,7 @@ import { z } from 'zod';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isAfter } from 'date-fns';
 import { cn } from '@/lib/utils.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { complianceData as seedComplianceData } from '@/lib/data-provider';
@@ -32,9 +32,7 @@ const complianceItemSchema = z.object({
   regulation: z.string().min(3, 'Regulation is required.'),
   process: z.string().min(5, 'Process description is required.'),
   responsibleManager: z.string().min(1, 'Responsible Manager is required.'),
-  lastAuditDate: z.date().optional().nullable(),
   nextAuditDate: z.date().optional().nullable(),
-  findings: z.string().optional(),
 });
 
 type ComplianceFormValues = z.infer<typeof complianceItemSchema>;
@@ -53,21 +51,18 @@ const ComplianceItemForm = ({
     defaultValues: existingItem
       ? {
           ...existingItem,
-          lastAuditDate: existingItem.lastAuditDate ? parseISO(existingItem.lastAuditDate) : null,
           nextAuditDate: existingItem.nextAuditDate ? parseISO(existingItem.nextAuditDate) : null,
         }
       : {
           regulation: '',
           process: '',
           responsibleManager: '',
-          findings: '',
         },
   });
 
   const handleFormSubmit = (data: ComplianceFormValues) => {
     onSubmit({
         ...data,
-        lastAuditDate: data.lastAuditDate ? format(data.lastAuditDate, 'yyyy-MM-dd') : undefined,
         nextAuditDate: data.nextAuditDate ? format(data.nextAuditDate, 'yyyy-MM-dd') : undefined,
     });
   };
@@ -118,32 +113,6 @@ const ComplianceItemForm = ({
         <div className="grid grid-cols-2 gap-4">
             <FormField
                 control={form.control}
-                name="lastAuditDate"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2">
-                        <FormLabel>Last Audit Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn( "w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                                >
-                                {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus/>
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
                 name="nextAuditDate"
                 render={({ field }) => (
                     <FormItem className="flex flex-col pt-2">
@@ -169,17 +138,6 @@ const ComplianceItemForm = ({
                 )}
             />
         </div>
-         <FormField
-          control={form.control}
-          name="findings"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Audit Findings (Reference)</FormLabel>
-              <FormControl><Textarea placeholder="Reference any audit findings, e.g., 'NCR-004'" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="flex justify-end pt-2">
           <Button type="submit">{existingItem ? 'Save Changes' : 'Add Item'}</Button>
@@ -194,6 +152,7 @@ export default function CoherenceMatrixPage() {
     const { toast } = useToast();
     const [complianceItems, setComplianceItems] = React.useState<ComplianceItem[]>([]);
     const [personnel, setPersonnel] = React.useState<User[]>([]);
+    const [audits, setAudits] = React.useState<QualityAudit[]>([]);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingItem, setEditingItem] = React.useState<ComplianceItem | null>(null);
 
@@ -202,14 +161,17 @@ export default function CoherenceMatrixPage() {
         try {
             const complianceQuery = query(collection(db, `companies/${company.id}/compliance-matrix`));
             const personnelQuery = query(collection(db, `companies/${company.id}/users`));
+            const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
 
-            const [complianceSnapshot, personnelSnapshot] = await Promise.all([
+            const [complianceSnapshot, personnelSnapshot, auditsSnapshot] = await Promise.all([
                 getDocs(complianceQuery),
-                getDocs(personnelQuery)
+                getDocs(personnelQuery),
+                getDocs(auditsSnapshot)
             ]);
 
             setComplianceItems(complianceSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ComplianceItem)));
             setPersonnel(personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+            setAudits(auditsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as QualityAudit)))
         } catch (error) {
             console.error("Error fetching data:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load coherence matrix data.' });
@@ -219,6 +181,30 @@ export default function CoherenceMatrixPage() {
     React.useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    const getAuditDataForRegulation = (regulation: string) => {
+        const relevantAudits = audits.filter(audit =>
+            audit.checklistItems.some(item => item.regulationReference === regulation)
+        );
+
+        if (relevantAudits.length === 0) {
+            return { lastAuditDate: 'N/A', findings: 'None' };
+        }
+
+        const mostRecentAudit = relevantAudits.reduce((latest, current) => {
+            return isAfter(parseISO(current.date), parseISO(latest.date)) ? current : latest;
+        });
+        
+        const findings = mostRecentAudit.nonConformanceIssues
+            .filter(issue => issue.regulationReference === regulation)
+            .map(issue => issue.id.substring(0,8)) // Or some identifier
+            .join(', ');
+
+        return {
+            lastAuditDate: format(parseISO(mostRecentAudit.date), 'dd MMM yyyy'),
+            findings: findings || 'None',
+        };
+    };
 
     const canEdit = user?.permissions.includes('Quality:Edit') || user?.permissions.includes('Super User');
 
@@ -324,14 +310,16 @@ export default function CoherenceMatrixPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {complianceItems.length > 0 ? complianceItems.map(item => (
+                            {complianceItems.length > 0 ? complianceItems.map(item => {
+                                const { lastAuditDate, findings } = getAuditDataForRegulation(item.regulation);
+                                return (
                                 <TableRow key={item.id}>
                                     <TableCell className="font-semibold">{item.regulation}</TableCell>
                                     <TableCell className="whitespace-pre-wrap">{item.process}</TableCell>
                                     <TableCell>{item.responsibleManager}</TableCell>
-                                    <TableCell>{item.lastAuditDate ? format(parseISO(item.lastAuditDate), 'dd MMM yyyy') : 'N/A'}</TableCell>
+                                    <TableCell>{lastAuditDate}</TableCell>
                                     <TableCell>{item.nextAuditDate ? format(parseISO(item.nextAuditDate), 'dd MMM yyyy') : 'N/A'}</TableCell>
-                                    <TableCell>{item.findings || 'None'}</TableCell>
+                                    <TableCell>{findings}</TableCell>
                                     {canEdit && (
                                         <TableCell className="text-right">
                                              <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setIsDialogOpen(true); }}>
@@ -343,7 +331,7 @@ export default function CoherenceMatrixPage() {
                                         </TableCell>
                                     )}
                                 </TableRow>
-                            )) : (
+                            )}) : (
                                 <TableRow>
                                     <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">No compliance items have been added.</TableCell>
                                 </TableRow>
