@@ -8,7 +8,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2, AlertTriangle, Activity, BellOff } from 'lucide-react';
+import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2, AlertTriangle, Activity, BellOff, GitPullRequest } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewCompanyForm } from '@/app/corporate/new-company-form';
@@ -328,7 +328,28 @@ function CompaniesPage() {
                 </CardContent>
             </Card>
         </div>
-        <SystemHealth companies={companies} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <SystemHealth companies={companies} />
+          </div>
+          <Card>
+            <CardHeader>
+                <CardTitle>System Management</CardTitle>
+                <CardDescription>Manage deployments and rollbacks.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="w-full">
+                    <Button className="w-full">
+                        <GitPullRequest className="mr-2 h-4 w-4" />
+                        Manage Deployments
+                    </Button>
+                </a>
+                <p className="text-xs text-muted-foreground mt-2">
+                    This will open the Firebase App Hosting console where you can view deployment history and perform rollbacks.
+                </p>
+            </CardContent>
+          </Card>
+        </div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -425,3 +446,5 @@ function CompaniesPage() {
 
 CompaniesPage.title = 'Company Management';
 export default CompaniesPage;
+
+    
