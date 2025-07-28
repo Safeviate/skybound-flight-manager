@@ -19,19 +19,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import type { Aircraft, SafetyReport, SafetyReportType } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Bot, Loader2, AlertTriangle, CheckCircle, Info, BarChart } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { analyzeSafetyReportTone } from '@/ai/flows/analyze-safety-report-tone';
+import type { AnalyzeSafetyReportToneOutput } from '@/ai/flows/analyze-safety-report-tone';
 
 const flightOpsSubCategories = [
     'Airspace Violation',
@@ -110,11 +112,45 @@ const getReportTypeAbbreviation = (type: SafetyReportType) => {
     }
 }
 
+const AnalysisResult = ({ data }: { data: AnalyzeSafetyReportToneOutput }) => {
+    const resultItems = [
+        { title: "Overall Tone", value: data.overallTone, icon: <Info className="text-primary"/> },
+        { title: "Severity Level", value: data.severityLevel, icon: <AlertTriangle className="text-destructive"/> },
+        { title: "Potential Safety Issues", value: data.potentialSafetyIssues, icon: <AlertTriangle className="text-destructive"/> },
+        { title: "Areas for Investigation", value: data.areasForInvestigation, icon: <Info className="text-primary"/> },
+        { title: "Compliance Concerns", value: data.complianceConcerns, icon: <CheckCircle className="text-green-600"/> },
+        { title: "Impact on Operations", value: data.impactOnOperations, icon: <BarChart className="text-primary"/> },
+    ];
+  return (
+    <Card className="bg-muted/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+            <Bot /> AI Analysis
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4 md:grid-cols-2 text-sm">
+        {resultItems.map(item => (
+            <div key={item.title} className="flex items-start space-x-3">
+                <div className="flex-shrink-0 mt-0.5">{item.icon}</div>
+                <div>
+                    <h3 className="font-semibold">{item.title}</h3>
+                    <p className="text-muted-foreground">{item.value}</p>
+                </div>
+            </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReportFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [airportData, setAirportData] = useState<any[]>([]); // Assuming airport data structure
+  
+  const [analysis, setAnalysis] = useState<AnalyzeSafetyReportToneOutput | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -134,6 +170,43 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         location: '',
     }
   });
+  
+  const detailsValue = form.watch('details');
+
+  const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    return (...args: Parameters<F>): void => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  };
+
+  const triggerAnalysis = useCallback(debounce(async (reportText: string) => {
+    if (reportText.length < 50) {
+        setAnalysis(null);
+        return;
+    };
+    setIsAnalyzing(true);
+    try {
+        const result = await analyzeSafetyReportTone({ reportText });
+        setAnalysis(result);
+    } catch (error) {
+        console.error("AI analysis failed:", error);
+        toast({ variant: 'destructive', title: 'AI Analysis Error', description: 'Could not analyze report text.' });
+    } finally {
+        setIsAnalyzing(false);
+    }
+  }, 1000), [toast]);
+
+
+  useEffect(() => {
+      triggerAnalysis(detailsValue);
+  }, [detailsValue, triggerAnalysis]);
+
 
   useEffect(() => {
     async function fetchData() {
@@ -143,10 +216,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         const aircraftSnapshot = await getDocs(aircraftQuery);
         setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
         
-        // You might have an 'airports' collection or similar
-        // const airportQuery = query(collection(db, `companies/${company.id}/airports`));
-        // const airportSnapshot = await getDocs(airportQuery);
-        // setAirportData(airportSnapshot.docs.map(doc => doc.data()));
       } catch (error) {
         console.error("Error fetching data for form:", error);
       }
@@ -496,6 +565,18 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     />
                 </CardContent>
             </Card>
+
+            {(isAnalyzing || analysis) && (
+                <div className="relative">
+                    {isAnalyzing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                            <span className="ml-2">Analyzing...</span>
+                        </div>
+                    )}
+                    {analysis && <AnalysisResult data={analysis} />}
+                </div>
+            )}
             
              <Card>
                 <CardHeader>
