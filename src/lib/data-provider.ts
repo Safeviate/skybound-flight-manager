@@ -134,9 +134,17 @@ export const complianceData: Omit<ComplianceItem, 'id'|'companyId'>[] = [
     },
      // Part 141 - Subpart 8: Quality and Safety Management
     {
-        regulation: 'CAR 141.08.1 & .2',
+        regulation: 'CAR 141.08.1',
         process: 'A Safety Management System (SMS) and Quality Management System (QMS) are established and maintained as per the respective manuals. The systems are integrated to ensure continuous improvement.',
         responsibleManager: 'Quality Manager',
+        lastAuditDate: '2024-07-30',
+        nextAuditDate: '2025-01-30',
+        findings: 'None'
+    },
+    {
+        regulation: 'CAR 141.08.2',
+        process: 'A Safety Management System (SMS) and Quality Management System (QMS) are established and maintained as per the respective manuals. The systems are integrated to ensure continuous improvement.',
+        responsibleManager: 'Safety Manager',
         lastAuditDate: '2024-07-30',
         nextAuditDate: '2025-01-30',
         findings: 'None'
@@ -149,6 +157,19 @@ export const complianceData: Omit<ComplianceItem, 'id'|'companyId'>[] = [
         nextAuditDate: '2025-01-30',
         findings: 'None'
     }
-];
+].sort((a, b) => {
+    const partsA = a.regulation.replace('CAR ', '').split('.').map(Number);
+    const partsB = b.regulation.replace('CAR ', '').split('.').map(Number);
+    const len = Math.max(partsA.length, partsB.length);
+    for (let i = 0; i < len; i++) {
+        const valA = partsA[i] || 0;
+        const valB = partsB[i] || 0;
+        if (valA !== valB) {
+            return valA - valB;
+        }
+    }
+    return 0;
+});
+
 
 // Functions to modify data are now handled by components writing to Firestore.
