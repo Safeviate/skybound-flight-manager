@@ -34,7 +34,14 @@ export type ThemeColors = {
   ring: string;
 };
 
-export type Feature = 'AdvancedAnalytics' | 'AIAuditAnalysis' | 'CustomChecklists';
+export type Feature = 
+    | 'Safety' 
+    | 'Quality' 
+    | 'Bookings' 
+    | 'Aircraft' 
+    | 'Students' 
+    | 'Personnel'
+    | 'AdvancedAnalytics';
 
 export type Company = {
   id: string;
@@ -287,6 +294,7 @@ export type SafetyReport = {
   sizeOfBirds?: string;
   partOfAircraftStruck?: string;
   eventSubcategoryDetails?: string;
+  phaseOfFlight?: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {

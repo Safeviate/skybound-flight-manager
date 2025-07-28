@@ -21,9 +21,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
 
 const features: { id: Feature, label: string, description: string }[] = [
+    { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
+    { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
+    { id: 'Bookings', label: 'Bookings & Scheduling', description: 'Enables the aircraft booking and scheduling system.' },
+    { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
+    { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
+    { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
     { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
-    { id: 'AIAuditAnalysis', label: 'AI Audit Analysis', description: 'Allows users to use AI for analyzing audit reports.' },
-    { id: 'CustomChecklists', label: 'Custom Checklist Builder', description: 'Allows management to create custom checklists for aircraft.' },
 ];
 
 const companyFormSchema = z.object({
@@ -176,7 +180,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
             render={() => (
                 <FormItem>
                 <div className="mb-4">
-                    <FormLabel className="text-base">Enabled Features</FormLabel>
+                    <FormLabel className="text-base">Enabled Modules</FormLabel>
                     <FormDescription>
                     Select the modules that this company will have access to.
                     </FormDescription>
