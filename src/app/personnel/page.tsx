@@ -156,6 +156,7 @@ function PersonnelPage() {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Role</TableHead>
+                            <TableHead>Department</TableHead>
                             <TableHead>Contact</TableHead>
                             <TableHead>Required Documents</TableHead>
                              {canEdit && <TableHead className="text-right">Actions</TableHead>}
@@ -166,6 +167,7 @@ function PersonnelPage() {
                             <TableRow key={person.id}>
                                 <TableCell className="font-medium">{person.name}</TableCell>
                                 <TableCell>{person.role}</TableCell>
+                                <TableCell>{person.department}</TableCell>
                                 <TableCell>
                                     <div>{person.email}</div>
                                     <div>{person.phone}</div>
