@@ -43,12 +43,12 @@ export default function NewSafetyReportPage() {
         };
 
         try {
-            await addDoc(collection(db, `companies/${company.id}/safety-reports`), newReport);
+            const docRef = await addDoc(collection(db, `companies/${company.id}/safety-reports`), newReport);
             toast({
                 title: 'Report Filed Successfully',
                 description: `Your report (${reportNumber}) has been submitted.`,
             });
-            router.push('/safety');
+            router.push(`/safety/${docRef.id}`);
         } catch (error) {
             console.error("Error submitting report:", error);
             toast({
@@ -69,5 +69,6 @@ export default function NewSafetyReportPage() {
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+
 
 
