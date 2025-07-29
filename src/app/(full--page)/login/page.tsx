@@ -39,16 +39,18 @@ export default function LoginPage() {
   }, [user, router]);
   
   useEffect(() => {
-    // Fetch users for the demo login dropdown from the skybound-aero company
+    // Fetch users for the demo login dropdown from all companies
     const fetchDemoUsers = async () => {
         try {
-            // Query users only from the 'skybound-aero' company
-            const usersQuery = query(collection(db, 'companies/skybound-aero/users'));
+            // Query all 'users' collections across all 'companies'
+            const usersQuery = query(collectionGroup(db, 'users'));
             const usersSnapshot = await getDocs(usersQuery);
             const usersList = usersSnapshot.docs.map(doc => doc.data() as User);
             
-            // Sort by name for better organization
+            // Sort by company then name for better organization
             usersList.sort((a, b) => {
+                if (a.companyId < b.companyId) return -1;
+                if (a.companyId > b.companyId) return 1;
                 if (a.name < b.name) return -1;
                 if (a.name > b.name) return 1;
                 return 0;
@@ -153,7 +155,7 @@ export default function LoginPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle className="text-2xl">Demo Login (skybound-aero)</CardTitle>
+                <CardTitle className="text-2xl">Demo Login</CardTitle>
                 <CardDescription>
                     Select a user to emulate their session without needing a password.
                 </CardDescription>
@@ -169,7 +171,7 @@ export default function LoginPage() {
                             <SelectContent>
                                 {demoUsers.map(demoUser => (
                                     <SelectItem key={demoUser.id} value={demoUser.email!}>
-                                        {demoUser.name} ({demoUser.role})
+                                        {demoUser.name} ({demoUser.companyId} - {demoUser.role})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
