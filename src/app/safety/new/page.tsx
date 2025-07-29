@@ -31,18 +31,10 @@ export default function NewSafetyReportPage() {
         const nextId = reportsOfType.length + 1;
         const reportNumber = `${reportTypeAbbr}-${String(nextId).padStart(3, '0')}`;
         
-        let submittedBy = user.name;
-        if (data.isAnonymous) {
-            submittedBy = 'Anonymous';
-        } else if (data.onBehalfOf && data.onBehalfOfUser) {
-            submittedBy = data.onBehalfOfUser;
-        }
-
         const newReport: Omit<SafetyReport, 'id'> = {
             ...data,
             companyId: company.id,
             reportNumber,
-            submittedBy,
             status: 'Open',
             filedDate: format(new Date(), 'yyyy-MM-dd'),
             department: REPORT_TYPE_DEPARTMENT_MAPPING[data.reportType as SafetyReportType],
@@ -69,10 +61,11 @@ export default function NewSafetyReportPage() {
     return (
         <main className="flex-1 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
-                <NewSafetyReportForm onSubmit={handleNewReport} safetyReports={safetyReports} />
+                <NewSafetyReportForm onSubmit={handleNewReport} />
             </div>
         </main>
     );
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+

@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,8 +42,6 @@ const reportFormSchema = z.object({
   }).optional(),
   aircraftInvolved: z.string().optional(),
   location: z.string().optional(),
-  heading: z.string().min(5, { message: "Heading must be at least 5 characters."}),
-  details: z.string().min(20, { message: "Details must be at least 20 characters."}),
   isAnonymous: z.boolean().default(false),
   onBehalfOf: z.boolean().default(false),
   onBehalfOfUser: z.string().optional(),
@@ -90,8 +88,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             occurrenceTime: format(new Date(), 'HH:mm'),
             isAnonymous: false,
             onBehalfOf: false,
-            heading: '',
-            details: '',
             subCategory: '',
             phaseOfFlight: '',
             lossOfSeparationType: '',
@@ -112,7 +108,18 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     }, [isAnonymousChecked, onBehalfOfChecked, form]);
 
     function handleFormSubmit(data: ReportFormValues) {
-        onSubmit(data);
+        let submittedBy = user?.name || 'Anonymous';
+        if (data.isAnonymous) {
+            submittedBy = 'Anonymous';
+        } else if (data.onBehalfOf && data.onBehalfOfUser) {
+            const selectedUser = personnel.find(p => p.id === data.onBehalfOfUser);
+            submittedBy = selectedUser?.name || user?.name || 'Error';
+        }
+
+        onSubmit({
+            ...data,
+            submittedBy, // Pass the correct name
+        });
     }
 
   return (
@@ -305,7 +312,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                     </FormControl>
                                     <SelectContent>
                                     {personnel.map((p) => (
-                                        <SelectItem key={p.id} value={`${p.name}`}>
+                                        <SelectItem key={p.id} value={p.id}>
                                             {p.name} ({p.department || p.role})
                                         </SelectItem>
                                     ))}
@@ -318,10 +325,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                     )}
                 </CardContent>
             </Card>
-
-            <div className="flex justify-end">
-                <Button type="submit">Submit Report</Button>
-            </div>
         </form>
     </Form>
   );
