@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User, InvestigationTask } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -82,7 +82,35 @@ const diaryFormSchema = z.object({
 
 type DiaryFormValues = z.infer<typeof diaryFormSchema>;
 
-const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void }) => {
+const completionNotesFormSchema = z.object({
+    completionNotes: z.string().min(1, "Completion notes cannot be empty."),
+});
+type CompletionNotesFormValues = z.infer<typeof completionNotesFormSchema>;
+
+
+const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed', notes?: string) => void }) => {
+    const [completingTask, setCompletingTask] = useState<InvestigationTask | null>(null);
+    const form = useForm<CompletionNotesFormValues>({
+        resolver: zodResolver(completionNotesFormSchema),
+    });
+
+    const handleCheckboxClick = (task: InvestigationTask) => {
+        if (task.status === 'Open') {
+            setCompletingTask(task);
+            form.reset({ completionNotes: '' });
+        } else {
+            // Re-open task
+            onUpdateTask(task.id, 'Open', '');
+        }
+    };
+
+    const handleNotesSubmit = (data: CompletionNotesFormValues) => {
+        if (completingTask) {
+            onUpdateTask(completingTask.id, 'Completed', data.completionNotes);
+            setCompletingTask(null);
+        }
+    };
+
     if (!tasks || tasks.length === 0) {
         return (
             <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
@@ -102,22 +130,30 @@ const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTa
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12"></TableHead>
-                            <TableHead>Task Description</TableHead>
+                            <TableHead>Task Description & Notes</TableHead>
                             <TableHead>Assigned To</TableHead>
                             <TableHead>Due Date</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {tasks.map(task => (
-                            <TableRow key={task.id} className={cn(task.status === 'Completed' && 'text-muted-foreground line-through')}>
+                            <TableRow key={task.id} className={cn(task.status === 'Completed' && 'bg-muted/50')}>
                                 <TableCell>
                                     <Checkbox 
                                         checked={task.status === 'Completed'}
-                                        onCheckedChange={(checked) => onUpdateTask(task.id, checked ? 'Completed' : 'Open')}
+                                        onCheckedChange={() => handleCheckboxClick(task)}
                                     />
                                 </TableCell>
-                                <TableCell>{task.description}</TableCell>
-                                <TableCell>{task.assignedTo}</TableCell>
+                                <TableCell>
+                                    <p className={cn(task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</p>
+                                    {task.completionNotes && (
+                                        <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground border-l-2 pl-3 border-green-500">
+                                            <MessageSquare className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                            <p className="whitespace-pre-wrap">{task.completionNotes}</p>
+                                        </div>
+                                    )}
+                                </TableCell>
+                                <TableCell className={cn(task.status === 'Completed' && 'line-through')}>{task.assignedTo}</TableCell>
                                 <TableCell>
                                     <Badge variant={new Date(task.dueDate) < new Date() && task.status === 'Open' ? 'destructive' : 'outline'}>
                                         {format(new Date(task.dueDate), 'PPP')}
@@ -128,6 +164,35 @@ const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTa
                     </TableBody>
                 </Table>
             </CardContent>
+            <Dialog open={!!completingTask} onOpenChange={() => setCompletingTask(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Complete Task</DialogTitle>
+                        <DialogDescription>
+                           Please provide completion notes for this task.
+                           <blockquote className="mt-2 pl-4 border-l-2">{completingTask?.description}</blockquote>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleNotesSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="completionNotes"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Completion Notes</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Describe the action taken and the outcome..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit">Mark as Complete</Button>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }
@@ -331,11 +396,11 @@ function SafetyReportInvestigationPage() {
     });
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed') => {
+  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed', notes?: string) => {
     if (!report) return;
     
     const updatedTasks = report.tasks?.map(task => 
-        task.id === taskId ? { ...task, status } : task
+        task.id === taskId ? { ...task, status, completionNotes: notes || task.completionNotes } : task
     );
     
     handleReportUpdate({ ...report, tasks: updatedTasks });
@@ -752,4 +817,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-

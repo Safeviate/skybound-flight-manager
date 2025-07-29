@@ -265,6 +265,7 @@ export type InvestigationTask = {
   assignedTo: string;
   dueDate: string;
   status: 'Open' | 'Completed';
+  completionNotes?: string;
 }
 
 export type SafetyReport = {
