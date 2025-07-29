@@ -414,7 +414,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                                 <SelectContent>
                                                     {personnel.filter(p => p.role !== 'Student').map((p) => (
                                                         <SelectItem key={p.id} value={p.name}>
-                                                            {p.name}
+                                                            {p.name} ({p.department || p.role})
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
