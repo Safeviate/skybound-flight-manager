@@ -96,17 +96,17 @@ export default function LoginPage() {
         <span className="text-xl font-semibold">{company?.name || 'SkyBound Flight Manager'}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl w-full">
+      <div className="w-full max-w-sm">
         <Card>
             <CardHeader>
             <CardTitle className="text-2xl">
-                Login to Your Account
+                Login
             </CardTitle>
             <CardDescription>
-                Enter your email and password below to login.
+                Enter your email and password below to login, or use the demo login.
             </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
             <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -135,30 +135,19 @@ export default function LoginPage() {
                 Login
                 </Button>
             </form>
-            </CardContent>
-            <CardFooter className="justify-center text-sm">
-                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
-                    Don't have an account? Register your company
-                </Link>
-            </CardFooter>
-        </Card>
+            
+            <Separator className="my-4" />
 
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2"><Users /> Demo Login</CardTitle>
-                <CardDescription>Select a sample user to log in without a password.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleDemoLogin} className="space-y-4">
+             <form onSubmit={handleDemoLogin} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="demo-user-select">Select a User</Label>
+                        <Label htmlFor="demo-user-select">Demo Login</Label>
                         <Select value={selectedDemoUser} onValueChange={setSelectedDemoUser}>
                             <SelectTrigger id="demo-user-select">
-                                <SelectValue placeholder="Select a demo user role..." />
+                                <SelectValue placeholder="Select a demo user to login..." />
                             </SelectTrigger>
                             <SelectContent>
                                 {demoUsers.map(demoUser => (
-                                    <SelectItem key={demoUser.email || demoUser.id} value={demoUser.email || demoUser.id}>
+                                    <SelectItem key={demoUser.id} value={demoUser.email}>
                                         {demoUser.name} ({demoUser.role} @ {demoUser.companyId})
                                     </SelectItem>
                                 ))}
@@ -170,7 +159,13 @@ export default function LoginPage() {
                         Login as Demo User
                     </Button>
                 </form>
+
             </CardContent>
+            <CardFooter className="justify-center text-sm">
+                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                    Don't have an account? Register your company
+                </Link>
+            </CardFooter>
         </Card>
       </div>
 
