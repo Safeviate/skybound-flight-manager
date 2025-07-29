@@ -42,6 +42,7 @@ const reportFormSchema = z.object({
   }).optional(),
   aircraftInvolved: z.string().optional(),
   location: z.string().optional(),
+  isAnonymous: z.boolean().default(false).optional(),
   onBehalfOf: z.boolean().default(false),
   onBehalfOfUser: z.string().optional(),
   subCategory: z.string().optional(),
@@ -86,6 +87,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             occurrenceDate: new Date(),
             occurrenceTime: format(new Date(), 'HH:mm'),
             onBehalfOf: false,
+            isAnonymous: false,
             subCategory: '',
             phaseOfFlight: '',
             lossOfSeparationType: '',
@@ -99,7 +101,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     const onBehalfOfChecked = form.watch('onBehalfOf');
 
     function handleFormSubmit(data: ReportFormValues) {
-        let submittedBy = user?.name || 'Anonymous';
+        let submittedBy = data.isAnonymous ? 'Anonymous' : user?.name || 'Anonymous';
         if (data.onBehalfOf && data.onBehalfOfUser) {
             const selectedUser = personnel.find(p => p.id === data.onBehalfOfUser);
             submittedBy = selectedUser?.name || user?.name || 'Error';
@@ -148,63 +150,65 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             />
                         </div>
                         <div className="md:col-span-2">
-                             <FormLabel>Date & Time of Occurrence</FormLabel>
-                             <div className="flex gap-2">
-                                <FormField
-                                    control={form.control}
-                                    name="occurrenceDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <Popover>
-                                                <PopoverTrigger asChild>
+                             <FormItem>
+                                <FormLabel>Date & Time of Occurrence</FormLabel>
+                                <div className="flex gap-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="occurrenceDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                        >
+                                                        {field.value ? (
+                                                            format(field.value, "PPP")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) => date > new Date()}
+                                                        initialFocus
+                                                    />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="occurrenceTime"
+                                        render={({ field }) => (
+                                            <FormItem>
                                                 <FormControl>
-                                                    <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                    >
-                                                    {field.value ? (
-                                                        format(field.value, "PPP")
-                                                    ) : (
-                                                        <span>Pick a date</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
+                                                    <Input
+                                                        type="time"
+                                                        className="w-[100px]"
+                                                        {...field}
+                                                    />
                                                 </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={(date) => date > new Date()}
-                                                    initialFocus
-                                                />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="occurrenceTime"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <Input
-                                                    type="time"
-                                                    className="w-[100px]"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                             </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                             </FormItem>
                         </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -243,28 +247,52 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                     <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <FormField
-                        control={form.control}
-                        name="onBehalfOf"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                File on behalf of another user
-                                </FormLabel>
-                                <FormDescription>
-                                 Select this if you are filing this report for someone else.
-                                </FormDescription>
-                            </div>
-                            </FormItem>
-                        )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="isAnonymous"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                    File Anonymously
+                                    </FormLabel>
+                                    <FormDescription>
+                                    If checked, your name will not be attached to this report.
+                                    </FormDescription>
+                                </div>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="onBehalfOf"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                    File on behalf of another user
+                                    </FormLabel>
+                                    <FormDescription>
+                                    Select this if you are filing this report for someone else.
+                                    </FormDescription>
+                                </div>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     {onBehalfOfChecked && (
                          <FormField
                             control={form.control}
