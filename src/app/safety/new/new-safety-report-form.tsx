@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Copy, RefreshCw } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -31,6 +31,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const reportFormSchema = z.object({
   reportType: z.string({
@@ -47,11 +49,15 @@ const reportFormSchema = z.object({
   isAnonymous: z.boolean().default(false).optional(),
   onBehalfOf: z.boolean().default(false),
   onBehalfOfUser: z.string().optional(),
-  subCategory: z.string().optional(),
+  
+  // Conditional fields
   phaseOfFlight: z.string().optional(),
-  lossOfSeparationType: z.string().optional(),
-  raCallout: z.string().optional(),
-  raNotFollowedReason: z.string().optional(),
+  systemOrComponent: z.string().optional(),
+  aircraftGrounded: z.boolean().optional(),
+  areaOfOperation: z.string().optional(),
+  groundEventType: z.string().optional(),
+  injuryType: z.string().optional(),
+  medicalAttentionRequired: z.boolean().optional(),
 }).refine(data => {
     if (data.onBehalfOf) {
         return !!data.onBehalfOfUser;
@@ -60,6 +66,14 @@ const reportFormSchema = z.object({
 }, {
     message: "You must select a user when filing on their behalf.",
     path: ['onBehalfOfUser'],
+}).refine(data => {
+    if (data.reportType === 'Aircraft Defect Report') {
+        return !!data.aircraftInvolved;
+    }
+    return true;
+}, {
+    message: "Aircraft must be specified for a defect report.",
+    path: ['aircraftInvolved'],
 });
 
 
@@ -68,6 +82,11 @@ type ReportFormValues = z.infer<typeof reportFormSchema>;
 interface NewSafetyReportFormProps {
     onSubmit: (data: any) => void;
 }
+
+const groundOpAreas = ['Ramp/Apron', 'Taxiway', 'Hangar', 'Fuel Bay', 'Storage Area'];
+const groundOpEvents = ['Vehicle Incident', 'Ground Handling Issue', 'Fuel Spill', 'Foreign Object Debris (FOD)', 'Security Breach'];
+const occupationalInjuryTypes = ['Slip/Trip/Fall', 'Manual Handling/Lifting', 'Hazardous Substance Exposure', 'Ergonomic Issue', 'Laceration/Cut', 'Other'];
+
 
 export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     const { user, company } = useUser();
@@ -90,11 +109,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             occurrenceTime: format(new Date(), 'HH:mm'),
             onBehalfOf: false,
             isAnonymous: false,
-            subCategory: '',
             phaseOfFlight: '',
-            lossOfSeparationType: '',
-            raCallout: '',
-            raNotFollowedReason: '',
             aircraftInvolved: '',
             location: '',
         }
@@ -152,67 +167,65 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             )}
                             />
                         </div>
-                        <div className="md:col-span-2">
-                             <FormItem>
-                                <FormLabel>Date & Time of Occurrence</FormLabel>
-                                <div className="flex gap-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="occurrenceDate"
-                                        render={({ field }) => (
-                                            <FormItem className="flex-1">
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                    <FormControl>
-                                                        <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                        >
-                                                        {field.value ? (
-                                                            format(field.value, "PPP")
-                                                        ) : (
-                                                            <span>Pick a date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
-                                                    </FormControl>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        disabled={(date) => date > new Date()}
-                                                        initialFocus
-                                                    />
-                                                    </PopoverContent>
-                                                </Popover>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="occurrenceTime"
-                                        render={({ field }) => (
-                                            <FormItem>
+                         <FormItem className="md:col-span-2">
+                            <FormLabel>Date & Time of Occurrence</FormLabel>
+                            <div className="flex gap-2">
+                                <FormField
+                                    control={form.control}
+                                    name="occurrenceDate"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <Popover>
+                                                <PopoverTrigger asChild>
                                                 <FormControl>
-                                                    <Input
-                                                        type="time"
-                                                        className="w-[100px]"
-                                                        {...field}
-                                                    />
+                                                    <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full pl-3 text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                    >
+                                                    {field.value ? (
+                                                        format(field.value, "PPP")
+                                                    ) : (
+                                                        <span>Pick a date</span>
+                                                    )}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
                                                 </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                             </FormItem>
-                        </div>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => date > new Date()}
+                                                    initialFocus
+                                                />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="occurrenceTime"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <Input
+                                                    type="time"
+                                                    className="w-[100px]"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                         </FormItem>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
@@ -268,6 +281,112 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             )}
                         />
                     )}
+
+                    {reportType === 'Aircraft Defect Report' && (
+                        <div className="space-y-4 pt-4 border-t">
+                            <FormField
+                                control={form.control}
+                                name="systemOrComponent"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>System or Component</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., Left Main Landing Gear" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="aircraftGrounded"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Aircraft Grounded?</FormLabel>
+                                            <FormDescription>Is the aircraft unserviceable as a result of this defect?</FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
+                    
+                    {reportType === 'Ground Operations Report' && (
+                        <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                           <FormField
+                                control={form.control}
+                                name="areaOfOperation"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Area of Operation</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select area" /></SelectTrigger></FormControl>
+                                            <SelectContent>{groundOpAreas.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="groundEventType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Event Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger></FormControl>
+                                            <SelectContent>{groundOpEvents.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
+
+                    {reportType === 'Occupational Report' && (
+                        <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                            <FormField
+                                control={form.control}
+                                name="injuryType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Type of Injury/Hazard</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select injury type" /></SelectTrigger></FormControl>
+                                            <SelectContent>{occupationalInjuryTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="medicalAttentionRequired"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-2.5">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Medical Attention Required?</FormLabel>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
+
                 </CardContent>
             </Card>
 
@@ -329,7 +448,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Person Reporting</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a person" />

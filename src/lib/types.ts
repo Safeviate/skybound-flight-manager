@@ -295,6 +295,18 @@ export type SafetyReport = {
   sizeOfBirds?: string;
   partOfAircraftStruck?: string;
   eventSubcategoryDetails?: string;
+
+  // Aircraft Defect Report
+  systemOrComponent?: string;
+  aircraftGrounded?: boolean;
+
+  // Ground Operations Report
+  areaOfOperation?: string;
+  groundEventType?: string;
+
+  // Occupational Report
+  injuryType?: string;
+  medicalAttentionRequired?: boolean;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
