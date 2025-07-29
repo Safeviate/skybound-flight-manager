@@ -85,6 +85,12 @@ export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveA
     }
     fetchPersonnel();
   }, [company]);
+  
+  const uniquePersonnel = personnel.filter((person, index, self) =>
+    index === self.findIndex((p) => (
+      p.name === person.name
+    ))
+  );
 
 
   function handleFormSubmit(data: CapFormValues) {
@@ -161,7 +167,7 @@ export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveA
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {personnel.map((person) => (
+                    {uniquePersonnel.map((person) => (
                         <SelectItem key={person.id} value={person.name}>
                         {person.name} ({person.role})
                         </SelectItem>
