@@ -488,10 +488,11 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     />
                 </CardContent>
                  <CardFooter>
-                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                    <div className="w-full space-y-4">
+                        <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                    </div>
                 </CardFooter>
             </Card>
-
         </form>
     </Form>
   );
