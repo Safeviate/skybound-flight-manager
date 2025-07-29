@@ -388,10 +388,10 @@ function SafetyReportInvestigationPage() {
                 
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto">
-                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="triage" className="mt-6 space-y-6">
@@ -409,7 +409,7 @@ function SafetyReportInvestigationPage() {
 
                     <Card>
                         <CardHeader>
-                             <CardTitle>Classification &amp; Categorization</CardTitle>
+                             <CardTitle>Classification & Categorization</CardTitle>
                              <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -510,6 +510,14 @@ function SafetyReportInvestigationPage() {
                 <TabsContent value="investigation" className="mt-6 space-y-6">
                     <Card>
                         <CardHeader>
+                            <CardTitle>Investigation Team</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
                             <CardTitle>AI Toolkit</CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -532,14 +540,6 @@ function SafetyReportInvestigationPage() {
                         </CardContent>
                     </Card>
                     <InvestigationTaskList tasks={report.tasks || []} onUpdateTask={handleUpdateTaskStatus} />
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Investigation Team</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                        </CardContent>
-                    </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Investigation Discussion</CardTitle>
@@ -752,3 +752,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
