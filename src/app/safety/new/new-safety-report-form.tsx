@@ -90,23 +90,13 @@ const reportFormSchema = z.object({
     message: 'Details must be at least 20 characters long.',
   }),
   isAnonymous: z.boolean().default(false).optional(),
-  fileOnBehalf: z.boolean().default(false).optional(),
-  behalfOfUser: z.string().optional(),
-}).refine(data => {
-    if (data.fileOnBehalf && !data.behalfOfUser) {
-        return false;
-    }
-    return true;
-}, {
-    message: "You must select a user to file on behalf of.",
-    path: ["behalfOfUser"],
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
     safetyReports: SafetyReport[];
-    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean, fileOnBehalf?: boolean, behalfOfUser?: string }) => void;
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => void;
 }
 
 const getReportTypeAbbreviation = (type: SafetyReportType) => {
@@ -132,7 +122,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         occurrenceDate: new Date(),
         occurrenceTime: format(new Date(), 'HH:mm'),
         isAnonymous: false,
-        fileOnBehalf: false,
         heading: '',
         details: '',
         subCategory: '',
@@ -170,21 +159,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const subCategory = form.watch('subCategory');
   const lossOfSeparationType = form.watch('lossOfSeparationType');
   const raFollowed = form.watch('raFollowed');
-  const isAnonymous = form.watch('isAnonymous');
-  const fileOnBehalf = form.watch('fileOnBehalf');
-  
-  useEffect(() => {
-    if (isAnonymous) {
-        form.setValue('fileOnBehalf', false);
-    }
-  }, [isAnonymous, form]);
-  
-  useEffect(() => {
-    if (fileOnBehalf) {
-        form.setValue('isAnonymous', false);
-    }
-  }, [fileOnBehalf, form]);
-
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -312,7 +286,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                             <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
-                                disabled={fileOnBehalf}
                             />
                             </FormControl>
                             <div className="space-y-1 leading-none">
@@ -326,55 +299,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="fileOnBehalf"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={isAnonymous}
-                            />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                File on behalf of another user
-                            </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                Select this if you are filing this report for someone else.
-                            </p>
-                            </div>
-                        </FormItem>
-                        )}
-                    />
-                    {fileOnBehalf && (
-                        <FormField
-                            control={form.control}
-                            name="behalfOfUser"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Submitted By</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select the user who reported the incident" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {personnel.map(p => (
-                                            <SelectItem key={p.id} value={p.name}>
-                                                {p.name} ({p.department || p.role})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
                 </CardContent>
                  <CardFooter>
                     <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
