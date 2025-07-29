@@ -158,9 +158,11 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
   }, [company, toast]);
   
   useEffect(() => {
-    if (purpose === 'Maintenance') {
-        if (dateRange?.from) form.setValue('date', dateRange.from);
-        if (dateRange?.to) form.setValue('endDate', dateRange.to);
+    if (purpose === 'Maintenance' && dateRange?.from) {
+        form.setValue('date', dateRange.from);
+        if (dateRange.to) {
+            form.setValue('endDate', dateRange.to);
+        }
     }
   }, [dateRange, form]);
 
