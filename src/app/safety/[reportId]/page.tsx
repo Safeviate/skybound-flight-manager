@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { useEffect, useState, useActionState } from 'react';
@@ -336,6 +335,18 @@ function SafetyReportInvestigationPage() {
                         <CardDescription>
                             Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
                         </CardDescription>
+                    </div>
+                     <div className="flex items-center gap-2">
+                         <Button asChild variant="outline">
+                            <Link href="/safety?tab=reports">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back to Reports
+                            </Link>
+                        </Button>
+                        <Button variant="outline" onClick={() => window.print()} className="no-print">
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print Report
+                        </Button>
                     </div>
                 </div>
             </CardHeader>
@@ -805,44 +816,4 @@ function SafetyReportInvestigationPage() {
 }
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
-SafetyReportInvestigationPage.headerContent = function HeaderActions() {
-    const { report } = (this as any).type.getInitialProps ? (this as any).type.getInitialProps().pageProps : { report: null };
-    const generateMailtoLink = () => {
-    if (!report) return "";
-
-    const subject = `Safety Report: ${report.reportNumber} - ${report.heading}`;
-    let body = `A safety report requires your attention.\n\n`;
-    body += `Report Number: ${report.reportNumber}\n`;
-    body += `Heading: ${report.heading}\n`;
-    body += `Status: ${report.status}\n`;
-    body += `Date of Occurrence: ${report.occurrenceDate}\n\n`;
-    body += `Details:\n${report.details}\n\n`;
-    body += `Link to report: ${typeof window !== 'undefined' ? window.location.href : ''}`;
-
-    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-    return (
-    <>
-        <Button asChild variant="outline" className="no-print">
-            <Link href="/safety?tab=reports">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to All Reports
-            </Link>
-        </Button>
-        <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => window.print()} className="no-print">
-                <Printer className="mr-2 h-4 w-4" />
-                Print Report
-            </Button>
-            <a href={generateMailtoLink()}>
-                 <Button variant="outline" className="no-print">
-                    <Mail className="mr-2 h-4 w-4" />
-                    Email Report
-                </Button>
-            </a>
-        </div>
-    </>
-  );
-}
-
 export default SafetyReportInvestigationPage;
