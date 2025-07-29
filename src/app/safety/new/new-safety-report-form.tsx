@@ -114,8 +114,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const { toast } = useToast();
   const { user, company } = useUser();
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
-  const [personnel, setPersonnel] = useState<User[]>([]);
-
+  
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
@@ -142,11 +141,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
         const aircraftSnapshot = await getDocs(aircraftQuery);
         setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
-        
-        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-        const personnelSnapshot = await getDocs(personnelQuery);
-        setPersonnel(personnelSnapshot.docs.map(p => p.data() as User));
-
       } catch (error) {
         console.error("Error fetching data for form:", error);
       }
@@ -271,39 +265,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     </div>
                 </CardContent>
             </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>Submission Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="isAnonymous"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                File Anonymously
-                            </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, your name will not be attached to this report.
-                            </p>
-                            </div>
-                        </FormItem>
-                        )}
-                    />
-                </CardContent>
-                 <CardFooter>
-                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
-                </CardFooter>
-             </Card>
 
             {reportType === 'Flight Operations Report' && (
                 <Card>
@@ -528,6 +489,33 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                     />
                 </CardContent>
+                 <CardFooter>
+                    <div className="w-full space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="isAnonymous"
+                            render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                    File Anonymously
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                    If checked, your name will not be attached to this report.
+                                </p>
+                                </div>
+                            </FormItem>
+                            )}
+                        />
+                        <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                    </div>
+                </CardFooter>
             </Card>
 
         </form>
