@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { userData as seedUsers, aircraftData as seedAircraft } from '@/lib/data-provider';
 import { Database, Loader2 } from 'lucide-react';
 
@@ -42,9 +42,10 @@ export default function SeedDataPage() {
       const usersToSeed = seedUsers.filter(u => u.companyId === 'skybound-aero');
 
       usersToSeed.forEach(user => {
+        // Use the predefined ID from the seed data if available, otherwise let Firestore generate one
+        const userRef = user.id ? doc(db, `companies/${company.id}/users`, user.id) : doc(collection(db, `companies/${company.id}/users`));
         const { password, ...userData } = user;
-        const userRef = doc(db, `companies/${company.id}/users`, user.id);
-        batch.set(userRef, { ...userData, companyId: company.id });
+        batch.set(userRef, { ...userData, id: userRef.id, companyId: company.id });
       });
 
       await batch.commit();
@@ -75,11 +76,19 @@ export default function SeedDataPage() {
       return;
     }
 
-    if (seedAircraft.length === 0) {
+    const aircraftCollectionRef = collection(db, `companies/${company.id}/aircraft`);
+    
+    // Use getDocs to check for existing aircraft to avoid duplicates if seed is run multiple times
+    const existingSnapshot = await getDocs(aircraftCollectionRef);
+    const existingIds = new Set(existingSnapshot.docs.map(d => d.id));
+
+    const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero' && !existingIds.has(ac.id));
+
+    if (aircraftToSeed.length === 0) {
         toast({
-            variant: 'destructive',
-            title: 'No Seed Data',
-            description: 'There is no sample aircraft data available to seed.',
+            variant: 'default',
+            title: 'No New Aircraft to Seed',
+            description: 'Sample aircraft already exist in your fleet.',
         });
         return;
     }
@@ -87,7 +96,6 @@ export default function SeedDataPage() {
     setIsSeedingAircraft(true);
     try {
       const batch = writeBatch(db);
-      const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero');
 
       aircraftToSeed.forEach(aircraft => {
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
