@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssociatedRisk, RiskLikelihood, RiskSeverity } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RiskAssessmentTool } from '../risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,14 +37,16 @@ type AddRiskFormValues = z.infer<typeof addRiskFormSchema>;
 
 interface AddRiskFormProps {
     onAddRisk: (newRisk: Omit<AssociatedRisk, 'id'>) => void;
+    initialValues?: Partial<AddRiskFormValues>;
 }
 
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
 const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
-export function AddRiskForm({ onAddRisk }: AddRiskFormProps) {
+export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
   const form = useForm<AddRiskFormValues>({
     resolver: zodResolver(addRiskFormSchema),
+    defaultValues: initialValues || {},
   });
 
   const handleAssessmentChange = (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => {
@@ -136,14 +138,19 @@ export function AddRiskForm({ onAddRisk }: AddRiskFormProps) {
         
         <Card>
             <CardContent className="pt-6">
-                 <RiskAssessmentTool onAssessmentChange={handleAssessmentChange} showResultCard={false} />
+                 <RiskAssessmentTool
+                    onAssessmentChange={handleAssessmentChange} 
+                    showResultCard={false}
+                    initialLikelihood={form.getValues('likelihood')}
+                    initialSeverity={form.getValues('severity')}
+                 />
                  {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
                  {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}
             </CardContent>
         </Card>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit">Add Hazard to Register</Button>
+          <Button type="submit">{initialValues ? 'Save Hazard' : 'Add Hazard to Register'}</Button>
         </div>
       </form>
     </Form>

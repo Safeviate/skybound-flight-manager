@@ -8,14 +8,13 @@ import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, ArrowUpCircle, Bot, Loader2 } from 'lucide-react';
+import { PlusCircle, ArrowUpCircle, Bot, Loader2, Edit } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
 import { promoteRiskAction, suggestHazardsAction } from './actions';
 import type { SuggestHazardsOutput } from '@/ai/flows/suggest-hazards-flow';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -33,43 +32,57 @@ function SuggestHazardsButton() {
     );
 }
 
-function HazardSuggestionsResult({ data, onAddHazards }: { data: SuggestHazardsOutput, onAddHazards: (hazards: any[]) => void }) {
-    const [selectedHazards, setSelectedHazards] = useState<any[]>([]);
+function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOutput, onAddHazard: (hazard: Omit<AssociatedRisk, 'id'>) => void }) {
+    const [editingHazard, setEditingHazard] = useState<Omit<AssociatedRisk, 'id'> | null>(null);
 
-    const handleToggle = (hazard: any) => {
-        setSelectedHazards(prev => 
-            prev.some(h => h.hazard === hazard.hazard) 
-            ? prev.filter(h => h.hazard !== hazard.hazard) 
-            : [...prev, hazard]
-        );
+    const handleEditClick = (hazard: { hazard: string; risk: string; likelihood: RiskLikelihood; severity: RiskSeverity }) => {
+        setEditingHazard({
+            ...hazard,
+            hazardArea: '',
+            process: '',
+        });
     };
+    
+    const handleSave = (updatedHazard: Omit<AssociatedRisk, 'id'>) => {
+        onAddHazard(updatedHazard);
+        setEditingHazard(null);
+    }
 
     return (
         <div className="space-y-4 p-4 border-t mt-4">
             <h4 className="font-semibold text-sm">AI Suggested Hazards</h4>
             <div className="space-y-2">
                 {data.suggestedHazards.map((hazard, index) => (
-                    <div key={index} className="flex items-start gap-3 p-2 border rounded-md bg-muted/50">
-                        <Checkbox 
-                            id={`hazard-${index}`} 
-                            className="mt-1"
-                            onCheckedChange={() => handleToggle(hazard)}
-                        />
-                        <div className="grid gap-1 text-sm">
-                            <Label htmlFor={`hazard-${index}`} className="font-semibold">{hazard.hazard}</Label>
+                    <div key={index} className="flex items-start justify-between gap-3 p-2 border rounded-md bg-muted/50">
+                        <div className="grid gap-1 text-sm flex-1">
+                            <p className="font-semibold">{hazard.hazard}</p>
                             <p className="text-muted-foreground"><span className="font-medium">Risk:</span> {hazard.risk}</p>
                             <p className="text-muted-foreground">
                                 <span className="font-medium">Est. Likelihood:</span> {hazard.likelihood}, <span className="font-medium">Est. Severity:</span> {hazard.severity}
                             </p>
                         </div>
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(hazard)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Review & Add
+                        </Button>
                     </div>
                 ))}
             </div>
-            {selectedHazards.length > 0 && (
-                <Button onClick={() => onAddHazards(selectedHazards)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Selected to Register
-                </Button>
+             {editingHazard && (
+                <Dialog open={!!editingHazard} onOpenChange={() => setEditingHazard(null)}>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Review AI Suggested Hazard</DialogTitle>
+                            <DialogDescription>
+                                Review and edit the details suggested by the AI before adding it to the report.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <AddRiskForm 
+                            onAddRisk={handleSave} 
+                            initialValues={editingHazard}
+                        />
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );
@@ -97,24 +110,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
         description: 'The new hazard and its initial risk score have been recorded.'
     });
   }
-
-  const handleAddSuggestedHazards = (hazards: { hazard: string; risk: string; likelihood: RiskLikelihood; severity: RiskSeverity }[]) => {
-      const newRisks: AssociatedRisk[] = hazards.map(h => ({
-          ...h,
-          id: `risk-${Date.now()}-${Math.random()}`,
-          riskScore: getRiskScore(h.likelihood, h.severity),
-          hazardArea: '', // To be filled by user
-          process: '', // To be filled by user
-      }));
-
-      const updatedRisks = [...(report.associatedRisks || []), ...newRisks];
-      onUpdate({ ...report, associatedRisks: updatedRisks });
-
-      toast({
-          title: 'AI Hazards Added',
-          description: `${hazards.length} hazard(s) have been added to the register.`
-      });
-  };
 
   const riskLevel = (score: number | null) => {
       if (score === null || score === undefined) return 'N/A';
@@ -161,7 +156,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
         {suggestHazardsState.data && (
             <HazardSuggestionsResult 
                 data={suggestHazardsState.data as SuggestHazardsOutput} 
-                onAddHazards={handleAddSuggestedHazards}
+                onAddHazard={handleAddRisk}
             />
         )}
         {report.associatedRisks && report.associatedRisks.length > 0 ? (
