@@ -87,6 +87,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
         
         onAssignTasks(newTasks as Omit<InvestigationTask, 'id'|'status'>[]);
         setIsAssignDialogOpen(false);
+        setCheckedItems({}); // Clear the checkboxes
     };
 
     const resultItems = [
@@ -110,6 +111,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
                                     <Checkbox 
                                         id={`${item.key}-${i}`} 
                                         onCheckedChange={(checked) => handleCheckedChange(item.key, v, !!checked)} 
+                                        checked={checkedItems[item.key]?.includes(v) || false}
                                     />
                                     <Label htmlFor={`${item.key}-${i}`} className="font-normal cursor-pointer">{v}</Label>
                                 </div>
