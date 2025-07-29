@@ -229,7 +229,7 @@ function SafetyReportInvestigationPage() {
     } else if (icaoState.message && !icaoState.message.includes('complete')) {
        toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
     }
-  }, [icaoState]);
+  }, [icaoState, report, toast]);
 
 
   const handleReportUpdate = async (updatedReport: SafetyReport, showToast = true) => {
@@ -426,225 +426,219 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-1 space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Investigation Team</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>AI Toolkit</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <Tabs defaultValue="steps">
-                                        <TabsList className="grid w-full grid-cols-2">
-                                            <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
-                                            <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
-                                        </TabsList>
-                                        <TabsContent value="steps" className="pt-4">
-                                            <InvestigationStepsGenerator report={report} />
-                                        </TabsContent>
-                                        <TabsContent value="whys" className="pt-4">
-                                            <FiveWhysGenerator report={report} onUpdate={handleReportUpdate} />
-                                        </TabsContent>
-                                    </Tabs>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="lg:col-span-2 space-y-6">
-                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle>Investigation Discussion</CardTitle>
-                                <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline">
-                                                <Send className="mr-2 h-4 w-4" />
-                                                Post Message
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Post New Message</DialogTitle>
-                                                <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
-                                            </DialogHeader>
-                                            <Form {...discussionForm}>
-                                                <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
-                                                <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                                                    <FormField
-                                                        control={discussionForm.control}
-                                                        name="recipient"
-                                                        render={({ field }) => (
-                                                        <FormItem className="flex-1">
-                                                            <FormLabel>Send To (Optional)</FormLabel>
-                                                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                <SelectValue placeholder="Select a team member" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {availableRecipients.map((p) => (
-                                                                <SelectItem key={p.id} value={p.name}>
-                                                                    {p.name}
-                                                                </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                            </Select>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                        )}
-                                                    />
-                                                    <FormField
-                                                        control={discussionForm.control}
-                                                        name="replyByDate"
-                                                        render={({ field }) => (
-                                                            <FormItem className="flex-1">
-                                                                <FormLabel>Reply Needed By (Optional)</FormLabel>
-                                                                <Popover>
-                                                                    <PopoverTrigger asChild>
-                                                                    <FormControl>
-                                                                        <Button
-                                                                        variant={"outline"}
-                                                                        className={cn(
-                                                                            "w-full pl-3 text-left font-normal",
-                                                                            !field.value && "text-muted-foreground"
-                                                                        )}
-                                                                        >
-                                                                        {field.value ? (
-                                                                            format(field.value, "PPP")
-                                                                        ) : (
-                                                                            <span>Pick a date</span>
-                                                                        )}
-                                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                        </Button>
-                                                                    </FormControl>
-                                                                    </PopoverTrigger>
-                                                                    <PopoverContent className="w-auto p-0" align="start">
-                                                                    <Calendar
-                                                                        mode="single"
-                                                                        selected={field.value}
-                                                                        onSelect={field.onChange}
-                                                                        disabled={(date) => date < new Date()}
-                                                                        initialFocus
-                                                                    />
-                                                                    </PopoverContent>
-                                                                </Popover>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>AI Toolkit</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs defaultValue="steps">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
+                                        <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="steps" className="pt-4">
+                                        <InvestigationStepsGenerator report={report} />
+                                    </TabsContent>
+                                    <TabsContent value="whys" className="pt-4">
+                                        <FiveWhysGenerator report={report} onUpdate={handleReportUpdate} />
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Investigation Team</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle>Investigation Discussion</CardTitle>
+                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline">
+                                            <Send className="mr-2 h-4 w-4" />
+                                            Post Message
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Post New Message</DialogTitle>
+                                            <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
+                                        </DialogHeader>
+                                        <Form {...discussionForm}>
+                                            <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
+                                            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                                                 <FormField
                                                     control={discussionForm.control}
-                                                    name="message"
+                                                    name="recipient"
                                                     render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Message / Instruction</FormLabel>
+                                                    <FormItem className="flex-1">
+                                                        <FormLabel>Send To (Optional)</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value || ''}>
                                                         <FormControl>
-                                                        <Textarea
-                                                            id="message"
-                                                            placeholder="Type your message here..."
-                                                            className="min-h-[100px]"
-                                                            {...field}
-                                                        />
+                                                            <SelectTrigger>
+                                                            <SelectValue placeholder="Select a team member" />
+                                                            </SelectTrigger>
                                                         </FormControl>
+                                                        <SelectContent>
+                                                            {availableRecipients.map((p) => (
+                                                            <SelectItem key={p.id} value={p.name}>
+                                                                {p.name}
+                                                            </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                        </Select>
                                                         <FormMessage />
                                                     </FormItem>
                                                     )}
                                                 />
-                                                <div className="flex justify-end items-center">
-                                                    <Button type="submit">
-                                                        <Send className="mr-2 h-4 w-4" />
-                                                        Post Message
-                                                    </Button>
-                                                </div>
-                                                </form>
-                                            </Form>
-                                        </DialogContent>
-                                    </Dialog>
-                                </CardHeader>
-                                <CardContent>
-                                <DiscussionSection 
-                                    report={report} 
-                                    onUpdate={handleReportUpdate} 
-                                />
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <CardTitle>Investigation Diary</CardTitle>
-                                    <Dialog open={isDiaryDialogOpen} onOpenChange={setIsDiaryDialogOpen}>
-                                        <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm">
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            New Entry
-                                        </Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                            <DialogTitle>Add New Diary Entry</DialogTitle>
-                                            <DialogDescription>
-                                                Record an action, decision, or note. This will be added to the chronological investigation log.
-                                            </DialogDescription>
-                                            </DialogHeader>
-                                            <Form {...diaryForm}>
-                                            <form onSubmit={diaryForm.handleSubmit(handleNewDiaryEntry)} className="space-y-4">
                                                 <FormField
-                                                control={diaryForm.control}
-                                                name="entryText"
+                                                    control={discussionForm.control}
+                                                    name="replyByDate"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex-1">
+                                                            <FormLabel>Reply Needed By (Optional)</FormLabel>
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                <FormControl>
+                                                                    <Button
+                                                                    variant={"outline"}
+                                                                    className={cn(
+                                                                        "w-full pl-3 text-left font-normal",
+                                                                        !field.value && "text-muted-foreground"
+                                                                    )}
+                                                                    >
+                                                                    {field.value ? (
+                                                                        format(field.value, "PPP")
+                                                                    ) : (
+                                                                        <span>Pick a date</span>
+                                                                    )}
+                                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                    </Button>
+                                                                </FormControl>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-auto p-0" align="start">
+                                                                <Calendar
+                                                                    mode="single"
+                                                                    selected={field.value}
+                                                                    onSelect={field.onChange}
+                                                                    disabled={(date) => date < new Date()}
+                                                                    initialFocus
+                                                                />
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <FormField
+                                                control={discussionForm.control}
+                                                name="message"
                                                 render={({ field }) => (
-                                                    <FormItem>
-                                                    <FormLabel>New Diary Entry</FormLabel>
+                                                <FormItem>
+                                                    <FormLabel>Message / Instruction</FormLabel>
                                                     <FormControl>
-                                                        <Textarea
-                                                        id="diaryEntry"
-                                                        placeholder="Log an action, decision, or note..."
+                                                    <Textarea
+                                                        id="message"
+                                                        placeholder="Type your message here..."
                                                         className="min-h-[100px]"
                                                         {...field}
-                                                        />
+                                                    />
                                                     </FormControl>
                                                     <FormMessage />
-                                                    </FormItem>
+                                                </FormItem>
                                                 )}
-                                                />
-                                                <div className="flex justify-end items-center">
+                                            />
+                                            <div className="flex justify-end items-center">
                                                 <Button type="submit">
-                                                    Add to Diary
+                                                    <Send className="mr-2 h-4 w-4" />
+                                                    Post Message
                                                 </Button>
-                                                </div>
+                                            </div>
                                             </form>
-                                            </Form>
-                                        </DialogContent>
-                                    </Dialog>
-                                </CardHeader>
-                                <CardContent>
-                                    <InvestigationDiary report={report}/>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                    
-                    <Card>
-                        <CardHeader>
-                             <CardTitle>Investigation Notes & Findings</CardTitle>
-                             <CardDescription>Record all investigation notes, findings, and discussions here. This will be used to generate the corrective action plan.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Textarea 
-                                id="investigation-notes"
-                                placeholder="Record all investigation notes, findings, and discussions here..."
-                                className="min-h-[300px]"
-                                value={report.investigationNotes || ''}
-                                onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent>
+                            <DiscussionSection 
+                                report={report} 
+                                onUpdate={handleReportUpdate} 
                             />
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle>Investigation Diary</CardTitle>
+                                <Dialog open={isDiaryDialogOpen} onOpenChange={setIsDiaryDialogOpen}>
+                                    <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        New Entry
+                                    </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                        <DialogTitle>Add New Diary Entry</DialogTitle>
+                                        <DialogDescription>
+                                            Record an action, decision, or note. This will be added to the chronological investigation log.
+                                        </DialogDescription>
+                                        </DialogHeader>
+                                        <Form {...diaryForm}>
+                                        <form onSubmit={diaryForm.handleSubmit(handleNewDiaryEntry)} className="space-y-4">
+                                            <FormField
+                                            control={diaryForm.control}
+                                            name="entryText"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                <FormLabel>New Diary Entry</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                    id="diaryEntry"
+                                                    placeholder="Log an action, decision, or note..."
+                                                    className="min-h-[100px]"
+                                                    {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                </FormItem>
+                                            )}
+                                            />
+                                            <div className="flex justify-end items-center">
+                                            <Button type="submit">
+                                                Add to Diary
+                                            </Button>
+                                            </div>
+                                        </form>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent>
+                                <InvestigationDiary report={report}/>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader>
+                                 <CardTitle>Investigation Notes & Findings</CardTitle>
+                                 <CardDescription>Record all investigation notes, findings, and discussions here. This will be used to generate the corrective action plan.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Textarea 
+                                    id="investigation-notes"
+                                    placeholder="Record all investigation notes, findings, and discussions here..."
+                                    className="min-h-[300px]"
+                                    value={report.investigationNotes || ''}
+                                    onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
                 <TabsContent value="mitigation" className="mt-6 space-y-6">
                     <Card>
@@ -673,3 +667,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
