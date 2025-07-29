@@ -207,11 +207,10 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
   const { toast } = useToast();
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Effect to handle the result from the server action
   useEffect(() => {
     if (state.data) {
-      // The action now persists the data, so we don't need to set local state from it.
-      // The parent component will re-render with the new report data.
+      // When the action completes and returns data, automatically show the suggestions.
+      setShowSuggestions(true);
     }
     if (state.message && state.message !== 'Analysis complete') {
       toast({
@@ -222,6 +221,8 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
     }
   }, [state, toast]);
 
+  // Determine which set of suggestions to show: from the action state (just generated) or from the persisted report data.
+  const suggestionsToShow = state.data || report.aiSuggestedSteps;
   const hasExistingSuggestions = !!report.aiSuggestedSteps;
 
   return (
@@ -251,9 +252,9 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
             </Button>
         )}
 
-        {showSuggestions && report.aiSuggestedSteps && (
+        {showSuggestions && suggestionsToShow && (
              <AnalysisResult 
-                data={report.aiSuggestedSteps} 
+                data={suggestionsToShow as SuggestInvestigationStepsOutput} 
                 personnel={personnel} 
                 onAssignTasks={onAssignTasks} 
             />
