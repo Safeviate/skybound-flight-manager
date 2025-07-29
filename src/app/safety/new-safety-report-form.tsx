@@ -298,7 +298,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                 </CardContent>
             </Card>
 
-            <Card>
+             <Card>
                 <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
@@ -364,7 +364,9 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                                     </FormControl>
                                     <SelectContent>
                                         {personnel.map(p => (
-                                            <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
+                                            <SelectItem key={p.id} value={p.name}>
+                                                {p.name} ({p.role})
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -599,9 +601,11 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                     />
                 </CardContent>
+                 <CardFooter>
+                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                </CardFooter>
             </Card>
-            
-            <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+
         </form>
     </Form>
   );
