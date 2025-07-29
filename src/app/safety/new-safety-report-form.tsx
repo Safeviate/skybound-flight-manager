@@ -90,23 +90,13 @@ const reportFormSchema = z.object({
     message: 'Details must be at least 20 characters long.',
   }),
   isAnonymous: z.boolean().default(false).optional(),
-  fileOnBehalf: z.boolean().default(false).optional(),
-  behalfOfUser: z.string().optional(),
-}).refine(data => {
-    if (data.fileOnBehalf && !data.behalfOfUser) {
-        return false;
-    }
-    return true;
-}, {
-    message: "You must select a user to file on behalf of.",
-    path: ["behalfOfUser"],
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
     safetyReports: SafetyReport[];
-    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean, fileOnBehalf?: boolean, behalfOfUser?: string }) => void;
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => void;
 }
 
 const getReportTypeAbbreviation = (type: SafetyReportType) => {
@@ -124,15 +114,13 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const { toast } = useToast();
   const { user, company } = useUser();
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
-  const [personnel, setPersonnel] = useState<User[]>([]);
-
+  
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
         occurrenceDate: new Date(),
         occurrenceTime: format(new Date(), 'HH:mm'),
         isAnonymous: false,
-        fileOnBehalf: false,
         heading: '',
         details: '',
         subCategory: '',
@@ -153,11 +141,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
         const aircraftSnapshot = await getDocs(aircraftQuery);
         setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
-        
-        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-        const personnelSnapshot = await getDocs(personnelQuery);
-        setPersonnel(personnelSnapshot.docs.map(p => p.data() as User));
-
       } catch (error) {
         console.error("Error fetching data for form:", error);
       }
@@ -170,21 +153,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const subCategory = form.watch('subCategory');
   const lossOfSeparationType = form.watch('lossOfSeparationType');
   const raFollowed = form.watch('raFollowed');
-  const isAnonymous = form.watch('isAnonymous');
-  const fileOnBehalf = form.watch('fileOnBehalf');
-  
-  useEffect(() => {
-    if (isAnonymous) {
-        form.setValue('fileOnBehalf', false);
-    }
-  }, [isAnonymous, form]);
-  
-  useEffect(() => {
-    if (fileOnBehalf) {
-        form.setValue('isAnonymous', false);
-    }
-  }, [fileOnBehalf, form]);
-
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -297,89 +265,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     </div>
                 </CardContent>
             </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>Submission Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="isAnonymous"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={fileOnBehalf}
-                            />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                File Anonymously
-                            </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, your name will not be attached to this report.
-                            </p>
-                            </div>
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="fileOnBehalf"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={isAnonymous}
-                            />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                File on behalf of another user
-                            </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                Select this if you are filing this report for someone else.
-                            </p>
-                            </div>
-                        </FormItem>
-                        )}
-                    />
-                    {fileOnBehalf && (
-                        <FormField
-                            control={form.control}
-                            name="behalfOfUser"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Submitted By</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select the user who reported the incident" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {personnel.map(p => (
-                                            <SelectItem key={p.id} value={p.name}>
-                                                {p.name} ({p.role})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    )}
-                </CardContent>
-                 <CardFooter>
-                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
-                </CardFooter>
-             </Card>
 
             {reportType === 'Flight Operations Report' && (
                 <Card>
@@ -604,6 +489,33 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                     />
                 </CardContent>
+                 <CardFooter>
+                    <div className="w-full space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="isAnonymous"
+                            render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                    File Anonymously
+                                </FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                    If checked, your name will not be attached to this report.
+                                </p>
+                                </div>
+                            </FormItem>
+                            )}
+                        />
+                        <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                    </div>
+                </CardFooter>
             </Card>
 
         </form>
