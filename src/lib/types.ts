@@ -267,6 +267,7 @@ export type TaskComment = {
   author: string;
   date: string;
   message: string;
+  readBy: string[];
 };
 
 export type InvestigationTask = {

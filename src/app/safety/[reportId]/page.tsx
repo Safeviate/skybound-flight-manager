@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState, useActionState, useMemo } from 'react';
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -120,7 +120,7 @@ const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddCommen
     );
 };
 
-const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }: { report: SafetyReport, onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean }) => {
+const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead }: { report: SafetyReport, onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void }) => {
     const tasks = report.tasks || [];
     const { user } = useUser();
 
@@ -155,8 +155,10 @@ const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }
                 <CardDescription>All tasks assigned for this investigation.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-                {tasks.map(task => (
-                    <Collapsible key={task.id} className="border p-4 rounded-lg">
+                {tasks.map(task => {
+                    const unreadCount = task.comments?.filter(c => !c.readBy?.includes(user?.id || '')).length || 0;
+                    return (
+                    <Collapsible key={task.id} className="border p-4 rounded-lg" onOpenChange={(isOpen) => isOpen && unreadCount > 0 && onMarkCommentsRead(task.id)}>
                         <div className="flex items-start gap-4">
                             <Checkbox 
                                 id={`task-${task.id}`}
@@ -174,16 +176,24 @@ const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }
                                 </div>
                             </div>
                             <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="relative">
                                     <MessageSquare className="mr-2 h-4 w-4" />
                                     Comments ({task.comments?.length || 0})
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-4 w-4 bg-primary text-primary-foreground text-[10px] items-center justify-center">{unreadCount}</span>
+                                        </span>
+                                    )}
                                 </Button>
                             </CollapsibleTrigger>
                         </div>
                         <CollapsibleContent className="pt-4 mt-4 border-t">
                             <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                                {task.comments?.map(comment => (
-                                    <div key={comment.id} className="flex gap-3">
+                                {task.comments?.map(comment => {
+                                     const isUnread = !comment.readBy?.includes(user?.id || '');
+                                     return (
+                                    <div key={comment.id} className={cn("flex gap-3", isUnread && 'p-2 rounded-md bg-primary/10')}>
                                         <div className="h-8 w-8 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
                                             <UserIcon className="h-4 w-4 text-muted-foreground" />
                                         </div>
@@ -192,10 +202,10 @@ const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }
                                                 <p className="font-semibold">{comment.author}</p>
                                                 <p className="text-xs text-muted-foreground">{format(new Date(comment.date), "MMM d, yyyy 'at' h:mm a")}</p>
                                             </div>
-                                            <div className="p-2 rounded-md bg-muted/50 whitespace-pre-wrap">{comment.message}</div>
+                                            <div className="p-2 rounded-md bg-background whitespace-pre-wrap">{comment.message}</div>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                                 {(!task.comments || task.comments.length === 0) && (
                                      <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
                                 )}
@@ -203,7 +213,7 @@ const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }
                             <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
                         </CollapsibleContent>
                     </Collapsible>
-                ))}
+                )})}
             </CardContent>
         </Card>
     )
@@ -426,6 +436,7 @@ function SafetyReportInvestigationPage() {
         author: user.name,
         date: new Date().toISOString(),
         message,
+        readBy: [user.id], // The author has "read" it.
     };
 
     const updatedTasks = report.tasks?.map(task => 
@@ -433,6 +444,25 @@ function SafetyReportInvestigationPage() {
     );
 
     handleReportUpdate({ ...report, tasks: updatedTasks });
+  };
+  
+  const handleMarkCommentsRead = (taskId: string) => {
+    if (!report || !user) return;
+    
+    const updatedTasks = report.tasks?.map(task => {
+        if (task.id === taskId) {
+            const updatedComments = task.comments?.map(comment => {
+                if (!comment.readBy?.includes(user.id)) {
+                    return { ...comment, readBy: [...(comment.readBy || []), user.id] };
+                }
+                return comment;
+            });
+            return { ...task, comments: updatedComments };
+        }
+        return task;
+    });
+    
+    handleReportUpdate({ ...report, tasks: updatedTasks }, false); // Update silently
   };
 
   if (loading || dataLoading) {
@@ -655,7 +685,8 @@ function SafetyReportInvestigationPage() {
                         report={report}
                         onUpdateTask={handleUpdateTaskStatus} 
                         onAddComment={handleAddTaskComment}
-                        isLoading={dataLoading} 
+                        isLoading={dataLoading}
+                        onMarkCommentsRead={handleMarkCommentsRead}
                     />
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
