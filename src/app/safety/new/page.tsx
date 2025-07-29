@@ -32,18 +32,15 @@ function NewSafetyReportPage() {
         }
     }, [user, company, loading, router]);
 
-    const handleNewReportSubmit = async (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => {
+    const handleNewReportSubmit = async (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'>) => {
         if (!company) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot file report without company context.' });
             return;
         }
-        const { isAnonymous, ...reportData } = newReportData;
-        const department = REPORT_TYPE_DEPARTMENT_MAPPING[reportData.type] || 'Management';
+        
+        const department = REPORT_TYPE_DEPARTMENT_MAPPING[newReportData.reportType] || 'Management';
         
         let submittedBy = user?.name || 'System';
-        if (isAnonymous) {
-            submittedBy = 'Anonymous';
-        }
 
         let finalReportData: any = {
             companyId: company.id,
@@ -51,7 +48,7 @@ function NewSafetyReportPage() {
             status: 'Open' as SafetyReport['status'],
             filedDate: format(new Date(), 'yyyy-MM-dd'),
             department,
-            ...reportData,
+            ...newReportData,
         };
 
         // Remove undefined properties before sending to Firestore

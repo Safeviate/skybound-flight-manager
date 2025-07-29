@@ -89,7 +89,6 @@ const reportFormSchema = z.object({
   details: z.string().min(20, {
     message: 'Details must be at least 20 characters long.',
   }),
-  isAnonymous: z.boolean().default(false).optional(),
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
@@ -120,7 +119,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
     defaultValues: {
         occurrenceDate: new Date(),
         occurrenceTime: format(new Date(), 'HH:mm'),
-        isAnonymous: false,
         heading: '',
         details: '',
         subCategory: '',
@@ -490,31 +488,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                     />
                 </CardContent>
                  <CardFooter>
-                    <div className="w-full space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="isAnonymous"
-                            render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
-                                <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                    File Anonymously
-                                </FormLabel>
-                                <p className="text-xs text-muted-foreground">
-                                    If checked, your name will not be attached to this report.
-                                </p>
-                                </div>
-                            </FormItem>
-                            )}
-                        />
-                        <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
-                    </div>
+                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
                 </CardFooter>
             </Card>
 
