@@ -39,16 +39,16 @@ export default function LoginPage() {
   }, [user, router]);
   
   useEffect(() => {
-    // Fetch users for the demo login dropdown from all companies
+    // Fetch users for the demo login dropdown from the skybound-aero company
     const fetchDemoUsers = async () => {
         try {
-            const usersQuery = query(collectionGroup(db, 'users'), where('role', '!=', 'Admin'));
+            // Query users only from the 'skybound-aero' company
+            const usersQuery = query(collection(db, 'companies/skybound-aero/users'));
             const usersSnapshot = await getDocs(usersQuery);
             const usersList = usersSnapshot.docs.map(doc => doc.data() as User);
-            // Sort by company then by name for better organization
+            
+            // Sort by name for better organization
             usersList.sort((a, b) => {
-                if (a.companyId < b.companyId) return -1;
-                if (a.companyId > b.companyId) return 1;
                 if (a.name < b.name) return -1;
                 if (a.name > b.name) return 1;
                 return 0;
@@ -153,7 +153,7 @@ export default function LoginPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle className="text-2xl">Demo Login</CardTitle>
+                <CardTitle className="text-2xl">Demo Login (skybound-aero)</CardTitle>
                 <CardDescription>
                     Select a user to emulate their session without needing a password.
                 </CardDescription>
@@ -169,7 +169,7 @@ export default function LoginPage() {
                             <SelectContent>
                                 {demoUsers.map(demoUser => (
                                     <SelectItem key={demoUser.id} value={demoUser.email!}>
-                                        {demoUser.name} ({demoUser.role} / {demoUser.companyId})
+                                        {demoUser.name} ({demoUser.role})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
