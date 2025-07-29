@@ -81,14 +81,14 @@ export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveA
         if (!company) return;
         const q = query(collection(db, `companies/${company.id}/users`));
         const snapshot = await getDocs(q);
-        setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+        setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
     }
     fetchPersonnel();
   }, [company]);
   
   const uniquePersonnel = personnel.filter((person, index, self) =>
     index === self.findIndex((p) => (
-      p.name === person.name
+      p.id === person.id
     ))
   );
 
@@ -168,8 +168,8 @@ export function CorrectiveActionPlanForm({ onSubmit, suggestedCap }: CorrectiveA
                     </FormControl>
                     <SelectContent>
                     {uniquePersonnel.map((person) => (
-                        <SelectItem key={person.id} value={person.name}>
-                        {person.name} ({person.role})
+                        <SelectItem key={person.id} value={`${person.name} (${person.department || person.role})`}>
+                            {person.name} ({person.department || person.role})
                         </SelectItem>
                     ))}
                     </SelectContent>
