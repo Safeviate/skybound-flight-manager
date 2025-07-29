@@ -8,7 +8,7 @@ import type { SafetyReport, SafetyReportType, Department } from '@/lib/types';
 import { NewSafetyReportForm } from './new-safety-report-form';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -19,17 +19,20 @@ export default function NewSafetyReportPage() {
     const { user, company } = useUser();
     const { toast } = useToast();
     const router = useRouter();
-    const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]); // Assuming this might be needed for report numbering
 
     const handleNewReport = async (data: Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>) => {
         if (!user || !company) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to file a report.' });
             return;
         }
+        
+        // Fix for sequential numbering: Query Firestore for the current count of reports of the same type.
+        const reportsCollection = collection(db, `companies/${company.id}/safety-reports`);
+        const q = query(reportsCollection, where('reportType', '==', data.reportType));
+        const snapshot = await getCountFromServer(q);
+        const nextId = snapshot.data().count + 1;
 
         const reportTypeAbbr = (data.reportType as string).split(' ').map(w => w[0]).join('');
-        const reportsOfType = safetyReports.filter(r => r.reportNumber.startsWith(reportTypeAbbr));
-        const nextId = reportsOfType.length + 1;
         const reportNumber = `${reportTypeAbbr}-${String(nextId).padStart(3, '0')}`;
         
         const newReport: Omit<SafetyReport, 'id'> = {
@@ -41,7 +44,6 @@ export default function NewSafetyReportPage() {
             department: REPORT_TYPE_DEPARTMENT_MAPPING[data.reportType as SafetyReportType],
             occurrenceDate: format(data.occurrenceDate, 'yyyy-MM-dd'),
             pilotInCommand: data.pilotInCommand || null,
-            pilotFlying: data.pilotFlying || null,
             raFollowed: data.raFollowed || null,
         };
 
@@ -82,10 +84,4 @@ export default function NewSafetyReportPage() {
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
-
-
-
-
-
-
 
