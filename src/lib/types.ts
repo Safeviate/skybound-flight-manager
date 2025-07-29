@@ -259,6 +259,14 @@ export type AssociatedRisk = {
     promotedToRegister?: boolean;
 }
 
+export type InvestigationTask = {
+  id: string;
+  description: string;
+  assignedTo: string;
+  dueDate: string;
+  status: 'Open' | 'Completed';
+}
+
 export type SafetyReport = {
   id: string;
   companyId: string;
@@ -280,6 +288,7 @@ export type SafetyReport = {
   location?: string;
   investigationTeam?: string[];
   investigationDiary?: InvestigationDiaryEntry[];
+  tasks?: InvestigationTask[];
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
