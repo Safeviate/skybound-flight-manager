@@ -777,10 +777,12 @@ function SafetyPage() {
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
+              <TabsTrigger value="spis">SPIs</TabsTrigger>
+              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -987,6 +989,7 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
 
 
 
