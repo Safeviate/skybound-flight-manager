@@ -120,6 +120,11 @@ export let userData: Omit<User, 'id'>[] = [
     { id: 'edward-wilson-maint', companyId: 'skybound-aero', name: 'Edward Wilson', role: 'Maintenance', email: 'edward@skybound.com', phone: '+27851112222', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
     { id: 'isla-hall-maint', companyId: 'skybound-aero', name: 'Isla Hall', role: 'Maintenance', email: 'isla@skybound.com', phone: '+27853334444', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
     { id: 'james-king-maint', companyId: 'skybound-aero', name: 'James King', role: 'Maintenance', email: 'james@skybound.com', phone: '+27855556666', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'kevin-scott-maint', companyId: 'skybound-aero', name: 'Kevin Scott', role: 'Maintenance', email: 'kevin@skybound.com', phone: '+27856667777', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'olivia-green-maint', companyId: 'skybound-aero', name: 'Olivia Green', role: 'Maintenance', email: 'olivia.g@skybound.com', phone: '+27857778888', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'peter-adams-maint', companyId: 'skybound-aero', name: 'Peter Adams', role: 'Maintenance', email: 'peter@skybound.com', phone: '+27858889999', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'nora-baker-maint', companyId: 'skybound-aero', name: 'Nora Baker', role: 'Maintenance', email: 'nora@skybound.com', phone: '+27859991111', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'leo-campbell-maint', companyId: 'skybound-aero', name: 'Leo Campbell', role: 'Maintenance', email: 'leo@skybound.com', phone: '+27851113333', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
 
     // Ground Operations
     { id: 'fiona-garcia-front', companyId: 'skybound-aero', name: 'Fiona Garcia', role: 'Front Office', email: 'fiona@skybound.com', phone: '+27857778888', permissions: ROLE_PERMISSIONS['Front Office'], department: 'Ground Operation', status: 'Active' },
