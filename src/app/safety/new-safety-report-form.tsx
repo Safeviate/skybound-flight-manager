@@ -272,6 +272,36 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                 </CardContent>
             </Card>
 
+            <Card>
+                <CardHeader>
+                    <CardTitle>Submission</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="isAnonymous"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
+                            <FormControl>
+                            <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                            <FormLabel>
+                                File Anonymously
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                                If checked, your name will not be attached to this report.
+                            </p>
+                            </div>
+                        </FormItem>
+                        )}
+                    />
+                </CardContent>
+             </Card>
+
             {reportType === 'Flight Operations Report' && (
                 <Card>
                     <CardHeader>
@@ -497,35 +527,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                 </CardContent>
             </Card>
             
-             <Card>
-                <CardHeader>
-                    <CardTitle>Submission</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <FormField
-                        control={form.control}
-                        name="isAnonymous"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-yellow-200 dark:bg-yellow-200/30">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                            <FormLabel>
-                                File Anonymously
-                            </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, your name will not be attached to this report.
-                            </p>
-                            </div>
-                        </FormItem>
-                        )}
-                    />
-                </CardContent>
-             </Card>
             <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
         </form>
     </Form>
