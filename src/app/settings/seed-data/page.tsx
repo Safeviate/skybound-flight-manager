@@ -84,7 +84,7 @@ export default function SeedDataPage() {
     const existingSnapshot = await getDocs(aircraftCollectionRef);
     const existingIds = new Set(existingSnapshot.docs.map(d => d.id));
 
-    const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero' && !existingIds.has(ac.id));
+    const aircraftToSeed = seedAircraft.filter(ac => !existingIds.has(ac.id));
 
     if (aircraftToSeed.length === 0) {
         toast({
