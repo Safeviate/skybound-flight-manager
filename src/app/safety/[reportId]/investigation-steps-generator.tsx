@@ -5,7 +5,7 @@
 import { useActionState, useEffect, useState, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User } from 'lucide-react';
+import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, SuggestInvestigationStepsOutput, InvestigationTask, User as Personnel } from '@/lib/types';
 import { suggestStepsAction } from './actions';
@@ -110,7 +110,10 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
                 <p className="text-sm text-muted-foreground">
                     Tasks have been created based on the AI suggestions. You can view them in the task list.
                 </p>
-                 <Button variant="link" size="sm" onClick={() => setSuggestionsHidden(false)} className="mt-2">Show Suggestions Again</Button>
+                 <Button variant="outline" size="sm" onClick={() => setSuggestionsHidden(false)} className="mt-4">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Re-open Suggestions
+                </Button>
             </div>
         );
     }
