@@ -23,7 +23,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { User } from '@/lib/types';
+import type { User, SafetyReport } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
@@ -84,7 +84,7 @@ const reportFormSchema = z.object({
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
-    onSubmit: (data: any) => void;
+    onSubmit: (data: Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>) => void;
 }
 
 const groundOpAreas = ['Ramp/Apron', 'Taxiway', 'Hangar', 'Fuel Bay', 'Storage Area'];
@@ -94,6 +94,15 @@ const flightOpOccurrenceTypes = ['Loss of Separation / Airprox', 'Bird Strike', 
 const losSubcategories = ['Close Proximity', 'Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
 const raCallouts = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
 
+const defaultValues = {
+    occurrenceDate: new Date(),
+    occurrenceTime: format(new Date(), 'HH:mm'),
+    onBehalfOf: false,
+    isAnonymous: false,
+    phaseOfFlight: '',
+    aircraftInvolved: '',
+    location: '',
+};
 
 export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     const { user, company } = useUser();
@@ -111,15 +120,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
   
     const form = useForm<ReportFormValues>({
         resolver: zodResolver(reportFormSchema),
-        defaultValues: {
-            occurrenceDate: new Date(),
-            occurrenceTime: format(new Date(), 'HH:mm'),
-            onBehalfOf: false,
-            isAnonymous: false,
-            phaseOfFlight: '',
-            aircraftInvolved: '',
-            location: '',
-        }
+        defaultValues: defaultValues
     });
 
     const onBehalfOfChecked = form.watch('onBehalfOf');
@@ -137,7 +138,11 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
         onSubmit({
             ...data,
             submittedBy, // Pass the correct name
-        });
+        } as Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>);
+    }
+    
+    const handleReset = () => {
+        form.reset(defaultValues);
     }
 
   return (
@@ -539,8 +544,13 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         />
                     )}
                 </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={handleReset}>Reset Form</Button>
+                    <Button type="submit">Submit Report</Button>
+                </CardFooter>
             </Card>
         </form>
     </Form>
   );
 }
+

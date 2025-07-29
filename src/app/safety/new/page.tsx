@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -68,4 +69,5 @@ export default function NewSafetyReportPage() {
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+
 
