@@ -65,13 +65,24 @@ export default function NewSafetyReportPage() {
     return (
         <main className="flex-1 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
-                <NewSafetyReportForm onSubmit={handleNewReport} />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>File New Safety Report</CardTitle>
+                        <CardDescription>
+                            Your report will be submitted to the Safety Department for review. Please provide as much detail as possible.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <NewSafetyReportForm onSubmit={handleNewReport} />
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+
 
 
 
