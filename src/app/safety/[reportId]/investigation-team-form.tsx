@@ -22,11 +22,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport, User } from '@/lib/types';
+import type { SafetyReport, User, Alert } from '@/lib/types';
 import { UserPlus, X } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, addDoc } from 'firebase/firestore';
 
 const teamFormSchema = z.object({
   personnel: z.string().min(1, 'You must select a person to add.'),
@@ -41,7 +41,7 @@ interface InvestigationTeamFormProps {
 
 export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFormProps) {
   const { toast } = useToast();
-  const { company } = useUser();
+  const { user: currentUser, company } = useUser();
   const [team, setTeam] = React.useState<string[]>(() => {
     const initialTeam = new Set(report.investigationTeam || []);
     if (report.submittedBy !== 'Anonymous') {
@@ -57,7 +57,7 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
       try {
         const personnelQuery = query(collection(db, `companies/${company.id}/users`));
         const snapshot = await getDocs(personnelQuery);
-        setAllPersonnel(snapshot.docs.map(doc => doc.data() as User));
+        setAllPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
       } catch (error) {
         console.error("Error fetching personnel:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Could not load personnel list.' });
@@ -83,14 +83,34 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
     resolver: zodResolver(teamFormSchema),
   });
 
-  function onAddMember(data: TeamFormValues) {
+  async function onAddMember(data: TeamFormValues) {
+    if (!company || !currentUser) return;
+    
     const newTeam = [...team, data.personnel];
     setTeam(newTeam);
     onUpdate({ ...report, investigationTeam: newTeam });
     form.reset();
+
+    const addedUser = allPersonnel.find(p => p.name === data.personnel);
+    if (addedUser) {
+        const newAlert: Omit<Alert, 'id' | 'number'> = {
+            companyId: company.id,
+            type: 'Task',
+            title: `Assigned to Investigation: ${report.reportNumber}`,
+            description: `You have been added to the investigation team for safety report: "${report.heading}".`,
+            author: currentUser.name,
+            date: new Date().toISOString(),
+            readBy: [],
+            targetUserId: addedUser.id,
+            relatedLink: `/safety/${report.id}`,
+        };
+        const alertsCollection = collection(db, `companies/${company.id}/alerts`);
+        await addDoc(alertsCollection, newAlert);
+    }
+    
     toast({
       title: 'Team Member Added',
-      description: `${data.personnel} has been added to the investigation.`,
+      description: `${data.personnel} has been added to the investigation and notified.`,
     });
   }
 

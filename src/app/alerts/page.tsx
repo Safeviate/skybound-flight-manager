@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2 } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 function AlertsPage() {
-  const { user, company, loading } = useUser();
+  const { user, company, loading, acknowledgeAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
@@ -53,24 +53,25 @@ function AlertsPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    async function fetchAlerts() {
-        if (!company) return;
-        try {
-            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-            const q = query(alertsCollection, orderBy('date', 'desc'));
-            const querySnapshot = await getDocs(q);
-            const fetchedAlerts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-            setAlerts(fetchedAlerts);
-        } catch (error) {
-            console.error("Error fetching alerts: ", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not fetch alerts from the database.'
-            });
-        }
+  const fetchAlerts = async () => {
+    if (!company) return;
+    try {
+        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        const q = query(alertsCollection, orderBy('date', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const fetchedAlerts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+        setAlerts(fetchedAlerts);
+    } catch (error) {
+        console.error("Error fetching alerts: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch alerts from the database.'
+        });
     }
+  }
+
+  useEffect(() => {
     if (company) {
         fetchAlerts();
     }
@@ -84,7 +85,6 @@ function AlertsPage() {
     try {
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
         
-        // Query for the last alert of the same type to determine the new number
         const q = query(
             alertsCollection, 
             where('type', '==', data.type), 
@@ -123,7 +123,7 @@ function AlertsPage() {
     try {
       const alertRef = doc(db, 'companies', company.id, 'alerts', alertId);
       await deleteDoc(alertRef);
-      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      fetchAlerts(); // Re-fetch alerts after deletion
       toast({
         title: 'Alert Deleted',
         description: 'The alert has been successfully deleted.',
@@ -138,6 +138,25 @@ function AlertsPage() {
     }
   };
 
+  const handleAcknowledge = async (alertId: string) => {
+    if (!user) return;
+    try {
+        await acknowledgeAlerts([alertId]);
+        fetchAlerts(); // Re-fetch to update the UI
+        toast({
+            title: 'Alert Acknowledged',
+            description: 'The notification has been marked as read.',
+        });
+    } catch (error) {
+        console.error("Failed to acknowledge alert", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not acknowledge the alert.',
+        });
+    }
+  };
+
 
   if (loading || !user) {
     return (
@@ -146,6 +165,8 @@ function AlertsPage() {
         </main>
     );
   }
+  
+  const displayedAlerts = alerts.filter(alert => !alert.readBy.includes(user.id));
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -178,9 +199,9 @@ function AlertsPage() {
             )}
           </CardHeader>
           <CardContent>
-            {alerts.length > 0 ? (
+            {displayedAlerts.length > 0 ? (
                 <div className="space-y-4">
-                    {alerts.map((alert) => (
+                    {displayedAlerts.map((alert) => (
                         <Collapsible key={alert.id} className="w-full">
                             <Card className="hover:bg-muted/50 transition-colors">
                                 <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -195,6 +216,10 @@ function AlertsPage() {
                                         </div>
                                    </div>
                                    <div className="flex items-center">
+                                    <Button size="sm" variant="outline" onClick={() => handleAcknowledge(alert.id)}>
+                                        <Check className="mr-2 h-4 w-4" />
+                                        Acknowledge
+                                    </Button>
                                     <CollapsibleTrigger asChild>
                                       <Button variant="ghost" size="icon">
                                         <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
