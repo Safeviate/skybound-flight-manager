@@ -117,11 +117,11 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
       <div className="space-y-4">
         {team.length > 0 ? (
           <div className="flex flex-wrap gap-4">
-            {team.map((memberName) => {
+            {team.map((memberName, index) => {
               const member = allPersonnel.find((u) => u.name === memberName);
               const isReporter = memberName === report.submittedBy;
               return (
-                <div key={memberName} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
+                <div key={`${memberName}-${index}`} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
                   <div>
                     <p className="font-medium text-sm">{memberName}</p>
                     <p className="text-xs text-muted-foreground">{isReporter ? 'Reporter' : member?.role}</p>
