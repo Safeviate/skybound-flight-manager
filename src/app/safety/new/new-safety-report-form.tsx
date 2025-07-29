@@ -47,6 +47,7 @@ const reportFormSchema = z.object({
   }).optional(),
   aircraftInvolved: z.string().optional(),
   location: z.string().optional(),
+  details: z.string().min(20, { message: 'The event description must be at least 20 characters long.' }),
   isAnonymous: z.boolean().default(false).optional(),
   onBehalfOf: z.boolean().default(false),
   onBehalfOfUser: z.string().optional(),
@@ -102,6 +103,7 @@ const defaultValues = {
     phaseOfFlight: '',
     aircraftInvolved: '',
     location: '',
+    details: '',
 };
 
 export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
@@ -271,7 +273,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         <div className="space-y-4 pt-4 border-t">
                             <FormField
                                 control={form.control}
-                                name="phaseOfFlight" // Re-using for specific type
+                                name="phaseOfFlight"
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Specific Occurrence Type</FormLabel>
@@ -468,6 +470,33 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Event Description</CardTitle>
+                    <CardDescription>
+                        Describe the event in detail. Include what happened, where it happened, and who was involved.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <FormField
+                        control={form.control}
+                        name="details"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="Provide a detailed description of the event..."
+                                    className="min-h-[200px]"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -553,4 +582,5 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     </Form>
   );
 }
+
 
