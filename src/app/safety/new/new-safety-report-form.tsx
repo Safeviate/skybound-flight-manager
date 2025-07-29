@@ -470,33 +470,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Event Description</CardTitle>
-                    <CardDescription>
-                        Describe the event in detail. Include what happened, where it happened, and who was involved.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <FormField
-                        control={form.control}
-                        name="details"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Provide a detailed description of the event..."
-                                    className="min-h-[200px]"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -573,6 +546,33 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         />
                     )}
                 </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Event Description</CardTitle>
+                    <CardDescription>
+                        Describe the event in detail. Include what happened, where it happened, and who was involved.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <FormField
+                        control={form.control}
+                        name="details"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="Provide a detailed description of the event..."
+                                    className="min-h-[200px]"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={handleReset}>Reset Form</Button>
                     <Button type="submit">Submit Report</Button>
@@ -582,5 +582,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     </Form>
   );
 }
+
 
 
