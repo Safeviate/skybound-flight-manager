@@ -39,6 +39,7 @@ const reportFormSchema = z.object({
   reportType: z.string({
     required_error: 'Please select a report type.',
   }),
+  heading: z.string().min(5, { message: 'The heading must be at least 5 characters long.' }),
   occurrenceDate: z.date({
     required_error: 'An occurrence date is required.',
   }),
@@ -100,6 +101,7 @@ const raCallouts = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 
 
 const defaultValues: Partial<ReportFormValues> = {
     reportType: '',
+    heading: '',
     occurrenceDate: new Date(),
     occurrenceTime: format(new Date(), 'HH:mm'),
     onBehalfOf: false,
@@ -576,6 +578,32 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         </div>
                     )}
 
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Report Heading</CardTitle>
+                    <CardDescription>
+                        Provide a concise, one-line summary of the event.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <FormField
+                        control={form.control}
+                        name="heading"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Input
+                                    placeholder="e.g., Unstable approach due to bird activity on final."
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </CardContent>
             </Card>
 
