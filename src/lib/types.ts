@@ -262,13 +262,20 @@ export type AssociatedRisk = {
     promotedToRegister?: boolean;
 }
 
+export type TaskComment = {
+  id: string;
+  author: string;
+  date: string;
+  message: string;
+};
+
 export type InvestigationTask = {
   id: string;
   description: string;
   assignedTo: string;
   dueDate: string;
   status: 'Open' | 'Completed';
-  completionNotes?: string;
+  comments?: TaskComment[];
 }
 
 export type SafetyReport = {

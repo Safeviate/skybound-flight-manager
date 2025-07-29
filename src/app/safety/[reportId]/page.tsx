@@ -11,8 +11,8 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { Risk, SafetyReport, User, InvestigationTask } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown } from 'lucide-react';
+import type { Risk, SafetyReport, User, InvestigationTask, TaskComment } from '@/lib/types';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -44,7 +44,7 @@ import { InvestigationDiary } from './investigation-diary';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Check, CheckCircle } from 'lucide-react';
 import type { DiscussionEntry, InvestigationDiaryEntry } from '@/lib/types';
@@ -83,14 +83,51 @@ const diaryFormSchema = z.object({
 
 type DiaryFormValues = z.infer<typeof diaryFormSchema>;
 
+const commentFormSchema = z.object({
+    message: z.string().min(1, 'Comment cannot be empty.'),
+});
 
-const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, isLoading: boolean }) => {
+type CommentFormValues = z.infer<typeof commentFormSchema>;
+
+const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddComment: (taskId: string, message: string) => void }) => {
+    const form = useForm<CommentFormValues>({ resolver: zodResolver(commentFormSchema) });
+    const { user } = useUser();
+
+    const onSubmit = (data: CommentFormValues) => {
+        if (!user) return;
+        onAddComment(taskId, data.message);
+        form.reset({ message: '' });
+    };
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2 pt-2">
+                <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormControl>
+                                <Textarea placeholder="Add a comment..." {...field} rows={1} className="min-h-0" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" size="sm">Comment</Button>
+            </form>
+        </Form>
+    );
+};
+
+const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading }: { report: SafetyReport, onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean }) => {
+    const tasks = report.tasks || [];
+    const { user } = useUser();
 
     const handleCheckboxClick = (task: InvestigationTask) => {
         if (task.status === 'Open') {
             onUpdateTask(task.id, 'Completed');
         } else {
-            // Re-open task
             onUpdateTask(task.id, 'Open');
         }
     };
@@ -117,44 +154,56 @@ const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: Inve
                 <CardTitle className="flex items-center gap-2"><ListTodo /> Investigation Task List</CardTitle>
                 <CardDescription>All tasks assigned for this investigation.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-12"></TableHead>
-                            <TableHead>Task Description</TableHead>
-                            <TableHead>Assigned To</TableHead>
-                            <TableHead>Due Date</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {tasks.map(task => (
-                            <TableRow key={task.id} className={cn(task.status === 'Completed' && 'bg-muted/50')}>
-                                <TableCell>
-                                    <Checkbox 
-                                        checked={task.status === 'Completed'}
-                                        onCheckedChange={() => handleCheckboxClick(task)}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <p className={cn(task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</p>
-                                    {task.completionNotes && (
-                                        <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground border-l-2 pl-3 border-green-500">
-                                            <MessageSquare className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                                            <p className="whitespace-pre-wrap">{task.completionNotes}</p>
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell className={cn(task.status === 'Completed' && 'line-through')}>{task.assignedTo}</TableCell>
-                                <TableCell>
+            <CardContent className="space-y-2">
+                {tasks.map(task => (
+                    <Collapsible key={task.id} className="border p-4 rounded-lg">
+                        <div className="flex items-start gap-4">
+                            <Checkbox 
+                                id={`task-${task.id}`}
+                                checked={task.status === 'Completed'}
+                                onCheckedChange={() => handleCheckboxClick(task)}
+                                className="mt-1"
+                            />
+                            <div className="flex-1 grid gap-1">
+                                <Label htmlFor={`task-${task.id}`} className={cn("font-medium", task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</Label>
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <span>Assigned to: {task.assignedTo}</span>
                                     <Badge variant={new Date(task.dueDate) < new Date() && task.status === 'Open' ? 'destructive' : 'outline'}>
-                                        {format(new Date(task.dueDate), 'PPP')}
+                                        Due: {format(new Date(task.dueDate), 'PPP')}
                                     </Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                </div>
+                            </div>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    Comments ({task.comments?.length || 0})
+                                </Button>
+                            </CollapsibleTrigger>
+                        </div>
+                        <CollapsibleContent className="pt-4 mt-4 border-t">
+                            <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                                {task.comments?.map(comment => (
+                                    <div key={comment.id} className="flex gap-3">
+                                        <div className="h-8 w-8 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
+                                            <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                        </div>
+                                        <div className="flex-1 space-y-1 text-sm">
+                                            <div className="flex items-baseline justify-between">
+                                                <p className="font-semibold">{comment.author}</p>
+                                                <p className="text-xs text-muted-foreground">{format(new Date(comment.date), "MMM d, yyyy 'at' h:mm a")}</p>
+                                            </div>
+                                            <div className="p-2 rounded-md bg-muted/50 whitespace-pre-wrap">{comment.message}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!task.comments || task.comments.length === 0) && (
+                                     <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
+                                )}
+                            </div>
+                            <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
+                        </CollapsibleContent>
+                    </Collapsible>
+                ))}
             </CardContent>
         </Card>
     )
@@ -368,6 +417,23 @@ function SafetyReportInvestigationPage() {
     
     handleReportUpdate({ ...report, tasks: updatedTasks });
   }
+
+  const handleAddTaskComment = (taskId: string, message: string) => {
+    if (!report || !user) return;
+    
+    const newComment: TaskComment = {
+        id: `comment-${Date.now()}`,
+        author: user.name,
+        date: new Date().toISOString(),
+        message,
+    };
+
+    const updatedTasks = report.tasks?.map(task => 
+        task.id === taskId ? { ...task, comments: [...(task.comments || []), newComment] } : task
+    );
+
+    handleReportUpdate({ ...report, tasks: updatedTasks });
+  };
 
   if (loading || dataLoading) {
     return (
@@ -585,7 +651,12 @@ function SafetyReportInvestigationPage() {
                             </Tabs>
                         </CardContent>
                     </Card>
-                    <InvestigationTaskList tasks={report.tasks || []} onUpdateTask={handleUpdateTaskStatus} isLoading={dataLoading} />
+                    <InvestigationTaskList 
+                        report={report}
+                        onUpdateTask={handleUpdateTaskStatus} 
+                        onAddComment={handleAddTaskComment}
+                        isLoading={dataLoading} 
+                    />
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Investigation Discussion</CardTitle>
@@ -798,4 +869,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
