@@ -159,7 +159,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
         onSubmit({
             ...data,
             submittedBy, // Pass the correct name
-            pilotInCommand: picName,
+            pilotInCommand: picName || null,
         } as Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>);
     }
     
@@ -422,7 +422,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                         render={({ field }) => (
                                             <FormItem>
                                             <FormLabel>Pilot in Command (PIC)</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select the PIC" />
@@ -578,6 +578,34 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
 
                 </CardContent>
             </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>Event Description</CardTitle>
+                    <CardDescription>
+                        Describe the event in detail. Include what happened, where it happened, and who was involved.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <FormField
+                        control={form.control}
+                        name="details"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="Provide a detailed description of the event..."
+                                    className="min-h-[200px]"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
@@ -655,33 +683,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             )}
                         />
                     )}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Event Description</CardTitle>
-                    <CardDescription>
-                        Describe the event in detail. Include what happened, where it happened, and who was involved.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <FormField
-                        control={form.control}
-                        name="details"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Provide a detailed description of the event..."
-                                    className="min-h-[200px]"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={handleReset}>Reset Form</Button>
