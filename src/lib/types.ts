@@ -4,6 +4,9 @@ import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-cor
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
 export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
+import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
+export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
+
 
 export type Airport = {
   id: string;
@@ -295,6 +298,7 @@ export type SafetyReport = {
   associatedRisks?: AssociatedRisk[];
   correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
   fiveWhysAnalysis?: FiveWhysAnalysisOutput;
+  aiSuggestedSteps?: SuggestInvestigationStepsOutput;
   // Dynamic fields based on category
   phaseOfFlight?: string;
   crewInvolved?: string;
@@ -331,13 +335,6 @@ export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department
     'Aircraft Defect Report': 'Maintenance',
     'Occupational Report': 'Management',
     'General Report': 'Management',
-};
-
-export type SuggestInvestigationStepsOutput = {
-  initialAssessment: string;
-  keyAreasToInvestigate: string[];
-  recommendedActions: string[];
-  potentialContributingFactors: string[];
 };
 
 export type CorrectiveAction = {

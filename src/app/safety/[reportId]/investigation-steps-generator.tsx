@@ -5,7 +5,7 @@
 import { useActionState, useEffect, useState, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen } from 'lucide-react';
+import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, SuggestInvestigationStepsOutput, InvestigationTask, User as Personnel } from '@/lib/types';
 import { suggestStepsAction } from './actions';
@@ -41,12 +41,6 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
     const [taskAssignments, setTaskAssignments] = useState<Record<string, { assignedTo: string, dueDate: Date }>>({});
     const [suggestionsHidden, setSuggestionsHidden] = useState(false);
 
-
-    const allSuggestions = useMemo(() => [
-        ...data.keyAreasToInvestigate,
-        ...data.recommendedActions,
-        ...data.potentialContributingFactors,
-    ], [data]);
 
     const handleCheckedChange = (group: string, value: string, isChecked: boolean) => {
         setCheckedItems(prev => {
@@ -91,6 +85,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
         onAssignTasks(newTasks as Omit<InvestigationTask, 'id'|'status'>[]);
         setIsAssignDialogOpen(false);
         setSuggestionsHidden(true); // Hide suggestions after assigning
+        setCheckedItems({}); // Clear selections
     };
 
     const resultItems = [
@@ -112,7 +107,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
                 </p>
                  <Button variant="outline" size="sm" onClick={() => setSuggestionsHidden(false)} className="mt-4">
                     <BookOpen className="mr-2 h-4 w-4" />
-                    Re-open Suggestions
+                    Show Suggestions Again
                 </Button>
             </div>
         );
@@ -209,12 +204,14 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
 
 export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
   const [state, formAction] = useActionState(suggestStepsAction, initialState);
-  const [result, setResult] = useState<SuggestInvestigationStepsOutput | null>(null);
   const { toast } = useToast();
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Effect to handle the result from the server action
   useEffect(() => {
     if (state.data) {
-      setResult(state.data as SuggestInvestigationStepsOutput);
+      // The action now persists the data, so we don't need to set local state from it.
+      // The parent component will re-render with the new report data.
     }
     if (state.message && state.message !== 'Analysis complete') {
       toast({
@@ -225,16 +222,42 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
     }
   }, [state, toast]);
 
+  const hasExistingSuggestions = !!report.aiSuggestedSteps;
+
   return (
     <div>
         <p className="text-xs text-muted-foreground mb-2">
             Generate a structured investigation plan based on the report details.
         </p>
-        <form action={formAction}>
-            <input type="hidden" name="report" value={JSON.stringify(report)} />
-            <SubmitButton />
-        </form>
-        {result && <AnalysisResult data={result} personnel={personnel} onAssignTasks={onAssignTasks} />}
+
+        {!hasExistingSuggestions ? (
+            <form action={formAction}>
+                <input type="hidden" name="report" value={JSON.stringify(report)} />
+                <SubmitButton />
+            </form>
+        ) : (
+            <Button variant="outline" size="sm" className="w-full" onClick={() => setShowSuggestions(prev => !prev)}>
+                {showSuggestions ? (
+                    <>
+                        <X className="mr-2 h-4 w-4" />
+                        Hide Suggestions
+                    </>
+                ) : (
+                    <>
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Show AI Suggestions
+                    </>
+                )}
+            </Button>
+        )}
+
+        {showSuggestions && report.aiSuggestedSteps && (
+             <AnalysisResult 
+                data={report.aiSuggestedSteps} 
+                personnel={personnel} 
+                onAssignTasks={onAssignTasks} 
+            />
+        )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -8,7 +9,10 @@ import { promoteToRiskRegister } from '@/ai/flows/promote-to-risk-register-flow'
 import { fiveWhysAnalysis } from '@/ai/flows/five-whys-analysis-flow';
 import { suggestHazards } from '@/ai/flows/suggest-hazards-flow';
 import { suggestIcaoCategory } from '@/ai/flows/suggest-icao-category-flow';
-import type { SafetyReport, AssociatedRisk } from '@/lib/types';
+import type { SafetyReport, AssociatedRisk, SuggestInvestigationStepsOutput } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+
 
 const reportSchema = z.object({
   report: z.any(),
@@ -41,6 +45,15 @@ export async function suggestStepsAction(prevState: any, formData: FormData) {
     const result = await suggestInvestigationSteps({
       report: validatedFields.data.report,
     });
+    
+    // Persist the suggestions to the report in Firestore
+    if (result && report.companyId && report.id) {
+        const reportRef = doc(db, `companies/${report.companyId}/safety-reports`, report.id);
+        await updateDoc(reportRef, {
+            aiSuggestedSteps: result
+        });
+    }
+
     return {
       message: 'Analysis complete',
       data: result,
