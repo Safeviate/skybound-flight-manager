@@ -45,6 +45,7 @@ export default function NewSafetyReportPage() {
             occurrenceDate: format(data.occurrenceDate, 'yyyy-MM-dd'),
             pilotInCommand: data.pilotInCommand || null,
             raFollowed: data.raFollowed || null,
+            pilotFlying: data.pilotFlying || null,
         };
 
         try {
@@ -84,4 +85,5 @@ export default function NewSafetyReportPage() {
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+
 
