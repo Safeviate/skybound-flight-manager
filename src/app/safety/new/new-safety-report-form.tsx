@@ -274,6 +274,30 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                     </div>
                      {reportType === 'Flight Operations Report' && (
                         <div className="space-y-4 pt-4 border-t">
+                             <FormField
+                                control={form.control}
+                                name="phaseOfFlight"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Phase of Flight</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a phase of flight" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {ICAO_PHASES_OF_FLIGHT.map((phase) => (
+                                            <SelectItem key={phase} value={phase}>
+                                            {phase}
+                                            </SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="phaseOfFlight"
@@ -388,7 +412,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {personnel.filter(p => p.role.includes('Instructor') || p.role.includes('Manager')).map((p) => (
+                                                    {personnel.filter(p => p.role !== 'Student').map((p) => (
                                                         <SelectItem key={p.id} value={p.name}>
                                                             {p.name}
                                                         </SelectItem>
@@ -537,7 +561,6 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
 
                 </CardContent>
             </Card>
-
             <Card>
                 <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
@@ -617,7 +640,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                     )}
                 </CardContent>
             </Card>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>Event Description</CardTitle>
@@ -652,7 +675,3 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     </Form>
   );
 }
-
-
-
-
