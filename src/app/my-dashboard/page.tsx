@@ -8,17 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Alert } from '@/lib/types';
-import { Calendar, Bell, Plane, Clock, Check, AlertTriangle } from 'lucide-react';
+import { Calendar, Bell, Plane, Clock, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 function MyDashboardPage() {
-  const { user, company, loading, getUnacknowledgedAlerts } = useUser();
+  const { user, company, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
   const router = useRouter();
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
   
   useEffect(() => {
     if (!loading && !user) {
@@ -59,9 +62,6 @@ function MyDashboardPage() {
 
           setUpcomingBookings(combinedBookings);
 
-          // Get unacknowledged alerts
-          const unacknowledgedAlerts = getUnacknowledgedAlerts([]);
-          setAlerts(unacknowledgedAlerts);
         } catch (error) {
           console.error("Error fetching dashboard data:", error);
         } finally {
@@ -73,7 +73,13 @@ function MyDashboardPage() {
         // If super user lands here without a company context, send them to the main companies page
         router.push('/');
     }
-  }, [user, company, getUnacknowledgedAlerts, loading, router]);
+  }, [user, company, loading, router]);
+  
+    useEffect(() => {
+        // This effect runs when getUnacknowledgedAlerts changes, which happens when allAlerts is updated.
+        const unacknowledged = getUnacknowledgedAlerts([]);
+        setAlerts(unacknowledged);
+    }, [getUnacknowledgedAlerts]);
 
   if (loading || dataLoading) {
     return (
@@ -90,6 +96,18 @@ function MyDashboardPage() {
         default: return <Bell className="h-4 w-4 text-primary" />;
     }
 }
+
+const handleAcknowledge = async (alertId: string) => {
+    if (!user) return;
+    try {
+      await acknowledgeAlerts([alertId]);
+      setAcknowledgedOnPage(prev => [...prev, alertId]);
+    } catch (error) {
+      console.error("Failed to acknowledge alert", error);
+    }
+  };
+
+  const displayedAlerts = alerts.filter(a => !acknowledgedOnPage.includes(a.id));
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -151,17 +169,21 @@ function MyDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             {alerts.length > 0 ? (
+             {displayedAlerts.length > 0 ? (
                 <ul className="space-y-4">
-                    {alerts.map(alert => (
+                    {displayedAlerts.map(alert => (
                         <li key={alert.id} className="flex items-start gap-4">
                             <div className="p-2 bg-muted rounded-full">
                                 {getAlertIcon(alert.type)}
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <p className="font-semibold">{alert.title}</p>
                                 <p className="text-sm text-muted-foreground">{alert.description}</p>
                             </div>
+                             <Button size="sm" variant="outline" onClick={() => handleAcknowledge(alert.id)}>
+                                <Check className="mr-2 h-4 w-4" />
+                                Acknowledge
+                            </Button>
                         </li>
                     ))}
                 </ul>
