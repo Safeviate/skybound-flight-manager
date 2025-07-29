@@ -88,7 +88,7 @@ const completionNotesFormSchema = z.object({
 type CompletionNotesFormValues = z.infer<typeof completionNotesFormSchema>;
 
 
-const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed', notes?: string) => void }) => {
+const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed', notes?: string) => void, isLoading: boolean }) => {
     const [completingTask, setCompletingTask] = useState<InvestigationTask | null>(null);
     const form = useForm<CompletionNotesFormValues>({
         resolver: zodResolver(completionNotesFormSchema),
@@ -111,6 +111,14 @@ const InvestigationTaskList = ({ tasks, onUpdateTask }: { tasks: InvestigationTa
         }
     };
 
+    if (isLoading) {
+        return (
+             <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+    
     if (!tasks || tasks.length === 0) {
         return (
             <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
@@ -604,7 +612,7 @@ function SafetyReportInvestigationPage() {
                             </Tabs>
                         </CardContent>
                     </Card>
-                    <InvestigationTaskList tasks={report.tasks || []} onUpdateTask={handleUpdateTaskStatus} />
+                    <InvestigationTaskList tasks={report.tasks || []} onUpdateTask={handleUpdateTaskStatus} isLoading={dataLoading} />
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Investigation Discussion</CardTitle>

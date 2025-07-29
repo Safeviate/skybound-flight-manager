@@ -5,7 +5,7 @@
 import { useActionState, useEffect, useState, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw } from 'lucide-react';
+import { Loader2, Bot, Clipboard, CheckCircle, CalendarIcon, User, BookOpen, X, RefreshCw, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, SuggestInvestigationStepsOutput, InvestigationTask, User as Personnel } from '@/lib/types';
 import { suggestStepsAction } from './actions';
@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 const initialState = {
@@ -30,7 +31,7 @@ function SubmitButton() {
   return (
     <Button type="submit" variant="outline" size="sm" disabled={pending} className="w-full">
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Suggest Investigation Steps
+      Generate Investigation Steps
     </Button>
   );
 }
@@ -39,8 +40,6 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
     const [checkedItems, setCheckedItems] = useState<Record<string, string[]>>({});
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [taskAssignments, setTaskAssignments] = useState<Record<string, { assignedTo: string, dueDate: Date }>>({});
-    const [suggestionsHidden, setSuggestionsHidden] = useState(false);
-
 
     const handleCheckedChange = (group: string, value: string, isChecked: boolean) => {
         setCheckedItems(prev => {
@@ -84,7 +83,6 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
         
         onAssignTasks(newTasks as Omit<InvestigationTask, 'id'|'status'>[]);
         setIsAssignDialogOpen(false);
-        setSuggestionsHidden(true); // Hide suggestions after assigning
         setCheckedItems({}); // Clear selections
     };
 
@@ -96,22 +94,6 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
     ];
 
     const isAnyCheckboxChecked = Object.values(checkedItems).some(arr => arr.length > 0);
-
-    if (suggestionsHidden) {
-        return (
-            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-muted p-6 text-center">
-                 <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
-                 <h4 className="font-semibold">Tasks Assigned</h4>
-                <p className="text-sm text-muted-foreground">
-                    Tasks have been created based on the AI suggestions. You can view them in the task list.
-                </p>
-                 <Button variant="outline" size="sm" onClick={() => setSuggestionsHidden(false)} className="mt-4">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Show Suggestions Again
-                </Button>
-            </div>
-        );
-    }
 
     return (
         <div className="mt-4 space-y-4">
@@ -209,7 +191,6 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
 
   useEffect(() => {
     if (state.data) {
-      // When the action completes and returns data, automatically show the suggestions.
       setShowSuggestions(true);
     }
     if (state.message && state.message !== 'Analysis complete') {
@@ -221,44 +202,41 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
     }
   }, [state, toast]);
 
-  // Determine which set of suggestions to show: from the action state (just generated) or from the persisted report data.
   const suggestionsToShow = state.data || report.aiSuggestedSteps;
-  const hasExistingSuggestions = !!report.aiSuggestedSteps;
 
   return (
-    <div>
-        <p className="text-xs text-muted-foreground mb-2">
-            Generate a structured investigation plan based on the report details.
-        </p>
+    <Collapsible open={showSuggestions} onOpenChange={setShowSuggestions}>
+        <div className="flex items-center justify-between">
+             <div className="space-y-1">
+                <h4 className="text-sm font-semibold">AI Suggested Steps</h4>
+                <p className="text-xs text-muted-foreground">
+                    Generate a structured investigation plan based on the report details.
+                </p>
+             </div>
+             {suggestionsToShow ? (
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-9 p-0">
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="sr-only">Toggle</span>
+                    </Button>
+                </CollapsibleTrigger>
+             ) : (
+                <form action={formAction}>
+                    <input type="hidden" name="report" value={JSON.stringify(report)} />
+                    <SubmitButton />
+                </form>
+             )}
+        </div>
 
-        {!hasExistingSuggestions ? (
-            <form action={formAction}>
-                <input type="hidden" name="report" value={JSON.stringify(report)} />
-                <SubmitButton />
-            </form>
-        ) : (
-            <Button variant="outline" size="sm" className="w-full" onClick={() => setShowSuggestions(prev => !prev)}>
-                {showSuggestions ? (
-                    <>
-                        <X className="mr-2 h-4 w-4" />
-                        Hide Suggestions
-                    </>
-                ) : (
-                    <>
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Show AI Suggestions
-                    </>
-                )}
-            </Button>
-        )}
-
-        {showSuggestions && suggestionsToShow && (
-             <AnalysisResult 
-                data={suggestionsToShow as SuggestInvestigationStepsOutput} 
-                personnel={personnel} 
-                onAssignTasks={onAssignTasks} 
-            />
-        )}
-    </div>
+        <CollapsibleContent>
+            {suggestionsToShow && (
+                <AnalysisResult 
+                    data={suggestionsToShow as SuggestInvestigationStepsOutput} 
+                    personnel={personnel} 
+                    onAssignTasks={onAssignTasks} 
+                />
+            )}
+        </CollapsibleContent>
+    </Collapsible>
   );
 }
