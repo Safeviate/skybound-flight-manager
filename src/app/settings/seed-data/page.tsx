@@ -39,12 +39,14 @@ export default function SeedDataPage() {
     setIsSeedingUsers(true);
     try {
       const batch = writeBatch(db);
-      const usersToSeed = seedUsers.filter(u => u.companyId === 'skybound-aero');
+      // The filter for 'skybound-aero' is removed here to make the seeding company-agnostic.
+      const usersToSeed = seedUsers;
 
       usersToSeed.forEach(user => {
         // Use the predefined ID from the seed data if available, otherwise let Firestore generate one
         const userRef = user.id ? doc(db, `companies/${company.id}/users`, user.id) : doc(collection(db, `companies/${company.id}/users`));
         const { password, ...userData } = user;
+        // The companyId is correctly overridden with the current company's ID.
         batch.set(userRef, { ...userData, id: userRef.id, companyId: company.id });
       });
 
