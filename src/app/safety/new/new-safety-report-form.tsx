@@ -28,6 +28,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
 const reportFormSchema = z.object({
   reportType: z.string({
@@ -39,10 +40,18 @@ const reportFormSchema = z.object({
   occurrenceTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
       message: "Please enter a valid time in 24-hour HH:mm format.",
   }).optional(),
+  aircraftInvolved: z.string().optional(),
   location: z.string().optional(),
+  heading: z.string().min(5, { message: "Heading must be at least 5 characters."}),
+  details: z.string().min(20, { message: "Details must be at least 20 characters."}),
   isAnonymous: z.boolean().default(false),
   onBehalfOf: z.boolean().default(false),
   onBehalfOfUser: z.string().optional(),
+  subCategory: z.string().optional(),
+  phaseOfFlight: z.string().optional(),
+  lossOfSeparationType: z.string().optional(),
+  raCallout: z.string().optional(),
+  raNotFollowedReason: z.string().optional(),
 }).refine(data => {
     if (data.onBehalfOf) {
         return !!data.onBehalfOfUser;
@@ -81,6 +90,15 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             occurrenceTime: format(new Date(), 'HH:mm'),
             isAnonymous: false,
             onBehalfOf: false,
+            heading: '',
+            details: '',
+            subCategory: '',
+            phaseOfFlight: '',
+            lossOfSeparationType: '',
+            raCallout: '',
+            raNotFollowedReason: '',
+            aircraftInvolved: '',
+            location: '',
         }
     });
 
@@ -191,14 +209,64 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                 />
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Report Details</CardTitle>
+                    <CardDescription>Describe the event in as much detail as possible.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="aircraftInvolved"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Aircraft Involved (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., N12345" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="location"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Location (Optional)</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., KPAO, Gate 14, Maintenance Hangar" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                      <FormField
                         control={form.control}
-                        name="location"
+                        name="heading"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Place of Occurrence</FormLabel>
+                            <FormLabel>Report Heading</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., KPAO, Gate 14, Maintenance Hangar" {...field} />
+                                <Input placeholder="A brief, one-line summary of the event" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="details"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Details of Occurrence</FormLabel>
+                            <FormControl>
+                                <Textarea className="min-h-32" placeholder="Provide a full description of the event..." {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -272,8 +340,8 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                     </FormControl>
                                     <SelectContent>
                                     {personnel.map((p) => (
-                                        <SelectItem key={p.id} value={`${p.name} (${p.role})`}>
-                                            {p.name} ({p.role})
+                                        <SelectItem key={p.id} value={`${p.name}`}>
+                                            {p.name} ({p.department || p.role})
                                         </SelectItem>
                                     ))}
                                     </SelectContent>
@@ -287,7 +355,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             </Card>
 
             <div className="flex justify-end">
-                <Button type="submit">Continue to Report Details</Button>
+                <Button type="submit">Submit Report</Button>
             </div>
         </form>
     </Form>
