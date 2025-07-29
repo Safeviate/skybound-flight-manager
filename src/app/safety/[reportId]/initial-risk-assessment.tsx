@@ -15,6 +15,7 @@ import { AddRiskForm } from './add-risk-form';
 import { promoteRiskAction, suggestHazardsAction } from './actions';
 import type { SuggestHazardsOutput } from '@/ai/flows/suggest-hazards-flow';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -32,20 +33,28 @@ function SuggestHazardsButton() {
     );
 }
 
-function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOutput, onAddHazard: (hazard: Omit<AssociatedRisk, 'id'>) => void }) {
-    const [editingHazard, setEditingHazard] = useState<Omit<AssociatedRisk, 'id'> | null>(null);
+function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOutput, onAddHazard: (hazards: Omit<AssociatedRisk, 'id'>[]) => void }) {
+    const [selectedHazards, setSelectedHazards] = useState<number[]>([]);
 
-    const handleEditClick = (hazard: { hazard: string; risk: string; likelihood: RiskLikelihood; severity: RiskSeverity }) => {
-        setEditingHazard({
-            ...hazard,
-            hazardArea: '',
-            process: '',
+    const handleCheckboxChange = (index: number, checked: boolean) => {
+        if (checked) {
+            setSelectedHazards(prev => [...prev, index]);
+        } else {
+            setSelectedHazards(prev => prev.filter(i => i !== index));
+        }
+    }
+
+    const handleAddSelected = () => {
+        const hazardsToAdd = selectedHazards.map(index => {
+            const suggestion = data.suggestedHazards[index];
+            return {
+                ...suggestion,
+                hazardArea: '', // Default values to be filled in later
+                process: '',
+            };
         });
-    };
-    
-    const handleSave = (updatedHazard: Omit<AssociatedRisk, 'id'>) => {
-        onAddHazard(updatedHazard);
-        setEditingHazard(null);
+        onAddHazard(hazardsToAdd);
+        setSelectedHazards([]);
     }
 
     return (
@@ -54,39 +63,36 @@ function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOu
             <div className="space-y-2">
                 {data.suggestedHazards.map((hazard, index) => (
                     <div key={index} className="flex items-start justify-between gap-3 p-2 border rounded-md bg-muted/50">
-                        <div className="grid gap-1 text-sm flex-1">
-                            <p className="font-semibold">{hazard.hazard}</p>
-                            <p className="text-muted-foreground"><span className="font-medium">Risk:</span> {hazard.risk}</p>
-                            <p className="text-muted-foreground">
-                                <span className="font-medium">Est. Likelihood:</span> {hazard.likelihood}, <span className="font-medium">Est. Severity:</span> {hazard.severity}
-                            </p>
+                        <div className="flex items-start gap-3">
+                           <Checkbox
+                                id={`hazard-select-${index}`}
+                                onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
+                                checked={selectedHazards.includes(index)}
+                                className="mt-1"
+                            />
+                            <div className="grid gap-1 text-sm flex-1">
+                                <Label htmlFor={`hazard-select-${index}`} className="font-semibold cursor-pointer">{hazard.hazard}</Label>
+                                <p className="text-muted-foreground"><span className="font-medium">Risk:</span> {hazard.risk}</p>
+                                <p className="text-muted-foreground">
+                                    <span className="font-medium">Est. Likelihood:</span> {hazard.likelihood}, <span className="font-medium">Est. Severity:</span> {hazard.severity}
+                                </p>
+                            </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => handleEditClick(hazard)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Review & Add
-                        </Button>
                     </div>
                 ))}
             </div>
-             {editingHazard && (
-                <Dialog open={!!editingHazard} onOpenChange={() => setEditingHazard(null)}>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Review AI Suggested Hazard</DialogTitle>
-                            <DialogDescription>
-                                Review and edit the details suggested by the AI before adding it to the report.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <AddRiskForm 
-                            onAddRisk={handleSave} 
-                            initialValues={editingHazard}
-                        />
-                    </DialogContent>
-                </Dialog>
+            {selectedHazards.length > 0 && (
+                <div className="flex justify-end">
+                    <Button onClick={handleAddSelected}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Selected ({selectedHazards.length}) to Register
+                    </Button>
+                </div>
             )}
         </div>
     );
 }
+
 
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
@@ -108,6 +114,25 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     toast({
         title: 'Hazard Added to Register',
         description: 'The new hazard and its initial risk score have been recorded.'
+    });
+  }
+  
+  const handleAddMultipleRisks = (risksData: Omit<AssociatedRisk, 'id'>[]) => {
+    const newRisks = risksData.map((riskData, index) => {
+        const riskScore = getRiskScore(riskData.likelihood, riskData.severity);
+        return {
+            ...riskData,
+            id: `risk-${Date.now()}-${index}`,
+            riskScore,
+        };
+    });
+
+    const updatedRisks = [...(report.associatedRisks || []), ...newRisks];
+    onUpdate({ ...report, associatedRisks: updatedRisks });
+
+    toast({
+        title: `${newRisks.length} Hazards Added`,
+        description: 'The selected AI suggestions have been added to the register.'
     });
   }
 
@@ -156,7 +181,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
         {suggestHazardsState.data && (
             <HazardSuggestionsResult 
                 data={suggestHazardsState.data as SuggestHazardsOutput} 
-                onAddHazard={handleAddRisk}
+                onAddHazard={handleAddMultipleRisks}
             />
         )}
         {report.associatedRisks && report.associatedRisks.length > 0 ? (
