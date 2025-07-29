@@ -99,27 +99,27 @@ export let aircraftData: Aircraft[] = [
 
 export let userData: Omit<User, 'id'>[] = [
     // Management
-    { companyId: 'skybound-aero', name: 'Barry Smith', role: 'Admin', email: 'barry@safeviate.com', phone: '+27821112222', permissions: ROLE_PERMISSIONS['Admin'], department: 'Management', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Samantha Jones', role: 'Operations Manager', email: 'sam@skybound.com', phone: '+27823334444', permissions: ROLE_PERMISSIONS['Operations Manager'], department: 'Management', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Frank White', role: 'Safety Manager', email: 'frank@skybound.com', phone: '+27825556666', permissions: ROLE_PERMISSIONS['Safety Manager'], department: 'Management', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Grace Lee', role: 'Quality Manager', email: 'grace@skybound.com', phone: '+27827778888', permissions: ROLE_PERMISSIONS['Quality Manager'], department: 'Management', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Henry Taylor', role: 'HR Manager', email: 'henry@skybound.com', phone: '+27829990000', permissions: ROLE_PERMISSIONS['HR Manager'], department: 'Management', status: 'Active' },
+    { id: 'barry-smith-admin', companyId: 'skybound-aero', name: 'Barry Smith', role: 'Admin', email: 'barry@safeviate.com', phone: '+27821112222', permissions: ROLE_PERMISSIONS['Admin'], department: 'Management', status: 'Active' },
+    { id: 'samantha-jones-ops', companyId: 'skybound-aero', name: 'Samantha Jones', role: 'Operations Manager', email: 'sam@skybound.com', phone: '+27823334444', permissions: ROLE_PERMISSIONS['Operations Manager'], department: 'Management', status: 'Active' },
+    { id: 'frank-white-safety', companyId: 'skybound-aero', name: 'Frank White', role: 'Safety Manager', email: 'frank@skybound.com', phone: '+27825556666', permissions: ROLE_PERMISSIONS['Safety Manager'], department: 'Management', status: 'Active' },
+    { id: 'grace-lee-quality', companyId: 'skybound-aero', name: 'Grace Lee', role: 'Quality Manager', email: 'grace@skybound.com', phone: '+27827778888', permissions: ROLE_PERMISSIONS['Quality Manager'], department: 'Management', status: 'Active' },
+    { id: 'henry-taylor-hr', companyId: 'skybound-aero', name: 'Henry Taylor', role: 'HR Manager', email: 'henry@skybound.com', phone: '+27829990000', permissions: ROLE_PERMISSIONS['HR Manager'], department: 'Management', status: 'Active' },
     
     // Flight Operations
-    { companyId: 'skybound-aero', name: 'Chris Green', role: 'Chief Flight Instructor', email: 'chris@skybound.com', phone: '+27831112222', permissions: ROLE_PERMISSIONS['Chief Flight Instructor'], department: 'Flight Operations', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Tom Harris', role: 'Instructor', email: 'tom@skybound.com', phone: '+27833334444', permissions: ROLE_PERMISSIONS['Instructor'], department: 'Flight Operations', status: 'Active', licenseExpiry: format(addDays(new Date(), 90), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 180), 'yyyy-MM-dd') },
-    { companyId: 'skybound-aero', name: 'Laura Clark', role: 'Instructor', email: 'laura@skybound.com', phone: '+27835556666', permissions: ROLE_PERMISSIONS['Instructor'], department: 'Flight Operations', status: 'Active', licenseExpiry: format(addDays(new Date(), 365), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 25), 'yyyy-MM-dd') },
+    { id: 'chris-green-cfi', companyId: 'skybound-aero', name: 'Chris Green', role: 'Chief Flight Instructor', email: 'chris@skybound.com', phone: '+27831112222', permissions: ROLE_PERMISSIONS['Chief Flight Instructor'], department: 'Flight Operations', status: 'Active' },
+    { id: 'tom-harris-inst', companyId: 'skybound-aero', name: 'Tom Harris', role: 'Instructor', email: 'tom@skybound.com', phone: '+27833334444', permissions: ROLE_PERMISSIONS['Instructor'], department: 'Flight Operations', status: 'Active', licenseExpiry: format(addDays(new Date(), 90), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 180), 'yyyy-MM-dd') },
+    { id: 'laura-clark-inst', companyId: 'skybound-aero', name: 'Laura Clark', role: 'Instructor', email: 'laura@skybound.com', phone: '+27835556666', permissions: ROLE_PERMISSIONS['Instructor'], department: 'Flight Operations', status: 'Active', licenseExpiry: format(addDays(new Date(), 365), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 25), 'yyyy-MM-dd') },
 
     // Students
-    { companyId: 'skybound-aero', name: 'Alice Williams', role: 'Student', email: 'alice@student.com', phone: '+27841112222', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Tom Harris', flightHours: 15.5, progress: 25, status: 'Active', licenseExpiry: format(addDays(new Date(), 730), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 400), 'yyyy-MM-dd') },
-    { companyId: 'skybound-aero', name: 'Bob Brown', role: 'Student', email: 'bob@student.com', phone: '+27843334444', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Laura Clark', flightHours: 42.1, progress: 60, status: 'Active', licenseExpiry: format(addDays(new Date(), 600), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 300), 'yyyy-MM-dd') },
-    { companyId: 'skybound-aero', name: 'Charlie Davis', role: 'Student', email: 'charlie@student.com', phone: '+27845556666', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Tom Harris', flightHours: 88.0, progress: 95, status: 'Active', licenseExpiry: format(addDays(new Date(), 500), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 15), 'yyyy-MM-dd') },
-    { companyId: 'skybound-aero', name: 'Diana Miller', role: 'Student', email: 'diana@student.com', phone: '+27847778888', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Laura Clark', flightHours: 2.5, progress: 5, status: 'Archived', licenseExpiry: format(subDays(new Date(), 100), 'yyyy-MM-dd'), medicalExpiry: format(subDays(new Date(), 50), 'yyyy-MM-dd') },
+    { id: 'alice-williams-stu', companyId: 'skybound-aero', name: 'Alice Williams', role: 'Student', email: 'alice@student.com', phone: '+27841112222', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Tom Harris', flightHours: 15.5, progress: 25, status: 'Active', licenseExpiry: format(addDays(new Date(), 730), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 400), 'yyyy-MM-dd') },
+    { id: 'bob-brown-stu', companyId: 'skybound-aero', name: 'Bob Brown', role: 'Student', email: 'bob@student.com', phone: '+27843334444', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Laura Clark', flightHours: 42.1, progress: 60, status: 'Active', licenseExpiry: format(addDays(new Date(), 600), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 300), 'yyyy-MM-dd') },
+    { id: 'charlie-davis-stu', companyId: 'skybound-aero', name: 'Charlie Davis', role: 'Student', email: 'charlie@student.com', phone: '+27845556666', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Tom Harris', flightHours: 88.0, progress: 95, status: 'Active', licenseExpiry: format(addDays(new Date(), 500), 'yyyy-MM-dd'), medicalExpiry: format(addDays(new Date(), 15), 'yyyy-MM-dd') },
+    { id: 'diana-miller-stu', companyId: 'skybound-aero', name: 'Diana Miller', role: 'Student', email: 'diana@student.com', phone: '+27847778888', permissions: ROLE_PERMISSIONS['Student'], instructor: 'Laura Clark', flightHours: 2.5, progress: 5, status: 'Archived', licenseExpiry: format(subDays(new Date(), 100), 'yyyy-MM-dd'), medicalExpiry: format(subDays(new Date(), 50), 'yyyy-MM-dd') },
 
     // Ground Operations & Maintenance
-    { companyId: 'skybound-aero', name: 'Edward Wilson', role: 'Maintenance', email: 'edward@skybound.com', phone: '+27851112222', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'Fiona Garcia', role: 'Front Office', email: 'fiona@skybound.com', phone: '+27853334444', permissions: ROLE_PERMISSIONS['Front Office'], department: 'Ground Operation', status: 'Active' },
-    { companyId: 'skybound-aero', name: 'George Martinez', role: 'Driver', email: 'george@skybound.com', phone: '+27855556666', permissions: ROLE_PERMISSIONS['Driver'], department: 'Ground Operation', status: 'Active' },
+    { id: 'edward-wilson-maint', companyId: 'skybound-aero', name: 'Edward Wilson', role: 'Maintenance', email: 'edward@skybound.com', phone: '+27851112222', permissions: ROLE_PERMISSIONS['Maintenance'], department: 'Maintenance', status: 'Active' },
+    { id: 'fiona-garcia-front', companyId: 'skybound-aero', name: 'Fiona Garcia', role: 'Front Office', email: 'fiona@skybound.com', phone: '+27853334444', permissions: ROLE_PERMISSIONS['Front Office'], department: 'Ground Operation', status: 'Active' },
+    { id: 'george-martinez-driver', companyId: 'skybound-aero', name: 'George Martinez', role: 'Driver', email: 'george@skybound.com', phone: '+27855556666', permissions: ROLE_PERMISSIONS['Driver'], department: 'Ground Operation', status: 'Active' },
 ];
 
 
@@ -241,3 +241,5 @@ export const complianceData: Omit<ComplianceItem, 'id'|'companyId'|'lastAuditDat
 
 
 // Functions to modify data are now handled by components writing to Firestore.
+
+    
