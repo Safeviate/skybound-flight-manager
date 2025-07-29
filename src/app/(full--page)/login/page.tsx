@@ -170,7 +170,7 @@ export default function LoginPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {demoUsers.map(demoUser => (
-                                    <SelectItem key={demoUser.id} value={demoUser.email!}>
+                                    <SelectItem key={`${demoUser.id}-${demoUser.email}`} value={demoUser.email!}>
                                         {demoUser.name} ({demoUser.companyId} - {demoUser.role})
                                     </SelectItem>
                                 ))}
