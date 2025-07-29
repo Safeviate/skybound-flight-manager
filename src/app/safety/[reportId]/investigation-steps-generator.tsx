@@ -38,6 +38,8 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
     const [checkedItems, setCheckedItems] = useState<Record<string, string[]>>({});
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [taskAssignments, setTaskAssignments] = useState<Record<string, { assignedTo: string, dueDate: Date }>>({});
+    const [suggestionsHidden, setSuggestionsHidden] = useState(false);
+
 
     const allSuggestions = useMemo(() => [
         ...data.keyAreasToInvestigate,
@@ -87,7 +89,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
         
         onAssignTasks(newTasks as Omit<InvestigationTask, 'id'|'status'>[]);
         setIsAssignDialogOpen(false);
-        setCheckedItems({}); // Clear the checkboxes
+        setSuggestionsHidden(true); // Hide suggestions after assigning
     };
 
     const resultItems = [
@@ -98,6 +100,19 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
     ];
 
     const isAnyCheckboxChecked = Object.values(checkedItems).some(arr => arr.length > 0);
+
+    if (suggestionsHidden) {
+        return (
+            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-muted p-6 text-center">
+                 <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
+                 <h4 className="font-semibold">Tasks Assigned</h4>
+                <p className="text-sm text-muted-foreground">
+                    Tasks have been created based on the AI suggestions. You can view them in the task list.
+                </p>
+                 <Button variant="link" size="sm" onClick={() => setSuggestionsHidden(false)} className="mt-2">Show Suggestions Again</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-4 space-y-4">
