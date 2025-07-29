@@ -283,6 +283,7 @@ export type SafetyReport = {
   associatedRisks?: AssociatedRisk[];
   correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
   // Dynamic fields based on category
+  phaseOfFlight?: string;
   raCallout?: string;
   raFollowed?: 'Yes' | 'No';
   weatherConditions?: string;
@@ -294,7 +295,6 @@ export type SafetyReport = {
   sizeOfBirds?: string;
   partOfAircraftStruck?: string;
   eventSubcategoryDetails?: string;
-  phaseOfFlight?: string;
 };
 
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {

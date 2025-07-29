@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +30,7 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 
 const reportFormSchema = z.object({
   reportType: z.string({
@@ -99,6 +101,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     });
 
     const onBehalfOfChecked = form.watch('onBehalfOf');
+    const reportType = form.watch('reportType');
 
     function handleFormSubmit(data: ReportFormValues) {
         let submittedBy = data.isAnonymous ? 'Anonymous' : user?.name || 'Anonymous';
@@ -239,6 +242,32 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             )}
                         />
                     </div>
+                     {reportType === 'Flight Operations Report' && (
+                        <FormField
+                            control={form.control}
+                            name="phaseOfFlight"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Phase of Flight</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select phase of flight" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {ICAO_PHASES_OF_FLIGHT.map((phase) => (
+                                        <SelectItem key={phase} value={phase}>
+                                        {phase}
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
                 </CardContent>
             </Card>
 
