@@ -140,9 +140,12 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             submittedBy = selectedUser?.name || user?.name || 'Error';
         }
 
+        const picName = personnel.find(p => p.id === data.pilotInCommand)?.name;
+
         onSubmit({
             ...data,
             submittedBy, // Pass the correct name
+            pilotInCommand: picName,
         } as Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>);
     }
     
@@ -413,7 +416,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                                 </FormControl>
                                                 <SelectContent>
                                                     {personnel.filter(p => p.role !== 'Student').map((p) => (
-                                                        <SelectItem key={p.id} value={p.name}>
+                                                        <SelectItem key={p.id} value={p.id}>
                                                             {p.name} ({p.department || p.role})
                                                         </SelectItem>
                                                     ))}
