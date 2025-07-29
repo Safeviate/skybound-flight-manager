@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ICAO_PHASES_OF_FLIGHT } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const reportFormSchema = z.object({
   reportType: z.string({
@@ -58,6 +59,9 @@ const reportFormSchema = z.object({
   groundEventType: z.string().optional(),
   injuryType: z.string().optional(),
   medicalAttentionRequired: z.boolean().optional(),
+  subCategory: z.string().optional(),
+  raCallout: z.string().optional(),
+  raFollowed: z.enum(['Yes', 'No']).optional(),
 }).refine(data => {
     if (data.onBehalfOf) {
         return !!data.onBehalfOfUser;
@@ -86,6 +90,9 @@ interface NewSafetyReportFormProps {
 const groundOpAreas = ['Ramp/Apron', 'Taxiway', 'Hangar', 'Fuel Bay', 'Storage Area'];
 const groundOpEvents = ['Vehicle Incident', 'Ground Handling Issue', 'Fuel Spill', 'Foreign Object Debris (FOD)', 'Security Breach'];
 const occupationalInjuryTypes = ['Slip/Trip/Fall', 'Manual Handling/Lifting', 'Hazardous Substance Exposure', 'Ergonomic Issue', 'Laceration/Cut', 'Other'];
+const flightOpOccurrenceTypes = ['Loss of Separation / Airprox', 'Bird Strike', 'System/Component Failure (In-Flight)', 'Weather-Related Occurrence', 'Runway Event', 'Other'];
+const losSubcategories = ['Close Proximity', 'Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
+const raCallouts = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
 
 
 export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
@@ -117,6 +124,8 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
 
     const onBehalfOfChecked = form.watch('onBehalfOf');
     const reportType = form.watch('reportType');
+    const specificOccurrenceType = form.watch('phaseOfFlight'); // Re-using for specific type
+    const losSubcategory = form.watch('subCategory');
 
     function handleFormSubmit(data: ReportFormValues) {
         let submittedBy = data.isAnonymous ? 'Anonymous' : user?.name || 'Anonymous';
@@ -140,34 +149,32 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                     <CardDescription>Start by providing the basic information about the occurrence.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div className="md:col-span-3">
-                            <FormField
-                            control={form.control}
-                            name="reportType"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Type of report</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a report type" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
-                                    <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
-                                    <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
-                                    <SelectItem value="Occupational Report">Occupational Report</SelectItem>
-                                    <SelectItem value="General Report">General Report</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        </div>
-                         <FormItem className="md:col-span-2">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                        control={form.control}
+                        name="reportType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Type of report</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a report type" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                <SelectItem value="Flight Operations Report">Flight Operations Report</SelectItem>
+                                <SelectItem value="Ground Operations Report">Ground Operations Report</SelectItem>
+                                <SelectItem value="Aircraft Defect Report">Aircraft Defect Report</SelectItem>
+                                <SelectItem value="Occupational Report">Occupational Report</SelectItem>
+                                <SelectItem value="General Report">General Report</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                         <FormItem>
                             <FormLabel>Date & Time of Occurrence</FormLabel>
                             <div className="flex gap-2">
                                 <FormField
@@ -256,30 +263,94 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         />
                     </div>
                      {reportType === 'Flight Operations Report' && (
-                        <FormField
-                            control={form.control}
-                            name="phaseOfFlight"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Phase of Flight</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select phase of flight" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {ICAO_PHASES_OF_FLIGHT.map((phase) => (
-                                        <SelectItem key={phase} value={phase}>
-                                        {phase}
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
+                        <div className="space-y-4 pt-4 border-t">
+                            <FormField
+                                control={form.control}
+                                name="phaseOfFlight" // Re-using for specific type
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Specific Occurrence Type</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a specific occurrence type" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {flightOpOccurrenceTypes.map((type) => (
+                                            <SelectItem key={type} value={type}>
+                                            {type}
+                                            </SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {specificOccurrenceType === 'Loss of Separation / Airprox' && (
+                                <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
+                                     <FormField
+                                        control={form.control}
+                                        name="subCategory"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Event Type</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Select LOS event type" /></SelectTrigger></FormControl>
+                                                <SelectContent>{losSubcategories.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {losSubcategory === 'Resolution Advisory (RA)' && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="raCallout"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>RA Callout</FormLabel>
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <FormControl><SelectTrigger><SelectValue placeholder="Select callout" /></SelectTrigger></FormControl>
+                                                            <SelectContent>{raCallouts.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                             <FormField
+                                                control={form.control}
+                                                name="raFollowed"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel>Was RA Followed?</FormLabel>
+                                                        <FormControl>
+                                                            <RadioGroup
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
+                                                            className="flex items-center space-x-4 pt-2"
+                                                            >
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="Yes" /></FormControl>
+                                                                <FormLabel className="font-normal">Yes</FormLabel>
+                                                            </FormItem>
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="No" /></FormControl>
+                                                                <FormLabel className="font-normal">No</FormLabel>
+                                                            </FormItem>
+                                                            </RadioGroup>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             )}
-                        />
+                        </div>
                     )}
 
                     {reportType === 'Aircraft Defect Report' && (
