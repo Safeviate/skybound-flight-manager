@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Copy, RefreshCw } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -120,7 +120,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Initial Details</CardTitle>
+                    <CardTitle>Report Details</CardTitle>
                     <CardDescription>Start by providing the basic information about the occurrence.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -131,7 +131,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             name="reportType"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Report Type</FormLabel>
+                                <FormLabel>Type of report</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
@@ -157,7 +157,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                 name="occurrenceDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Date</FormLabel>
+                                        <FormLabel>Date of occurence</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                             <FormControl>
@@ -196,7 +196,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                     name="occurrenceTime"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>Time (24h)</FormLabel>
+                                            <FormLabel>Time of occurence</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="time"
@@ -209,24 +209,15 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                 />
                         </div>
                     </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Report Details</CardTitle>
-                    <CardDescription>Describe the event in as much detail as possible.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="aircraftInvolved"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Aircraft Involved (Optional)</FormLabel>
+                                <FormLabel>Place of occurence</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g., N12345" {...field} />
+                                    <Input placeholder="e.g., KPAO, Gate 14, Maintenance Hangar" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -246,36 +237,10 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             )}
                         />
                     </div>
-                     <FormField
-                        control={form.control}
-                        name="heading"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Report Heading</FormLabel>
-                            <FormControl>
-                                <Input placeholder="A brief, one-line summary of the event" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="details"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Details of Occurrence</FormLabel>
-                            <FormControl>
-                                <Textarea className="min-h-32" placeholder="Provide a full description of the event..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </CardContent>
             </Card>
 
-             <Card>
+            <Card>
                 <CardHeader>
                     <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
