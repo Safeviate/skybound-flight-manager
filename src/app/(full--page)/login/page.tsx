@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 
 
@@ -39,12 +39,20 @@ export default function LoginPage() {
   }, [user, router]);
   
   useEffect(() => {
-    // Fetch users for the demo login dropdown
+    // Fetch users for the demo login dropdown from all companies
     const fetchDemoUsers = async () => {
         try {
-            const usersQuery = query(collection(db, 'companies/skybound-aero/users'), where('role', '!=', 'Admin'));
+            const usersQuery = query(collectionGroup(db, 'users'), where('role', '!=', 'Admin'));
             const usersSnapshot = await getDocs(usersQuery);
             const usersList = usersSnapshot.docs.map(doc => doc.data() as User);
+            // Sort by company then by name for better organization
+            usersList.sort((a, b) => {
+                if (a.companyId < b.companyId) return -1;
+                if (a.companyId > b.companyId) return 1;
+                if (a.name < b.name) return -1;
+                if (a.name > b.name) return 1;
+                return 0;
+            });
             setDemoUsers(usersList);
         } catch (error) {
             console.error("Failed to fetch demo users:", error);
@@ -161,7 +169,7 @@ export default function LoginPage() {
                             <SelectContent>
                                 {demoUsers.map(demoUser => (
                                     <SelectItem key={demoUser.id} value={demoUser.email!}>
-                                        {demoUser.name} ({demoUser.role})
+                                        {demoUser.name} ({demoUser.role} / {demoUser.companyId})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
