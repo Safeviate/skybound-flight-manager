@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User, InvestigationTask } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -49,6 +49,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Check, CheckCircle } from 'lucide-react';
 import type { DiscussionEntry, InvestigationDiaryEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -82,32 +83,15 @@ const diaryFormSchema = z.object({
 
 type DiaryFormValues = z.infer<typeof diaryFormSchema>;
 
-const completionNotesFormSchema = z.object({
-    completionNotes: z.string().min(1, "Completion notes cannot be empty."),
-});
-type CompletionNotesFormValues = z.infer<typeof completionNotesFormSchema>;
 
-
-const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed', notes?: string) => void, isLoading: boolean }) => {
-    const [completingTask, setCompletingTask] = useState<InvestigationTask | null>(null);
-    const form = useForm<CompletionNotesFormValues>({
-        resolver: zodResolver(completionNotesFormSchema),
-    });
+const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: InvestigationTask[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, isLoading: boolean }) => {
 
     const handleCheckboxClick = (task: InvestigationTask) => {
         if (task.status === 'Open') {
-            setCompletingTask(task);
-            form.reset({ completionNotes: '' });
+            onUpdateTask(task.id, 'Completed');
         } else {
             // Re-open task
-            onUpdateTask(task.id, 'Open', '');
-        }
-    };
-
-    const handleNotesSubmit = (data: CompletionNotesFormValues) => {
-        if (completingTask) {
-            onUpdateTask(completingTask.id, 'Completed', data.completionNotes);
-            setCompletingTask(null);
+            onUpdateTask(task.id, 'Open');
         }
     };
 
@@ -138,7 +122,7 @@ const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: Inve
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12"></TableHead>
-                            <TableHead>Task Description & Notes</TableHead>
+                            <TableHead>Task Description</TableHead>
                             <TableHead>Assigned To</TableHead>
                             <TableHead>Due Date</TableHead>
                         </TableRow>
@@ -172,35 +156,6 @@ const InvestigationTaskList = ({ tasks, onUpdateTask, isLoading }: { tasks: Inve
                     </TableBody>
                 </Table>
             </CardContent>
-            <Dialog open={!!completingTask} onOpenChange={() => setCompletingTask(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Complete Task</DialogTitle>
-                        <DialogDescription>
-                           Please provide completion notes for this task.
-                           <blockquote className="mt-2 pl-4 border-l-2">{completingTask?.description}</blockquote>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleNotesSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="completionNotes"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Completion Notes</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Describe the action taken and the outcome..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit">Mark as Complete</Button>
-                        </form>
-                    </Form>
-                </DialogContent>
-            </Dialog>
         </Card>
     )
 }
@@ -404,11 +359,11 @@ function SafetyReportInvestigationPage() {
     });
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed', notes?: string) => {
+  const handleUpdateTaskStatus = (taskId: string, status: 'Open' | 'Completed') => {
     if (!report) return;
     
     const updatedTasks = report.tasks?.map(task => 
-        task.id === taskId ? { ...task, status, completionNotes: notes || task.completionNotes } : task
+        task.id === taskId ? { ...task, status } : task
     );
     
     handleReportUpdate({ ...report, tasks: updatedTasks });
@@ -600,11 +555,29 @@ function SafetyReportInvestigationPage() {
                                     <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="steps" className="pt-4">
-                                    <InvestigationStepsGenerator 
-                                        report={report} 
-                                        personnel={personnel}
-                                        onAssignTasks={handleAssignTasks}
-                                    />
+                                     <Collapsible>
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <h4 className="text-sm font-semibold">AI Suggested Steps</h4>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Generate a structured investigation plan based on the report details.
+                                                </p>
+                                            </div>
+                                            <CollapsibleTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="w-9 p-0">
+                                                    <ChevronDown className="h-4 w-4" />
+                                                    <span className="sr-only">Toggle</span>
+                                                </Button>
+                                            </CollapsibleTrigger>
+                                        </div>
+                                        <CollapsibleContent>
+                                            <InvestigationStepsGenerator 
+                                                report={report} 
+                                                personnel={personnel}
+                                                onAssignTasks={handleAssignTasks}
+                                            />
+                                        </CollapsibleContent>
+                                    </Collapsible>
                                 </TabsContent>
                                 <TabsContent value="whys" className="pt-4">
                                     <FiveWhysGenerator report={report} onUpdate={handleReportUpdate} />
@@ -825,3 +798,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
