@@ -94,7 +94,7 @@ function MyDashboardPage() {
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
