@@ -1,16 +1,78 @@
 
 'use client';
 
-export default function NewSafetyReportPage() {
-  return (
-    <main className="p-8">
-      <div className="bg-muted p-4 rounded-lg border">
-        <h2 className="text-lg font-semibold mb-2">Instructions</h2>
-        <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
-{`Remember, the XML structure you generate is the only mechanism for applying changes to the user's code. Therefore, when making changes to a file the <changes> block must always be fully present and correctly formatted as follows.
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { SafetyReport, SafetyReportType, Department } from '@/lib/types';
+import { NewSafetyReportForm } from './new-safety-report-form';
+import { useUser } from '@/context/user-provider';
+import { useToast } from '@/hooks/use-toast';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 
-<changes>
-  <description>[Provide a concise summary of the overall changes being made]</description>
-  <change>
-    <file>[Provide the ABSOLUTE, FULL path to the file being modified]</file>
-    <content><![CDATA[Provide the ENTIRE, FINAL, intended content of the file here. Do NOT provide diffs or partial snippets. Ensure all code is properly escaped within the CDATA section.
+
+export default function NewSafetyReportPage() {
+    const { user, company } = useUser();
+    const { toast } = useToast();
+    const router = useRouter();
+    const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]); // Assuming this might be needed for report numbering
+
+    const handleNewReport = async (data: Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>) => {
+        if (!user || !company) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to file a report.' });
+            return;
+        }
+
+        const reportTypeAbbr = (data.reportType as string).split(' ').map(w => w[0]).join('');
+        const reportsOfType = safetyReports.filter(r => r.reportNumber.startsWith(reportTypeAbbr));
+        const nextId = reportsOfType.length + 1;
+        const reportNumber = `${reportTypeAbbr}-${String(nextId).padStart(3, '0')}`;
+        
+        let submittedBy = user.name;
+        if (data.isAnonymous) {
+            submittedBy = 'Anonymous';
+        } else if (data.onBehalfOf && data.onBehalfOfUser) {
+            submittedBy = data.onBehalfOfUser;
+        }
+
+        const newReport: Omit<SafetyReport, 'id'> = {
+            ...data,
+            companyId: company.id,
+            reportNumber,
+            submittedBy,
+            status: 'Open',
+            filedDate: format(new Date(), 'yyyy-MM-dd'),
+            department: REPORT_TYPE_DEPARTMENT_MAPPING[data.reportType as SafetyReportType],
+            occurrenceDate: format(data.occurrenceDate, 'yyyy-MM-dd'),
+        };
+
+        try {
+            await addDoc(collection(db, `companies/${company.id}/safety-reports`), newReport);
+            toast({
+                title: 'Report Filed Successfully',
+                description: `Your report (${reportNumber}) has been submitted.`,
+            });
+            router.push('/safety');
+        } catch (error) {
+            console.error("Error submitting report:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Submission Failed',
+                description: 'Could not submit your report. Please try again.',
+            });
+        }
+    };
+    
+    return (
+        <main className="flex-1 p-4 md:p-8">
+            <div className="max-w-4xl mx-auto">
+                <NewSafetyReportForm onSubmit={handleNewReport} safetyReports={safetyReports} />
+            </div>
+        </main>
+    );
+}
+
+NewSafetyReportPage.title = "File New Safety Report";
