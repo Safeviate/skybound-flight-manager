@@ -2,6 +2,8 @@
 
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
+import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
+export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
 
 export type Airport = {
   id: string;
@@ -282,13 +284,14 @@ export type SafetyReport = {
   discussion?: DiscussionEntry[];
   associatedRisks?: AssociatedRisk[];
   correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
+  fiveWhysAnalysis?: FiveWhysAnalysisOutput;
   // Dynamic fields based on category
   phaseOfFlight?: string;
   crewInvolved?: string;
   pilotInCommand?: string;
-  pilotFlying?: 'PIC' | 'First Officer';
+  pilotFlying?: 'PIC' | 'First Officer' | null;
   raCallout?: string;
-  raFollowed?: 'Yes' | 'No';
+  raFollowed?: 'Yes' | 'No' | null;
   weatherConditions?: string;
   visibility?: number;
   windSpeed?: number;
@@ -325,12 +328,6 @@ export type SuggestInvestigationStepsOutput = {
   keyAreasToInvestigate: string[];
   recommendedActions: string[];
   potentialContributingFactors: string[];
-};
-
-export type FiveWhysAnalysisOutput = {
-  problemStatement: string;
-  analysis: { why: string; because: string }[];
-  rootCause: string;
 };
 
 export type CorrectiveAction = {
