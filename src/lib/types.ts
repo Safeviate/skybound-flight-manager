@@ -284,6 +284,9 @@ export type SafetyReport = {
   correctiveActionPlan?: GenerateCorrectiveActionPlanOutput;
   // Dynamic fields based on category
   phaseOfFlight?: string;
+  crewInvolved?: string;
+  pilotInCommand?: string;
+  pilotFlying?: 'PIC' | 'First Officer';
   raCallout?: string;
   raFollowed?: 'Yes' | 'No';
   weatherConditions?: string;

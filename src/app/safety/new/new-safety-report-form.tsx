@@ -54,6 +54,9 @@ const reportFormSchema = z.object({
   
   // Conditional fields
   phaseOfFlight: z.string().optional(),
+  crewInvolved: z.string().optional(),
+  pilotInCommand: z.string().optional(),
+  pilotFlying: z.enum(['PIC', 'First Officer']).optional(),
   systemOrComponent: z.string().optional(),
   aircraftGrounded: z.boolean().optional(),
   areaOfOperation: z.string().optional(),
@@ -357,6 +360,73 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                     )}
                                 </div>
                             )}
+                             <div className="space-y-4 pt-4 border-t">
+                                <FormField
+                                    control={form.control}
+                                    name="crewInvolved"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Crew Involved</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="List all crew members involved..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                     <FormField
+                                        control={form.control}
+                                        name="pilotInCommand"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Pilot in Command (PIC)</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select the PIC" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {personnel.filter(p => p.role.includes('Instructor') || p.role.includes('Manager')).map((p) => (
+                                                        <SelectItem key={p.id} value={p.name}>
+                                                            {p.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="pilotFlying"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel>Pilot Flying</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                    onValueChange={field.onChange}
+                                                    defaultValue={field.value}
+                                                    className="flex items-center space-x-4 pt-2"
+                                                    >
+                                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                                        <FormControl><RadioGroupItem value="PIC" /></FormControl>
+                                                        <FormLabel className="font-normal">PIC</FormLabel>
+                                                    </FormItem>
+                                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                                        <FormControl><RadioGroupItem value="First Officer" /></FormControl>
+                                                        <FormLabel className="font-normal">First Officer</FormLabel>
+                                                    </FormItem>
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -582,6 +652,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     </Form>
   );
 }
+
 
 
 
