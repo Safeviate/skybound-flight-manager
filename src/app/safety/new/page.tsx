@@ -33,14 +33,14 @@ function NewSafetyReportPage() {
     }, [user, company, loading, router]);
 
     const handleNewReportSubmit = async (newReportData: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'>) => {
-        if (!company) {
+        if (!company || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot file report without company context.' });
             return;
         }
         
         const department = REPORT_TYPE_DEPARTMENT_MAPPING[newReportData.reportType] || 'Management';
         
-        let submittedBy = user?.name || 'System';
+        const submittedBy = user.name;
 
         let finalReportData: any = {
             companyId: company.id,
