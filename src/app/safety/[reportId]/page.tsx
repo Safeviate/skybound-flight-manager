@@ -67,49 +67,6 @@ const ICAO_OPTIONS = ICAO_OCCURRENCE_CATEGORIES.map(code => ({
 
 const CLASSIFICATION_OPTIONS = ['Hazard', 'Occurrence', 'Incident', 'Accident'];
 
-const SCF_SUBCATEGORIES = ['Landing Gear', 'Flight Controls', 'Hydraulics', 'Electrical', 'Avionics', 'Navigation', 'Other'];
-const LOS_SUBCATEGORIES = ['Close Proximity', 'Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
-const RA_CALLOUTS = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
-const WEATHER_RELATED_CATEGORIES = ['WSTRW', 'TURB', 'ICE', 'CFIT', 'LOC-I', 'RI', 'RE', 'LALT', 'UIMC'];
-
-const BIRD_STRIKE_PARTS = ['Radome', 'Windshield', 'Nose', 'Engine No. 1', 'Engine No. 2', 'Propeller', 'Wing/Rotor', 'Fuselage', 'Landing Gear', 'Tail', 'Lights', 'Other'];
-const BIRD_NUMBERS = ['1', '2-10', '11-100', 'More than 100'];
-const BIRD_SIZES = ['Small', 'Medium', 'Large'];
-
-
-const WeatherInputGroup = ({ report, onUpdate }: { report: SafetyReport, onUpdate: (updatedReport: SafetyReport, showToast?: boolean) => void }) => {
-  return (
-    <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
-      <label className="text-sm font-medium block flex items-center gap-2">
-        <Wind className="h-4 w-4" />
-        Weather Information
-      </label>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input 
-          placeholder="Visibility (e.g., 5 SM)" 
-          value={report.visibility || ''}
-          onChange={e => onUpdate({ ...report, visibility: Number(e.target.value) }, false)}
-        />
-        <Input 
-          placeholder="Wind Speed (knots)" 
-          value={report.windSpeed || ''}
-          onChange={e => onUpdate({ ...report, windSpeed: Number(e.target.value) }, false)}
-        />
-        <Input 
-          placeholder="Wind Direction" 
-          value={report.windDirection || ''}
-          onChange={e => onUpdate({ ...report, windDirection: Number(e.target.value) }, false)}
-        />
-      </div>
-       <Textarea 
-          placeholder="Describe overall weather conditions (e.g., METAR, general description)..."
-          value={report.weatherConditions || ''}
-          onChange={e => onUpdate({ ...report, weatherConditions: e.target.value }, false)}
-        />
-    </div>
-  );
-};
-
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
   message: z.string().min(1, 'Message cannot be empty.'),
@@ -317,11 +274,6 @@ function SafetyReportInvestigationPage() {
         </main>
     );
   }
-  
-  const showScfFields = report.occurrenceCategory === 'SCF-NP' || report.occurrenceCategory === 'SCF-PP';
-  const showLosFields = report.occurrenceCategory === 'MAC';
-  const showWeatherFields = report.occurrenceCategory && WEATHER_RELATED_CATEGORIES.includes(report.occurrenceCategory);
-  const showBirdStrikeFields = report.occurrenceCategory === 'BIRD';
 
   return (
     <>
@@ -352,12 +304,12 @@ function SafetyReportInvestigationPage() {
             </CardHeader>
         </Card>
                 
-            <Tabs defaultValue="details" className="w-full">
+            <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto">
                     <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
-                    <TabsTrigger value="investigation">Investigation &amp; Analysis</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
                     <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                    <TabsTrigger value="review">Final Review</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="triage" className="mt-6 space-y-6">
@@ -470,15 +422,7 @@ function SafetyReportInvestigationPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Initial Risk Assessment</CardTitle>
-                             <CardDescription>Identify hazards associated with this report and assess their initial risk level.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
-                        </CardContent>
-                    </Card>
+                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
@@ -509,7 +453,6 @@ function SafetyReportInvestigationPage() {
                             </Tabs>
                         </CardContent>
                     </Card>
-
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Investigation Discussion</CardTitle>
@@ -680,7 +623,6 @@ function SafetyReportInvestigationPage() {
                              <InvestigationDiary report={report}/>
                         </CardContent>
                     </Card>
-
                     <Card>
                         <CardHeader>
                              <CardTitle>Investigation Notes & Findings</CardTitle>
@@ -697,9 +639,8 @@ function SafetyReportInvestigationPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-
                 <TabsContent value="mitigation" className="mt-6 space-y-6">
-                     <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Risk Mitigation Assessment</CardTitle>
                              <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
@@ -708,9 +649,7 @@ function SafetyReportInvestigationPage() {
                             <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
                         </CardContent>
                      </Card>
-                </TabsContent>
-                <TabsContent value="corrective-action" className="mt-6">
-                    <CorrectiveActionPlanGenerator 
+                     <CorrectiveActionPlanGenerator 
                         report={report} 
                         personnel={personnel}
                         onUpdate={handleReportUpdate} 
