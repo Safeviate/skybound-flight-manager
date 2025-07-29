@@ -7,11 +7,11 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MoreHorizontal, Mail, Search, ArrowUpDown, Loader2 } from 'lucide-react';
-import type { User as PersonnelUser } from '@/lib/types';
+import { MoreHorizontal, Mail, Search, ArrowUpDown, Loader2, Edit } from 'lucide-react';
+import type { User as PersonnelUser, Role } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collectionGroup, query, getDocs, collection } from 'firebase/firestore';
+import { collectionGroup, query, getDocs, collection, doc, updateDoc } from 'firebase/firestore';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import {
   DropdownMenu,
@@ -19,14 +19,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useTableControls } from '@/hooks/use-table-controls';
+import { useTableControls } from '@/hooks/use-table-controls.ts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ROLE_PERMISSIONS } from '@/lib/types';
+
+const ALL_ROLES = Object.keys(ROLE_PERMISSIONS) as Role[];
+
 
 function SystemUsersPage() {
-    const { user, company, loading } = useUser();
+    const { user, loading } = useUser();
     const router = useRouter();
     const [allUsers, setAllUsers] = useState<PersonnelUser[]>([]);
     const [isDataLoading, setIsDataLoading] = useState(true);
+    const [editingUser, setEditingUser] = useState<PersonnelUser | null>(null);
+    const [newRole, setNewRole] = useState<Role | null>(null);
     const { toast } = useToast();
     
     const { items: filteredUsers, searchTerm, setSearchTerm, requestSort, sortConfig } = useTableControls(allUsers, {
@@ -54,6 +62,42 @@ function SystemUsersPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch system users.' });
         } finally {
             setIsDataLoading(false);
+        }
+    };
+    
+    const openEditDialog = (userToEdit: PersonnelUser) => {
+        setEditingUser(userToEdit);
+        setNewRole(userToEdit.role);
+    };
+
+    const handleRoleChange = async () => {
+        if (!editingUser || !newRole) return;
+
+        try {
+            const userRef = doc(db, `companies/${editingUser.companyId}/users`, editingUser.id);
+            const permissions = ROLE_PERMISSIONS[newRole] || [];
+            
+            await updateDoc(userRef, {
+                role: newRole,
+                permissions: permissions,
+            });
+
+            setAllUsers(prevUsers => 
+                prevUsers.map(u => 
+                    u.id === editingUser.id ? { ...u, role: newRole, permissions } : u
+                )
+            );
+            
+            toast({
+                title: 'Role Updated',
+                description: `${editingUser.name}'s role has been changed to ${newRole}.`,
+            });
+            setEditingUser(null);
+            setNewRole(null);
+
+        } catch (error) {
+            console.error("Error updating role:", error);
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update the user\'s role.' });
         }
     };
 
@@ -154,6 +198,10 @@ function SystemUsersPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => openEditDialog(person)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit Role
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleResendWelcome(person)} disabled={!person.email}>
                                                     <Mail className="mr-2 h-4 w-4" />
                                                     Resend Welcome Email
@@ -172,6 +220,33 @@ function SystemUsersPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Role for {editingUser?.name}</DialogTitle>
+                        <DialogDescription>
+                            Select a new role. The user's permissions will be updated accordingly.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Select value={newRole || ''} onValueChange={(value) => setNewRole(value as Role)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ALL_ROLES.map(role => (
+                                    <SelectItem key={role} value={role}>{role}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setEditingUser(null)}>Cancel</Button>
+                        <Button onClick={handleRoleChange}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }
