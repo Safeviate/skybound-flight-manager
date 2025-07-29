@@ -353,260 +353,162 @@ function SafetyReportInvestigationPage() {
         </Card>
                 
             <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-6 h-auto">
-                    <TabsTrigger value="details">Report Details</TabsTrigger>
-                    <TabsTrigger value="classification">Classification</TabsTrigger>
-                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="risk-mitigation">Risk Mitigation</TabsTrigger>
-                    <TabsTrigger value="corrective-action">Corrective Action</TabsTrigger>
-                    <TabsTrigger value="final-review">Final Review</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 h-auto">
+                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation &amp; Analysis</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="details" className="mt-6 space-y-4">
-                    <h3 className="font-semibold text-lg">Details of Occurrence</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
-                        {report.details}
-                    </p>
-                </TabsContent>
-                <TabsContent value="classification" className="mt-6 space-y-8">
-                    <div className="flex flex-wrap items-end gap-4">
-                        <div className="space-y-2 flex-1 min-w-[200px]">
-                            <label className="text-sm font-medium">Report Status</label>
-                            <Select 
-                                value={report.status} 
-                                onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value }, true)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Set status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Open">Open</SelectItem>
-                                    <SelectItem value="Under Review">Under Review</SelectItem>
-                                    <SelectItem value="Closed">Closed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2 flex-1 min-w-[240px]">
-                            <label className="text-sm font-medium flex items-center gap-1">
-                                ICAO Occurrence Category
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5">
-                                            <Info className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-2xl">
-                                        <DialogHeader>
-                                            <DialogTitle>ICAO Occurrence Categories</DialogTitle>
-                                            <DialogDescription>
-                                                Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <ScrollArea className="h-96">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Code</TableHead>
-                                                        <TableHead>Definition</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {ICAO_OPTIONS.map(option => (
-                                                        <TableRow key={option.value}>
-                                                            <TableCell>{option.label}</TableCell>
-                                                            <TableCell>{option.description}</TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </ScrollArea>
-                                    </DialogContent>
-                                </Dialog>
-                            </label>
-                            <div className="flex gap-2">
-                                <Combobox
-                                    options={ICAO_OPTIONS}
-                                    value={report.occurrenceCategory || ''}
-                                    onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
-                                    placeholder="Select ICAO category..."
-                                    searchPlaceholder="Search categories..."
-                                    noResultsText="No category found."
-                                />
-                                <form action={icaoFormAction}>
-                                    <input type="hidden" name="reportText" value={report.details} />
-                                    <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
-                                        {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                                    </Button>
-                                </form>
-                            </div>
-                        </div>
-                            <div className="space-y-2 flex-1 min-w-[200px]">
-                            <label className="text-sm font-medium">Classification</label>
-                            <Select 
-                                value={report.classification || ''}
-                                onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value }, true)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Classify event" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CLASSIFICATION_OPTIONS.map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    
-                    {showScfFields && (
-                        <div className="space-y-2 p-4 border bg-muted/50 rounded-lg">
-                            <label className="text-sm font-medium">System/Component Failure Details</label>
-                            <Select 
-                                value={report.subCategory || ''}
-                                onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select the affected system" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {SCF_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Textarea
-                                placeholder="Add any other relevant details about the system/component failure..."
-                                value={report.eventSubcategoryDetails || ''}
-                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                            />
-                        </div>
-                    )}
+                <TabsContent value="triage" className="mt-6 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Initial Report Details</CardTitle>
+                            <CardDescription>This is the original report as submitted.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                                {report.details}
+                            </p>
+                        </CardContent>
+                    </Card>
 
-                    {showLosFields && (
-                        <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
-                            <label className="text-sm font-medium block mb-2">Loss of Separation Details</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium">Event Type</label>
-                                    <Select value={report.subCategory || ''} onValueChange={(value) => handleReportUpdate({ ...report, subCategory: value }, false)}>
-                                        <SelectTrigger><SelectValue placeholder="Select event type" /></SelectTrigger>
+                    <Card>
+                        <CardHeader>
+                             <CardTitle>Classification &amp; Categorization</CardTitle>
+                             <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap items-end gap-4">
+                                <div className="space-y-2 flex-1 min-w-[200px]">
+                                    <label className="text-sm font-medium">Report Status</label>
+                                    <Select 
+                                        value={report.status} 
+                                        onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value }, true)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Set status" />
+                                        </SelectTrigger>
                                         <SelectContent>
-                                            {LOS_SUBCATEGORIES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                            <SelectItem value="Open">Open</SelectItem>
+                                            <SelectItem value="Under Review">Under Review</SelectItem>
+                                            <SelectItem value="Closed">Closed</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                {report.subCategory === 'Resolution Advisory (RA)' && (
-                                    <>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-medium">RA Callout</label>
-                                                <Select value={report.raCallout || ''} onValueChange={(value) => handleReportUpdate({ ...report, raCallout: value }, false)}>
-                                                <SelectTrigger><SelectValue placeholder="Select RA callout" /></SelectTrigger>
-                                                <SelectContent>
-                                                    {RA_CALLOUTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-medium">RA Followed?</label>
-                                                <Select value={report.raFollowed || ''} onValueChange={(value: 'Yes' | 'No') => handleReportUpdate({ ...report, raFollowed: value }, false)}>
-                                                <SelectTrigger><SelectValue placeholder="Select one" /></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Yes">Yes</SelectItem>
-                                                    <SelectItem value="No">No</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </>
-                                )}
+                                <div className="space-y-2 flex-1 min-w-[240px]">
+                                    <label className="text-sm font-medium flex items-center gap-1">
+                                        ICAO Occurrence Category
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5">
+                                                    <Info className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-2xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>ICAO Occurrence Categories</DialogTitle>
+                                                    <DialogDescription>
+                                                        Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <ScrollArea className="h-96">
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>Code</TableHead>
+                                                                <TableHead>Definition</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {ICAO_OPTIONS.map(option => (
+                                                                <TableRow key={option.value}>
+                                                                    <TableCell>{option.label}</TableCell>
+                                                                    <TableCell>{option.description}</TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                </ScrollArea>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <Combobox
+                                            options={ICAO_OPTIONS}
+                                            value={report.occurrenceCategory || ''}
+                                            onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
+                                            placeholder="Select ICAO category..."
+                                            searchPlaceholder="Search categories..."
+                                            noResultsText="No category found."
+                                        />
+                                        <form action={icaoFormAction}>
+                                            <input type="hidden" name="reportText" value={report.details} />
+                                            <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
+                                                {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                                            </Button>
+                                        </form>
+                                    </div>
+                                </div>
+                                    <div className="space-y-2 flex-1 min-w-[200px]">
+                                    <label className="text-sm font-medium">Classification</label>
+                                    <Select 
+                                        value={report.classification || ''}
+                                        onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value }, true)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Classify event" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {CLASSIFICATION_OPTIONS.map(opt => (
+                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                            <Textarea
-                                placeholder="Add any other relevant details about the loss of separation..."
-                                value={report.eventSubcategoryDetails || ''}
-                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                            />
-                        </div>
-                    )}
-                    
-                    {showWeatherFields && (
-                        <WeatherInputGroup report={report} onUpdate={handleReportUpdate} />
-                    )}
+                        </CardContent>
+                    </Card>
 
-                    {showBirdStrikeFields && (
-                            <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
-                            <label className="text-sm font-medium block flex items-center gap-2">
-                                <Bird className="h-4 w-4" />
-                                Bird Strike Details
-                            </label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                                <div className="space-y-2">
-                                    <Label htmlFor="bird-number">Number of Birds</Label>
-                                    <Select value={report.numberOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, numberOfBirds: value }, false)}>
-                                        <SelectTrigger id="bird-number"><SelectValue placeholder="Select number" /></SelectTrigger>
-                                        <SelectContent>{BIRD_NUMBERS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="bird-size">Size of Birds</Label>
-                                    <Select value={report.sizeOfBirds || ''} onValueChange={(value) => handleReportUpdate({ ...report, sizeOfBirds: value }, false)}>
-                                        <SelectTrigger id="bird-size"><SelectValue placeholder="Select size" /></SelectTrigger>
-                                        <SelectContent>{BIRD_SIZES.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="bird-part">Part Struck</Label>
-                                    <Select value={report.partOfAircraftStruck || ''} onValueChange={(value) => handleReportUpdate({ ...report, partOfAircraftStruck: value }, false)}>
-                                        <SelectTrigger id="bird-part"><SelectValue placeholder="Select part" /></SelectTrigger>
-                                        <SelectContent>{BIRD_STRIKE_PARTS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="flex items-center space-x-2 pt-6">
-                                    <Switch 
-                                        id="bird-damage"
-                                        checked={report.birdStrikeDamage}
-                                        onCheckedChange={(checked) => handleReportUpdate({ ...report, birdStrikeDamage: checked }, false)}
-                                    />
-                                    <Label htmlFor="bird-damage">Damage Reported?</Label>
-                                </div>
-                            </div>
-                                <Textarea
-                                placeholder="Add any other relevant details about the bird strike..."
-                                value={report.eventSubcategoryDetails || ''}
-                                onChange={e => handleReportUpdate({ ...report, eventSubcategoryDetails: e.target.value }, false)}
-                                />
-                            </div>
-                    )}
-
-                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Initial Risk Assessment</CardTitle>
+                             <CardDescription>Identify hazards associated with this report and assess their initial risk level.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                 
                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                   <div className="grid lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2">
-                            <CardHeader>
-                                <CardTitle>Investigation Team</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                            </CardContent>
-                        </Card>
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>AI Toolkit</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Tabs defaultValue="steps">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
-                                        <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="steps" className="pt-4">
-                                        <InvestigationStepsGenerator report={report} />
-                                    </TabsContent>
-                                    <TabsContent value="whys" className="pt-4">
-                                        <FiveWhysGenerator report={report} />
-                                    </TabsContent>
-                                </Tabs>
-                            </CardContent>
-                        </Card>
-                    </div>
+                   <Card>
+                        <CardHeader>
+                            <CardTitle>Investigation Team</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>AI Toolkit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Tabs defaultValue="steps">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="steps">Suggested Steps</TabsTrigger>
+                                    <TabsTrigger value="whys">5 Whys Analysis</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="steps" className="pt-4">
+                                    <InvestigationStepsGenerator report={report} />
+                                </TabsContent>
+                                <TabsContent value="whys" className="pt-4">
+                                    <FiveWhysGenerator report={report} />
+                                </TabsContent>
+                            </Tabs>
+                        </CardContent>
+                    </Card>
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
@@ -796,8 +698,16 @@ function SafetyReportInvestigationPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="risk-mitigation" className="mt-6 space-y-6">
-                    <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
+                <TabsContent value="mitigation" className="mt-6 space-y-6">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Risk Mitigation Assessment</CardTitle>
+                             <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
+                        </CardContent>
+                     </Card>
                 </TabsContent>
                 <TabsContent value="corrective-action" className="mt-6">
                     <CorrectiveActionPlanGenerator 
@@ -806,7 +716,7 @@ function SafetyReportInvestigationPage() {
                         onUpdate={handleReportUpdate} 
                     />
                 </TabsContent>
-                <TabsContent value="final-review" className="mt-6">
+                <TabsContent value="review" className="mt-6">
                     <FinalReview report={report} onUpdate={handleReportUpdate} />
                 </TabsContent>
             </Tabs>
