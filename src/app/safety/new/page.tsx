@@ -40,6 +40,7 @@ export default function NewSafetyReportPage() {
             filedDate: format(new Date(), 'yyyy-MM-dd'),
             department: REPORT_TYPE_DEPARTMENT_MAPPING[data.reportType as SafetyReportType],
             occurrenceDate: format(data.occurrenceDate, 'yyyy-MM-dd'),
+            pilotFlying: data.pilotFlying || null,
         };
 
         try {
@@ -69,6 +70,7 @@ export default function NewSafetyReportPage() {
 }
 
 NewSafetyReportPage.title = "File New Safety Report";
+
 
 
 
