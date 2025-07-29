@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,7 +28,6 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 
 const reportFormSchema = z.object({
   reportType: z.string({
@@ -56,11 +57,10 @@ const reportFormSchema = z.object({
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
-    safetyReports: any[]; // Used for numbering
     onSubmit: (data: any) => void;
 }
 
-export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReportFormProps) {
+export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     const { user, company } = useUser();
     const [personnel, setPersonnel] = useState<User[]>([]);
 
@@ -69,7 +69,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
             if (!company) return;
             const q = query(collection(db, `companies/${company.id}/users`));
             const snapshot = await getDocs(q);
-            setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+            setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id } as User)));
         }
         fetchPersonnel();
     }, [company]);
@@ -272,7 +272,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                                     </FormControl>
                                     <SelectContent>
                                     {personnel.map((p) => (
-                                        <SelectItem key={p.id} value={p.name}>
+                                        <SelectItem key={p.id} value={`${p.name} (${p.role})`}>
                                             {p.name} ({p.role})
                                         </SelectItem>
                                     ))}
