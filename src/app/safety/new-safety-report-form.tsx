@@ -376,6 +376,9 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         />
                     )}
                 </CardContent>
+                 <CardFooter>
+                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
+                </CardFooter>
              </Card>
 
             {reportType === 'Flight Operations Report' && (
@@ -601,9 +604,6 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         )}
                     />
                 </CardContent>
-                 <CardFooter>
-                    <Button type="submit" variant="destructive" className="w-full">Submit Report</Button>
-                </CardFooter>
             </Card>
 
         </form>
