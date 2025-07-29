@@ -101,7 +101,7 @@ function AnalysisResult({ initialData, onSave }: { initialData: FiveWhysAnalysis
   );
 }
 
-export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate: (data: Partial<SafetyReport>) => void }) {
+export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, onUpdate?: (data: Partial<SafetyReport>) => void }) {
   const [state, formAction] = useActionState(fiveWhysAnalysisAction, initialState);
   const { toast } = useToast();
   const [analysisData, setAnalysisData] = useState<FiveWhysAnalysisOutput | null>(report.fiveWhysAnalysis || null);
@@ -120,11 +120,13 @@ export function FiveWhysGenerator({ report, onUpdate }: { report: SafetyReport, 
   }, [state, toast]);
 
   const handleSave = (data: FiveWhysAnalysisOutput) => {
-    onUpdate({ fiveWhysAnalysis: data });
-    toast({
-        title: 'Analysis Saved',
-        description: 'Your changes to the 5 Whys analysis have been saved.',
-    });
+    if (typeof onUpdate === 'function') {
+      onUpdate({ fiveWhysAnalysis: data });
+      toast({
+          title: 'Analysis Saved',
+          description: 'Your changes to the 5 Whys analysis have been saved.',
+      });
+    }
   }
 
   return (
