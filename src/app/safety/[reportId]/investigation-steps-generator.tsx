@@ -98,9 +98,13 @@ function AnalysisResult({ data, onCopyToClipboard }: { data: SuggestInvestigatio
 
 export function InvestigationStepsGenerator({ report }: { report: SafetyReport }) {
   const [state, formAction] = useActionState(suggestStepsAction, initialState);
+  const [result, setResult] = useState<SuggestInvestigationStepsOutput | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (state.data) {
+      setResult(state.data as SuggestInvestigationStepsOutput);
+    }
     if (state.message && state.message !== 'Analysis complete') {
       toast({
         variant: 'destructive',
@@ -127,7 +131,7 @@ export function InvestigationStepsGenerator({ report }: { report: SafetyReport }
             <input type="hidden" name="report" value={JSON.stringify(report)} />
             <SubmitButton />
         </form>
-        {state.data && <AnalysisResult data={state.data as SuggestInvestigationStepsOutput} onCopyToClipboard={copyToClipboard} />}
+        {result && <AnalysisResult data={result} onCopyToClipboard={copyToClipboard} />}
     </div>
   );
 }
