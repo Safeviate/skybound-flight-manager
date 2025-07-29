@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -38,7 +38,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc } from 'firebase/firestore';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -485,7 +485,12 @@ function SafetyPage() {
     }
   ]);
 
-  const reportsControls = useTableControls(safetyReports, {
+  const reportsControls = useTableControls(safetyReports.filter(r => r.status !== 'Archived'), {
+    initialSort: { key: 'filedDate', direction: 'desc' },
+    searchKeys: ['reportNumber', 'heading', 'details', 'department'],
+  });
+  
+  const archivedReportsControls = useTableControls(safetyReports.filter(r => r.status === 'Archived'), {
     initialSort: { key: 'filedDate', direction: 'desc' },
     searchKeys: ['reportNumber', 'heading', 'details', 'department'],
   });
@@ -502,10 +507,38 @@ function SafetyPage() {
       case 'Open': return 'destructive';
       case 'Under Review': return 'warning';
       case 'Closed': return 'success';
+      case 'Archived': return 'secondary';
       default: return 'outline';
     }
   };
   
+  const handleArchiveReport = async (reportId: string) => {
+    if (!company) return;
+    try {
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+        await updateDoc(reportRef, { status: 'Archived' });
+        setSafetyReports(prev => prev.map(r => r.id === reportId ? {...r, status: 'Archived'} : r));
+        toast({ title: 'Report Archived', description: 'The safety report has been archived.' });
+    } catch (error) {
+        console.error("Error archiving report:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not archive the report.' });
+    }
+  };
+  
+  const handleReactivateReport = async (reportId: string) => {
+    if (!company) return;
+    try {
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+        await updateDoc(reportRef, { status: 'Open' }); // Or 'Under Review'
+        setSafetyReports(prev => prev.map(r => r.id === reportId ? {...r, status: 'Open'} : r));
+        toast({ title: 'Report Reactivated', description: 'The safety report has been moved back to active reports.' });
+    } catch (error) {
+        console.error("Error reactivating report:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not reactivate the report.' });
+    }
+  };
+
+
   const handleNewRiskSubmit = async (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
     if (!company) return;
     const newRiskId = `risk-reg-${Date.now()}`;
@@ -582,13 +615,13 @@ function SafetyPage() {
   }, {} as Record<string, number>);
 
 
-  const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport }) => {
-    const { sortConfig, requestSort } = reportsControls;
-    const isSorted = sortConfig?.key === sortKey;
+  const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport | keyof Risk }) => {
+    const controls = activeTab === 'reports' ? reportsControls : riskControls;
+    const isSorted = controls.sortConfig?.key === sortKey;
     return (
-        <Button variant="ghost" onClick={() => requestSort(sortKey)}>
+        <Button variant="ghost" onClick={() => controls.requestSort(sortKey as any)}>
             {label}
-            {isSorted && <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />}
+            {isSorted && <ArrowUpDown className={`ml-2 h-4 w-4 ${controls.sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />}
             {!isSorted && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
         </Button>
     );
@@ -646,21 +679,111 @@ function SafetyPage() {
     );
   }
 
+  const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
+    const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
+
+    return (
+      <>
+        <div className="flex items-center py-4">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search reports..."
+              value={controls.searchTerm}
+              onChange={(e) => controls.setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
+              <TableHead className="hidden md:table-cell"><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
+              <TableHead>Report</TableHead>
+              <TableHead className="hidden lg:table-cell">Department</TableHead>
+              <TableHead className="hidden lg:table-cell">Aircraft</TableHead>
+              <TableHead className="hidden xl:table-cell">Location</TableHead>
+              <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
+              <TableHead className="text-right no-print">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {controls.items.map((report) => (
+              <TableRow key={report.id}>
+                <TableCell>
+                  <Link href={`/safety/${report.id}`} className="hover:underline">
+                    {report.reportNumber}
+                  </Link>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
+                <TableCell className="max-w-xs font-medium truncate">
+                  {report.heading}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
+                <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
+                <TableCell className="hidden xl:table-cell">
+                  {report.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      {report.location}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                </TableCell>
+                <TableCell className="text-right no-print">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/safety/${report.id}`}>
+                          View & Investigate
+                        </Link>
+                      </DropdownMenuItem>
+                      {report.status !== 'Archived' && user.permissions.includes('Super User') && (
+                        <DropdownMenuItem onClick={() => handleArchiveReport(report.id)}>
+                            <Archive className="mr-2 h-4 w-4" />
+                            Archive
+                        </DropdownMenuItem>
+                      )}
+                      {report.status === 'Archived' && user.permissions.includes('Super User') && (
+                        <DropdownMenuItem onClick={() => handleReactivateReport(report.id)}>
+                            <RotateCw className="mr-2 h-4 w-4" />
+                            Reactivate
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {controls.items.length === 0 && (
+          <div className="text-center text-muted-foreground py-10">No reports found.</div>
+        )}
+      </>
+    );
+  };
+
   return (
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList>
+            <TabsList className="grid grid-cols-3">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
-              <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
-              <TabsTrigger value="assessment">Risk Assessment Tool</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
-
           <TabsContent value="dashboard">
             <SafetyDashboard reports={safetyReports} risks={risks} />
           </TabsContent>
@@ -672,80 +795,18 @@ function SafetyPage() {
                 <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center py-4">
-                  <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search reports..."
-                      value={reportsControls.searchTerm}
-                      onChange={(e) => reportsControls.setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead><SortableHeader label="Report #" sortKey="reportNumber" /></TableHead>
-                      <TableHead className="hidden md:table-cell"><SortableHeader label="Occurrence Date" sortKey="occurrenceDate" /></TableHead>
-                      <TableHead>Report</TableHead>
-                      <TableHead className="hidden lg:table-cell">Department</TableHead>
-                      <TableHead className="hidden lg:table-cell">Aircraft</TableHead>
-                      <TableHead className="hidden xl:table-cell">Location</TableHead>
-                      <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
-                      <TableHead className="text-right no-print">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportsControls.items.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell>
-                           <Link href={`/safety/${report.id}`} className="hover:underline">
-                                {report.reportNumber}
-                           </Link>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">{report.occurrenceDate}</TableCell>
-                        <TableCell className="max-w-xs font-medium truncate">
-                            {report.heading}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">{report.department}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{report.aircraftInvolved || 'N/A'}</TableCell>
-                        <TableCell className="hidden xl:table-cell">
-                          {report.location && (
-                              <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                                  {report.location}
-                              </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right no-print">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Actions</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/safety/${report.id}`}>
-                                    View & Investigate
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>Update Status</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                 {reportsControls.items.length === 0 && (
-                    <div className="text-center text-muted-foreground py-10">No reports found.</div>
-                )}
+                <Tabs defaultValue="active">
+                    <TabsList>
+                        <TabsTrigger value="active">Active Reports</TabsTrigger>
+                        <TabsTrigger value="archived">Archived Reports</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="active">
+                        <ReportTable reports={safetyReports.filter(r => r.status !== 'Archived')} />
+                    </TabsContent>
+                    <TabsContent value="archived">
+                        <ReportTable reports={safetyReports.filter(r => r.status === 'Archived')} />
+                    </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </TabsContent>
@@ -888,7 +949,6 @@ function SafetyPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="spis">
             <SafetyPerformanceIndicators 
                 reports={safetyReports} 
@@ -898,7 +958,6 @@ function SafetyPage() {
                 monthlyChecklistCompletion={checklistCompletionRate}
             />
           </TabsContent>
-
           <TabsContent value="matrix">
             <RiskMatrix risks={risks} />
           </TabsContent>
@@ -928,5 +987,6 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
 
 

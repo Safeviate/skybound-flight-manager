@@ -268,7 +268,7 @@ export type SafetyReport = {
   submittedBy: string;
   heading: string;
   details: string;
-  status: 'Open' | 'Under Review' | 'Closed';
+  status: 'Open' | 'Under Review' | 'Closed' | 'Archived';
   type: SafetyReportType;
   department: Department;
   classification?: 'Hazard' | 'Occurrence' | 'Incident' | 'Accident';
