@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Aircraft, SafetyReport, SafetyReportType } from '@/lib/types';
+import type { Aircraft, SafetyReport, SafetyReportType, User, Role } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -29,7 +29,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -90,13 +90,23 @@ const reportFormSchema = z.object({
     message: 'Details must be at least 20 characters long.',
   }),
   isAnonymous: z.boolean().default(false).optional(),
+  fileOnBehalf: z.boolean().default(false).optional(),
+  behalfOfUser: z.string().optional(),
+}).refine(data => {
+    if (data.fileOnBehalf && !data.behalfOfUser) {
+        return false;
+    }
+    return true;
+}, {
+    message: "You must select a user to file on behalf of.",
+    path: ["behalfOfUser"],
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 interface NewSafetyReportFormProps {
     safetyReports: SafetyReport[];
-    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean }) => void;
+    onSubmit: (newReport: Omit<SafetyReport, 'id' | 'submittedBy' | 'status' | 'filedDate' | 'department'> & { isAnonymous?: boolean, fileOnBehalf?: boolean, behalfOfUser?: string }) => void;
 }
 
 const getReportTypeAbbreviation = (type: SafetyReportType) => {
@@ -112,9 +122,9 @@ const getReportTypeAbbreviation = (type: SafetyReportType) => {
 
 export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReportFormProps) {
   const { toast } = useToast();
-  const { company } = useUser();
+  const { user, company } = useUser();
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
-  const [airportData, setAirportData] = useState<any[]>([]); // Assuming airport data structure
+  const [personnel, setPersonnel] = useState<User[]>([]);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -122,6 +132,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         occurrenceDate: new Date(),
         occurrenceTime: format(new Date(), 'HH:mm'),
         isAnonymous: false,
+        fileOnBehalf: false,
         heading: '',
         details: '',
         subCategory: '',
@@ -143,10 +154,10 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
         const aircraftSnapshot = await getDocs(aircraftQuery);
         setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
         
-        // You might have an 'airports' collection or similar
-        // const airportQuery = query(collection(db, `companies/${company.id}/airports`));
-        // const airportSnapshot = await getDocs(airportQuery);
-        // setAirportData(airportSnapshot.docs.map(doc => doc.data()));
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+        const personnelSnapshot = await getDocs(personnelQuery);
+        setPersonnel(personnelSnapshot.docs.map(p => p.data() as User));
+
       } catch (error) {
         console.error("Error fetching data for form:", error);
       }
@@ -159,6 +170,21 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
   const subCategory = form.watch('subCategory');
   const lossOfSeparationType = form.watch('lossOfSeparationType');
   const raFollowed = form.watch('raFollowed');
+  const isAnonymous = form.watch('isAnonymous');
+  const fileOnBehalf = form.watch('fileOnBehalf');
+  
+  useEffect(() => {
+    if (isAnonymous) {
+        form.setValue('fileOnBehalf', false);
+    }
+  }, [isAnonymous, form]);
+  
+  useEffect(() => {
+    if (fileOnBehalf) {
+        form.setValue('isAnonymous', false);
+    }
+  }, [fileOnBehalf, form]);
+
 
   function handleFormSubmit(data: ReportFormValues) {
     const reportTypeAbbr = getReportTypeAbbreviation(data.reportType);
@@ -274,9 +300,9 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Submission</CardTitle>
+                    <CardTitle>Submission Details</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                     <FormField
                         control={form.control}
                         name="isAnonymous"
@@ -286,6 +312,7 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                             <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                disabled={fileOnBehalf}
                             />
                             </FormControl>
                             <div className="space-y-1 leading-none">
@@ -299,6 +326,53 @@ export function NewSafetyReportForm({ safetyReports, onSubmit }: NewSafetyReport
                         </FormItem>
                         )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="fileOnBehalf"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                            <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={isAnonymous}
+                            />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                            <FormLabel>
+                                File on behalf of another user
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                                Select this if you are filing this report for someone else.
+                            </p>
+                            </div>
+                        </FormItem>
+                        )}
+                    />
+                    {fileOnBehalf && (
+                        <FormField
+                            control={form.control}
+                            name="behalfOfUser"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Submitted By</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select the user who reported the incident" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {personnel.map(p => (
+                                            <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
                 </CardContent>
              </Card>
 
