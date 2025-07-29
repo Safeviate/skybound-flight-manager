@@ -98,7 +98,8 @@ const flightOpOccurrenceTypes = ['Loss of Separation / Airprox', 'Bird Strike', 
 const losSubcategories = ['Close Proximity', 'Traffic Advisory (TA)', 'Resolution Advisory (RA)'];
 const raCallouts = ['Climb', 'Descend', 'Maintain Vertical Speed', 'Level Off', 'Increase Climb', 'Increase Descent', 'Climb, Crossing Climb', 'Descend, Crossing Descend'];
 
-const defaultValues = {
+const defaultValues: Partial<ReportFormValues> = {
+    reportType: '',
     occurrenceDate: new Date(),
     occurrenceTime: format(new Date(), 'HH:mm'),
     onBehalfOf: false,
@@ -107,6 +108,19 @@ const defaultValues = {
     aircraftInvolved: '',
     location: '',
     details: '',
+    crewInvolved: '',
+    pilotInCommand: '',
+    pilotFlying: undefined,
+    systemOrComponent: '',
+    aircraftGrounded: false,
+    areaOfOperation: '',
+    groundEventType: '',
+    injuryType: '',
+    medicalAttentionRequired: false,
+    subCategory: '',
+    raCallout: '',
+    raFollowed: undefined,
+    onBehalfOfUser: '',
 };
 
 export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
@@ -125,7 +139,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
   
     const form = useForm<ReportFormValues>({
         resolver: zodResolver(reportFormSchema),
-        defaultValues: defaultValues
+        defaultValues: defaultValues as ReportFormValues
     });
 
     const onBehalfOfChecked = form.watch('onBehalfOf');
@@ -150,7 +164,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     }
     
     const handleReset = () => {
-        form.reset(defaultValues);
+        form.reset(defaultValues as ReportFormValues);
     }
 
   return (
@@ -169,7 +183,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Type of report</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a report type" />
