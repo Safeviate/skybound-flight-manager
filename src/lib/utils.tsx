@@ -108,6 +108,7 @@ const severityMap: Record<RiskSeverity, number> = {
 };
 
 export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity): number => {
+    if (!likelihood || !severity) return 0;
     return likelihoodMap[likelihood] * severityMap[severity];
 }
 

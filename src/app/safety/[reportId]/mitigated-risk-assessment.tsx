@@ -5,7 +5,7 @@
 import { useState, Fragment } from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, CorrectiveAction } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +28,7 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
   const handleAssessRisk = (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => {
     const updatedRisks = report.associatedRisks?.map(risk => {
         if (risk.id === riskId) {
-            const residualRiskScore = getRiskScore(updatedValues.residualLikelihood, updatedValues.residualSeverity);
+            const residualRiskScore = getRiskScore(updatedValues.residualLikelihood!, updatedValues.residualSeverity!);
             return {
                 ...risk,
                 ...updatedValues,
@@ -46,14 +46,6 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
     });
   }
   
-  const riskLevel = (score: number | null) => {
-      if (score === null || score === undefined) return 'N/A';
-      if (score <= 4) return 'Low';
-      if (score <= 9) return 'Medium';
-      if (score <= 16) return 'High';
-      return 'Extreme';
-  }
-
   const handleOpenAssessDialog = (risk: AssociatedRisk) => {
     const formattedActions = correctiveActions?.map(ca => `- ${ca.action} (Assigned to: ${ca.responsiblePerson}, Deadline: ${ca.deadline})`).join('\n') || '';
     setEditingRisk({ ...risk, mitigationControls: formattedActions });
@@ -99,7 +91,7 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
                                 </div>
                             </TableCell>
                             <TableCell>
-                                    <Badge variant="outline">{riskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
+                                    <Badge variant="outline">{getRiskLevel(risk.residualRiskScore ?? risk.riskScore)}</Badge>
                             </TableCell>
                             <TableCell className="text-right">
                                 <Button variant="outline" size="sm" onClick={() => handleOpenAssessDialog(risk)}>

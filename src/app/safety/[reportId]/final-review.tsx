@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { SafetyReport } from '@/lib/types';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { ArrowRight, Check, ShieldCheck, ShieldAlert, CircleAlert, FileText, CheckCircle } from 'lucide-react';
 
 interface FinalReviewProps {
@@ -22,14 +22,6 @@ export function FinalReview({ report, onUpdate }: FinalReviewProps) {
       status: 'Closed',
       closedDate: new Date().toISOString().split('T')[0],
     });
-  };
-
-  const riskLevel = (score: number | null | undefined): string => {
-      if (score === null || score === undefined) return 'N/A';
-      if (score <= 4) return 'Low';
-      if (score <= 9) return 'Medium';
-      if (score <= 16) return 'High';
-      return 'Extreme';
   };
 
   return (
@@ -69,11 +61,11 @@ export function FinalReview({ report, onUpdate }: FinalReviewProps) {
                     <div key={risk.id} className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                         <span>{risk.hazard}:</span>
                         <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                            {riskLevel(risk.riskScore)} ({risk.riskScore})
+                            {getRiskLevel(risk.riskScore)} ({risk.riskScore})
                         </Badge>
                          <ArrowRight className="h-4 w-4" />
                          <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
-                            {riskLevel(risk.residualRiskScore)} ({risk.residualRiskScore})
+                            {getRiskLevel(risk.residualRiskScore)} ({risk.residualRiskScore})
                         </Badge>
                     </div>
                 ))}
