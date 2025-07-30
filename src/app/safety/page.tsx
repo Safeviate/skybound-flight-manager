@@ -26,7 +26,6 @@ import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useTableControls } from '@/hooks/use-table-controls.ts';
@@ -726,12 +725,11 @@ function SafetyPage() {
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -773,9 +771,6 @@ function SafetyPage() {
                 monthlyFlightHours={monthlyFlightHours}
                 monthlyChecklistCompletion={checklistCompletionRate}
             />
-          </TabsContent>
-          <TabsContent value="matrix">
-            <RiskMatrix risks={risks} />
           </TabsContent>
           
           <TabsContent value="assessment">

@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useState, useEffect } from 'react';
-import { RiskAssessmentTool } from './risk-assessment-tool';
+import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
