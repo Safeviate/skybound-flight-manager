@@ -23,7 +23,7 @@ const PromoteToRiskRegisterOutputSchema = z.object({
   description: z.string().describe('A concise, formal description of the risk for the register.'),
   mitigation: z.string().describe('A brief, high-level summary of initial mitigation steps to consider.'),
   status: z.enum(['Open', 'Mitigated', 'Closed']).describe('The initial status of the risk.'),
-  hazardArea: z.string().describe("The general area of operations where the hazard exists (e.g., Flight Operations, Maintenance, Ground Operations)."),
+  hazardArea: z.enum(['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management']).describe("The general area of operations where the hazard exists."),
   process: z.string().describe("The specific process or activity during which the hazard occurs (e.g., Landing, Takeoff, Refueling)."),
   reportNumber: z.string().describe("The report number from the source safety report.")
 });
@@ -57,8 +57,8 @@ Based on this information:
 1.  Write a formal, one-sentence **description** of the risk suitable for a high-level risk register. This should be more general than the specific instance in the report. For example, if the hazard is "bird flew close to N12345 on final", the description could be "Risk of bird strikes on approach or departure paths."
 2.  Suggest a brief, one-sentence initial **mitigation** strategy. For example, "Review bird dispersal procedures and pilot briefing protocols."
 3.  Set the initial **status** to "Open".
-4.  From the safety report's context, determine the most relevant **hazardArea**. Choose one from: Flight Operations, Maintenance, Ground Operations, Administration.
-5.  From the safety report's context, determine the most relevant **process** or activity. Choose one from: Pre-flight, Taxiing, Takeoff, Climb, Cruise, Descent, Approach, Landing, Post-flight, Servicing, Other.
+4.  From the safety report's context and the hazard details, determine the most relevant **hazardArea**.
+5.  From the safety report's context and the hazard details, determine the most relevant **process** or activity.
 6.  Extract the **reportNumber** from the main safety report.
 
 Output the results in the required JSON format.`,

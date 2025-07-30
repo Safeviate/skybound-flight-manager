@@ -20,6 +20,9 @@ import { RiskAssessmentTool } from '../risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
+const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
+
 const addRiskFormSchema = z.object({
   hazard: z.string().min(10, {
     message: 'Hazard description must be at least 10 characters long.',
@@ -39,9 +42,6 @@ interface AddRiskFormProps {
     onAddRisk: (newRisk: Omit<AssociatedRisk, 'id'>) => void;
     initialValues?: Partial<AddRiskFormValues>;
 }
-
-const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
-const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
 export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
   const form = useForm<AddRiskFormValues>({

@@ -32,6 +32,9 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
+const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
+
 const editRiskFormSchema = z.object({
   hazard: z.string().min(3, { message: 'Hazard is required.'}),
   risk: z.string().min(10, {
@@ -63,9 +66,6 @@ interface EditRiskFormProps {
   risk: Risk;
   onSubmit: (data: Risk) => void;
 }
-
-const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Administration'];
-const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
 
 export function EditRiskForm({ risk, onSubmit }: EditRiskFormProps) {

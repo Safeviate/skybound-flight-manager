@@ -43,7 +43,7 @@ import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc } from 'fire
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
-    const area = risk.hazardArea;
+    const area = risk.hazardArea || 'Uncategorized';
     if (!acc[area]) {
       acc[area] = [];
     }
@@ -989,6 +989,7 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
 
 
 
