@@ -425,7 +425,7 @@ function SafetyReportInvestigationPage() {
         task.id === taskId ? { ...task, status } : task
     );
     
-    handleReportUpdate({ ...report, tasks: updatedTasks });
+    handleReportUpdate({ ...report, tasks: updatedTasks }, true);
   }
 
   const handleAddTaskComment = (taskId: string, message: string) => {
@@ -443,7 +443,7 @@ function SafetyReportInvestigationPage() {
         task.id === taskId ? { ...task, comments: [...(task.comments || []), newComment] } : task
     );
 
-    handleReportUpdate({ ...report, tasks: updatedTasks });
+    handleReportUpdate({ ...report, tasks: updatedTasks }, true);
   };
   
   const handleMarkCommentsRead = (taskId: string) => {
