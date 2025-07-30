@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -738,7 +739,7 @@ function SafetyReportInvestigationPage() {
                             <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
                         </CardContent>
                     </Card>
-
+                    
                     <Card>
                         <CardHeader>
                             <CardTitle>Investigation Plan & Tools</CardTitle>
@@ -758,7 +759,7 @@ function SafetyReportInvestigationPage() {
                         onMarkCommentsRead={handleMarkCommentsRead}
                         onManualTaskAdd={handleManualTaskAdd}
                     />
-                    
+
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
@@ -778,7 +779,7 @@ function SafetyReportInvestigationPage() {
                             />
                         </CardContent>
                     </Card>
-                    
+
                     <Card>
                         <CardHeader>
                              <CardTitle>5 Whys Analysis</CardTitle>
@@ -915,10 +916,10 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
 
                 <TabsContent value="mitigation" className="mt-6 space-y-6">
-                     <CorrectiveActionPlanGenerator 
+                    <CorrectiveActionPlanGenerator 
                         report={report} 
-                        personnel={personnel}
-                        onUpdate={handleReportUpdate} 
+                        personnel={investigationTeamMembers}
+                        onUpdate={handleReportUpdate}
                     />
                     <Card>
                         <CardHeader>

@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Bot, Check, ShieldCheck, PlusCircle, Send, MessageSquare, Trash2, Edit } from 'lucide-react';
+import { Loader2, Bot, Check, ShieldCheck, PlusCircle, Send, MessageSquare, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { SafetyReport, User, Alert, CorrectiveAction, TaskComment } from '@/lib/types';
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
@@ -29,7 +30,7 @@ import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 
 const initialState = {
@@ -50,6 +51,12 @@ const actionFormSchema = z.object({
 });
 type ActionFormValues = z.infer<typeof actionFormSchema>;
 
+const extensionFormSchema = z.object({
+    requestedDeadline: z.date({ required_error: 'A new deadline is required.'}),
+    extensionRequestReason: z.string().min(10, 'A reason for the request is required.'),
+});
+type ExtensionFormValues = z.infer<typeof extensionFormSchema>;
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -66,18 +73,13 @@ function AnalysisResult({ data, onAccept }: { data: GenerateCorrectiveActionPlan
   // ... (implementation from previous turn)
 }
 
-const ActionItem = ({ action, personnel, onUpdate, onDelete, onAddComment }: { action: CorrectiveAction, personnel: User[], onUpdate: (action: CorrectiveAction) => void, onDelete: (actionId: string) => void, onAddComment: (actionId: string, comment: string) => void }) => {
+const ActionItem = ({ action, personnel, onUpdate, onAddComment, onRequestExtension, onApproveExtension, onRejectExtension }: { action: CorrectiveAction, personnel: User[], onUpdate: (action: CorrectiveAction) => void, onAddComment: (actionId: string, comment: string) => void, onRequestExtension: (actionId: string, reason: string, newDeadline: string) => void, onApproveExtension: (actionId: string) => void, onRejectExtension: (actionId: string) => void }) => {
     const { user } = useUser();
     const [isEditing, setIsEditing] = useState(false);
+    const [isExtensionOpen, setIsExtensionOpen] = useState(false);
 
     const handleStatusChange = (newStatus: 'Not Started' | 'In Progress' | 'Completed') => {
         onUpdate({ ...action, status: newStatus });
-    };
-
-    const handleDeadlineChange = (newDate?: Date) => {
-        if (newDate) {
-            onUpdate({ ...action, deadline: format(newDate, 'yyyy-MM-dd') });
-        }
     };
     
     const handleAssigneeChange = (newName: string) => {
@@ -85,11 +87,21 @@ const ActionItem = ({ action, personnel, onUpdate, onDelete, onAddComment }: { a
     }
 
     const commentForm = useForm<CommentFormValues>({ resolver: zodResolver(commentFormSchema) });
+    const extensionForm = useForm<ExtensionFormValues>({ resolver: zodResolver(extensionFormSchema) });
 
     const handleCommentSubmit = (data: CommentFormValues) => {
         onAddComment(action.id, data.message);
         commentForm.reset();
     }
+    
+    const handleExtensionSubmit = (data: ExtensionFormValues) => {
+        onRequestExtension(action.id, data.extensionRequestReason, format(data.requestedDeadline, 'yyyy-MM-dd'));
+        setIsExtensionOpen(false);
+        extensionForm.reset();
+    }
+    
+    const isUserAssigned = user?.name === action.responsiblePerson;
+    const isTeamLead = user?.permissions.includes('Safety:Edit') || user?.permissions.includes('Super User');
 
     return (
          <Collapsible key={action.id} className="p-4 border rounded-lg space-y-3">
@@ -118,6 +130,23 @@ const ActionItem = ({ action, personnel, onUpdate, onDelete, onAddComment }: { a
                     </CollapsibleTrigger>
                 </div>
             </div>
+            {action.extensionStatus === 'Pending' && (
+                 <div className="p-3 bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 rounded-md text-sm space-y-2">
+                    <h4 className="font-semibold text-amber-800 dark:text-amber-200">Extension Requested</h4>
+                    <p>New Deadline: {format(parseISO(action.requestedDeadline!), 'PPP')}</p>
+                    <p className="p-2 bg-background rounded-md text-muted-foreground italic">"{action.extensionRequestReason}"</p>
+                    {isTeamLead && (
+                        <div className="flex gap-2 pt-2 border-t border-amber-300 dark:border-amber-700">
+                             <Button size="sm" variant="success" onClick={() => onApproveExtension(action.id)}>
+                                <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                            </Button>
+                             <Button size="sm" variant="destructive" onClick={() => onRejectExtension(action.id)}>
+                                <XCircle className="mr-2 h-4 w-4" /> Reject
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            )}
             <CollapsibleContent className="space-y-4 pt-3 border-t">
                 {/* Comment display section */}
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
@@ -137,7 +166,7 @@ const ActionItem = ({ action, personnel, onUpdate, onDelete, onAddComment }: { a
                             render={({ field }) => (
                                 <FormItem className="flex-1">
                                     <FormControl>
-                                        <Input placeholder="Add a comment or request extension..." {...field} />
+                                        <Input placeholder="Add a comment..." {...field} />
                                     </FormControl>
                                 </FormItem>
                             )}
@@ -147,32 +176,36 @@ const ActionItem = ({ action, personnel, onUpdate, onDelete, onAddComment }: { a
                 </Form>
                  {/* Edit section */}
                 <div className="pt-3 border-t">
-                    <p className="text-xs font-semibold text-muted-foreground">Edit Action</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Manage Action</p>
                     <div className="flex items-end gap-2 mt-1">
                          <div className="flex-1">
                             <Label className="text-xs">Responsible Person</Label>
-                            <Select value={action.responsiblePerson} onValueChange={handleAssigneeChange}>
+                            <Select value={action.responsiblePerson} onValueChange={handleAssigneeChange} disabled={!isTeamLead}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     {personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="flex-1">
-                            <Label className="text-xs">Due Date</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !action.deadline && "text-muted-foreground")}>
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {action.deadline ? format(parseISO(action.deadline), "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={parseISO(action.deadline)} onSelect={handleDeadlineChange} initialFocus /></PopoverContent>
-                            </Popover>
-                        </div>
-                        <Button variant="destructive" size="icon" onClick={() => onDelete(action.id)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isUserAssigned && (
+                            <Dialog open={isExtensionOpen} onOpenChange={setIsExtensionOpen}>
+                                <DialogTrigger asChild>
+                                     <Button variant="outline" size="sm">Request Extension</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Request Deadline Extension</DialogTitle>
+                                    </DialogHeader>
+                                     <Form {...extensionForm}>
+                                        <form onSubmit={extensionForm.handleSubmit(handleExtensionSubmit)} className="space-y-4">
+                                            <FormField control={extensionForm.control} name="requestedDeadline" render={({ field }) => (<FormItem><FormLabel>New Deadline</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : <span>Pick date</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                            <FormField control={extensionForm.control} name="extensionRequestReason" render={({ field }) => (<FormItem><FormLabel>Reason for Request</FormLabel><FormControl><Textarea placeholder="Explain why an extension is needed..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <div className="flex justify-end"><Button type="submit">Submit Request</Button></div>
+                                        </form>
+                                    </Form>
+                                </DialogContent>
+                            </Dialog>
+                        )}
                     </div>
                 </div>
             </CollapsibleContent>
@@ -206,16 +239,14 @@ export function CorrectiveActionPlanGenerator({
     // ... (implementation from previous turn)
   };
 
+  const updateActions = (newActions: CorrectiveAction[]) => {
+      onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: newActions } });
+  }
+
   const handleUpdateAction = (updatedAction: CorrectiveAction) => {
-    const updatedActions = report.correctiveActionPlan?.correctiveActions.map(a => a.id === updatedAction.id ? updatedAction : a);
-    onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: updatedActions! } });
+    updateActions(report.correctiveActionPlan?.correctiveActions.map(a => a.id === updatedAction.id ? updatedAction : a) || []);
   };
   
-  const handleDeleteAction = (actionId: string) => {
-    const updatedActions = report.correctiveActionPlan?.correctiveActions.filter(a => a.id !== actionId);
-    onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: updatedActions! } });
-  };
-
   const handleAddComment = (actionId: string, message: string) => {
     if (!user) return;
     const newComment: TaskComment = { id: `capc-${Date.now()}`, author: user.name, date: new Date().toISOString(), message, readBy: [user.id] };
@@ -225,7 +256,7 @@ export function CorrectiveActionPlanGenerator({
         }
         return action;
     });
-    onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: updatedActions! } });
+    updateActions(updatedActions || []);
   };
   
   const handleAddActionSubmit = (data: ActionFormValues) => {
@@ -236,10 +267,37 @@ export function CorrectiveActionPlanGenerator({
           deadline: format(data.deadline, 'yyyy-MM-dd')
       };
       const updatedActions = [...(report.correctiveActionPlan?.correctiveActions || []), newAction];
-      onUpdate({ correctiveActionPlan: { ...report.correctiveActionPlan!, correctiveActions: updatedActions } });
+      updateActions(updatedActions);
       addActionForm.reset();
       setIsAddingAction(false);
   }
+  
+  const handleRequestExtension = (actionId: string, reason: string, newDeadline: string) => {
+      const updatedActions = report.correctiveActionPlan?.correctiveActions.map(a => 
+          a.id === actionId ? { ...a, extensionRequestReason: reason, requestedDeadline: newDeadline, extensionStatus: 'Pending' } : a
+      );
+      updateActions(updatedActions || []);
+      toast({ title: 'Extension Requested', description: 'Your request has been submitted for approval.'});
+  };
+  
+  const handleApproveExtension = (actionId: string) => {
+      const actionToUpdate = report.correctiveActionPlan?.correctiveActions.find(a => a.id === actionId);
+      if (!actionToUpdate || !actionToUpdate.requestedDeadline) return;
+      
+      const updatedActions = report.correctiveActionPlan?.correctiveActions.map(a =>
+          a.id === actionId ? { ...a, deadline: a.requestedDeadline!, extensionStatus: 'Approved' } : a
+      );
+      updateActions(updatedActions || []);
+      toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
+  };
+
+  const handleRejectExtension = (actionId: string) => {
+      const updatedActions = report.correctiveActionPlan?.correctiveActions.map(a =>
+          a.id === actionId ? { ...a, extensionStatus: 'Rejected' } : a
+      );
+      updateActions(updatedActions || []);
+      toast({ variant: 'destructive', title: 'Extension Rejected', description: `The deadline extension request was rejected.`});
+  };
 
   if (!report.correctiveActionPlan) {
       return (
@@ -305,8 +363,10 @@ export function CorrectiveActionPlanGenerator({
                             action={action} 
                             personnel={personnel}
                             onUpdate={handleUpdateAction}
-                            onDelete={handleDeleteAction}
                             onAddComment={handleAddComment}
+                            onRequestExtension={handleRequestExtension}
+                            onApproveExtension={handleApproveExtension}
+                            onRejectExtension={handleRejectExtension}
                         />
                     ))}
                 </div>

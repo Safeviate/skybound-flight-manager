@@ -344,6 +344,9 @@ export type CorrectiveAction = {
     deadline: string;
     status: 'Not Started' | 'In Progress' | 'Completed';
     comments?: TaskComment[];
+    extensionRequestReason?: string;
+    requestedDeadline?: string;
+    extensionStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
 }
 
 export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
