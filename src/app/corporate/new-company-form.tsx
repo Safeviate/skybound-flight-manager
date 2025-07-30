@@ -62,7 +62,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         primaryColor: '#2563eb',
         backgroundColor: '#f4f4f5',
         accentColor: '#f59e0b',
-        enabledFeatures: [],
+        enabledFeatures: ['Safety'],
     }
   });
 
