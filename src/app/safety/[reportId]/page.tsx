@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -11,7 +10,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { Risk, SafetyReport, User, InvestigationTask, TaskComment } from '@/lib/types';
+import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction } from '@/lib/types';
 import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
@@ -334,17 +333,17 @@ function SafetyReportInvestigationPage() {
   });
   
   const investigationTeamMembers = useMemo(() => {
-    if (!report || !personnel) return [];
+    if (!report || !personnel.length) return [];
+    
     const teamNames = new Set(report.investigationTeam || []);
-    // Also include the reporter if they are not anonymous
     if (report.submittedBy && report.submittedBy !== 'Anonymous') {
       teamNames.add(report.submittedBy);
     }
-    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
-    // Ensure there are no duplicate users in the list, comparing by ID
-    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
-    return uniqueById;
+    
+    const team = personnel.filter(p => teamNames.has(p.name));
+    return Array.from(new Map(team.map(item => [item['id'], item])).values());
   }, [report, personnel]);
+
 
   const availableRecipients = useMemo(() => {
     if (!investigationTeamMembers.length || !user) {
@@ -446,12 +445,13 @@ function SafetyReportInvestigationPage() {
   }, [icaoState, report, toast]);
 
 
-  const handleReportUpdate = async (updatedReport: SafetyReport, showToast = true) => {
-    if (!company) return;
-    setReport(updatedReport); // Optimistic update
+  const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
+    if (!company || !report) return;
+    const newReport = { ...report, ...updatedReport };
+    setReport(newReport); // Optimistic update
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
-        await setDoc(reportRef, updatedReport, { merge: true });
+        await setDoc(reportRef, newReport, { merge: true });
         if (showToast) {
             toast({ title: 'Report Updated', description: 'Your changes have been saved.' });
         }
@@ -639,7 +639,7 @@ function SafetyReportInvestigationPage() {
                                     <label className="text-sm font-medium">Report Status</label>
                                     <Select 
                                         value={report.status} 
-                                        onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ ...report, status: value }, true)}
+                                        onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ status: value }, true)}
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Set status" />
@@ -692,7 +692,7 @@ function SafetyReportInvestigationPage() {
                                         <Combobox
                                             options={ICAO_OPTIONS}
                                             value={report.occurrenceCategory || ''}
-                                            onChange={(value) => handleReportUpdate({ ...report, occurrenceCategory: value }, false)}
+                                            onChange={(value) => handleReportUpdate({ occurrenceCategory: value }, false)}
                                             placeholder="Select ICAO category..."
                                             searchPlaceholder="Search categories..."
                                             noResultsText="No category found."
@@ -709,7 +709,7 @@ function SafetyReportInvestigationPage() {
                                     <label className="text-sm font-medium">Classification</label>
                                     <Select 
                                         value={report.classification || ''}
-                                        onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ ...report, classification: value }, true)}
+                                        onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ classification: value }, true)}
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Classify event" />
@@ -773,7 +773,7 @@ function SafetyReportInvestigationPage() {
                             <Textarea 
                                 placeholder="Summarize the investigation findings, root causes, and contributing factors here..." 
                                 value={report.investigationNotes || ''}
-                                onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
+                                onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, false)}
                                 className="min-h-[150px]"
                             />
                         </CardContent>
@@ -784,7 +784,7 @@ function SafetyReportInvestigationPage() {
                              <CardTitle>5 Whys Analysis</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate({ ...report, ...data }, true)} />
+                            <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate(data, true)} />
                         </CardContent>
                     </Card>
 
@@ -941,4 +941,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-

@@ -338,10 +338,12 @@ export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department
 };
 
 export type CorrectiveAction = {
+    id: string;
     action: string;
     responsiblePerson: string;
     deadline: string;
     status: 'Not Started' | 'In Progress' | 'Completed';
+    comments?: TaskComment[];
 }
 
 export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
