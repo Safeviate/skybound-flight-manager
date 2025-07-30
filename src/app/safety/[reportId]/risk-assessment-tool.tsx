@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils.tsx';
 import { ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,10 +72,10 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-            <Table className="border">
+            <Table className="border table-fixed">
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="border-r align-bottom" rowSpan={2}>Likelihood</TableHead>
+                        <TableHead className="border-r align-bottom w-48" rowSpan={2}>Likelihood</TableHead>
                         <TableHead className="text-center" colSpan={5}>Severity of Consequences</TableHead>
                     </TableRow>
                     <TableRow>
