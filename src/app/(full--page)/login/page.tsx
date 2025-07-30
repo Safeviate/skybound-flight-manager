@@ -12,11 +12,6 @@ import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { db } from '@/lib/firebase';
-import { collectionGroup, getDocs, query } from 'firebase/firestore';
-import type { User } from '@/lib/types';
 
 export default function LoginPage() {
   const { user, login, company } = useUser();
@@ -26,9 +21,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
-  const [demoUsers, setDemoUsers] = useState<User[]>([]);
-  const [selectedDemoUser, setSelectedDemoUser] = useState<string>('');
 
 
   useEffect(() => {
@@ -38,21 +30,6 @@ export default function LoginPage() {
     }
   }, [user, router]);
   
-  useEffect(() => {
-    const fetchDemoUsers = async () => {
-        try {
-            const usersQuery = query(collectionGroup(db, 'users'));
-            const snapshot = await getDocs(usersQuery);
-            const usersList = snapshot.docs.map(doc => doc.data() as User);
-            setDemoUsers(usersList);
-        } catch (error) {
-            console.error("Failed to fetch demo users:", error);
-            setLoginError("Could not load demo users from the database.");
-        }
-    };
-    fetchDemoUsers();
-  }, []);
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
@@ -66,26 +43,6 @@ export default function LoginPage() {
     } else {
       setLoginError('Login failed. Please check your email and password.');
       setIsLoading(false);
-    }
-  }
-  
-  async function handleDemoLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedDemoUser) {
-        setLoginError("Please select a demo user to log in.");
-        return;
-    }
-    setIsDemoLoading(true);
-    setLoginError(null);
-
-    const loginSuccess = await login(selectedDemoUser);
-    
-    if (loginSuccess) {
-        const redirectPath = searchParams.get('redirect');
-        router.push(redirectPath || '/');
-    } else {
-        setLoginError('Demo login failed. The selected user could not be found.');
-        setIsDemoLoading(false);
     }
   }
 
@@ -103,7 +60,7 @@ export default function LoginPage() {
                 Login
             </CardTitle>
             <CardDescription>
-                Enter your email and password below to login, or use the demo login.
+                Enter your email and password below to login.
             </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -135,31 +92,6 @@ export default function LoginPage() {
                 Login
                 </Button>
             </form>
-            
-            <Separator className="my-4" />
-
-             <form onSubmit={handleDemoLogin} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="demo-user-select">Demo Login</Label>
-                        <Select value={selectedDemoUser} onValueChange={setSelectedDemoUser}>
-                            <SelectTrigger id="demo-user-select">
-                                <SelectValue placeholder="Select a demo user to login..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {demoUsers.map(demoUser => (
-                                    <SelectItem key={demoUser.id} value={demoUser.email}>
-                                        {demoUser.name} ({demoUser.role} @ {demoUser.companyId})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <Button type="submit" variant="secondary" className="w-full" disabled={isDemoLoading}>
-                        {isDemoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                        Login as Demo User
-                    </Button>
-                </form>
-
             </CardContent>
             <CardFooter className="justify-center text-sm">
                 <Link href="/corporate" className="text-muted-foreground hover:text-primary">
