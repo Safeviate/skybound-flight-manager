@@ -26,16 +26,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
-  },
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version,
   }
