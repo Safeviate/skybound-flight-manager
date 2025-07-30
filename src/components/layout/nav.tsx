@@ -123,10 +123,6 @@ export default function Nav() {
     if (item.href === '/' && !user.permissions.includes('Super User')) {
       return false;
     }
-    // For super users, the dashboard link should be the company list page
-    if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
-      return false;
-    }
     return hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature)
   });
   
