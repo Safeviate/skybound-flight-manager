@@ -5,7 +5,7 @@
 import React, { useState, useActionState, Fragment } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { getRiskScore, getRiskScoreColor } from '@/lib/utils.tsx';
+import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -203,7 +203,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             <TableCell className="max-w-xs">{risk.risk}</TableCell>
                             <TableCell>
                                 <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                    {typeof risk.riskScore === 'number' ? risk.riskScore : 'N/A'}
+                                    {!isNaN(risk.riskScore) ? risk.riskScore : 'N/A'}
                                 </Badge>
                             </TableCell>
                             <TableCell>
@@ -262,3 +262,4 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     </div>
   );
 }
+
