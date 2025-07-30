@@ -42,13 +42,6 @@ const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
     '1': { 'A': '1A', 'B': '1B', 'C': '1C', 'D': '1D', 'E': '1E' },
 };
 
-const RISK_CLASSIFICATION: Record<string, string> = {
-    '5A': 'Intolerable', '5B': 'Intolerable', '4A': 'Intolerable', '4B': 'Intolerable', '3A': 'Intolerable',
-    '5C': 'Tolerable', '5D': 'Tolerable', '4C': 'Tolerable', '3B': 'Tolerable', '3C': 'Tolerable', '2A': 'Tolerable', '2B': 'Tolerable',
-    '5E': 'Acceptable', '4D': 'Acceptable', '4E': 'Acceptable', '3D': 'Acceptable', '3E': 'Acceptable', '2C': 'Acceptable', '2D': 'Acceptable', '2E': 'Acceptable', '1A': 'Acceptable', '1B': 'Acceptable', '1C': 'Acceptable', '1D': 'Acceptable', '1E': 'Acceptable',
-};
-
-
 const INITIAL_CELL_COLORS: Record<string, string> = {
     '5A': '#d9534f', '5B': '#d9534f', '4A': '#d9534f', '4B': '#d9534f', '3A': '#d9534f',
     '5C': '#f0ad4e', '5D': '#f0ad4e', '4C': '#f0ad4e', '3B': '#f0ad4e', '3C': '#f0ad4e', '2A': '#f0ad4e', '2B': '#f0ad4e',
@@ -163,49 +156,6 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                 </div>
             </div>
         </div>
-        {canEditColors && (
-            <div className="mt-6 p-4 rounded-lg border">
-                <CardHeader className="p-0 mb-4">
-                  <CardTitle>Risk Color Customization</CardTitle>
-                  <CardDescription>Set the background color for each risk index.</CardDescription>
-                </CardHeader>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {Object.entries(
-                      Object.entries(cellColors).reduce((acc, [code, color]) => {
-                          const level = RISK_CLASSIFICATION[code];
-                          if (!acc[level]) {
-                              acc[level] = [];
-                          }
-                          acc[level].push({ code, color });
-                          return acc;
-                      }, {} as Record<string, { code: string; color: string }[]>)
-                  ).map(([level, items]) => (
-                      <div key={level} className="space-y-2">
-                          <h4 className="font-semibold text-sm">{level}</h4>
-                          <div className="space-y-2">
-                              {items.map(({ code, color }) => (
-                                  <div key={code} className="flex items-center gap-2">
-                                      <Label htmlFor={`${code}-color-picker`} className="w-12">{code}</Label>
-                                      <Input
-                                          id={`${code}-color-picker`}
-                                          type="color"
-                                          value={color}
-                                          onChange={(e) => handleColorChange(code, e.target.value)}
-                                          className="h-8 w-10 p-1"
-                                      />
-                                      <Input 
-                                          value={color}
-                                          onChange={(e) => handleColorChange(code, e.target.value)}
-                                          className="h-8 flex-1"
-                                      />
-                                  </div>
-                              ))}
-                          </div>
-                      </div>
-                  ))}
-                </div>
-            </div>
-        )}
       </CardContent>
     </Card>
   );
