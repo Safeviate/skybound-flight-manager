@@ -92,18 +92,18 @@ export function getDistance(
 
 // Risk Matrix Logic
 const likelihoodMap: Record<RiskLikelihood, number> = {
-  'Rare': 1,
-  'Unlikely': 2,
-  'Possible': 3,
-  'Likely': 4,
-  'Certain': 5,
+  'Extremely Improbable': 1,
+  'Improbable': 2,
+  'Remote': 3,
+  'Occasional': 4,
+  'Frequent': 5,
 };
 
 const severityMap: Record<RiskSeverity, number> = {
-  'Insignificant': 1,
+  'Negligible': 1,
   'Minor': 2,
-  'Moderate': 3,
-  'Major': 4,
+  'Major': 3,
+  'Hazardous': 4,
   'Catastrophic': 5,
 };
 
@@ -122,11 +122,34 @@ export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium'
 
 export const getRiskScoreColor = (score: number | null | undefined): string => {
   if (score === null || score === undefined) return 'hsl(var(--muted-foreground))';
+  
+  const riskCode = getRiskCodeFromScore(score);
+  
+  const riskClassifications: Record<string, string> = {
+    'Intolerable': 'hsl(var(--destructive))',
+    'Tolerable': 'hsl(var(--orange))',
+    'Acceptable': 'hsl(var(--success))',
+  };
+
+  if (riskCode.level in riskClassifications) {
+    return riskClassifications[riskCode.level];
+  }
+  
+  // Fallback based on score if code not found (should not happen)
   if (score <= 4) return `hsl(var(--success))`;
-  if (score <= 9) return `hsl(var(--warning))`;
+  if (score <= 9) return `hsl(var(--orange))`;
   if (score <= 16) return `hsl(var(--orange))`;
   return `hsl(var(--destructive))`;
 }
+
+const getRiskCodeFromScore = (score: number) => {
+    if (score >= 20) return { code: '5A/5B/4A', level: 'Intolerable' };
+    if (score >= 15) return { code: '5C/4B/3A', level: 'Intolerable' };
+    if (score >= 10) return { code: '5D/4C/3B/2A/2B', level: 'Tolerable' };
+    if (score >= 5) return { code: '5E/4D/3C/3D/1A/2C', level: 'Acceptable' };
+    return { code: '4E/3E/2D/2E/1B-1E', level: 'Acceptable' };
+};
+
 
 export const getRiskScoreColorWithOpacity = (score: number | null | undefined, opacity: number = 1): string => {
   if (score === null || score === undefined) return `hsla(var(--muted-foreground), ${opacity})`;
@@ -151,3 +174,4 @@ export const calculateFlightHours = (logs: TrainingLogEntry[], periodInDays: num
 };
 
     
+

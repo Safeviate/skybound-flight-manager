@@ -352,8 +352,8 @@ export type CorrectiveAction = {
     status: 'Not Started' | 'In Progress' | 'Completed';
 }
 
-export type RiskLikelihood = 'Rare' | 'Unlikely' | 'Possible' | 'Likely' | 'Certain';
-export type RiskSeverity = 'Insignificant' | 'Minor' | 'Moderate' | 'Major' | 'Catastrophic';
+export type RiskLikelihood = 'Frequent' | 'Occasional' | 'Remote' | 'Improbable' | 'Extremely Improbable';
+export type RiskSeverity = 'Catastrophic' | 'Hazardous' | 'Major' | 'Minor' | 'Negligible';
 export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
 
 export type Risk = {

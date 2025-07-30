@@ -4,24 +4,25 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getRiskScoreColor, getRiskLevel } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { ShieldAlert } from 'lucide-react';
 
-const SEVERITY_LEVELS = {
-    'Catastrophic': { description: 'Equipment destroyed, multiple deaths.', value: 5 },
-    'Hazardous': { description: 'Large reduction in safety margins, serious injury, major equipment damage.', value: 4 },
-    'Major': { description: 'Significant reduction in safety margins, serious incident, injury to persons.', value: 3 },
-    'Minor': { description: 'Nuisance, operating limitations, minor incident.', value: 2 },
-    'Negligible': { description: 'Little or no effect on safety.', value: 1 },
+const LIKELIHOOD_LEVELS = {
+    'Frequent': { description: 'Likely to occur many times (has happened frequently).', value: 5 },
+    'Occasional': { description: 'Likely to occur some times (has happened infrequently).', value: 4 },
+    'Remote': { description: 'Unlikely, but possible to occur (has happened rarely).', value: 3 },
+    'Improbable': { description: 'Very unlikely to occur (not known to have happened).', value: 2 },
+    'Extremely Improbable': { description: 'Almost inconceivable that the event will occur.', value: 1 },
 };
 
-const LIKELIHOOD_LEVELS = {
-    'Frequent': { description: 'Likely to occur many times (has happened frequently).', value: 'A' },
-    'Occasional': { description: 'Likely to occur some times (has happened infrequently).', value: 'B' },
-    'Remote': { description: 'Unlikely, but possible to occur (has happened rarely).', value: 'C' },
-    'Improbable': { description: 'Very unlikely to occur (not known to have happened).', value: 'D' },
-    'Extremely Improbable': { description: 'Almost inconceivable that the event will occur.', value: 'E' },
+const SEVERITY_LEVELS = {
+    'Catastrophic': { description: 'Equipment destroyed, multiple deaths.', value: 'A' },
+    'Hazardous': { description: 'Large reduction in safety margins, serious injury, major equipment damage.', value: 'B' },
+    'Major': { description: 'Significant reduction in safety margins, serious incident, injury to persons.', value: 'C' },
+    'Minor': { description: 'Nuisance, operating limitations, minor incident.', value: 'D' },
+    'Negligible': { description: 'Little or no effect on safety.', value: 'E' },
 };
+
 
 const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
     '5': { 'A': '5A', 'B': '5B', 'C': '5C', 'D': '5D', 'E': '5E' },
@@ -32,19 +33,11 @@ const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
 };
 
 const RISK_CLASSIFICATION: Record<string, { level: 'Intolerable' | 'Tolerable' | 'Acceptable', color: string }> = {
-    '5A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5B': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5C': { level: 'Intolerable', color: 'hsl(var(--destructive))' },
-    '4A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '4B': { level: 'Intolerable', color: 'hsl(var(--destructive))' },
-    '3A': { level: 'Intolerable', color: 'hsl(var(--destructive))' },
-    '5D': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '4E': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '4C': { level: 'Tolerable', color: 'hsl(var(--orange))' }, '4D': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '3B': { level: 'Tolerable', color: 'hsl(var(--orange))' }, '3C': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '2A': { level: 'Tolerable', color: 'hsl(var(--orange))' }, '2B': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '1A': { level: 'Tolerable', color: 'hsl(var(--orange))' },
-    '4E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '3D': { level: 'Acceptable', color: 'hsl(var(--success))' }, '3E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '2C': { level: 'Acceptable', color: 'hsl(var(--success))' }, '2D': { level: 'Acceptable', color: 'hsl(var(--success))' }, '2E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '1B': { level: 'Acceptable', color: 'hsl(var(--success))' }, '1C': { level: 'Acceptable', color: 'hsl(var(--success))' }, '1D': { level: 'Acceptable', color: 'hsl(var(--success))' }, '1E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+    '5A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5B': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '5D': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '5E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+    '4A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '4B': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '4C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '4D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '4E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+    '3A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '3B': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '3C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '3D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '3E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+    '2A': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '2B': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '2C': { level: 'Acceptable', color: 'hsl(var(--success))' },  '2D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '2E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+    '1A': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1B': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1C': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1E': { level: 'Acceptable', color: 'hsl(var(--success))' },
 };
 
 
@@ -62,11 +55,11 @@ export function RiskAssessmentTool() {
             <Table className="border">
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="border-r" rowSpan={2}>Severity</TableHead>
-                        <TableHead className="text-center" colSpan={5}>Likelihood of Occurrence</TableHead>
+                        <TableHead className="border-r align-bottom" rowSpan={2}>Likelihood</TableHead>
+                        <TableHead className="text-center" colSpan={5}>Severity of Consequences</TableHead>
                     </TableRow>
                     <TableRow>
-                        {Object.entries(LIKELIHOOD_LEVELS).map(([level, { description, value }]) => (
+                        {Object.entries(SEVERITY_LEVELS).map(([level, { description, value }]) => (
                             <TableHead key={level} className="border-t text-center p-2">
                                 <div>{level}</div>
                                 <div className="text-xs font-normal text-muted-foreground">({value})</div>
@@ -75,17 +68,17 @@ export function RiskAssessmentTool() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {Object.entries(SEVERITY_LEVELS).reverse().map(([level, { description, value }]) => (
+                    {Object.entries(LIKELIHOOD_LEVELS).reverse().map(([level, { description, value }]) => (
                         <TableRow key={level}>
                             <TableCell className="border-r p-2 font-semibold">
                                 <div>{level}</div>
                                 <div className="text-xs font-normal text-muted-foreground">({value})</div>
                             </TableCell>
-                            {Object.values(LIKELIHOOD_LEVELS).map(({ value: likelihoodValue }) => {
-                                const riskCode = RISK_MATRIX_DATA[value][likelihoodValue];
+                            {Object.values(SEVERITY_LEVELS).map(({ value: severityValue }) => {
+                                const riskCode = RISK_MATRIX_DATA[value][severityValue];
                                 const classification = RISK_CLASSIFICATION[riskCode];
                                 return (
-                                <TableCell key={`${value}-${likelihoodValue}`} className="p-2 text-center" style={{ backgroundColor: classification?.color }}>
+                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: classification?.color }}>
                                     <div className="font-bold text-white">{riskCode}</div>
                                 </TableCell>
                                 );
