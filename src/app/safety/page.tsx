@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc } from 'firebase/firestore';
 import { RiskRegister } from './risk-register';
+import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -724,10 +726,11 @@ function SafetyPage() {
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
+              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
             </TabsList>
             {renderActionButton()}
@@ -761,6 +764,9 @@ function SafetyPage() {
 
           <TabsContent value="register">
              <RiskRegister risks={risks} onUpdate={fetchData} />
+          </TabsContent>
+          <TabsContent value="matrix">
+             <RiskAssessmentTool />
           </TabsContent>
           <TabsContent value="spis">
             <SafetyPerformanceIndicators 
