@@ -120,7 +120,7 @@ const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddCommen
     );
 };
 
-const InvestigationTaskList = ({ report, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead }: { report: SafetyReport, onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void }) => {
+const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void }) => {
     const tasks = report.tasks || [];
     const { user } = useUser();
 
@@ -480,6 +480,8 @@ function SafetyReportInvestigationPage() {
         </main>
     );
   }
+  
+  const investigationTeamMembers = personnel.filter(p => report.investigationTeam?.includes(p.name));
 
   return (
     <>
@@ -644,6 +646,7 @@ function SafetyReportInvestigationPage() {
 
                     <InvestigationTaskList 
                         report={report} 
+                        personnel={investigationTeamMembers}
                         onUpdateTask={handleUpdateTaskStatus} 
                         onAddComment={handleAddTaskComment} 
                         isLoading={dataLoading} 
@@ -657,7 +660,7 @@ function SafetyReportInvestigationPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="p-4 border rounded-lg">
-                                <InvestigationStepsGenerator report={report} personnel={personnel} onAssignTasks={handleAssignTasks} />
+                                <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
                             </div>
                             <div className="p-4 border rounded-lg">
                                 <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate({ ...report, ...data }, true)} />
