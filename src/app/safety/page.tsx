@@ -20,7 +20,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { SafetyReport, Risk, GroupedRisk, Department, CompletedChecklist, Booking } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
-import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
 import Link from 'next/link';
@@ -771,10 +770,6 @@ function SafetyPage() {
                 monthlyFlightHours={monthlyFlightHours}
                 monthlyChecklistCompletion={checklistCompletionRate}
             />
-          </TabsContent>
-          
-          <TabsContent value="assessment">
-            <RiskAssessmentTool />
           </TabsContent>
         </Tabs>
       </main>
