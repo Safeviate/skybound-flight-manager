@@ -333,6 +333,23 @@ function SafetyReportInvestigationPage() {
     resolver: zodResolver(discussionFormSchema),
   });
 
+  const investigationTeamMembers = useMemo(() => {
+    if (!report || !personnel) return [];
+    const teamNames = new Set(report.investigationTeam || []);
+    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
+    // Ensure there are no duplicate users in the list, comparing by ID
+    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
+    return uniqueById;
+  }, [report, personnel]);
+
+  const availableRecipients = useMemo(() => {
+    if (!investigationTeamMembers.length || !user) {
+      return [];
+    }
+    return investigationTeamMembers.filter(p => p.id !== user?.id);
+  }, [investigationTeamMembers, user]);
+
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -372,22 +389,6 @@ function SafetyReportInvestigationPage() {
     fetchReport();
     fetchPersonnel();
   }, [reportId, company, user, loading, router, toast]);
-
-  const investigationTeamMembers = useMemo(() => {
-    if (!report || !personnel) return [];
-    const teamNames = new Set(report.investigationTeam || []);
-    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
-    // Ensure there are no duplicate users in the list, comparing by ID
-    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
-    return uniqueById;
-  }, [report, personnel]);
-
-  const availableRecipients = useMemo(() => {
-    if (!investigationTeamMembers.length || !user) {
-      return [];
-    }
-    return investigationTeamMembers.filter(p => p.id !== user?.id);
-  }, [investigationTeamMembers, user]);
 
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
@@ -739,13 +740,8 @@ function SafetyReportInvestigationPage() {
                             <CardTitle>Investigation Plan & Tools</CardTitle>
                             <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="p-4 border rounded-lg">
-                                <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
-                            </div>
-                            <div className="p-4 border rounded-lg">
-                                <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate({ ...report, ...data }, true)} />
-                            </div>
+                        <CardContent>
+                           <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
                         </CardContent>
                     </Card>
                     
@@ -776,6 +772,15 @@ function SafetyReportInvestigationPage() {
                                 onChange={(e) => handleReportUpdate({ ...report, investigationNotes: e.target.value }, false)}
                                 className="min-h-[150px]"
                             />
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                             <CardTitle>5 Whys Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate({ ...report, ...data }, true)} />
                         </CardContent>
                     </Card>
 
