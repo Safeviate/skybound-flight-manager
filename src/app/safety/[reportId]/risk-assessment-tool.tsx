@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState } from 'react';
@@ -43,17 +42,36 @@ const RISK_CLASSIFICATION: Record<string, 'Intolerable' | 'Tolerable' | 'Accepta
     '1A': 'Acceptable',  '1B': 'Acceptable',  '1C': 'Acceptable',  '1D': 'Acceptable',  '1E': 'Acceptable',
 };
 
+const INITIAL_CELL_COLORS: Record<string, string> = {
+    '5A': '#d9534f', '5B': '#d9534f', '5C': '#f0ad4e', '5D': '#f0ad4e', '5E': '#5cb85c',
+    '4A': '#d9534f', '4B': '#d9534f', '4C': '#f0ad4e', '4D': '#5cb85c', '4E': '#5cb85c',
+    '3A': '#d9534f', '3B': '#f0ad4e', '3C': '#f0ad4e', '3D': '#5cb85c', '3E': '#5cb85c',
+    '2A': '#f0ad4e', '2B': '#f0ad4e', '2C': '#5cb85c', '2D': '#5cb85c', '2E': '#5cb85c',
+    '1A': '#5cb85c', '1B': '#5cb85c', '1C': '#5cb85c', '1D': '#5cb85c', '1E': '#5cb85c',
+};
+
+const groupCodesByClassification = () => {
+    const groups: Record<string, string[]> = {
+        Intolerable: [],
+        Tolerable: [],
+        Acceptable: [],
+    };
+    for (const code in RISK_CLASSIFICATION) {
+        const classification = RISK_CLASSIFICATION[code];
+        groups[classification].push(code);
+    }
+    return groups;
+};
+
 
 export function RiskAssessmentTool() {
-  const [colors, setColors] = useState({
-    Intolerable: '#d9534f', // Red
-    Tolerable: '#f0ad4e',   // Orange
-    Acceptable: '#5cb85c', // Green
-  });
+  const [cellColors, setCellColors] = useState(INITIAL_CELL_COLORS);
 
-  const handleColorChange = (level: keyof typeof colors, value: string) => {
-    setColors(prev => ({ ...prev, [level]: value }));
+  const handleColorChange = (riskCode: string, value: string) => {
+    setCellColors(prev => ({ ...prev, [riskCode]: value }));
   };
+
+  const groupedCodes = groupCodesByClassification();
 
   return (
     <Card>
@@ -89,9 +107,8 @@ export function RiskAssessmentTool() {
                             </TableCell>
                             {Object.values(SEVERITY_LEVELS).map(({ value: severityValue }) => {
                                 const riskCode = RISK_MATRIX_DATA[value][severityValue];
-                                const classification = RISK_CLASSIFICATION[riskCode];
                                 return (
-                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: colors[classification] }}>
+                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: cellColors[riskCode] }}>
                                     <div className="font-bold text-white">{riskCode}</div>
                                 </TableCell>
                                 );
@@ -105,30 +122,32 @@ export function RiskAssessmentTool() {
         <div className="grid md:grid-cols-2 gap-4 mt-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Risk Tolerability &amp; Colors</CardTitle>
+                    <CardTitle className="text-base">Risk Color Customization</CardTitle>
+                    <CardDescription className="text-sm">Set the background color for each risk index.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    {Object.entries(colors).map(([level, color]) => (
-                        <div key={level} className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: color}}/>
-                                <span className="font-bold">{level}:</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                               <Label htmlFor={`${level}-color`} className="sr-only">{level} color</Label>
-                                <Input 
-                                    id={`${level}-color`}
-                                    type="color" 
-                                    value={color} 
-                                    onChange={(e) => handleColorChange(level as keyof typeof colors, e.target.value)}
-                                    className="h-8 w-10 p-1"
-                                />
-                                <Input 
-                                    type="text"
-                                    value={color}
-                                    onChange={(e) => handleColorChange(level as keyof typeof colors, e.target.value)}
-                                    className="h-8 w-24"
-                                />
+                <CardContent className="space-y-4 text-sm max-h-60 overflow-y-auto pr-2">
+                    {Object.entries(groupedCodes).map(([classification, codes]) => (
+                        <div key={classification}>
+                            <h4 className="font-semibold text-muted-foreground mb-2">{classification}</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {codes.map(code => (
+                                    <div key={code} className="flex items-center gap-2">
+                                        <Label htmlFor={`${code}-color`} className="w-8">{code}</Label>
+                                        <Input 
+                                            id={`${code}-color`}
+                                            type="color" 
+                                            value={cellColors[code]} 
+                                            onChange={(e) => handleColorChange(code, e.target.value)}
+                                            className="h-8 w-10 p-1"
+                                        />
+                                        <Input 
+                                            type="text"
+                                            value={cellColors[code]}
+                                            onChange={(e) => handleColorChange(code, e.target.value)}
+                                            className="h-8 flex-1"
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))}
@@ -154,4 +173,3 @@ export function RiskAssessmentTool() {
     </Card>
   );
 }
-
