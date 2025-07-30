@@ -317,7 +317,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
 function SafetyReportInvestigationPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, company, loading } = useUser();
+  const { user, company, loading: userLoading } = useUser();
   const reportId = params.reportId as string;
   const [report, setReport] = useState<SafetyReport | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
@@ -332,10 +332,14 @@ function SafetyReportInvestigationPage() {
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
   });
-
+  
   const investigationTeamMembers = useMemo(() => {
     if (!report || !personnel) return [];
     const teamNames = new Set(report.investigationTeam || []);
+    // Also include the reporter if they are not anonymous
+    if (report.submittedBy && report.submittedBy !== 'Anonymous') {
+      teamNames.add(report.submittedBy);
+    }
     const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
     // Ensure there are no duplicate users in the list, comparing by ID
     const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
@@ -351,7 +355,7 @@ function SafetyReportInvestigationPage() {
 
 
   useEffect(() => {
-    if (loading) return;
+    if (userLoading) return;
     if (!user) {
         router.push('/login');
         return;
@@ -383,12 +387,12 @@ function SafetyReportInvestigationPage() {
       if (!company) return;
       const usersRef = collection(db, `companies/${company.id}/users`);
       const snapshot = await getDocs(usersRef);
-      setPersonnel(snapshot.docs.map(doc => doc.data() as User));
+      setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
     };
 
     fetchReport();
     fetchPersonnel();
-  }, [reportId, company, user, loading, router, toast]);
+  }, [reportId, company, user, userLoading, router, toast]);
 
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
@@ -558,7 +562,7 @@ function SafetyReportInvestigationPage() {
     handleReportUpdate({ ...report, tasks: updatedTasks }, false); // Update silently
   };
 
-  if (loading || dataLoading) {
+  if (userLoading || dataLoading) {
     return (
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <p>Loading report...</p>
@@ -911,6 +915,11 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
 
                 <TabsContent value="mitigation" className="mt-6 space-y-6">
+                     <CorrectiveActionPlanGenerator 
+                        report={report} 
+                        personnel={personnel}
+                        onUpdate={handleReportUpdate} 
+                    />
                     <Card>
                         <CardHeader>
                             <CardTitle>Risk Mitigation Assessment</CardTitle>
@@ -920,11 +929,6 @@ function SafetyReportInvestigationPage() {
                             <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
                         </CardContent>
                      </Card>
-                     <CorrectiveActionPlanGenerator 
-                        report={report} 
-                        personnel={personnel}
-                        onUpdate={handleReportUpdate} 
-                    />
                 </TabsContent>
                 <TabsContent value="review" className="mt-6">
                     <FinalReview report={report} onUpdate={handleReportUpdate} />
@@ -937,3 +941,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
