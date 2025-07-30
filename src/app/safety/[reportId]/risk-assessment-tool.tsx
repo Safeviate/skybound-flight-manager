@@ -21,7 +21,7 @@ const LIKELIHOOD_LEVELS: Record<RiskLikelihood, { description: string; value: nu
     'Extremely Improbable': { description: 'Almost inconceivable that the event will occur.', value: 1 },
 };
 
-const LIKELIHOOD_ORDER: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const LIKELIHOOD_ORDER: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'].reverse();
 
 
 const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string }> = {
@@ -31,7 +31,7 @@ const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string
     'Minor': { description: 'Nuisance, operating limitations, minor incident.', value: 'D' },
     'Negligible': { description: 'Little or no effect on safety.', value: 'E' },
 };
-const SEVERITY_ORDER: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+const SEVERITY_ORDER: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'].reverse();
 
 
 const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
@@ -167,7 +167,7 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
             <div className="mt-6 p-4 rounded-lg border">
                 <CardHeader className="p-0 mb-4">
                   <CardTitle>Risk Color Customization</CardTitle>
-                  <CardDescription>Set the background color for each risk tolerability level.</CardDescription>
+                  <CardDescription>Set the background color for each risk index.</CardDescription>
                 </CardHeader>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {Object.entries(
