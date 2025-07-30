@@ -104,7 +104,10 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                                 <ContextMenu key={`${likelihoodValue}-${severityValue}`}>
                                     <ContextMenuTrigger asChild>
                                         <TableCell 
-                                            className={cn("p-2 text-center cursor-pointer transition-all", isSelected && 'ring-2 ring-primary ring-offset-2 z-10')} 
+                                            className={cn(
+                                                "p-2 text-center cursor-pointer transition-all border",
+                                                isSelected && 'ring-2 ring-primary ring-offset-2 z-10'
+                                            )} 
                                             style={{ backgroundColor: cellColors[riskCode] }}
                                             onClick={() => onCellClick?.(likelihood, severity)}
                                         >
