@@ -1,3 +1,4 @@
+
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
@@ -50,7 +51,7 @@ const auth = getAuth(app);
 // Initialize Performance Monitoring
 // We need to check if we're in a browser environment before initializing performance.
 if (typeof window !== 'undefined') {
-  getPerformance(app);
+  getPerformance(app, { instrumentationEnabled: false });
 }
 
 
