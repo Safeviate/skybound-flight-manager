@@ -7,20 +7,21 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 function PersonnelPage() {
@@ -113,6 +114,18 @@ function PersonnelPage() {
         }
     };
 
+    const handleDeletePersonnel = async (personnelId: string) => {
+        if (!company) return;
+        try {
+            await deleteDoc(doc(db, `companies/${company.id}/users`, personnelId));
+            setPersonnel(prev => prev.filter(p => p.id !== personnelId));
+            toast({ title: 'Personnel Deleted', description: 'The user has been removed from the roster.' });
+        } catch (error) {
+            console.error("Error deleting personnel:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete personnel.' });
+        }
+    };
+
 
   if (loading || !user) {
         return (
@@ -187,9 +200,41 @@ function PersonnelPage() {
                                 </TableCell>
                                 {canEdit && (
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="sm" onClick={() => setEditingPersonnel(person)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete {person.name} from the system.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
+                                                                Yes, Delete Personnel
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 )}
                             </TableRow>
@@ -220,5 +265,3 @@ function PersonnelPage() {
 
 PersonnelPage.title = 'Personnel Management';
 export default PersonnelPage;
-
-    
