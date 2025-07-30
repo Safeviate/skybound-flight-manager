@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -36,6 +35,7 @@ import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc } from 'firebase/firestore';
+import { RiskRegister } from './risk-register';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -397,6 +397,37 @@ function SafetyPage() {
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
   const router = useRouter();
 
+  const fetchData = async () => {
+    if (!company) return;
+    try {
+        const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
+        const risksQuery = query(collection(db, `companies/${company.id}/risks`));
+        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+        const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
+
+        const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
+            getDocs(reportsQuery),
+            getDocs(risksQuery),
+            getDocs(bookingsQuery),
+            getDocs(checklistsQuery),
+        ]);
+
+        const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+        const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
+        
+        setSafetyReports(reportsList);
+        setRisks(risksList);
+        setBookings(bookingsList);
+        setCompletedChecklists(checklistsList);
+
+    } catch (error) {
+        console.error("Error fetching safety data:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
+    }
+  };
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -404,36 +435,7 @@ function SafetyPage() {
       return;
     }
     if (company) {
-        const fetchSafetyData = async () => {
-            try {
-                const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
-                const risksQuery = query(collection(db, `companies/${company.id}/risks`));
-                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-                const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
-
-                const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
-                    getDocs(reportsQuery),
-                    getDocs(risksQuery),
-                    getDocs(bookingsQuery),
-                    getDocs(checklistsQuery),
-                ]);
-
-                const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
-                const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
-                const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-                const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
-                
-                setSafetyReports(reportsList);
-                setRisks(risksList);
-                setBookings(bookingsList);
-                setCompletedChecklists(checklistsList);
-
-            } catch (error) {
-                console.error("Error fetching safety data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
-            }
-        };
-        fetchSafetyData();
+        fetchData();
     }
   }, [user, company, loading, router, toast]);
 
@@ -761,9 +763,7 @@ function SafetyPage() {
           </TabsContent>
 
           <TabsContent value="register">
-             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">The Risk Register has been cleared for rebuild.</p>
-            </div>
+             <RiskRegister risks={risks} onUpdate={fetchData} />
           </TabsContent>
           <TabsContent value="spis">
             <SafetyPerformanceIndicators 

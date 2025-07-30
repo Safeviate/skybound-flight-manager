@@ -359,6 +359,7 @@ export type RiskStatus = 'Open' | 'Mitigated' | 'Closed';
 export type Risk = {
   id: string;
   companyId: string;
+  description: string;
   hazard: string;
   risk: string;
   consequences: string[];
