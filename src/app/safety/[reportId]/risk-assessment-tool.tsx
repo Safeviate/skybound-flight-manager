@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,9 @@ const LIKELIHOOD_LEVELS: Record<RiskLikelihood, { description: string; value: nu
     'Extremely Improbable': { description: 'Almost inconceivable that the event will occur.', value: 1 },
 };
 
+const LIKELIHOOD_ORDER: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+
+
 const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string }> = {
     'Catastrophic': { description: 'Equipment destroyed, multiple deaths.', value: 'A' },
     'Hazardous': { description: 'Large reduction in safety margins, serious injury, major equipment damage.', value: 'B' },
@@ -28,6 +31,7 @@ const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string
     'Minor': { description: 'Nuisance, operating limitations, minor incident.', value: 'D' },
     'Negligible': { description: 'Little or no effect on safety.', value: 'E' },
 };
+const SEVERITY_ORDER: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
 
 const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
@@ -45,10 +49,10 @@ const RISK_CLASSIFICATION: Record<string, string> = {
 };
 
 
-const INITIAL_CELL_COLORS = {
-    'Intolerable': '#d9534f',
-    'Tolerable': '#f0ad4e',
-    'Acceptable': '#5cb85c',
+const INITIAL_CELL_COLORS: Record<string, string> = {
+    '5A': '#d9534f', '5B': '#d9534f', '4A': '#d9534f', '4B': '#d9534f', '3A': '#d9534f',
+    '5C': '#f0ad4e', '5D': '#f0ad4e', '4C': '#f0ad4e', '3B': '#f0ad4e', '3C': '#f0ad4e', '2A': '#f0ad4e', '2B': '#f0ad4e',
+    '5E': '#5cb85c', '4D': '#5cb85c', '4E': '#5cb85c', '3D': '#5cb85c', '3E': '#5cb85c', '2C': '#5cb85c', '2D': '#5cb85c', '2E': '#5cb85c', '1A': '#5cb85c', '1B': '#5cb85c', '1C': '#5cb85c', '1D': '#5cb85c', '1E': '#5cb85c',
 };
 
 interface RiskAssessmentToolProps {
@@ -57,12 +61,12 @@ interface RiskAssessmentToolProps {
 }
 
 export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessmentToolProps) {
-  const [cellColors, setCellColors] = useState(INITIAL_CELL_COLORS);
+  const [cellColors, setCellColors] = React.useState(INITIAL_CELL_COLORS);
   const { user } = useUser();
   const canEditColors = user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit');
 
-  const handleColorChange = (riskClass: string, value: string) => {
-    setCellColors(prev => ({ ...prev, [riskClass]: value }));
+  const handleColorChange = (riskCode: string, value: string) => {
+    setCellColors(prev => ({ ...prev, [riskCode]: value }));
   };
 
   return (
@@ -82,31 +86,33 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                         <TableHead className="text-center" colSpan={5}>Severity of Consequences</TableHead>
                     </TableRow>
                     <TableRow>
-                        {Object.entries(SEVERITY_LEVELS).map(([level, { value }]) => (
+                        {SEVERITY_ORDER.map((level) => (
                             <TableHead key={level} className="border-t text-center p-2">
                                 <div>{level}</div>
-                                <div className="text-xs font-normal text-muted-foreground">({value})</div>
+                                <div className="text-xs font-normal text-muted-foreground">({SEVERITY_LEVELS[level].value})</div>
                             </TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {(Object.entries(LIKELIHOOD_LEVELS) as [RiskLikelihood, { description: string; value: number }][]).reverse().map(([likelihood, { value: likelihoodValue }]) => (
+                    {LIKELIHOOD_ORDER.map((likelihood) => {
+                        const { value: likelihoodValue } = LIKELIHOOD_LEVELS[likelihood];
+                        return (
                         <TableRow key={likelihood}>
                             <TableCell className="border-r p-2 font-semibold">
                                 <div>{likelihood}</div>
                                 <div className="text-xs font-normal text-muted-foreground">({likelihoodValue})</div>
                             </TableCell>
-                            {(Object.entries(SEVERITY_LEVELS) as [RiskSeverity, { description: string; value: string }][]).map(([severity, { value: severityValue }]) => {
+                            {SEVERITY_ORDER.map((severity) => {
+                                const { value: severityValue } = SEVERITY_LEVELS[severity];
                                 const riskCode = RISK_MATRIX_DATA[likelihoodValue][severityValue];
-                                const riskClass = RISK_CLASSIFICATION[riskCode];
                                 const isSelected = selectedCode === riskCode;
                                 return (
                                 <ContextMenu key={`${likelihoodValue}-${severityValue}`}>
                                     <ContextMenuTrigger asChild>
                                         <TableCell 
                                             className={cn("p-2 text-center cursor-pointer transition-all", isSelected && 'ring-2 ring-primary ring-offset-2 z-10')} 
-                                            style={{ backgroundColor: cellColors[riskClass] }}
+                                            style={{ backgroundColor: cellColors[riskCode] }}
                                             onClick={() => onCellClick?.(likelihood, severity)}
                                         >
                                             <div className="font-bold text-white">{riskCode}</div>
@@ -116,12 +122,12 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                                         <ContextMenuContent>
                                             <ContextMenuItem onSelect={(e) => e.preventDefault()} className="focus:bg-transparent">
                                                 <div className="flex items-center gap-2">
-                                                    <Label htmlFor={`${riskCode}-color`} className="font-semibold">{riskClass}</Label>
+                                                    <Label htmlFor={`${riskCode}-color`} className="font-semibold">{riskCode}</Label>
                                                     <Input 
                                                         id={`${riskCode}-color`}
                                                         type="color" 
-                                                        value={cellColors[riskClass]} 
-                                                        onChange={(e) => handleColorChange(riskClass, e.target.value)}
+                                                        value={cellColors[riskCode]} 
+                                                        onChange={(e) => handleColorChange(riskCode, e.target.value)}
                                                         className="h-8 w-10 p-1"
                                                     />
                                                 </div>
@@ -132,7 +138,7 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                                 );
                             })}
                         </TableRow>
-                    ))}
+                    )})}
                 </TableBody>
             </Table>
         </div>
@@ -141,37 +147,62 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
             <div className="p-4 rounded-lg border">
                 <h4 className="font-semibold mb-2">Severity</h4>
                 <div className="space-y-1 text-xs text-muted-foreground">
-                    {Object.entries(SEVERITY_LEVELS).map(([level, { value, description }]) => (
-                        <p key={level}><span className="font-bold text-foreground">({value}) {level}:</span> {description}</p>
-                    ))}
+                    {SEVERITY_ORDER.map((level) => {
+                        const { value, description } = SEVERITY_LEVELS[level];
+                        return <p key={level}><span className="font-bold text-foreground">({value}) {level}:</span> {description}</p>
+                    })}
                 </div>
             </div>
             <div className="p-4 rounded-lg border">
                 <h4 className="font-semibold mb-2">Likelihood</h4>
                 <div className="space-y-1 text-xs text-muted-foreground">
-                     {Object.entries(LIKELIHOOD_LEVELS).map(([level, { value, description }]) => (
-                        <p key={level}><span className="font-bold text-foreground">({value}) {level}:</span> {description}</p>
-                    ))}
+                     {LIKELIHOOD_ORDER.map((level) => {
+                        const { value, description } = LIKELIHOOD_LEVELS[level];
+                        return <p key={level}><span className="font-bold text-foreground">({value}) {level}:</span> {description}</p>
+                    })}
                 </div>
             </div>
         </div>
         {canEditColors && (
             <div className="mt-6 p-4 rounded-lg border">
-                <h4 className="font-semibold mb-2">Risk Color Customization</h4>
-                <p className="text-xs text-muted-foreground mb-4">Set the background color for each risk tolerability level.</p>
-                <div className="flex flex-wrap gap-4">
-                    {Object.entries(cellColors).map(([level, color]) => (
-                        <div key={level} className="flex items-center gap-2">
-                            <Label htmlFor={`${level}-color`} className="font-semibold text-sm">{level}</Label>
-                            <Input
-                                id={`${level}-color`}
-                                type="color"
-                                value={color}
-                                onChange={(e) => handleColorChange(level, e.target.value)}
-                                className="h-8 w-10 p-1"
-                            />
-                        </div>
-                    ))}
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle>Risk Color Customization</CardTitle>
+                  <CardDescription>Set the background color for each risk tolerability level.</CardDescription>
+                </CardHeader>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Object.entries(
+                      Object.entries(cellColors).reduce((acc, [code, color]) => {
+                          const level = RISK_CLASSIFICATION[code];
+                          if (!acc[level]) {
+                              acc[level] = [];
+                          }
+                          acc[level].push({ code, color });
+                          return acc;
+                      }, {} as Record<string, { code: string; color: string }[]>)
+                  ).map(([level, items]) => (
+                      <div key={level} className="space-y-2">
+                          <h4 className="font-semibold text-sm">{level}</h4>
+                          <div className="space-y-2">
+                              {items.map(({ code, color }) => (
+                                  <div key={code} className="flex items-center gap-2">
+                                      <Label htmlFor={`${code}-color-picker`} className="w-12">{code}</Label>
+                                      <Input
+                                          id={`${code}-color-picker`}
+                                          type="color"
+                                          value={color}
+                                          onChange={(e) => handleColorChange(code, e.target.value)}
+                                          className="h-8 w-10 p-1"
+                                      />
+                                      <Input 
+                                          value={color}
+                                          onChange={(e) => handleColorChange(code, e.target.value)}
+                                          className="h-8 flex-1"
+                                      />
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  ))}
                 </div>
             </div>
         )}
