@@ -36,10 +36,12 @@ function SubmitButton() {
   );
 }
 
-function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInvestigationStepsOutput, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void }) {
+function AnalysisResult({ data, personnel, reportTasks, onAssignTasks }: { data: SuggestInvestigationStepsOutput, personnel: Personnel[], reportTasks: InvestigationTask[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void }) {
     const [checkedItems, setCheckedItems] = useState<Record<string, string[]>>({});
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
     const [taskAssignments, setTaskAssignments] = useState<Record<string, { assignedTo: string, dueDate: Date }>>({});
+
+    const existingTaskDescriptions = useMemo(() => new Set(reportTasks.map(t => t.description)), [reportTasks]);
 
     const handleCheckedChange = (group: string, value: string, isChecked: boolean) => {
         setCheckedItems(prev => {
@@ -102,16 +104,19 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
                     <h4 className="font-semibold text-sm">{item.title}</h4>
                     {Array.isArray(item.value) ? (
                         <div className="text-sm text-muted-foreground mt-1 space-y-2">
-                            {item.value.map((v, i) => (
+                            {item.value.map((v, i) => {
+                                const isAlreadyTask = existingTaskDescriptions.has(v);
+                                return (
                                 <div key={i} className="flex items-center space-x-2">
                                     <Checkbox 
                                         id={`${item.key}-${i}`} 
                                         onCheckedChange={(checked) => handleCheckedChange(item.key, v, !!checked)} 
                                         checked={checkedItems[item.key]?.includes(v) || false}
+                                        disabled={isAlreadyTask}
                                     />
-                                    <Label htmlFor={`${item.key}-${i}`} className="font-normal cursor-pointer">{v}</Label>
+                                    <Label htmlFor={`${item.key}-${i}`} className={cn("font-normal cursor-pointer", isAlreadyTask && "text-muted-foreground line-through")}>{v}</Label>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     ) : (
                         <p className="text-sm text-muted-foreground mt-1">{item.value}</p>
@@ -187,7 +192,7 @@ function AnalysisResult({ data, personnel, onAssignTasks }: { data: SuggestInves
 export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }: { report: SafetyReport, personnel: Personnel[], onAssignTasks: (tasks: Omit<InvestigationTask, 'id'|'status'>[]) => void; }) {
   const [state, formAction] = useActionState(suggestStepsAction, initialState);
   const { toast } = useToast();
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(!!report.aiSuggestedSteps);
 
   useEffect(() => {
     if (state.data) {
@@ -233,6 +238,7 @@ export function InvestigationStepsGenerator({ report, personnel, onAssignTasks }
                 <AnalysisResult 
                     data={suggestionsToShow as SuggestInvestigationStepsOutput} 
                     personnel={personnel} 
+                    reportTasks={report.tasks || []}
                     onAssignTasks={onAssignTasks} 
                 />
             )}
