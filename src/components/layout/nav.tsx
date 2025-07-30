@@ -35,6 +35,7 @@ import {
   Database,
   ListChecks,
   Activity,
+  Mail,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -49,12 +50,13 @@ const navItems: {
 }[] = [
   { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
+  { href: '/messages', label: 'Messages', icon: Mail },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'], requiredFeature: 'Bookings' },
   { href: '/aircraft', label: 'Aircraft', icon: Plane, requiredPermissions: ['Aircraft:View', 'Aircraft:Edit'], requiredFeature: 'Aircraft' },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'], requiredFeature: 'Personnel' },
-  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'] },
+  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
 ];
 
@@ -64,7 +66,6 @@ const reportsNavItems = [
 ]
 
 const settingsNavItems = [
-    { href: '/system/users', label: 'System Users', icon: Users, requiredPermissions: ['Super User'] },
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
@@ -119,7 +120,9 @@ export default function Nav() {
   }
 
   const visibleNavItems = navItems.filter(item => {
-    // Hide "Companies" link for non-super users
+    if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
+      return true;
+    }
     if (item.href === '/' && !user.permissions.includes('Super User')) {
       return false;
     }
