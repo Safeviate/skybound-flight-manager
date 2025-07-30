@@ -17,6 +17,10 @@ import { promoteRiskAction, suggestHazardsAction } from './actions';
 import type { SuggestHazardsOutput } from '@/ai/flows/suggest-hazards-flow';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { likelihoodValues, severityValues } from '@/lib/data-provider';
+
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -35,19 +39,26 @@ function SuggestHazardsButton() {
 }
 
 function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOutput, onAddHazard: (hazards: Omit<AssociatedRisk, 'id'>[]) => void }) {
-    const [selectedHazards, setSelectedHazards] = useState<number[]>([]);
+    const [editableSuggestions, setEditableSuggestions] = useState(data.suggestedHazards);
+    const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+
+    const handleFieldChange = (index: number, field: keyof typeof editableSuggestions[0], value: string) => {
+        const newSuggestions = [...editableSuggestions];
+        newSuggestions[index] = { ...newSuggestions[index], [field]: value };
+        setEditableSuggestions(newSuggestions);
+    };
 
     const handleCheckboxChange = (index: number, checked: boolean) => {
         if (checked) {
-            setSelectedHazards(prev => [...prev, index]);
+            setSelectedIndices(prev => [...prev, index]);
         } else {
-            setSelectedHazards(prev => prev.filter(i => i !== index));
+            setSelectedIndices(prev => prev.filter(i => i !== index));
         }
     }
 
     const handleAddSelected = () => {
-        const hazardsToAdd = selectedHazards.map(index => {
-            const suggestion = data.suggestedHazards[index];
+        const hazardsToAdd = selectedIndices.map(index => {
+            const suggestion = editableSuggestions[index];
             return {
                 ...suggestion,
                 hazardArea: '', // Default values to be filled in later
@@ -55,38 +66,60 @@ function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOu
             };
         });
         onAddHazard(hazardsToAdd);
-        setSelectedHazards([]);
+        setSelectedIndices([]);
     }
 
     return (
         <div className="space-y-4 p-4 border-t mt-4">
             <h4 className="font-semibold text-sm">AI Suggested Hazards</h4>
-            <div className="space-y-2">
-                {data.suggestedHazards.map((hazard, index) => (
-                    <div key={index} className="flex items-start justify-between gap-3 p-2 border rounded-md bg-muted/50">
-                        <div className="flex items-start gap-3">
-                           <Checkbox
-                                id={`hazard-select-${index}`}
-                                onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
-                                checked={selectedHazards.includes(index)}
-                                className="mt-1"
-                            />
-                            <div className="grid gap-1 text-sm flex-1">
-                                <Label htmlFor={`hazard-select-${index}`} className="font-semibold cursor-pointer">{hazard.hazard}</Label>
-                                <p className="text-muted-foreground"><span className="font-medium">Risk:</span> {hazard.risk}</p>
-                                <p className="text-muted-foreground">
-                                    <span className="font-medium">Est. Likelihood:</span> {hazard.likelihood}, <span className="font-medium">Est. Severity:</span> {hazard.severity}
-                                </p>
+            <p className="text-xs text-muted-foreground">Review and edit the suggestions below before adding them to the report.</p>
+            <div className="space-y-4">
+                {editableSuggestions.map((suggestion, index) => (
+                    <div key={index} className="flex items-start justify-between gap-3 p-4 border rounded-lg bg-muted/50">
+                        <Checkbox
+                            id={`hazard-select-${index}`}
+                            onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
+                            checked={selectedIndices.includes(index)}
+                            className="mt-2"
+                        />
+                        <div className="grid gap-2 text-sm flex-1">
+                            <div>
+                                <Label htmlFor={`hazard-text-${index}`} className="font-medium">Hazard</Label>
+                                <Textarea id={`hazard-text-${index}`} value={suggestion.hazard} onChange={(e) => handleFieldChange(index, 'hazard', e.target.value)} />
                             </div>
+                            <div>
+                                <Label htmlFor={`risk-text-${index}`} className="font-medium">Risk</Label>
+                                <Textarea id={`risk-text-${index}`} value={suggestion.risk} onChange={(e) => handleFieldChange(index, 'risk', e.target.value)} />
+                            </div>
+                             <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <Label>Likelihood</Label>
+                                    <Select value={suggestion.likelihood} onValueChange={(value) => handleFieldChange(index, 'likelihood', value)}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                 <div>
+                                    <Label>Severity</Label>
+                                    <Select value={suggestion.severity} onValueChange={(value) => handleFieldChange(index, 'severity', value)}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                             </div>
                         </div>
                     </div>
                 ))}
             </div>
-            {selectedHazards.length > 0 && (
+            {selectedIndices.length > 0 && (
                 <div className="flex justify-end">
                     <Button onClick={handleAddSelected}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Selected ({selectedHazards.length}) to Register
+                        Add Selected ({selectedIndices.length}) to Register
                     </Button>
                 </div>
             )}
@@ -262,4 +295,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     </div>
   );
 }
+
+
 

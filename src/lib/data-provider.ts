@@ -1,9 +1,10 @@
 
+
 'use client';
 
 // This file is being kept for now to avoid breaking imports, but it no longer provides mock data.
 // All data fetching is now handled directly by components from Firestore.
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company, ComplianceItem } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company, ComplianceItem, RiskLikelihood, RiskSeverity } from './types';
 import { ROLE_PERMISSIONS } from './types';
 import { format, subDays, addDays } from 'date-fns';
 
@@ -151,6 +152,10 @@ export let auditScheduleData: AuditScheduleItem[] = [];
 export let auditChecklistData: AuditChecklist[] = [];
 export let allAlerts: Alert[] = [];
 export let companyData: Company[] = [];
+
+export const likelihoodValues: RiskLikelihood[] = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Certain'];
+export const severityValues: RiskSeverity[] = ['Insignificant', 'Minor', 'Moderate', 'Major', 'Catastrophic'];
+
 export const complianceData: Omit<ComplianceItem, 'id'|'companyId'|'lastAuditDate'|'nextAuditDate'|'findings'>[] = [
     // Part 141 - Subpart 2: Certification
     {
