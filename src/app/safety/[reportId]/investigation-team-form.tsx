@@ -22,14 +22,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { SafetyReport, User, Alert } from '@/lib/types';
+import type { SafetyReport, User, Alert, InvestigationTeamMember } from '@/lib/types';
 import { UserPlus, X } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, addDoc } from 'firebase/firestore';
 
+const INVESTIGATION_ROLES: InvestigationTeamMember['role'][] = [
+  'Lead Investigator',
+  'Investigator',
+  'Technical Expert',
+  'Observer',
+];
+
 const teamFormSchema = z.object({
-  personnel: z.string().min(1, 'You must select a person to add.'),
+  userId: z.string().min(1, 'You must select a person to add.'),
+  role: z.enum(INVESTIGATION_ROLES, { required_error: 'You must assign a role.'}),
 });
 
 type TeamFormValues = z.infer<typeof teamFormSchema>;
@@ -42,13 +50,7 @@ interface InvestigationTeamFormProps {
 export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFormProps) {
   const { toast } = useToast();
   const { user: currentUser, company } = useUser();
-  const [team, setTeam] = React.useState<string[]>(() => {
-    const initialTeam = new Set(report.investigationTeam || []);
-    if (report.submittedBy !== 'Anonymous') {
-      initialTeam.add(report.submittedBy);
-    }
-    return Array.from(initialTeam);
-  });
+  const [team, setTeam] = React.useState<InvestigationTeamMember[]>(report.investigationTeam || []);
   const [allPersonnel, setAllPersonnel] = React.useState<User[]>([]);
 
   React.useEffect(() => {
@@ -67,16 +69,13 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
   }, [company, toast]);
 
   React.useEffect(() => {
-      const currentTeam = new Set(report.investigationTeam || []);
-      if (report.submittedBy !== 'Anonymous') {
-        currentTeam.add(report.submittedBy);
-      }
-      setTeam(Array.from(currentTeam));
-  }, [report.investigationTeam, report.submittedBy]);
+    setTeam(report.investigationTeam || []);
+  }, [report.investigationTeam]);
 
+  const teamMemberIds = React.useMemo(() => new Set(team.map(m => m.userId)), [team]);
 
   const availablePersonnel = allPersonnel.filter(
-    (u) => u.role !== 'Student' && !team.includes(u.name)
+    (u) => u.role !== 'Student' && !teamMemberIds.has(u.id)
   );
 
   const form = useForm<TeamFormValues>({
@@ -86,18 +85,26 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
   async function onAddMember(data: TeamFormValues) {
     if (!company || !currentUser) return;
     
-    const newTeam = [...team, data.personnel];
+    const addedUser = allPersonnel.find(p => p.id === data.userId);
+    if (!addedUser) return;
+
+    const newMember: InvestigationTeamMember = {
+        userId: addedUser.id,
+        name: addedUser.name,
+        role: data.role,
+    };
+
+    const newTeam = [...team, newMember];
     setTeam(newTeam);
     onUpdate({ ...report, investigationTeam: newTeam });
     form.reset();
 
-    const addedUser = allPersonnel.find(p => p.name === data.personnel);
     if (addedUser) {
         const newAlert: Omit<Alert, 'id' | 'number'> = {
             companyId: company.id,
             type: 'Task',
             title: `Assigned to Investigation: ${report.reportNumber}`,
-            description: `You have been added to the investigation team for safety report: "${report.heading}".`,
+            description: `You have been added as a ${data.role} to the investigation for safety report: "${report.heading}".`,
             author: currentUser.name,
             date: new Date().toISOString(),
             readBy: [],
@@ -110,25 +117,19 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
     
     toast({
       title: 'Team Member Added',
-      description: `${data.personnel} has been added to the investigation and notified.`,
+      description: `${addedUser.name} has been added to the investigation and notified.`,
     });
   }
 
-  function onRemoveMember(memberName: string) {
-    if (memberName === report.submittedBy && report.submittedBy !== 'Anonymous') {
-      toast({
-        variant: 'destructive',
-        title: 'Action Not Allowed',
-        description: 'The original reporter cannot be removed from the investigation team.',
-      });
-      return;
-    }
-    const newTeam = team.filter((m) => m !== memberName);
+  function onRemoveMember(memberId: string) {
+    // Note: The original reporter cannot be removed as they are not part of this specific list.
+    const newTeam = team.filter((m) => m.userId !== memberId);
+    const removedMember = team.find(m => m.userId === memberId);
     setTeam(newTeam);
     onUpdate({ ...report, investigationTeam: newTeam });
     toast({
       title: 'Team Member Removed',
-      description: `${memberName} has been removed from the investigation.`,
+      description: `${removedMember?.name} has been removed from the investigation.`,
     });
   }
 
@@ -137,21 +138,18 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
       <div className="space-y-4">
         {team.length > 0 ? (
           <div className="flex flex-wrap gap-4">
-            {team.map((memberName, index) => {
-              const member = allPersonnel.find((u) => u.name === memberName);
-              const isReporter = memberName === report.submittedBy;
+            {team.map((member, index) => {
               return (
-                <div key={`${memberName}-${index}`} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
+                <div key={`${member.userId}-${index}`} className="flex items-center gap-2 p-2 rounded-md border bg-muted">
                   <div>
-                    <p className="font-medium text-sm">{memberName}</p>
-                    <p className="text-xs text-muted-foreground">{isReporter ? 'Reporter' : member?.role}</p>
+                    <p className="font-medium text-sm">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">{member.role}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 ml-2"
-                    onClick={() => onRemoveMember(memberName)}
-                    disabled={isReporter && report.submittedBy !== 'Anonymous'}
+                    onClick={() => onRemoveMember(member.userId)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -168,7 +166,7 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
         <form onSubmit={form.handleSubmit(onAddMember)} className="flex items-end gap-2">
           <FormField
             control={form.control}
-            name="personnel"
+            name="userId"
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormLabel className="sr-only">Add Team Member</FormLabel>
@@ -180,8 +178,32 @@ export function InvestigationTeamForm({ report, onUpdate }: InvestigationTeamFor
                   </FormControl>
                   <SelectContent>
                     {availablePersonnel.map((p) => (
-                      <SelectItem key={p.id} value={p.name}>
+                      <SelectItem key={p.id} value={p.id}>
                         {p.name} ({p.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem className="w-48">
+                <FormLabel className="sr-only">Assign Role</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign a role" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {INVESTIGATION_ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
                       </SelectItem>
                     ))}
                   </SelectContent>

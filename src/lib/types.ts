@@ -272,6 +272,12 @@ export type InvestigationTask = {
   comments?: TaskComment[];
 }
 
+export type InvestigationTeamMember = {
+  userId: string;
+  name: string;
+  role: 'Lead Investigator' | 'Investigator' | 'Technical Expert' | 'Observer';
+};
+
 export type SafetyReport = {
   id: string;
   companyId: string;
@@ -291,7 +297,7 @@ export type SafetyReport = {
   subCategory?: string;
   aircraftInvolved?: string;
   location?: string;
-  investigationTeam?: string[];
+  investigationTeam?: InvestigationTeamMember[];
   tasks?: InvestigationTask[];
   investigationNotes?: string;
   discussion?: DiscussionEntry[];
