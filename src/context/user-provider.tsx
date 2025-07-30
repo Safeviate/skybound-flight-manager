@@ -12,7 +12,8 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc, orderBy, arr
 interface UserContextType {
   user: User | null;
   company: Company | null;
-  setCompany: React.Dispatch<React.SetStateAction<Company | null>>;
+  setCompany: (company: Company | null) => void;
+  userCompanies: Company[];
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
@@ -30,6 +31,7 @@ const LAST_COMPANY_ID_KEY = 'skybound_last_company_id';
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -54,22 +56,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
 
-  const fetchUserDataByEmail = async (email: string): Promise<[User | null, Company | null, string | null]> => {
+  const fetchUserDataAndCompaniesByEmail = async (email: string): Promise<[User | null, Company[], string | null]> => {
     const companiesColRef = collection(db, 'companies');
     const companiesSnapshot = await getDocs(companiesColRef);
 
-    for (const companyDoc of companiesSnapshot.docs) {
-      const usersColRef = collection(db, 'companies', companyDoc.id, 'users');
-      const userQuery = query(usersColRef, where('email', '==', email));
-      const userSnapshot = await getDocs(userQuery);
+    let mainUser: User | null = null;
+    let userId: string | null = null;
+    const allCompanies: Company[] = [];
+    const associatedCompanies: Company[] = [];
 
-      if (!userSnapshot.empty) {
-        const userData = userSnapshot.docs[0].data() as User;
+    for (const companyDoc of companiesSnapshot.docs) {
         const companyData = companyDoc.data() as Company;
-        return [userData, companyData, userSnapshot.docs[0].id];
-      }
+        allCompanies.push(companyData);
+
+        const usersColRef = collection(db, 'companies', companyDoc.id, 'users');
+        const userQuery = query(usersColRef, where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+
+        if (!userSnapshot.empty) {
+            associatedCompanies.push(companyData);
+            // Assuming the first one found is the "primary" user for simplicity.
+            if (!mainUser) {
+                mainUser = userSnapshot.docs[0].data() as User;
+                userId = userSnapshot.docs[0].id;
+            }
+        }
     }
-    return [null, null, null];
+    
+    // For a super user, they have access to all companies.
+    if (mainUser?.permissions.includes('Super User')) {
+        return [mainUser, allCompanies, userId];
+    }
+
+    return [mainUser, associatedCompanies, userId];
   };
   
   useEffect(() => {
@@ -101,38 +120,53 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const companyId = firebaseUser.photoURL;
             let userData: User | null = null;
             let companyData: Company | null = null;
+            let allUserCompanies: Company[] = [];
 
-            if (companyId) {
-                [userData, companyData] = await fetchUserDataById(companyId, firebaseUser.uid);
+            if (companyId && false) { // Temporarily disable direct lookup to favor multi-company fetch
+                // [userData, companyData] = await fetchUserDataById(companyId, firebaseUser.uid);
             }
 
             // Fallback: If companyId lookup fails, try finding user by email across all companies.
             if (!userData && firebaseUser.email) {
-                const [foundUser, foundCompany] = await fetchUserDataByEmail(firebaseUser.email);
+                const [foundUser, foundCompanies] = await fetchUserDataAndCompaniesByEmail(firebaseUser.email);
                 userData = foundUser;
-                companyData = foundCompany;
+                allUserCompanies = foundCompanies;
+                
+                // Set the initial active company
+                const lastCompanyId = localStorage.getItem(LAST_COMPANY_ID_KEY);
+                companyData = foundCompanies.find(c => c.id === lastCompanyId) || foundCompanies[0] || null;
             }
             
             if(userData && companyData) {
                 setUser(userData);
                 setCompany(companyData);
+                setUserCompanies(allUserCompanies);
                 localStorage.setItem(LAST_USER_ID_KEY, userData.id);
                 localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
             } else {
                  console.error("Could not determine company for authenticated user.");
                  setUser(null);
                  setCompany(null);
+                 setUserCompanies([]);
             }
         } else {
             setUser(null);
             setCompany(null);
             setAllAlerts([]);
+            setUserCompanies([]);
         }
         setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const setActiveCompany = (newCompany: Company | null) => {
+    if (newCompany) {
+        setCompany(newCompany);
+        localStorage.setItem(LAST_COMPANY_ID_KEY, newCompany.id);
+    }
+  }
 
   const getUnacknowledgedAlerts = useCallback((audits: QualityAudit[]): Alert[] => {
     if (!user || !user.id) return [];
@@ -169,12 +203,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             return true;
         } else {
             // This is for the demo environment for non-admin users without real auth
-            const [userData, companyData] = await fetchUserDataByEmail(email);
-            if (userData && companyData) {
+            const [userData, companyDataList] = await fetchUserDataAndCompaniesByEmail(email);
+            if (userData && companyDataList.length > 0) {
                 setUser(userData);
-                setCompany(companyData);
+                setCompany(companyDataList[0]);
+                setUserCompanies(companyDataList);
                 localStorage.setItem(LAST_USER_ID_KEY, userData.id);
-                localStorage.setItem(LAST_COMPANY_ID_KEY, companyData.id);
+                localStorage.setItem(LAST_COMPANY_ID_KEY, companyDataList[0].id);
                 return true;
             }
         }
@@ -204,6 +239,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setCompany(null);
       setAllAlerts([]);
+      setUserCompanies([]);
       setLoading(false);
       router.push('/login');
     }
@@ -243,7 +279,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <UserContext.Provider value={{ user, company, setCompany, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
+    <UserContext.Provider value={{ user, company, setCompany: setActiveCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );

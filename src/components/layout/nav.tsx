@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -104,12 +105,31 @@ export default function Nav() {
     }
     return companyFeatures.includes(requiredFeature);
   };
+  
+  const getIsActive = (href: string) => {
+    if (href === '/') {
+        return pathname === '/';
+    }
+    return pathname.startsWith(href);
+  };
+
 
   if (!user) {
     return null; // Don't render nav if not logged in
   }
 
-  const visibleNavItems = navItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
+  const visibleNavItems = navItems.filter(item => {
+    // Hide "Companies" link for non-super users
+    if (item.href === '/' && !user.permissions.includes('Super User')) {
+      return false;
+    }
+    // For super users, the dashboard link should be the company list page
+    if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
+      return false;
+    }
+    return hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature)
+  });
+  
   const visibleReportsItems = reportsNavItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
   const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
 
@@ -131,7 +151,7 @@ export default function Nav() {
               <Link href={item.href} passHref>
                 <SidebarMenuButton
                   as="a"
-                  isActive={pathname === item.href}
+                  isActive={getIsActive(item.href)}
                   tooltip={{ children: item.label }}
                   onClick={handleLinkClick}
                 >
@@ -148,7 +168,7 @@ export default function Nav() {
                      <Link key={item.href} href={item.href} passHref>
                         <SidebarMenuButton
                             as="a"
-                            isActive={pathname === item.href}
+                            isActive={getIsActive(item.href)}
                             tooltip={{ children: item.label }}
                             onClick={handleLinkClick}
                             className="ml-2"
@@ -167,7 +187,7 @@ export default function Nav() {
             {visibleSettingsItems.map((item) => (
                  <SidebarMenuItem key={item.href}>
                     <Link href={item.href} passHref>
-                        <SidebarMenuButton tooltip={{ children: item.label }} isActive={pathname === item.href} onClick={handleLinkClick}>
+                        <SidebarMenuButton tooltip={{ children: item.label }} isActive={getIsActive(item.href)} onClick={handleLinkClick}>
                             <item.icon />
                             <span>{item.label}</span>
                         </SidebarMenuButton>

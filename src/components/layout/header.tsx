@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -61,9 +61,10 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
-  const { user, logout, updateUser } = useUser();
+  const { user, company, userCompanies, setCompany, logout, updateUser } = useUser();
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
@@ -151,6 +152,16 @@ export default function Header({ title, children }: { title: string, children?: 
     }
   };
   
+  const handleSwitchCompany = (newCompanyId: string) => {
+    const newCompany = userCompanies.find(c => c.id === newCompanyId);
+    if (newCompany && newCompany.id !== company?.id) {
+        setCompany(newCompany);
+        // Optionally, redirect to a specific page after switching
+        router.push('/my-dashboard'); 
+    }
+    setIsSwitcherOpen(false);
+  }
+  
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
@@ -177,11 +188,21 @@ export default function Header({ title, children }: { title: string, children?: 
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <div className="text-xs text-muted-foreground">Active Company: <strong>{company?.name}</strong></div>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => setIsProfileOpen(true)}>
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>My Personal Information</span>
                   </DropdownMenuItem>
+                   {userCompanies.length > 1 && (
+                     <DropdownMenuItem onSelect={() => setIsSwitcherOpen(true)}>
+                        <Building className="mr-2 h-4 w-4" />
+                        <span>Switch Company</span>
+                    </DropdownMenuItem>
+                   )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
@@ -362,6 +383,32 @@ export default function Header({ title, children }: { title: string, children?: 
               </form>
             </Form>
           </DialogContent>
+        </Dialog>
+        <Dialog open={isSwitcherOpen} onOpenChange={setIsSwitcherOpen}>
+             <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Switch Company</DialogTitle>
+                    <DialogDescription>
+                        Select a company to switch your active workspace.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 pt-4">
+                    {userCompanies.map(c => (
+                        <button
+                            key={c.id}
+                            className={cn(
+                                "w-full text-left p-3 rounded-md flex items-center justify-between transition-colors",
+                                company?.id === c.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                            )}
+                            onClick={() => handleSwitchCompany(c.id)}
+                            disabled={company?.id === c.id}
+                        >
+                            <span>{c.name}</span>
+                            {company?.id === c.id && <Check className="h-5 w-5" />}
+                        </button>
+                    ))}
+                </div>
+            </DialogContent>
         </Dialog>
       </div>
     </header>
