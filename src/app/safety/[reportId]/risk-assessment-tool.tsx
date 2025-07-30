@@ -1,11 +1,14 @@
 
+
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { ShieldAlert } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const LIKELIHOOD_LEVELS = {
     'Frequent': { description: 'Likely to occur many times (has happened frequently).', value: 5 },
@@ -32,16 +35,26 @@ const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
     '1': { 'A': '1A', 'B': '1B', 'C': '1C', 'D': '1D', 'E': '1E' },
 };
 
-const RISK_CLASSIFICATION: Record<string, { level: 'Intolerable' | 'Tolerable' | 'Acceptable', color: string }> = {
-    '5A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5B': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '5C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '5D': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '5E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '4A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '4B': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '4C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '4D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '4E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '3A': { level: 'Intolerable', color: 'hsl(var(--destructive))' }, '3B': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '3C': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '3D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '3E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '2A': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '2B': { level: 'Tolerable', color: 'hsl(var(--orange))' },   '2C': { level: 'Acceptable', color: 'hsl(var(--success))' },  '2D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '2E': { level: 'Acceptable', color: 'hsl(var(--success))' },
-    '1A': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1B': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1C': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1D': { level: 'Acceptable', color: 'hsl(var(--success))' },  '1E': { level: 'Acceptable', color: 'hsl(var(--success))' },
+const RISK_CLASSIFICATION: Record<string, 'Intolerable' | 'Tolerable' | 'Acceptable'> = {
+    '5A': 'Intolerable', '5B': 'Intolerable', '5C': 'Tolerable',   '5D': 'Tolerable',   '5E': 'Acceptable',
+    '4A': 'Intolerable', '4B': 'Intolerable', '4C': 'Tolerable',   '4D': 'Acceptable',  '4E': 'Acceptable',
+    '3A': 'Intolerable', '3B': 'Tolerable',   '3C': 'Tolerable',   '3D': 'Acceptable',  '3E': 'Acceptable',
+    '2A': 'Tolerable',   '2B': 'Tolerable',   '2C': 'Acceptable',  '2D': 'Acceptable',  '2E': 'Acceptable',
+    '1A': 'Acceptable',  '1B': 'Acceptable',  '1C': 'Acceptable',  '1D': 'Acceptable',  '1E': 'Acceptable',
 };
 
 
 export function RiskAssessmentTool() {
+  const [colors, setColors] = useState({
+    Intolerable: '#d9534f', // Red
+    Tolerable: '#f0ad4e',   // Orange
+    Acceptable: '#5cb85c', // Green
+  });
+
+  const handleColorChange = (level: keyof typeof colors, value: string) => {
+    setColors(prev => ({ ...prev, [level]: value }));
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -78,7 +91,7 @@ export function RiskAssessmentTool() {
                                 const riskCode = RISK_MATRIX_DATA[value][severityValue];
                                 const classification = RISK_CLASSIFICATION[riskCode];
                                 return (
-                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: classification?.color }}>
+                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: colors[classification] }}>
                                     <div className="font-bold text-white">{riskCode}</div>
                                 </TableCell>
                                 );
@@ -92,12 +105,33 @@ export function RiskAssessmentTool() {
         <div className="grid md:grid-cols-2 gap-4 mt-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Risk Tolerability</CardTitle>
+                    <CardTitle className="text-base">Risk Tolerability &amp; Colors</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full" style={{backgroundColor: 'hsl(var(--destructive))'}}/> <div><span className="font-bold">Intolerable:</span> Risk that cannot be justified.</div></div>
-                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full" style={{backgroundColor: 'hsl(var(--orange))'}}/> <div><span className="font-bold">Tolerable:</span> Risk acceptable if As Low As Reasonably Practicable (ALARP).</div></div>
-                    <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full" style={{backgroundColor: 'hsl(var(--success))'}}/> <div><span className="font-bold">Acceptable:</span> Risk that is acceptable as is.</div></div>
+                <CardContent className="space-y-4 text-sm">
+                    {Object.entries(colors).map(([level, color]) => (
+                        <div key={level} className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-full" style={{backgroundColor: color}}/>
+                                <span className="font-bold">{level}:</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <Label htmlFor={`${level}-color`} className="sr-only">{level} color</Label>
+                                <Input 
+                                    id={`${level}-color`}
+                                    type="color" 
+                                    value={color} 
+                                    onChange={(e) => handleColorChange(level as keyof typeof colors, e.target.value)}
+                                    className="h-8 w-10 p-1"
+                                />
+                                <Input 
+                                    type="text"
+                                    value={color}
+                                    onChange={(e) => handleColorChange(level as keyof typeof colors, e.target.value)}
+                                    className="h-8 w-24"
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </CardContent>
             </Card>
              <Card>
@@ -120,3 +154,4 @@ export function RiskAssessmentTool() {
     </Card>
   );
 }
+
