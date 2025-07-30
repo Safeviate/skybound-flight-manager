@@ -464,9 +464,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Bookings:Edit', 'Bookings:Approve', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
     'Instructor': [...VIEW_ALL_PAGES, 'Bookings:Edit', 'Bookings:Approve', 'Students:View', 'Checklists:View'],
     'Front Office': [...VIEW_ALL_PAGES],
-    'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View'],
-    'Driver': ['Alerts:View'],
-    'Auditee': ['Quality:View', 'Alerts:View'],
+    'Student': ['Bookings:View', 'Aircraft:View', 'Alerts:View', 'Safety:View'],
+    'Driver': ['Alerts:View', 'Safety:View'],
+    'Auditee': ['Quality:View', 'Alerts:View', 'Safety:View'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES = [
