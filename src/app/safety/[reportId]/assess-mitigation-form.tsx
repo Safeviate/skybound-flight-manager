@@ -19,12 +19,15 @@ import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
 const assessMitigationFormSchema = z.object({
   mitigationControls: z.string().min(10, {
     message: 'Mitigation controls must be at least 10 characters long.',
   }),
-  residualLikelihood: z.custom<RiskLikelihood>(val => typeof val === 'string', 'Likelihood is required.'),
-  residualSeverity: z.custom<RiskSeverity>(val => typeof val === 'string', 'Severity is required.'),
+  residualLikelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.'}),
+  residualSeverity: z.enum(severityValues, { required_error: 'Severity is required.'}),
 });
 
 type AssessMitigationFormValues = z.infer<typeof assessMitigationFormSchema>;
@@ -33,6 +36,10 @@ interface AssessMitigationFormProps {
     risk: AssociatedRisk;
     onAssessRisk: (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => void;
 }
+
+const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
+const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
+
 
 export function AssessMitigationForm({ risk, onAssessRisk }: AssessMitigationFormProps) {
   const form = useForm<AssessMitigationFormValues>({
@@ -44,13 +51,23 @@ export function AssessMitigationForm({ risk, onAssessRisk }: AssessMitigationFor
     }
   });
 
-  const handleAssessmentChange = (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => {
-    if (likelihood) form.setValue('residualLikelihood', likelihood);
-    if (severity) form.setValue('residualSeverity', severity);
+  const watchedLikelihood = form.watch('residualLikelihood');
+  const watchedSeverity = form.watch('residualSeverity');
+
+  const handleAssessmentChange = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+    form.setValue('residualLikelihood', likelihood, { shouldValidate: true });
+    form.setValue('residualSeverity', severity, { shouldValidate: true });
   };
 
   function onSubmit(data: AssessMitigationFormValues) {
     onAssessRisk(risk.id, data);
+  }
+  
+  const getSelectedCode = () => {
+    if (watchedLikelihood && watchedSeverity) {
+        return `${likelihoodMap[watchedLikelihood]}${severityMap[watchedSeverity]}`;
+    }
+    return null;
   }
 
   return (
@@ -80,6 +97,8 @@ export function AssessMitigationForm({ risk, onAssessRisk }: AssessMitigationFor
                         <FormLabel>Residual Risk Assessment</FormLabel>
                         <p className="text-sm text-muted-foreground mb-4">Assess the risk level *after* the implementation of the controls.</p>
                         <RiskAssessmentTool
+                            onCellClick={handleAssessmentChange}
+                            selectedCode={getSelectedCode()}
                         />
                         {form.formState.errors.residualLikelihood && <FormMessage>{form.formState.errors.residualLikelihood.message}</FormMessage>}
                         {form.formState.errors.residualSeverity && <FormMessage>{form.formState.errors.residualSeverity.message}</FormMessage>}

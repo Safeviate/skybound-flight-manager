@@ -17,9 +17,10 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Risk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { getRiskScore } from '@/lib/utils';
 
 const hazardAreas = [
     'Flight Operations', 
@@ -32,14 +33,17 @@ const hazardAreas = [
 ];
 const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
+const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
 const riskFormSchema = z.object({
   hazard: z.string().min(10, { message: 'Hazard description must be at least 10 characters long.' }),
   risk: z.string().min(10, { message: 'Risk description must be at least 10 characters long.' }),
   description: z.string().optional(),
   hazardArea: z.string({ required_error: 'Please select a hazard area.'}),
   process: z.string({ required_error: 'Please select a process.'}),
-  likelihood: z.custom<RiskLikelihood>(val => typeof val === 'string', 'Likelihood is required.'),
-  severity: z.custom<RiskSeverity>(val => typeof val === 'string', 'Severity is required.'),
+  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.'}),
+  severity: z.enum(severityValues, { required_error: 'Severity is required.'}),
   mitigation: z.string().min(10, { message: 'Mitigation must be at least 10 characters long.' }),
   riskOwner: z.string().optional(),
   status: z.enum(['Open', 'Mitigated', 'Closed']),
@@ -52,6 +56,10 @@ interface NewRiskFormProps {
     existingRisk?: Risk | null;
 }
 
+const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
+const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
+
+
 export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
   const form = useForm<RiskFormValues>({
     resolver: zodResolver(riskFormSchema),
@@ -60,9 +68,12 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
     },
   });
 
-  const handleAssessmentChange = (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => {
-    if (likelihood) form.setValue('likelihood', likelihood);
-    if (severity) form.setValue('severity', severity);
+  const watchedLikelihood = form.watch('likelihood');
+  const watchedSeverity = form.watch('severity');
+
+  const handleAssessmentChange = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+    form.setValue('likelihood', likelihood, { shouldValidate: true });
+    form.setValue('severity', severity, { shouldValidate: true });
   };
 
   function handleFormSubmit(data: RiskFormValues) {
@@ -75,6 +86,13 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
         dateIdentified,
         consequences: [data.risk], // Simple mapping for now
     } as Omit<Risk, 'id' | 'companyId'>);
+  }
+
+  const getSelectedCode = () => {
+    if (watchedLikelihood && watchedSeverity) {
+        return `${likelihoodMap[watchedLikelihood]}${severityMap[watchedSeverity]}`;
+    }
+    return null;
   }
 
   return (
@@ -155,6 +173,8 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
             </CardHeader>
             <CardContent>
                  <RiskAssessmentTool
+                    onCellClick={handleAssessmentChange}
+                    selectedCode={getSelectedCode()}
                  />
                  {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
                  {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}

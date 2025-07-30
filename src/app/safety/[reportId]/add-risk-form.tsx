@@ -23,6 +23,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
 const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
 
+const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
+
 const addRiskFormSchema = z.object({
   hazard: z.string().min(10, {
     message: 'Hazard description must be at least 10 characters long.',
@@ -32,8 +36,8 @@ const addRiskFormSchema = z.object({
   }),
   hazardArea: z.string({ required_error: 'Please select a hazard area.'}),
   process: z.string({ required_error: 'Please select a process.'}),
-  likelihood: z.custom<RiskLikelihood>(val => typeof val === 'string', 'Likelihood is required.'),
-  severity: z.custom<RiskSeverity>(val => typeof val === 'string', 'Severity is required.'),
+  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.'}),
+  severity: z.enum(severityValues, { required_error: 'Severity is required.'}),
 });
 
 type AddRiskFormValues = z.infer<typeof addRiskFormSchema>;
@@ -43,19 +47,32 @@ interface AddRiskFormProps {
     initialValues?: Partial<AddRiskFormValues>;
 }
 
+const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
+const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
+
 export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
   const form = useForm<AddRiskFormValues>({
     resolver: zodResolver(addRiskFormSchema),
     defaultValues: initialValues || {},
   });
+  
+  const watchedLikelihood = form.watch('likelihood');
+  const watchedSeverity = form.watch('severity');
 
-  const handleAssessmentChange = (likelihood: RiskLikelihood | null, severity: RiskSeverity | null) => {
-    if (likelihood) form.setValue('likelihood', likelihood);
-    if (severity) form.setValue('severity', severity);
+  const handleAssessmentChange = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+    form.setValue('likelihood', likelihood, { shouldValidate: true });
+    form.setValue('severity', severity, { shouldValidate: true });
   };
 
   function onSubmit(data: AddRiskFormValues) {
     onAddRisk(data);
+  }
+  
+  const getSelectedCode = () => {
+    if (watchedLikelihood && watchedSeverity) {
+        return `${likelihoodMap[watchedLikelihood]}${severityMap[watchedSeverity]}`;
+    }
+    return null;
   }
 
   return (
@@ -139,6 +156,8 @@ export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
         <Card>
             <CardContent className="pt-6">
                  <RiskAssessmentTool
+                    onCellClick={handleAssessmentChange}
+                    selectedCode={getSelectedCode()}
                  />
                  {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
                  {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}
