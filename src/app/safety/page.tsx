@@ -21,15 +21,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { SafetyReport, Risk, GroupedRisk, Department, CompletedChecklist, Booking } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
-import { NewSafetyReportForm } from './new-safety-report-form';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
 import Link from 'next/link';
-import { NewRiskForm } from './new-risk-form';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { EditRiskForm } from './edit-risk-form';
 import { RiskMatrix } from './risk-matrix';
 import { REPORT_TYPE_DEPARTMENT_MAPPING } from '@/lib/types';
 import { Input } from '@/components/ui/input';
@@ -394,8 +391,6 @@ function SafetyPage() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [completedChecklists, setCompletedChecklists] = useState<CompletedChecklist[]>([]);
-  const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
-  const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
@@ -495,13 +490,6 @@ function SafetyPage() {
     searchKeys: ['reportNumber', 'heading', 'details', 'department'],
   });
 
-  const riskControls = useTableControls(risks, {
-    initialSort: { key: 'riskScore', direction: 'desc'},
-    searchKeys: ['hazard', 'risk', 'riskOwner', 'reportNumber'],
-  })
-
-  const groupedRiskData = groupRisksByArea(riskControls.items);
-
   const getStatusVariant = (status: SafetyReport['status']) => {
     switch (status) {
       case 'Open': return 'destructive';
@@ -535,49 +523,6 @@ function SafetyPage() {
     } catch (error) {
         console.error("Error reactivating report:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Could not reactivate the report.' });
-    }
-  };
-
-
-  const handleNewRiskSubmit = async (newRiskData: Omit<Risk, 'id' | 'dateIdentified' | 'riskScore' | 'status'>) => {
-    if (!company) return;
-    const newRiskId = `risk-reg-${Date.now()}`;
-    const newRisk: Risk = {
-      ...newRiskData,
-      id: newRiskId,
-      companyId: company.id,
-      dateIdentified: format(new Date(), 'yyyy-MM-dd'),
-      riskScore: getRiskScore(newRiskData.likelihood, newRiskData.severity),
-      status: 'Open',
-    };
-    try {
-        await setDoc(doc(db, `companies/${company.id}/risks`, newRiskId), newRisk);
-        setRisks(prev => [newRisk, ...prev]);
-        setIsNewRiskOpen(false);
-        toast({
-            title: 'Risk Added',
-            description: `The risk has been added to the register.`
-        });
-    } catch (error) {
-        console.error("Error creating new risk:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save new risk.' });
-    }
-  };
-  
-  const handleEditRiskSubmit = async (updatedRiskData: Risk) => {
-    if (!company) return;
-    try {
-        const riskRef = doc(db, `companies/${company.id}/risks`, updatedRiskData.id);
-        await setDoc(riskRef, updatedRiskData, { merge: true });
-        setRisks(prevRisks => prevRisks.map(r => r.id === updatedRiskData.id ? updatedRiskData : r));
-        setEditingRisk(null);
-        toast({
-            title: "Risk Updated",
-            description: "The risk details have been successfully saved."
-        });
-    } catch (error) {
-        console.error("Error updating risk:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save risk updates.' });
     }
   };
 
@@ -616,13 +561,15 @@ function SafetyPage() {
 
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport | keyof Risk }) => {
-    const controls = activeTab === 'reports' ? reportsControls : riskControls;
-    const isSorted = controls.sortConfig?.key === sortKey;
+    const controls = activeTab === 'reports' ? reportsControls : reportsControls; // Simplified for now
     return (
         <Button variant="ghost" onClick={() => controls.requestSort(sortKey as any)}>
             {label}
-            {isSorted && <ArrowUpDown className={`ml-2 h-4 w-4 ${controls.sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />}
-            {!isSorted && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+            {controls.sortConfig?.key === sortKey ? (
+                <ArrowUpDown className={`ml-2 h-4 w-4 ${controls.sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />
+            ) : (
+                <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />
+            )}
         </Button>
     );
   };
@@ -814,142 +761,9 @@ function SafetyPage() {
           </TabsContent>
 
           <TabsContent value="register">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between no-print">
-                <div>
-                    <CardTitle>Risk Register</CardTitle>
-                    <CardDescription>A log of identified risks and their mitigation status.</CardDescription>
-                </div>
-                 <Dialog open={isNewRiskOpen} onOpenChange={setIsNewRiskOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            New Risk Assessment
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>New Risk Assessment</DialogTitle>
-                            <DialogDescription>
-                                Proactively add a new risk to the central register.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <NewRiskForm onSubmit={handleNewRiskSubmit} />
-                    </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent>
-                 <div className="flex items-center py-4">
-                  <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search risks..."
-                      value={riskControls.searchTerm}
-                      onChange={(e) => riskControls.setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-8">
-                  {groupedRiskData.map(group => (
-                    <div key={group.area} className="border rounded-lg">
-                      <div className="bg-muted p-3 border-b">
-                         <h3 className="font-semibold text-lg">{group.area}</h3>
-                      </div>
-                      <ScrollArea>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[60px]">No.</TableHead>
-                                    <TableHead className="w-[150px]">Source Report</TableHead>
-                                    <TableHead className="w-[300px]">Hazard</TableHead>
-                                    <TableHead className="w-[300px]">Risk</TableHead>
-                                    <TableHead className="w-[300px]">Exposure</TableHead>
-                                    <TableHead className="w-[120px]">
-                                        <Button variant="ghost" onClick={() => riskControls.requestSort('riskScore')} className="px-0">
-                                            Initial Risk
-                                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </TableHead>
-                                    <TableHead className="w-[300px]">Existing Mitigation</TableHead>
-                                    <TableHead className="w-[300px]">Proposed Mitigation</TableHead>
-                                    <TableHead className="w-[120px]">Mitigated Value</TableHead>
-                                    <TableHead className="w-[200px]">Owner</TableHead>
-                                    <TableHead className="w-[150px]">
-                                         <Button variant="ghost" onClick={() => riskControls.requestSort('reviewDate')} className="px-0">
-                                            Review
-                                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </TableHead>
-                                    <TableHead className="w-[80px] no-print">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {group.risks.map((risk, index) => (
-                                    <TableRow key={risk.id}>
-                                        <TableCell>{String(index + 1).padStart(3, '0')}</TableCell>
-                                        <TableCell>
-                                            {risk.reportNumber ? (
-                                                <Link href={`/safety/${risk.id}`} className="hover:underline">{risk.reportNumber}</Link>
-                                            ) : (
-                                                'N/A'
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{risk.hazard}</TableCell>
-                                        <TableCell>{risk.risk}</TableCell>
-                                        <TableCell>
-                                            <ul className="list-disc list-inside">
-                                                {risk.consequences.map((c, i) => <li key={i}>{c}</li>)}
-                                            </ul>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge style={{backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white'}} className="rounded-md w-12 justify-center">
-                                                {risk.riskScore}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{risk.existingMitigation}</TableCell>
-                                        <TableCell>{risk.proposedMitigation}</TableCell>
-                                        <TableCell>
-                                            {risk.residualRiskScore !== undefined ? (
-                                                <Badge style={{backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white'}} className="rounded-md w-12 justify-center">
-                                                    {risk.residualRiskScore}
-                                                </Badge>
-                                            ) : '-'}
-                                        </TableCell>
-                                        <TableCell>{risk.riskOwner}</TableCell>
-                                        <TableCell>{risk.reviewDate}</TableCell>
-                                        <TableCell className="no-print">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                        <span className="sr-only">Actions</span>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    <DropdownMenuItem onSelect={() => setEditingRisk(risk)}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Edit Risk
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </div>
-                  ))}
-                   {groupedRiskData.length === 0 && (
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">No risks match your search.</p>
-                        </div>
-                    )}
-                </div>
-              </CardContent>
-            </Card>
+             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">The Risk Register has been cleared for rebuild.</p>
+            </div>
           </TabsContent>
           <TabsContent value="spis">
             <SafetyPerformanceIndicators 
@@ -968,31 +782,9 @@ function SafetyPage() {
             <RiskAssessmentTool />
           </TabsContent>
         </Tabs>
-        
-        {editingRisk && (
-            <Dialog open={!!editingRisk} onOpenChange={() => setEditingRisk(null)}>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Edit Risk</DialogTitle>
-                        <DialogDescription>
-                            Update the details for the selected risk. Your changes will be saved to the register.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <EditRiskForm risk={editingRisk} onSubmit={handleEditRiskSubmit} />
-                </DialogContent>
-            </Dialog>
-        )}
-
       </main>
   );
 }
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
-
-
-
-
-
-
-
