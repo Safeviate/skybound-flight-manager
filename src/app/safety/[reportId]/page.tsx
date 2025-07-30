@@ -40,14 +40,13 @@ import { FinalReview } from './final-review';
 import { DiscussionSection } from './discussion-section';
 import { suggestIcaoCategoryAction } from './actions';
 import { InitialRiskAssessment } from './initial-risk-assessment';
-import { InvestigationDiary } from './investigation-diary';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Check, CheckCircle } from 'lucide-react';
-import type { DiscussionEntry, InvestigationDiaryEntry } from '@/lib/types';
+import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -76,12 +75,6 @@ const discussionFormSchema = z.object({
 });
 
 type DiscussionFormValues = z.infer<typeof discussionFormSchema>;
-
-const diaryFormSchema = z.object({
-  entryText: z.string().min(1, 'Diary entry cannot be empty.'),
-});
-
-type DiaryFormValues = z.infer<typeof diaryFormSchema>;
 
 const commentFormSchema = z.object({
     message: z.string().min(1, 'Comment cannot be empty.'),
@@ -334,33 +327,11 @@ function SafetyReportInvestigationPage() {
   const [isIcaoLoading, setIsIcaoLoading] = React.useState(false);
 
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
-  const [isDiaryDialogOpen, setIsDiaryDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
 
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
   });
-  
-  const diaryForm = useForm<DiaryFormValues>({
-    resolver: zodResolver(diaryFormSchema),
-  });
-
-  const investigationTeamMembers = useMemo(() => {
-    if (!report || !personnel) return [];
-    const teamNames = new Set(report.investigationTeam || []);
-    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
-    // Ensure there are no duplicate users in the list, comparing by ID
-    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
-    return uniqueById;
-  }, [report, personnel]);
-
-  const availableRecipients = useMemo(() => {
-    if (!investigationTeamMembers.length || !user) {
-      return [];
-    }
-    return investigationTeamMembers.filter(p => p.id !== user?.id);
-  }, [investigationTeamMembers, user]);
-
 
   useEffect(() => {
     if (loading) return;
@@ -402,6 +373,23 @@ function SafetyReportInvestigationPage() {
     fetchPersonnel();
   }, [reportId, company, user, loading, router, toast]);
 
+  const investigationTeamMembers = useMemo(() => {
+    if (!report || !personnel) return [];
+    const teamNames = new Set(report.investigationTeam || []);
+    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
+    // Ensure there are no duplicate users in the list, comparing by ID
+    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
+    return uniqueById;
+  }, [report, personnel]);
+
+  const availableRecipients = useMemo(() => {
+    if (!investigationTeamMembers.length || !user) {
+      return [];
+    }
+    return investigationTeamMembers.filter(p => p.id !== user?.id);
+  }, [investigationTeamMembers, user]);
+
+
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
     if (!user || !report || !company) {
         toast({ variant: 'destructive', title: 'You must be logged in to post.'});
@@ -438,33 +426,6 @@ function SafetyReportInvestigationPage() {
       });
     }
   }
-  
-  const handleNewDiaryEntry = (data: DiaryFormValues) => {
-    if (!user || !report) {
-        toast({ variant: 'destructive', title: 'You must be logged in to post.'});
-        return;
-    }
-
-    const newEntry: InvestigationDiaryEntry = {
-        id: `diary-${Date.now()}`,
-        author: user.name,
-        date: new Date().toISOString(),
-        entryText: data.entryText,
-    };
-    
-    const updatedReport = {
-        ...report,
-        investigationDiary: [...(report.investigationDiary || []), newEntry],
-    };
-
-    handleReportUpdate(updatedReport);
-    diaryForm.reset();
-    setIsDiaryDialogOpen(false); // Close dialog on submit
-    toast({
-      title: 'Diary Entry Added',
-      description: 'Your entry has been added to the investigation diary.',
-    });
-  };
 
   useEffect(() => {
     setIsIcaoLoading(false);
@@ -787,7 +748,7 @@ function SafetyReportInvestigationPage() {
                             </div>
                         </CardContent>
                     </Card>
-
+                    
                     <InvestigationTaskList 
                         report={report} 
                         personnel={investigationTeamMembers}
@@ -797,57 +758,7 @@ function SafetyReportInvestigationPage() {
                         onMarkCommentsRead={handleMarkCommentsRead}
                         onManualTaskAdd={handleManualTaskAdd}
                     />
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Investigation Diary</CardTitle>
-                                <CardDescription>A chronological record of investigation activities.</CardDescription>
-                            </div>
-                             <Dialog open={isDiaryDialogOpen} onOpenChange={setIsDiaryDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline">
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Diary Entry
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Add Investigation Diary Entry</DialogTitle>
-                                    </DialogHeader>
-                                    <Form {...diaryForm}>
-                                        <form onSubmit={diaryForm.handleSubmit(handleNewDiaryEntry)} className="space-y-4">
-                                            <FormField
-                                                control={diaryForm.control}
-                                                name="entryText"
-                                                render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Diary Entry</FormLabel>
-                                                    <FormControl>
-                                                    <Textarea
-                                                        id="entryText"
-                                                        placeholder="Record your investigation activities, findings, or notes..."
-                                                        className="min-h-[120px]"
-                                                        {...field}
-                                                    />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                                )}
-                                            />
-                                            <div className="flex justify-end">
-                                                <Button type="submit">Save Entry</Button>
-                                            </div>
-                                        </form>
-                                    </Form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                           <InvestigationDiary report={report} />
-                        </CardContent>
-                    </Card>
-
+                    
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
