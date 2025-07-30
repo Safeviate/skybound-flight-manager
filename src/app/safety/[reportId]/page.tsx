@@ -44,7 +44,7 @@ import { InvestigationDiary } from './investigation-diary';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Check, CheckCircle } from 'lucide-react';
 import type { DiscussionEntry, InvestigationDiaryEntry } from '@/lib/types';
@@ -89,6 +89,15 @@ const commentFormSchema = z.object({
 
 type CommentFormValues = z.infer<typeof commentFormSchema>;
 
+const manualTaskFormSchema = z.object({
+  description: z.string().min(5, 'Task description must be at least 5 characters.'),
+  assignedTo: z.string({ required_error: 'You must assign this task.' }),
+  dueDate: z.date({ required_error: 'A due date is required.' }),
+});
+
+type ManualTaskFormValues = z.infer<typeof manualTaskFormSchema>;
+
+
 const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddComment: (taskId: string, message: string) => void }) => {
     const form = useForm<CommentFormValues>({ resolver: zodResolver(commentFormSchema) });
     const { user } = useUser();
@@ -120,9 +129,10 @@ const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddCommen
     );
 };
 
-const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void }) => {
+const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void }) => {
     const tasks = report.tasks || [];
     const { user } = useUser();
+    const [isManualTaskOpen, setIsManualTaskOpen] = useState(false);
 
     const handleCheckboxClick = (task: InvestigationTask) => {
         if (task.status === 'Open') {
@@ -130,6 +140,22 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
         } else {
             onUpdateTask(task.id, 'Open');
         }
+    };
+    
+    const manualTaskForm = useForm<ManualTaskFormValues>({
+        resolver: zodResolver(manualTaskFormSchema),
+        defaultValues: {
+            dueDate: addDays(new Date(), 7),
+        }
+    });
+
+    const handleManualTaskSubmit = (data: ManualTaskFormValues) => {
+        onManualTaskAdd({
+            ...data,
+            dueDate: format(data.dueDate, 'yyyy-MM-dd'),
+        });
+        manualTaskForm.reset();
+        setIsManualTaskOpen(false);
     };
 
     if (isLoading) {
@@ -140,83 +166,159 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
         )
     }
     
-    if (!tasks || tasks.length === 0) {
-        return (
-            <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">No investigation tasks assigned.</p>
-            </div>
-        )
-    }
-
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ListTodo /> Investigation Task List</CardTitle>
-                <CardDescription>All tasks assigned for this investigation.</CardDescription>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="flex items-center gap-2"><ListTodo /> Investigation Task List</CardTitle>
+                    <CardDescription>All tasks assigned for this investigation.</CardDescription>
+                </div>
+                <Dialog open={isManualTaskOpen} onOpenChange={setIsManualTaskOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Task
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add Manual Task</DialogTitle>
+                            <DialogDescription>Create a new task for the investigation team.</DialogDescription>
+                        </DialogHeader>
+                        <Form {...manualTaskForm}>
+                            <form onSubmit={manualTaskForm.handleSubmit(handleManualTaskSubmit)} className="space-y-4">
+                                <FormField
+                                    control={manualTaskForm.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Task Description</FormLabel>
+                                            <FormControl><Textarea placeholder="e.g., Interview the pilot in command..." {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={manualTaskForm.control}
+                                        name="assignedTo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Assign To</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {personnel.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={manualTaskForm.control}
+                                        name="dueDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Due Date</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant={"outline"}
+                                                                className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                            >
+                                                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Add Task</Button>
+                                </div>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent className="space-y-2">
-                {tasks.map(task => {
-                    const unreadCount = task.comments?.filter(c => !c.readBy?.includes(user?.id || '')).length || 0;
-                    return (
-                    <Collapsible key={task.id} className="border p-4 rounded-lg" onOpenChange={(isOpen) => isOpen && unreadCount > 0 && onMarkCommentsRead(task.id)}>
-                        <div className="flex items-start gap-4">
-                            <Checkbox 
-                                id={`task-${task.id}`}
-                                checked={task.status === 'Completed'}
-                                onCheckedChange={() => handleCheckboxClick(task)}
-                                className="mt-1"
-                            />
-                            <div className="flex-1 grid gap-1">
-                                <Label htmlFor={`task-${task.id}`} className={cn("font-medium", task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</Label>
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span>Assigned to: {task.assignedTo}</span>
-                                    <Badge variant={new Date(task.dueDate) < new Date() && task.status === 'Open' ? 'destructive' : 'outline'}>
-                                        Due: {format(new Date(task.dueDate), 'PPP')}
-                                    </Badge>
-                                </div>
-                            </div>
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="relative">
-                                    <MessageSquare className="mr-2 h-4 w-4" />
-                                    Comments ({task.comments?.length || 0})
-                                    {unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-4 w-4 bg-primary text-primary-foreground text-[10px] items-center justify-center">{unreadCount}</span>
-                                        </span>
-                                    )}
-                                </Button>
-                            </CollapsibleTrigger>
-                        </div>
-                        <CollapsibleContent className="pt-4 mt-4 border-t">
-                            <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                                {task.comments?.map(comment => {
-                                     const isUnread = !comment.readBy?.includes(user?.id || '');
-                                     return (
-                                    <div key={comment.id} className={cn("flex gap-3", isUnread && 'p-2 rounded-md bg-primary/10')}>
-                                        <div className="h-8 w-8 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
-                                            <UserIcon className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                        <div className="flex-1 space-y-1 text-sm">
-                                            <div className="flex items-baseline justify-between">
-                                                <p className="font-semibold">{comment.author}</p>
-                                                <p className="text-xs text-muted-foreground">{format(new Date(comment.date), "MMM d, yyyy 'at' h:mm a")}</p>
-                                            </div>
-                                            <div className="p-2 rounded-md bg-background whitespace-pre-wrap">{comment.message}</div>
-                                        </div>
+                {tasks && tasks.length > 0 ? (
+                    tasks.map(task => {
+                        const unreadCount = task.comments?.filter(c => !c.readBy?.includes(user?.id || '')).length || 0;
+                        return (
+                        <Collapsible key={task.id} className="border p-4 rounded-lg" onOpenChange={(isOpen) => isOpen && unreadCount > 0 && onMarkCommentsRead(task.id)}>
+                            <div className="flex items-start gap-4">
+                                <Checkbox 
+                                    id={`task-${task.id}`}
+                                    checked={task.status === 'Completed'}
+                                    onCheckedChange={() => handleCheckboxClick(task)}
+                                    className="mt-1"
+                                />
+                                <div className="flex-1 grid gap-1">
+                                    <Label htmlFor={`task-${task.id}`} className={cn("font-medium", task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</Label>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <span>Assigned to: {task.assignedTo}</span>
+                                        <Badge variant={new Date(task.dueDate) < new Date() && task.status === 'Open' ? 'destructive' : 'outline'}>
+                                            Due: {format(new Date(task.dueDate), 'PPP')}
+                                        </Badge>
                                     </div>
-                                )})}
-                                {(!task.comments || task.comments.length === 0) && (
-                                     <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
-                                )}
+                                </div>
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="relative">
+                                        <MessageSquare className="mr-2 h-4 w-4" />
+                                        Comments ({task.comments?.length || 0})
+                                        {unreadCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-4 w-4 bg-primary text-primary-foreground text-[10px] items-center justify-center">{unreadCount}</span>
+                                            </span>
+                                        )}
+                                    </Button>
+                                </CollapsibleTrigger>
                             </div>
-                            <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
-                        </CollapsibleContent>
-                    </Collapsible>
-                )})}
+                            <CollapsibleContent className="pt-4 mt-4 border-t">
+                                <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                                    {task.comments?.map(comment => {
+                                         const isUnread = !comment.readBy?.includes(user?.id || '');
+                                         return (
+                                        <div key={comment.id} className={cn("flex gap-3", isUnread && 'p-2 rounded-md bg-primary/10')}>
+                                            <div className="h-8 w-8 flex-shrink-0 bg-muted rounded-full flex items-center justify-center">
+                                                <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                            </div>
+                                            <div className="flex-1 space-y-1 text-sm">
+                                                <div className="flex items-baseline justify-between">
+                                                    <p className="font-semibold">{comment.author}</p>
+                                                    <p className="text-xs text-muted-foreground">{format(new Date(comment.date), "MMM d, yyyy 'at' h:mm a")}</p>
+                                                </div>
+                                                <div className="p-2 rounded-md bg-background whitespace-pre-wrap">{comment.message}</div>
+                                            </div>
+                                        </div>
+                                    )})}
+                                    {(!task.comments || task.comments.length === 0) && (
+                                         <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
+                                    )}
+                                </div>
+                                <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
+                            </CollapsibleContent>
+                        </Collapsible>
+                    )})
+                ) : (
+                    <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">No investigation tasks assigned.</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
-    )
+    );
 }
 
 function SafetyReportInvestigationPage() {
@@ -415,6 +517,27 @@ function SafetyReportInvestigationPage() {
     toast({
         title: "Tasks Assigned",
         description: `${newTasks.length} investigation task(s) have been added.`
+    });
+  };
+  
+  const handleManualTaskAdd = (task: Omit<InvestigationTask, 'id' | 'status'>) => {
+    if (!report) return;
+    
+    const newTask: InvestigationTask = {
+        ...task,
+        id: `task-${Date.now()}`,
+        status: 'Open',
+    };
+
+    const updatedReport: SafetyReport = {
+        ...report,
+        tasks: [...(report.tasks || []), newTask]
+    };
+
+    handleReportUpdate(updatedReport, true);
+    toast({
+        title: "Task Added",
+        description: `A new task has been manually added to the investigation.`
     });
   };
 
@@ -651,6 +774,7 @@ function SafetyReportInvestigationPage() {
                         onAddComment={handleAddTaskComment} 
                         isLoading={dataLoading} 
                         onMarkCommentsRead={handleMarkCommentsRead}
+                        onManualTaskAdd={handleManualTaskAdd}
                     />
 
                     <Card>
