@@ -349,14 +349,16 @@ function SafetyReportInvestigationPage() {
     if (!report || !personnel) return [];
     const teamNames = new Set(report.investigationTeam || []);
     const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
-    return uniquePersonnel;
+    // Ensure there are no duplicate users in the list, comparing by ID
+    const uniqueById = Array.from(new Map(uniquePersonnel.map(item => [item['id'], item])).values());
+    return uniqueById;
   }, [report, personnel]);
 
   const availableRecipients = useMemo(() => {
     if (!investigationTeamMembers.length || !user) {
       return [];
     }
-    return investigationTeamMembers.filter(p => p.name !== user?.name);
+    return investigationTeamMembers.filter(p => p.id !== user?.id);
   }, [investigationTeamMembers, user]);
 
 
@@ -771,16 +773,6 @@ function SafetyReportInvestigationPage() {
                         </CardContent>
                     </Card>
 
-                    <InvestigationTaskList 
-                        report={report} 
-                        personnel={investigationTeamMembers}
-                        onUpdateTask={handleUpdateTaskStatus} 
-                        onAddComment={handleAddTaskComment} 
-                        isLoading={dataLoading} 
-                        onMarkCommentsRead={handleMarkCommentsRead}
-                        onManualTaskAdd={handleManualTaskAdd}
-                    />
-
                     <Card>
                         <CardHeader>
                             <CardTitle>Investigation Plan & Tools</CardTitle>
@@ -795,6 +787,16 @@ function SafetyReportInvestigationPage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <InvestigationTaskList 
+                        report={report} 
+                        personnel={investigationTeamMembers}
+                        onUpdateTask={handleUpdateTaskStatus} 
+                        onAddComment={handleAddTaskComment} 
+                        isLoading={dataLoading} 
+                        onMarkCommentsRead={handleMarkCommentsRead}
+                        onManualTaskAdd={handleManualTaskAdd}
+                    />
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
