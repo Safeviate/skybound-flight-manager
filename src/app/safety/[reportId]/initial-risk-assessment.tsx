@@ -25,7 +25,38 @@ import { z } from 'zod';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
-const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
+const processes = [
+    'AB Initio Training',
+    'Advanced Training',
+    'Aerobatics',
+    'Airfield Operations',
+    'Aircraft Ferry',
+    'Cabin Safety Procedures',
+    'Charter Operations',
+    'Cross-Country Flight',
+    'Emergency Procedures Training',
+    'Flight Dispatch',
+    'Ground Handling',
+    'Hangar Operations',
+    'Instrument Flight Rules (IFR) Ops',
+    'Instrument Training',
+    'Line Maintenance',
+    'Night Flying',
+    'Passenger Briefing',
+    'Passenger Transport',
+    'Ramp Operations',
+    'Refueling',
+    'Scheduled Maintenance',
+    'Security Procedures',
+    'Short Field Landings',
+    'Solo Flight Operations',
+    'Specialized Operations',
+    'Taxiing',
+    'Towing',
+    'Unscheduled Maintenance',
+    'Visual Flight Rules (VFR) Ops',
+    'Other'
+];
 const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
@@ -326,5 +357,3 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     </div>
   );
 }
-
-    
