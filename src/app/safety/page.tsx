@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -784,3 +783,5 @@ function SafetyPage() {
 
 SafetyPage.title = 'Safety Management System';
 export default SafetyPage;
+
+    
