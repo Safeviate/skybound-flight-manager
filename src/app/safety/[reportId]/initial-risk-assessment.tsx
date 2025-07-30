@@ -3,24 +3,188 @@
 'use client';
 
 import React, { useState, useActionState, Fragment } from 'react';
+import { useForm, useFormContext } from 'react-hook-form';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import type { AssociatedRisk, SafetyReport, Risk as RiskRegisterEntry, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, ArrowUpCircle, Bot, Loader2, Edit } from 'lucide-react';
+import { PlusCircle, ArrowUpCircle, Bot, Loader2, Edit, Save } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddRiskForm } from './add-risk-form';
 import { promoteRiskAction, suggestHazardsAction } from './actions';
 import type { SuggestHazardsOutput } from '@/ai/flows/suggest-hazards-flow';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { likelihoodValues, severityValues } from '@/lib/data-provider';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { RiskAssessmentTool } from './risk-assessment-tool';
+import { z } from 'zod';
 
+const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
+const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
+const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
+const assessHazardFormSchema = z.object({
+  hazard: z.string().min(10, { message: 'Hazard description must be at least 10 characters long.' }),
+  risk: z.string().min(10, { message: 'Risk description must be at least 10 characters long.' }),
+  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.'}),
+  severity: z.enum(severityValues, { required_error: 'Severity is required.'}),
+  hazardArea: z.string({ required_error: 'Please select a hazard area.'}),
+  process: z.string({ required_error: 'Please select a process.'}),
+});
+
+type AssessHazardFormValues = z.infer<typeof assessHazardFormSchema>;
+
+const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
+const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
+
+
+function AssessHazardDialog({ suggestion, onAddRisk, onCancel }: { suggestion: Omit<AssociatedRisk, 'id'>, onAddRisk: (risk: Omit<AssociatedRisk, 'id'>) => void, onCancel: () => void }) {
+    const form = useForm<AssessHazardFormValues>({
+        resolver: zodResolver(assessHazardFormSchema),
+        defaultValues: {
+            hazard: suggestion.hazard,
+            risk: suggestion.risk,
+            likelihood: suggestion.likelihood,
+            severity: suggestion.severity,
+        },
+    });
+
+    const watchedLikelihood = form.watch('likelihood');
+    const watchedSeverity = form.watch('severity');
+
+    const handleAssessmentChange = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+        form.setValue('likelihood', likelihood, { shouldValidate: true });
+        form.setValue('severity', severity, { shouldValidate: true });
+    };
+
+    const getSelectedCode = () => {
+        if (watchedLikelihood && watchedSeverity) {
+            return `${likelihoodMap[watchedLikelihood]}${severityMap[watchedSeverity]}`;
+        }
+        return null;
+    }
+
+    const onSubmit = (data: AssessHazardFormValues) => {
+        onAddRisk(data);
+    };
+    
+    return (
+        <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Assess Suggested Hazard</DialogTitle>
+                <DialogDescription>
+                    Review, edit, and score the AI-suggested hazard before adding it to the report's register.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="hazard"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Hazard</FormLabel>
+                                    <FormControl><Textarea {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="risk"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Associated Risk</FormLabel>
+                                    <FormControl><Textarea {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="hazardArea"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Hazard Area</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select an area" /></SelectTrigger></FormControl>
+                                    <SelectContent>{hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="process"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Process / Activity</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a process" /></SelectTrigger></FormControl>
+                                    <SelectContent>{processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <RiskAssessmentTool onCellClick={handleAssessmentChange} selectedCode={getSelectedCode()} />
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                        <Button type="submit"><Save className="mr-2 h-4 w-4" /> Save Hazard</Button>
+                    </div>
+                </form>
+            </Form>
+        </DialogContent>
+    )
+}
+
+function HazardSuggestionsResult({ data, onAddRisk }: { data: SuggestHazardsOutput, onAddRisk: (risk: Omit<AssociatedRisk, 'id'>) => void }) {
+    const [assessingSuggestion, setAssessingSuggestion] = useState<Omit<AssociatedRisk, 'id'> | null>(null);
+
+    return (
+        <div className="space-y-4 p-4 border-t mt-4">
+            <h4 className="font-semibold text-sm">AI Suggested Hazards</h4>
+            <p className="text-xs text-muted-foreground">Review and assess each suggestion before adding it to the report.</p>
+            <div className="space-y-2">
+                {data.suggestedHazards.map((suggestion, index) => (
+                    <div key={index} className="flex items-center justify-between gap-3 p-3 border rounded-lg bg-muted/50">
+                        <div className="flex-1 text-sm">
+                            <p className="font-semibold">{suggestion.hazard}</p>
+                            <p className="text-muted-foreground">{suggestion.risk}</p>
+                        </div>
+                        <Button variant="secondary" size="sm" onClick={() => setAssessingSuggestion(suggestion)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Assess
+                        </Button>
+                    </div>
+                ))}
+            </div>
+            {assessingSuggestion && (
+                 <Dialog open={!!assessingSuggestion} onOpenChange={(isOpen) => !isOpen && setAssessingSuggestion(null)}>
+                    <AssessHazardDialog 
+                        suggestion={assessingSuggestion} 
+                        onAddRisk={(risk) => {
+                            onAddRisk(risk);
+                            setAssessingSuggestion(null);
+                        }} 
+                        onCancel={() => setAssessingSuggestion(null)}
+                    />
+                </Dialog>
+            )}
+        </div>
+    );
+}
 
 interface InitialRiskAssessmentProps {
     report: SafetyReport;
@@ -37,96 +201,6 @@ function SuggestHazardsButton() {
       </Button>
     );
 }
-
-function HazardSuggestionsResult({ data, onAddHazard }: { data: SuggestHazardsOutput, onAddHazard: (hazards: Omit<AssociatedRisk, 'id'>[]) => void }) {
-    const [editableSuggestions, setEditableSuggestions] = useState(data.suggestedHazards);
-    const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-
-    const handleFieldChange = (index: number, field: keyof typeof editableSuggestions[0], value: string) => {
-        const newSuggestions = [...editableSuggestions];
-        newSuggestions[index] = { ...newSuggestions[index], [field]: value };
-        setEditableSuggestions(newSuggestions);
-    };
-
-    const handleCheckboxChange = (index: number, checked: boolean) => {
-        if (checked) {
-            setSelectedIndices(prev => [...prev, index]);
-        } else {
-            setSelectedIndices(prev => prev.filter(i => i !== index));
-        }
-    }
-
-    const handleAddSelected = () => {
-        const hazardsToAdd = selectedIndices.map(index => {
-            const suggestion = editableSuggestions[index];
-            return {
-                ...suggestion,
-                hazardArea: '', // Default values to be filled in later
-                process: '',
-            };
-        });
-        onAddHazard(hazardsToAdd);
-        setSelectedIndices([]);
-    }
-
-    return (
-        <div className="space-y-4 p-4 border-t mt-4">
-            <h4 className="font-semibold text-sm">AI Suggested Hazards</h4>
-            <p className="text-xs text-muted-foreground">Review and edit the suggestions below before adding them to the report.</p>
-            <div className="space-y-4">
-                {editableSuggestions.map((suggestion, index) => (
-                    <div key={index} className="flex items-start justify-between gap-3 p-4 border rounded-lg bg-muted/50">
-                        <Checkbox
-                            id={`hazard-select-${index}`}
-                            onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
-                            checked={selectedIndices.includes(index)}
-                            className="mt-2"
-                        />
-                        <div className="grid gap-2 text-sm flex-1">
-                            <div>
-                                <Label htmlFor={`hazard-text-${index}`} className="font-medium">Hazard</Label>
-                                <Textarea id={`hazard-text-${index}`} value={suggestion.hazard} onChange={(e) => handleFieldChange(index, 'hazard', e.target.value)} />
-                            </div>
-                            <div>
-                                <Label htmlFor={`risk-text-${index}`} className="font-medium">Risk</Label>
-                                <Textarea id={`risk-text-${index}`} value={suggestion.risk} onChange={(e) => handleFieldChange(index, 'risk', e.target.value)} />
-                            </div>
-                             <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <Label>Likelihood</Label>
-                                    <Select value={suggestion.likelihood} onValueChange={(value) => handleFieldChange(index, 'likelihood', value)}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                 <div>
-                                    <Label>Severity</Label>
-                                    <Select value={suggestion.severity} onValueChange={(value) => handleFieldChange(index, 'severity', value)}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                             </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            {selectedIndices.length > 0 && (
-                <div className="flex justify-end">
-                    <Button onClick={handleAddSelected}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Selected ({selectedIndices.length}) to Register
-                    </Button>
-                </div>
-            )}
-        </div>
-    );
-}
-
 
 export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: InitialRiskAssessmentProps) {
   const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
@@ -149,33 +223,6 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
         title: 'Hazard Added to Register',
         description: 'The new hazard and its initial risk score have been recorded.'
     });
-  }
-  
-  const handleAddMultipleRisks = (risksData: Omit<AssociatedRisk, 'id'>[]) => {
-    const newRisks = risksData.map((riskData, index) => {
-        const riskScore = getRiskScore(riskData.likelihood, riskData.severity);
-        return {
-            ...riskData,
-            id: `risk-${Date.now()}-${index}`,
-            riskScore,
-        };
-    });
-
-    const updatedRisks = [...(report.associatedRisks || []), ...newRisks];
-    onUpdate({ ...report, associatedRisks: updatedRisks });
-
-    toast({
-        title: `${newRisks.length} Hazards Added`,
-        description: 'The selected AI suggestions have been added to the register.'
-    });
-  }
-
-  const riskLevel = (score: number | null | undefined) => {
-      if (score === null || score === undefined || isNaN(score)) return 'N/A';
-      if (score <= 4) return 'Low';
-      if (score <= 9) return 'Medium';
-      if (score <= 16) return 'High';
-      return 'Extreme';
   }
 
   return (
@@ -215,7 +262,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
         {suggestHazardsState.data && (
             <HazardSuggestionsResult 
                 data={suggestHazardsState.data as SuggestHazardsOutput} 
-                onAddHazard={handleAddMultipleRisks}
+                onAddRisk={handleAddRisk}
             />
         )}
         {report.associatedRisks && report.associatedRisks.length > 0 ? (
@@ -235,12 +282,16 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             <TableCell className="max-w-xs">{risk.hazard}</TableCell>
                             <TableCell className="max-w-xs">{risk.risk}</TableCell>
                             <TableCell>
-                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                    {!isNaN(risk.riskScore) ? risk.riskScore : 'N/A'}
-                                </Badge>
+                                { !isNaN(risk.riskScore) ? (
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                        {risk.riskScore}
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="outline">N/A</Badge>
+                                )}
                             </TableCell>
                             <TableCell>
-                                    <Badge variant="outline">{riskLevel(risk.riskScore)}</Badge>
+                                <Badge variant="outline">{getRiskLevel(risk.riskScore)}</Badge>
                             </TableCell>
                             <TableCell className="text-right no-print">
                                 <form action={async (formData) => {
@@ -295,6 +346,3 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     </div>
   );
 }
-
-
-
