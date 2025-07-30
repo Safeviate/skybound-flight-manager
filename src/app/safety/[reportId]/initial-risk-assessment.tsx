@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useActionState, Fragment } from 'react';
@@ -23,6 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RiskAssessmentTool } from './risk-assessment-tool';
 import { z } from 'zod';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const hazardAreas = ['Flight Operations', 'Maintenance', 'Ground Operations', 'Cabin Safety', 'Occupational Safety', 'Security', 'Administration & Management'];
 const processes = ['Pre-flight', 'Taxiing', 'Takeoff', 'Climb', 'Cruise', 'Descent', 'Approach', 'Landing', 'Post-flight', 'Servicing', 'Other'];
@@ -84,38 +84,42 @@ function AssessHazardDialog({ suggestion, onAddRisk, onCancel }: { suggestion: O
             </DialogHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="hazardArea"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Hazard Area</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select an area" /></SelectTrigger></FormControl>
-                                    <SelectContent>{hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="process"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Process / Activity</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a process" /></SelectTrigger></FormControl>
-                                    <SelectContent>{processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                    <RiskAssessmentTool onCellClick={handleAssessmentChange} selectedCode={getSelectedCode()} />
-                    <div className="flex justify-end gap-2">
+                    <ScrollArea className="h-[60vh] pr-4">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="hazardArea"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Hazard Area</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select an area" /></SelectTrigger></FormControl>
+                                            <SelectContent>{hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="process"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Process / Activity</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select a process" /></SelectTrigger></FormControl>
+                                            <SelectContent>{processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <RiskAssessmentTool onCellClick={handleAssessmentChange} selectedCode={getSelectedCode()} />
+                        </div>
+                    </ScrollArea>
+                    <div className="flex justify-end gap-2 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
                         <Button type="submit"><Save className="mr-2 h-4 w-4" /> Save Hazard</Button>
                     </div>
@@ -322,3 +326,5 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     </div>
   );
 }
+
+    
