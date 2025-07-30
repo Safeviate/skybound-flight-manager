@@ -155,10 +155,6 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
             </CardHeader>
             <CardContent>
                  <RiskAssessmentTool
-                    onAssessmentChange={handleAssessmentChange} 
-                    showResultCard={false}
-                    initialLikelihood={form.getValues('likelihood')}
-                    initialSeverity={form.getValues('severity')}
                  />
                  {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
                  {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssociatedRisk, RiskLikelihood, RiskSeverity } from '@/lib/types';
-import { RiskAssessmentTool } from '../risk-assessment-tool';
+import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 
 const assessMitigationFormSchema = z.object({
@@ -77,10 +77,6 @@ export function AssessMitigationForm({ risk, onAssessRisk }: AssessMitigationFor
                  <FormLabel>Residual Risk Assessment</FormLabel>
                  <p className="text-sm text-muted-foreground mb-4">Assess the risk level *after* the implementation of the controls.</p>
                  <RiskAssessmentTool
-                    onAssessmentChange={handleAssessmentChange} 
-                    showResultCard={false}
-                    initialLikelihood={form.getValues('residualLikelihood')}
-                    initialSeverity={form.getValues('residualSeverity')}
                  />
                  {form.formState.errors.residualLikelihood && <FormMessage>{form.formState.errors.residualLikelihood.message}</FormMessage>}
                  {form.formState.errors.residualSeverity && <FormMessage>{form.formState.errors.residualSeverity.message}</FormMessage>}

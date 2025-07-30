@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { AssociatedRisk, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useState, useEffect } from 'react';
-import { RiskAssessmentTool } from '../risk-assessment-tool';
+import { RiskAssessmentTool } from './risk-assessment-tool';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -139,10 +139,6 @@ export function AddRiskForm({ onAddRisk, initialValues }: AddRiskFormProps) {
         <Card>
             <CardContent className="pt-6">
                  <RiskAssessmentTool
-                    onAssessmentChange={handleAssessmentChange} 
-                    showResultCard={false}
-                    initialLikelihood={form.getValues('likelihood')}
-                    initialSeverity={form.getValues('severity')}
                  />
                  {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
                  {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}
