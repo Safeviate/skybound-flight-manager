@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -527,15 +528,15 @@ function SafetyPage() {
     }
   };
 
-  const monthlyFlightHours = bookings
+  const monthlyFlightHours = useMemo(() => bookings
     .filter(b => b.status === 'Completed' && b.flightDuration)
     .reduce((acc, booking) => {
         const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
         acc[month] = (acc[month] || 0) + booking.flightDuration!;
         return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, number>), [bookings]);
 
-  const monthlyChecklistStats = completedChecklists
+  const monthlyChecklistStats = useMemo(() => completedChecklists
     .filter(c => c.checklistType === 'Pre-Flight')
     .reduce((acc, checklist) => {
         const month = format(startOfMonth(parseISO(checklist.completionDate)), 'MMM yy');
@@ -544,7 +545,7 @@ function SafetyPage() {
         }
         acc[month].completed += 1;
         return acc;
-    }, {} as Record<string, { completed: number, required: number }>);
+    }, {} as Record<string, { completed: number, required: number }>), [completedChecklists]);
   
   bookings.filter(b => b.purpose === 'Training' || b.purpose === 'Private').forEach(booking => {
     const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
@@ -554,11 +555,11 @@ function SafetyPage() {
     monthlyChecklistStats[month].required += 1;
   });
 
-  const checklistCompletionRate = Object.keys(monthlyChecklistStats).reduce((acc, month) => {
+  const checklistCompletionRate = useMemo(() => Object.keys(monthlyChecklistStats).reduce((acc, month) => {
     const data = monthlyChecklistStats[month];
     acc[month] = data.required > 0 ? Math.round((data.completed / data.required) * 100) : 100;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>), [monthlyChecklistStats]);
 
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport | keyof Risk }) => {
