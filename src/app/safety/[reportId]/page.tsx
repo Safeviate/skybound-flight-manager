@@ -16,7 +16,7 @@ import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Sen
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, collection, getDocs, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, arrayUnion, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvestigationTeamForm } from './investigation-team-form';
@@ -604,7 +604,11 @@ function SafetyReportInvestigationPage() {
     );
   }
   
-  const investigationTeamMembers = personnel.filter(p => report.investigationTeam?.includes(p.name));
+  const investigationTeamMembers = useMemo(() => {
+    const teamNames = new Set(report.investigationTeam || []);
+    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
+    return uniquePersonnel;
+  }, [report.investigationTeam, personnel]);
 
   return (
     <>
