@@ -337,6 +337,29 @@ function SafetyReportInvestigationPage() {
   const [isDiaryDialogOpen, setIsDiaryDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
 
+  const discussionForm = useForm<DiscussionFormValues>({
+    resolver: zodResolver(discussionFormSchema),
+  });
+  
+  const diaryForm = useForm<DiaryFormValues>({
+    resolver: zodResolver(diaryFormSchema),
+  });
+
+  const investigationTeamMembers = useMemo(() => {
+    if (!report || !personnel) return [];
+    const teamNames = new Set(report.investigationTeam || []);
+    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
+    return uniquePersonnel;
+  }, [report, personnel]);
+
+  const availableRecipients = useMemo(() => {
+    if (!investigationTeamMembers.length || !user) {
+      return [];
+    }
+    return investigationTeamMembers.filter(p => p.name !== user?.name);
+  }, [investigationTeamMembers, user]);
+
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -376,23 +399,6 @@ function SafetyReportInvestigationPage() {
     fetchReport();
     fetchPersonnel();
   }, [reportId, company, user, loading, router, toast]);
-
-  const discussionForm = useForm<DiscussionFormValues>({
-    resolver: zodResolver(discussionFormSchema),
-  });
-  
-  const diaryForm = useForm<DiaryFormValues>({
-    resolver: zodResolver(diaryFormSchema),
-  });
-
-  const availableRecipients = React.useMemo(() => {
-    if (!personnel || personnel.length === 0 || !report || !report.investigationTeam) {
-      return [];
-    }
-    return personnel.filter(
-      (u) => report.investigationTeam?.includes(u.name) && u.name !== user?.name
-    );
-  }, [personnel, report, user]);
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
     if (!user || !report || !company) {
@@ -603,12 +609,6 @@ function SafetyReportInvestigationPage() {
         </main>
     );
   }
-  
-  const investigationTeamMembers = useMemo(() => {
-    const teamNames = new Set(report.investigationTeam || []);
-    const uniquePersonnel = personnel.filter(p => teamNames.has(p.name));
-    return uniquePersonnel;
-  }, [report.investigationTeam, personnel]);
 
   return (
     <>
