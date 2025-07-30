@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from '@/components/ui/context-menu';
 
 const LIKELIHOOD_LEVELS = {
     'Frequent': { description: 'Likely to occur many times (has happened frequently).', value: 5 },
@@ -34,14 +35,6 @@ const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
     '1': { 'A': '1A', 'B': '1B', 'C': '1C', 'D': '1D', 'E': '1E' },
 };
 
-const RISK_CLASSIFICATION: Record<string, 'Intolerable' | 'Tolerable' | 'Acceptable'> = {
-    '5A': 'Intolerable', '5B': 'Intolerable', '5C': 'Tolerable',   '5D': 'Tolerable',   '5E': 'Acceptable',
-    '4A': 'Intolerable', '4B': 'Intolerable', '4C': 'Tolerable',   '4D': 'Acceptable',  '4E': 'Acceptable',
-    '3A': 'Intolerable', '3B': 'Tolerable',   '3C': 'Tolerable',   '3D': 'Acceptable',  '3E': 'Acceptable',
-    '2A': 'Tolerable',   '2B': 'Tolerable',   '2C': 'Acceptable',  '2D': 'Acceptable',  '2E': 'Acceptable',
-    '1A': 'Acceptable',  '1B': 'Acceptable',  '1C': 'Acceptable',  '1D': 'Acceptable',  '1E': 'Acceptable',
-};
-
 const INITIAL_CELL_COLORS: Record<string, string> = {
     '5A': '#d9534f', '5B': '#d9534f', '5C': '#f0ad4e', '5D': '#f0ad4e', '5E': '#5cb85c',
     '4A': '#d9534f', '4B': '#d9534f', '4C': '#f0ad4e', '4D': '#5cb85c', '4E': '#5cb85c',
@@ -50,20 +43,6 @@ const INITIAL_CELL_COLORS: Record<string, string> = {
     '1A': '#5cb85c', '1B': '#5cb85c', '1C': '#5cb85c', '1D': '#5cb85c', '1E': '#5cb85c',
 };
 
-const groupCodesByClassification = () => {
-    const groups: Record<string, string[]> = {
-        Intolerable: [],
-        Tolerable: [],
-        Acceptable: [],
-    };
-    for (const code in RISK_CLASSIFICATION) {
-        const classification = RISK_CLASSIFICATION[code];
-        groups[classification].push(code);
-    }
-    return groups;
-};
-
-
 export function RiskAssessmentTool() {
   const [cellColors, setCellColors] = useState(INITIAL_CELL_COLORS);
 
@@ -71,14 +50,12 @@ export function RiskAssessmentTool() {
     setCellColors(prev => ({ ...prev, [riskCode]: value }));
   };
 
-  const groupedCodes = groupCodesByClassification();
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>ICAO Risk Assessment Matrix</CardTitle>
         <CardDescription>
-          This matrix is used to determine the level of risk associated with an identified hazard, based on ICAO Document 9859 (Safety Management Manual).
+          This matrix is used to determine the level of risk associated with an identified hazard, based on ICAO Document 9859 (Safety Management Manual). Right-click a cell to change its color.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -108,9 +85,27 @@ export function RiskAssessmentTool() {
                             {Object.values(SEVERITY_LEVELS).map(({ value: severityValue }) => {
                                 const riskCode = RISK_MATRIX_DATA[value][severityValue];
                                 return (
-                                <TableCell key={`${value}-${severityValue}`} className="p-2 text-center" style={{ backgroundColor: cellColors[riskCode] }}>
-                                    <div className="font-bold text-white">{riskCode}</div>
-                                </TableCell>
+                                <ContextMenu key={`${value}-${severityValue}`}>
+                                    <ContextMenuTrigger asChild>
+                                        <TableCell className="p-2 text-center cursor-context-menu" style={{ backgroundColor: cellColors[riskCode] }}>
+                                            <div className="font-bold text-white">{riskCode}</div>
+                                        </TableCell>
+                                    </ContextMenuTrigger>
+                                    <ContextMenuContent>
+                                        <ContextMenuItem onSelect={(e) => e.preventDefault()} className="focus:bg-transparent">
+                                             <div className="flex items-center gap-2">
+                                                <Label htmlFor={`${riskCode}-color`} className="font-semibold">{riskCode}</Label>
+                                                <Input 
+                                                    id={`${riskCode}-color`}
+                                                    type="color" 
+                                                    value={cellColors[riskCode]} 
+                                                    onChange={(e) => handleColorChange(riskCode, e.target.value)}
+                                                    className="h-8 w-10 p-1"
+                                                />
+                                            </div>
+                                        </ContextMenuItem>
+                                    </ContextMenuContent>
+                                </ContextMenu>
                                 );
                             })}
                         </TableRow>
@@ -120,39 +115,6 @@ export function RiskAssessmentTool() {
         </div>
         
         <div className="grid md:grid-cols-2 gap-4 mt-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Risk Color Customization</CardTitle>
-                    <CardDescription className="text-sm">Set the background color for each risk index.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm max-h-60 overflow-y-auto pr-2">
-                    {Object.entries(groupedCodes).map(([classification, codes]) => (
-                        <div key={classification}>
-                            <h4 className="font-semibold text-muted-foreground mb-2">{classification}</h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {codes.map(code => (
-                                    <div key={code} className="flex items-center gap-2">
-                                        <Label htmlFor={`${code}-color`} className="w-8">{code}</Label>
-                                        <Input 
-                                            id={`${code}-color`}
-                                            type="color" 
-                                            value={cellColors[code]} 
-                                            onChange={(e) => handleColorChange(code, e.target.value)}
-                                            className="h-8 w-10 p-1"
-                                        />
-                                        <Input 
-                                            type="text"
-                                            value={cellColors[code]}
-                                            onChange={(e) => handleColorChange(code, e.target.value)}
-                                            className="h-8 flex-1"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
              <Card>
                 <CardHeader>
                     <CardTitle className="text-base">Definitions</CardTitle>
