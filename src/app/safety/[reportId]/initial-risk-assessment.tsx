@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useActionState, Fragment } from 'react';
@@ -136,8 +137,8 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
     });
   }
 
-  const riskLevel = (score: number | null) => {
-      if (score === null || score === undefined) return 'N/A';
+  const riskLevel = (score: number | null | undefined) => {
+      if (score === null || score === undefined || isNaN(score)) return 'N/A';
       if (score <= 4) return 'Low';
       if (score <= 9) return 'Medium';
       if (score <= 16) return 'High';
@@ -202,7 +203,7 @@ export function InitialRiskAssessment({ report, onUpdate, onPromoteRisk }: Initi
                             <TableCell className="max-w-xs">{risk.risk}</TableCell>
                             <TableCell>
                                 <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
-                                    {risk.riskScore}
+                                    {typeof risk.riskScore === 'number' ? risk.riskScore : 'N/A'}
                                 </Badge>
                             </TableCell>
                             <TableCell>
