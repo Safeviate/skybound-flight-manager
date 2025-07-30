@@ -11,8 +11,8 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon } from 'lucide-react';
+import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember } from '@/lib/types';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -45,7 +45,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Check, CheckCircle } from 'lucide-react';
+import { CalendarIcon, Check } from 'lucide-react';
 import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -90,6 +90,12 @@ const manualTaskFormSchema = z.object({
 
 type ManualTaskFormValues = z.infer<typeof manualTaskFormSchema>;
 
+const extensionFormSchema = z.object({
+    requestedDeadline: z.date({ required_error: 'A new deadline is required.'}),
+    extensionRequestReason: z.string().min(10, 'A reason for the request is required.'),
+});
+type ExtensionFormValues = z.infer<typeof extensionFormSchema>;
+
 
 const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddComment: (taskId: string, message: string) => void }) => {
     const form = useForm<CommentFormValues>({ resolver: zodResolver(commentFormSchema) });
@@ -122,19 +128,11 @@ const TaskCommentForm = ({ taskId, onAddComment }: { taskId: string, onAddCommen
     );
 };
 
-const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void }) => {
+const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, isLoading, onMarkCommentsRead, onManualTaskAdd, onRequestExtension, onApproveExtension, onRejectExtension }: { report: SafetyReport, personnel: User[], onUpdateTask: (taskId: string, status: 'Open' | 'Completed') => void, onAddComment: (taskId: string, message: string) => void, isLoading: boolean, onMarkCommentsRead: (taskId: string) => void, onManualTaskAdd: (task: Omit<InvestigationTask, 'id'|'status'>) => void, onRequestExtension: (taskId: string, reason: string, newDeadline: string) => void, onApproveExtension: (taskId: string) => void, onRejectExtension: (taskId: string) => void }) => {
     const tasks = report.tasks || [];
     const { user } = useUser();
     const [isManualTaskOpen, setIsManualTaskOpen] = useState(false);
 
-    const handleCheckboxClick = (task: InvestigationTask) => {
-        if (task.status === 'Open') {
-            onUpdateTask(task.id, 'Completed');
-        } else {
-            onUpdateTask(task.id, 'Open');
-        }
-    };
-    
     const manualTaskForm = useForm<ManualTaskFormValues>({
         resolver: zodResolver(manualTaskFormSchema),
         defaultValues: {
@@ -158,7 +156,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
             </div>
         )
     }
-    
+
     return (
         <Card>
             <CardHeader className="flex-row items-center justify-between">
@@ -247,13 +245,25 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                 {tasks && tasks.length > 0 ? (
                     tasks.map(task => {
                         const unreadCount = task.comments?.filter(c => !c.readBy?.includes(user?.id || '')).length || 0;
+                        const isUserAssigned = user?.name === task.assignedTo;
+                        const isTeamLead = user?.permissions.includes('Safety:Edit') || user?.permissions.includes('Super User');
+
+                        const [isExtensionOpen, setIsExtensionOpen] = useState(false);
+                        const extensionForm = useForm<ExtensionFormValues>({ resolver: zodResolver(extensionFormSchema) });
+
+                        const handleExtensionSubmit = (data: ExtensionFormValues) => {
+                            onRequestExtension(task.id, data.extensionRequestReason, format(data.requestedDeadline, 'yyyy-MM-dd'));
+                            setIsExtensionOpen(false);
+                            extensionForm.reset();
+                        }
+                        
                         return (
                         <Collapsible key={task.id} className="border p-4 rounded-lg" onOpenChange={(isOpen) => isOpen && unreadCount > 0 && onMarkCommentsRead(task.id)}>
                             <div className="flex items-start gap-4">
                                 <Checkbox 
                                     id={`task-${task.id}`}
                                     checked={task.status === 'Completed'}
-                                    onCheckedChange={() => handleCheckboxClick(task)}
+                                    onCheckedChange={() => onUpdateTask(task.id, task.status === 'Open' ? 'Completed' : 'Open')}
                                     className="mt-1"
                                 />
                                 <div className="flex-1 grid gap-1">
@@ -278,6 +288,23 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                     </Button>
                                 </CollapsibleTrigger>
                             </div>
+                             {task.extensionStatus === 'Pending' && (
+                                 <div className="mt-3 p-3 bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 rounded-md text-sm space-y-2">
+                                    <h4 className="font-semibold text-amber-800 dark:text-amber-200">Extension Requested</h4>
+                                    <p>New Deadline: {format(parseISO(task.requestedDeadline!), 'PPP')}</p>
+                                    <p className="p-2 bg-background rounded-md text-muted-foreground italic">"{task.extensionRequestReason}"</p>
+                                    {isTeamLead && (
+                                        <div className="flex gap-2 pt-2 border-t border-amber-300 dark:border-amber-700">
+                                            <Button size="sm" variant="success" onClick={() => onApproveExtension(task.id)}>
+                                                <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                                            </Button>
+                                            <Button size="sm" variant="destructive" onClick={() => onRejectExtension(task.id)}>
+                                                <XCircle className="mr-2 h-4 w-4" /> Reject
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <CollapsibleContent className="pt-4 mt-4 border-t">
                                 <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
                                     {task.comments?.map(comment => {
@@ -301,6 +328,27 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                     )}
                                 </div>
                                 <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
+                                {isUserAssigned && (
+                                    <div className="pt-3 mt-3 border-t">
+                                         <Dialog open={isExtensionOpen} onOpenChange={setIsExtensionOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm">Request Deadline Extension</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Request Deadline Extension</DialogTitle>
+                                                </DialogHeader>
+                                                <Form {...extensionForm}>
+                                                    <form onSubmit={extensionForm.handleSubmit(handleExtensionSubmit)} className="space-y-4">
+                                                        <FormField control={extensionForm.control} name="requestedDeadline" render={({ field }) => (<FormItem><FormLabel>New Deadline</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : <span>Pick date</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                                        <FormField control={extensionForm.control} name="extensionRequestReason" render={({ field }) => (<FormItem><FormLabel>Reason for Request</FormLabel><FormControl><Textarea placeholder="Explain why an extension is needed..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                                        <div className="flex justify-end"><Button type="submit">Submit Request</Button></div>
+                                                    </form>
+                                                </Form>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                )}
                             </CollapsibleContent>
                         </Collapsible>
                     )})
@@ -333,27 +381,6 @@ function SafetyReportInvestigationPage() {
     resolver: zodResolver(discussionFormSchema),
   });
   
-  const investigationTeamMembers = useMemo(() => {
-    if (!report || !personnel.length) return [];
-    
-    const teamNames = new Set(report.investigationTeam || []);
-    if (report.submittedBy && report.submittedBy !== 'Anonymous') {
-      teamNames.add(report.submittedBy);
-    }
-    
-    const team = personnel.filter(p => teamNames.has(p.name));
-    return Array.from(new Map(team.map(item => [item['id'], item])).values());
-  }, [report, personnel]);
-
-
-  const availableRecipients = useMemo(() => {
-    if (!investigationTeamMembers.length || !user) {
-      return [];
-    }
-    return investigationTeamMembers.filter(p => p.id !== user?.id);
-  }, [investigationTeamMembers, user]);
-
-
   useEffect(() => {
     if (userLoading) return;
     if (!user) {
@@ -393,6 +420,22 @@ function SafetyReportInvestigationPage() {
     fetchReport();
     fetchPersonnel();
   }, [reportId, company, user, userLoading, router, toast]);
+
+  const investigationTeamMembers = useMemo(() => {
+    if (!report || !personnel.length || !report.investigationTeam) return [];
+    
+    const teamMemberIds = new Set(report.investigationTeam.map(m => m.userId));
+    
+    return personnel.filter(p => teamMemberIds.has(p.id));
+  }, [report, personnel]);
+
+
+  const availableRecipients = useMemo(() => {
+    if (!investigationTeamMembers.length || !user) {
+      return [];
+    }
+    return investigationTeamMembers.filter(p => p.id !== user?.id);
+  }, [investigationTeamMembers, user]);
 
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
@@ -443,7 +486,7 @@ function SafetyReportInvestigationPage() {
     } else if (icaoState.message && !icaoState.message.includes('complete')) {
        toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
     }
-  }, [icaoState, report, toast]);
+  }, [icaoState]);
 
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
@@ -561,6 +604,33 @@ function SafetyReportInvestigationPage() {
     });
     
     handleReportUpdate({ ...report, tasks: updatedTasks }, false); // Update silently
+  };
+  
+  const handleRequestExtension = (taskId: string, reason: string, newDeadline: string) => {
+      const updatedTasks = report?.tasks?.map(t => 
+          t.id === taskId ? { ...t, extensionRequestReason: reason, requestedDeadline: newDeadline, extensionStatus: 'Pending' } : t
+      );
+      handleReportUpdate({ tasks: updatedTasks || [] }, true);
+      toast({ title: 'Extension Requested', description: 'Your request has been submitted for approval.'});
+  };
+  
+  const handleApproveExtension = (taskId: string) => {
+      const taskToUpdate = report?.tasks?.find(t => t.id === taskId);
+      if (!taskToUpdate || !taskToUpdate.requestedDeadline) return;
+      
+      const updatedTasks = report?.tasks?.map(t =>
+          t.id === taskId ? { ...t, dueDate: t.requestedDeadline!, extensionStatus: 'Approved' } : t
+      );
+      handleReportUpdate({ tasks: updatedTasks || [] }, true);
+      toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
+  };
+
+  const handleRejectExtension = (taskId: string) => {
+      const updatedTasks = report?.tasks?.map(t =>
+          t.id === taskId ? { ...t, extensionStatus: 'Rejected' } : t
+      );
+      handleReportUpdate({ tasks: updatedTasks || [] }, true);
+      toast({ variant: 'destructive', title: 'Extension Rejected', description: `The deadline extension request was rejected.`});
   };
 
   if (userLoading || dataLoading) {
@@ -758,31 +828,30 @@ function SafetyReportInvestigationPage() {
                         isLoading={dataLoading} 
                         onMarkCommentsRead={handleMarkCommentsRead}
                         onManualTaskAdd={handleManualTaskAdd}
+                        onRequestExtension={handleRequestExtension}
+                        onApproveExtension={handleApproveExtension}
+                        onRejectExtension={handleRejectExtension}
                     />
 
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Investigation Notes</CardTitle>
-                                <CardDescription>
-                                    This is the final summary of the investigation findings.
-                                </CardDescription>
-                            </div>
-                            <Button onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
-                        </CardHeader>
-                        <CardContent>
-                            <Textarea 
-                                placeholder="Summarize the investigation findings, root causes, and contributing factors here..." 
-                                value={report.investigationNotes || ''}
-                                onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, false)}
-                                className="min-h-[150px]"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <Card>
                         <CardHeader>
-                             <CardTitle>5 Whys Analysis</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Investigation Notes</CardTitle>
+                                    <CardDescription>
+                                        This is the final summary of the investigation findings.
+                                    </CardDescription>
+                                </div>
+                                 <Button onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
+                            </div>
+                            <div className="pt-4">
+                                <Textarea 
+                                    placeholder="Summarize the investigation findings, root causes, and contributing factors here..." 
+                                    value={report.investigationNotes || ''}
+                                    onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, false)}
+                                    className="min-h-[150px]"
+                                />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate(data, true)} />
