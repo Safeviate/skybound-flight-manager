@@ -79,35 +79,11 @@ function AssessHazardDialog({ suggestion, onAddRisk, onCancel }: { suggestion: O
             <DialogHeader>
                 <DialogTitle>Assess Suggested Hazard</DialogTitle>
                 <DialogDescription>
-                    Review, edit, and score the AI-suggested hazard before adding it to the report's register.
+                    Categorize the hazard and use the matrix to set the initial risk score. The hazard is: "{suggestion.hazard}"
                 </DialogDescription>
             </DialogHeader>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="hazard"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Hazard</FormLabel>
-                                    <FormControl><Textarea {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="risk"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Associated Risk</FormLabel>
-                                    <FormControl><Textarea {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
