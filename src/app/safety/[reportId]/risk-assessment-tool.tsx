@@ -21,7 +21,7 @@ const LIKELIHOOD_LEVELS: Record<RiskLikelihood, { description: string; value: nu
     'Extremely Improbable': { description: 'Almost inconceivable that the event will occur.', value: 1 },
 };
 
-const LIKELIHOOD_ORDER: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'].reverse();
+const LIKELIHOOD_ORDER: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 
 
 const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string }> = {
@@ -31,7 +31,7 @@ const SEVERITY_LEVELS: Record<RiskSeverity, { description: string; value: string
     'Minor': { description: 'Nuisance, operating limitations, minor incident.', value: 'D' },
     'Negligible': { description: 'Little or no effect on safety.', value: 'E' },
 };
-const SEVERITY_ORDER: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'].reverse();
+const SEVERITY_ORDER: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
 
 const RISK_MATRIX_DATA: Record<string, Record<string, string>> = {
