@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
@@ -22,7 +22,7 @@ import type { Aircraft } from '@/lib/types';
 
 const checklistSchema = z.object({
   registration: z.string().min(1, { message: "Aircraft registration scan is required." }),
-  hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter scan is required." }),
+  hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   checklistOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the checklist is onboard." }),
@@ -45,15 +45,13 @@ interface PreFlightChecklistFormProps {
 
 export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | null>(null);
 
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
     defaultValues: {
-        registration: '',
+        registration: aircraft.tailNumber,
         hobbs: 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
@@ -69,18 +67,13 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     }
   });
 
+  useEffect(() => {
+    form.setValue('registration', aircraft.tailNumber);
+  }, [aircraft, form]);
+
+
   const { setValue, watch } = form;
   const watchedValues = watch();
-
-  const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
-    if (scanMode === 'registration' && data.registration) {
-      setValue('registration', data.registration, { shouldValidate: true });
-    }
-    if (scanMode === 'hobbs' && data.hobbs) {
-      setValue('hobbs', data.hobbs, { shouldValidate: true });
-    }
-    setIsScannerOpen(false);
-  };
   
   const handlePhotoSuccess = (data: { registration?: string; hobbs?: number }) => {
     // This is a workaround as the scanner component is being reused
@@ -90,11 +83,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     }
     setIsCameraOpen(false);
   }
-
-  const openScanner = (mode: 'registration' | 'hobbs') => {
-    setScanMode(mode);
-    setIsScannerOpen(true);
-  };
 
   const openCamera = (target: 'leftSidePhoto' | 'rightSidePhoto') => {
     setPhotoTarget(target);
@@ -116,7 +104,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                 <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 {/* AI Camera Scans */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
@@ -126,10 +113,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                                 <FormLabel>Aircraft Registration</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Plane className="h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="Not Scanned" {...field} readOnly className="flex-1" />
-                                    <Button type="button" variant="outline" onClick={() => openScanner('registration')}>
-                                        <Bot className="mr-2" /> Scan
-                                    </Button>
+                                    <Input placeholder="Aircraft Registration" {...field} readOnly className="flex-1 bg-muted" />
                                 </div>
                                 <FormMessage />
                             </FormItem>
@@ -143,10 +127,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                                 <FormLabel>Hobbs Meter</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Hash className="h-5 w-5 text-muted-foreground" />
-                                    <Input type="number" placeholder="Not Scanned" {...field} readOnly className="flex-1" />
-                                    <Button type="button" variant="outline" onClick={() => openScanner('hobbs')}>
-                                        <Bot className="mr-2" /> Scan
-                                    </Button>
+                                    <Input type="number" placeholder="Enter current Hobbs hours" {...field} className="flex-1" />
                                 </div>
                                 <FormMessage />
                             </FormItem>
@@ -233,20 +214,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                  <Button type="submit" className="w-full">Submit Pre-Flight Checklist</Button>
             </CardFooter>
         </Card>
-        
-        {/* Dialog for AI Scanner */}
-        <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>AI Aircraft Scanner</DialogTitle>
-                    <DialogDescription>
-                    {scanMode === 'registration' && 'Capture an image of the aircraft registration number.'}
-                    {scanMode === 'hobbs' && 'Capture an image of the Hobbs meter.'}
-                    </DialogDescription>
-                </DialogHeader>
-                {scanMode && <AircraftInfoScanner scanMode={scanMode} onSuccess={handleScanSuccess} />}
-            </DialogContent>
-        </Dialog>
         
         {/* Dialog for Standard Camera */}
         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
