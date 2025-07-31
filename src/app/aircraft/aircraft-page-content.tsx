@@ -22,8 +22,8 @@ import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PostFlightChecklistForm } from '../checklists/post-flight-checklist-form';
+import { ChecklistStarter } from './checklist-starter';
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -32,7 +32,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const { user, company, loading } = useUser();
     const { toast } = useToast();
     const { settings } = useSettings();
-    const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string>('');
+    const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
 
     const refreshData = useCallback(async () => {
         if (!company) return;
@@ -50,6 +50,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const archivedAircraft = useMemo(() => aircraftList.filter(a => a.status === 'Archived'), [aircraftList]);
     
     const selectedAircraftForChecklist = useMemo(() => {
+        if (!selectedChecklistAircraftId) return null;
         return activeAircraft.find(ac => ac.id === selectedChecklistAircraftId);
     }, [activeAircraft, selectedChecklistAircraftId]);
 
@@ -131,10 +132,15 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 title: 'Checklist Submitted',
                 description: `The aircraft is now ready for its ${newStatus === 'needs-post-flight' ? 'Post-Flight' : 'Pre-Flight'} check.`
             });
+             setSelectedChecklistAircraftId(null);
         } catch (error) {
             console.error("Error updating checklist status:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update checklist status.' });
         }
+    };
+    
+    const handleAircraftSelected = (aircraftId: string | null) => {
+        setSelectedChecklistAircraftId(aircraftId);
     };
 
     const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => (
@@ -240,23 +246,12 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 </TabsContent>
                 <TabsContent value="checklists" className="pt-6">
                     <div className="max-w-md mx-auto space-y-6">
-                        <Select value={selectedChecklistAircraftId} onValueChange={setSelectedChecklistAircraftId}>
-                            <SelectTrigger>
-                                <div className="flex items-center gap-2">
-                                    <Plane className="h-4 w-4" />
-                                    <SelectValue placeholder="Select an aircraft to perform a checklist..." />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {activeAircraft.map(ac => (
-                                    <SelectItem key={ac.id} value={ac.id}>
-                                        {ac.model} ({ac.tailNumber})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        {selectedAircraftForChecklist && (
+                        {!selectedAircraftForChecklist ? (
+                            <ChecklistStarter 
+                                aircraftList={activeAircraft} 
+                                onAircraftSelected={handleAircraftSelected} 
+                            />
+                        ) : (
                             <>
                                 {selectedAircraftForChecklist.checklistStatus === 'needs-post-flight' ? (
                                     <PostFlightChecklistForm 
@@ -270,12 +265,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                     />
                                 )}
                             </>
-                        )}
-                         {!selectedChecklistAircraftId && (
-                            <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-40 border-2 border-dashed rounded-lg">
-                                <p>Please select an aircraft</p>
-                                <p className="text-xs">to view its required checklist.</p>
-                            </div>
                         )}
                     </div>
                 </TabsContent>
