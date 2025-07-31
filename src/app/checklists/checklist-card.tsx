@@ -7,13 +7,13 @@ import { PlayCircle, Edit } from 'lucide-react';
 import type { AuditChecklist, CompletedChecklist } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { PerformChecklistDialog } from './perform-checklist-dialog';
 import { PostMaintenanceChecklistForm } from './post-maintenance-checklist-form';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
+import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 
 interface ChecklistCardProps {
   template: AuditChecklist;
@@ -58,8 +58,24 @@ export function ChecklistCard({ template, onEdit }: ChecklistCardProps) {
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the checklist.' });
     }
   };
+  
+    const renderChecklistForm = () => {
+        switch (template.id) {
+            case 'master-post-maintenance':
+                return <PostMaintenanceChecklistForm onSubmit={handleStandardFormSubmit} />;
+            case 'master-pre-flight':
+                // In a real app, you'd have a specific pre-flight form.
+                // For now, we'll reuse the post-maintenance as a placeholder.
+                return <PostMaintenanceChecklistForm onSubmit={handleStandardFormSubmit} />;
+            case 'master-post-flight':
+                 // For now, we'll reuse the post-maintenance as a placeholder.
+                return <PostMaintenanceChecklistForm onSubmit={handleStandardFormSubmit} />;
+            default:
+                // Generic fallback
+                return <p>This checklist cannot be performed at this time.</p>;
+        }
+    }
 
-  const isPostMaintenance = template.id === 'master-post-maintenance';
 
   return (
     <>
@@ -92,11 +108,7 @@ export function ChecklistCard({ template, onEdit }: ChecklistCardProps) {
                 <DialogTitle>{template.title}</DialogTitle>
                 <DialogDescription>Complete each item below.</DialogDescription>
             </DialogHeader>
-            {isPostMaintenance ? (
-                <PostMaintenanceChecklistForm onSubmit={handleStandardFormSubmit} />
-            ) : (
-                <PerformChecklistDialog template={template} />
-            )}
+            {renderChecklistForm()}
         </DialogContent>
       </Dialog>
     </>
