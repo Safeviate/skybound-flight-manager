@@ -1,13 +1,16 @@
 
+import { cookies } from 'next/headers';
 import { getAircraftPageData } from './data';
 import { AircraftPageContent } from './aircraft-page-content';
-import type { Aircraft, Booking, Checklist } from '@/lib/types';
-import { cookies } from 'next/headers';
 
-async function getInitialData(companyId: string) {
+async function getInitialData() {
+    const cookieStore = cookies();
+    const companyId = cookieStore.get('skybound_last_company_id')?.value;
+    
     if (!companyId) {
         return { aircraftList: [], checklistList: [], bookingList: [] };
     }
+    
     try {
         const { aircraftList, checklistList, bookingList } = await getAircraftPageData(companyId);
         return { aircraftList, checklistList, bookingList };
@@ -18,10 +21,7 @@ async function getInitialData(companyId: string) {
 }
 
 export default async function AircraftPageContainer() {
-    // In a real app, you'd get the companyId from the user's session
-    const cookieStore = cookies();
-    const companyId = cookieStore.get('skybound_last_company_id')?.value || 'skybound-aero';
-    const { aircraftList, checklistList, bookingList } = await getInitialData(companyId);
+    const { aircraftList, checklistList, bookingList } = await getInitialData();
 
     return (
         <AircraftPageContent 

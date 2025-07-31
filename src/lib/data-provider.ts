@@ -1,20 +1,13 @@
 
-
 'use client';
 
 // This file is being kept for now to avoid breaking imports, but it no longer provides mock data.
 // All data fetching is now handled directly by components from Firestore.
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company, ComplianceItem, RiskLikelihood, RiskSeverity } from './types';
-import { ROLE_PERMISSIONS } from './types';
-import { format, subDays, addDays } from 'date-fns';
 
 export const airportData: Airport[] = [];
-
-export let aircraftData: Aircraft[] = [];
-
+export const aircraftData: Aircraft[] = [];
 export let userData: Omit<User, 'id'>[] = [];
-
-
 export let bookingData: Booking[] = [];
 export const trainingExercisesData: string[] = [
     'Pre-Solo Written Exam',
@@ -134,8 +127,3 @@ export const complianceData: Omit<ComplianceItem, 'id'|'companyId'|'lastAuditDat
     }
     return 0;
 });
-
-
-// Functions to modify data are now handled by components writing to Firestore.
-
-    
