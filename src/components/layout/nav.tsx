@@ -51,6 +51,7 @@ const navItems: {
 }[] = [
   { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
+  { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View', 'Bookings:Edit'], requiredFeature: 'Bookings' },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
