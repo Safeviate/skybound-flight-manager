@@ -56,7 +56,7 @@ export function AircraftPageContent({
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  const fetchData = async () => {
+  const refreshData = async () => {
       if (!company) return;
       try {
           const { aircraftList, checklistList, bookingList } = await getAircraftPageData(company.id);
@@ -65,7 +65,7 @@ export function AircraftPageContent({
           setBookings(bookingList);
       } catch (error) {
           console.error("Error fetching data:", error);
-          toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch initial data.'});
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to refresh data.'});
       }
   };
   
@@ -183,7 +183,7 @@ export function AircraftPageContent({
   const handleAircraftAdded = (newAircraft: Aircraft) => {
     setFleet(prev => [...prev, newAircraft]);
     setIsNewAircraftDialogOpen(false);
-    fetchData(); // Refetch all data to get newly assigned checklists
+    refreshData(); // Refetch all data to get newly assigned checklists
   }
   
   const handleDeleteAircraft = async (aircraftId: string) => {
@@ -248,7 +248,7 @@ export function AircraftPageContent({
         title: 'Aircraft Seeded',
         description: `${aircraftToSeed.length} sample aircraft have been added to your fleet.`,
       });
-      fetchData(); // Refresh the list
+      refreshData(); // Refresh the list
     } catch (error) {
       console.error('Error seeding aircraft:', error);
       toast({
