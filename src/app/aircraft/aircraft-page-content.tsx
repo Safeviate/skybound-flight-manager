@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -19,6 +20,7 @@ import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
+import { AuditChecklistsManager } from '../checklists/checklist-template-manager';
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -210,13 +212,8 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 <TabsContent value="archived">
                      <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
-                <TabsContent value="checklists">
-                    <div className="flex justify-end p-4">
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Create audit checklist
-                        </Button>
-                    </div>
+                <TabsContent value="checklists" className="pt-4">
+                    <AuditChecklistsManager />
                 </TabsContent>
             </Tabs>
         </CardContent>

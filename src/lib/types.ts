@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -406,11 +405,12 @@ export type AuditChecklist = {
     companyId: string;
     title: string;
     area: AuditArea;
-    items: AuditChecklistItem[];
+    items: ChecklistItem[];
     department?: string;
     auditeeName?: string;
     auditeePosition?: string;
     auditor?: string;
+    category: ChecklistCategory;
 }
 
 export const VIEW_ALL_PAGES: Permission[] = [
@@ -468,21 +468,32 @@ export const ICAO_PHASES_OF_FLIGHT = [
 ].sort();
 
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs';
 
 export type ChecklistItem = {
     id: string;
     text: string;
-    type: 'Checkbox' | 'Confirm postflight hobbs';
+    type: ChecklistItemType;
     completed: boolean;
-    value?: string | number;
+    value?: string | number | boolean;
 };
 
-export type Checklist = {
+export type CompletedChecklistItemResult = {
+    itemId: string;
+    itemText: string;
+    completed: boolean;
+    value?: any;
+};
+
+export type CompletedChecklist = {
     id: string;
+    templateId: string;
+    templateTitle: string;
+    userId: string;
+    userName: string;
     companyId: string;
-    title: string;
-    category: ChecklistCategory;
-    items: ChecklistItem[];
+    dateCompleted: string;
+    items: CompletedChecklistItemResult[];
 };
 
 export type CorrectiveActionPlan = {
@@ -569,5 +580,3 @@ export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department
     'Occupational Report': 'Management',
     'General Report': 'Management',
 };
-
-    
