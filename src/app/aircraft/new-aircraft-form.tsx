@@ -42,12 +42,12 @@ const aircraftFormSchema = z.object({
   hours: z.coerce.number().min(0, {
       message: "Hours must be a positive number.",
   }),
-  airworthinessExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  insuranceExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  certificateOfReleaseToServiceExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  certificateOfRegistrationExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  massAndBalanceExpiry: z.date({ required_error: 'An expiry date is required.' }),
-  radioStationLicenseExpiry: z.date({ required_error: 'An expiry date is required.' }),
+  airworthinessExpiry: z.date().optional(),
+  insuranceExpiry: z.date().optional(),
+  certificateOfReleaseToServiceExpiry: z.date().optional(),
+  certificateOfRegistrationExpiry: z.date().optional(),
+  massAndBalanceExpiry: z.date().optional(),
+  radioStationLicenseExpiry: z.date().optional(),
 });
 
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
@@ -135,12 +135,12 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         ...data,
         id,
         companyId: company.id,
-        airworthinessExpiry: format(data.airworthinessExpiry, 'yyyy-MM-dd'),
-        insuranceExpiry: format(data.insuranceExpiry, 'yyyy-MM-dd'),
-        certificateOfReleaseToServiceExpiry: format(data.certificateOfReleaseToServiceExpiry, 'yyyy-MM-dd'),
-        certificateOfRegistrationExpiry: format(data.certificateOfRegistrationExpiry, 'yyyy-MM-dd'),
-        massAndBalanceExpiry: format(data.massAndBalanceExpiry, 'yyyy-MM-dd'),
-        radioStationLicenseExpiry: format(data.radioStationLicenseExpiry, 'yyyy-MM-dd'),
+        airworthinessExpiry: data.airworthinessExpiry ? format(data.airworthinessExpiry, 'yyyy-MM-dd') : '',
+        insuranceExpiry: data.insuranceExpiry ? format(data.insuranceExpiry, 'yyyy-MM-dd') : '',
+        certificateOfReleaseToServiceExpiry: data.certificateOfReleaseToServiceExpiry ? format(data.certificateOfReleaseToServiceExpiry, 'yyyy-MM-dd') : '',
+        certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? format(data.certificateOfRegistrationExpiry, 'yyyy-MM-dd') : '',
+        massAndBalanceExpiry: data.massAndBalanceExpiry ? format(data.massAndBalanceExpiry, 'yyyy-MM-dd') : '',
+        radioStationLicenseExpiry: data.radioStationLicenseExpiry ? format(data.radioStationLicenseExpiry, 'yyyy-MM-dd') : '',
         nextServiceType: nextService.type,
         hoursUntilService: nextService.hoursUntil,
         location: 'KPAO', // Default location, can be changed later

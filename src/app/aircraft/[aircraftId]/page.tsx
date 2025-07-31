@@ -88,7 +88,7 @@ export default function AircraftDetailPage() {
       { label: 'Certificate of Registration', date: aircraft.certificateOfRegistrationExpiry },
       { label: 'Mass and Balance', date: aircraft.massAndBalanceExpiry },
       { label: 'Radio Station License', date: aircraft.radioStationLicenseExpiry },
-  ];
+  ].filter(doc => doc.date);
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
