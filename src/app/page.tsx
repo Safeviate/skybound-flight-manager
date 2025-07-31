@@ -29,8 +29,11 @@ async function fetchStatsForCompany(companyId: string): Promise<Omit<CompanyWith
         getDocs(lastBookingQuery),
       ]);
       
-      const lastBookingDateString = lastBookingSnapshot.empty ? undefined : lastBookingSnapshot.docs[0].data().date;
-      const lastBookingDate = lastBookingDateString ? new Date(lastBookingDateString).toISOString() : undefined;
+      let lastBookingDate: string | undefined = undefined;
+      if (!lastBookingSnapshot.empty) {
+        const lastBookingTimestamp = lastBookingSnapshot.docs[0].data().date as Timestamp;
+        lastBookingDate = lastBookingTimestamp.toDate().toISOString();
+      }
 
 
       return {
