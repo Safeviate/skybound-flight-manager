@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -253,6 +253,12 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                             />
                         ) : (
                             <>
+                                <div className="mb-4">
+                                    <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" />
+                                        Change Aircraft
+                                    </Button>
+                                </div>
                                 {selectedAircraftForChecklist.checklistStatus === 'needs-post-flight' ? (
                                     <PostFlightChecklistForm 
                                         onSuccess={() => handleChecklistSuccess('needs-pre-flight')}
