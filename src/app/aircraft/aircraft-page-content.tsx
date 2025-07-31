@@ -215,7 +215,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         <TableCell className="text-right">
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon">
+                                   <Button variant="ghost" size="icon" disabled={isArchived}>
                                        <MoreHorizontal className="h-4 w-4" />
                                    </Button>
                                </DropdownMenuTrigger>
@@ -334,3 +334,5 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     </main>
   );
 }
+
+    

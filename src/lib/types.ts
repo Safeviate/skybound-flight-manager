@@ -569,3 +569,5 @@ export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department
     'Occupational Report': 'Management',
     'General Report': 'Management',
 };
+
+    

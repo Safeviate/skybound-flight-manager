@@ -86,83 +86,71 @@ export function ChecklistTemplateManager({ onUpdate }: { onUpdate: () => void })
     }
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <ListChecks className="mr-2 h-4 w-4" />
-                    Manage Checklists
+        <div className="space-y-4">
+             <div className="flex justify-end mb-4">
+                <Button onClick={openNewDialog}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Template
                 </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl">
-                <DialogHeader>
-                    <DialogTitle>Aircraft Checklist Templates</DialogTitle>
-                    <DialogDescription>
-                        Manage the master checklists that are assigned to aircraft.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex justify-end mb-4">
-                    <Button onClick={openNewDialog}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        New Template
-                    </Button>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto p-1">
-                    {checklistTemplates.length > 0 ? (
-                        checklistTemplates.map((template) => (
-                            <Card key={template.id} className="flex flex-col">
-                                <CardHeader>
-                                    <CardTitle>{template.title}</CardTitle>
-                                    <CardDescription>{template.category}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1">
-                                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                                        {template.items.slice(0, 5).map(item => (
-                                            <li key={item.id} className="truncate">{item.text}</li>
-                                        ))}
-                                        {template.items.length > 5 && <li>...and {template.items.length - 5} more</li>}
-                                    </ul>
-                                </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
-                                        <Edit className="mr-2 h-4 w-4" /> Edit
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="icon">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the "{template.title}" template. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDelete(template.id)}>
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </CardFooter>
-                            </Card>
-                        ))
-                    ) : (
-                        <p className="text-muted-foreground col-span-full text-center py-10">No checklist templates found.</p>
-                    )}
-                </div>
-                <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
-                        </DialogHeader>
-                        <ChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
-                    </DialogContent>
-                </Dialog>
-            </DialogContent>
-        </Dialog>
+            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto p-1">
+                {checklistTemplates.length > 0 ? (
+                    checklistTemplates.map((template) => (
+                        <Card key={template.id} className="flex flex-col">
+                            <CardHeader>
+                                <CardTitle>{template.title}</CardTitle>
+                                <CardDescription>{template.category}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-1">
+                                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                    {template.items.slice(0, 5).map(item => (
+                                        <li key={item.id} className="truncate">{item.text}</li>
+                                    ))}
+                                    {template.items.length > 5 && <li>...and {template.items.length - 5} more</li>}
+                                </ul>
+                            </CardContent>
+                            <CardFooter className="flex justify-end gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="icon">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete the "{template.title}" template. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(template.id)}>
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </CardFooter>
+                        </Card>
+                    ))
+                ) : (
+                    <p className="text-muted-foreground col-span-full text-center py-10">No checklist templates found.</p>
+                )}
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
+                    </DialogHeader>
+                    <ChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }
+
+    
