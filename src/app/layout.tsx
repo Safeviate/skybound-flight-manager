@@ -7,6 +7,7 @@ import { SettingsProvider } from '@/context/settings-provider';
 import { AppContent } from './app-content';
 import { Inter } from 'next/font/google';
 import { ScaleProvider } from '@/context/scale-provider';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -33,9 +34,9 @@ export default function RootLayout({
           <UserProvider>
             <SettingsProvider>
               <ScaleProvider>
-                <AppContent>
+                <SidebarProvider>
                   {children}
-                </AppContent>
+                </SidebarProvider>
                 <Toaster />
               </ScaleProvider>
             </SettingsProvider>

@@ -32,6 +32,7 @@ import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writ
 import { format } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
+import { AppContent } from '../app-content';
 
 function AircraftPage() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -280,6 +281,7 @@ function AircraftPage() {
   }
   
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -463,6 +465,7 @@ function AircraftPage() {
           </CardContent>
         </Card>
       </main>
+    </AppContent>
   );
 }
 

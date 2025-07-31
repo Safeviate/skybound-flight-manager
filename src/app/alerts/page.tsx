@@ -22,6 +22,7 @@ import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, lim
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AppContent } from '../app-content';
 
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -169,6 +170,7 @@ function AlertsPage() {
   const displayedAlerts = alerts.filter(alert => !alert.readBy.includes(user.id));
 
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -292,6 +294,7 @@ function AlertsPage() {
           </CardContent>
         </Card>
       </main>
+    </AppContent>
   );
 }
 

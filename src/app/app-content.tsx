@@ -35,14 +35,15 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const noLayoutRoutes = ['/login', '/corporate'];
   const showLayout = user && !noLayoutRoutes.includes(pathname);
   
-  const pageTitle = getPageTitle(children);
-  const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
-  const headerContent = child?.type && (child.type as any).headerContent;
+  if (pathname === '/') return <>{children}</>;
 
-  
   if (showLayout) {
+    const pageTitle = getPageTitle(children);
+    const child = Children.only(children) as React.ReactElement<any, string | React.JSXElementConstructor<any>>;
+    const headerContent = child?.type && (child.type as any).headerContent;
+
     return (
-      <SidebarProvider>
+      <>
           <Sidebar>
               <Nav />
           </Sidebar>
@@ -57,7 +58,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
               </div>
               <Footer />
           </SidebarInset>
-      </SidebarProvider>
+      </>
     );
   }
 

@@ -26,7 +26,11 @@ export default function LoginPage() {
   useEffect(() => {
     // If a user is already logged in, redirect them away from the login page.
     if (user) {
-        router.push('/');
+        if(user.permissions.includes('Super User')) {
+            router.push('/');
+        } else {
+            router.push('/my-dashboard');
+        }
     }
   }, [user, router]);
   
@@ -37,13 +41,11 @@ export default function LoginPage() {
     
     const loginSuccess = await login(email, password);
 
-    if (loginSuccess) {
-        const redirectPath = searchParams.get('redirect');
-        router.push(redirectPath || '/');
-    } else {
+    if (!loginSuccess) {
       setLoginError('Login failed. Please check your email and password.');
       setIsLoading(false);
     }
+    // The useEffect hook will handle redirection on successful login
   }
 
   return (

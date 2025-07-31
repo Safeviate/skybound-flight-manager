@@ -37,6 +37,7 @@ import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AppContent } from '../app-content';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -769,6 +770,7 @@ export default function QualityAuditDetailPage() {
   const isAuditClosed = audit.status === 'Closed' || audit.status === 'Archived';
   
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
         {isAuditClosed ? (
             <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} />
@@ -924,6 +926,7 @@ export default function QualityAuditDetailPage() {
         </>
         )}
       </main>
+    </AppContent>
   );
 }
 
@@ -931,6 +934,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

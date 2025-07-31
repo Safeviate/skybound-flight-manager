@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Aircraft, CompletedChecklist } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
+import { AppContent } from '../app-content';
 
 
 export default function AircraftDetailPage() {
@@ -91,6 +92,7 @@ export default function AircraftDetailPage() {
   ];
 
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader>
@@ -175,6 +177,7 @@ export default function AircraftDetailPage() {
           </CardContent>
         </Card>
       </main>
+    </AppContent>
   );
 }
 

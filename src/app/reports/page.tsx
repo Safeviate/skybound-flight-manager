@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
 import type { Booking, Aircraft } from '@/lib/types';
+import { AppContent } from '../app-content';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -96,6 +97,7 @@ function ReportsPage() {
   }
 
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader>
@@ -110,6 +112,7 @@ function ReportsPage() {
           </CardContent>
         </Card>
       </main>
+    </AppContent>
   );
 }
 

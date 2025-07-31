@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -49,6 +48,7 @@ import { CalendarIcon, Check } from 'lucide-react';
 import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AppContent } from '../app-content';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -650,7 +650,7 @@ function SafetyReportInvestigationPage() {
   }
 
   return (
-    <>
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
             <CardHeader>
@@ -1005,7 +1005,7 @@ function SafetyReportInvestigationPage() {
                 </TabsContent>
             </Tabs>
       </main>
-    </>
+    </AppContent>
   );
 }
 
