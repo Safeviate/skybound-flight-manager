@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, Trash2, RotateCw } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, Trash2, RotateCw, ListChecks } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,15 +12,46 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft } from '@/lib/types';
+import type { Aircraft, Checklist } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, setDoc, addDoc, getDocs, query } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
+import { ChecklistCard } from '../checklists/checklist-card';
+
+
+const PRE_FLIGHT_TEMPLATE: Checklist = {
+  id: 'template-pre-flight',
+  companyId: 'skybound-aero', // Placeholder
+  title: 'Standard Pre-Flight Inspection',
+  category: 'Pre-Flight',
+  items: [
+    { id: 'doc-airworthiness', text: 'Confirm Certificate of Airworthiness is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-insurance', text: 'Confirm Insurance is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-crts', text: 'Confirm Certificate of Release to Service is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-registration', text: 'Confirm Certificate of Registration is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-mass-balance', text: 'Confirm Mass and Balance is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-radio-license', text: 'Confirm Radio Station License is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-aircraft-checklist', text: 'Confirm Aircraft checklist is onboard', type: 'Checkbox', completed: false },
+    { id: 'doc-aircraft-manual', text: 'Confirm Aircraft Manual is onboard', type: 'Checkbox', completed: false },
+  ],
+};
+
+const POST_FLIGHT_TEMPLATE: Checklist = {
+  id: 'template-post-flight',
+  companyId: 'skybound-aero', // Placeholder
+  title: 'Standard Post-Flight Checks',
+  category: 'Post-Flight',
+  items: [
+    { id: 'post-hobbs', text: 'Confirm postflight hobbs', type: 'Confirm postflight hobbs', completed: false },
+    // ... add any other post-flight items here
+  ],
+};
+
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -29,6 +60,8 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const { user, company, loading } = useUser();
     const { toast } = useToast();
     const { settings } = useSettings();
+    const [activeChecklist, setActiveChecklist] = useState<Checklist | null>(null);
+    const [selectedAircraftForChecklist, setSelectedAircraftForChecklist] = useState<Aircraft | null>(null);
 
 
     const refreshData = useCallback(async () => {
@@ -111,6 +144,48 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             default: return 'outline';
         }
     };
+
+    const openChecklistDialog = (aircraft: Aircraft) => {
+        setSelectedAircraftForChecklist(aircraft);
+        // For now, we'll default to the pre-flight checklist.
+        // This can be expanded to allow choosing between pre/post flight.
+        setActiveChecklist(PRE_FLIGHT_TEMPLATE);
+    };
+    
+    const closeChecklistDialog = () => {
+        setSelectedAircraftForChecklist(null);
+        setActiveChecklist(null);
+    }
+    
+    const handleChecklistItemToggle = (updatedChecklist: Checklist) => {
+        setActiveChecklist(updatedChecklist);
+    }
+    
+    const handleChecklistSubmit = async (finalChecklist: Checklist, hobbsValue?: number) => {
+        if (!company || !selectedAircraftForChecklist || !user) return;
+        
+        try {
+            const completedChecklistData = {
+                ...finalChecklist,
+                completedBy: user.id,
+                completedDate: new Date().toISOString(),
+                aircraftId: selectedAircraftForChecklist.id,
+                hobbsValue: hobbsValue, // Add Hobbs value if provided
+            };
+            
+            await addDoc(collection(db, `companies/${company.id}/completed-checklists`), completedChecklistData);
+            
+            toast({
+                title: 'Checklist Submitted',
+                description: `The ${finalChecklist.title} for ${selectedAircraftForChecklist.tailNumber} has been saved.`,
+            });
+            
+            closeChecklistDialog();
+        } catch (error) {
+            console.error("Error submitting checklist:", error);
+            toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the checklist.' });
+        }
+    };
     
     const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => (
         <Table>
@@ -140,7 +215,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         <TableCell className="text-right">
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon" disabled={isArchived}>
+                                   <Button variant="ghost" size="icon">
                                        <MoreHorizontal className="h-4 w-4" />
                                    </Button>
                                </DropdownMenuTrigger>
@@ -155,6 +230,10 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                         <DropdownMenuItem onClick={() => handleEdit(ac)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => openChecklistDialog(ac)}>
+                                            <ListChecks className="mr-2 h-4 w-4" />
+                                            Perform Checklist
                                         </DropdownMenuItem>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -229,6 +308,28 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               </DialogHeader>
               <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
           </DialogContent>
+        </Dialog>
+        
+        <Dialog open={!!activeChecklist} onOpenChange={closeChecklistDialog}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{activeChecklist?.title}</DialogTitle>
+                    <DialogDescription>
+                        For aircraft: {selectedAircraftForChecklist?.tailNumber}
+                    </DialogDescription>
+                </DialogHeader>
+                {activeChecklist && (
+                    <ChecklistCard 
+                        checklist={activeChecklist}
+                        aircraft={selectedAircraftForChecklist || undefined}
+                        onItemToggle={handleChecklistItemToggle}
+                        onItemValueChange={() => {}} // Placeholder for now
+                        onUpdate={handleChecklistSubmit}
+                        onReset={() => {}} // Placeholder for now
+                        onEdit={() => {}} // Placeholder for now
+                    />
+                )}
+            </DialogContent>
         </Dialog>
     </main>
   );

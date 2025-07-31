@@ -467,6 +467,23 @@ export const ICAO_PHASES_OF_FLIGHT = [
     'Other'
 ].sort();
 
+export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+
+export type ChecklistItem = {
+    id: string;
+    text: string;
+    type: 'Checkbox' | 'Confirm postflight hobbs';
+    completed: boolean;
+    value?: string | number;
+};
+
+export type Checklist = {
+    id: string;
+    companyId: string;
+    title: string;
+    category: ChecklistCategory;
+    items: ChecklistItem[];
+};
 
 export type CorrectiveActionPlan = {
   rootCause: string;
