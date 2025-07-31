@@ -252,10 +252,10 @@ function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: Personne
   );
 }
 
-export default async function PersonnelPage() {
+export default async function PersonnelPageContainer() {
     const companyId = 'skybound-aero';
     const initialPersonnel = await getPersonnelPageData(companyId);
     return <PersonnelPageContent initialPersonnel={initialPersonnel} />;
 }
 
-PersonnelPage.title = 'Personnel Management';
+PersonnelPageContainer.title = 'Personnel Management';

@@ -217,11 +217,11 @@ function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   );
 }
 
-export default async function StudentsPage() {
+export default async function StudentsPageContainer() {
     const companyId = 'skybound-aero'; // Placeholder for company context
     const initialStudents = await getStudentsPageData(companyId);
     return <StudentsPageContent initialStudents={initialStudents} />;
 }
 
 
-StudentsPage.title = "Student Management";
+StudentsPageContainer.title = "Student Management";
