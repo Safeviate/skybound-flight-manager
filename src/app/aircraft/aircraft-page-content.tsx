@@ -14,25 +14,23 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Checklist } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Trash2, MoreHorizontal, Save } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import QRCode from 'qrcode.react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useSettings } from '@/context/settings-provider';
-import { getAircraftPageData } from './data';
 import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
-import { updateDoc } from 'firebase/firestore';
-import { Save } from 'lucide-react';
 import { ChecklistCard } from '../checklists/checklist-card';
+import { getAircraftPageData } from './data';
 
 
 export function AircraftPageContent({
@@ -41,7 +39,6 @@ export function AircraftPageContent({
 }: {
     initialFleet: Aircraft[], 
     initialChecklists: Checklist[],
-    initialBookings: any[]
 }) {
   const [fleet, setFleet] = useState<Aircraft[]>(initialFleet);
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklists);
@@ -122,7 +119,8 @@ export function AircraftPageContent({
   };
   
   const handleChecklistUpdate = async () => {
-      // Dummy function for now, will be implemented later
+      // This will eventually link to completing a checklist and updating aircraft status
+      await refreshData();
       toast({ title: "Checklist submitted (simulation)" });
   }
 
@@ -130,7 +128,10 @@ export function AircraftPageContent({
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Aircraft Fleet</CardTitle>
+            <div className="space-y-1">
+                <CardTitle>Aircraft Fleet</CardTitle>
+                <CardDescription>Manage all aircraft, their documents, and associated checklists.</CardDescription>
+            </div>
           <div className="flex items-center gap-2">
              {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
               <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
@@ -206,8 +207,8 @@ export function AircraftPageContent({
                           </div>
                       )}
                   </TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
+                  <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                  <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
                   <TableCell>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
