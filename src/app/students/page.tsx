@@ -33,25 +33,21 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
-function StudentsPage() {
+async function getStudentsPageData(companyId: string) {
+    const studentsQuery = query(collection(db, `companies/${companyId}/users`), where('role', '==', 'Student'));
+    const snapshot = await getDocs(studentsQuery);
+    return snapshot.docs.map(doc => doc.data() as User);
+}
+
+function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
-  const [students, setStudents] = useState<User[]>([]);
+  const [students, setStudents] = useState<User[]>(initialStudents);
   const { user, company, loading } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (company) {
-        fetchStudents();
-    }
-  }, [user, company, loading, router]);
-  
   const fetchStudents = async () => {
       if (!company) return;
-      const studentsQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Student'));
-      const snapshot = await getDocs(studentsQuery);
-      const studentList = snapshot.docs.map(doc => doc.data() as User);
+      const studentList = await getStudentsPageData(company.id);
       setStudents(studentList);
   };
 
@@ -177,14 +173,6 @@ function StudentsPage() {
     </Table>
   );
 
-  if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
-  }
-
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -229,5 +217,11 @@ function StudentsPage() {
   );
 }
 
+export default async function StudentsPage() {
+    const companyId = 'skybound-aero'; // Placeholder for company context
+    const initialStudents = await getStudentsPageData(companyId);
+    return <StudentsPageContent initialStudents={initialStudents} />;
+}
+
+
 StudentsPage.title = "Student Management";
-export default StudentsPage;

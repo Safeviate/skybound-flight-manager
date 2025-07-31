@@ -17,38 +17,41 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-function BookingsPage() {
-  const [bookingData, setBookingData] = useState<Booking[]>([]);
-  const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+async function getBookingsPageData(companyId: string) {
+    const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+    const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
+    
+    const [bookingsSnapshot, aircraftSnapshot] = await Promise.all([
+        getDocs(bookingsQuery),
+        getDocs(aircraftQuery)
+    ]);
+
+    const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+    
+    return { bookingsList, aircraftList };
+}
+
+function BookingsPageContent({
+    initialBookings,
+    initialAircraft
+}: {
+    initialBookings: Booking[],
+    initialAircraft: Aircraft[]
+}) {
+  const [bookingData, setBookingData] = useState<Booking[]>(initialBookings);
+  const [aircraftData, setAircraftData] = useState<Aircraft[]>(initialAircraft);
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
   const { user, company, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (company) {
-        fetchData();
-    }
-  }, [user, company, loading, router]);
-
   const fetchData = async () => {
     if (!company) return;
     try {
-        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-        
-        const [bookingsSnapshot, aircraftSnapshot] = await Promise.all([
-            getDocs(bookingsQuery),
-            getDocs(aircraftQuery)
-        ]);
-
-        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        const { bookingsList, aircraftList } = await getBookingsPageData(company.id);
         setBookingData(bookingsList);
-
-        const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         setAircraftData(aircraftList);
 
     } catch(e) {
@@ -114,15 +117,6 @@ function BookingsPage() {
     setIsNewBookingOpen(true);
   }
 
-
-  if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
-  }
-
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -172,5 +166,11 @@ function BookingsPage() {
   );
 }
 
-BookingsPage.title = 'Aircraft Bookings';
-export default BookingsPage;
+export default async function BookingsPageContainer() {
+    const companyId = 'skybound-aero';
+    const { bookingsList, aircraftList } = await getBookingsPageData(companyId);
+    
+    return <BookingsPageContent initialBookings={bookingsList} initialAircraft={aircraftList} />
+}
+
+BookingsPageContainer.title = 'Aircraft Bookings';

@@ -24,30 +24,28 @@ import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
-function PersonnelPage() {
+async function getPersonnelPageData(companyId: string) {
+    const personnelQuery = query(collection(db, `companies/${companyId}/users`), where('role', '!=', 'Student'));
+    const snapshot = await getDocs(personnelQuery);
+    return snapshot.docs.map(doc => doc.data() as PersonnelUser);
+}
+
+
+function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
     const { user, company, loading } = useUser();
     const { settings } = useSettings();
     const router = useRouter();
-    const [personnel, setPersonnel] = useState<PersonnelUser[]>([]);
+    const [personnel, setPersonnel] = useState<PersonnelUser[]>(initialPersonnel);
     const [isNewPersonnelOpen, setIsNewPersonnelOpen] = useState(false);
     const [editingPersonnel, setEditingPersonnel] = useState<PersonnelUser | null>(null);
     const { toast } = useToast();
     
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        } else if (company) {
-            fetchPersonnel();
-        }
-    }, [user, company, loading, router]);
-    
     const fetchPersonnel = async () => {
         if (!company) return;
-        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-        const snapshot = await getDocs(personnelQuery);
-        setPersonnel(snapshot.docs.map(doc => doc.data() as PersonnelUser));
+        const personnelData = await getPersonnelPageData(company.id);
+        setPersonnel(personnelData);
     };
 
     const handleNewPersonnel = async (data: Omit<PersonnelUser, 'id'>) => {
@@ -125,15 +123,6 @@ function PersonnelPage() {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete personnel.' });
         }
     };
-
-
-  if (loading || !user) {
-        return (
-            <main className="flex-1 flex items-center justify-center">
-                <p>Loading...</p>
-            </main>
-        );
-    }
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -263,5 +252,10 @@ function PersonnelPage() {
   );
 }
 
+export default async function PersonnelPage() {
+    const companyId = 'skybound-aero';
+    const initialPersonnel = await getPersonnelPageData(companyId);
+    return <PersonnelPageContent initialPersonnel={initialPersonnel} />;
+}
+
 PersonnelPage.title = 'Personnel Management';
-export default PersonnelPage;

@@ -27,6 +27,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
 
 
+async function getQualityPageData(companyId: string) {
+    const auditsQuery = query(collection(db, `companies/${companyId}/quality-audits`));
+    const scheduleQuery = query(collection(db, `companies/${companyId}/audit-schedule-items`));
+
+    const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
+        getDocs(auditsQuery),
+        getDocs(scheduleQuery),
+    ]);
+    
+    const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
+    const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
+
+    return { auditsList, scheduleList };
+}
+
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
   const chartData = data.map(audit => ({
     date: format(parseISO(audit.date), 'MMM yy'),
@@ -86,10 +101,16 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
 
 const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
 
-function QualityPage() {
+function QualityPageContent({
+    initialAudits,
+    initialSchedule
+}: {
+    initialAudits: QualityAudit[],
+    initialSchedule: AuditScheduleItem[]
+}) {
   const searchParams = useSearchParams();
-  const [audits, setAudits] = useState<QualityAudit[]>([]);
-  const [schedule, setSchedule] = useState<AuditScheduleItem[]>([]);
+  const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
+  const [schedule, setSchedule] = useState<AuditScheduleItem[]>(initialSchedule);
   const [auditAreas, setAuditAreas] = useState<string[]>(INITIAL_AUDIT_AREAS);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
@@ -98,39 +119,6 @@ function QualityPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (company) {
-        const fetchData = async () => {
-            if (!company) return;
-            try {
-                const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
-                const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
-
-                const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
-                    getDocs(auditsQuery),
-                    getDocs(scheduleQuery),
-                ]);
-                
-                const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
-                setAudits(auditsList);
-
-                const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
-                setSchedule(scheduleList);
-
-            } catch (error) {
-                console.error("Error fetching quality data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
-            }
-        };
-        fetchData();
-    }
-  }, [user, company, loading, router, toast]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -293,11 +281,6 @@ function QualityPage() {
     } else {
         setSelectedAudits(prev => prev.filter(id => id !== auditId));
     }
-  }
-
-
-  if (loading || !user) {
-    return null;
   }
 
   const getComplianceColor = (score: number) => {
@@ -511,5 +494,10 @@ function QualityPage() {
   );
 }
 
-QualityPage.title = 'Quality Assurance';
-export default QualityPage;
+export default async function QualityPageContainer() {
+    const companyId = 'skybound-aero';
+    const { auditsList, scheduleList } = await getQualityPageData(companyId);
+    return <QualityPageContent initialAudits={auditsList} initialSchedule={scheduleList} />;
+}
+
+QualityPageContainer.title = 'Quality Assurance';

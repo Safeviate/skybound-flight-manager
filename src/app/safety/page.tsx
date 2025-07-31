@@ -37,6 +37,28 @@ import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 
 
+async function getSafetyPageData(companyId: string) {
+    const reportsQuery = query(collection(db, `companies/${companyId}/safety-reports`));
+    const risksQuery = query(collection(db, `companies/${companyId}/risks`));
+    const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+    const checklistsQuery = query(collection(db, `companies/${companyId}/completedChecklists`));
+
+    const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
+        getDocs(reportsQuery),
+        getDocs(risksQuery),
+        getDocs(bookingsQuery),
+        getDocs(checklistsQuery),
+    ]);
+
+    const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+    const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+    const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
+    
+    return { reportsList, risksList, bookingsList, checklistsList };
+}
+
+
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
   const grouped: { [key: string]: Risk[] } = risks.reduce((acc, risk) => {
     const area = risk.hazardArea || 'Uncategorized';
@@ -382,60 +404,38 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     );
 };
 
-function SafetyPage() {
+function SafetyPageContent({
+    initialReports,
+    initialRisks,
+    initialBookings,
+    initialChecklists
+}: {
+    initialReports: SafetyReport[],
+    initialRisks: Risk[],
+    initialBookings: Booking[],
+    initialChecklists: CompletedChecklist[]
+}) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
 
-  const [safetyReports, setSafetyReports] = useState<SafetyReport[]>([]);
-  const [risks, setRisks] = useState<Risk[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [completedChecklists, setCompletedChecklists] = useState<CompletedChecklist[]>([]);
+  const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
+  const [risks, setRisks] = useState<Risk[]>(initialRisks);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [completedChecklists, setCompletedChecklists] = useState<CompletedChecklist[]>(initialChecklists);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (company) {
-        const fetchData = async () => {
-            if (!company) return;
-            try {
-                const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
-                const risksQuery = query(collection(db, `companies/${company.id}/risks`));
-                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-                const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
-
-                const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
-                    getDocs(reportsQuery),
-                    getDocs(risksQuery),
-                    getDocs(bookingsQuery),
-                    getDocs(checklistsQuery),
-                ]);
-
-                const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
-                const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
-                const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-                const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
-                
-                setSafetyReports(reportsList);
-                setRisks(risksList);
-                setBookings(bookingsList);
-                setCompletedChecklists(checklistsList);
-
-            } catch (error) {
-                console.error("Error fetching safety data:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
-            }
-        };
-        fetchData();
-    }
-  }, [user, company, loading, router, toast]);
+  
+  const fetchData = async () => {
+    if (!company) return;
+    const { reportsList, risksList, bookingsList, checklistsList } = await getSafetyPageData(company.id);
+    setSafetyReports(reportsList);
+    setRisks(risksList);
+    setBookings(bookingsList);
+    setCompletedChecklists(checklistsList);
+  };
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
     { 
@@ -621,10 +621,6 @@ function SafetyPage() {
     );
   };
 
-  if (loading || !user) {
-    return null;
-  }
-
   const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
     const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
 
@@ -779,5 +775,18 @@ function SafetyPage() {
   );
 }
 
-SafetyPage.title = 'Safety Management System';
-export default SafetyPage;
+export default async function SafetyPageContainer() {
+    const companyId = 'skybound-aero';
+    const { reportsList, risksList, bookingsList, checklistsList } = await getSafetyPageData(companyId);
+
+    return (
+        <SafetyPageContent 
+            initialReports={reportsList} 
+            initialRisks={risksList}
+            initialBookings={bookingsList}
+            initialChecklists={checklistsList}
+        />
+    )
+}
+
+SafetyPageContainer.title = 'Safety Management System';

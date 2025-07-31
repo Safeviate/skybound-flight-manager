@@ -32,12 +32,38 @@ import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writ
 import { format } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
-import { AppContent } from '../app-content';
 
-function AircraftPage() {
-  const [checklists, setChecklists] = useState<Checklist[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [fleet, setFleet] = useState<Aircraft[]>([]);
+async function getAircraftPageData(companyId: string) {
+    const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
+    const checklistQuery = query(collection(db, `companies/${companyId}/checklists`));
+    const bookingQuery = query(collection(db, `companies/${companyId}/bookings`));
+
+    const [aircraftSnapshot, checklistSnapshot, bookingSnapshot] = await Promise.all([
+        getDocs(aircraftQuery),
+        getDocs(checklistQuery),
+        getDocs(bookingQuery)
+    ]);
+    
+    const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+    const checklistList = checklistSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
+    const bookingList = bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+
+    return { aircraftList, checklistList, bookingList };
+}
+
+
+function AircraftPageContent({
+    initialFleet, 
+    initialChecklists, 
+    initialBookings
+}: {
+    initialFleet: Aircraft[], 
+    initialChecklists: Checklist[], 
+    initialBookings: Booking[]
+}) {
+  const [checklists, setChecklists] = useState<Checklist[]>(initialChecklists);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [fleet, setFleet] = useState<Aircraft[]>(initialFleet);
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   const { toast } = useToast();
@@ -47,31 +73,12 @@ function AircraftPage() {
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (company) {
-        fetchData();
-    }
-  }, [user, company, loading, router]);
-
   const fetchData = async () => {
       if (!company) return;
       try {
-          const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
-          const aircraftSnapshot = await getDocs(aircraftQuery);
-          const aircraftList = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+          const { aircraftList, checklistList, bookingList } = await getAircraftPageData(company.id);
           setFleet(aircraftList);
-
-          // Now fetching assigned checklists, not templates
-          const checklistQuery = query(collection(db, `companies/${company.id}/checklists`));
-          const checklistSnapshot = await getDocs(checklistQuery);
-          const checklistList = checklistSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
           setChecklists(checklistList);
-
-          const bookingQuery = query(collection(db, `companies/${company.id}/bookings`));
-          const bookingSnapshot = await getDocs(bookingQuery);
-          const bookingList = bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
           setBookings(bookingList);
       } catch (error) {
           console.error("Error fetching data:", error);
@@ -271,15 +278,6 @@ function AircraftPage() {
     }
   };
 
-
-  if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
-  }
-  
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -467,5 +465,19 @@ function AircraftPage() {
   );
 }
 
-AircraftPage.title = 'Aircraft Management';
-export default AircraftPage;
+export default async function AircraftPageContainer() {
+    // This is a server-side wrapper to fetch data
+    // In a real app, you'd get the companyId from the user's session
+    const companyId = 'skybound-aero'; // Placeholder
+    const { aircraftList, checklistList, bookingList } = await getAircraftPageData(companyId);
+
+    return (
+        <AircraftPageContent 
+            initialFleet={aircraftList} 
+            initialChecklists={checklistList} 
+            initialBookings={bookingList} 
+        />
+    )
+}
+
+AircraftPageContainer.title = 'Aircraft Management';
