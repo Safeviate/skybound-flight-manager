@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,6 +21,7 @@ import config from '@/config';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { subDays, formatDistanceToNow } from 'date-fns';
+import Loading from './loading';
 
 interface CompanyWithStats extends Company {
   userCount: number;
@@ -279,13 +279,16 @@ function CompaniesPage() {
   const totalAircraft = companies.reduce((sum, c) => sum + c.aircraftCount, 0);
   const totalOpenReports = companies.reduce((sum, c) => sum + c.openSafetyReports, 0);
 
-  if (loading || isDataLoading || !user || !user.permissions.includes('Super User')) {
-    return (
-      <main className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-4">Loading system data...</p>
-      </main>
-    );
+  if (loading || isDataLoading) {
+    return <Loading />;
+  }
+  
+  if (!user || !user.permissions.includes('Super User')) {
+      return (
+        <main className="flex-1 flex items-center justify-center">
+            <p>You do not have permission to view this page.</p>
+        </main>
+      );
   }
 
   return (

@@ -72,6 +72,8 @@ function MyDashboardPage() {
     } else if (!loading && !company && user?.permissions.includes('Super User')) {
         // If super user lands here without a company context, send them to the main companies page
         router.push('/');
+    } else if (!loading) {
+        setDataLoading(false);
     }
   }, [user, company, loading, router]);
   
@@ -82,7 +84,11 @@ function MyDashboardPage() {
     }, [getUnacknowledgedAlerts]);
 
   if (loading || dataLoading) {
-    return null;
+    return (
+        <main className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+    );
   }
 
   const getAlertIcon = (type: Alert['type']) => {
