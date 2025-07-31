@@ -111,11 +111,9 @@ export function PreFlightChecklistForm() {
                                 <div className="flex items-center gap-2">
                                     <Plane className="h-5 w-5 text-muted-foreground" />
                                     <Input placeholder="Not Scanned" {...field} readOnly className="flex-1" />
-                                    <DialogTrigger asChild>
-                                        <Button type="button" variant="outline" onClick={() => openScanner('registration')}>
-                                            <Bot className="mr-2" /> Scan
-                                        </Button>
-                                    </DialogTrigger>
+                                    <Button type="button" variant="outline" onClick={() => openScanner('registration')}>
+                                        <Bot className="mr-2" /> Scan
+                                    </Button>
                                 </div>
                                 <FormMessage />
                             </FormItem>
@@ -130,11 +128,9 @@ export function PreFlightChecklistForm() {
                                 <div className="flex items-center gap-2">
                                     <Hash className="h-5 w-5 text-muted-foreground" />
                                     <Input type="number" placeholder="Not Scanned" {...field} readOnly className="flex-1" />
-                                    <DialogTrigger asChild>
-                                        <Button type="button" variant="outline" onClick={() => openScanner('hobbs')}>
-                                            <Bot className="mr-2" /> Scan
-                                        </Button>
-                                    </DialogTrigger>
+                                    <Button type="button" variant="outline" onClick={() => openScanner('hobbs')}>
+                                        <Bot className="mr-2" /> Scan
+                                    </Button>
                                 </div>
                                 <FormMessage />
                             </FormItem>
