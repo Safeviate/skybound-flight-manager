@@ -82,11 +82,7 @@ function MyDashboardPage() {
     }, [getUnacknowledgedAlerts]);
 
   if (loading || dataLoading) {
-    return (
-      <main className="flex-1 flex items-center justify-center">
-        <p>Loading your dashboard...</p>
-      </main>
-    );
+    return null;
   }
 
   const getAlertIcon = (type: Alert['type']) => {

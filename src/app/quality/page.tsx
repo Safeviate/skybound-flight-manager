@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -100,29 +99,6 @@ function QualityPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
 
-  const fetchData = async () => {
-    if (!company) return;
-    try {
-        const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
-        const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
-
-        const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
-            getDocs(auditsQuery),
-            getDocs(scheduleQuery),
-        ]);
-        
-        const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
-        setAudits(auditsList);
-
-        const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
-        setSchedule(scheduleList);
-
-    } catch (error) {
-        console.error("Error fetching quality data:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
-    }
-  };
-
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -130,6 +106,28 @@ function QualityPage() {
       return;
     }
     if (company) {
+        const fetchData = async () => {
+            if (!company) return;
+            try {
+                const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
+                const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+
+                const [auditsSnapshot, scheduleSnapshot] = await Promise.all([
+                    getDocs(auditsQuery),
+                    getDocs(scheduleQuery),
+                ]);
+                
+                const auditsList = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit));
+                setAudits(auditsList);
+
+                const scheduleList = scheduleSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem));
+                setSchedule(scheduleList);
+
+            } catch (error) {
+                console.error("Error fetching quality data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch quality data.' });
+            }
+        };
         fetchData();
     }
   }, [user, company, loading, router, toast]);
@@ -299,11 +297,7 @@ function QualityPage() {
 
 
   if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
+    return null;
   }
 
   const getComplianceColor = (score: number) => {

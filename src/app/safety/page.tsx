@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -397,37 +396,6 @@ function SafetyPage() {
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
   const router = useRouter();
 
-  const fetchData = async () => {
-    if (!company) return;
-    try {
-        const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
-        const risksQuery = query(collection(db, `companies/${company.id}/risks`));
-        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-        const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
-
-        const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
-            getDocs(reportsQuery),
-            getDocs(risksQuery),
-            getDocs(bookingsQuery),
-            getDocs(checklistsQuery),
-        ]);
-
-        const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
-        const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
-        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
-        
-        setSafetyReports(reportsList);
-        setRisks(risksList);
-        setBookings(bookingsList);
-        setCompletedChecklists(checklistsList);
-
-    } catch (error) {
-        console.error("Error fetching safety data:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
-    }
-  };
-
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -435,6 +403,36 @@ function SafetyPage() {
       return;
     }
     if (company) {
+        const fetchData = async () => {
+            if (!company) return;
+            try {
+                const reportsQuery = query(collection(db, `companies/${company.id}/safety-reports`));
+                const risksQuery = query(collection(db, `companies/${company.id}/risks`));
+                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+                const checklistsQuery = query(collection(db, `companies/${company.id}/completedChecklists`));
+
+                const [reportsSnapshot, risksSnapshot, bookingsSnapshot, checklistsSnapshot] = await Promise.all([
+                    getDocs(reportsQuery),
+                    getDocs(risksQuery),
+                    getDocs(bookingsQuery),
+                    getDocs(checklistsQuery),
+                ]);
+
+                const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+                const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+                const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+                const checklistsList = checklistsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
+                
+                setSafetyReports(reportsList);
+                setRisks(risksList);
+                setBookings(bookingsList);
+                setCompletedChecklists(checklistsList);
+
+            } catch (error) {
+                console.error("Error fetching safety data:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch safety data.' });
+            }
+        };
         fetchData();
     }
   }, [user, company, loading, router, toast]);
@@ -482,12 +480,15 @@ function SafetyPage() {
     }
   ]);
 
-  const reportsControls = useTableControls(safetyReports.filter(r => r.status !== 'Archived'), {
+  const activeReports = useMemo(() => safetyReports.filter(r => r.status !== 'Archived'), [safetyReports]);
+  const archivedReports = useMemo(() => safetyReports.filter(r => r.status === 'Archived'), [safetyReports]);
+
+  const reportsControls = useTableControls(activeReports, {
     initialSort: { key: 'filedDate', direction: 'desc' },
     searchKeys: ['reportNumber', 'heading', 'details', 'department'],
   });
   
-  const archivedReportsControls = useTableControls(safetyReports.filter(r => r.status === 'Archived'), {
+  const archivedReportsControls = useTableControls(archivedReports, {
     initialSort: { key: 'filedDate', direction: 'desc' },
     searchKeys: ['reportNumber', 'heading', 'details', 'department'],
   });
@@ -621,11 +622,7 @@ function SafetyPage() {
   };
 
   if (loading || !user) {
-    return (
-        <main className="flex-1 flex items-center justify-center">
-            <p>Loading...</p>
-        </main>
-    );
+    return null;
   }
 
   const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
@@ -752,10 +749,10 @@ function SafetyPage() {
                         <TabsTrigger value="archived">Archived Reports</TabsTrigger>
                     </TabsList>
                     <TabsContent value="active">
-                        <ReportTable reports={safetyReports.filter(r => r.status !== 'Archived')} />
+                        <ReportTable reports={activeReports} />
                     </TabsContent>
                     <TabsContent value="archived">
-                        <ReportTable reports={safetyReports.filter(r => r.status === 'Archived')} />
+                        <ReportTable reports={archivedReports} />
                     </TabsContent>
                 </Tabs>
               </CardContent>
