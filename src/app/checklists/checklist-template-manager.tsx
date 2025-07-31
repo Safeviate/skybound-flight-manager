@@ -152,5 +152,3 @@ export function ChecklistTemplateManager({ onUpdate }: { onUpdate: () => void })
         </div>
     );
 }
-
-    

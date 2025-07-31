@@ -18,14 +18,10 @@ import Image from 'next/image';
 interface ChecklistCardProps {
   checklist: Checklist;
   aircraft?: Aircraft;
-  onItemToggle: (checklist: Checklist) => void;
-  onItemValueChange: (checklistId: string, itemId: string, value: string) => void;
   onUpdate: (checklist: Checklist, hobbsValue?: number, report?: string) => void;
-  onReset: (checklistId: string) => void;
-  onEdit: (checklist: Checklist) => void;
 }
 
-const AiCameraScanner = ({ scanMode, onScan, onConfirm, aircraft }: { scanMode: 'registration' | 'hobbs', onScan: (value: string | number) => void, onConfirm: () => void, aircraft?: Aircraft }) => {
+const AiCameraScanner = ({ scanMode, onScan }: { scanMode: 'registration' | 'hobbs', onScan: (value: string | number) => void }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -68,13 +64,8 @@ const AiCameraScanner = ({ scanMode, onScan, onConfirm, aircraft }: { scanMode: 
             try {
                 if (scanMode === 'registration') {
                     const result = await readRegistrationFromImage({ photoDataUri: dataUrl });
-                    if (result.registration !== aircraft?.tailNumber) {
-                        toast({ variant: 'destructive', title: "Incorrect Aircraft", description: `Scanned registration (${result.registration}) does not match selected aircraft (${aircraft?.tailNumber}).` });
-                        handleRetry();
-                    } else {
-                        setScanResult(result.registration);
-                        onScan(result.registration);
-                    }
+                    setScanResult(result.registration);
+                    onScan(result.registration);
                 } else if (scanMode === 'hobbs') {
                     const result = await readHobbsFromImage({ photoDataUri: dataUrl });
                     setScanResult(result.hobbsValue);
@@ -102,7 +93,7 @@ const AiCameraScanner = ({ scanMode, onScan, onConfirm, aircraft }: { scanMode: 
                 {scanResult !== null && !isLoading && (
                     <div className="text-center space-y-2">
                         <p className="text-lg font-bold text-primary">{scanResult}</p>
-                        <p className="text-sm text-green-600 font-semibold flex items-center justify-center gap-2"><Check /> Confirmed</p>
+                         <Button onClick={handleRetry} variant="outline" size="sm" className="w-full">Recapture</Button>
                     </div>
                 )}
                 {scanResult === null && !isLoading && <Button onClick={handleRetry} variant="outline" className="w-full">Recapture</Button>}
@@ -169,37 +160,39 @@ const PhotoCapture = ({ title, onCapture }: { title: string, onCapture: (dataUrl
 };
 
 export function ChecklistCard({ checklist, aircraft, onUpdate }: ChecklistCardProps) {
+  const { toast } = useToast();
   const [steps, setSteps] = useState<Record<string, boolean>>({});
   const [reportText, setReportText] = useState('');
   const [hobbsValue, setHobbsValue] = useState<number | undefined>();
-  const [isDocsComplete, setIsDocsComplete] = useState(false);
+  const [localChecklist, setLocalChecklist] = useState<Checklist>(checklist);
 
   const handleStepComplete = (step: string, value: any) => {
+    if (step === 'registration') {
+        if (value !== aircraft?.tailNumber) {
+            toast({ variant: 'destructive', title: "Incorrect Aircraft", description: `Scanned registration (${value}) does not match selected aircraft (${aircraft?.tailNumber}).` });
+            return;
+        }
+    }
     setSteps(prev => ({ ...prev, [step]: true }));
     if (step === 'hobbs') setHobbsValue(value);
   };
   
-  const checkDocsComplete = () => {
-    const docItems = checklist.items.filter(i => i.type === 'Checkbox');
-    setIsDocsComplete(docItems.every(i => i.completed));
-  }
-  
-  const handleItemToggle = (itemId: string) => {
-    const updatedItems = checklist.items.map(item =>
-      item.id === itemId ? { ...item, completed: !item.completed } : item
+  const handleItemToggle = (itemId: string, checked: boolean) => {
+    const updatedItems = localChecklist.items.map(item =>
+      item.id === itemId ? { ...item, completed: checked } : item
     );
-    // This is a prop function, but we don't have it, so we'll just check completion locally.
-    checkDocsComplete();
+    setLocalChecklist(prev => ({ ...prev, items: updatedItems }));
   };
-
-  const isComplete = steps.registration && steps.leftPhoto && steps.rightPhoto && isDocsComplete && steps.hobbs;
+  
+  const docsAreComplete = localChecklist.items.every(i => i.completed);
+  const isComplete = steps.registration && steps.leftPhoto && steps.rightPhoto && docsAreComplete && steps.hobbs;
 
   return (
     <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="pt-6 space-y-4 max-h-[70vh] overflow-y-auto">
             
             <ChecklistStep title="Step 1: Verify Aircraft Registration" isComplete={steps.registration}>
-                <AiCameraScanner scanMode="registration" aircraft={aircraft} onScan={() => handleStepComplete('registration', true)} onConfirm={() => {}} />
+                <AiCameraScanner scanMode="registration" onScan={(val) => handleStepComplete('registration', val)} />
             </ChecklistStep>
 
             <ChecklistStep title="Step 2: Walkaround Photos" isComplete={steps.leftPhoto && steps.rightPhoto}>
@@ -209,11 +202,15 @@ export function ChecklistCard({ checklist, aircraft, onUpdate }: ChecklistCardPr
                 </div>
             </ChecklistStep>
 
-            <ChecklistStep title="Step 3: Confirm Onboard Documents" isComplete={isDocsComplete}>
-                 {checklist.items.map(item => (
+            <ChecklistStep title="Step 3: Confirm Onboard Documents" isComplete={docsAreComplete}>
+                 {localChecklist.items.map(item => (
                     <div key={item.id} className="flex items-center space-x-2">
-                        <Checkbox id={`${checklist.id}-${item.id}`} onCheckedChange={() => handleItemToggle(item.id)} />
-                        <Label htmlFor={`${checklist.id}-${item.id}`} className="flex-1">{item.text}</Label>
+                        <Checkbox 
+                            id={`${localChecklist.id}-${item.id}`} 
+                            onCheckedChange={(checked) => handleItemToggle(item.id, !!checked)} 
+                            checked={item.completed}
+                        />
+                        <Label htmlFor={`${localChecklist.id}-${item.id}`} className="flex-1">{item.text}</Label>
                     </div>
                 ))}
             </ChecklistStep>
@@ -223,12 +220,12 @@ export function ChecklistCard({ checklist, aircraft, onUpdate }: ChecklistCardPr
             </ChecklistStep>
             
             <ChecklistStep title="Step 5: Record Hobbs Meter" isComplete={!!steps.hobbs}>
-                <AiCameraScanner scanMode="hobbs" onScan={(val) => handleStepComplete('hobbs', val)} onConfirm={() => {}} />
+                <AiCameraScanner scanMode="hobbs" onScan={(val) => handleStepComplete('hobbs', val)} />
             </ChecklistStep>
             
         </CardContent>
         <CardFooter>
-            <Button onClick={() => onUpdate(checklist, hobbsValue, reportText)} disabled={!isComplete} className="w-full">
+            <Button onClick={() => onUpdate(localChecklist, hobbsValue, reportText)} disabled={!isComplete} className="w-full">
                 Submit Checklist
             </Button>
         </CardFooter>
@@ -249,5 +246,3 @@ const ChecklistStep = ({ title, isComplete, children }: { title: string, isCompl
         </Card>
     )
 }
-
-    

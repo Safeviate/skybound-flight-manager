@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { Checklist, ChecklistItem } from '@/lib/types';
+import type { Checklist, ChecklistItem, ChecklistCategory } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect } from 'react';
 
@@ -30,7 +30,7 @@ const checklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
-  category: z.enum(['Pre-Flight', 'Post-Flight', 'Post-Maintenance'], {
+  category: z.custom<ChecklistCategory>((val) => ['Pre-Flight', 'Post-Flight', 'Post-Maintenance'].includes(val as string), {
       required_error: 'Please select a category.'
   }),
   items: z.array(checklistItemSchema).min(1, {
