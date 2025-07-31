@@ -22,12 +22,11 @@ async function getInitialData() {
 }
 
 export default async function AircraftPageContainer() {
-    const { aircraftList, checklistList } = await getInitialData();
+    const { aircraftList } = await getInitialData();
 
     return (
         <AircraftPageContent 
             initialFleet={aircraftList} 
-            initialChecklists={checklistList} 
         />
     );
 }
