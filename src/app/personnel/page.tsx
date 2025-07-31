@@ -22,7 +22,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { AppContent } from '../app-content';
 
 
 function PersonnelPage() {
@@ -137,132 +136,130 @@ function PersonnelPage() {
     }
 
   return (
-    <AppContent>
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Personnel Roster</CardTitle>
-                    <CardDescription>A list of all active staff members.</CardDescription>
-                </div>
-                {canEdit && (
-                    <Dialog open={isNewPersonnelOpen} onOpenChange={setIsNewPersonnelOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                New Personnel
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Add New Personnel</DialogTitle>
-                                <DialogDescription>
-                                    Add a new staff member to the system. This will create their user account and send them a welcome email.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <NewPersonnelForm onSubmit={handleNewPersonnel} />
-                        </DialogContent>
-                    </Dialog>
-                )}
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Department</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Required Documents</TableHead>
-                             {canEdit && <TableHead className="text-right">Actions</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {personnel.map(person => (
-                            <TableRow key={person.id}>
-                                <TableCell className="font-medium">{person.name}</TableCell>
-                                <TableCell>{person.role}</TableCell>
-                                <TableCell>{person.department}</TableCell>
-                                <TableCell>
-                                    <div>{person.email}</div>
-                                    <div>{person.phone}</div>
-                                </TableCell>
-                                <TableCell>
-                                    {person.requiredDocuments && person.requiredDocuments.length > 0 ? (
-                                        <div className="flex flex-wrap gap-1">
-                                            {person.requiredDocuments.map(doc => (
-                                                <Badge key={doc} variant="secondary" className="font-normal">
-                                                    {doc}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        'N/A'
-                                    )}
-                                </TableCell>
-                                {canEdit && (
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
-                                                    <Edit className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete {person.name} from the system.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
-                                                                Yes, Delete Personnel
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-        {editingPersonnel && (
-            <Dialog open={!!editingPersonnel} onOpenChange={() => setEditingPersonnel(null)}>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Edit Personnel: {editingPersonnel.name}</DialogTitle>
-                        <DialogDescription>
-                            Update the details for this staff member.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <EditPersonnelForm 
-                        personnel={editingPersonnel} 
-                        onSubmit={handleUpdatePersonnel} 
-                    />
-                </DialogContent>
-            </Dialog>
-        )}
-      </main>
-    </AppContent>
+    <main className="flex-1 p-4 md:p-8 space-y-8">
+      <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                  <CardTitle>Personnel Roster</CardTitle>
+                  <CardDescription>A list of all active staff members.</CardDescription>
+              </div>
+              {canEdit && (
+                  <Dialog open={isNewPersonnelOpen} onOpenChange={setIsNewPersonnelOpen}>
+                      <DialogTrigger asChild>
+                          <Button>
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              New Personnel
+                          </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-2xl">
+                          <DialogHeader>
+                              <DialogTitle>Add New Personnel</DialogTitle>
+                              <DialogDescription>
+                                  Add a new staff member to the system. This will create their user account and send them a welcome email.
+                              </DialogDescription>
+                          </DialogHeader>
+                          <NewPersonnelForm onSubmit={handleNewPersonnel} />
+                      </DialogContent>
+                  </Dialog>
+              )}
+          </CardHeader>
+          <CardContent>
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Required Documents</TableHead>
+                           {canEdit && <TableHead className="text-right">Actions</TableHead>}
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {personnel.map(person => (
+                          <TableRow key={person.id}>
+                              <TableCell className="font-medium">{person.name}</TableCell>
+                              <TableCell>{person.role}</TableCell>
+                              <TableCell>{person.department}</TableCell>
+                              <TableCell>
+                                  <div>{person.email}</div>
+                                  <div>{person.phone}</div>
+                              </TableCell>
+                              <TableCell>
+                                  {person.requiredDocuments && person.requiredDocuments.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1">
+                                          {person.requiredDocuments.map(doc => (
+                                              <Badge key={doc} variant="secondary" className="font-normal">
+                                                  {doc}
+                                              </Badge>
+                                          ))}
+                                      </div>
+                                  ) : (
+                                      'N/A'
+                                  )}
+                              </TableCell>
+                              {canEdit && (
+                                  <TableCell className="text-right">
+                                      <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                              <Button variant="ghost" size="icon">
+                                                  <MoreHorizontal className="h-4 w-4" />
+                                              </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent>
+                                              <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
+                                                  <Edit className="mr-2 h-4 w-4" />
+                                                  Edit
+                                              </DropdownMenuItem>
+                                              <AlertDialog>
+                                                  <AlertDialogTrigger asChild>
+                                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                          <Trash2 className="mr-2 h-4 w-4" />
+                                                          Delete
+                                                      </DropdownMenuItem>
+                                                  </AlertDialogTrigger>
+                                                  <AlertDialogContent>
+                                                      <AlertDialogHeader>
+                                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                          <AlertDialogDescription>
+                                                              This action cannot be undone. This will permanently delete {person.name} from the system.
+                                                          </AlertDialogDescription>
+                                                      </AlertDialogHeader>
+                                                      <AlertDialogFooter>
+                                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                          <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
+                                                              Yes, Delete Personnel
+                                                          </AlertDialogAction>
+                                                      </AlertDialogFooter>
+                                                  </AlertDialogContent>
+                                              </AlertDialog>
+                                          </DropdownMenuContent>
+                                      </DropdownMenu>
+                                  </TableCell>
+                              )}
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+          </CardContent>
+      </Card>
+      {editingPersonnel && (
+          <Dialog open={!!editingPersonnel} onOpenChange={() => setEditingPersonnel(null)}>
+              <DialogContent className="sm:max-w-2xl">
+                  <DialogHeader>
+                      <DialogTitle>Edit Personnel: {editingPersonnel.name}</DialogTitle>
+                      <DialogDescription>
+                          Update the details for this staff member.
+                      </DialogDescription>
+                  </DialogHeader>
+                  <EditPersonnelForm 
+                      personnel={editingPersonnel} 
+                      onSubmit={handleUpdatePersonnel} 
+                  />
+              </DialogContent>
+          </Dialog>
+      )}
+    </main>
   );
 }
 

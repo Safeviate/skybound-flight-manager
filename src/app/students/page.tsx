@@ -32,7 +32,6 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { AppContent } from '../app-content';
 
 function StudentsPage() {
   const { toast } = useToast();
@@ -187,48 +186,46 @@ function StudentsPage() {
   }
 
   return (
-    <AppContent>
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Student Roster</CardTitle>
-            {canEdit && (
-              <Dialog>
-                  <DialogTrigger asChild>
-                      <Button>
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Student
-                      </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
-                      <DialogHeader>
-                          <DialogTitle>Add New Student</DialogTitle>
-                          <DialogDescription>
-                              Fill out the form below to add a new student. This will create a user account for them.
-                          </DialogDescription>
-                      </DialogHeader>
-                      <NewStudentForm onSubmit={handleNewStudent} />
-                  </DialogContent>
-              </Dialog>
-            )}
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="active">
-                <TabsList>
-                    <TabsTrigger value="active">Active ({activeStudents.length})</TabsTrigger>
-                    <TabsTrigger value="archived">Archived ({archivedStudents.length})</TabsTrigger>
-                </TabsList>
-                <TabsContent value="active" className="pt-4">
-                    <StudentTable list={activeStudents} />
-                </TabsContent>
-                <TabsContent value="archived" className="pt-4">
-                    <StudentTable list={archivedStudents} isArchived />
-                </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </main>
-    </AppContent>
+    <main className="flex-1 p-4 md:p-8 space-y-8">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Student Roster</CardTitle>
+          {canEdit && (
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Student
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Add New Student</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to add a new student. This will create a user account for them.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewStudentForm onSubmit={handleNewStudent} />
+                </DialogContent>
+            </Dialog>
+          )}
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="active">
+              <TabsList>
+                  <TabsTrigger value="active">Active ({activeStudents.length})</TabsTrigger>
+                  <TabsTrigger value="archived">Archived ({archivedStudents.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="active" className="pt-4">
+                  <StudentTable list={activeStudents} />
+              </TabsContent>
+              <TabsContent value="archived" className="pt-4">
+                  <StudentTable list={archivedStudents} isArchived />
+              </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
 

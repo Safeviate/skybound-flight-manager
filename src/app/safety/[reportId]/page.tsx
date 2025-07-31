@@ -48,7 +48,6 @@ import { CalendarIcon, Check } from 'lucide-react';
 import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AppContent } from '../app-content';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -650,362 +649,360 @@ function SafetyReportInvestigationPage() {
   }
 
   return (
-    <AppContent>
-      <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                        <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                        <CardDescription>
-                            Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                        </CardDescription>
-                    </div>
-                     <div className="flex items-center gap-2">
-                         <Button asChild variant="outline">
-                            <Link href="/safety?tab=reports">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Reports
-                            </Link>
-                        </Button>
-                        <Button variant="outline" onClick={() => window.print()} className="no-print">
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print Report
-                        </Button>
-                    </div>
-                </div>
-            </CardHeader>
-        </Card>
-                
-            <Tabs defaultValue="triage" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 h-auto">
-                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
-                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
-                </TabsList>
+    <main className="flex-1 p-4 md:p-8 space-y-8">
+      <Card>
+          <CardHeader>
+              <div className="flex justify-between items-start">
+                  <div>
+                      <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                      <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                      <CardDescription>
+                          Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                      </CardDescription>
+                  </div>
+                   <div className="flex items-center gap-2">
+                       <Button asChild variant="outline">
+                          <Link href="/safety?tab=reports">
+                              <ArrowLeft className="mr-2 h-4 w-4" />
+                              Back to Reports
+                          </Link>
+                      </Button>
+                      <Button variant="outline" onClick={() => window.print()} className="no-print">
+                          <Printer className="mr-2 h-4 w-4" />
+                          Print Report
+                      </Button>
+                  </div>
+              </div>
+          </CardHeader>
+      </Card>
+              
+          <Tabs defaultValue="triage" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 h-auto">
+                  <TabsTrigger value="triage">Report & Triage</TabsTrigger>
+                  <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                  <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
+                  <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="triage" className="mt-6 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Initial Report Details</CardTitle>
-                            <CardDescription>This is the original report as submitted.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
-                                {report.details}
-                            </p>
-                        </CardContent>
-                    </Card>
+              <TabsContent value="triage" className="mt-6 space-y-6">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Initial Report Details</CardTitle>
+                          <CardDescription>This is the original report as submitted.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                              {report.details}
+                          </p>
+                      </CardContent>
+                  </Card>
 
-                    <Card>
-                        <CardHeader>
-                             <CardTitle>Classification & Categorization</CardTitle>
-                             <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap items-end gap-4">
-                                <div className="space-y-2 flex-1 min-w-[200px]">
-                                    <label className="text-sm font-medium">Report Status</label>
-                                    <Select 
-                                        value={report.status} 
-                                        onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ status: value }, true)}
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Set status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Open">Open</SelectItem>
-                                            <SelectItem value="Under Review">Under Review</SelectItem>
-                                            <SelectItem value="Closed">Closed</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2 flex-1 min-w-[240px]">
-                                    <label className="text-sm font-medium flex items-center gap-1">
-                                        ICAO Occurrence Category
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5">
-                                                    <Info className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="sm:max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>ICAO Occurrence Categories</DialogTitle>
-                                                    <DialogDescription>
-                                                        Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <ScrollArea className="h-96">
-                                                    <Table>
-                                                        <TableHeader>
-                                                            <TableRow>
-                                                                <TableHead>Code</TableHead>
-                                                                <TableHead>Definition</TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            {ICAO_OPTIONS.map(option => (
-                                                                <TableRow key={option.value}>
-                                                                    <TableCell>{option.label}</TableCell>
-                                                                    <TableCell>{option.description}</TableCell>
-                                                                </TableRow>
-                                                            ))}
-                                                        </TableBody>
-                                                    </Table>
-                                                </ScrollArea>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <Combobox
-                                            options={ICAO_OPTIONS}
-                                            value={report.occurrenceCategory || ''}
-                                            onChange={(value) => handleReportUpdate({ occurrenceCategory: value }, false)}
-                                            placeholder="Select ICAO category..."
-                                            searchPlaceholder="Search categories..."
-                                            noResultsText="No category found."
-                                        />
-                                        <form action={icaoFormAction}>
-                                            <input type="hidden" name="reportText" value={report.details} />
-                                            <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
-                                                {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                                            </Button>
-                                        </form>
-                                    </div>
-                                </div>
-                                    <div className="space-y-2 flex-1 min-w-[200px]">
-                                    <label className="text-sm font-medium">Classification</label>
-                                    <Select 
-                                        value={report.classification || ''}
-                                        onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ classification: value }, true)}
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Classify event" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {CLASSIFICATION_OPTIONS.map(opt => (
-                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                  <Card>
+                      <CardHeader>
+                           <CardTitle>Classification & Categorization</CardTitle>
+                           <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <div className="flex flex-wrap items-end gap-4">
+                              <div className="space-y-2 flex-1 min-w-[200px]">
+                                  <label className="text-sm font-medium">Report Status</label>
+                                  <Select 
+                                      value={report.status} 
+                                      onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ status: value }, true)}
+                                  >
+                                      <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Set status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                          <SelectItem value="Open">Open</SelectItem>
+                                          <SelectItem value="Under Review">Under Review</SelectItem>
+                                          <SelectItem value="Closed">Closed</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                              <div className="space-y-2 flex-1 min-w-[240px]">
+                                  <label className="text-sm font-medium flex items-center gap-1">
+                                      ICAO Occurrence Category
+                                      <Dialog>
+                                          <DialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-5 w-5">
+                                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                              </Button>
+                                          </DialogTrigger>
+                                          <DialogContent className="sm:max-w-2xl">
+                                              <DialogHeader>
+                                                  <DialogTitle>ICAO Occurrence Categories</DialogTitle>
+                                                  <DialogDescription>
+                                                      Standardized categories for aviation occurrences based on the ICAO ADREP taxonomy.
+                                                  </DialogDescription>
+                                              </DialogHeader>
+                                              <ScrollArea className="h-96">
+                                                  <Table>
+                                                      <TableHeader>
+                                                          <TableRow>
+                                                              <TableHead>Code</TableHead>
+                                                              <TableHead>Definition</TableHead>
+                                                          </TableRow>
+                                                      </TableHeader>
+                                                      <TableBody>
+                                                          {ICAO_OPTIONS.map(option => (
+                                                              <TableRow key={option.value}>
+                                                                  <TableCell>{option.label}</TableCell>
+                                                                  <TableCell>{option.description}</TableCell>
+                                                              </TableRow>
+                                                          ))}
+                                                      </TableBody>
+                                                  </Table>
+                                              </ScrollArea>
+                                          </DialogContent>
+                                      </Dialog>
+                                  </label>
+                                  <div className="flex gap-2">
+                                      <Combobox
+                                          options={ICAO_OPTIONS}
+                                          value={report.occurrenceCategory || ''}
+                                          onChange={(value) => handleReportUpdate({ occurrenceCategory: value }, false)}
+                                          placeholder="Select ICAO category..."
+                                          searchPlaceholder="Search categories..."
+                                          noResultsText="No category found."
+                                      />
+                                      <form action={icaoFormAction}>
+                                          <input type="hidden" name="reportText" value={report.details} />
+                                          <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
+                                              {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                                          </Button>
+                                      </form>
+                                  </div>
+                              </div>
+                                  <div className="space-y-2 flex-1 min-w-[200px]">
+                                  <label className="text-sm font-medium">Classification</label>
+                                  <Select 
+                                      value={report.classification || ''}
+                                      onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ classification: value }, true)}
+                                  >
+                                      <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Classify event" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                          {CLASSIFICATION_OPTIONS.map(opt => (
+                                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                          </div>
+                      </CardContent>
+                  </Card>
 
-                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
-                </TabsContent>
-                
-                 <TabsContent value="investigation" className="mt-6 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Investigation Team</CardTitle>
-                            <CardDescription>Manage the personnel assigned to investigate this report.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Investigation Plan & Tools</CardTitle>
-                            <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                           <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
-                        </CardContent>
-                    </Card>
-                    
-                    <InvestigationTaskList 
-                        report={report} 
-                        personnel={investigationTeamMembers}
-                        onUpdateTask={handleUpdateTaskStatus} 
-                        onAddComment={handleAddTaskComment} 
-                        isLoading={dataLoading} 
-                        onMarkCommentsRead={handleMarkCommentsRead}
-                        onManualTaskAdd={handleManualTaskAdd}
-                        onRequestExtension={handleRequestExtension}
-                        onApproveExtension={handleApproveExtension}
-                        onRejectExtension={handleRejectExtension}
-                    />
+                  <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+              </TabsContent>
+              
+               <TabsContent value="investigation" className="mt-6 space-y-6">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Investigation Team</CardTitle>
+                          <CardDescription>Manage the personnel assigned to investigate this report.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <InvestigationTeamForm report={report} onUpdate={handleReportUpdate} />
+                      </CardContent>
+                  </Card>
+                  
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Investigation Plan & Tools</CardTitle>
+                          <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                         <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
+                      </CardContent>
+                  </Card>
+                  
+                  <InvestigationTaskList 
+                      report={report} 
+                      personnel={investigationTeamMembers}
+                      onUpdateTask={handleUpdateTaskStatus} 
+                      onAddComment={handleAddTaskComment} 
+                      isLoading={dataLoading} 
+                      onMarkCommentsRead={handleMarkCommentsRead}
+                      onManualTaskAdd={handleManualTaskAdd}
+                      onRequestExtension={handleRequestExtension}
+                      onApproveExtension={handleApproveExtension}
+                      onRejectExtension={handleRejectExtension}
+                  />
 
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle>Investigation Notes</CardTitle>
-                                    <CardDescription>
-                                        This is the final summary of the investigation findings.
-                                    </CardDescription>
-                                </div>
-                                 <Button onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
-                            </div>
-                            <div className="pt-4">
-                                <Textarea 
-                                    placeholder="Summarize the investigation findings, root causes, and contributing factors here..." 
-                                    value={report.investigationNotes || ''}
-                                    onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, false)}
-                                    className="min-h-[150px]"
-                                />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate(data, true)} />
-                        </CardContent>
-                    </Card>
+                  <Card>
+                      <CardHeader>
+                          <div className="flex items-center justify-between">
+                              <div>
+                                  <CardTitle>Investigation Notes</CardTitle>
+                                  <CardDescription>
+                                      This is the final summary of the investigation findings.
+                                  </CardDescription>
+                              </div>
+                               <Button onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
+                          </div>
+                          <div className="pt-4">
+                              <Textarea 
+                                  placeholder="Summarize the investigation findings, root causes, and contributing factors here..." 
+                                  value={report.investigationNotes || ''}
+                                  onChange={(e) => handleReportUpdate({ investigationNotes: e.target.value }, false)}
+                                  className="min-h-[150px]"
+                              />
+                          </div>
+                      </CardHeader>
+                      <CardContent>
+                          <FiveWhysGenerator report={report} onUpdate={(data) => handleReportUpdate(data, true)} />
+                      </CardContent>
+                  </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Discussion Forum</CardTitle>
-                                <CardDescription>
-                                    A forum for investigators to discuss findings and actions.
-                                </CardDescription>
-                            </div>
-                            <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline">
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Post Message
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Post New Message</DialogTitle>
-                                        <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
-                                    </DialogHeader>
-                                    <Form {...discussionForm}>
-                                        <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
-                                        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                                            <FormField
-                                                control={discussionForm.control}
-                                                name="recipient"
-                                                render={({ field }) => (
-                                                <FormItem className="flex-1">
-                                                    <FormLabel>Send To (Optional)</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                        <SelectValue placeholder="Select a team member" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {availableRecipients.map((person) => (
-                                                        <SelectItem key={person.id} value={person.name}>
-                                                            {person.name}
-                                                        </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={discussionForm.control}
-                                                name="replyByDate"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex-1">
-                                                        <FormLabel>Reply Needed By (Optional)</FormLabel>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                variant={"outline"}
-                                                                className={cn(
-                                                                    "w-full pl-3 text-left font-normal",
-                                                                    !field.value && "text-muted-foreground"
-                                                                )}
-                                                                >
-                                                                {field.value ? (
-                                                                    format(field.value, "PPP")
-                                                                ) : (
-                                                                    <span>Pick a date</span>
-                                                                )}
-                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar
-                                                                mode="single"
-                                                                selected={field.value}
-                                                                onSelect={field.onChange}
-                                                                disabled={(date) => date < new Date()}
-                                                                initialFocus
-                                                            />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <FormField
-                                            control={discussionForm.control}
-                                            name="message"
-                                            render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Message / Instruction</FormLabel>
-                                                <FormControl>
-                                                <Textarea
-                                                    id="message"
-                                                    placeholder="Type your message here..."
-                                                    className="min-h-[100px]"
-                                                    {...field}
-                                                />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                            )}
-                                        />
-                                        <div className="flex justify-end items-center">
-                                            <Button type="submit">
-                                                <Send className="mr-2 h-4 w-4" />
-                                                Post Message
-                                            </Button>
-                                        </div>
-                                        </form>
-                                    </Form>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            <DiscussionSection 
-                                report={report} 
-                                onUpdate={handleReportUpdate}
-                            />
-                        </CardContent>
-                    </Card>
+                  <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                          <div>
+                              <CardTitle>Discussion Forum</CardTitle>
+                              <CardDescription>
+                                  A forum for investigators to discuss findings and actions.
+                              </CardDescription>
+                          </div>
+                          <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
+                              <DialogTrigger asChild>
+                                  <Button variant="outline">
+                                      <Send className="mr-2 h-4 w-4" />
+                                      Post Message
+                                  </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                  <DialogHeader>
+                                      <DialogTitle>Post New Message</DialogTitle>
+                                      <DialogDescription>Your message will be visible to all members of the investigation team.</DialogDescription>
+                                  </DialogHeader>
+                                  <Form {...discussionForm}>
+                                      <form onSubmit={discussionForm.handleSubmit(handleNewDiscussionMessage)} className="space-y-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                                          <FormField
+                                              control={discussionForm.control}
+                                              name="recipient"
+                                              render={({ field }) => (
+                                              <FormItem className="flex-1">
+                                                  <FormLabel>Send To (Optional)</FormLabel>
+                                                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                                                  <FormControl>
+                                                      <SelectTrigger>
+                                                      <SelectValue placeholder="Select a team member" />
+                                                      </SelectTrigger>
+                                                  </FormControl>
+                                                  <SelectContent>
+                                                      {availableRecipients.map((person) => (
+                                                      <SelectItem key={person.id} value={person.name}>
+                                                          {person.name}
+                                                      </SelectItem>
+                                                      ))}
+                                                  </SelectContent>
+                                                  </Select>
+                                                  <FormMessage />
+                                              </FormItem>
+                                              )}
+                                          />
+                                          <FormField
+                                              control={discussionForm.control}
+                                              name="replyByDate"
+                                              render={({ field }) => (
+                                                  <FormItem className="flex-1">
+                                                      <FormLabel>Reply Needed By (Optional)</FormLabel>
+                                                      <Popover>
+                                                          <PopoverTrigger asChild>
+                                                          <FormControl>
+                                                              <Button
+                                                              variant={"outline"}
+                                                              className={cn(
+                                                                  "w-full pl-3 text-left font-normal",
+                                                                  !field.value && "text-muted-foreground"
+                                                              )}
+                                                              >
+                                                              {field.value ? (
+                                                                  format(field.value, "PPP")
+                                                              ) : (
+                                                                  <span>Pick a date</span>
+                                                              )}
+                                                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                              </Button>
+                                                          </FormControl>
+                                                          </PopoverTrigger>
+                                                          <PopoverContent className="w-auto p-0" align="start">
+                                                          <Calendar
+                                                              mode="single"
+                                                              selected={field.value}
+                                                              onSelect={field.onChange}
+                                                              disabled={(date) => date < new Date()}
+                                                              initialFocus
+                                                          />
+                                                          </PopoverContent>
+                                                      </Popover>
+                                                      <FormMessage />
+                                                  </FormItem>
+                                              )}
+                                          />
+                                      </div>
+                                      <FormField
+                                          control={discussionForm.control}
+                                          name="message"
+                                          render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Message / Instruction</FormLabel>
+                                              <FormControl>
+                                              <Textarea
+                                                  id="message"
+                                                  placeholder="Type your message here..."
+                                                  className="min-h-[100px]"
+                                                  {...field}
+                                              />
+                                              </FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                          )}
+                                      />
+                                      <div className="flex justify-end items-center">
+                                          <Button type="submit">
+                                              <Send className="mr-2 h-4 w-4" />
+                                              Post Message
+                                          </Button>
+                                      </div>
+                                      </form>
+                                  </Form>
+                              </DialogContent>
+                          </Dialog>
+                      </CardHeader>
+                      <CardContent>
+                          <DiscussionSection 
+                              report={report} 
+                              onUpdate={handleReportUpdate}
+                          />
+                      </CardContent>
+                  </Card>
 
-                </TabsContent>
+              </TabsContent>
 
-                <TabsContent value="mitigation" className="mt-6 space-y-6">
-                    <CorrectiveActionPlanGenerator 
-                        report={report} 
-                        personnel={investigationTeamMembers}
-                        onUpdate={handleReportUpdate}
-                    />
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Risk Mitigation Assessment</CardTitle>
-                             <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
-                        </CardContent>
-                     </Card>
-                </TabsContent>
-                <TabsContent value="review" className="mt-6">
-                    <FinalReview report={report} onUpdate={handleReportUpdate} />
-                </TabsContent>
-            </Tabs>
-      </main>
-    </AppContent>
+              <TabsContent value="mitigation" className="mt-6 space-y-6">
+                  <CorrectiveActionPlanGenerator 
+                      report={report} 
+                      personnel={investigationTeamMembers}
+                      onUpdate={handleReportUpdate}
+                  />
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Risk Mitigation Assessment</CardTitle>
+                           <CardDescription>Assess the effectiveness of corrective actions by measuring the residual risk.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <MitigatedRiskAssessment report={report} onUpdate={handleReportUpdate} correctiveActions={report.correctiveActionPlan?.correctiveActions}/>
+                      </CardContent>
+                   </Card>
+              </TabsContent>
+              <TabsContent value="review" className="mt-6">
+                  <FinalReview report={report} onUpdate={handleReportUpdate} />
+              </TabsContent>
+          </Tabs>
+    </main>
   );
 }
 
