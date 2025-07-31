@@ -1,115 +1,228 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Database, Edit } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NewAircraftForm } from './new-aircraft-form';
+import type { Aircraft } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, writeBatch } from 'firebase/firestore';
-import type { AuditChecklist } from '@/lib/types';
-import { ChecklistCard } from './checklist-card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ChecklistTemplateForm } from './checklist-template-form';
-import { createMasterChecklists } from './actions';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { getAircraftPageData } from './data';
+import { getExpiryBadge, cn } from '@/lib/utils';
+import { useSettings } from '@/context/settings-provider';
 
-export function AuditChecklistsManager() {
-  const [templates, setTemplates] = useState<AuditChecklist[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<AuditChecklist | null>(null);
-  const { user, company } = useUser();
-  const { toast } = useToast();
+export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
+    const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
+    const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
+    const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
+    const { user, company, loading } = useUser();
+    const { toast } = useToast();
+    const { settings } = useSettings();
 
-  const fetchTemplates = async () => {
-    if (!company) return;
-    setLoading(true);
-    const templatesQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
-    const snapshot = await getDocs(templatesQuery);
-    setTemplates(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditChecklist)));
-    setLoading(false);
-  };
+    const refreshData = useCallback(async () => {
+        if (!company) return;
+        const data = await getAircraftPageData(company.id);
+        setAircraftList(data);
+    }, [company]);
+    
+    useEffect(() => {
+        if (company) {
+            refreshData();
+        }
+    }, [company, refreshData]);
 
-  useEffect(() => {
-    if (company) {
-      fetchTemplates();
+    const activeAircraft = useMemo(() => aircraftList.filter(a => a.status !== 'Archived'), [aircraftList]);
+    const archivedAircraft = useMemo(() => aircraftList.filter(a => a.status === 'Archived'), [aircraftList]);
+
+    const handleSuccess = () => {
+        setIsNewAircraftDialogOpen(false);
+        setEditingAircraft(null);
+        refreshData();
+    };
+    
+    const handleEdit = (aircraft: Aircraft) => {
+        setEditingAircraft(aircraft);
+        setIsNewAircraftDialogOpen(true);
+    };
+
+    const handleArchive = async (aircraft: Aircraft) => {
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        try {
+            await updateDoc(aircraftRef, { status: 'Archived' });
+            toast({
+                title: 'Aircraft Archived',
+                description: `${aircraft.tailNumber} has been moved to the archives.`,
+            });
+            refreshData();
+        } catch (error) {
+            console.error("Error archiving aircraft:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Archiving Failed',
+                description: 'Could not archive the aircraft.',
+            });
+        }
+    };
+    
+    const handleRestore = async (aircraft: Aircraft) => {
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        try {
+            await updateDoc(aircraftRef, { status: 'Available' });
+            toast({
+                title: 'Aircraft Restored',
+                description: `${aircraft.tailNumber} has been restored to the active fleet.`,
+            });
+            refreshData();
+        } catch (error) {
+            console.error("Error restoring aircraft:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Restoring Failed',
+                description: 'Could not restore the aircraft.',
+            });
+        }
+    };
+
+    const openNewDialog = () => {
+        setEditingAircraft(null);
+        setIsNewAircraftDialogOpen(true);
     }
-  }, [company]);
+    
+    const getStatusVariant = (status: Aircraft['status']) => {
+        switch (status) {
+            case 'Available': return 'success';
+            case 'Booked': return 'warning';
+            case 'In Maintenance': return 'destructive';
+            case 'Archived': return 'secondary';
+            default: return 'outline';
+        }
+    };
 
-  const handleSeed = async () => {
-    if (!company) return;
-    setIsSeeding(true);
-    try {
-      await createMasterChecklists(company.id);
-      await fetchTemplates();
-      toast({ title: "Master Checklists Created", description: "The three standard checklists have been added." });
-    } catch (error) {
-      console.error("Error seeding checklists:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not create master checklists." });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-  const handleFormSubmit = async (data: Omit<AuditChecklist, 'id' | 'companyId'>) => {
-    if (!company) return;
-
-    try {
-      if (editingTemplate) {
-        const templateRef = doc(db, `companies/${company.id}/audit-checklists`, editingTemplate.id);
-        await setDoc(templateRef, data, { merge: true });
-        toast({ title: "Template Updated" });
-      } else {
-        // This case might not be used if creation is only through master templates
-      }
-      fetchTemplates();
-      setIsFormOpen(false);
-      setEditingTemplate(null);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({ variant: "destructive", title: "Save Failed", description: "Could not save the checklist template." });
-    }
-  };
-
-  const handleEdit = (template: AuditChecklist) => {
-    setEditingTemplate(template);
-    setIsFormOpen(true);
-  };
-
-  if (loading) {
-    return <p>Loading checklists...</p>;
-  }
+    const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Registration</TableHead>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Total Hours</TableHead>
+                    <TableHead>Airworthiness</TableHead>
+                    <TableHead>Insurance</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {aircraft.map((ac) => {
+                    return (
+                    <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
+                        <TableCell className="font-medium">{ac.tailNumber}</TableCell>
+                        <TableCell>{ac.make} {ac.model}</TableCell>
+                        <TableCell>{ac.hours.toFixed(1)}</TableCell>
+                        <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                        <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                   <Button variant="ghost" size="icon" disabled={isArchived}>
+                                       <MoreHorizontal className="h-4 w-4" />
+                                   </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent>
+                                {isArchived ? (
+                                    <DropdownMenuItem onClick={() => handleRestore(ac)}>
+                                        <RotateCw className="mr-2 h-4 w-4" />
+                                        Restore
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem onClick={() => handleEdit(ac)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                        <Archive className="mr-2 h-4 w-4" />
+                                                        Archive
+                                                    </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
+                                                        </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </>
+                                )}
+                               </DropdownMenuContent>
+                           </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                )})}
+            </TableBody>
+        </Table>
+    );
 
   return (
-    <div className="space-y-4">
-      {templates.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg text-center p-4">
-          <p className="text-muted-foreground mb-4">No checklist templates found. Create the standard master templates to begin.</p>
-          <Button onClick={handleSeed} disabled={isSeeding}>
-            <Database className="mr-2 h-4 w-4" />
-            {isSeeding ? 'Creating...' : 'Create Master Checklists'}
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map(template => (
-            <ChecklistCard key={template.id} template={template} onEdit={handleEdit} />
-          ))}
-        </div>
-      )}
-      <Dialog open={isFormOpen} onOpenChange={(isOpen) => { if (!isOpen) setEditingTemplate(null); setIsFormOpen(isOpen); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Checklist Template</DialogTitle>
-            <DialogDescription>
-              Modify the items and properties of this checklist template.
-            </DialogDescription>
-          </DialogHeader>
-          <ChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
-        </DialogContent>
-      </Dialog>
-    </div>
+    <main className="flex-1 p-4 md:p-8">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div className="space-y-1">
+                <CardTitle>Manage Fleet</CardTitle>
+                <CardDescription>View and manage all aircraft in your fleet.</CardDescription>
+            </div>
+            <Button onClick={openNewDialog}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Aircraft
+            </Button>
+        </CardHeader>
+        <CardContent>
+            <Tabs defaultValue="active">
+                <TabsList>
+                    <TabsTrigger value="active">Active Fleet</TabsTrigger>
+                    <TabsTrigger value="archived">Archived</TabsTrigger>
+                </TabsList>
+                <TabsContent value="active">
+                    <AircraftTable aircraft={activeAircraft} />
+                </TabsContent>
+                <TabsContent value="archived">
+                     <AircraftTable aircraft={archivedAircraft} isArchived />
+                </TabsContent>
+            </Tabs>
+        </CardContent>
+      </Card>
+      <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
+          <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                  <DialogTitle>{editingAircraft ? 'Edit Aircraft' : 'Add New Aircraft'}</DialogTitle>
+                  <DialogDescription>
+                      {editingAircraft ? 'Update the details for this aircraft.' : 'Fill out the form below to add a new aircraft to the fleet.'}
+                  </DialogDescription>
+              </DialogHeader>
+              <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
+          </DialogContent>
+        </Dialog>
+    </main>
   );
 }

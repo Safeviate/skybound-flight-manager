@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, Checklist } from '@/lib/types';
+import type { Aircraft } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -20,7 +20,6 @@ import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
-import { AuditChecklistsManager } from '../checklists/checklist-template-manager';
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -204,16 +203,12 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 <TabsList>
                     <TabsTrigger value="active">Active Fleet</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
-                    <TabsTrigger value="checklists">Checklists</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
                     <AircraftTable aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived">
                      <AircraftTable aircraft={archivedAircraft} isArchived />
-                </TabsContent>
-                <TabsContent value="checklists" className="pt-4">
-                    <AuditChecklistsManager />
                 </TabsContent>
             </Tabs>
         </CardContent>
