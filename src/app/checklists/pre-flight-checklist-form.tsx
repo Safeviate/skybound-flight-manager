@@ -36,11 +36,11 @@ const checklistSchema = z.object({
   report: z.string().optional(),
 });
 
-type ChecklistFormValues = z.infer<typeof checklistSchema>;
+export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
-    onSuccess: () => void;
+    onSuccess: (data: PreFlightChecklistFormValues) => void;
 }
 
 export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightChecklistFormProps) {
@@ -48,7 +48,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | null>(null);
 
-  const form = useForm<ChecklistFormValues>({
+  const form = useForm<PreFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         registration: aircraft.tailNumber,
@@ -89,9 +89,8 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     setIsCameraOpen(true);
   }
   
-  const onSubmit = (data: ChecklistFormValues) => {
-    console.log(data);
-    onSuccess();
+  const onSubmit = (data: PreFlightChecklistFormValues) => {
+    onSuccess(data);
     form.reset();
   }
 
@@ -127,7 +126,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                                 <FormLabel>Hobbs Meter</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Hash className="h-5 w-5 text-muted-foreground" />
-                                    <Input type="number" placeholder="Enter current Hobbs hours" {...field} className="flex-1" />
+                                    <Input type="number" step="0.1" placeholder="Enter current Hobbs hours" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} className="flex-1" />
                                 </div>
                                 <FormMessage />
                             </FormItem>

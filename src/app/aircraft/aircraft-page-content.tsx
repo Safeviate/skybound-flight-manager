@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,17 +13,35 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft } from '@/lib/types';
+import type { Aircraft, CompletedChecklist } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
-import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
-import { PostFlightChecklistForm } from '../checklists/post-flight-checklist-form';
+import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
+import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { ChecklistStarter } from './checklist-starter';
+import { format, parseISO } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+
+async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
+    if (!companyId || !aircraftId) return [];
+    
+    const historyQuery = query(
+        collection(db, `companies/${companyId}/aircraft/${aircraftId}/completed-checklists`),
+        orderBy('dateCompleted', 'desc')
+    );
+    
+    const snapshot = await getDocs(historyQuery);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
+}
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -33,6 +51,9 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const { toast } = useToast();
     const { settings } = useSettings();
     const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
+    const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
+    const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
+    const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
 
     const refreshData = useCallback(async () => {
         if (!company) return;
@@ -45,6 +66,18 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             refreshData();
         }
     }, [company, refreshData]);
+    
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (company && selectedHistoryAircraftId) {
+                const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
+                setChecklistHistory(history);
+            } else {
+                setChecklistHistory([]);
+            }
+        };
+        fetchHistory();
+    }, [selectedHistoryAircraftId, company]);
 
     const activeAircraft = useMemo(() => aircraftList.filter(a => a.status !== 'Archived'), [aircraftList]);
     const archivedAircraft = useMemo(() => aircraftList.filter(a => a.status === 'Archived'), [aircraftList]);
@@ -120,22 +153,40 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         }
     };
     
-    const handleChecklistSuccess = async (newStatus: Aircraft['checklistStatus']) => {
-        if (!selectedAircraftForChecklist || !company) return;
+    const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
+        if (!selectedAircraftForChecklist || !company || !user) return;
         
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
-        
+        const isPreFlight = 'registration' in data;
+        const newStatus = isPreFlight ? 'needs-post-flight' : 'needs-pre-flight';
+
+        const historyDoc: Omit<CompletedChecklist, 'id'> = {
+            aircraftId: selectedAircraftForChecklist.id,
+            aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
+            userId: user.id,
+            userName: user.name,
+            dateCompleted: new Date().toISOString(),
+            type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
+            results: data,
+        };
+
         try {
+            // Update aircraft status
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
             await updateDoc(aircraftRef, { checklistStatus: newStatus });
-            refreshData(); // Refresh the list to get the updated status
+
+            // Add to checklist history
+            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
+            await addDoc(historyCollectionRef, historyDoc);
+
+            refreshData();
             toast({
                 title: 'Checklist Submitted',
-                description: `The aircraft is now ready for its ${newStatus === 'needs-post-flight' ? 'Post-Flight' : 'Pre-Flight'} check.`
+                description: `The checklist has been saved. The aircraft is now ready for its ${newStatus === 'needs-post-flight' ? 'next flight' : 'Post-Flight check'}.`
             });
              setSelectedChecklistAircraftId(null);
         } catch (error) {
-            console.error("Error updating checklist status:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update checklist status.' });
+            console.error("Error updating checklist status or history:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
         }
     };
     
@@ -217,6 +268,68 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             </TableBody>
         </Table>
     );
+    
+    const handleDownloadChecklist = (checklist: CompletedChecklist) => {
+        const doc = new jsPDF();
+        const { results } = checklist;
+        const isPreFlight = checklist.type === 'Pre-Flight';
+
+        doc.setFontSize(18);
+        doc.text(`${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
+        doc.setFontSize(10);
+        doc.text(`Completed by ${checklist.userName} on ${format(parseISO(checklist.dateCompleted), 'PPP p')}`, 14, 28);
+        
+        let yPos = 40;
+        
+        const addField = (label: string, value: string | number | boolean | undefined) => {
+            if (value !== undefined) {
+                doc.setFont('helvetica', 'bold');
+                doc.text(label, 14, yPos);
+                doc.setFont('helvetica', 'normal');
+                doc.text(String(value), 60, yPos);
+                yPos += 7;
+            }
+        };
+
+        if (isPreFlight) {
+            addField('Aircraft Registration:', (results as PreFlightChecklistFormValues).registration);
+            addField('Hobbs Hours:', (results as PreFlightChecklistFormValues).hobbs);
+        } else {
+             addField('Hobbs Hours:', (results as PostFlightChecklistFormValues).hobbs);
+        }
+        
+        yPos += 5;
+
+        const tableBody = [];
+        if (isPreFlight) {
+            const preFlightResults = results as PreFlightChecklistFormValues;
+            tableBody.push(['Left Side Photo', preFlightResults.leftSidePhoto ? 'Captured' : 'Not Captured']);
+            tableBody.push(['Right Side Photo', preFlightResults.rightSidePhoto ? 'Captured' : 'Not Captured']);
+            tableBody.push(['Checklist/POH Onboard', preFlightResults.checklistOnboard ? 'Yes' : 'No']);
+            tableBody.push(['FOM Onboard', preFlightResults.fomOnboard ? 'Yes' : 'No']);
+        } else {
+            const postFlightResults = results as PostFlightChecklistFormValues;
+            tableBody.push(['Left Side Photo', postFlightResults.leftSidePhoto ? 'Captured' : 'Not Captured']);
+            tableBody.push(['Right Side Photo', postFlightResults.rightSidePhoto ? 'Captured' : 'Not Captured']);
+            tableBody.push(['Defect Photo', postFlightResults.defectPhoto ? 'Captured' : 'Not Captured']);
+        }
+
+        autoTable(doc, {
+            startY: yPos,
+            head: [['Item', 'Result']],
+            body: tableBody,
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Anything to Report?', 14, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.text(results.report || 'Nothing reported.', 14, yPos, { maxWidth: 180 });
+        
+        doc.save(`checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`);
+    };
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -233,10 +346,11 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="active">
-                <TabsList>
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="active">Active Fleet</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
                     <TabsTrigger value="checklists">Aircraft Checklist</TabsTrigger>
+                    <TabsTrigger value="history">Checklist History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
                     <AircraftTable aircraft={activeAircraft} />
@@ -261,17 +375,57 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                 </div>
                                 {selectedAircraftForChecklist.checklistStatus === 'needs-post-flight' ? (
                                     <PostFlightChecklistForm 
-                                        onSuccess={() => handleChecklistSuccess('needs-pre-flight')}
+                                        onSuccess={handleChecklistSuccess}
                                         aircraft={selectedAircraftForChecklist}
                                     />
                                 ) : (
                                     <PreFlightChecklistForm 
-                                        onSuccess={() => handleChecklistSuccess('needs-post-flight')} 
+                                        onSuccess={handleChecklistSuccess} 
                                         aircraft={selectedAircraftForChecklist}
                                     />
                                 )}
                             </>
                         )}
+                    </div>
+                </TabsContent>
+                 <TabsContent value="history" className="pt-6">
+                    <div className="max-w-2xl mx-auto space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Plane className="h-5 w-5 text-muted-foreground" />
+                            <Select onValueChange={setSelectedHistoryAircraftId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an aircraft to view its history..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {activeAircraft.map(ac => (
+                                        <SelectItem key={ac.id} value={ac.id}>
+                                            {ac.model} ({ac.tailNumber})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {checklistHistory.length > 0 ? (
+                            <div className="space-y-2">
+                                {checklistHistory.map(item => (
+                                    <Card key={item.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setViewingChecklist(item)}>
+                                        <CardContent className="p-3 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-semibold">{item.type} Checklist</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Completed by {item.userName} on {format(parseISO(item.dateCompleted), 'PPP')}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : selectedHistoryAircraftId ? (
+                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">No checklist history found for this aircraft.</p>
+                            </div>
+                        ) : null}
                     </div>
                 </TabsContent>
             </Tabs>
@@ -288,6 +442,39 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
           </DialogContent>
         </Dialog>
+        {viewingChecklist && (
+             <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>{viewingChecklist.type} Checklist</DialogTitle>
+                        <DialogDescription>
+                            Details for {viewingChecklist.aircraftTailNumber} on {format(parseISO(viewingChecklist.dateCompleted), 'PPP p')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+                        <p className="text-sm">Completed by: <span className="font-semibold">{viewingChecklist.userName}</span></p>
+                        <div className="space-y-2">
+                             <h4 className="font-semibold text-sm">Photos</h4>
+                             <div className="grid grid-cols-2 gap-2">
+                                {(viewingChecklist.results as PostFlightChecklistFormValues).leftSidePhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
+                                {(viewingChecklist.results as PostFlightChecklistFormValues).rightSidePhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
+                                {(viewingChecklist.results as PostFlightChecklistFormValues).defectPhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
+                             </div>
+                        </div>
+                        <div className="space-y-2">
+                             <h4 className="font-semibold text-sm">Report</h4>
+                             <p className="text-sm p-2 bg-muted rounded-md">{viewingChecklist.results.report || "No issues reported."}</p>
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <Button variant="outline" onClick={() => handleDownloadChecklist(viewingChecklist)}>
+                            <Download className="mr-2 h-4 w-4"/>
+                            Download PDF
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+             </Dialog>
+        )}
     </main>
   );
 }

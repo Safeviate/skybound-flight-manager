@@ -25,11 +25,11 @@ const checklistSchema = z.object({
   defectPhoto: z.string().optional(),
 });
 
-type ChecklistFormValues = z.infer<typeof checklistSchema>;
+export type PostFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 
 interface PostFlightChecklistFormProps {
     aircraft: Aircraft;
-    onSuccess: () => void;
+    onSuccess: (data: PostFlightChecklistFormValues) => void;
 }
 
 export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightChecklistFormProps) {
@@ -38,7 +38,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
-  const form = useForm<ChecklistFormValues>({
+  const form = useForm<PostFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         hobbs: 0,
@@ -71,9 +71,8 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
     setIsCameraOpen(true);
   }
   
-  const onSubmit = (data: ChecklistFormValues) => {
-    console.log(data);
-    onSuccess();
+  const onSubmit = (data: PostFlightChecklistFormValues) => {
+    onSuccess(data);
     form.reset();
   }
 
@@ -94,7 +93,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                             <FormLabel>Closing Hobbs Meter</FormLabel>
                             <div className="flex items-center gap-2">
                                 <Hash className="h-5 w-5 text-muted-foreground" />
-                                <Input type="number" placeholder="Not Scanned" {...field} readOnly className="flex-1" />
+                                <Input type="number" step="0.1" placeholder="Not Scanned" {...field} readOnly className="flex-1" />
                                 <Button type="button" variant="outline" onClick={() => setIsScannerOpen(true)}>
                                     <Bot className="mr-2" /> Scan
                                 </Button>
