@@ -50,6 +50,11 @@ export function AircraftPageContent({
   const { settings } = useSettings();
   const { toast } = useToast();
 
+  useEffect(() => {
+    setFleet(initialFleet);
+    setChecklists(initialChecklists);
+  }, [initialFleet, initialChecklists]);
+
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
   const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
   const canEditChecklists = user?.permissions.includes('Checklists:Edit') || user?.permissions.includes('Super User');
@@ -310,5 +315,3 @@ export function AircraftPageContent({
     </main>
   );
 }
-
-    

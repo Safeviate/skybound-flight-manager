@@ -81,19 +81,21 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
           const templatesSnapshot = await getDocs(templatesRef);
           const standardTemplates = templatesSnapshot.docs
               .map(doc => ({ id: doc.id, ...doc.data() } as Checklist))
-              .filter(t => t.title.toLowerCase().includes('pre-flight') || t.title.toLowerCase().includes('post-flight'));
+              .filter(t => t.category === 'Pre-Flight' || t.category === 'Post-Flight');
 
           if (standardTemplates.length === 0) return;
 
           const assignedChecklistsRef = collection(db, `companies/${company.id}/checklists`);
+          const batch = [];
           for (const template of standardTemplates) {
               const newChecklistForAircraft: Omit<Checklist, 'id'> = {
                   ...template,
                   aircraftId: aircraftId,
                   templateId: template.id,
               };
-              await addDoc(assignedChecklistsRef, newChecklistForAircraft);
+              batch.push(addDoc(assignedChecklistsRef, newChecklistForAircraft));
           }
+          await Promise.all(batch);
       } catch (error) {
           console.error('Error assigning standard checklists:', error);
           toast({ variant: 'destructive', title: 'Checklist Assignment Failed', description: 'Could not automatically assign standard checklists.'});
@@ -102,7 +104,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
 
   async function onSubmit(data: AircraftFormValues) {
     if (!company) {
-        toast({ variant: 'destructive', title: 'Error', description: 'No company context found.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'No company context found. Cannot add aircraft.' });
         return;
     }
     const id = data.tailNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -127,8 +129,8 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
     try {
         await setDoc(aircraftRef, newAircraft);
         await assignStandardChecklists(id);
-        onAircraftAdded();
         toast({ title: 'Aircraft Added', description: `Aircraft ${data.tailNumber} has been added.` });
+        onAircraftAdded();
     } catch (error) {
         console.error("Error adding aircraft:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to add aircraft.' });
@@ -197,7 +199,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
              <FormField control={form.control} name="hours" render={({ field }) => (
                 <FormItem><FormLabel>Hobbs Hours</FormLabel>
                  <div className="flex items-center gap-2">
-                    <FormControl><Input type="number" placeholder="1250.5" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="1250.5" {...field} /></FormControl>
                     <Button variant="outline" type="button" size="icon" onClick={() => setIsHobbsCameraOpen(true)}><Camera className="h-4 w-4" /></Button>
                  </div><FormMessage /></FormItem>
             )}/>
