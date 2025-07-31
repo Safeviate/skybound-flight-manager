@@ -544,3 +544,11 @@ export type ComplianceItem = {
     nextAuditDate?: string;
     findings?: string;
 };
+
+export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
+    'Flight Operations Report': 'Flight Operations',
+    'Ground Operations Report': 'Ground Operation',
+    'Aircraft Defect Report': 'Maintenance',
+    'Occupational Report': 'Management',
+    'General Report': 'Management',
+};
