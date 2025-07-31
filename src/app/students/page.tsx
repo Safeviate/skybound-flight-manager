@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import { AppContent } from '../app-content';
 
 function StudentsPage() {
   const { toast } = useToast();
@@ -186,6 +187,7 @@ function StudentsPage() {
   }
 
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -226,6 +228,7 @@ function StudentsPage() {
           </CardContent>
         </Card>
       </main>
+    </AppContent>
   );
 }
 

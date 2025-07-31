@@ -296,148 +296,137 @@ function CompaniesPage() {
   }
 
   return (
-    <>
-      <Sidebar>
-          <Nav />
-      </Sidebar>
-      <SidebarInset>
-          <div className="flex-1 flex flex-col min-h-0">
-            <Header title={CompaniesPage.title} />
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-                            <Building className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{companies.length}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalUsers}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Aircraft</CardTitle>
-                            <Plane className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalAircraft}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
-                            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalOpenReports}</div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <SystemHealth companies={companies} />
-                <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Registered Companies</CardTitle>
-                        <CardDescription>
-                        A list of all organizations registered in the system.
-                        </CardDescription>
-                    </div>
-                    <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                New Company
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-xl">
-                            <DialogHeader>
-                                <DialogTitle>Register New Company</DialogTitle>
-                                <DialogDescription>
-                                    Set up a new portal for an organization.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <NewCompanyForm onSubmit={handleNewCompany} />
-                        </DialogContent>
-                    </Dialog>
+    <main className="flex-1 p-4 md:p-8 space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Company Name</TableHead>
-                        <TableHead>Users</TableHead>
-                        <TableHead>Aircraft</TableHead>
-                        <TableHead>Open Reports</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {companies.map((company) => (
-                        <TableRow key={company.id}>
-                            <TableCell className="font-medium flex items-center gap-2">
-                                {company.logoUrl ? <img src={company.logoUrl} alt={company.name} className="h-6 w-6 object-contain"/> : <Rocket className="h-5 w-5 text-primary" />}
-                                {company.name}
-                            </TableCell>
-                            <TableCell>{company.userCount}</TableCell>
-                            <TableCell>{company.aircraftCount}</TableCell>
-                            <TableCell>
-                                <Badge variant={company.openSafetyReports > 0 ? 'destructive' : 'success'}>
-                                    {company.openSafetyReports}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                            <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem onSelect={() => handleLoginAs(company)}>
-                                            <User className="mr-2 h-4 w-4"/>
-                                            Login As Admin
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => openEditDialog(company)}>
-                                            <Edit className="mr-2 h-4 w-4"/>
-                                            Edit Company
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                            </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
+                    <div className="text-2xl font-bold">{companies.length}</div>
                 </CardContent>
-                </Card>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalUsers}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Aircraft</CardTitle>
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalAircraft}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
+                    <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalOpenReports}</div>
+                </CardContent>
+            </Card>
+        </div>
+        <SystemHealth companies={companies} />
+        <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Registered Companies</CardTitle>
+                <CardDescription>
+                A list of all organizations registered in the system.
+                </CardDescription>
+            </div>
+            <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Company
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Register New Company</DialogTitle>
+                        <DialogDescription>
+                            Set up a new portal for an organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewCompanyForm onSubmit={handleNewCompany} />
+                </DialogContent>
+            </Dialog>
+        </CardHeader>
+        <CardContent>
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>Company Name</TableHead>
+                <TableHead>Users</TableHead>
+                <TableHead>Aircraft</TableHead>
+                <TableHead>Open Reports</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {companies.map((company) => (
+                <TableRow key={company.id}>
+                    <TableCell className="font-medium flex items-center gap-2">
+                        {company.logoUrl ? <img src={company.logoUrl} alt={company.name} className="h-6 w-6 object-contain"/> : <Rocket className="h-5 w-5 text-primary" />}
+                        {company.name}
+                    </TableCell>
+                    <TableCell>{company.userCount}</TableCell>
+                    <TableCell>{company.aircraftCount}</TableCell>
+                    <TableCell>
+                        <Badge variant={company.openSafetyReports > 0 ? 'destructive' : 'success'}>
+                            {company.openSafetyReports}
+                        </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                    <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onSelect={() => handleLoginAs(company)}>
+                                    <User className="mr-2 h-4 w-4"/>
+                                    Login As Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => openEditDialog(company)}>
+                                    <Edit className="mr-2 h-4 w-4"/>
+                                    Edit Company
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                    </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </CardContent>
+        </Card>
 
-                {editingCompany && (
-                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                        <DialogContent className="sm:max-w-xl">
-                            <DialogHeader>
-                                <DialogTitle>Edit Company: {editingCompany.name}</DialogTitle>
-                                <DialogDescription>
-                                Update the details for this organization.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <EditCompanyForm company={editingCompany} onSubmit={handleEditCompany} />
-                        </DialogContent>
-                    </Dialog>
-                )}
-            </main>
-          </div>
-          <Footer />
-      </SidebarInset>
-    </>
+        {editingCompany && (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Company: {editingCompany.name}</DialogTitle>
+                        <DialogDescription>
+                        Update the details for this organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <EditCompanyForm company={editingCompany} onSubmit={handleEditCompany} />
+                </DialogContent>
+            </Dialog>
+        )}
+    </main>
   );
 }
 

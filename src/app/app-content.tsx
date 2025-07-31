@@ -34,8 +34,6 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   
   const noLayoutRoutes = ['/login', '/corporate'];
   const showLayout = user && !noLayoutRoutes.includes(pathname);
-  
-  if (pathname === '/') return <>{children}</>;
 
   if (showLayout) {
     const pageTitle = getPageTitle(children);

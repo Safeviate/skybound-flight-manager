@@ -22,6 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AppContent } from '../app-content';
 
 
 function PersonnelPage() {
@@ -136,6 +137,7 @@ function PersonnelPage() {
     }
 
   return (
+    <AppContent>
       <main className="flex-1 p-4 md:p-8 space-y-8">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -260,6 +262,7 @@ function PersonnelPage() {
             </Dialog>
         )}
       </main>
+    </AppContent>
   );
 }
 

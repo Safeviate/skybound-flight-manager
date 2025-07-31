@@ -35,7 +35,9 @@ export default function RootLayout({
             <SettingsProvider>
               <ScaleProvider>
                 <SidebarProvider>
-                  {children}
+                  <AppContent>
+                    {children}
+                  </AppContent>
                 </SidebarProvider>
                 <Toaster />
               </ScaleProvider>
