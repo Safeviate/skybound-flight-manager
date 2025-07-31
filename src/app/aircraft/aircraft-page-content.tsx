@@ -293,7 +293,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         const doc = new jsPDF();
         const { results } = checklist;
         const isPreFlight = checklist.type === 'Pre-Flight';
-
+    
         doc.setFontSize(18);
         doc.text(`${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
         doc.setFontSize(10);
@@ -310,7 +310,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 yPos += 7;
             }
         };
-
+    
         if (isPreFlight) {
             const preFlightResults = results as PreFlightChecklistFormValues;
             addField('Aircraft Registration:', preFlightResults.registration);
@@ -320,7 +320,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         }
         
         yPos += 5;
-
+    
         const tableBody: any[][] = [];
         if (isPreFlight) {
             const preFlightResults = results as PreFlightChecklistFormValues;
@@ -335,13 +335,13 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         } else {
             tableBody.push(['Defect Reported', (results.report || '').length > 0 ? 'Yes' : 'No']);
         }
-
+    
         autoTable(doc, {
             startY: yPos,
             head: [['Item', 'Result']],
             body: tableBody,
         });
-
+    
         yPos = (doc as any).lastAutoTable.finalY + 10;
         
         doc.setFont('helvetica', 'bold');
@@ -349,33 +349,35 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         yPos += 5;
         doc.setFont('helvetica', 'normal');
         doc.text(results.report || 'Nothing reported.', 14, yPos, { maxWidth: 180 });
-
+    
         yPos = (doc as any).lastAutoTable.finalY + 15;
         
         const addImageSection = (title: string, dataUrl: string | undefined) => {
             if (dataUrl) {
-                if (yPos > 240) { // Check if new page is needed
+                if (yPos > 220) { // Check if new page is needed, increased threshold
                     doc.addPage();
                     yPos = 20;
                 }
                 doc.setFont('helvetica', 'bold');
                 doc.text(title, 14, yPos);
                 yPos += 5;
-                doc.addImage(dataUrl, 'PNG', 14, yPos, 80, 45);
+                doc.addImage(dataUrl, 'JPEG', 14, yPos, 80, 45); // Using JPEG for smaller size
                 yPos += 55;
             }
         };
 
-        if ('leftSidePhoto' in results) {
-            addImageSection('Left Side Photo', (results as PreFlightChecklistFormValues | PostFlightChecklistFormValues).leftSidePhoto);
-        }
-        if ('rightSidePhoto' in results) {
-            addImageSection('Right Side Photo', (results as PreFlightChecklistFormValues | PostFlightChecklistFormValues).rightSidePhoto);
-        }
-        if ('defectPhoto' in results) {
-            addImageSection('Defect Photo', (results as PostFlightChecklistFormValues).defectPhoto);
-        }
+        const preFlightResults = results as PreFlightChecklistFormValues;
+        const postFlightResults = results as PostFlightChecklistFormValues;
 
+        if (preFlightResults.leftSidePhoto) {
+            addImageSection('Left Side Photo:', preFlightResults.leftSidePhoto);
+        }
+        if (preFlightResults.rightSidePhoto) {
+            addImageSection('Right Side Photo:', preFlightResults.rightSidePhoto);
+        }
+        if (postFlightResults.defectPhoto) {
+            addImageSection('Defect Photo:', postFlightResults.defectPhoto);
+        }
         
         doc.save(`checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`);
     };
