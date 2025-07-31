@@ -41,12 +41,6 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   const { user, company, loading } = useUser();
   const router = useRouter();
 
-  const fetchStudents = async () => {
-      if (!company) return;
-      const studentList = await getStudentsPageData(company.id);
-      setStudents(studentList);
-  };
-
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
