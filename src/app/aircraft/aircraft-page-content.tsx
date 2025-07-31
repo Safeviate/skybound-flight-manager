@@ -54,7 +54,6 @@ export function AircraftPageContent({
   const { settings } = useSettings();
   const router = useRouter();
   const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const refreshData = async () => {
       if (!company) return;
@@ -226,10 +225,9 @@ export function AircraftPageContent({
     }
   };
 
-  const handleAircraftAdded = (newAircraft: Aircraft) => {
-    setFleet(prev => [...prev, newAircraft]);
+  const handleAircraftAdded = () => {
     setIsNewAircraftDialogOpen(false);
-    refreshData(); // Refetch all data to get newly assigned checklists
+    refreshData();
   }
   
   const handleDeleteAircraft = async (aircraftId: string) => {
@@ -331,8 +329,8 @@ export function AircraftPageContent({
                           </div>
                       )}
                   </TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                  <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry)}</TableCell>
+                  <TableCell>{getExpiryBadge(aircraft.insuranceExpiry)}</TableCell>
                   <TableCell>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>

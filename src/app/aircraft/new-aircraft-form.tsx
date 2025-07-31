@@ -187,7 +187,7 @@ const aircraftFormSchema = z.object({
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
 
 interface NewAircraftFormProps {
-    onAircraftAdded: (newAircraft: Aircraft) => void;
+    onAircraftAdded: () => void;
 }
 
 export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
@@ -287,7 +287,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         
         await assignStandardChecklists(id);
 
-        onAircraftAdded(newAircraft);
+        onAircraftAdded();
         toast({
           title: 'Aircraft Added',
           description: `Aircraft ${data.tailNumber} has been added.`,

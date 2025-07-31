@@ -39,7 +39,7 @@ export const getNextService = (hours: number): { type: string; hoursUntil: numbe
 };
 
 export const getExpiryBadge = (
-    expiryDate: string, 
+    expiryDate?: string, 
     orangeWarningDays: number = 30, 
     yellowWarningDays: number = 60
 ) => {
