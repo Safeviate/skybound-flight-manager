@@ -43,9 +43,15 @@ export const getExpiryBadge = (
     orangeWarningDays: number = 30, 
     yellowWarningDays: number = 60
 ) => {
+    if (!expiryDate) {
+        return <Badge variant="outline">N/A</Badge>;
+    }
     const today = new Date('2024-08-15'); // Hardcoding date for consistent display
     today.setHours(0, 0, 0, 0); // Set to start of day for consistent comparison
     const date = parseISO(expiryDate);
+    if (isNaN(date.getTime())) {
+        return <Badge variant="outline">Invalid Date</Badge>;
+    }
     const daysUntil = differenceInDays(date, today);
 
     let variant: "success" | "warning" | "destructive" | "default" | "orange" = "success";
@@ -174,4 +180,3 @@ export const calculateFlightHours = (logs: TrainingLogEntry[], periodInDays: num
 };
 
     
-
