@@ -22,8 +22,11 @@ import { db } from '@/lib/firebase';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Bot } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState } from 'react';
+import { AircraftInfoScanner } from './aircraft-info-scanner';
 
 const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
@@ -52,6 +55,7 @@ const parseDate = (dateString?: string | null): Date | undefined => {
 export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
@@ -111,6 +115,20 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     }
   }
 
+  const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
+    if (data.registration) {
+      form.setValue('tailNumber', data.registration);
+    }
+    if (data.hobbs !== undefined) {
+      form.setValue('hours', data.hobbs);
+    }
+    setIsScannerOpen(false);
+    toast({
+      title: 'Scan Successful',
+      description: 'The form has been updated with the scanned values.',
+    });
+  };
+
   const DatePickerField = ({ name, label }: { name: keyof AircraftFormValues, label: string }) => (
     <FormField
       control={form.control}
@@ -153,6 +171,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
   );
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
         <FormField
@@ -220,10 +239,28 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
           </div>
         </div>
 
-        <div className="md:col-span-2 flex justify-end pt-4">
+        <div className="md:col-span-2 flex justify-between items-center pt-4">
+          <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+              <DialogTrigger asChild>
+                  <Button type="button" variant="outline">
+                      <Bot className="mr-2 h-4 w-4" />
+                      Scan with AI
+                  </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                      <DialogTitle>AI Aircraft Scanner</DialogTitle>
+                      <DialogDescription>
+                          Capture an image of the aircraft registration or Hobbs meter.
+                      </DialogDescription>
+                  </DialogHeader>
+                  <AircraftInfoScanner onSuccess={handleScanSuccess} />
+              </DialogContent>
+          </Dialog>
           <Button type="submit">{initialData ? 'Save Changes' : 'Add Aircraft'}</Button>
         </div>
       </form>
     </Form>
+    </>
   );
 }
