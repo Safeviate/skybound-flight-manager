@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Camera, Loader2, RotateCcw } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -26,7 +26,121 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import type { Aircraft, User, Checklist, ChecklistItem } from '@/lib/types';
 import { getNextService } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { readHobbsFromImage } from '@/ai/flows/read-hobbs-from-image-flow';
+import { readRegistrationFromImage } from '@/ai/flows/read-registration-from-image-flow';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import Image from 'next/image';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
+
+const AiCameraReader = ({
+  onValueRead,
+  aiFlow,
+  title,
+  description,
+}: {
+  onValueRead: (value: string | number) => void;
+  aiFlow: (input: any) => Promise<any>;
+  title: string;
+  description: string;
+}) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const getCameraPermission = async () => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setHasCameraPermission(false);
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+                setHasCameraPermission(true);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                setHasCameraPermission(false);
+            }
+        };
+        getCameraPermission();
+        return () => {
+            if (videoRef.current && videoRef.current.srcObject) {
+                const stream = videoRef.current.srcObject as MediaStream;
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
+
+    const handleCapture = async () => {
+        if (videoRef.current) {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoRef.current.videoWidth;
+            canvas.height = videoRef.current.videoHeight;
+            canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            setCapturedImage(dataUrl);
+            setIsLoading(true);
+            try {
+                const result = await aiFlow({ photoDataUri: dataUrl });
+                const value = result.registration || result.hobbsValue;
+                onValueRead(value);
+            } catch (error) {
+                console.error("AI reading failed:", error);
+                toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not read the value from the image.' });
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const handleRetry = () => {
+        setCapturedImage(null);
+    };
+
+    if (hasCameraPermission === false) {
+        return <Alert variant="destructive"><AlertTitle>Camera Access Required</AlertTitle><AlertDescription>Please allow camera access to use this feature.</AlertDescription></Alert>;
+    }
+
+    if (capturedImage) {
+        return (
+             <div className="space-y-4">
+                <Image src={capturedImage} alt="Captured image" width={300} height={150} className="rounded-md w-full" />
+                {isLoading && (
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin"/>
+                        <span>Analyzing...</span>
+                    </div>
+                )}
+                 <Button variant="outline" className="w-full" onClick={handleRetry}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Recapture
+                </Button>
+            </div>
+        )
+    }
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{title}</DialogTitle>
+                <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Capture & Analyze
+                </Button>
+            </div>
+        </DialogContent>
+    );
+};
 
 
 const aircraftFormSchema = z.object({
@@ -84,12 +198,10 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
       if (!company) return;
       
       try {
-          // 1. Fetch all master templates
           const templatesRef = collection(db, `companies/${company.id}/checklist-templates`);
           const templatesSnapshot = await getDocs(templatesRef);
           const allTemplates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Checklist));
 
-          // 2. Filter for standard "Pre-Flight" and "Post-Flight" templates
           const standardTemplates = allTemplates.filter(t => 
               t.title.toLowerCase().includes('pre-flight') || 
               t.title.toLowerCase().includes('post-flight')
@@ -100,7 +212,6 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
               return;
           }
 
-          // 3. Create and assign copies for the new aircraft
           const assignedChecklistsRef = collection(db, `companies/${company.id}/checklists`);
           for (const template of standardTemplates) {
               const newChecklistForAircraft: Omit<Checklist, 'id'> = {
@@ -149,7 +260,6 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
     try {
         await setDoc(aircraftRef, newAircraft);
         
-        // Automatically assign standard checklists
         await assignStandardChecklists(id);
 
         onAircraftAdded(newAircraft);
@@ -174,9 +284,22 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Tail Number</FormLabel>
-                <FormControl>
-                    <Input placeholder="N12345" {...field} />
-                </FormControl>
+                <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input placeholder="N12345" {...field} />
+                    </FormControl>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
+                        </DialogTrigger>
+                        <AiCameraReader
+                            title="Scan Tail Number"
+                            description="Position the aircraft's tail number in the frame and capture."
+                            aiFlow={readRegistrationFromImage}
+                            onValueRead={(value) => form.setValue('tailNumber', String(value))}
+                        />
+                    </Dialog>
+                </div>
                 <FormMessage />
                 </FormItem>
             )}
@@ -222,9 +345,22 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Hobbs Hours</FormLabel>
-                <FormControl>
-                    <Input type="number" placeholder="1250.5" {...field} />
-                </FormControl>
+                 <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input type="number" placeholder="1250.5" {...field} />
+                    </FormControl>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
+                        </DialogTrigger>
+                        <AiCameraReader
+                            title="Scan Hobbs Meter"
+                            description="Position the Hobbs meter in the frame and capture."
+                            aiFlow={readHobbsFromImage}
+                            onValueRead={(value) => form.setValue('hours', Number(value))}
+                        />
+                    </Dialog>
+                 </div>
                 <FormMessage />
                 </FormItem>
             )}
