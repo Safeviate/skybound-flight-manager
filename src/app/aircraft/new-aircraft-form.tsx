@@ -83,7 +83,7 @@ const AiCameraReader = ({
             canvas.width = videoRef.current.videoWidth;
             canvas.height = videoRef.current.videoHeight;
             canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-            const dataUrl = canvas.toDataURL('image/png');
+            const dataUrl = canvas.toDataURL('image/jpeg');
             setCapturedImage(dataUrl);
             setIsLoading(true);
             try {
