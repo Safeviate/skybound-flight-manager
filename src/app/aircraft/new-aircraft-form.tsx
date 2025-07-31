@@ -56,7 +56,8 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
   const { toast } = useToast();
   const { company } = useUser();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  
+  const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
+
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
     defaultValues: initialData ? {
@@ -114,6 +115,11 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         toast({ variant: 'destructive', title: 'Error', description: 'Could not save aircraft data.' });
     }
   }
+  
+  const openScanner = (mode: 'registration' | 'hobbs') => {
+    setScanMode(mode);
+    setIsScannerOpen(true);
+  }
 
   const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
     if (data.registration) {
@@ -125,7 +131,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     setIsScannerOpen(false);
     toast({
       title: 'Scan Successful',
-      description: 'The form has been updated with the scanned values.',
+      description: 'The form has been updated with the scanned value.',
     });
   };
 
@@ -206,9 +212,14 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
           render={({ field }) => (
             <FormItem>
               <FormLabel>Aircraft Registration</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., ZS-ABC" {...field} />
-              </FormControl>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                    <Input placeholder="e.g., ZS-ABC" {...field} />
+                </FormControl>
+                <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
+                    <Bot className="h-4 w-4" />
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -219,9 +230,14 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
           render={({ field }) => (
             <FormItem>
               <FormLabel>Current Hobbs Hours</FormLabel>
-              <FormControl>
-                <Input type="number" step="0.1" {...field} />
-              </FormControl>
+               <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input type="number" step="0.1" {...field} />
+                    </FormControl>
+                    <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
+                        <Bot className="h-4 w-4" />
+                    </Button>
+                </div>
               <FormMessage />
             </FormItem>
           )}
@@ -239,28 +255,24 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
           </div>
         </div>
 
-        <div className="md:col-span-2 flex justify-between items-center pt-4">
-          <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
-              <DialogTrigger asChild>
-                  <Button type="button" variant="outline">
-                      <Bot className="mr-2 h-4 w-4" />
-                      Scan with AI
-                  </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                      <DialogTitle>AI Aircraft Scanner</DialogTitle>
-                      <DialogDescription>
-                          Capture an image of the aircraft registration or Hobbs meter.
-                      </DialogDescription>
-                  </DialogHeader>
-                  <AircraftInfoScanner onSuccess={handleScanSuccess} />
-              </DialogContent>
-          </Dialog>
+        <div className="md:col-span-2 flex justify-end items-center pt-4">
           <Button type="submit">{initialData ? 'Save Changes' : 'Add Aircraft'}</Button>
         </div>
       </form>
     </Form>
+
+    <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>AI Aircraft Scanner</DialogTitle>
+                <DialogDescription>
+                  {scanMode === 'registration' && 'Capture an image of the aircraft registration number.'}
+                  {scanMode === 'hobbs' && 'Capture an image of the Hobbs meter.'}
+                </DialogDescription>
+            </DialogHeader>
+            {scanMode && <AircraftInfoScanner scanMode={scanMode} onSuccess={handleScanSuccess} />}
+        </DialogContent>
+    </Dialog>
     </>
   );
 }

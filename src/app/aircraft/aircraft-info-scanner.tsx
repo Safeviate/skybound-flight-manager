@@ -12,10 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
 interface AircraftInfoScannerProps {
+  scanMode: 'registration' | 'hobbs';
   onSuccess: (data: { registration?: string; hobbs?: number }) => void;
 }
 
-export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
+export function AircraftInfoScanner({ scanMode, onSuccess }: AircraftInfoScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -67,21 +68,17 @@ export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
       setScanResult({});
 
       try {
-        const [hobbsResult, regResult] = await Promise.allSettled([
-          readHobbsFromImage({ photoDataUri: dataUrl }),
-          readRegistrationFromImage({ photoDataUri: dataUrl }),
-        ]);
-
-        const newResult: { registration?: string; hobbs?: number } = {};
-        if (hobbsResult.status === 'fulfilled' && hobbsResult.value.hobbsValue) {
-          newResult.hobbs = hobbsResult.value.hobbsValue;
+        if (scanMode === 'registration') {
+            const result = await readRegistrationFromImage({ photoDataUri: dataUrl });
+            if (result.registration) {
+                setScanResult({ registration: result.registration });
+            }
+        } else if (scanMode === 'hobbs') {
+            const result = await readHobbsFromImage({ photoDataUri: dataUrl });
+             if (result.hobbsValue) {
+                setScanResult({ hobbs: result.hobbsValue });
+            }
         }
-        if (regResult.status === 'fulfilled' && regResult.value.registration) {
-          newResult.registration = regResult.value.registration;
-        }
-        
-        setScanResult(newResult);
-
       } catch (error) {
         console.error("AI scan failed:", error);
         toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not read data from the image.' });
@@ -99,6 +96,9 @@ export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
   const handleConfirm = () => {
     onSuccess(scanResult);
   };
+  
+  const resultValue = scanMode === 'registration' ? scanResult.registration : scanResult.hobbs?.toFixed(1);
+  const resultLabel = scanMode === 'registration' ? 'Registration' : 'Hobbs Hours';
 
   if (hasCameraPermission === false) {
     return (
@@ -120,16 +120,10 @@ export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <h4 className="font-semibold text-center">AI Scan Results</h4>
-            <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-2 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Registration</p>
-                    <p className="text-lg font-bold">{scanResult.registration || 'Not found'}</p>
-                </div>
-                 <div className="p-2 border rounded-md">
-                    <p className="text-sm text-muted-foreground">Hobbs Hours</p>
-                    <p className="text-lg font-bold">{scanResult.hobbs?.toFixed(1) || 'Not found'}</p>
-                </div>
+            <h4 className="font-semibold text-center">AI Scan Result</h4>
+            <div className="p-4 border rounded-md text-center">
+                <p className="text-sm text-muted-foreground">{resultLabel}</p>
+                <p className="text-lg font-bold">{resultValue || 'Not found'}</p>
             </div>
             <Separator />
             <div className="flex justify-between">
@@ -137,7 +131,7 @@ export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Recapture
                 </Button>
-                <Button onClick={handleConfirm} disabled={Object.keys(scanResult).length === 0}>
+                <Button onClick={handleConfirm} disabled={!resultValue}>
                     <Check className="mr-2 h-4 w-4" />
                     Confirm & Use
                 </Button>
