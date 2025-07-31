@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport, TrainingLogEntry, User } from '@/lib/types';
-import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2, Trash2, MoreHorizontal } from 'lucide-react';
+import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2, Trash2, MoreHorizontal, ListChecks } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewAircraftForm } from './new-aircraft-form';
@@ -33,6 +33,7 @@ import { format, parseISO } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
 import { getAircraftPageData } from './data';
+import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
 
 
 export function AircraftPageContent({
@@ -71,6 +72,7 @@ export function AircraftPageContent({
   
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
   const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
+  const canEditChecklists = user?.permissions.includes('Checklists:Edit') || user?.permissions.includes('Super User');
 
   const handleItemToggle = async (toggledChecklist: Checklist) => {
     setChecklists(prev => prev.map(c => c.id === toggledChecklist.id ? toggledChecklist : c));
@@ -312,6 +314,7 @@ export function AircraftPageContent({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Aircraft Fleet</CardTitle>
           <div className="flex items-center gap-2">
+             {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
               <Button onClick={handleSeedAircraft} variant="outline" disabled={isSeeding}>
                   {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
                   Seed Sample Fleet
