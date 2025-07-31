@@ -9,7 +9,7 @@ interface CompanyWithStats extends Company {
   userCount: number;
   aircraftCount: number;
   openSafetyReports: number;
-  lastBookingDate?: Timestamp;
+  lastBookingDate?: string;
 }
 
 async function fetchStatsForCompany(companyId: string): Promise<Omit<CompanyWithStats, keyof Company>> {
@@ -29,13 +29,15 @@ async function fetchStatsForCompany(companyId: string): Promise<Omit<CompanyWith
         getDocs(lastBookingQuery),
       ]);
       
-      const lastBookingDate = lastBookingSnapshot.empty ? undefined : lastBookingSnapshot.docs[0].data().date;
+      const lastBookingDateString = lastBookingSnapshot.empty ? undefined : lastBookingSnapshot.docs[0].data().date;
+      const lastBookingDate = lastBookingDateString ? new Date(lastBookingDateString).toISOString() : undefined;
+
 
       return {
         userCount: userSnapshot.data().count,
         aircraftCount: aircraftSnapshot.data().count,
         openSafetyReports: openReportsSnapshot.data().count,
-        lastBookingDate: lastBookingDate ? Timestamp.fromDate(new Date(lastBookingDate)) : undefined,
+        lastBookingDate: lastBookingDate,
       };
     } catch (e) {
       console.error(`Failed to fetch stats for company ${companyId}`, e);

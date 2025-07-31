@@ -20,7 +20,7 @@ import { db, auth } from '@/lib/firebase';
 import config from '@/config';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { subDays, formatDistanceToNow } from 'date-fns';
+import { subDays, formatDistanceToNow, parseISO } from 'date-fns';
 import Loading from './loading';
 import { Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import Nav from '@/components/layout/nav';
@@ -31,7 +31,7 @@ interface CompanyWithStats extends Company {
   userCount: number;
   aircraftCount: number;
   openSafetyReports: number;
-  lastBookingDate?: Timestamp;
+  lastBookingDate?: string;
 }
 
 const SystemHealth = ({ companies }: { companies: CompanyWithStats[] }) => {
@@ -54,10 +54,10 @@ const SystemHealth = ({ companies }: { companies: CompanyWithStats[] }) => {
       }
 
       // Alert for inactivity
-      if (company.lastBookingDate && company.lastBookingDate.toDate() < thirtyDaysAgo) {
+      if (company.lastBookingDate && parseISO(company.lastBookingDate) < thirtyDaysAgo) {
         alerts.push({
           level: 'info' as const,
-          message: `has had no new bookings in over 30 days. Last booking was ${formatDistanceToNow(company.lastBookingDate.toDate(), { addSuffix: true })}.`,
+          message: `has had no new bookings in over 30 days. Last booking was ${formatDistanceToNow(parseISO(company.lastBookingDate), { addSuffix: true })}.`,
           companyName: company.name,
         });
       }
