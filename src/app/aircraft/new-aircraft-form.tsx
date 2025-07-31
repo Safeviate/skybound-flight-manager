@@ -60,7 +60,18 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
-    defaultValues: { status: 'Available', hours: 0 }
+    defaultValues: {
+      tailNumber: '',
+      model: '',
+      status: 'Available',
+      hours: 0,
+      airworthinessExpiry: undefined,
+      insuranceExpiry: undefined,
+      certificateOfReleaseToServiceExpiry: undefined,
+      certificateOfRegistrationExpiry: undefined,
+      massAndBalanceExpiry: undefined,
+      radioStationLicenseExpiry: undefined,
+    }
   });
 
   const assignStandardChecklists = async (aircraftId: string) => {
