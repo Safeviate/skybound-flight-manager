@@ -14,10 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 
 const checklistSchema = z.object({
@@ -75,11 +75,9 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
   const { setValue, watch } = form;
   const watchedValues = watch();
   
-  const handlePhotoSuccess = (data: { registration?: string; hobbs?: number }) => {
-    // This is a workaround as the scanner component is being reused
-    // It returns a data URL in the `registration` field
-    if (photoTarget && data.registration) {
-        setValue(photoTarget, data.registration, { shouldValidate: true });
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+        setValue(photoTarget, dataUrl, { shouldValidate: true });
     }
     setIsCameraOpen(false);
   }
@@ -230,8 +228,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                         {photoTarget === 'rightSidePhoto' && 'Take a clear photo of the right side of the aircraft.'}
                     </DialogDescription>
                 </DialogHeader>
-                 {/* Reusing scanner component - it will act as a normal camera and return a dataURL */}
-                <AircraftInfoScanner scanMode={'registration'} onSuccess={handlePhotoSuccess} />
+                <StandardCamera onSuccess={handlePhotoSuccess} />
             </DialogContent>
         </Dialog>
       </form>

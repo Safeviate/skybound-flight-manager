@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 
 const checklistSchema = z.object({
@@ -59,9 +60,9 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
     setIsScannerOpen(false);
   };
   
-  const handlePhotoSuccess = (data: { registration?: string; hobbs?: number }) => {
-    if (photoTarget && data.registration) {
-        setValue(photoTarget, data.registration, { shouldValidate: true });
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+        setValue(photoTarget, dataUrl, { shouldValidate: true });
     }
     setIsCameraOpen(false);
   }
@@ -212,7 +213,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                         {photoTarget === 'defectPhoto' && 'Take a clear photo of the reported defect or issue.'}
                     </DialogDescription>
                 </DialogHeader>
-                <AircraftInfoScanner scanMode={'registration'} onSuccess={handlePhotoSuccess} />
+                <StandardCamera onSuccess={handlePhotoSuccess} />
             </DialogContent>
         </Dialog>
       </form>
