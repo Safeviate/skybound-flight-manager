@@ -134,11 +134,12 @@ function QualityPage() {
     }
   }, [user, company, loading, router, toast]);
 
-  const activeAudits = audits.filter(audit => audit.status !== 'Archived');
-  const archivedAudits = audits.filter(audit => audit.status === 'Archived');
-  const displayedAudits = showArchived ? archivedAudits : activeAudits;
+  const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
+  const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
 
-  const filteredAudits = displayedAudits.filter(audit => {
+  const displayedAudits = useMemo(() => showArchived ? archivedAudits : activeAudits, [showArchived, archivedAudits, activeAudits]);
+
+  const filteredAudits = useMemo(() => displayedAudits.filter(audit => {
     const searchLower = searchTerm.toLowerCase();
     return (
         audit.id.toLowerCase().includes(searchLower) ||
@@ -147,7 +148,7 @@ function QualityPage() {
         audit.status.toLowerCase().includes(searchLower) ||
         audit.type.toLowerCase().includes(searchLower)
     );
-  });
+  }), [displayedAudits, searchTerm]);
   
   useEffect(() => {
     setSelectedAudits([]);
