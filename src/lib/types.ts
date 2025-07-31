@@ -338,14 +338,6 @@ export type SafetyReport = {
   medicalAttentionRequired?: boolean;
 };
 
-export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
-    'Flight Operations Report': 'Flight Operations',
-    'Ground Operations Report': 'Ground Operation',
-    'Aircraft Defect Report': 'Maintenance',
-    'Occupational Report': 'Management',
-    'General Report': 'Management',
-};
-
 export type CorrectiveAction = {
     id: string;
     action: string;
