@@ -204,12 +204,18 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 <TabsList>
                     <TabsTrigger value="active">Active Fleet</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
+                    <TabsTrigger value="checklists">Checklists</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
                     <AircraftTable aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived">
                      <AircraftTable aircraft={archivedAircraft} isArchived />
+                </TabsContent>
+                <TabsContent value="checklists">
+                    <div className="p-4 text-center text-muted-foreground">
+                        Checklist templates will be managed here.
+                    </div>
                 </TabsContent>
             </Tabs>
         </CardContent>
