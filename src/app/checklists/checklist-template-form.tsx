@@ -42,7 +42,7 @@ type ChecklistFormValues = z.infer<typeof checklistFormSchema>;
 
 interface ChecklistTemplateFormProps {
     onSubmit: (data: Omit<Checklist, 'id' | 'companyId'>) => void;
-    existingTemplate?: Checklist;
+    existingTemplate?: Partial<Checklist>;
 }
 
 export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistTemplateFormProps) {
@@ -59,7 +59,7 @@ export function ChecklistTemplateForm({ onSubmit, existingTemplate }: ChecklistT
         form.reset({
             title: existingTemplate.title,
             category: existingTemplate.category,
-            items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, type: item.type as 'Checkbox' | 'Confirm postflight hobbs' })),
+            items: existingTemplate.items?.map(item => ({ id: item.id, text: item.text, type: item.type as 'Checkbox' | 'Confirm postflight hobbs' })),
         });
     }
   }, [existingTemplate, form]);

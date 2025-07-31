@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -7,20 +6,57 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft } from '@/lib/types';
+import type { Aircraft, Checklist } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
+import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
+import { ChecklistTemplateForm } from '../checklists/checklist-template-form';
 
+const PRE_FLIGHT_TEMPLATE: Partial<Checklist> = {
+    title: 'Standard Pre-Flight Inspection',
+    category: 'Pre-Flight',
+    items: [
+        { id: '1', text: 'AI Camera Registration', type: 'Checkbox', completed: false },
+        { id: '2', text: 'Camera left side of aircraft', type: 'Checkbox', completed: false },
+        { id: '3', text: 'Camera right side of the aircraft', type: 'Checkbox', completed: false },
+        { id: '4', text: 'Flight Operations Manual', type: 'Checkbox', completed: false },
+        { id: '5', text: 'Aircraft Checklist', type: 'Checkbox', completed: false },
+        { id: '6', text: 'AI Hobbs camera', type: 'Checkbox', completed: false },
+        { id: '7', text: 'Anything to report?', type: 'Checkbox', completed: false },
+    ],
+};
+const POST_FLIGHT_TEMPLATE: Partial<Checklist> = {
+    title: 'Standard Post-Flight Inspection',
+    category: 'Post-Flight',
+    items: [
+        { id: '1', text: 'Confirm postflight hobbs', type: 'Confirm postflight hobbs', completed: false },
+        { id: '2', text: 'Aircraft secured (tie-downs, covers)', type: 'Checkbox', completed: false },
+        { id: '3', text: 'All personal items removed', type: 'Checkbox', completed: false },
+        { id: '4', text: 'Report any new defects or snags', type: 'Checkbox', completed: false },
+    ],
+};
+
+const POST_MAINTENANCE_TEMPLATE: Partial<Checklist> = {
+    title: 'Standard Post-Maintenance Check',
+    category: 'Post-Maintenance',
+    items: [
+        { id: '1', text: 'Verify all work order items completed', type: 'Checkbox', completed: false },
+        { id: '2', text: 'Inspect work area for FOD', type: 'Checkbox', completed: false },
+        { id: '3', text: 'Review logbook entry for accuracy', type: 'Checkbox', completed: false },
+        { id: '4', text: 'Confirm all panels and cowlings secured', type: 'Checkbox', completed: false },
+        { id: '5', text: 'Release to service document signed', type: 'Checkbox', completed: false },
+    ]
+}
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -29,6 +65,9 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const { user, company, loading } = useUser();
     const { toast } = useToast();
     const { settings } = useSettings();
+    const [isChecklistFormOpen, setIsChecklistFormOpen] = useState(false);
+    const [editingChecklist, setEditingChecklist] = useState<Partial<Checklist> | null>(null);
+
 
     const refreshData = useCallback(async () => {
         if (!company) return;
@@ -100,6 +139,19 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         setEditingAircraft(null);
         setIsNewAircraftDialogOpen(true);
     }
+
+    const openChecklistDialog = (template: Partial<Checklist>) => {
+        setEditingChecklist(template);
+        setIsChecklistFormOpen(true);
+    }
+
+    const handleChecklistFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
+        if (!company) return;
+        const newTemplate = { ...data, companyId: company.id };
+        await addDoc(collection(db, `companies/${company.id}/checklists`), newTemplate);
+        toast({ title: 'Template Created', description: `${data.title} has been saved.` });
+        setIsChecklistFormOpen(false);
+    };
     
     const getStatusVariant = (status: Aircraft['status']) => {
         switch (status) {
@@ -214,11 +266,27 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 </TabsContent>
                 <TabsContent value="checklists">
                     <div className="flex justify-end p-4">
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Create audit checklist
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Create audit checklist
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => openChecklistDialog(PRE_FLIGHT_TEMPLATE)}>
+                                    Pre-Flight Checklist
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openChecklistDialog(POST_FLIGHT_TEMPLATE)}>
+                                    Post-Flight Checklist
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openChecklistDialog(POST_MAINTENANCE_TEMPLATE)}>
+                                    Post-Maintenance Checklist
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
+                    <ChecklistTemplateManager />
                 </TabsContent>
             </Tabs>
         </CardContent>
@@ -233,6 +301,18 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               </DialogHeader>
               <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
           </DialogContent>
+        </Dialog>
+
+        <Dialog open={isChecklistFormOpen} onOpenChange={setIsChecklistFormOpen}>
+            <DialogContent className="sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>Create Checklist Template</DialogTitle>
+                    <DialogDescription>
+                       Use this as a starting point and customize the checklist items for your needs.
+                    </DialogDescription>
+                </DialogHeader>
+                <ChecklistTemplateForm onSubmit={handleChecklistFormSubmit} existingTemplate={editingChecklist || undefined} />
+            </DialogContent>
         </Dialog>
     </main>
   );
