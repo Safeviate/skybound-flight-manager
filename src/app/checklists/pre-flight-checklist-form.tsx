@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import type { Aircraft } from '@/lib/types';
 
 
 const checklistSchema = z.object({
@@ -36,7 +38,12 @@ const checklistSchema = z.object({
 
 type ChecklistFormValues = z.infer<typeof checklistSchema>;
 
-export function PreFlightChecklistForm() {
+interface PreFlightChecklistFormProps {
+    aircraft: Aircraft;
+    onSuccess: () => void;
+}
+
+export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
@@ -96,10 +103,7 @@ export function PreFlightChecklistForm() {
   
   const onSubmit = (data: ChecklistFormValues) => {
     console.log(data);
-    toast({
-        title: "Checklist Submitted",
-        description: "The pre-flight checklist has been successfully submitted.",
-    });
+    onSuccess();
     form.reset();
   }
 
@@ -109,7 +113,7 @@ export function PreFlightChecklistForm() {
         <Card>
             <CardHeader>
                 <CardTitle>Pre-Flight Checklist</CardTitle>
-                <CardDescription>Complete all items before submitting.</CardDescription>
+                <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  {/* AI Camera Scans */}
@@ -199,26 +203,8 @@ export function PreFlightChecklistForm() {
                 {/* Document Checks */}
                 <div className="space-y-4 rounded-lg border p-4">
                     <h4 className="font-medium text-sm flex items-center gap-2"><FileCheck className="h-4 w-4"/> Document Checks</h4>
-                     <FormField
-                        control={form.control}
-                        name="checklistOnboard"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                <FormLabel className="font-normal">Aircraft Checklist / POH onboard</FormLabel>
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="fomOnboard"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                <FormLabel className="font-normal">Flight Operations Manual onboard</FormLabel>
-                            </FormItem>
-                        )}
-                    />
+                     <FormField control={form.control} name="checklistOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Aircraft Checklist / POH onboard</FormLabel></FormItem>)} />
+                     <FormField control={form.control} name="fomOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Flight Operations Manual onboard</FormLabel></FormItem>)} />
                      <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Airworthiness</FormLabel></FormItem>)} />
                     <FormField control={form.control} name="insuranceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Insurance</FormLabel></FormItem>)} />
                     <FormField control={form.control} name="releaseToServiceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Release to Service</FormLabel></FormItem>)} />

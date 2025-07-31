@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -72,6 +73,7 @@ export type Aircraft = {
   radioStationLicenseExpiry: string;
   location: string; // Airport ID
   isPostFlightPending?: boolean;
+  checklistStatus?: 'needs-pre-flight' | 'needs-post-flight';
 };
 
 export type Endorsement = {
