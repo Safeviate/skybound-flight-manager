@@ -348,20 +348,24 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         doc.text('Anything to Report?', 14, yPos);
         yPos += 5;
         doc.setFont('helvetica', 'normal');
-        doc.text(results.report || 'Nothing reported.', 14, yPos, { maxWidth: 180 });
-    
-        yPos = (doc as any).lastAutoTable.finalY + 15;
         
+        const reportText = results.report || 'Nothing reported.';
+        const splitText = doc.splitTextToSize(reportText, 180);
+        doc.text(splitText, 14, yPos);
+        yPos += splitText.length * 5; 
+
+        yPos += 15; // Increased spacing to move photos down
+
         const addImageSection = (title: string, dataUrl: string | undefined) => {
             if (dataUrl) {
-                if (yPos > 220) { // Check if new page is needed, increased threshold
+                if (yPos > 220) { 
                     doc.addPage();
                     yPos = 20;
                 }
                 doc.setFont('helvetica', 'bold');
                 doc.text(title, 14, yPos);
                 yPos += 5;
-                doc.addImage(dataUrl, 'JPEG', 14, yPos, 80, 45); // Using JPEG for smaller size
+                doc.addImage(dataUrl, 'JPEG', 14, yPos, 80, 45);
                 yPos += 55;
             }
         };
