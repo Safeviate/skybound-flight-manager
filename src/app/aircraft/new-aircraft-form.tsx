@@ -85,7 +85,10 @@ const AiCameraReader = ({
             canvas.width = videoRef.current.videoWidth;
             canvas.height = videoRef.current.videoHeight;
             canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-            const dataUrl = canvas.toDataURL('image/png');
+            let dataUrl = canvas.toDataURL('image/png');
+             if (dataUrl.startsWith('data:;')) {
+                dataUrl = dataUrl.replace('data:;', 'data:image/png;');
+            }
             setCapturedImage(dataUrl);
             setIsLoading(true);
             setAiResult(null);
@@ -118,7 +121,7 @@ const AiCameraReader = ({
     }
 
     return (
-        <>
+        <DialogContent>
             <DialogHeader>
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
@@ -154,7 +157,7 @@ const AiCameraReader = ({
                     </>
                 )}
             </div>
-        </>
+        </DialogContent>
     );
 };
 
@@ -314,17 +317,15 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <AiCameraReader
-                                title="Scan Tail Number"
-                                description="Position the aircraft's tail number in the frame and capture."
-                                aiFlow={readRegistrationFromImage}
-                                onValueRead={(value) => {
-                                    form.setValue('tailNumber', String(value));
-                                    setIsRegCameraOpen(false);
-                                }}
-                            />
-                        </DialogContent>
+                        <AiCameraReader
+                            title="Scan Tail Number"
+                            description="Position the aircraft's tail number in the frame and capture."
+                            aiFlow={readRegistrationFromImage}
+                            onValueRead={(value) => {
+                                form.setValue('tailNumber', String(value));
+                                setIsRegCameraOpen(false);
+                            }}
+                        />
                     </Dialog>
                 </div>
                 <FormMessage />
@@ -380,17 +381,15 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <AiCameraReader
-                                title="Scan Hobbs Meter"
-                                description="Position the Hobbs meter in the frame and capture."
-                                aiFlow={readHobbsFromImage}
-                                onValueRead={(value) => {
-                                    form.setValue('hours', Number(value));
-                                    setIsHobbsCameraOpen(false);
-                                }}
-                            />
-                        </DialogContent>
+                        <AiCameraReader
+                            title="Scan Hobbs Meter"
+                            description="Position the Hobbs meter in the frame and capture."
+                            aiFlow={readHobbsFromImage}
+                            onValueRead={(value) => {
+                                form.setValue('hours', Number(value));
+                                setIsHobbsCameraOpen(false);
+                            }}
+                        />
                     </Dialog>
                  </div>
                 <FormMessage />
