@@ -63,7 +63,7 @@ export type Aircraft = {
   tailNumber: string;
   make: string;
   model: string;
-  status: 'Available' | 'In Maintenance' | 'Booked';
+  status: 'Available' | 'In Maintenance' | 'Booked' | 'Archived';
   hours: number;
   nextServiceType: string;
   hoursUntilService: number;

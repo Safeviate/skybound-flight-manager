@@ -1,21 +1,24 @@
+
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
 import type { Aircraft } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getNextService } from '@/lib/utils';
-
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -36,10 +39,38 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         }
     }, [company, refreshData]);
 
+    const activeAircraft = useMemo(() => aircraftList.filter(a => a.status !== 'Archived'), [aircraftList]);
+    const archivedAircraft = useMemo(() => aircraftList.filter(a => a.status === 'Archived'), [aircraftList]);
+
     const handleSuccess = () => {
         setIsNewAircraftDialogOpen(false);
         setEditingAircraft(null);
         refreshData();
+    };
+    
+    const handleEdit = (aircraft: Aircraft) => {
+        setEditingAircraft(aircraft);
+        setIsNewAircraftDialogOpen(true);
+    };
+
+    const handleArchive = async (aircraft: Aircraft) => {
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        try {
+            await updateDoc(aircraftRef, { status: 'Archived' });
+            toast({
+                title: 'Aircraft Archived',
+                description: `${aircraft.tailNumber} has been moved to the archives.`,
+            });
+            refreshData();
+        } catch (error) {
+            console.error("Error archiving aircraft:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Archiving Failed',
+                description: 'Could not archive the aircraft.',
+            });
+        }
     };
 
     const openNewDialog = () => {
@@ -52,9 +83,75 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             case 'Available': return 'success';
             case 'Booked': return 'warning';
             case 'In Maintenance': return 'destructive';
+            case 'Archived': return 'secondary';
             default: return 'outline';
         }
     };
+    
+    const AircraftTable = ({ aircraft }: { aircraft: Aircraft[] }) => (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Registration</TableHead>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Total Hours</TableHead>
+                    <TableHead>Next Service</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {aircraft.map((ac) => {
+                    const nextService = getNextService(ac.hours);
+                    return (
+                    <TableRow key={ac.id}>
+                        <TableCell className="font-medium">{ac.tailNumber}</TableCell>
+                        <TableCell>{ac.make} {ac.model}</TableCell>
+                        <TableCell>{ac.hours.toFixed(1)}</TableCell>
+                        <TableCell>{nextService.type} in {nextService.hoursUntil.toFixed(1)} hrs</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                   <Button variant="ghost" size="icon">
+                                       <MoreHorizontal className="h-4 w-4" />
+                                   </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent>
+                                   <DropdownMenuItem onClick={() => handleEdit(ac)}>
+                                       <Edit className="mr-2 h-4 w-4" />
+                                       Edit
+                                   </DropdownMenuItem>
+                                   <AlertDialog>
+                                       <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                <Archive className="mr-2 h-4 w-4" />
+                                                Archive
+                                            </DropdownMenuItem>
+                                       </AlertDialogTrigger>
+                                       <AlertDialogContent>
+                                           <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
+                                                </AlertDialogDescription>
+                                           </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                       </AlertDialogContent>
+                                   </AlertDialog>
+                               </DropdownMenuContent>
+                           </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                )})}
+            </TableBody>
+        </Table>
+    );
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -70,32 +167,18 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             </Button>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Registration</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Total Hours</TableHead>
-                        <TableHead>Next Service</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {aircraftList.map((aircraft) => {
-                        const nextService = getNextService(aircraft.hours);
-                        return (
-                        <TableRow key={aircraft.id}>
-                            <TableCell className="font-medium">{aircraft.tailNumber}</TableCell>
-                            <TableCell>{aircraft.make} {aircraft.model}</TableCell>
-                            <TableCell>{aircraft.hours.toFixed(1)}</TableCell>
-                            <TableCell>{nextService.type} in {nextService.hoursUntil.toFixed(1)} hrs</TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
-                            </TableCell>
-                        </TableRow>
-                    )})}
-                </TableBody>
-            </Table>
+            <Tabs defaultValue="active">
+                <TabsList>
+                    <TabsTrigger value="active">Active Fleet</TabsTrigger>
+                    <TabsTrigger value="archived">Archived</TabsTrigger>
+                </TabsList>
+                <TabsContent value="active">
+                    <AircraftTable aircraft={activeAircraft} />
+                </TabsContent>
+                <TabsContent value="archived">
+                     <AircraftTable aircraft={archivedAircraft} />
+                </TabsContent>
+            </Tabs>
         </CardContent>
       </Card>
       <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
