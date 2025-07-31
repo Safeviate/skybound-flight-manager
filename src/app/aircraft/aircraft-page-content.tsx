@@ -300,18 +300,13 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         
         yPos += 5;
 
-        const tableBody = [];
+        const tableBody: any[][] = [];
         if (isPreFlight) {
             const preFlightResults = results as PreFlightChecklistFormValues;
-            tableBody.push(['Left Side Photo', preFlightResults.leftSidePhoto ? 'Captured' : 'Not Captured']);
-            tableBody.push(['Right Side Photo', preFlightResults.rightSidePhoto ? 'Captured' : 'Not Captured']);
             tableBody.push(['Checklist/POH Onboard', preFlightResults.checklistOnboard ? 'Yes' : 'No']);
             tableBody.push(['FOM Onboard', preFlightResults.fomOnboard ? 'Yes' : 'No']);
         } else {
-            const postFlightResults = results as PostFlightChecklistFormValues;
-            tableBody.push(['Left Side Photo', postFlightResults.leftSidePhoto ? 'Captured' : 'Not Captured']);
-            tableBody.push(['Right Side Photo', postFlightResults.rightSidePhoto ? 'Captured' : 'Not Captured']);
-            tableBody.push(['Defect Photo', postFlightResults.defectPhoto ? 'Captured' : 'Not Captured']);
+            tableBody.push(['Defect Reported', (results.report || '').length > 0 ? 'Yes' : 'No']);
         }
 
         autoTable(doc, {
@@ -327,6 +322,33 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         yPos += 5;
         doc.setFont('helvetica', 'normal');
         doc.text(results.report || 'Nothing reported.', 14, yPos, { maxWidth: 180 });
+
+        yPos = (doc as any).lastAutoTable.finalY + 15;
+        
+        const addImageSection = (title: string, dataUrl: string | undefined) => {
+            if (dataUrl) {
+                if (yPos > 240) { // Check if new page is needed
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, 14, yPos);
+                yPos += 5;
+                doc.addImage(dataUrl, 'PNG', 14, yPos, 80, 45);
+                yPos += 55;
+            }
+        };
+
+        if ('leftSidePhoto' in results) {
+            addImageSection('Left Side Photo', (results as PreFlightChecklistFormValues | PostFlightChecklistFormValues).leftSidePhoto);
+        }
+        if ('rightSidePhoto' in results) {
+            addImageSection('Right Side Photo', (results as PreFlightChecklistFormValues | PostFlightChecklistFormValues).rightSidePhoto);
+        }
+        if ('defectPhoto' in results) {
+            addImageSection('Defect Photo', (results as PostFlightChecklistFormValues).defectPhoto);
+        }
+
         
         doc.save(`checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`);
     };
