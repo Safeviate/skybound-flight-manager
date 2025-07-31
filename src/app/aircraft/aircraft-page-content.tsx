@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Checklist } from '@/lib/types';
+import type { Aircraft } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Trash2, MoreHorizontal, Save } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -27,22 +27,19 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useSettings } from '@/context/settings-provider';
-import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
-import { ChecklistCard } from '../checklists/checklist-card';
 import { getAircraftPageData } from './data';
+import { NewAircraftForm } from './new-aircraft-form';
 
 
 export function AircraftPageContent({
-    initialFleet, 
-    initialChecklists,
+    initialFleet,
 }: {
-    initialFleet: Aircraft[], 
-    initialChecklists: Checklist[],
+    initialFleet: Aircraft[],
 }) {
   const [fleet, setFleet] = useState<Aircraft[]>(initialFleet);
-  const [checklists, setChecklists] = useState<Checklist[]>(initialChecklists);
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
+  const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   
   const { user, company, loading } = useUser();
   const { settings } = useSettings();
@@ -50,8 +47,7 @@ export function AircraftPageContent({
 
   useEffect(() => {
     setFleet(initialFleet);
-    setChecklists(initialChecklists);
-  }, [initialFleet, initialChecklists]);
+  }, [initialFleet]);
 
   const canUpdateHobbs = user?.permissions.includes('Aircraft:UpdateHobbs') || user?.permissions.includes('Super User');
   const canEditAircraft = user?.permissions.includes('Aircraft:Edit') || user?.permissions.includes('Super User');
@@ -60,9 +56,8 @@ export function AircraftPageContent({
   const refreshData = async () => {
     if (!company) return;
     try {
-        const { aircraftList, checklistList } = await getAircraftPageData(company.id);
+        const { aircraftList } = await getAircraftPageData(company.id);
         setFleet(aircraftList);
-        setChecklists(checklistList);
     } catch (error) {
         console.error("Error refreshing data:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to refresh aircraft data.'});
@@ -116,12 +111,6 @@ export function AircraftPageContent({
     }
   };
   
-  const handleChecklistUpdate = async () => {
-      // This will eventually link to completing a checklist and updating aircraft status
-      await refreshData();
-      toast({ title: "Checklist submitted (simulation)" });
-  }
-
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -131,13 +120,26 @@ export function AircraftPageContent({
                 <CardDescription>Add new aircraft or manage global checklist templates.</CardDescription>
             </div>
           <div className="flex items-center gap-2">
-             {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
-              <Button asChild>
-                  <Link href="/aircraft/new">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Aircraft
-                  </Link>
-              </Button>
+              <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Aircraft
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Aircraft</DialogTitle>
+                        <DialogDescription>
+                            Fill out the form below to add a new aircraft to the fleet.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewAircraftForm onSuccess={() => {
+                        setIsNewAircraftDialogOpen(false);
+                        refreshData();
+                    }} />
+                </DialogContent>
+              </Dialog>
           </div>
         </CardHeader>
       </Card>
@@ -151,13 +153,11 @@ export function AircraftPageContent({
             <TableHead>Hobbs Hours</TableHead>
             <TableHead>Airworthiness Expiry</TableHead>
             <TableHead>Insurance Expiry</TableHead>
-            <TableHead>Checklists</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {fleet.map((aircraft) => {
-            const aircraftChecklists = checklists.filter(c => c.aircraftId === aircraft.id);
             const isEditing = editingHobbsId === aircraft.id;
 
             return (
@@ -197,46 +197,6 @@ export function AircraftPageContent({
               </TableCell>
               <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
               <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-              <TableCell>
-                  <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                              <ClipboardCheck className="mr-2 h-4 w-4" />
-                              View ({aircraftChecklists.length})
-                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
-                          {aircraftChecklists.length > 0 ? (
-                              aircraftChecklists.map(checklist => (
-                                  <Dialog key={checklist.id}>
-                                      <DialogTrigger asChild>
-                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                              {checklist.title}
-                                          </DropdownMenuItem>
-                                      </DialogTrigger>
-                                      <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                          <DialogHeader>
-                                              <DialogTitle>{checklist.title}</DialogTitle>
-                                          </DialogHeader>
-                                          <ChecklistCard 
-                                              checklist={checklist}
-                                              aircraft={aircraft}
-                                              onItemToggle={(updated) => setChecklists(prev => prev.map(c => c.id === updated.id ? updated : c))}
-                                              onItemValueChange={(checklistId, itemId, value) => { /* handle value change if needed */ }}
-                                              onUpdate={handleChecklistUpdate}
-                                              onReset={(checklistId) => { /* handle reset */ }}
-                                              onEdit={() => {}}
-                                          />
-                                      </DialogContent>
-                                  </Dialog>
-                              ))
-                          ) : (
-                              <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
-                          )}
-                      </DropdownMenuContent>
-                  </DropdownMenu>
-              </TableCell>
               <TableCell className="text-right">
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
