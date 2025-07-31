@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport } from '@/lib/types';
+import type { Aircraft, Booking, Checklist, ChecklistItem, SafetyReport, TrainingLogEntry, User } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Save, Wrench, Settings, Database, Loader2, Trash2, MoreHorizontal } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -28,8 +28,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { format, parseISO } from 'date-fns';
 import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
 import { getAircraftPageData } from './data';
@@ -88,8 +88,8 @@ export function AircraftPageContent({
     });
   };
 
-  const handleChecklistUpdate = async (updatedChecklist: Checklist) => {
-    if (!company) return;
+  const handleChecklistUpdate = async (updatedChecklist: Checklist, hobbsValue?: number) => {
+    if (!company || !user) return;
 
     // Persist the final state of the checklist
     const checklistRef = doc(db, `companies/${company.id}/checklists`, updatedChecklist.id);
@@ -113,6 +113,51 @@ export function AircraftPageContent({
                 await updateDoc(bookingDoc.ref, { isChecklistComplete: true });
             });
             setBookings(prev => prev.map(b => b.aircraft === aircraft.tailNumber && b.status === 'Approved' ? {...b, isChecklistComplete: true} : b));
+        } else if (updatedChecklist.category === 'Post-Flight' && hobbsValue) {
+            const lastBookingQuery = query(
+                collection(db, `companies/${company.id}/bookings`),
+                where('aircraft', '==', aircraft.tailNumber),
+                where('status', '==', 'Approved'),
+                orderBy('date', 'desc'),
+                orderBy('startTime', 'desc'),
+                limit(1)
+            );
+            const lastBookingSnapshot = await getDocs(lastBookingQuery);
+
+            if (!lastBookingSnapshot.empty) {
+                const bookingDoc = lastBookingSnapshot.docs[0];
+                const bookingData = bookingDoc.data() as Booking;
+                const studentRef = doc(db, `companies/${company.id}/users`, bookingData.student);
+                const studentSnap = await getDoc(studentRef);
+
+                if (studentSnap.exists()) {
+                    const studentData = studentSnap.data() as User;
+                    const flightDuration = hobbsValue - aircraft.hours;
+
+                    const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+                        date: bookingData.date,
+                        aircraft: bookingData.aircraft,
+                        flightDuration: flightDuration,
+                        instructorName: bookingData.instructor,
+                        instructorNotes: "Post-flight log entry via automated checklist.",
+                        startHobbs: aircraft.hours,
+                        endHobbs: hobbsValue,
+                    };
+                    
+                    await updateDoc(studentRef, {
+                        flightHours: (studentData.flightHours || 0) + flightDuration,
+                        trainingLogs: arrayUnion({ ...newLogEntry, id: `log-${Date.now()}` }),
+                    });
+                    
+                    await updateDoc(bookingDoc.ref, { status: 'Completed', flightDuration });
+                    
+                    const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+                    await updateDoc(aircraftRef, { hours: hobbsValue, status: 'Available' });
+                    
+                    setFleet(prev => prev.map(ac => ac.id === aircraft.id ? {...ac, hours: hobbsValue, status: 'Available'} : ac));
+                    setBookings(prev => prev.map(b => b.id === bookingDoc.id ? {...b, status: 'Completed', flightDuration} : b));
+                }
+            }
         }
          toast({
             title: "Checklist Complete",

@@ -385,7 +385,7 @@ export type Risk = {
   riskOwner?: string;
   reviewDate?: string;
   reportNumber?: string;
-}
+};
 
 export type GroupedRisk = {
   area: string;
@@ -416,6 +416,8 @@ export type CompletedChecklist = {
     aircraftId: string;
     completedBy: string;
     completionDate: string;
+    startHobbs?: number;
+    endHobbs?: number;
 }
 
 export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation';
