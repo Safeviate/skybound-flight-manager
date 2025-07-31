@@ -42,6 +42,12 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         setPersonnel(personnelData);
     };
 
+    useEffect(() => {
+        if(company) {
+            fetchPersonnel();
+        }
+    }, [company]);
+
     const handleNewPersonnel = async (data: Omit<PersonnelUser, 'id'>) => {
         if (!company) {
             toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
