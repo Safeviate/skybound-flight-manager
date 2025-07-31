@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -19,6 +20,7 @@ import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
+import { PreFlightChecklistForm } from '@/app/checklists/pre-flight-checklist-form';
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -211,9 +213,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                      <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
                 <TabsContent value="checklists">
-                    <div className="p-4 text-center">
-                        <p>Checklist content will go here.</p>
-                    </div>
+                    <PreFlightChecklistForm />
                 </TabsContent>
             </Tabs>
         </CardContent>
