@@ -58,6 +58,11 @@ export function ChecklistStarter({
     }
   };
 
+  const switchToManual = () => {
+    setIsScannerOpen(false);
+    setIsSelectorOpen(true);
+  }
+
   return (
     <div className="space-y-4 text-center">
       <p className="text-sm text-muted-foreground">
@@ -91,6 +96,10 @@ export function ChecklistStarter({
             </DialogDescription>
           </DialogHeader>
           <AircraftInfoScanner scanMode="registration" onSuccess={handleScanSuccess} />
+          <Separator />
+          <div className="text-center">
+             <Button variant="link" onClick={switchToManual}>Can't scan? Select Manually</Button>
+          </div>
         </DialogContent>
       </Dialog>
       
