@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Camera, Loader2, RotateCcw } from 'lucide-react';
+import { CalendarIcon, Camera, Loader2, RotateCcw, Check, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -49,6 +49,7 @@ const AiCameraReader = ({
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [aiResult, setAiResult] = useState<string | number | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -86,10 +87,11 @@ const AiCameraReader = ({
             const dataUrl = canvas.toDataURL('image/png');
             setCapturedImage(dataUrl);
             setIsLoading(true);
+            setAiResult(null);
             try {
                 const result = await aiFlow({ photoDataUri: dataUrl });
                 const value = result.registration || result.hobbsValue;
-                onValueRead(value);
+                setAiResult(value);
             } catch (error) {
                 console.error("AI reading failed:", error);
                 toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not read the value from the image.' });
@@ -98,31 +100,20 @@ const AiCameraReader = ({
             }
         }
     };
+    
+    const handleAccept = () => {
+        if (aiResult !== null) {
+            onValueRead(aiResult);
+        }
+    };
 
     const handleRetry = () => {
         setCapturedImage(null);
+        setAiResult(null);
     };
 
     if (hasCameraPermission === false) {
         return <Alert variant="destructive"><AlertTitle>Camera Access Required</AlertTitle><AlertDescription>Please allow camera access to use this feature.</AlertDescription></Alert>;
-    }
-
-    if (capturedImage) {
-        return (
-             <div className="space-y-4">
-                <Image src={capturedImage} alt="Captured image" width={300} height={150} className="rounded-md w-full" />
-                {isLoading && (
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-5 w-5 animate-spin"/>
-                        <span>Analyzing...</span>
-                    </div>
-                )}
-                 <Button variant="outline" className="w-full" onClick={handleRetry}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Recapture
-                </Button>
-            </div>
-        )
     }
 
     return (
@@ -132,11 +123,35 @@ const AiCameraReader = ({
                 <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
-                    <Camera className="mr-2 h-4 w-4" />
-                    Capture & Analyze
-                </Button>
+                {capturedImage ? (
+                    <div className="space-y-4">
+                        <Image src={capturedImage} alt="Captured image" width={300} height={150} className="rounded-md w-full" />
+                        {isLoading && (
+                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-5 w-5 animate-spin"/>
+                                <span>Analyzing...</span>
+                            </div>
+                        )}
+                        {aiResult !== null && (
+                            <div className="p-4 bg-muted rounded-lg space-y-3">
+                                <p className="font-semibold text-center">AI Read Value:</p>
+                                <p className="text-3xl font-bold text-center text-primary">{aiResult}</p>
+                                <div className="flex justify-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={handleRetry}><RotateCcw className="mr-2 h-4 w-4" /> Recapture</Button>
+                                    <Button size="sm" onClick={handleAccept}><Check className="mr-2 h-4 w-4" /> Accept</Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                        <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+                            <Camera className="mr-2 h-4 w-4" />
+                            Capture & Analyze
+                        </Button>
+                    </>
+                )}
             </div>
         </>
     );
