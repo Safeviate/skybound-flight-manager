@@ -19,7 +19,7 @@ import { StandardCamera } from '@/components/ui/standard-camera';
 
 
 const checklistSchema = z.object({
-  hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter scan is required." }),
+  hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   report: z.string().optional(),
@@ -94,10 +94,14 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                             <FormLabel>Closing Hobbs Meter</FormLabel>
                             <div className="flex items-center gap-2">
                                 <Hash className="h-5 w-5 text-muted-foreground" />
-                                <Input type="number" step="0.1" placeholder="Not Scanned" {...field} readOnly className="flex-1" />
-                                <Button type="button" variant="outline" onClick={() => setIsScannerOpen(true)}>
-                                    <Bot className="mr-2" /> Scan
-                                </Button>
+                                <Input 
+                                    type="number" 
+                                    step="0.1" 
+                                    placeholder="Enter closing Hobbs hours" 
+                                    {...field} 
+                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                    className="flex-1" 
+                                />
                             </div>
                             <FormMessage />
                         </FormItem>
