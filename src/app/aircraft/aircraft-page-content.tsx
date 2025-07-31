@@ -245,7 +245,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                      <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
                 <TabsContent value="checklists" className="pt-6">
-                    <div className="max-w-md mx-auto space-y-6">
+                    <div className="max-w-2xl mx-auto space-y-6">
                         {!selectedAircraftForChecklist ? (
                             <ChecklistStarter 
                                 aircraftList={activeAircraft} 
