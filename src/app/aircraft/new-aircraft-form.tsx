@@ -174,6 +174,8 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [users, setUsers] = useState<User[]>([]);
+  const [isRegCameraOpen, setIsRegCameraOpen] = useState(false);
+  const [isHobbsCameraOpen, setIsHobbsCameraOpen] = useState(false);
   
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
@@ -288,7 +290,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                     <FormControl>
                         <Input placeholder="N12345" {...field} />
                     </FormControl>
-                    <Dialog>
+                    <Dialog open={isRegCameraOpen} onOpenChange={setIsRegCameraOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
@@ -297,7 +299,10 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                                 title="Scan Tail Number"
                                 description="Position the aircraft's tail number in the frame and capture."
                                 aiFlow={readRegistrationFromImage}
-                                onValueRead={(value) => form.setValue('tailNumber', String(value))}
+                                onValueRead={(value) => {
+                                    form.setValue('tailNumber', String(value));
+                                    setIsRegCameraOpen(false);
+                                }}
                             />
                         </DialogContent>
                     </Dialog>
@@ -351,7 +356,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                     <FormControl>
                         <Input type="number" placeholder="1250.5" {...field} />
                     </FormControl>
-                    <Dialog>
+                    <Dialog open={isHobbsCameraOpen} onOpenChange={setIsHobbsCameraOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
@@ -360,7 +365,10 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                                 title="Scan Hobbs Meter"
                                 description="Position the Hobbs meter in the frame and capture."
                                 aiFlow={readHobbsFromImage}
-                                onValueRead={(value) => form.setValue('hours', Number(value))}
+                                onValueRead={(value) => {
+                                    form.setValue('hours', Number(value));
+                                    setIsHobbsCameraOpen(false);
+                                }}
                             />
                         </DialogContent>
                     </Dialog>
