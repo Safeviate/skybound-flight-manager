@@ -9,15 +9,15 @@ async function getInitialData() {
     const companyId = cookieStore.get('skybound_last_company_id')?.value;
     
     if (!companyId) {
-        return { aircraftList: [], checklistList: [] };
+        return { aircraftList: [] };
     }
     
     try {
-        const { aircraftList, checklistList } = await getAircraftPageData(companyId);
-        return { aircraftList, checklistList };
+        const { aircraftList } = await getAircraftPageData(companyId);
+        return { aircraftList };
     } catch (error) {
         console.error("Failed to fetch initial data for aircraft page:", error);
-        return { aircraftList: [], checklistList: [] };
+        return { aircraftList: [] };
     }
 }
 
