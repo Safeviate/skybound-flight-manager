@@ -126,7 +126,13 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                                 <FormLabel>Hobbs Meter</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Hash className="h-5 w-5 text-muted-foreground" />
-                                    <Input type="number" step="0.1" placeholder="Enter current Hobbs hours" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} className="flex-1" />
+                                    <Input 
+                                        type="number" 
+                                        step="0.1" 
+                                        placeholder="Enter current Hobbs hours" 
+                                        {...field} 
+                                        onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                                        className="flex-1" />
                                 </div>
                                 <FormMessage />
                             </FormItem>
