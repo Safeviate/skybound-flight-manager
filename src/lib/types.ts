@@ -65,8 +65,6 @@ export type Aircraft = {
   model: string;
   status: 'Available' | 'In Maintenance' | 'Booked' | 'Archived';
   hours: number;
-  nextServiceType: string;
-  hoursUntilService: number;
   airworthinessExpiry: string;
   insuranceExpiry: string;
   certificateOfReleaseToServiceExpiry: string;

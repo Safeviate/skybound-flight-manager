@@ -18,7 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
-import { getNextService } from '@/lib/utils';
+import { getExpiryBadge } from '@/lib/utils';
+import { useSettings } from '@/context/settings-provider';
+
+// This function can be removed or modified as it's not currently used in the table
+const getNextService = (hours: number): { type: string; hoursUntil: number } => {
+  return { type: 'A-Check', hoursUntil: 50 - (hours % 50) };
+};
+
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -26,6 +33,8 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading } = useUser();
     const { toast } = useToast();
+    const { settings } = useSettings();
+
 
     const refreshData = useCallback(async () => {
         if (!company) return;
@@ -95,20 +104,21 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                     <TableHead>Registration</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Total Hours</TableHead>
-                    <TableHead>Next Service</TableHead>
+                    <TableHead>Airworthiness</TableHead>
+                    <TableHead>Insurance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {aircraft.map((ac) => {
-                    const nextService = getNextService(ac.hours);
                     return (
                     <TableRow key={ac.id}>
                         <TableCell className="font-medium">{ac.tailNumber}</TableCell>
                         <TableCell>{ac.make} {ac.model}</TableCell>
                         <TableCell>{ac.hours.toFixed(1)}</TableCell>
-                        <TableCell>{nextService.type} in {nextService.hoursUntil.toFixed(1)} hrs</TableCell>
+                        <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                        <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
                         <TableCell>
                             <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
                         </TableCell>
