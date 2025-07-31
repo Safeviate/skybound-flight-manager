@@ -213,6 +213,8 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
     const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
     const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
     
+    if (ac.status === 'Archived') return false;
+
     if (purpose === 'Maintenance') {
         return !airworthinessExpired && !insuranceExpired;
     }

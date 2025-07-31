@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Booking, Aircraft } from '@/lib/types';
 import { BookingCalendar } from './booking-calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -103,6 +103,8 @@ export function BookingsPageContent({
     setIsNewBookingOpen(true);
   }
 
+  const activeAircraft = useMemo(() => aircraftData.filter(ac => ac.status !== 'Archived'), [aircraftData]);
+
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -122,13 +124,13 @@ export function BookingsPageContent({
               <TabsContent value="day" className="mt-4">
                   <BookingCalendar 
                       bookings={bookingData}
-                      aircraft={aircraftData}
+                      aircraft={activeAircraft}
                       onCancelBooking={handleCancelBooking}
                       onEditBooking={openEditBookingDialog} 
                   />
               </TabsContent>
               <TabsContent value="month" className="mt-4">
-                  <MonthlyCalendarView bookings={bookingData} aircraftData={aircraftData} />
+                  <MonthlyCalendarView bookings={bookingData} aircraftData={activeAircraft} />
               </TabsContent>
           </Tabs>
         </CardContent>

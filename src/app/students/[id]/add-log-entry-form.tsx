@@ -80,7 +80,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
         if (!company) return;
         const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
         const instQuery = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
-        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'In Maintenance'));
+        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '==', 'Available'));
         
         const [instSnapshot, acSnapshot] = await Promise.all([getDocs(instQuery), getDocs(acQuery)]);
         
