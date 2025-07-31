@@ -41,7 +41,7 @@ const getAlertIcon = (type: Alert['type']) => {
 }
 
 function AlertsPage() {
-  const { user, company, loading, acknowledgeAlerts } = useUser();
+  const { user, company, loading, acknowledgeAlerts, getUnacknowledgedAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
@@ -52,30 +52,13 @@ function AlertsPage() {
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  const fetchAlerts = async () => {
-    if (!company) return;
-    try {
-        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-        const q = query(alertsCollection, orderBy('date', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const fetchedAlerts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-        setAlerts(fetchedAlerts);
-    } catch (error) {
-        console.error("Error fetching alerts: ", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not fetch alerts from the database.'
-        });
-    }
-  }
-
+  
   useEffect(() => {
-    if (company) {
-        fetchAlerts();
+    if (user && company) {
+        const unacknowledgedAlerts = getUnacknowledgedAlerts([]);
+        setAlerts(unacknowledgedAlerts);
     }
-  }, [company, toast]);
+  }, [user, company, getUnacknowledgedAlerts]);
   
   const canCreateAlerts = user?.permissions.includes('Super User') || user?.permissions.includes('Alerts:Edit');
 
@@ -95,7 +78,7 @@ function AlertsPage() {
         const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
         const newAlertNumber = (lastAlert?.number || 0) + 1;
 
-        const newAlertData: Alert = {
+        const newAlertData: Omit<Alert, 'id'> = {
             ...data,
             companyId: company.id,
             number: newAlertNumber,
@@ -104,8 +87,8 @@ function AlertsPage() {
             readBy: [user.id],
         };
 
-        const docRef = await addDoc(alertsCollection, newAlertData);
-        setAlerts(prev => [{ ...newAlertData, id: docRef.id }, ...prev]);
+        await addDoc(alertsCollection, newAlertData);
+        // No need to manually update state, onSnapshot in UserProvider will handle it
         setIsDialogOpen(false);
     } catch (error) {
         console.error("Error creating new alert:", error);
@@ -123,7 +106,7 @@ function AlertsPage() {
     try {
       const alertRef = doc(db, 'companies', company.id, 'alerts', alertId);
       await deleteDoc(alertRef);
-      fetchAlerts(); // Re-fetch alerts after deletion
+      // No need to manually update state, onSnapshot will handle it
       toast({
         title: 'Alert Deleted',
         description: 'The alert has been successfully deleted.',
@@ -142,7 +125,7 @@ function AlertsPage() {
     if (!user) return;
     try {
         await acknowledgeAlerts([alertId]);
-        fetchAlerts(); // Re-fetch to update the UI
+        // No need to manually update state, onSnapshot will handle it
         toast({
             title: 'Alert Acknowledged',
             description: 'The notification has been marked as read.',
@@ -165,8 +148,6 @@ function AlertsPage() {
         </main>
     );
   }
-  
-  const displayedAlerts = alerts.filter(alert => !alert.readBy.includes(user.id));
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -199,9 +180,9 @@ function AlertsPage() {
           )}
         </CardHeader>
         <CardContent>
-          {displayedAlerts.length > 0 ? (
+          {alerts.length > 0 ? (
               <div className="space-y-4">
-                  {displayedAlerts.map((alert) => (
+                  {alerts.map((alert) => (
                       <Collapsible key={alert.id} className="w-full">
                           <Card className="hover:bg-muted/50 transition-colors">
                               <CardHeader className="flex flex-row items-start justify-between gap-4">
