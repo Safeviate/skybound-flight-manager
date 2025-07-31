@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -203,12 +202,18 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 <TabsList>
                     <TabsTrigger value="active">Active Fleet</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
+                    <TabsTrigger value="checklists">Aircraft Checklist</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
                     <AircraftTable aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived">
                      <AircraftTable aircraft={archivedAircraft} isArchived />
+                </TabsContent>
+                <TabsContent value="checklists">
+                    <div className="p-4 text-center">
+                        <p>Checklist content will go here.</p>
+                    </div>
                 </TabsContent>
             </Tabs>
         </CardContent>
