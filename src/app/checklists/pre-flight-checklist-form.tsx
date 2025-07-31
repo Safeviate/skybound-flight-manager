@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,12 @@ const checklistSchema = z.object({
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   checklistOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the checklist is onboard." }),
   fomOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Flight Operations Manual is onboard." }),
+  airworthinessOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Certificate of Airworthiness is onboard." }),
+  insuranceOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Insurance is onboard." }),
+  releaseToServiceOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Certificate of Release to Service is onboard." }),
+  registrationOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Certificate of Registration is onboard." }),
+  massAndBalanceOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Mass and Balance is onboard." }),
+  radioLicenseOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Radio Station License is onboard." }),
   report: z.string().optional(),
 });
 
@@ -46,6 +52,12 @@ export function PreFlightChecklistForm() {
         rightSidePhoto: '',
         checklistOnboard: false,
         fomOnboard: false,
+        airworthinessOnboard: false,
+        insuranceOnboard: false,
+        releaseToServiceOnboard: false,
+        registrationOnboard: false,
+        massAndBalanceOnboard: false,
+        radioLicenseOnboard: false,
         report: '',
     }
   });
@@ -207,6 +219,12 @@ export function PreFlightChecklistForm() {
                             </FormItem>
                         )}
                     />
+                     <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Airworthiness</FormLabel></FormItem>)} />
+                    <FormField control={form.control} name="insuranceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Insurance</FormLabel></FormItem>)} />
+                    <FormField control={form.control} name="releaseToServiceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Release to Service</FormLabel></FormItem>)} />
+                    <FormField control={form.control} name="registrationOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Registration</FormLabel></FormItem>)} />
+                    <FormField control={form.control} name="massAndBalanceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Mass and Balance</FormLabel></FormItem>)} />
+                    <FormField control={form.control} name="radioLicenseOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Radio Station License</FormLabel></FormItem>)} />
                 </div>
 
                 {/* Anything to Report */}
