@@ -326,14 +326,8 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             const preFlightResults = results as PreFlightChecklistFormValues;
             tableBody.push(['Checklist/POH Onboard', preFlightResults.checklistOnboard ? 'Yes' : 'No']);
             tableBody.push(['FOM Onboard', preFlightResults.fomOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Certificate of Airworthiness', preFlightResults.airworthinessOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Insurance', preFlightResults.insuranceOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Certificate of Release to Service', preFlightResults.releaseToServiceOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Certificate of Registration', preFlightResults.registrationOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Mass and Balance', preFlightResults.massAndBalanceOnboard ? 'Yes' : 'No']);
-            tableBody.push(['Radio Station License', preFlightResults.radioLicenseOnboard ? 'Yes' : 'No']);
         } else {
-            tableBody.push(['Defect Reported', (results.report || '').length > 0 ? 'Yes' : 'No']);
+            tableBody.push(['Defect Reported', (results as PostFlightChecklistFormValues).report && (results as PostFlightChecklistFormValues).report!.length > 0 ? 'Yes' : 'No']);
         }
     
         autoTable(doc, {
@@ -349,12 +343,12 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         yPos += 5;
         doc.setFont('helvetica', 'normal');
         
-        const reportText = results.report || 'Nothing reported.';
+        const reportText = (results as any).report || 'Nothing reported.';
         const splitText = doc.splitTextToSize(reportText, 180);
         doc.text(splitText, 14, yPos);
         yPos += splitText.length * 5; 
 
-        yPos += 15; // Increased spacing to move photos down
+        yPos += 20; // Increased spacing to move photos down
 
         const addImageSection = (title: string, dataUrl: string | undefined) => {
             if (dataUrl) {
@@ -379,8 +373,8 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         if (preFlightResults.rightSidePhoto) {
             addImageSection('Right Side Photo:', preFlightResults.rightSidePhoto);
         }
-        if (postFlightResults.defectPhoto) {
-            addImageSection('Defect Photo:', postFlightResults.defectPhoto);
+        if ((results as any).defectPhoto) {
+            addImageSection('Defect Photo:', (results as any).defectPhoto);
         }
         
         doc.save(`checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`);
@@ -534,14 +528,14 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         <div className="space-y-2">
                              <h4 className="font-semibold text-sm">Photos</h4>
                              <div className="grid grid-cols-2 gap-2">
-                                {(viewingChecklist.results as PostFlightChecklistFormValues).leftSidePhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
-                                {(viewingChecklist.results as PostFlightChecklistFormValues).rightSidePhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
-                                {(viewingChecklist.results as PostFlightChecklistFormValues).defectPhoto && <Image src={(viewingChecklist.results as PostFlightChecklistFormValues).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
+                                {(viewingChecklist.results as any).leftSidePhoto && <Image src={(viewingChecklist.results as any).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
+                                {(viewingChecklist.results as any).rightSidePhoto && <Image src={(viewingChecklist.results as any).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
+                                {(viewingChecklist.results as any).defectPhoto && <Image src={(viewingChecklist.results as any).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
                              </div>
                         </div>
                         <div className="space-y-2">
                              <h4 className="font-semibold text-sm">Report</h4>
-                             <p className="text-sm p-2 bg-muted rounded-md">{viewingChecklist.results.report || "No issues reported."}</p>
+                             <p className="text-sm p-2 bg-muted rounded-md">{(viewingChecklist.results as any).report || "No issues reported."}</p>
                         </div>
                     </div>
                      <DialogFooter>
