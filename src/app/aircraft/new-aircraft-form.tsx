@@ -27,7 +27,7 @@ import { doc, setDoc, collection, addDoc, getDocs } from 'firebase/firestore';
 import type { Aircraft, Checklist } from '@/lib/types';
 import { getNextService } from '@/lib/utils';
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AiCameraReader } from './ai-camera-reader';
 import { readHobbsFromImage } from '@/ai/flows/read-hobbs-from-image-flow';
 import { readRegistrationFromImage } from '@/ai/flows/read-registration-from-image-flow';
@@ -49,10 +49,10 @@ const aircraftFormSchema = z.object({
 type AircraftFormValues = z.infer<typeof aircraftFormSchema>;
 
 interface NewAircraftFormProps {
-    onAircraftAdded: () => void;
+    onSuccess: () => void;
 }
 
-export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
+export function NewAircraftForm({ onSuccess }: NewAircraftFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [isRegCameraOpen, setIsRegCameraOpen] = useState(false);
@@ -130,7 +130,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         await setDoc(aircraftRef, newAircraft);
         await assignStandardChecklists(id);
         toast({ title: 'Aircraft Added', description: `Aircraft ${data.tailNumber} has been added.` });
-        onAircraftAdded();
+        onSuccess();
     } catch (error) {
         console.error("Error adding aircraft:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to add aircraft.' });

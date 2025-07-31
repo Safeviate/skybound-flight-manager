@@ -17,7 +17,6 @@ import type { Aircraft, Checklist } from '@/lib/types';
 import { ClipboardCheck, PlusCircle, QrCode, Edit, Trash2, MoreHorizontal, Save } from 'lucide-react';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { NewAircraftForm } from './new-aircraft-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
@@ -42,7 +41,6 @@ export function AircraftPageContent({
 }) {
   const [fleet, setFleet] = useState<Aircraft[]>(initialFleet);
   const [checklists, setChecklists] = useState<Checklist[]>(initialChecklists);
-  const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
   const [editingHobbsId, setEditingHobbsId] = useState<string | null>(null);
   const [hobbsInputValue, setHobbsInputValue] = useState<number>(0);
   
@@ -69,11 +67,6 @@ export function AircraftPageContent({
         console.error("Error refreshing data:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to refresh aircraft data.'});
     }
-  };
-
-  const handleAircraftAdded = () => {
-    setIsNewAircraftDialogOpen(false);
-    refreshData();
   };
 
   const handleDeleteAircraft = async (aircraftId: string) => {
@@ -139,23 +132,12 @@ export function AircraftPageContent({
             </div>
           <div className="flex items-center gap-2">
              {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
-              <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
-                  <DialogTrigger asChild>
-                      <Button>
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Aircraft
-                      </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
-                      <DialogHeader>
-                          <DialogTitle>Add New Aircraft</DialogTitle>
-                          <DialogDescription>
-                              Fill out the form below to add a new aircraft to the fleet.
-                          </DialogDescription>
-                      </DialogHeader>
-                      <NewAircraftForm onAircraftAdded={handleAircraftAdded} />
-                  </DialogContent>
-              </Dialog>
+              <Button asChild>
+                  <Link href="/aircraft/new">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Aircraft
+                  </Link>
+              </Button>
           </div>
         </CardHeader>
       </Card>
