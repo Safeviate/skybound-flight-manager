@@ -180,7 +180,10 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
     defaultValues: {
+        tailNumber: '',
+        model: '',
         status: 'Available',
+        hours: 0,
     }
   });
 
