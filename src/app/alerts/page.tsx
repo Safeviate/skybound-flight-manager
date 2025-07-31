@@ -55,7 +55,7 @@ function AlertsPage() {
   
   useEffect(() => {
     if (user && company) {
-        const unacknowledgedAlerts = getUnacknowledgedAlerts([]);
+        const unacknowledgedAlerts = getUnacknowledgedAlerts();
         setAlerts(unacknowledgedAlerts);
     }
   }, [user, company, getUnacknowledgedAlerts]);
