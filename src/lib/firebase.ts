@@ -6,7 +6,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration
 const firebaseConfigDev = {
@@ -48,12 +47,5 @@ const firebaseConfig = getFirebaseConfig();
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-// Initialize Performance Monitoring
-// We need to check if we're in a browser environment before initializing performance.
-if (typeof window !== 'undefined') {
-  getPerformance(app, { instrumentationEnabled: false });
-}
-
 
 export { app, db, auth };
