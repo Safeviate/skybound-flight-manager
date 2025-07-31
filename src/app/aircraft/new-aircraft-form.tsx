@@ -39,6 +39,12 @@ export function NewAircraftForm({ onSuccess }: NewAircraftFormProps) {
 
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
+    defaultValues: {
+      make: '',
+      model: '',
+      tailNumber: '',
+      hours: 0,
+    },
   });
 
   async function onSubmit(data: AircraftFormValues) {
