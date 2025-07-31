@@ -104,7 +104,7 @@ export function AircraftInfoScanner({ onSuccess }: AircraftInfoScannerProps) {
     return (
       <Alert variant="destructive">
         <AlertTitle>Camera Access Required</AlertTitle>
-        <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+        <AlertDescription>Please allow camera access in your browser settings to use this feature.</AlertDescription>
       </Alert>
     );
   }
