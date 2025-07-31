@@ -383,34 +383,6 @@ export type GroupedRisk = {
   risks: Risk[];
 };
 
-export type ChecklistItemType = 
-    | 'Checkbox'
-    | 'Confirm preflight hobbs'
-    | 'Confirm postflight hobbs'
-    | 'Confirm premaintenance hobbs'
-    | 'Confirm post maintenance hobbs';
-
-export type ChecklistItem = {
-    id: string;
-    text: string;
-    type: ChecklistItemType;
-    completed: boolean;
-    value: string;
-};
-
-export type CompletedChecklist = {
-    id: string;
-    companyId: string;
-    checklistId: string;
-    checklistName: string;
-    checklistType: 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
-    aircraftId: string;
-    completedBy: string;
-    completionDate: string;
-    startHobbs?: number;
-    endHobbs?: number;
-}
-
 export type FindingStatus = 'Compliant' | 'Non-compliant' | 'Partial' | 'Not Applicable' | 'Observation';
 export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Finding' | 'Observation' | null;
 
@@ -571,15 +543,4 @@ export type ComplianceItem = {
     lastAuditDate?: string;
     nextAuditDate?: string;
     findings?: string;
-};
-
-// This type was moved here from `app/checklists/page.tsx`
-export type Checklist = {
-  id: string;
-  companyId: string;
-  title: string;
-  category: 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
-  items: ChecklistItem[];
-  templateId?: string; // ID of the master template
-  aircraftId?: string; // If null, it's a master template. If populated, it's assigned to an aircraft.
 };

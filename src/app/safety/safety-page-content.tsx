@@ -18,7 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department, CompletedChecklist, Booking } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department, Booking } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
@@ -59,10 +59,9 @@ interface SafetyPerformanceIndicatorsProps {
   spiConfigs: SpiConfig[];
   onConfigChange: (newConfigs: SpiConfig[]) => void;
   monthlyFlightHours: Record<string, number>;
-  monthlyChecklistCompletion: Record<string, number>;
 }
 
-const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours, monthlyChecklistCompletion }: SafetyPerformanceIndicatorsProps) => {
+const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours }: SafetyPerformanceIndicatorsProps) => {
     const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
 
     const handleSpiUpdate = (updatedSpi: SpiConfig) => {
@@ -80,23 +79,17 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
             </CardHeader>
             <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
-                    let spiData;
-                    if (config.id === 'checklistCompletion') {
-                        spiData = monthlyChecklistCompletion;
-                    } else {
-                        spiData = reports
-                            .filter(r => config.filter(r))
-                            .reduce((acc, report) => {
-                                const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
-                                acc[month] = (acc[month] || 0) + 1;
-                                return acc;
-                            }, {} as Record<string, number>);
-                    }
-
+                    const spiData = reports
+                        .filter(r => config.filter(r))
+                        .reduce((acc, report) => {
+                            const month = format(startOfMonth(parseISO(report.filedDate)), 'MMM yy');
+                            acc[month] = (acc[month] || 0) + 1;
+                            return acc;
+                        }, {} as Record<string, number>);
 
                     const chartData = Object.keys(spiData).map(month => {
                         const value = spiData[month as keyof typeof spiData];
-                        if (config.calculation === 'rate' && config.unit && config.id !== 'checklistCompletion') {
+                        if (config.calculation === 'rate' && config.unit) {
                             const totalHours = monthlyFlightHours[month as keyof typeof monthlyFlightHours] || 0;
                             const rate = totalHours > 0 ? ((value as number) / totalHours) * 100 : 0;
                             return { name: month, value: parseFloat(rate.toFixed(2)) };
@@ -123,8 +116,8 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
 
                     const status = getStatus(latestValue);
                     
-                    const ChartComponent = config.id === 'checklistCompletion' || config.calculation === 'rate' ? LineChart : BarChart;
-                    const ChartTypeComponent = config.id === 'checklistCompletion' || config.calculation === 'rate' ? Line : Bar;
+                    const ChartComponent = config.calculation === 'rate' ? LineChart : BarChart;
+                    const ChartTypeComponent = config.calculation === 'rate' ? Line : Bar;
                     
                     const chartProps: any = {
                         dataKey: "value",
@@ -172,7 +165,7 @@ const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, mont
                                     <ChartComponent data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="name" fontSize={12} />
-                                        <YAxis allowDecimals={config.calculation === 'rate' || config.id === 'checklistCompletion'} unit={config.id === 'checklistCompletion' ? '%' : ''} />
+                                        <YAxis allowDecimals={config.calculation === 'rate'} />
                                         <Tooltip formatter={(value) => `${value} ${config.unit || ''}`} />
                                         <Legend verticalAlign="top" height={36}/>
                                         <ReferenceLine y={config.target} label={{ value: 'Target', position: 'insideTopLeft', fill: 'hsl(var(--success-foreground))' }} stroke="hsl(var(--success))" strokeDasharray="3 3" />
@@ -386,13 +379,11 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
 export function SafetyPageContent({
     initialReports,
     initialRisks,
-    initialBookings,
-    initialChecklists
+    initialBookings
 }: {
     initialReports: SafetyReport[],
     initialRisks: Risk[],
-    initialBookings: Booking[],
-    initialChecklists: CompletedChecklist[]
+    initialBookings: Booking[]
 }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -400,7 +391,6 @@ export function SafetyPageContent({
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-  const [completedChecklists, setCompletedChecklists] = useState<CompletedChecklist[]>(initialChecklists);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
@@ -409,11 +399,10 @@ export function SafetyPageContent({
   
   const fetchData = async () => {
     if (!company) return;
-    const { reportsList, risksList, bookingsList, checklistsList } = await getSafetyPageData(company.id);
+    const { reportsList, risksList, bookingsList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
-    setCompletedChecklists(checklistsList);
   };
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
@@ -446,16 +435,6 @@ export function SafetyPageContent({
         targetDirection: '<=',
         target: 0.5, alert2: 0.75, alert3: 1.0, alert4: 1.25,
         filter: (r: SafetyReport) => r.type && r.type.includes('Report'),
-    },
-    {
-        id: 'checklistCompletion',
-        name: 'Pre-Flight Checklist Completion Rate',
-        type: 'Leading Indicator',
-        calculation: 'rate',
-        unit: '%',
-        targetDirection: '>=',
-        target: 98, alert2: 95, alert3: 90, alert4: 85,
-        filter: (r: SafetyReport) => false, // This is calculated differently
     }
   ]);
 
@@ -515,31 +494,6 @@ export function SafetyPageContent({
         acc[month] = (acc[month] || 0) + booking.flightDuration!;
         return acc;
     }, {} as Record<string, number>), [bookings]);
-
-  const monthlyChecklistStats = useMemo(() => completedChecklists
-    .filter(c => c.checklistType === 'Pre-Flight')
-    .reduce((acc, checklist) => {
-        const month = format(startOfMonth(parseISO(checklist.completionDate)), 'MMM yy');
-        if (!acc[month]) {
-            acc[month] = { completed: 0, required: 0 };
-        }
-        acc[month].completed += 1;
-        return acc;
-    }, {} as Record<string, { completed: number, required: number }>), [completedChecklists]);
-  
-  bookings.filter(b => b.purpose === 'Training' || b.purpose === 'Private').forEach(booking => {
-    const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
-    if (!monthlyChecklistStats[month]) {
-        monthlyChecklistStats[month] = { completed: 0, required: 0 };
-    }
-    monthlyChecklistStats[month].required += 1;
-  });
-
-  const checklistCompletionRate = useMemo(() => Object.keys(monthlyChecklistStats).reduce((acc, month) => {
-    const data = monthlyChecklistStats[month];
-    acc[month] = data.required > 0 ? Math.round((data.completed / data.required) * 100) : 100;
-    return acc;
-  }, {} as Record<string, number>), [monthlyChecklistStats]);
 
 
   const SortableHeader = ({ label, sortKey }: { label: string, sortKey: keyof SafetyReport | keyof Risk }) => {
@@ -746,7 +700,6 @@ export function SafetyPageContent({
                 spiConfigs={spiConfigs} 
                 onConfigChange={setSpiConfigs} 
                 monthlyFlightHours={monthlyFlightHours}
-                monthlyChecklistCompletion={checklistCompletionRate}
             />
           </TabsContent>
         </Tabs>

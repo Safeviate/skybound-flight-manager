@@ -3,7 +3,7 @@
 
 // This file is being kept for now to avoid breaking imports, but it no longer provides mock data.
 // All data fetching is now handled directly by components from Firestore.
-import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Checklist, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, AuditChecklist, Alert, CompletedChecklist, Company, ComplianceItem, RiskLikelihood, RiskSeverity } from './types';
+import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, Alert, Company, ComplianceItem, RiskLikelihood, RiskSeverity } from './types';
 
 export const airportData: Airport[] = [];
 export const aircraftData: Aircraft[] = [];
@@ -18,13 +18,10 @@ export const trainingExercisesData: string[] = [
     'Commercial Pilot License',
     'Multi-Engine Rating',
 ];
-export let checklistData: Checklist[] = [];
-export let completedChecklistData: CompletedChecklist[] = [];
 export let safetyReportData: SafetyReport[] = [];
 export let riskRegisterData: Risk[] = [];
 export let qualityAuditData: QualityAudit[] = [];
 export let auditScheduleData: AuditScheduleItem[] = [];
-export let auditChecklistData: AuditChecklist[] = [];
 export let allAlerts: Alert[] = [];
 export let companyData: Company[] = [];
 
