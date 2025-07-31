@@ -4,10 +4,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlayCircle, Edit } from 'lucide-react';
-import type { AuditChecklist } from '@/lib/types';
+import type { AuditChecklist, CompletedChecklist } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { PerformChecklistDialog } from './perform-checklist-dialog';
+import { PostMaintenanceChecklistForm } from './post-maintenance-checklist-form';
+import { useUser } from '@/context/user-provider';
+import { useToast } from '@/hooks/use-toast';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { format } from 'date-fns';
 
 interface ChecklistCardProps {
   template: AuditChecklist;
@@ -16,6 +22,44 @@ interface ChecklistCardProps {
 
 export function ChecklistCard({ template, onEdit }: ChecklistCardProps) {
   const [isPerformDialogOpen, setIsPerformDialogOpen] = useState(false);
+  const { user, company } = useUser();
+  const { toast } = useToast();
+
+  const handleStandardFormSubmit = async (data: Record<string, any>) => {
+    if (!user || !company) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+      return;
+    }
+
+    const completedChecklist: Omit<CompletedChecklist, 'id'> = {
+      templateId: template.id,
+      templateTitle: template.title,
+      userId: user.id,
+      userName: user.name,
+      companyId: company.id,
+      dateCompleted: format(new Date(), 'yyyy-MM-dd'),
+      items: Object.entries(data).map(([key, value]) => {
+        const originalItem = template.items.find(i => i.id === key);
+        return {
+          itemId: key,
+          itemText: originalItem?.text || 'Unknown Item',
+          completed: !!value, // Simple truthy check for completion
+          value: value,
+        };
+      }),
+    };
+
+    try {
+      await addDoc(collection(db, `companies/${company.id}/completed-checklists`), completedChecklist);
+      toast({ title: 'Checklist Submitted', description: 'Your completed checklist has been saved.' });
+      setIsPerformDialogOpen(false);
+    } catch (error) {
+      console.error("Error submitting checklist:", error);
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the checklist.' });
+    }
+  };
+
+  const isPostMaintenance = template.id === 'master-post-maintenance';
 
   return (
     <>
@@ -41,11 +85,20 @@ export function ChecklistCard({ template, onEdit }: ChecklistCardProps) {
           </Button>
         </CardFooter>
       </Card>
-      <PerformChecklistDialog
-        isOpen={isPerformDialogOpen}
-        onOpenChange={setIsPerformDialogOpen}
-        template={template}
-      />
+
+      <Dialog open={isPerformDialogOpen} onOpenChange={setIsPerformDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>{template.title}</DialogTitle>
+                <DialogDescription>Complete each item below.</DialogDescription>
+            </DialogHeader>
+            {isPostMaintenance ? (
+                <PostMaintenanceChecklistForm onSubmit={handleStandardFormSubmit} />
+            ) : (
+                <PerformChecklistDialog template={template} />
+            )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

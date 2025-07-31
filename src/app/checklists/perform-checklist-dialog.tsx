@@ -17,12 +17,10 @@ import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import { format } from 'date-fns';
 
 interface PerformChecklistDialogProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
   template: AuditChecklist;
 }
 
-export function PerformChecklistDialog({ isOpen, onOpenChange, template }: PerformChecklistDialogProps) {
+export function PerformChecklistDialog({ template }: PerformChecklistDialogProps) {
   const [completedItems, setCompletedItems] = useState<Record<string, { completed: boolean; value?: any }>>({});
   const { user, company } = useUser();
   const { toast } = useToast();
@@ -67,7 +65,7 @@ export function PerformChecklistDialog({ isOpen, onOpenChange, template }: Perfo
     try {
       await addDoc(collection(db, `companies/${company.id}/completed-checklists`), completedChecklist);
       toast({ title: 'Checklist Submitted', description: 'Your completed checklist has been saved.' });
-      onOpenChange(false);
+      // The parent dialog will close itself
     } catch (error) {
       console.error("Error submitting checklist:", error);
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save the checklist.' });
@@ -132,13 +130,8 @@ export function PerformChecklistDialog({ isOpen, onOpenChange, template }: Perfo
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{template.title}</DialogTitle>
-          <DialogDescription>Complete each item below.</DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="h-[60vh] p-4 border rounded-md">
+    <>
+        <ScrollArea className="h-[60vh] p-4 border rounded-md -mx-6 -my-2">
           <div className="space-y-6">
             {template.items.map(item => (
               <div key={item.id} className="p-4 rounded-lg bg-background border">
@@ -147,13 +140,9 @@ export function PerformChecklistDialog({ isOpen, onOpenChange, template }: Perfo
             ))}
           </div>
         </ScrollArea>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">Cancel</Button>
-          </DialogClose>
+        <DialogFooter className="pt-4">
           <Button type="button" onClick={handleSubmit}>Submit</Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </>
   );
 }
