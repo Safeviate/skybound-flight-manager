@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ import type { Aircraft, CompletedChecklist } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
@@ -67,17 +67,19 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         }
     }, [company, refreshData]);
     
+    const fetchHistory = useCallback(async () => {
+        if (company && selectedHistoryAircraftId) {
+            const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
+            setChecklistHistory(history);
+        } else {
+            setChecklistHistory([]);
+        }
+    }, [company, selectedHistoryAircraftId]);
+
     useEffect(() => {
-        const fetchHistory = async () => {
-            if (company && selectedHistoryAircraftId) {
-                const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
-                setChecklistHistory(history);
-            } else {
-                setChecklistHistory([]);
-            }
-        };
         fetchHistory();
-    }, [selectedHistoryAircraftId, company]);
+    }, [fetchHistory]);
+
 
     const activeAircraft = useMemo(() => aircraftList.filter(a => a.status !== 'Archived'), [aircraftList]);
     const archivedAircraft = useMemo(() => aircraftList.filter(a => a.status === 'Archived'), [aircraftList]);
@@ -187,6 +189,24 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         } catch (error) {
             console.error("Error updating checklist status or history:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
+        }
+    };
+
+    const handleDeleteChecklist = async (checklistId: string) => {
+        if (!company || !selectedHistoryAircraftId) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete checklist without company or aircraft context.' });
+            return;
+        }
+
+        const checklistRef = doc(db, `companies/${company.id}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
+        
+        try {
+            await deleteDoc(checklistRef);
+            toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
+            fetchHistory(); // Refresh the list
+        } catch (error) {
+            console.error("Error deleting checklist:", error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the checklist history record.' });
         }
     };
     
@@ -437,15 +457,38 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         {checklistHistory.length > 0 ? (
                             <div className="space-y-2">
                                 {checklistHistory.map(item => (
-                                    <Card key={item.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setViewingChecklist(item)}>
+                                    <Card key={item.id} className="hover:bg-muted/50">
                                         <CardContent className="p-3 flex justify-between items-center">
-                                            <div>
+                                            <div onClick={() => setViewingChecklist(item)} className="cursor-pointer flex-1">
                                                 <p className="font-semibold">{item.type} Checklist</p>
                                                 <p className="text-sm text-muted-foreground">
                                                     Completed by {item.userName} on {format(parseISO(item.dateCompleted), 'PPP')}
                                                 </p>
                                             </div>
-                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                             <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                     <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Delete Checklist History?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete this checklist record.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteChecklist(item.id)}>
+                                                            Yes, Delete
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                            <Button variant="ghost" size="icon" onClick={() => setViewingChecklist(item)}>
+                                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                            </Button>
                                         </CardContent>
                                     </Card>
                                 ))}
