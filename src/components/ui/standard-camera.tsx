@@ -53,7 +53,7 @@ export function StandardCamera({ onSuccess }: StandardCameraProps) {
       const canvas = document.createElement('canvas');
       const video = videoRef.current;
       
-      const maxWidth = 1280;
+      const maxWidth = 800; // Reduced from 1280
       const scale = maxWidth / video.videoWidth;
       const finalWidth = video.videoWidth > maxWidth ? maxWidth : video.videoWidth;
       const finalHeight = video.videoWidth > maxWidth ? video.videoHeight * scale : video.videoHeight;
@@ -64,8 +64,8 @@ export function StandardCamera({ onSuccess }: StandardCameraProps) {
       const context = canvas.getContext('2d');
       context?.drawImage(video, 0, 0, finalWidth, finalHeight);
 
-      // Use JPEG for better compression of photos, with a quality of 70%
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      // Use JPEG for better compression of photos, with a quality of 50%
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
       onSuccess(dataUrl);
     }
   };
