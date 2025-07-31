@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, Trash2, RotateCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -18,14 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
-import { getExpiryBadge } from '@/lib/utils';
+import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
-
-// This function can be removed or modified as it's not currently used in the table
-const getNextService = (hours: number): { type: string; hoursUntil: number } => {
-  return { type: 'A-Check', hoursUntil: 50 - (hours % 50) };
-};
-
+import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
 
 export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
@@ -81,6 +76,26 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             });
         }
     };
+    
+    const handleRestore = async (aircraft: Aircraft) => {
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        try {
+            await updateDoc(aircraftRef, { status: 'Available' });
+            toast({
+                title: 'Aircraft Restored',
+                description: `${aircraft.tailNumber} has been restored to the active fleet.`,
+            });
+            refreshData();
+        } catch (error) {
+            console.error("Error restoring aircraft:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Restoring Failed',
+                description: 'Could not restore the aircraft.',
+            });
+        }
+    };
 
     const openNewDialog = () => {
         setEditingAircraft(null);
@@ -97,7 +112,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         }
     };
     
-    const AircraftTable = ({ aircraft }: { aircraft: Aircraft[] }) => (
+    const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -113,7 +128,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             <TableBody>
                 {aircraft.map((ac) => {
                     return (
-                    <TableRow key={ac.id}>
+                    <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
                         <TableCell className="font-medium">{ac.tailNumber}</TableCell>
                         <TableCell>{ac.make} {ac.model}</TableCell>
                         <TableCell>{ac.hours.toFixed(1)}</TableCell>
@@ -125,35 +140,44 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         <TableCell className="text-right">
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon">
+                                   <Button variant="ghost" size="icon" disabled={isArchived}>
                                        <MoreHorizontal className="h-4 w-4" />
                                    </Button>
                                </DropdownMenuTrigger>
                                <DropdownMenuContent>
-                                   <DropdownMenuItem onClick={() => handleEdit(ac)}>
-                                       <Edit className="mr-2 h-4 w-4" />
-                                       Edit
-                                   </DropdownMenuItem>
-                                   <AlertDialog>
-                                       <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                <Archive className="mr-2 h-4 w-4" />
-                                                Archive
-                                            </DropdownMenuItem>
-                                       </AlertDialogTrigger>
-                                       <AlertDialogContent>
-                                           <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
-                                                </AlertDialogDescription>
-                                           </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                       </AlertDialogContent>
-                                   </AlertDialog>
+                                {isArchived ? (
+                                    <DropdownMenuItem onClick={() => handleRestore(ac)}>
+                                        <RotateCw className="mr-2 h-4 w-4" />
+                                        Restore
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem onClick={() => handleEdit(ac)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                        <Archive className="mr-2 h-4 w-4" />
+                                                        Archive
+                                                    </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
+                                                        </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </>
+                                )}
                                </DropdownMenuContent>
                            </DropdownMenu>
                         </TableCell>
@@ -181,18 +205,16 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 <TabsList>
                     <TabsTrigger value="active">Active Fleet</TabsTrigger>
                     <TabsTrigger value="archived">Archived</TabsTrigger>
-                    <TabsTrigger value="checklists">Checklists</TabsTrigger>
+                    <TabsTrigger value="checklists">Checklist Templates</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
                     <AircraftTable aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived">
-                     <AircraftTable aircraft={archivedAircraft} />
+                     <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
                 <TabsContent value="checklists">
-                    <div className="p-6 text-center text-muted-foreground">
-                        <p>Checklist template management will go here.</p>
-                    </div>
+                    <ChecklistTemplateManager onUpdate={() => {}} />
                 </TabsContent>
             </Tabs>
         </CardContent>
