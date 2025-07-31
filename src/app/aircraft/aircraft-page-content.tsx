@@ -213,8 +213,11 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                      <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
                 <TabsContent value="checklists">
-                    <div className="p-4 text-center text-muted-foreground">
-                        Checklist templates will be managed here.
+                    <div className="flex justify-end p-4">
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create audit checklist
+                        </Button>
                     </div>
                 </TabsContent>
             </Tabs>
