@@ -11,6 +11,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
+import { Bot } from 'lucide-react';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -121,6 +122,27 @@ function OperationalSettingsPage() {
 
             <Separator />
             
+            <div className="space-y-2">
+                <h3 className="font-semibold text-lg flex items-center gap-2"><Bot /> AI Features</h3>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                    <Label htmlFor="use-ai-checklists" className="text-base">
+                    Enable AI-Powered Checklists
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                    Use AI to scan aircraft registration numbers and Hobbs meters to streamline checklist completion.
+                    </p>
+                </div>
+                <Switch
+                    id="use-ai-checklists"
+                    checked={settings.useAiChecklists}
+                    onCheckedChange={() => handleToggle('useAiChecklists')}
+                />
+                </div>
+            </div>
+
+            <Separator />
+
             <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Flight & Duty Limits</h3>
                 <p className="text-sm text-muted-foreground">

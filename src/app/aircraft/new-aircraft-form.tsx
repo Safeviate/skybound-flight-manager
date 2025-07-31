@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { AircraftInfoScanner } from './aircraft-info-scanner';
+import { useSettings } from '@/context/settings-provider';
 
 const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
@@ -58,6 +58,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
   const { company } = useUser();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
+  const { settings } = useSettings();
 
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
@@ -218,9 +219,11 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                 <FormControl>
                     <Input placeholder="e.g., ZS-ABC" {...field} />
                 </FormControl>
-                <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
-                    <Bot className="h-4 w-4" />
-                </Button>
+                {settings.useAiChecklists && (
+                    <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
+                        <Bot className="h-4 w-4" />
+                    </Button>
+                )}
               </div>
               <FormMessage />
             </FormItem>
@@ -236,9 +239,11 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     <FormControl>
                         <Input type="number" step="0.1" {...field} />
                     </FormControl>
-                    <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
-                        <Bot className="h-4 w-4" />
-                    </Button>
+                    {settings.useAiChecklists && (
+                        <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
+                            <Bot className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
               <FormMessage />
             </FormItem>

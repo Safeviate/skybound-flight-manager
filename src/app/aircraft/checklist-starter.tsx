@@ -22,6 +22,7 @@ import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useToast } from '@/hooks/use-toast';
 import type { Aircraft } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { useSettings } from '@/context/settings-provider';
 
 interface ChecklistStarterProps {
   aircraftList: Aircraft[];
@@ -35,6 +36,7 @@ export function ChecklistStarter({
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
     setIsScannerOpen(false);
@@ -68,15 +70,20 @@ export function ChecklistStarter({
       <p className="text-sm text-muted-foreground">
         How would you like to start the checklist?
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          className="h-24 flex-col"
-          onClick={() => setIsScannerOpen(true)}
-        >
-          <Bot className="h-8 w-8 mb-2" />
-          Scan Aircraft
-        </Button>
+      <div className={cn(
+          "gap-4",
+          settings.useAiChecklists ? "grid grid-cols-1 sm:grid-cols-2" : "flex justify-center"
+      )}>
+        {settings.useAiChecklists && (
+            <Button
+            variant="outline"
+            className="h-24 flex-col"
+            onClick={() => setIsScannerOpen(true)}
+            >
+            <Bot className="h-8 w-8 mb-2" />
+            Scan Aircraft
+            </Button>
+        )}
         <Button
           variant="outline"
           className="h-24 flex-col"
