@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Aircraft } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { useSettings } from '@/context/settings-provider';
+import { cn } from '@/lib/utils';
 
 interface ChecklistStarterProps {
   aircraftList: Aircraft[];
