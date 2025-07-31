@@ -40,11 +40,13 @@ const AiCameraReader = ({
   aiFlow,
   title,
   description,
+  isOpen,
 }: {
   onValueRead: (value: string | number) => void;
   aiFlow: (input: any) => Promise<any>;
   title: string;
   description: string;
+  isOpen: boolean;
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
@@ -54,13 +56,17 @@ const AiCameraReader = ({
     const { toast } = useToast();
 
     useEffect(() => {
+        let stream: MediaStream | null = null;
+        
         const getCameraPermission = async () => {
+            if (!isOpen) return;
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 setHasCameraPermission(false);
                 return;
             }
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                 }
@@ -70,14 +76,18 @@ const AiCameraReader = ({
                 setHasCameraPermission(false);
             }
         };
+        
         getCameraPermission();
+        
         return () => {
-            if (videoRef.current && videoRef.current.srcObject) {
-                const stream = videoRef.current.srcObject as MediaStream;
+            if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
+            if (videoRef.current) {
+                videoRef.current.srcObject = null;
+            }
         };
-    }, []);
+    }, [isOpen]);
 
     const handleCapture = async () => {
         if (videoRef.current) {
@@ -85,10 +95,7 @@ const AiCameraReader = ({
             canvas.width = videoRef.current.videoWidth;
             canvas.height = videoRef.current.videoHeight;
             canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-            let dataUrl = canvas.toDataURL('image/png');
-             if (dataUrl.startsWith('data:;')) {
-                dataUrl = dataUrl.replace('data:;', 'data:image/png;');
-            }
+            const dataUrl = canvas.toDataURL('image/png');
             setCapturedImage(dataUrl);
             setIsLoading(true);
             setAiResult(null);
@@ -116,48 +123,41 @@ const AiCameraReader = ({
         setAiResult(null);
     };
 
-    if (hasCameraPermission === false) {
-        return <Alert variant="destructive"><AlertTitle>Camera Access Required</AlertTitle><AlertDescription>Please allow camera access to use this feature.</AlertDescription></Alert>;
-    }
-
     return (
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>{title}</DialogTitle>
-                <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-                {capturedImage ? (
-                    <div className="space-y-4">
-                        <Image src={capturedImage} alt="Captured image" width={300} height={150} className="rounded-md w-full" />
-                        {isLoading && (
-                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                                <Loader2 className="h-5 w-5 animate-spin"/>
-                                <span>Analyzing...</span>
+        <div className="space-y-4">
+            {capturedImage ? (
+                <div className="space-y-4">
+                    <Image src={capturedImage} alt="Captured image" width={300} height={150} className="rounded-md w-full" />
+                    {isLoading && (
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-5 w-5 animate-spin"/>
+                            <span>Analyzing...</span>
+                        </div>
+                    )}
+                    {aiResult !== null && (
+                        <div className="p-4 bg-muted rounded-lg space-y-3">
+                            <p className="font-semibold text-center">AI Read Value:</p>
+                            <p className="text-3xl font-bold text-center text-primary">{aiResult}</p>
+                            <div className="flex justify-center gap-2">
+                                <Button variant="outline" size="sm" onClick={handleRetry}><RotateCcw className="mr-2 h-4 w-4" /> Recapture</Button>
+                                <Button size="sm" onClick={handleAccept}><Check className="mr-2 h-4 w-4" /> Accept</Button>
                             </div>
-                        )}
-                        {aiResult !== null && (
-                            <div className="p-4 bg-muted rounded-lg space-y-3">
-                                <p className="font-semibold text-center">AI Read Value:</p>
-                                <p className="text-3xl font-bold text-center text-primary">{aiResult}</p>
-                                <div className="flex justify-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={handleRetry}><RotateCcw className="mr-2 h-4 w-4" /> Recapture</Button>
-                                    <Button size="sm" onClick={handleAccept}><Check className="mr-2 h-4 w-4" /> Accept</Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <>
-                        <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                        <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
-                            <Camera className="mr-2 h-4 w-4" />
-                            Capture & Analyze
-                        </Button>
-                    </>
-                )}
-            </div>
-        </DialogContent>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <>
+                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                    {hasCameraPermission === false && (
+                        <Alert variant="destructive"><AlertTitle>Camera Access Required</AlertTitle><AlertDescription>Please allow camera access to use this feature.</AlertDescription></Alert>
+                    )}
+                    <Button onClick={handleCapture} disabled={!hasCameraPermission} className="w-full">
+                        <Camera className="mr-2 h-4 w-4" />
+                        Capture & Analyze
+                    </Button>
+                </>
+            )}
+        </div>
     );
 };
 
@@ -317,15 +317,22 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <AiCameraReader
-                            title="Scan Tail Number"
-                            description="Position the aircraft's tail number in the frame and capture."
-                            aiFlow={readRegistrationFromImage}
-                            onValueRead={(value) => {
-                                form.setValue('tailNumber', String(value));
-                                setIsRegCameraOpen(false);
-                            }}
-                        />
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Scan Tail Number</DialogTitle>
+                                <DialogDescription>Position the aircraft's tail number in the frame and capture.</DialogDescription>
+                            </DialogHeader>
+                            <AiCameraReader
+                                isOpen={isRegCameraOpen}
+                                aiFlow={readRegistrationFromImage}
+                                onValueRead={(value) => {
+                                    form.setValue('tailNumber', String(value));
+                                    setIsRegCameraOpen(false);
+                                }}
+                                title="Scan Tail Number"
+                                description="Position the aircraft's tail number in the frame and capture."
+                            />
+                        </DialogContent>
                     </Dialog>
                 </div>
                 <FormMessage />
@@ -381,15 +388,22 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                         <DialogTrigger asChild>
                             <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
                         </DialogTrigger>
-                        <AiCameraReader
-                            title="Scan Hobbs Meter"
-                            description="Position the Hobbs meter in the frame and capture."
-                            aiFlow={readHobbsFromImage}
-                            onValueRead={(value) => {
-                                form.setValue('hours', Number(value));
-                                setIsHobbsCameraOpen(false);
-                            }}
-                        />
+                        <DialogContent>
+                           <DialogHeader>
+                                <DialogTitle>Scan Hobbs Meter</DialogTitle>
+                                <DialogDescription>Position the Hobbs meter in the frame and capture.</DialogDescription>
+                            </DialogHeader>
+                            <AiCameraReader
+                                isOpen={isHobbsCameraOpen}
+                                aiFlow={readHobbsFromImage}
+                                onValueRead={(value) => {
+                                    form.setValue('hours', Number(value));
+                                    setIsHobbsCameraOpen(false);
+                                }}
+                                title="Scan Hobbs Meter"
+                                description="Position the Hobbs meter in the frame and capture."
+                            />
+                        </DialogContent>
                     </Dialog>
                  </div>
                 <FormMessage />
