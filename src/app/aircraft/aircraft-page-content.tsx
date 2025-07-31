@@ -134,8 +134,8 @@ export function AircraftPageContent({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
-                <CardTitle>Aircraft Fleet</CardTitle>
-                <CardDescription>Manage all aircraft, their documents, and associated checklists.</CardDescription>
+                <CardTitle>Manage Fleet</CardTitle>
+                <CardDescription>Add new aircraft or manage global checklist templates.</CardDescription>
             </div>
           <div className="flex items-center gap-2">
              {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
@@ -157,6 +157,13 @@ export function AircraftPageContent({
                   </DialogContent>
               </Dialog>
           </div>
+        </CardHeader>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle>Aircraft Fleet</CardTitle>
+            <CardDescription>View and manage all aircraft in your fleet.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
