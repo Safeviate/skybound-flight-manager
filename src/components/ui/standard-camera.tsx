@@ -51,10 +51,21 @@ export function StandardCamera({ onSuccess }: StandardCameraProps) {
   const handleCapture = () => {
     if (videoRef.current) {
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-      const dataUrl = canvas.toDataURL('image/png');
+      const video = videoRef.current;
+      
+      const maxWidth = 1280;
+      const scale = maxWidth / video.videoWidth;
+      const finalWidth = video.videoWidth > maxWidth ? maxWidth : video.videoWidth;
+      const finalHeight = video.videoWidth > maxWidth ? video.videoHeight * scale : video.videoHeight;
+
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+      
+      const context = canvas.getContext('2d');
+      context?.drawImage(video, 0, 0, finalWidth, finalHeight);
+
+      // Use JPEG for better compression of photos, with a quality of 70%
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
       onSuccess(dataUrl);
     }
   };
