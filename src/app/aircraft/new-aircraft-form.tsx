@@ -38,14 +38,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const AiCameraReader = ({
   onValueRead,
   aiFlow,
-  title,
-  description,
   isOpen,
 }: {
   onValueRead: (value: string | number) => void;
   aiFlow: (input: any) => Promise<any>;
-  title: string;
-  description: string;
   isOpen: boolean;
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,7 +55,13 @@ const AiCameraReader = ({
         let stream: MediaStream | null = null;
         
         const getCameraPermission = async () => {
-            if (!isOpen) return;
+            if (!isOpen) {
+                 if (videoRef.current && videoRef.current.srcObject) {
+                    (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+                    videoRef.current.srcObject = null;
+                }
+                return;
+            };
 
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 setHasCameraPermission(false);
@@ -82,9 +84,6 @@ const AiCameraReader = ({
         return () => {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
-            }
-            if (videoRef.current) {
-                videoRef.current.srcObject = null;
             }
         };
     }, [isOpen]);
@@ -122,6 +121,8 @@ const AiCameraReader = ({
         setCapturedImage(null);
         setAiResult(null);
     };
+    
+    if (!isOpen) return null;
 
     return (
         <div className="space-y-4">
@@ -147,7 +148,7 @@ const AiCameraReader = ({
                 </div>
             ) : (
                 <>
-                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
                     {hasCameraPermission === false && (
                         <Alert variant="destructive"><AlertTitle>Camera Access Required</AlertTitle><AlertDescription>Please allow camera access to use this feature.</AlertDescription></Alert>
                     )}
@@ -299,6 +300,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <ScrollArea className="h-[60vh] pr-4">
@@ -313,27 +315,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                     <FormControl>
                         <Input placeholder="N12345" {...field} />
                     </FormControl>
-                    <Dialog open={isRegCameraOpen} onOpenChange={setIsRegCameraOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Scan Tail Number</DialogTitle>
-                                <DialogDescription>Position the aircraft's tail number in the frame and capture.</DialogDescription>
-                            </DialogHeader>
-                            <AiCameraReader
-                                isOpen={isRegCameraOpen}
-                                aiFlow={readRegistrationFromImage}
-                                onValueRead={(value) => {
-                                    form.setValue('tailNumber', String(value));
-                                    setIsRegCameraOpen(false);
-                                }}
-                                title="Scan Tail Number"
-                                description="Position the aircraft's tail number in the frame and capture."
-                            />
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="outline" type="button" size="icon" onClick={() => setIsRegCameraOpen(true)}><Camera className="h-4 w-4" /></Button>
                 </div>
                 <FormMessage />
                 </FormItem>
@@ -384,27 +366,7 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
                     <FormControl>
                         <Input type="number" placeholder="1250.5" {...field} />
                     </FormControl>
-                    <Dialog open={isHobbsCameraOpen} onOpenChange={setIsHobbsCameraOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" type="button" size="icon"><Camera className="h-4 w-4" /></Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                           <DialogHeader>
-                                <DialogTitle>Scan Hobbs Meter</DialogTitle>
-                                <DialogDescription>Position the Hobbs meter in the frame and capture.</DialogDescription>
-                            </DialogHeader>
-                            <AiCameraReader
-                                isOpen={isHobbsCameraOpen}
-                                aiFlow={readHobbsFromImage}
-                                onValueRead={(value) => {
-                                    form.setValue('hours', Number(value));
-                                    setIsHobbsCameraOpen(false);
-                                }}
-                                title="Scan Hobbs Meter"
-                                description="Position the Hobbs meter in the frame and capture."
-                            />
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="outline" type="button" size="icon" onClick={() => setIsHobbsCameraOpen(true)}><Camera className="h-4 w-4" /></Button>
                  </div>
                 <FormMessage />
                 </FormItem>
@@ -646,5 +608,40 @@ export function NewAircraftForm({ onAircraftAdded }: NewAircraftFormProps) {
         </div>
       </form>
     </Form>
+
+    <Dialog open={isRegCameraOpen} onOpenChange={setIsRegCameraOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Scan Tail Number</DialogTitle>
+                <DialogDescription>Position the aircraft's tail number in the frame and capture.</DialogDescription>
+            </DialogHeader>
+            <AiCameraReader
+                isOpen={isRegCameraOpen}
+                aiFlow={readRegistrationFromImage}
+                onValueRead={(value) => {
+                    form.setValue('tailNumber', String(value));
+                    setIsRegCameraOpen(false);
+                }}
+            />
+        </DialogContent>
+    </Dialog>
+
+    <Dialog open={isHobbsCameraOpen} onOpenChange={setIsHobbsCameraOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Scan Hobbs Meter</DialogTitle>
+                <DialogDescription>Position the Hobbs meter in the frame and capture.</DialogDescription>
+            </DialogHeader>
+            <AiCameraReader
+                isOpen={isHobbsCameraOpen}
+                aiFlow={readHobbsFromImage}
+                onValueRead={(value) => {
+                    form.setValue('hours', Number(value));
+                    setIsHobbsCameraOpen(false);
+                }}
+            />
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
