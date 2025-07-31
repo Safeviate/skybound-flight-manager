@@ -22,6 +22,7 @@ const checklistSchema = z.object({
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   report: z.string().optional(),
+  defectPhoto: z.string().optional(),
 });
 
 type ChecklistFormValues = z.infer<typeof checklistSchema>;
@@ -35,7 +36,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
   const { toast } = useToast();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | null>(null);
+  const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -44,6 +45,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
         leftSidePhoto: '',
         rightSidePhoto: '',
         report: '',
+        defectPhoto: '',
     }
   });
 
@@ -64,7 +66,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
     setIsCameraOpen(false);
   }
 
-  const openCamera = (target: 'leftSidePhoto' | 'rightSidePhoto') => {
+  const openCamera = (target: 'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto') => {
     setPhotoTarget(target);
     setIsCameraOpen(true);
   }
@@ -161,6 +163,28 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                     )}
                 />
 
+                <FormField
+                    control={form.control}
+                    name="defectPhoto"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Photo of Defect (Optional)</FormLabel>
+                            {watchedValues.defectPhoto ? (
+                                <div className="flex items-center gap-2">
+                                    <ImageIcon className="h-5 w-5 text-green-500" />
+                                    <span className="text-sm text-green-500">Photo captured</span>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => openCamera('defectPhoto')}>Retake</Button>
+                                </div>
+                            ) : (
+                                <Button type="button" variant="outline" className="w-full" onClick={() => openCamera('defectPhoto')}>
+                                    <Camera className="mr-2" /> Take Photo of Defect
+                                </Button>
+                            )}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Post-Flight Checklist</Button>
@@ -186,6 +210,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                     <DialogDescription>
                         {photoTarget === 'leftSidePhoto' && 'Take a clear photo of the left side of the aircraft.'}
                         {photoTarget === 'rightSidePhoto' && 'Take a clear photo of the right side of the aircraft.'}
+                        {photoTarget === 'defectPhoto' && 'Take a clear photo of the reported defect or issue.'}
                     </DialogDescription>
                 </DialogHeader>
                 <AircraftInfoScanner scanMode={'registration'} onSuccess={handlePhotoSuccess} />
