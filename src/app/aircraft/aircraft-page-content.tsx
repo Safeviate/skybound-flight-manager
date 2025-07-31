@@ -160,165 +160,157 @@ export function AircraftPageContent({
         </CardHeader>
       </Card>
       
-      <Card>
-        <CardHeader>
-            <CardTitle>Aircraft Fleet</CardTitle>
-            <CardDescription>View and manage all aircraft in your fleet.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tail Number</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Hobbs Hours</TableHead>
-                <TableHead>Airworthiness Expiry</TableHead>
-                <TableHead>Insurance Expiry</TableHead>
-                <TableHead>Checklists</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fleet.map((aircraft) => {
-                const aircraftChecklists = checklists.filter(c => c.aircraftId === aircraft.id);
-                const isEditing = editingHobbsId === aircraft.id;
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Tail Number</TableHead>
+            <TableHead>Model</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Hobbs Hours</TableHead>
+            <TableHead>Airworthiness Expiry</TableHead>
+            <TableHead>Insurance Expiry</TableHead>
+            <TableHead>Checklists</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {fleet.map((aircraft) => {
+            const aircraftChecklists = checklists.filter(c => c.aircraftId === aircraft.id);
+            const isEditing = editingHobbsId === aircraft.id;
 
-                return (
-                <TableRow key={aircraft.id}>
-                  <TableCell className="font-medium">
-                    <Link href={`/aircraft/${aircraft.id}`} className="hover:underline">
-                      {aircraft.tailNumber}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{aircraft.model}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                      {isEditing && canUpdateHobbs ? (
-                           <div className="flex items-center gap-2">
-                              <Input 
-                                  type="number" 
-                                  value={hobbsInputValue}
-                                  onChange={(e) => setHobbsInputValue(parseFloat(e.target.value))}
-                                  className="w-24 h-8"
-                              />
-                              <Button size="icon" className="h-8 w-8" onClick={() => handleSaveHobbs(aircraft.id)}>
-                                  <Save className="h-4 w-4" />
+            return (
+            <TableRow key={aircraft.id}>
+              <TableCell className="font-medium">
+                <Link href={`/aircraft/${aircraft.id}`} className="hover:underline">
+                  {aircraft.tailNumber}
+                </Link>
+              </TableCell>
+              <TableCell>{aircraft.model}</TableCell>
+              <TableCell>
+                <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>
+              </TableCell>
+              <TableCell>
+                  {isEditing && canUpdateHobbs ? (
+                       <div className="flex items-center gap-2">
+                          <Input 
+                              type="number" 
+                              value={hobbsInputValue}
+                              onChange={(e) => setHobbsInputValue(parseFloat(e.target.value))}
+                              className="w-24 h-8"
+                          />
+                          <Button size="icon" className="h-8 w-8" onClick={() => handleSaveHobbs(aircraft.id)}>
+                              <Save className="h-4 w-4" />
+                          </Button>
+                       </div>
+                  ) : (
+                      <div className="flex items-center gap-2">
+                          {aircraft.hours.toFixed(1)}
+                          {canUpdateHobbs && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
+                                  <Edit className="h-3 w-3" />
                               </Button>
-                           </div>
-                      ) : (
-                          <div className="flex items-center gap-2">
-                              {aircraft.hours.toFixed(1)}
-                              {canUpdateHobbs && (
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditHobbs(aircraft)}>
-                                      <Edit className="h-3 w-3" />
-                                  </Button>
-                              )}
-                          </div>
-                      )}
-                  </TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                  <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                  <TableCell>
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                                  View ({aircraftChecklists.length})
-                              </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
-                              {aircraftChecklists.length > 0 ? (
-                                  aircraftChecklists.map(checklist => (
-                                      <Dialog key={checklist.id}>
-                                          <DialogTrigger asChild>
-                                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                  {checklist.title}
-                                              </DropdownMenuItem>
-                                          </DialogTrigger>
-                                          <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
-                                              <DialogHeader>
-                                                  <DialogTitle>{checklist.title}</DialogTitle>
-                                              </DialogHeader>
-                                              <ChecklistCard 
-                                                  checklist={checklist}
-                                                  aircraft={aircraft}
-                                                  onItemToggle={(updated) => setChecklists(prev => prev.map(c => c.id === updated.id ? updated : c))}
-                                                  onItemValueChange={(checklistId, itemId, value) => { /* handle value change if needed */ }}
-                                                  onUpdate={handleChecklistUpdate}
-                                                  onReset={(checklistId) => { /* handle reset */ }}
-                                                  onEdit={() => {}}
-                                              />
-                                          </DialogContent>
-                                      </Dialog>
-                                  ))
-                              ) : (
-                                  <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
-                              )}
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                  </TableCell>
-                  <TableCell className="text-right">
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                          <QrCode className="mr-2 h-4 w-4" />
-                                          Show QR Code
-                                      </DropdownMenuItem>
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-xs">
-                                      <DialogHeader>
-                                          <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
-                                          <DialogDescription>
-                                              Scan this code with the in-app scanner to start the pre-flight checklist.
-                                          </DialogDescription>
-                                      </DialogHeader>
-                                      <div className="flex items-center justify-center p-4">
-                                          <QRCode value={aircraft.id} size={200} />
-                                      </div>
-                                  </DialogContent>
-                              </Dialog>
-                              {canEditAircraft && (
-                                   <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                              <Trash2 className="mr-2 h-4 w-4" />
-                                              Delete
+                          )}
+                      </div>
+                  )}
+              </TableCell>
+              <TableCell>{getExpiryBadge(aircraft.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+              <TableCell>{getExpiryBadge(aircraft.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+              <TableCell>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                              <ClipboardCheck className="mr-2 h-4 w-4" />
+                              View ({aircraftChecklists.length})
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Available Checklists</DropdownMenuLabel>
+                          {aircraftChecklists.length > 0 ? (
+                              aircraftChecklists.map(checklist => (
+                                  <Dialog key={checklist.id}>
+                                      <DialogTrigger asChild>
+                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                              {checklist.title}
                                           </DropdownMenuItem>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              This action cannot be undone. This will permanently delete {aircraft.tailNumber}.
-                                          </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeleteAircraft(aircraft.id)}>Yes, Delete</AlertDialogAction>
-                                          </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                  </AlertDialog>
-                              )}
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )})}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                                      </DialogTrigger>
+                                      <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh]">
+                                          <DialogHeader>
+                                              <DialogTitle>{checklist.title}</DialogTitle>
+                                          </DialogHeader>
+                                          <ChecklistCard 
+                                              checklist={checklist}
+                                              aircraft={aircraft}
+                                              onItemToggle={(updated) => setChecklists(prev => prev.map(c => c.id === updated.id ? updated : c))}
+                                              onItemValueChange={(checklistId, itemId, value) => { /* handle value change if needed */ }}
+                                              onUpdate={handleChecklistUpdate}
+                                              onReset={(checklistId) => { /* handle reset */ }}
+                                              onEdit={() => {}}
+                                          />
+                                      </DialogContent>
+                                  </Dialog>
+                              ))
+                          ) : (
+                              <DropdownMenuItem disabled>No checklists assigned</DropdownMenuItem>
+                          )}
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+              </TableCell>
+              <TableCell className="text-right">
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                          <Dialog>
+                              <DialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                      <QrCode className="mr-2 h-4 w-4" />
+                                      Show QR Code
+                                  </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-xs">
+                                  <DialogHeader>
+                                      <DialogTitle>Checklist for {aircraft.tailNumber}</DialogTitle>
+                                      <DialogDescription>
+                                          Scan this code with the in-app scanner to start the pre-flight checklist.
+                                      </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex items-center justify-center p-4">
+                                      <QRCode value={aircraft.id} size={200} />
+                                  </div>
+                              </DialogContent>
+                          </Dialog>
+                          {canEditAircraft && (
+                               <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                       <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          Delete
+                                      </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete {aircraft.tailNumber}.
+                                      </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteAircraft(aircraft.id)}>Yes, Delete</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          )}
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          )})}
+        </TableBody>
+      </Table>
     </main>
   );
 }
