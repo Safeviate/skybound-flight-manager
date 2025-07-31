@@ -30,7 +30,6 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, addDoc, updateDoc, writeBatch, deleteDoc, arrayUnion, orderBy, limit } from 'firebase/firestore';
 import { format, parseISO } from 'date-fns';
-import { aircraftData as seedAircraft } from '@/lib/data-provider';
 import { useSettings } from '@/context/settings-provider';
 import { getAircraftPageData } from './data';
 import { ChecklistTemplateManager } from '../checklists/checklist-template-manager';
@@ -252,62 +251,6 @@ export function AircraftPageContent({
     }
   };
 
-  const handleSeedAircraft = async () => {
-    if (!company) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No company selected. Cannot seed aircraft data.',
-      });
-      return;
-    }
-
-    setIsSeeding(true);
-    try {
-      const batch = writeBatch(db);
-      
-      const aircraftCollectionRef = collection(db, `companies/${company.id}/aircraft`);
-      // Use getDocs to check for existing aircraft to avoid duplicates if seed is run multiple times
-      const existingSnapshot = await getDocs(aircraftCollectionRef);
-      const existingIds = new Set(existingSnapshot.docs.map(d => d.id));
-
-      const aircraftToSeed = seedAircraft.filter(ac => ac.companyId === 'skybound-aero' && !existingIds.has(ac.id));
-      
-      if (aircraftToSeed.length === 0) {
-        toast({
-            variant: 'default',
-            title: 'No New Aircraft to Seed',
-            description: 'Sample aircraft already exist in your fleet.',
-        });
-        setIsSeeding(false);
-        return;
-      }
-
-
-      aircraftToSeed.forEach(aircraft => {
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
-        batch.set(aircraftRef, { ...aircraft, companyId: company.id });
-      });
-
-      await batch.commit();
-
-      toast({
-        title: 'Aircraft Seeded',
-        description: `${aircraftToSeed.length} sample aircraft have been added to your fleet.`,
-      });
-      refreshData(); // Refresh the list
-    } catch (error) {
-      console.error('Error seeding aircraft:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Seeding Failed',
-        description: 'An error occurred while trying to seed aircraft data.',
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
@@ -315,10 +258,6 @@ export function AircraftPageContent({
           <CardTitle>Aircraft Fleet</CardTitle>
           <div className="flex items-center gap-2">
              {canEditChecklists && <ChecklistTemplateManager onUpdate={refreshData} />}
-              <Button onClick={handleSeedAircraft} variant="outline" disabled={isSeeding}>
-                  {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                  Seed Sample Fleet
-              </Button>
               <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
                   <DialogTrigger asChild>
                       <Button>
