@@ -34,6 +34,7 @@ const checklistSchema = z.object({
   massAndBalanceOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Mass and Balance is onboard." }),
   radioLicenseOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Radio Station License is onboard." }),
   report: z.string().optional(),
+  defectPhoto: z.string().optional(),
 });
 
 export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
@@ -46,7 +47,7 @@ interface PreFlightChecklistFormProps {
 export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | null>(null);
+  const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
 
   const form = useForm<PreFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -64,6 +65,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
         massAndBalanceOnboard: false,
         radioLicenseOnboard: false,
         report: '',
+        defectPhoto: '',
     }
   });
 
@@ -82,7 +84,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     setIsCameraOpen(false);
   }
 
-  const openCamera = (target: 'leftSidePhoto' | 'rightSidePhoto') => {
+  const openCamera = (target: 'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto') => {
     setPhotoTarget(target);
     setIsCameraOpen(true);
   }
@@ -198,19 +200,41 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                 </div>
 
                 {/* Anything to Report */}
-                <FormField
-                    control={form.control}
-                    name="report"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Anything to Report?</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="Note any defects, issues, or observations..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <div className="space-y-2">
+                    <FormField
+                        control={form.control}
+                        name="report"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Anything to Report?</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="Note any defects, issues, or observations..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="defectPhoto"
+                        render={({ field }) => (
+                            <FormItem>
+                                {watchedValues.defectPhoto ? (
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="h-5 w-5 text-green-500" />
+                                        <span className="text-sm text-green-500">Defect photo captured</span>
+                                        <Button type="button" size="sm" variant="link" onClick={() => openCamera('defectPhoto')}>Retake photo</Button>
+                                    </div>
+                                ) : (
+                                    <Button type="button" variant="outline" size="sm" onClick={() => openCamera('defectPhoto')}>
+                                        <Camera className="mr-2 h-4 w-4" /> Add Photo of Defect
+                                    </Button>
+                                )}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
             </CardContent>
             <CardFooter>
@@ -226,6 +250,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                     <DialogDescription>
                         {photoTarget === 'leftSidePhoto' && 'Take a clear photo of the left side of the aircraft.'}
                         {photoTarget === 'rightSidePhoto' && 'Take a clear photo of the right side of the aircraft.'}
+                        {photoTarget === 'defectPhoto' && 'Take a clear photo of the reported defect or issue.'}
                     </DialogDescription>
                 </DialogHeader>
                 <StandardCamera onSuccess={handlePhotoSuccess} />
