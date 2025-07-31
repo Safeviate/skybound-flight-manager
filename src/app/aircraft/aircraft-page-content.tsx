@@ -292,8 +292,9 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         };
 
         if (isPreFlight) {
-            addField('Aircraft Registration:', (results as PreFlightChecklistFormValues).registration);
-            addField('Hobbs Hours:', (results as PreFlightChecklistFormValues).hobbs);
+            const preFlightResults = results as PreFlightChecklistFormValues;
+            addField('Aircraft Registration:', preFlightResults.registration);
+            addField('Hobbs Hours:', preFlightResults.hobbs);
         } else {
              addField('Hobbs Hours:', (results as PostFlightChecklistFormValues).hobbs);
         }
@@ -305,6 +306,12 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             const preFlightResults = results as PreFlightChecklistFormValues;
             tableBody.push(['Checklist/POH Onboard', preFlightResults.checklistOnboard ? 'Yes' : 'No']);
             tableBody.push(['FOM Onboard', preFlightResults.fomOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Certificate of Airworthiness', preFlightResults.airworthinessOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Insurance', preFlightResults.insuranceOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Certificate of Release to Service', preFlightResults.releaseToServiceOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Certificate of Registration', preFlightResults.registrationOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Mass and Balance', preFlightResults.massAndBalanceOnboard ? 'Yes' : 'No']);
+            tableBody.push(['Radio Station License', preFlightResults.radioLicenseOnboard ? 'Yes' : 'No']);
         } else {
             tableBody.push(['Defect Reported', (results.report || '').length > 0 ? 'Yes' : 'No']);
         }
