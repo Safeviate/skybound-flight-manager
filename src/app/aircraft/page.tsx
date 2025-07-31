@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 import { getAircraftPageData } from './data';
 import { AircraftPageContent } from './aircraft-page-content';
+import type { Aircraft, Checklist, Booking } from '@/lib/types';
 
 async function getInitialData() {
     const cookieStore = cookies();
@@ -27,9 +28,10 @@ export default async function AircraftPageContainer() {
         <AircraftPageContent 
             initialFleet={aircraftList} 
             initialChecklists={checklistList} 
-            initialBookings={bookingList} 
         />
     );
 }
 
 AircraftPageContainer.title = 'Aircraft Management';
+
+    
