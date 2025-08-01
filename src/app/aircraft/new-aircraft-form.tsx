@@ -107,7 +107,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                 companyId: company.id,
                 status: 'Available',
                 location: 'Default Base', // Placeholder
-                checklistStatus: 'needs-pre-flight',
+                checklistStatus: 'ready',
             };
             await addDoc(collection(db, `companies/${company.id}/aircraft`), newAircraft);
             toast({ title: 'Aircraft Added', description: `${data.tailNumber} has been added to the fleet.` });

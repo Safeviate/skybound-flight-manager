@@ -9,6 +9,7 @@ import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface TrainingSchedulePageContentProps {
   aircraft: Aircraft[];
@@ -55,10 +56,10 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
 
   const timeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
   
-  const getBookingForSlot = (aircraftId: string, time: string) => {
+  const getBookingForSlot = (aircraftTailNumber: string, time: string) => {
     const hour = parseInt(time.split(':')[0], 10);
     return bookings.find(b => {
-      if (b.aircraft !== aircraftId) return false;
+      if (b.aircraft !== aircraftTailNumber) return false;
       const startHour = parseInt(b.startTime.split(':')[0], 10);
       const endHour = parseInt(b.endTime.split(':')[0], 10);
       return hour >= startHour && hour < endHour;
@@ -80,12 +81,18 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
     return `${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
-  const getBookingVariant = (purpose: Booking['purpose']) => {
-    switch (purpose) {
-      case 'Training': return 'bg-blue-500';
-      case 'Maintenance': return 'bg-yellow-500';
-      case 'Private': return 'bg-green-500';
-      default: return 'bg-gray-500';
+  const getBookingVariant = (aircraftForBooking: Aircraft | undefined) => {
+    if (!aircraftForBooking) return 'bg-gray-400'; // Should not happen
+
+    switch (aircraftForBooking.checklistStatus) {
+      case 'needs-pre-flight':
+        return 'bg-gray-400';
+      case 'needs-post-flight':
+        return 'bg-blue-500';
+      case 'ready':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-400';
     }
   };
 
@@ -177,7 +184,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
                                 {timeSlots.map(time => {
                                   if (renderedSlots.has(time)) return null;
 
-                                  const booking = getBookingForSlot(ac.id, time);
+                                  const booking = getBookingForSlot(ac.tailNumber, time);
                                   if (booking) {
                                     const colSpan = calculateColSpan(booking, time);
                                     if (colSpan > 0) {
@@ -185,9 +192,10 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
                                         const nextHour = parseInt(time.split(':')[0], 10) + i;
                                         renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
                                       }
+                                      const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       return (
                                         <td key={time} colSpan={colSpan}>
-                                          <div className={`gantt-bar ${getBookingVariant(booking.purpose)}`}>
+                                          <div className={cn('gantt-bar', getBookingVariant(aircraftForBooking))}>
                                             {getBookingLabel(booking)}
                                           </div>
                                         </td>

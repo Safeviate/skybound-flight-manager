@@ -184,7 +184,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         if (!selectedAircraftForChecklist || !company || !user) return;
         
         const isPreFlight = 'registration' in data;
-        const newStatus = isPreFlight ? 'needs-post-flight' : 'needs-pre-flight';
+        const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
 
         const historyDoc: Omit<CompletedChecklist, 'id'> = {
             aircraftId: selectedAircraftForChecklist.id,
@@ -208,7 +208,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             refreshData();
             toast({
                 title: 'Checklist Submitted',
-                description: `The checklist has been saved. The aircraft is now ready for its ${newStatus === 'needs-post-flight' ? 'next flight' : 'Post-Flight check'}.`
+                description: `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`
             });
              setSelectedChecklistAircraftId(null);
         } catch (error) {

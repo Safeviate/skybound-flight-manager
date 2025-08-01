@@ -71,8 +71,7 @@ export type Aircraft = {
   massAndBalanceExpiry: string;
   radioStationLicenseExpiry: string;
   location: string; // Airport ID
-  isPostFlightPending?: boolean;
-  checklistStatus?: 'needs-pre-flight' | 'needs-post-flight';
+  checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
 };
 
 export type Endorsement = {
@@ -486,14 +485,15 @@ export type CompletedChecklistItemResult = {
 
 export type CompletedChecklist = {
     id: string;
-    templateId: string;
-    templateTitle: string;
+    aircraftId: string;
+    aircraftTailNumber: string;
     userId: string;
     userName: string;
-    companyId: string;
     dateCompleted: string;
-    items: CompletedChecklistItemResult[];
+    type: 'Pre-Flight' | 'Post-Flight';
+    results: any; // Can be PreFlightChecklistFormValues or PostFlightChecklistFormValues
 };
+
 
 export type CorrectiveActionPlan = {
   rootCause: string;
