@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -24,7 +24,7 @@ import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { ChecklistStarter } from './checklist-starter';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
@@ -32,6 +32,7 @@ import autoTable from 'jspdf-autotable';
 import { sendEmailWithAttachment } from '@/ai/flows/send-email-with-attachment-flow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -57,6 +58,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
+    const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
     
     useEffect(() => {
         const fetchContacts = async () => {
@@ -101,6 +103,17 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         if (!selectedChecklistAircraftId) return null;
         return activeAircraft.find(ac => ac.id === selectedChecklistAircraftId);
     }, [activeAircraft, selectedChecklistAircraftId]);
+
+    const bookedDays = useMemo(() => {
+        return checklistHistory.map(h => parseISO(h.dateCompleted));
+    }, [checklistHistory]);
+
+    const selectedDayChecklists = useMemo(() => {
+        if (!selectedDay) return [];
+        return checklistHistory
+            .filter(h => isSameDay(parseISO(h.dateCompleted), selectedDay))
+            .sort((a, b) => parseISO(b.dateCompleted).getTime() - parseISO(a.dateCompleted).getTime());
+    }, [checklistHistory, selectedDay]);
 
     const handleSuccess = () => {
         setIsNewAircraftDialogOpen(false);
@@ -497,77 +510,74 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                     </div>
                 </TabsContent>
                  <TabsContent value="history" className="pt-6">
-                    <div className="max-w-4xl mx-auto space-y-4">
-                        <div className="space-y-2">
-                             <p className="text-sm font-medium text-center text-muted-foreground">Select an aircraft to view its history</p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                                {activeAircraft.map(ac => (
-                                    <Button 
-                                        key={ac.id} 
-                                        variant={selectedHistoryAircraftId === ac.id ? 'default' : 'outline'}
-                                        onClick={() => setSelectedHistoryAircraftId(ac.id)}
-                                    >
-                                        {ac.tailNumber}
-                                    </Button>
-                                ))}
-                            </div>
+                    <div className="space-y-2">
+                         <p className="text-sm font-medium text-center text-muted-foreground">Select an aircraft to view its history</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            {activeAircraft.map(ac => (
+                                <Button 
+                                    key={ac.id} 
+                                    variant={selectedHistoryAircraftId === ac.id ? 'default' : 'outline'}
+                                    onClick={() => setSelectedHistoryAircraftId(ac.id)}
+                                >
+                                    {ac.tailNumber}
+                                </Button>
+                            ))}
                         </div>
-
-                        {checklistHistory.length > 0 ? (
-                            <div className="border rounded-md">
-                                <Table>
+                    </div>
+                    {selectedHistoryAircraftId && (
+                        <div className="grid md:grid-cols-2 gap-8 mt-6">
+                            <div className="flex justify-center">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDay}
+                                    onSelect={setSelectedDay}
+                                    className="rounded-md border"
+                                    modifiers={{ booked: bookedDays }}
+                                    modifiersClassNames={{
+                                    booked: 'bg-primary/20 text-primary-foreground rounded-full',
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-6 w-6"/>
+                                    <h3 className="text-xl font-semibold">
+                                        {selectedDay ? format(selectedDay, 'EEEE, MMMM d') : 'No date selected'}
+                                    </h3>
+                                </div>
+                                {selectedDayChecklists.length > 0 ? (
+                                    <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Checklist Type</TableHead>
-                                            <TableHead>Completed By</TableHead>
-                                            <TableHead>Date</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>User</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {checklistHistory.map(item => (
-                                            <TableRow key={item.id}>
-                                                <TableCell className="font-medium">{item.type} Checklist</TableCell>
-                                                <TableCell>{item.userName}</TableCell>
-                                                <TableCell>{format(parseISO(item.dateCompleted), 'PPP p')}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View
-                                                    </Button>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="ml-2 text-destructive hover:bg-destructive/10 hover:text-destructive">
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Delete Checklist History?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This action cannot be undone. This will permanently delete this checklist record.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeleteChecklist(item.id)}>
-                                                                    Yes, Delete
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </TableCell>
-                                            </TableRow>
+                                        {selectedDayChecklists.map(item => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">{item.type} Checklist</TableCell>
+                                            <TableCell>{item.userName}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
+                                                    <Eye className="mr-2 h-4 w-4" /> View
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
                                         ))}
                                     </TableBody>
-                                </Table>
+                                    </Table>
+                                ) : (
+                                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">
+                                            {selectedDay ? "No checklists for this day." : "Select a day to see history."}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                        ) : selectedHistoryAircraftId ? (
-                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">No checklist history found for this aircraft.</p>
-                            </div>
-                        ) : null}
-                    </div>
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </CardContent>
