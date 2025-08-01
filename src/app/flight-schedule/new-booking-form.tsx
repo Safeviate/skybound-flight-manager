@@ -75,6 +75,14 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
       date: new Date(),
+      purpose: undefined,
+      aircraft: '',
+      startTime: '',
+      endTime: '',
+      student: '',
+      instructor: '',
+      maintenanceType: '',
+      trainingExercise: '',
     },
   });
 
