@@ -1,7 +1,9 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Aircraft, Booking } from '@/lib/types';
+import { CalendarView } from './calendar-view';
+import { aircraftData, bookingData } from '@/app/bookings/data';
 
 function BookingsPage() {
   return (
@@ -14,9 +16,7 @@ function BookingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Bookings content will be here.</p>
-            </div>
+          <CalendarView bookings={bookingData} aircraft={aircraftData} />
         </CardContent>
       </Card>
     </main>
