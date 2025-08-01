@@ -63,6 +63,10 @@ interface NewBookingFormProps {
 export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
+    defaultValues: {
+      startTime: '',
+      endTime: '',
+    }
   });
 
   useEffect(() => {
