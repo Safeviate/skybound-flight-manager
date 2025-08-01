@@ -55,10 +55,12 @@ interface NewBookingFormProps {
 }
 
 const availableTimes = (startHour = 6) => {
-    return Array.from({ length: 24 - startHour }, (_, i) => {
-        const hour = startHour + i;
-        return `${hour.toString().padStart(2, '0')}:00`;
-    });
+    const times = [];
+    for (let i = startHour; i < 24; i++) {
+        times.push(`${i.toString().padStart(2, '0')}:00`);
+        times.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+    return times;
 };
 
 export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
@@ -98,6 +100,34 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
     } else {
       onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>);
     }
+  }
+  
+  const getEndTimeOptions = () => {
+    if (!watchedStartTime) return availableTimes(7);
+    const [hourStr, minuteStr] = watchedStartTime.split(':');
+    const startHour = parseInt(hourStr, 10);
+    const startMinute = parseInt(minuteStr, 10);
+
+    const times = [];
+    let currentHour = startHour;
+    let currentMinute = startMinute;
+
+    if (currentMinute === 30) {
+        currentHour++;
+        currentMinute = 0;
+    } else {
+        currentMinute = 30;
+    }
+
+    for (let i = currentHour; i < 24; i++) {
+        if (i === currentHour && currentMinute === 30) {
+             times.push(`${i.toString().padStart(2, '0')}:30`);
+        } else {
+            times.push(`${i.toString().padStart(2, '0')}:00`);
+            times.push(`${i.toString().padStart(2, '0')}:30`);
+        }
+    }
+    return times;
   }
 
   return (
@@ -222,7 +252,7 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select end time" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {availableTimes(parseInt(watchedStartTime?.split(':')[0] || '6', 10) + 1).map(time => (
+                        {getEndTimeOptions().map(time => (
                             <SelectItem key={time} value={time}>{time}</SelectItem>
                         ))}
                         </SelectContent>
