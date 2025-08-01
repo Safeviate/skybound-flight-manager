@@ -15,7 +15,7 @@ export function GanttAircraftColumn({ aircraft, isOdd }: GanttAircraftColumnProp
   const getStatusVariant = (status: Aircraft['status']) => {
     switch (status) {
       case 'Available': return 'success';
-      case 'Booked': return 'warning'; // Note: this status might be redundant now
+      case 'Booked': return 'warning';
       case 'In Maintenance': return 'destructive';
       default: return 'outline';
     }

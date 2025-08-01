@@ -14,7 +14,7 @@ export function GanttHeader({ startTime, endTime }: GanttHeaderProps) {
   return (
     <>
       {hours.map(hour => (
-        <div key={hour} className="p-2 text-center text-sm font-medium text-muted-foreground border-b border-r">
+        <div key={hour} className="sticky top-0 z-10 p-2 text-center text-sm font-medium text-muted-foreground bg-muted border-b border-r">
           {`${hour.toString().padStart(2, '0')}:00`}
         </div>
       ))}
