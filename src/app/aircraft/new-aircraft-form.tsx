@@ -283,5 +283,3 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     </>
   );
 }
-
-    
