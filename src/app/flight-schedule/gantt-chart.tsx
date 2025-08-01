@@ -35,7 +35,7 @@ export function GanttChart({ aircraft, bookings, date, onCellClick }: GanttChart
             <GanttAircraftColumn aircraft={ac} isOdd={index % 2 !== 0} />
             
             {/* Timeline Row */}
-            <div className={`col-start-2 col-span-full grid grid-cols-subgrid relative ${index % 2 !== 0 ? 'bg-background' : 'bg-muted/50'}`}>
+            <div className={`col-start-2 col-span-full grid grid-cols-subgrid relative border-b ${index % 2 !== 0 ? 'bg-background' : 'bg-muted/50'}`}>
                 {Array.from({ length: totalHours }).map((_, i) => {
                     const hour = ganttStartTime + i;
                     const timeString = `${hour.toString().padStart(2, '0')}:00`;
