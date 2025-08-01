@@ -53,12 +53,12 @@ export function GanttChartView({
     };
 
     return (
-        <div className="border rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
-            <div className="overflow-x-auto h-full">
+        <div className="relative h-full border rounded-lg shadow-sm">
+            <div className="absolute inset-0 overflow-x-auto">
                 <div 
                     className="grid relative bg-background"
                     style={{
-                        gridTemplateColumns: `180px repeat(${totalHours * 4}, minmax(0, 1fr))`, // 4 columns per hour (15 min increments)
+                        gridTemplateColumns: `180px repeat(${totalHours * 4}, 20px)`, // Using fixed width for columns
                         gridTemplateRows: `40px repeat(${aircraft.length}, minmax(60px, 1fr))`,
                     }}
                 >
