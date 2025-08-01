@@ -52,7 +52,6 @@ const navItems: {
   { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
-  { href: '/bookings', label: 'Bookings', icon: Calendar, requiredPermissions: ['Bookings:View'], requiredFeature: 'Bookings' },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'], requiredFeature: 'Personnel' },
