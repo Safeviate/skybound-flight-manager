@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { useMemo, useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,7 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
   const utilizationData = useMemo(() => {
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
       const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
-      if (ac) {
+      if (ac && booking.status !== 'Cancelled') {
         acc[ac.model] = (acc[ac.model] || 0) + 1;
       }
       return acc;
@@ -45,6 +46,46 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
       </BarChart>
     </ResponsiveContainer>
   );
+};
+
+const CancellationReasonChart = ({ bookings }: { bookings: Booking[] }) => {
+    const cancellationData = useMemo(() => {
+        const reasons = bookings
+            .filter(b => b.status === 'Cancelled' && b.cancellationReason)
+            .reduce((acc, booking) => {
+                const reason = booking.cancellationReason!.split(':')[0].trim();
+                acc[reason] = (acc[reason] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+        
+        return Object.entries(reasons).map(([name, value]) => ({ name, value }));
+
+    }, [bookings]);
+    
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'];
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+                <Pie
+                    data={cancellationData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                >
+                    {cancellationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                </Pie>
+                 <Tooltip />
+                 <Legend />
+            </PieChart>
+        </ResponsiveContainer>
+    );
 };
 
 function ReportsPage() {
@@ -85,6 +126,10 @@ function ReportsPage() {
 
       fetchData();
   }, [company]);
+  
+  const totalBookings = bookingData.length;
+  const completedFlights = bookingData.filter(b => b.status === 'Completed').length;
+  const cancelledFlights = bookingData.filter(b => b.status === 'Cancelled').length;
 
 
   if (loading || dataLoading || !user) {
@@ -102,7 +147,36 @@ function ReportsPage() {
           <CardTitle>Operational Metrics</CardTitle>
           <CardDescription>Insights into aircraft usage and flight activity across the fleet.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Flight Volume</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-4xl font-bold">{totalBookings}</div>
+                        <p className="text-xs text-muted-foreground">Total Bookings</p>
+                        <div className="grid grid-cols-2 mt-4 text-sm">
+                            <div>
+                                <p className="font-semibold text-green-600">{completedFlights}</p>
+                                <p className="text-muted-foreground">Completed</p>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-red-600">{cancelledFlights}</p>
+                                <p className="text-muted-foreground">Cancelled</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Cancellation Reasons</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <CancellationReasonChart bookings={bookingData} />
+                    </CardContent>
+                </Card>
+            </div>
           <div>
             <h3 className="text-lg font-semibold text-center mb-4">Aircraft Utilization by Bookings</h3>
             <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />

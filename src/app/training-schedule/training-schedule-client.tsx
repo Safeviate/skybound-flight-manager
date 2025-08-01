@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -80,6 +81,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     const hour = parseInt(time.split(':')[0], 10);
     return bookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
+      if (b.status === 'Cancelled') return false;
       const startHour = parseInt(b.startTime.split(':')[0], 10);
       const endHour = parseInt(b.endTime.split(':')[0], 10);
       return hour >= startHour && hour < endHour;
@@ -150,12 +152,13 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         return;
     }
     try {
-        await deleteDoc(doc(db, `companies/${company.id}/bookings`, bookingId));
-        toast({ title: 'Booking Deleted', description: `Reason: ${reason}` });
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        await updateDoc(bookingRef, { status: 'Cancelled', cancellationReason: reason });
+        toast({ title: 'Booking Cancelled', description: `Reason: ${reason}` });
         handleDialogClose();
     } catch (error) {
-        console.error("Error deleting booking:", error);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the booking.' });
+        console.error("Error cancelling booking:", error);
+        toast({ variant: 'destructive', title: 'Cancellation Failed', description: 'Could not cancel the booking.' });
     }
   }
   
