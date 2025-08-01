@@ -1,6 +1,4 @@
 
-'use client';
-
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import type { SafetyReport, Risk, Booking } from '@/lib/types';
