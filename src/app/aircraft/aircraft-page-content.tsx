@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -497,7 +497,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                     </div>
                 </TabsContent>
                  <TabsContent value="history" className="pt-6">
-                    <div className="max-w-2xl mx-auto space-y-4">
+                    <div className="max-w-4xl mx-auto space-y-4">
                         <div className="space-y-2">
                              <p className="text-sm font-medium text-center text-muted-foreground">Select an aircraft to view its history</p>
                             <div className="flex flex-wrap justify-center gap-2">
@@ -514,43 +514,53 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         </div>
 
                         {checklistHistory.length > 0 ? (
-                            <div className="space-y-2 pt-4 border-t">
-                                {checklistHistory.map(item => (
-                                    <Card key={item.id} className="hover:bg-muted/50">
-                                        <CardContent className="p-3 flex justify-between items-center">
-                                            <div onClick={() => setViewingChecklist(item)} className="cursor-pointer flex-1">
-                                                <p className="font-semibold">{item.type} Checklist</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Completed by {item.userName} on {format(parseISO(item.dateCompleted), 'PPP')}
-                                                </p>
-                                            </div>
-                                             <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                     <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                                                        <Trash2 className="h-4 w-4" />
+                            <div className="border rounded-md">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Checklist Type</TableHead>
+                                            <TableHead>Completed By</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {checklistHistory.map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="font-medium">{item.type} Checklist</TableCell>
+                                                <TableCell>{item.userName}</TableCell>
+                                                <TableCell>{format(parseISO(item.dateCompleted), 'PPP p')}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View
                                                     </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Checklist History?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete this checklist record.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteChecklist(item.id)}>
-                                                            Yes, Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                            <Button variant="ghost" size="icon" onClick={() => setViewingChecklist(item)}>
-                                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="ml-2 text-destructive hover:bg-destructive/10 hover:text-destructive">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Checklist History?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This action cannot be undone. This will permanently delete this checklist record.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteChecklist(item.id)}>
+                                                                    Yes, Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : selectedHistoryAircraftId ? (
                              <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
@@ -621,9 +631,10 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                             <SelectValue placeholder="Select from external contacts..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {externalContacts.map(contact => (
-                                                <SelectItem key={contact.id} value={contact.email}>{contact.name} ({contact.email})</SelectItem>
-                                            ))}
+                                            {externalContacts.map(contact => {
+                                                const key = `${contact.id}-${contact.email}`;
+                                                return <SelectItem key={key} value={contact.email}>{contact.name} ({contact.email})</SelectItem>
+                                            })}
                                         </SelectContent>
                                     </Select>
                                     <div className="space-y-2">
