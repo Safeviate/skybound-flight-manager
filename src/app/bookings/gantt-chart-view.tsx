@@ -33,18 +33,18 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
   return (
     <div className="flex w-full">
         <div className="w-48 flex-shrink-0">
-             <div className="h-10 flex items-center p-2 font-semibold text-sm">Aircraft</div>
+             <div className="h-10 flex items-center p-2 font-semibold text-sm border-b border-r">Aircraft</div>
              {aircraft.map((ac) => (
-                <div key={ac.id} className="h-12 flex items-center p-2 border-t text-sm font-medium whitespace-nowrap">
+                <div key={ac.id} className="h-12 flex items-center p-2 border-t border-r text-sm font-medium whitespace-nowrap">
                     {ac.model} ({ac.tailNumber})
                 </div>
              ))}
         </div>
         <ScrollArea className="flex-1 whitespace-nowrap">
             <div className="relative" style={{ width: `${18 * 4}rem` }}>
-                <div className="h-10 grid grid-cols-18">
+                <div className="h-10 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}>
                     {hours.map(hour => (
-                        <div key={hour} className="w-16 flex items-center justify-center text-sm text-muted-foreground border-l">
+                        <div key={hour} className="w-16 flex items-center justify-center text-sm text-muted-foreground border-b border-l">
                             {hour.toString().padStart(2, '0')}:00
                         </div>
                     ))}
@@ -54,7 +54,7 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
                         const aircraftBookings = dayBookings.filter(b => b.aircraft === ac.tailNumber);
                         return (
                              <div key={ac.id} className="relative h-12 border-t">
-                                <div className="grid grid-cols-18 h-full">
+                                <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}>
                                     {hours.map(hour => <div key={hour} className="w-16 h-full border-l"></div>)}
                                 </div>
                                 {aircraftBookings.map(booking => {
