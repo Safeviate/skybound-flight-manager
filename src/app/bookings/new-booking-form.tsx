@@ -143,11 +143,11 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
         try {
             const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
             const aircraftSnapshot = await getDocs(aircraftQuery);
-            setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
+            setAircraftData(aircraftSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Aircraft)));
 
             const usersQuery = query(collection(db, `companies/${company.id}/users`));
             const usersSnapshot = await getDocs(usersQuery);
-            setUserData(usersSnapshot.docs.map(doc => doc.data() as User));
+            setUserData(usersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
             
         } catch (error) {
             console.error("Failed to fetch form prerequisites", error);
@@ -210,8 +210,8 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
   today.setHours(0, 0, 0, 0);
 
   const availableAircraft = aircraftData.filter(ac => {
-    const airworthinessExpired = isBefore(parseISO(ac.airworthinessExpiry), today);
-    const insuranceExpired = isBefore(parseISO(ac.insuranceExpiry), today);
+    const airworthinessExpired = ac.airworthinessExpiry ? isBefore(parseISO(ac.airworthinessExpiry), today) : false;
+    const insuranceExpired = ac.insuranceExpiry ? isBefore(parseISO(ac.insuranceExpiry), today) : false;
     
     if (ac.status === 'Archived' || ac.checklistStatus === 'needs-post-flight') return false;
 
@@ -380,7 +380,7 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
                     <SelectContent>
                     {availableStudents.length > 0 ? (
                         availableStudents.map(s => (
-                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                         ))
                     ) : (
                         <SelectItem value="none" disabled>No students available for booking</SelectItem>
@@ -543,5 +543,3 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
     </Form>
   );
 }
-
-    
