@@ -6,7 +6,7 @@ import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } fr
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 
-type CalendarViewMode = 'month' | 'week' | 'day' | 'gantt';
+type CalendarViewMode = 'month' | 'week' | 'day';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -20,13 +20,13 @@ export function CalendarHeader({ currentDate, setCurrentDate, view, setView }: C
   const handlePrev = () => {
     if (view === 'month') setCurrentDate(subMonths(currentDate, 1));
     if (view === 'week') setCurrentDate(subWeeks(currentDate, 1));
-    if (view === 'day' || view === 'gantt') setCurrentDate(subDays(currentDate, 1));
+    if (view === 'day') setCurrentDate(subDays(currentDate, 1));
   };
 
   const handleNext = () => {
     if (view === 'month') setCurrentDate(addMonths(currentDate, 1));
     if (view === 'week') setCurrentDate(addWeeks(currentDate, 1));
-    if (view === 'day' || view === 'gantt') setCurrentDate(addDays(currentDate, 1));
+    if (view === 'day') setCurrentDate(addDays(currentDate, 1));
   };
 
   const handleToday = () => {
@@ -40,7 +40,6 @@ export function CalendarHeader({ currentDate, setCurrentDate, view, setView }: C
       case 'week':
         return `MMMM yyyy`; // Week view will show range in its own component
       case 'day':
-      case 'gantt':
         return 'MMMM d, yyyy';
     }
   };
@@ -68,9 +67,6 @@ export function CalendarHeader({ currentDate, setCurrentDate, view, setView }: C
         </Button>
         <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')}>
           Day
-        </Button>
-         <Button variant={view === 'gantt' ? 'default' : 'outline'} size="sm" onClick={() => setView('gantt')}>
-          Gantt
         </Button>
       </div>
     </div>

@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarView } from './calendar-view';
-import { aircraftData, bookingData } from '@/app/bookings/data';
+import { bookingData, aircraftData } from '@/app/bookings/data';
 
 function BookingsPage() {
   return (
