@@ -1,19 +1,23 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Plane, Eye } from 'lucide-react';
+import { PlusCircle, Calendar as CalendarIcon, ArrowLeft, ArrowRight } from 'lucide-react';
 import type { Aircraft, Booking, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, serverTimestamp, setDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFlightSchedulePageData } from './data';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { GanttChart } from './gantt-chart';
+import { format, addDays, subDays, isSameDay, parseISO } from 'date-fns';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 export function FlightSchedulePageContent({ 
     initialAircraft, 
@@ -23,7 +27,10 @@ export function FlightSchedulePageContent({
     const [aircraft, setAircraft] = useState(initialAircraft);
     const [bookings, setBookings] = useState(initialBookings);
     const [personnel, setPersonnel] = useState(initialPersonnel);
-    const { company } = useUser();
+    const { user, company } = useUser();
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+    const { toast } = useToast();
 
     const refreshData = async () => {
         if (!company) return;
@@ -39,6 +46,27 @@ export function FlightSchedulePageContent({
         }
     }, [company]);
     
+    const students = useMemo(() => personnel.filter(p => p.role === 'Student'), [personnel]);
+    const instructors = useMemo(() => personnel.filter(p => p.role === 'Instructor' || p.role === 'Chief Flight Instructor'), [personnel]);
+
+    const bookingsForSelectedDate = useMemo(() => {
+        return bookings.filter(booking => isSameDay(parseISO(booking.date), currentDate));
+    }, [bookings, currentDate]);
+    
+    const handleNewBooking = async (data: Omit<Booking, 'id' | 'companyId'>) => {
+        if (!company) return;
+        const bookingData = { ...data, companyId: company.id };
+        
+        try {
+            await addDoc(collection(db, `companies/${company.id}/bookings`), bookingData);
+            toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
+            setIsBookingDialogOpen(false);
+            refreshData();
+        } catch (error) {
+            console.error("Error creating booking:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not create booking.' });
+        }
+    };
 
     return (
         <main className="flex-1 p-4 md:p-8">
@@ -48,35 +76,65 @@ export function FlightSchedulePageContent({
                         <CardTitle>Flight Schedule</CardTitle>
                         <CardDescription>View and manage aircraft and personnel schedules.</CardDescription>
                     </div>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Fleet
+                    <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(subDays(currentDate, 1))}>
+                                <ArrowLeft className="h-4 w-4" />
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Aircraft Fleet</DialogTitle>
-                                <DialogDescription>A list of all active aircraft registered in the system.</DialogDescription>
-                            </DialogHeader>
-                            <div className="max-h-96 overflow-y-auto">
-                                <ul className="space-y-2">
-                                    {aircraft.filter(ac => ac.status !== 'Archived').map((ac: Aircraft) => (
-                                        <li key={ac.id} className="flex justify-between items-center p-2 border rounded-md">
-                                            <span className="font-medium">{ac.tailNumber}</span>
-                                            <span className="text-sm text-muted-foreground">{ac.make} {ac.model}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[280px] justify-start text-left font-normal",
+                                        !currentDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={currentDate}
+                                    onSelect={(date) => date && setCurrentDate(date)}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, 1))}>
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    New Booking
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-xl">
+                                <DialogHeader>
+                                    <DialogTitle>Create New Booking</DialogTitle>
+                                    <DialogDescription>Fill out the form to schedule a flight or maintenance.</DialogDescription>
+                                </DialogHeader>
+                                <NewBookingForm 
+                                    aircraft={aircraft}
+                                    students={students}
+                                    instructors={instructors}
+                                    onSubmit={handleNewBooking}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">Schedule view will be implemented here.</p>
-                    </div>
+                    <GanttChart 
+                        aircraft={aircraft.filter(ac => ac.status !== 'Archived')} 
+                        bookings={bookingsForSelectedDate} 
+                        date={currentDate} 
+                    />
                 </CardContent>
             </Card>
         </main>
