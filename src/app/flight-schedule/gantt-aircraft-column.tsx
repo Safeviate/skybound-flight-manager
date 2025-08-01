@@ -28,10 +28,12 @@ export function GanttAircraftColumn({ aircraft, isOdd }: GanttAircraftColumnProp
     return <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>;
   }
 
+  const bgColorClass = isOdd ? 'bg-background' : 'bg-muted/50';
+
   return (
     <div className={cn(
-        "flex flex-col justify-center p-2 border-b border-r h-16",
-        isOdd ? 'bg-background' : 'bg-muted/50'
+        "flex flex-col justify-center p-2 border-b border-r h-16 sticky left-0 z-10",
+        bgColorClass
     )}>
       <p className="font-semibold text-sm">{aircraft.model}</p>
       <div className="flex justify-between items-center">
