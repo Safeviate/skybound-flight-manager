@@ -40,9 +40,10 @@ const sendEmailWithAttachmentFlow = ai.defineFlow(
     const resend = new Resend(apiKey);
     
     // For Resend sandbox, you can only send to the verified email.
-    // To test, we send it to the verified email, but we can see who it was intended for in the subject.
-    const recipient = 'barry@safeviate.com'; 
-    const finalSubject = `[Test Email for: ${to}] ${subject}`;
+    // If you are using a sandbox key, change `to` to your verified email.
+    // const recipient = 'YOUR_VERIFIED_EMAIL@example.com';
+    const recipient = to;
+    const finalSubject = subject;
 
     try {
       const { data, error } = await resend.emails.send({
