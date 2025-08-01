@@ -37,6 +37,7 @@ import {
   Activity,
   Mail,
   PlusCircle,
+  Contact,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -67,6 +68,7 @@ const reportsNavItems = [
 
 const settingsNavItems = [
     { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
+    { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
 

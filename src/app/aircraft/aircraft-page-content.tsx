@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, CompletedChecklist } from '@/lib/types';
+import type { Aircraft, CompletedChecklist, ExternalContact } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -56,6 +56,17 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
+    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
+    
+    useEffect(() => {
+        const fetchContacts = async () => {
+            if (!company) return;
+            const contactsQuery = query(collection(db, `companies/${company.id}/external-contacts`));
+            const snapshot = await getDocs(contactsQuery);
+            setExternalContacts(snapshot.docs.map(doc => doc.data() as ExternalContact));
+        };
+        fetchContacts();
+    }, [company]);
 
     const refreshData = useCallback(async () => {
         if (!company) return;
@@ -342,7 +353,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         
         doc.setFont('helvetica', 'bold');
         doc.text('Anything to Report?', 14, yPos);
-        yPos += 5;
+        yPos += 7;
         doc.setFont('helvetica', 'normal');
         
         const reportText = (results as any).report || 'Nothing reported.';
@@ -350,7 +361,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         doc.text(splitText, 14, yPos);
         yPos += splitText.length * 5; 
 
-        yPos += 20;
+        yPos += 25;
 
         const addImageSection = (title: string, dataUrl: string | undefined) => {
             if (dataUrl) {
@@ -592,12 +603,27 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Email Checklist Report</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Enter the recipient's email address below.
+                                        Select a recipient from your external contacts or enter an email address manually.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <div className="py-4">
-                                    <Label htmlFor="email-input">Email Address</Label>
-                                    <Input id="email-input" type="email" placeholder="recipient@example.com" />
+                                <div className="py-4 space-y-4">
+                                    <Select onValueChange={(value) => {
+                                        const emailInput = document.getElementById('email-input') as HTMLInputElement;
+                                        if (emailInput) emailInput.value = value;
+                                    }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select from external contacts..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {externalContacts.map(contact => (
+                                                <SelectItem key={contact.id} value={contact.email}>{contact.name} ({contact.email})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email-input">Or enter email manually</Label>
+                                        <Input id="email-input" type="email" placeholder="recipient@example.com" />
+                                    </div>
                                 </div>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>

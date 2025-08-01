@@ -582,3 +582,11 @@ export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department
     'Occupational Report': 'Management',
     'General Report': 'Management',
 };
+
+export type ExternalContact = {
+  id: string;
+  companyId: string;
+  name: string;
+  email: string;
+  description?: string;
+};
