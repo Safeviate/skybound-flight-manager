@@ -31,7 +31,7 @@ export function FlightSchedulePageContent({
     const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
     const { company } = useUser();
     const { toast } = useToast();
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
 
     const students = personnel.filter(p => p.role === 'Student');
     const instructors = personnel.filter(p => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(p.role));
@@ -130,11 +130,13 @@ export function FlightSchedulePageContent({
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <GanttChart 
-                        aircraft={activeAircraft}
-                        bookings={bookings.filter(b => b.date === format(currentDate, 'yyyy-MM-dd'))}
-                        date={currentDate}
-                    />
+                    {currentDate && (
+                        <GanttChart 
+                            aircraft={activeAircraft}
+                            bookings={bookings.filter(b => b.date === format(currentDate, 'yyyy-MM-dd'))}
+                            date={currentDate}
+                        />
+                    )}
                 </CardContent>
             </Card>
         </main>
