@@ -21,13 +21,14 @@ export function GanttBookingBar({ booking, ganttStartTime }: GanttBookingBarProp
   const endPercent = (timeToPercentage(booking.endTime) - ganttStartTime) / (22 - ganttStartTime) * 100;
   const widthPercent = endPercent - startPercent;
 
-  const getBookingColor = (purpose: Booking['purpose']) => {
-    switch (purpose) {
-      case 'Training': return 'bg-blue-500 hover:bg-blue-600';
-      case 'Maintenance': return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'Private': return 'bg-green-500 hover:bg-green-600';
-      default: return 'bg-gray-500 hover:bg-gray-600';
+  const getBookingColor = (booking: Booking) => {
+    if (booking.isChecklistComplete && booking.isPostFlightChecklistComplete) {
+      return 'bg-green-500 hover:bg-green-600'; // Green: Post-flight complete
     }
+    if (booking.isChecklistComplete) {
+      return 'bg-blue-500 hover:bg-blue-600'; // Blue: Pre-flight complete, post-flight pending
+    }
+    return 'bg-gray-500 hover:bg-gray-600'; // Grey: Pre-flight not complete
   };
 
   return (
@@ -37,7 +38,7 @@ export function GanttBookingBar({ booking, ganttStartTime }: GanttBookingBarProp
           <div
             className={cn(
               "absolute h-12 top-2 rounded-md p-2 text-white text-xs font-medium cursor-pointer overflow-hidden transition-all",
-              getBookingColor(booking.purpose)
+              getBookingColor(booking)
             )}
             style={{
               left: `${startPercent}%`,
