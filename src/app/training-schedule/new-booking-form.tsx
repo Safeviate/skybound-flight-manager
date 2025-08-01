@@ -253,14 +253,14 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                     <AlertDialogTrigger asChild>
                          <Button type="button" variant="destructive">
                             <Trash2 className="mr-2 h-4 w-4"/>
-                            Delete Booking
+                            Cancel Booking
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Reason for Deletion</AlertDialogTitle>
+                            <AlertDialogTitle>Reason for Cancellation</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Please select a reason for deleting this booking. This information is used for reporting.
+                                Please select a reason for cancelling this booking. This information is used for reporting.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="py-4 space-y-4">
@@ -288,7 +288,7 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDeleteConfirm} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
-                                Yes, Delete Booking
+                                Yes, Cancel Booking
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
