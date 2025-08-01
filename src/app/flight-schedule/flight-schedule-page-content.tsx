@@ -23,13 +23,7 @@ export function FlightSchedulePageContent({
     const [aircraft, setAircraft] = useState(initialAircraft);
     const [bookings, setBookings] = useState(initialBookings);
     const [personnel, setPersonnel] = useState(initialPersonnel);
-    const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
-    const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
     const { company } = useUser();
-    const { toast } = useToast();
-
-    const students = personnel.filter(p => p.role === 'Student');
-    const instructors = personnel.filter(p => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(p.role));
 
     const refreshData = async () => {
         if (!company) return;
@@ -45,41 +39,6 @@ export function FlightSchedulePageContent({
         }
     }, [company]);
     
-    const handleOpenDialog = (aircraftId: string | null = null) => {
-        setSelectedAircraftId(aircraftId);
-        setIsNewBookingOpen(true);
-    }
-
-    const handleNewBooking = async (data: Omit<Booking, 'id' | 'companyId'>) => {
-        if (!company) return;
-        try {
-            const newBookingRef = doc(collection(db, `companies/${company.id}/bookings`));
-
-            await setDoc(newBookingRef, {
-                ...data,
-                id: newBookingRef.id,
-                companyId: company.id,
-                status: 'Approved', // Default status
-            });
-
-            toast({
-                title: 'Booking Created',
-                description: `Flight for ${data.aircraft} has been scheduled successfully.`,
-            });
-            setIsNewBookingOpen(false);
-            refreshData();
-
-        } catch (error) {
-            console.error("Error creating booking: ", error);
-            toast({
-                variant: 'destructive',
-                title: 'Booking Failed',
-                description: 'Could not create the new booking.',
-            });
-        }
-    };
-    
-    const availableAircraft = aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight');
 
     return (
         <main className="flex-1 p-4 md:p-8">
@@ -99,11 +58,11 @@ export function FlightSchedulePageContent({
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Aircraft Fleet</DialogTitle>
-                                <DialogDescription>A list of all aircraft registered in the system.</DialogDescription>
+                                <DialogDescription>A list of all active aircraft registered in the system.</DialogDescription>
                             </DialogHeader>
                             <div className="max-h-96 overflow-y-auto">
                                 <ul className="space-y-2">
-                                    {aircraft.map((ac: Aircraft) => (
+                                    {aircraft.filter(ac => ac.status !== 'Archived').map((ac: Aircraft) => (
                                         <li key={ac.id} className="flex justify-between items-center p-2 border rounded-md">
                                             <span className="font-medium">{ac.tailNumber}</span>
                                             <span className="text-sm text-muted-foreground">{ac.make} {ac.model}</span>
