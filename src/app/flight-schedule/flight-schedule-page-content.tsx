@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Plane } from 'lucide-react';
 import type { Aircraft, Booking, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFlightSchedulePageData } from './data';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function FlightSchedulePageContent({ 
     initialAircraft, 
@@ -23,6 +24,7 @@ export function FlightSchedulePageContent({
     const [bookings, setBookings] = useState(initialBookings);
     const [personnel, setPersonnel] = useState(initialPersonnel);
     const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
+    const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
     const { company } = useUser();
     const { toast } = useToast();
 
@@ -36,6 +38,11 @@ export function FlightSchedulePageContent({
         setBookings(bookings);
         setPersonnel(personnel);
     };
+    
+    const handleOpenDialog = (aircraftId: string | null = null) => {
+        setSelectedAircraftId(aircraftId);
+        setIsNewBookingOpen(true);
+    }
 
     const handleNewBooking = async (data: Omit<Booking, 'id' | 'companyId'>) => {
         if (!company) return;
@@ -76,13 +83,29 @@ export function FlightSchedulePageContent({
                     </div>
                     <div className="flex items-center gap-4">
                          <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
-                             <DialogTrigger asChild>
-                                 <Button>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    New Booking
-                                </Button>
-                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-xl">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        New Booking
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>Select an Aircraft (Optional)</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                     <DropdownMenuItem onSelect={() => handleOpenDialog(null)}>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        New Booking
+                                    </DropdownMenuItem>
+                                    {aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight').map(ac => (
+                                        <DropdownMenuItem key={ac.id} onSelect={() => handleOpenDialog(ac.id)}>
+                                            <Plane className="mr-2 h-4 w-4" />
+                                            {ac.model} ({ac.tailNumber})
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                             </DropdownMenu>
+                             <DialogContent className="sm:max-w-xl">
                                 <DialogHeader>
                                     <DialogTitle>Create New Booking</DialogTitle>
                                     <DialogDescription>
@@ -94,6 +117,7 @@ export function FlightSchedulePageContent({
                                     students={students}
                                     instructors={instructors}
                                     onSubmit={handleNewBooking}
+                                    initialAircraftId={selectedAircraftId}
                                 />
                             </DialogContent>
                         </Dialog>

@@ -85,6 +85,8 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
         if (selectedAircraft) {
             form.setValue('aircraft', selectedAircraft.tailNumber);
         }
+    } else {
+        form.resetField('aircraft');
     }
   }, [initialAircraftId, aircraft, form]);
 
@@ -131,7 +133,7 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Aircraft</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select an aircraft" />
