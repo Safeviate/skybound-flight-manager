@@ -17,12 +17,11 @@ const getBookingColor = (booking: Booking, aircraftList: Aircraft[]) => {
                 return 'bg-gray-400';
             case 'needs-post-flight':
                 return 'bg-blue-500';
-             default:
-                 if (booking.status === 'Completed') {
-                    return 'bg-green-500';
-                 }
-                return 'bg-gray-400';
         }
+    }
+    
+    if (booking.status === 'Completed') {
+        return 'bg-green-500';
     }
 
     // Fallback to original purpose-based color
