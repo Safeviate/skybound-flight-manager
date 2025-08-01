@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const navItems: {
@@ -60,6 +61,12 @@ const navItems: {
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
 ];
 
+const mobileNavItems = [
+    { href: '/aircraft', label: 'Checklists', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
+    { href: '/safety', label: 'File Report', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
+    { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
+];
+
 const reportsNavItems = [
     { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
@@ -76,6 +83,7 @@ export default function Nav() {
   const { setOpenMobile } = useSidebar();
   const { user, company, logout } = useUser();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const userPermissions = user?.permissions || [];
   const companyFeatures = company?.enabledFeatures || [];
 
@@ -120,7 +128,9 @@ export default function Nav() {
     return null; // Don't render nav if not logged in
   }
 
-  const visibleNavItems = navItems.filter(item => {
+  const itemsToDisplay = isMobile ? mobileNavItems : navItems;
+
+  const visibleNavItems = itemsToDisplay.filter(item => {
     if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
       return true;
     }
@@ -161,7 +171,7 @@ export default function Nav() {
               </Link>
             </SidebarMenuItem>
           ))}
-          {visibleReportsItems.length > 0 && (
+          {!isMobile && visibleReportsItems.length > 0 && (
             <SidebarMenuItem>
                 <div className="px-3 pt-2 pb-1 text-xs font-semibold text-sidebar-foreground/70">Reports</div>
                 {visibleReportsItems.map((item) => (
@@ -184,7 +194,7 @@ export default function Nav() {
       </SidebarContent>
       <SidebarFooter>
          <SidebarMenu>
-            {visibleSettingsItems.map((item) => (
+            {!isMobile && visibleSettingsItems.map((item) => (
                  <SidebarMenuItem key={item.href}>
                     <Link href={item.href} passHref>
                         <SidebarMenuButton tooltip={{ children: item.label }} isActive={getIsActive(item.href)} onClick={handleLinkClick}>
