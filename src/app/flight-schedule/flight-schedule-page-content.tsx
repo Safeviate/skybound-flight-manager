@@ -13,13 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { addDoc, collection, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFlightSchedulePageData } from './data';
-import { GanttChart } from './gantt-chart';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function FlightSchedulePageContent({ 
     initialAircraft, 
@@ -30,14 +23,11 @@ export function FlightSchedulePageContent({
     const [bookings, setBookings] = useState(initialBookings);
     const [personnel, setPersonnel] = useState(initialPersonnel);
     const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
-    const [initialAircraftId, setInitialAircraftId] = useState<string | null>(null);
     const { company } = useUser();
     const { toast } = useToast();
-    const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
 
     const students = personnel.filter(p => p.role === 'Student');
     const instructors = personnel.filter(p => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(p.role));
-    const activeAircraft = aircraft.filter(a => a.status !== 'Archived');
 
     const refreshData = async () => {
         if (!company) return;
@@ -64,7 +54,6 @@ export function FlightSchedulePageContent({
                 description: `Flight for ${data.aircraft} has been scheduled successfully.`,
             });
             setIsNewBookingOpen(false);
-            setInitialAircraftId(null);
             refreshData();
 
         } catch (error) {
@@ -77,11 +66,6 @@ export function FlightSchedulePageContent({
         }
     };
 
-    const handleOpenBookingDialog = (aircraftId?: string) => {
-        setInitialAircraftId(aircraftId || null);
-        setIsNewBookingOpen(true);
-    };
-
     return (
         <main className="flex-1 p-4 md:p-8">
             <Card>
@@ -91,46 +75,13 @@ export function FlightSchedulePageContent({
                         <CardDescription>View and manage aircraft and personnel schedules.</CardDescription>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-[280px] justify-start text-left font-normal",
-                                    !currentDate && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                mode="single"
-                                selected={currentDate}
-                                onSelect={setCurrentDate}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
                          <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                     <Button>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        New Booking
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    {activeAircraft.map(ac => (
-                                         <DialogTrigger asChild key={ac.id}>
-                                            <DropdownMenuItem onSelect={() => handleOpenBookingDialog(ac.id)}>
-                                                {ac.model} ({ac.tailNumber})
-                                            </DropdownMenuItem>
-                                        </DialogTrigger>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                             <DialogTrigger asChild>
+                                 <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    New Booking
+                                </Button>
+                             </DialogTrigger>
                             <DialogContent className="sm:max-w-xl">
                                 <DialogHeader>
                                     <DialogTitle>Create New Booking</DialogTitle>
@@ -143,20 +94,15 @@ export function FlightSchedulePageContent({
                                     students={students}
                                     instructors={instructors}
                                     onSubmit={handleNewBooking}
-                                    initialAircraftId={initialAircraftId}
                                 />
                             </DialogContent>
                         </Dialog>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {currentDate && (
-                        <GanttChart 
-                            aircraft={activeAircraft}
-                            bookings={bookings.filter(b => b.date === format(currentDate, 'yyyy-MM-dd'))}
-                            date={currentDate}
-                        />
-                    )}
+                    <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">Schedule view will be implemented here.</p>
+                    </div>
                 </CardContent>
             </Card>
         </main>
