@@ -12,7 +12,7 @@ interface GanttChartViewProps {
   aircraft: Aircraft[];
 }
 
-const hours = Array.from({ length: 24 }, (_, i) => i);
+const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 06:00 to 23:00
 
 export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartViewProps) {
   const getBookingColor = (purpose: Booking['purpose']) => {
@@ -25,6 +25,8 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
   };
 
   const dayBookings = bookings.filter((b) => isSameDay(parse(b.date, 'yyyy-MM-dd', new Date()), currentDate));
+  
+  const totalMinutesInView = 18 * 60; // 18 hours from 6:00 to 24:00
 
   return (
     <div className="overflow-x-auto">
@@ -36,7 +38,7 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
                 Aircraft
               </th>
               {hours.map((hour) => (
-                <th key={hour} className="w-16 border-l pl-1 pr-2 text-center text-sm font-normal text-muted-foreground">
+                <th key={hour} className="w-12 border-l pl-1 pr-2 text-center text-sm font-normal text-muted-foreground">
                   {hour.toString().padStart(2, '0')}:00
                 </th>
               ))}
@@ -50,19 +52,21 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
                   <td className="sticky left-0 z-10 w-32 whitespace-nowrap bg-background py-2 pr-2 text-sm font-medium">
                     {ac.make} {ac.model} ({ac.tailNumber})
                   </td>
-                  <td colSpan={24} className="relative p-0">
+                  <td colSpan={18} className="relative p-0">
                     <div className="relative h-10 border-t border-b">
-                      {hours.map((hour) => (
-                        <div key={hour} className="absolute h-full border-l" style={{ left: `${(hour / 24) * 100}%` }}></div>
+                      {hours.map((hour, index) => (
+                        <div key={hour} className="absolute h-full border-l" style={{ left: `${(index / 18) * 100}%` }}></div>
                       ))}
                       {aircraftBookings.map((booking) => {
                         const start = parse(booking.startTime, 'HH:mm', new Date());
                         const end = parse(booking.endTime, 'HH:mm', new Date());
-                        const startMinutes = start.getHours() * 60 + start.getMinutes();
-                        const endMinutes = end.getHours() * 60 + end.getMinutes();
+                        const startMinutes = Math.max(0, start.getHours() * 60 + start.getMinutes() - 360); // Subtract 6 hours (360 minutes)
+                        const endMinutes = Math.min(totalMinutesInView, end.getHours() * 60 + end.getMinutes() - 360);
 
-                        const left = (startMinutes / (24 * 60)) * 100;
-                        const width = ((endMinutes - startMinutes) / (24 * 60)) * 100;
+                        if (endMinutes <= startMinutes) return null;
+
+                        const left = (startMinutes / totalMinutesInView) * 100;
+                        const width = ((endMinutes - startMinutes) / totalMinutesInView) * 100;
 
                         return (
                           <div
@@ -85,7 +89,7 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
             })}
              {aircraft.length === 0 && (
                 <tr>
-                    <td colSpan={25} className="py-10 text-center text-muted-foreground">
+                    <td colSpan={19} className="py-10 text-center text-muted-foreground">
                         No aircraft available to display.
                     </td>
                 </tr>
