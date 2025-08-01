@@ -31,8 +31,27 @@ const getBookingStyle = (booking: Booking): React.CSSProperties => {
     }
 };
 
-const getBookingColor = (purpose: Booking['purpose']) => {
-    switch (purpose) {
+const getBookingColor = (booking: Booking, aircraftList: Aircraft[]) => {
+    const aircraft = aircraftList.find(a => a.tailNumber === booking.aircraft);
+    
+    if (aircraft?.checklistStatus) {
+        switch (aircraft.checklistStatus) {
+            case 'needs-pre-flight':
+                return 'bg-gray-400 border-gray-600'; // Pre-flight outstanding (or cycle complete)
+            case 'needs-post-flight':
+                return 'bg-blue-500 border-blue-700'; // Post-flight outstanding
+            default:
+                 // Assuming a completed post-flight resets to 'needs-pre-flight', so green indicates the booking's cycle is done.
+                 // This might need refinement based on exact status flow. For now, let's assume 'completed' is a distinct state for the booking itself.
+                 if (booking.status === 'Completed') {
+                    return 'bg-green-500 border-green-700';
+                 }
+                return 'bg-gray-400 border-gray-600';
+        }
+    }
+
+    // Fallback to original purpose-based color if checklist status is not available
+    switch (booking.purpose) {
         case 'Training': return 'bg-blue-500/80 border-blue-700';
         case 'Maintenance': return 'bg-amber-500/80 border-amber-700';
         case 'Private': return 'bg-green-500/80 border-green-700';
@@ -132,7 +151,7 @@ export function DayViewCalendar({
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <div
-                                                    className={cn("absolute w-full p-2 text-white text-xs rounded-md border-l-4 overflow-hidden", getBookingColor(booking.purpose))}
+                                                    className={cn("absolute w-full p-2 text-white text-xs rounded-md border-l-4 overflow-hidden", getBookingColor(booking, aircraft))}
                                                     style={getBookingStyle(booking)}
                                                 >
                                                     <p className="font-bold">{booking.purpose}</p>

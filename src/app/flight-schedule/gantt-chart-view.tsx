@@ -8,8 +8,25 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser } from '@/context/user-provider';
 
-const getBookingColor = (purpose: Booking['purpose']) => {
-    switch (purpose) {
+const getBookingColor = (booking: Booking, aircraftList: Aircraft[]) => {
+    const aircraft = aircraftList.find(a => a.tailNumber === booking.aircraft);
+    
+    if (aircraft?.checklistStatus) {
+        switch (aircraft.checklistStatus) {
+            case 'needs-pre-flight':
+                return 'bg-gray-400';
+            case 'needs-post-flight':
+                return 'bg-blue-500';
+             default:
+                 if (booking.status === 'Completed') {
+                    return 'bg-green-500';
+                 }
+                return 'bg-gray-400';
+        }
+    }
+
+    // Fallback to original purpose-based color
+    switch (booking.purpose) {
         case 'Training': return 'bg-blue-500';
         case 'Maintenance': return 'bg-amber-500';
         case 'Private': return 'bg-green-500';
@@ -123,7 +140,7 @@ export function GanttChartView({
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <div
-                                                        className={cn("absolute top-1/2 -translate-y-1/2 h-4/6 rounded-md text-white text-xs font-semibold flex items-center px-2 overflow-hidden cursor-pointer z-10", getBookingColor(booking.purpose))}
+                                                        className={cn("absolute top-1/2 -translate-y-1/2 h-4/6 rounded-md text-white text-xs font-semibold flex items-center px-2 overflow-hidden cursor-pointer z-10", getBookingColor(booking, aircraft))}
                                                         style={{ left, width }}
                                                     >
                                                         <p className="truncate">{booking.purpose}: {booking.student || booking.instructor || booking.maintenanceType}</p>
