@@ -98,4 +98,3 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
     </div>
   );
 }
-
