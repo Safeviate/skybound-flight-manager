@@ -63,7 +63,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             if (!company) return;
             const contactsQuery = query(collection(db, `companies/${company.id}/external-contacts`));
             const snapshot = await getDocs(contactsQuery);
-            setExternalContacts(snapshot.docs.map(doc => doc.data() as ExternalContact));
+            setExternalContacts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ExternalContact)));
         };
         fetchContacts();
     }, [company]);
