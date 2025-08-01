@@ -19,6 +19,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Safeviate',
   description: 'Modern Aviation Management',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SkyBound',
+  },
 };
 
 export default function RootLayout({
@@ -29,6 +35,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
+          <meta name="theme-color" content="#2563eb" />
+          <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body>
           <UserProvider>
