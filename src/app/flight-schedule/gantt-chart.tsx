@@ -22,7 +22,7 @@ export function GanttChart({ aircraft, bookings, date, onCellClick }: GanttChart
 
   return (
     <div className="relative overflow-x-auto border rounded-lg">
-      <div className="grid min-w-[1800px]" style={{ gridTemplateColumns: `200px repeat(${totalHours}, 1fr)` }}>
+      <div className="grid min-w-[1800px]" style={{ gridTemplateColumns: `150px repeat(${totalHours}, 1fr)` }}>
         {/* Corner */}
         <div className="sticky left-0 z-10 p-2 font-semibold bg-muted border-b border-r">Aircraft</div>
         
