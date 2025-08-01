@@ -57,8 +57,9 @@ interface NewBookingFormProps {
 const availableTimes = (startHour = 6) => {
     const times = [];
     for (let i = startHour; i < 24; i++) {
-        times.push(`${i.toString().padStart(2, '0')}:00`);
-        times.push(`${i.toString().padStart(2, '0')}:30`);
+        for (let j = 0; j < 60; j += 10) {
+            times.push(`${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`);
+        }
     }
     return times;
 };
@@ -105,26 +106,23 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
   const getEndTimeOptions = () => {
     if (!watchedStartTime) return availableTimes(7);
     const [hourStr, minuteStr] = watchedStartTime.split(':');
-    const startHour = parseInt(hourStr, 10);
-    const startMinute = parseInt(minuteStr, 10);
+    let startHour = parseInt(hourStr, 10);
+    let startMinute = parseInt(minuteStr, 10);
 
     const times = [];
     let currentHour = startHour;
     let currentMinute = startMinute;
 
-    if (currentMinute === 30) {
+    // Move to the next 10-minute interval
+    currentMinute += 10;
+    if (currentMinute >= 60) {
         currentHour++;
         currentMinute = 0;
-    } else {
-        currentMinute = 30;
     }
 
     for (let i = currentHour; i < 24; i++) {
-        if (i === currentHour && currentMinute === 30) {
-             times.push(`${i.toString().padStart(2, '0')}:30`);
-        } else {
-            times.push(`${i.toString().padStart(2, '0')}:00`);
-            times.push(`${i.toString().padStart(2, '0')}:30`);
+        for (let j = (i === currentHour ? currentMinute : 0); j < 60; j += 10) {
+            times.push(`${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`);
         }
     }
     return times;
