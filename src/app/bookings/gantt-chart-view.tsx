@@ -64,7 +64,7 @@ export function GanttChartView({ aircraft, bookings }: GanttChartViewProps) {
               Aircraft
             </TableHead>
             {HOURS.map((hour) => (
-              <TableHead key={hour} className="text-center border-l w-12">
+              <TableHead key={hour} className="text-center border-l w-10">
                 {`${String(hour).padStart(2, '0')}:00`}
               </TableHead>
             ))}
