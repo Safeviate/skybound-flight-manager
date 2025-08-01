@@ -498,23 +498,23 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 </TabsContent>
                  <TabsContent value="history" className="pt-6">
                     <div className="max-w-2xl mx-auto space-y-4">
-                        <div className="flex items-center gap-4">
-                            <Plane className="h-5 w-5 text-muted-foreground" />
-                            <Select onValueChange={setSelectedHistoryAircraftId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an aircraft to view its history..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {activeAircraft.map(ac => (
-                                        <SelectItem key={ac.id} value={ac.id}>
-                                            {ac.model} ({ac.tailNumber})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div className="space-y-2">
+                             <p className="text-sm font-medium text-center text-muted-foreground">Select an aircraft to view its history</p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {activeAircraft.map(ac => (
+                                    <Button 
+                                        key={ac.id} 
+                                        variant={selectedHistoryAircraftId === ac.id ? 'default' : 'outline'}
+                                        onClick={() => setSelectedHistoryAircraftId(ac.id)}
+                                    >
+                                        {ac.tailNumber}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
+
                         {checklistHistory.length > 0 ? (
-                            <div className="space-y-2">
+                            <div className="space-y-2 pt-4 border-t">
                                 {checklistHistory.map(item => (
                                     <Card key={item.id} className="hover:bg-muted/50">
                                         <CardContent className="p-3 flex justify-between items-center">
