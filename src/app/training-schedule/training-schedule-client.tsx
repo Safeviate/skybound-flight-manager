@@ -24,6 +24,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
 
   const fetchData = useCallback(() => {
     if (!company) {
@@ -71,37 +72,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     return () => unsubscribe && unsubscribe();
   }, [fetchData]);
 
-
-  useEffect(() => {
-    const calendarBtn = document.getElementById('showCalendarBtn');
-    const ganttBtn = document.getElementById('showGanttBtn');
-    const calendarView = document.getElementById('calendarView');
-    const ganttView = document.getElementById('ganttView');
-
-    function switchView(viewToShow: 'calendar' | 'gantt') {
-        if (calendarView && ganttView && calendarBtn && ganttBtn) {
-            if (viewToShow === 'calendar') {
-                calendarView.style.display = 'block';
-                ganttView.style.display = 'none';
-                calendarBtn.classList.add('active');
-                ganttBtn.classList.remove('active');
-            } else {
-                calendarView.style.display = 'none';
-                ganttView.style.display = 'block';
-                calendarBtn.classList.remove('active');
-                ganttBtn.classList.add('active');
-            }
-        }
-    }
-
-    calendarBtn?.addEventListener('click', () => switchView('calendar'));
-    ganttBtn?.addEventListener('click', () => switchView('gantt'));
-
-    return () => {
-        calendarBtn?.removeEventListener('click', () => switchView('calendar'));
-        ganttBtn?.removeEventListener('click', () => switchView('gantt'));
-    };
-  }, []);
 
   const timeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
   
@@ -230,27 +200,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
       `}</style>
       <div className="container">
         <div className="view-switcher">
-            <button id="showCalendarBtn" className="active">Calendar View</button>
-            <button id="showGanttBtn">Gantt Chart View</button>
+            <button id="showGanttBtn" className="active">Gantt Chart View</button>
         </div>
 
-        <div id="calendarView">
-            <h2>Monthly Calendar</h2>
-            <table>
-                <thead>
-                    <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
-                    <tr><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td></tr>
-                    <tr><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td></tr>
-                    <tr><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td></tr>
-                    <tr><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td></td><td></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div id="ganttView" style={{ display: 'none' }}>
+        <div id="ganttView">
             <h2>Daily Schedule</h2>
             <div className="gantt-container">
                 <table className="gantt-table">
