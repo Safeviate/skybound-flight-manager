@@ -20,8 +20,8 @@ const bookingFormSchema = z.object({
   purpose: z.enum(['Training', 'Maintenance', 'Private']),
   aircraft: z.string(),
   date: z.string(),
-  startTime: z.string(),
-  endTime: z.string(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   // Conditional fields
   student: z.string().optional(),
   instructor: z.string().optional(),
@@ -42,7 +42,13 @@ const bookingFormSchema = z.object({
 }, {
     message: "Maintenance Type is required for Maintenance bookings.",
     path: ["maintenanceType"],
+}).refine(data => {
+    return data.endTime > data.startTime;
+}, {
+    message: "End time must be after start time.",
+    path: ["endTime"],
 });
+
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
@@ -53,16 +59,6 @@ interface NewBookingFormProps {
   onDelete?: (bookingId: string) => void;
   existingBooking?: Booking | null;
 }
-
-const availableTimes = (startHour = 6) => {
-    const times = [];
-    for (let i = startHour; i < 24; i++) {
-        for (let j = 0; j < 60; j += 10) {
-            times.push(`${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`);
-        }
-    }
-    return times;
-};
 
 export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
@@ -83,7 +79,6 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
   }, [existingBooking, aircraft, form]);
   
   const purpose = form.watch('purpose');
-  const watchedStartTime = form.watch('startTime');
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
@@ -101,31 +96,6 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
     } else {
       onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>);
     }
-  }
-  
-  const getEndTimeOptions = () => {
-    if (!watchedStartTime) return availableTimes(7);
-    const [hourStr, minuteStr] = watchedStartTime.split(':');
-    let startHour = parseInt(hourStr, 10);
-    let startMinute = parseInt(minuteStr, 10);
-
-    const times = [];
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-
-    // Move to the next 10-minute interval
-    currentMinute += 10;
-    if (currentMinute >= 60) {
-        currentHour++;
-        currentMinute = 0;
-    }
-
-    for (let i = currentHour; i < 24; i++) {
-        for (let j = (i === currentHour ? currentMinute : 0); j < 60; j += 10) {
-            times.push(`${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`);
-        }
-    }
-    return times;
   }
 
   return (
@@ -229,14 +199,9 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select start time" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                        {availableTimes().map(time => (
-                            <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -247,14 +212,9 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>End Time</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select end time" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                        {getEndTimeOptions().map(time => (
-                            <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                     <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
