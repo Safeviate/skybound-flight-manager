@@ -18,6 +18,8 @@ import { format, addDays, subDays, isSameDay, parseISO } from 'date-fns';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MonthlyCalendarView } from './monthly-calendar-view';
 
 export function FlightSchedulePageContent({ 
     initialAircraft, 
@@ -87,51 +89,64 @@ export function FlightSchedulePageContent({
     return (
         <main className="flex-1 p-4 md:p-8">
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="space-y-1">
-                        <CardTitle>Flight Schedule</CardTitle>
-                        <CardDescription>View and manage aircraft and personnel schedules. Click an empty slot to book.</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(subDays(currentDate, 1))}>
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[280px] justify-start text-left font-normal",
-                                        !currentDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={currentDate}
-                                    onSelect={(date) => date && setCurrentDate(date)}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, 1))}>
-                                <ArrowRight className="h-4 w-4" />
-                            </Button>
+                <CardHeader>
+                    <div className="flex flex-row items-center justify-between">
+                        <div className="space-y-1">
+                            <CardTitle>Flight Schedule</CardTitle>
+                            <CardDescription>View and manage aircraft and personnel schedules.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2">
+                                <Button variant="outline" size="icon" onClick={() => setCurrentDate(subDays(currentDate, 1))}>
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-[280px] justify-start text-left font-normal",
+                                            !currentDate && "text-muted-foreground"
+                                        )}
+                                        >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                        mode="single"
+                                        selected={currentDate}
+                                        onSelect={(date) => date && setCurrentDate(date)}
+                                        initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentDate(addDays(currentDate, 1))}>
+                                    <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <GanttChart 
-                        aircraft={aircraft.filter(ac => ac.status !== 'Archived')} 
-                        bookings={bookingsForSelectedDate} 
-                        date={currentDate} 
-                        onCellClick={handleCellClick}
-                    />
+                    <Tabs defaultValue="gantt">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="gantt">Gantt View</TabsTrigger>
+                            <TabsTrigger value="monthly">Monthly View</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="gantt" className="mt-4">
+                            <GanttChart 
+                                aircraft={aircraft.filter(ac => ac.status !== 'Archived')} 
+                                bookings={bookingsForSelectedDate} 
+                                date={currentDate} 
+                                onCellClick={handleCellClick}
+                            />
+                        </TabsContent>
+                        <TabsContent value="monthly" className="mt-4">
+                            <MonthlyCalendarView bookings={bookings} />
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
             </Card>
             
