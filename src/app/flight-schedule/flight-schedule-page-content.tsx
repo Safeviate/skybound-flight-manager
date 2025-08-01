@@ -30,6 +30,8 @@ export function FlightSchedulePageContent({
     const { user, company } = useUser();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+    const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const { toast } = useToast();
 
     const refreshData = async () => {
@@ -67,6 +69,12 @@ export function FlightSchedulePageContent({
             toast({ variant: 'destructive', title: 'Error', description: 'Could not create booking.' });
         }
     };
+    
+    const handleCellClick = (aircraft: Aircraft, time: string) => {
+        setSelectedAircraft(aircraft);
+        setSelectedTime(time);
+        setIsBookingDialogOpen(true);
+    };
 
     return (
         <main className="flex-1 p-4 md:p-8">
@@ -74,7 +82,7 @@ export function FlightSchedulePageContent({
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div className="space-y-1">
                         <CardTitle>Flight Schedule</CardTitle>
-                        <CardDescription>View and manage aircraft and personnel schedules.</CardDescription>
+                        <CardDescription>View and manage aircraft and personnel schedules. Click an empty slot to book.</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                          <div className="flex items-center gap-2">
@@ -107,26 +115,6 @@ export function FlightSchedulePageContent({
                                 <ArrowRight className="h-4 w-4" />
                             </Button>
                         </div>
-                        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    New Booking
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-xl">
-                                <DialogHeader>
-                                    <DialogTitle>Create New Booking</DialogTitle>
-                                    <DialogDescription>Fill out the form to schedule a flight or maintenance.</DialogDescription>
-                                </DialogHeader>
-                                <NewBookingForm 
-                                    aircraft={aircraft}
-                                    students={students}
-                                    instructors={instructors}
-                                    onSubmit={handleNewBooking}
-                                />
-                            </DialogContent>
-                        </Dialog>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -134,9 +122,27 @@ export function FlightSchedulePageContent({
                         aircraft={aircraft.filter(ac => ac.status !== 'Archived')} 
                         bookings={bookingsForSelectedDate} 
                         date={currentDate} 
+                        onCellClick={handleCellClick}
                     />
                 </CardContent>
             </Card>
+            
+            <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Create New Booking</DialogTitle>
+                        <DialogDescription>Fill out the form to schedule a flight or maintenance.</DialogDescription>
+                    </DialogHeader>
+                    <NewBookingForm 
+                        aircraft={aircraft}
+                        students={students}
+                        instructors={instructors}
+                        onSubmit={handleNewBooking}
+                        initialAircraftId={selectedAircraft?.id || null}
+                        initialTime={selectedTime}
+                    />
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }

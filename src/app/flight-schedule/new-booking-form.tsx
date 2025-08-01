@@ -67,9 +67,10 @@ interface NewBookingFormProps {
     instructors: User[];
     onSubmit: (data: Omit<Booking, 'id' | 'companyId'>) => void;
     initialAircraftId?: string | null;
+    initialTime?: string | null;
 }
 
-export function NewBookingForm({ aircraft, students, instructors, onSubmit, initialAircraftId }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, students, instructors, onSubmit, initialAircraftId, initialTime }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -85,10 +86,11 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
         if (selectedAircraft) {
             form.setValue('aircraft', selectedAircraft.tailNumber);
         }
-    } else {
-        form.resetField('aircraft');
     }
-  }, [initialAircraftId, aircraft, form]);
+    if(initialTime) {
+        form.setValue('startTime', initialTime);
+    }
+  }, [initialAircraftId, initialTime, aircraft, form]);
 
   function handleFormSubmit(data: BookingFormValues) {
     const bookingData = {
