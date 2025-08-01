@@ -1,9 +1,11 @@
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, or, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { User } from '@/lib/types';
+import type { User, Alert, Booking } from '@/lib/types';
+import { format } from 'date-fns';
 
 // In a real application, this should be a secure, per-company key stored in a secure location.
 const MOBILE_APP_API_KEY = process.env.MOBILE_APP_API_KEY || "your-secret-api-key-for-mobile";
@@ -39,10 +41,38 @@ export async function GET(request: NextRequest) {
     // It's crucial to remove sensitive information before sending it to the client.
     const { password, ...userToSend } = userData;
 
-    return NextResponse.json(userToSend);
+    // Fetch upcoming bookings for the user
+    const bookingsQuery = query(
+        collection(db, `companies/${companyId}/bookings`),
+        or(
+            where('student', '==', userToSend.name),
+            where('instructor', '==', userToSend.name)
+        ),
+        where('date', '>=', format(new Date(), 'yyyy-MM-dd')),
+        orderBy('date'),
+        orderBy('startTime')
+    );
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+
+    // Fetch unacknowledged alerts for the user
+    const alertsQuery = query(collection(db, `companies/${companyId}/alerts`));
+    const alertsSnapshot = await getDocs(alertsQuery);
+    const allAlerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+    const unacknowledgedAlerts = allAlerts.filter(alert => 
+        !alert.readBy.includes(userId) && (!alert.targetUserId || alert.targetUserId === userId)
+    );
+
+    const responsePayload = {
+        user: userToSend,
+        upcomingBookings: bookings,
+        unreadAlerts: unacknowledgedAlerts,
+    };
+
+    return NextResponse.json(responsePayload);
 
   } catch (error) {
-    console.error('API Error fetching user:', error);
+    console.error('API Error fetching user data:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
