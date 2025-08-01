@@ -3,7 +3,7 @@
 'use client';
 
 import Header from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { useMemo, useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
 import type { Booking, Aircraft } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -18,14 +21,15 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
       const ac = aircraft.find(a => a.tailNumber === booking.aircraft);
       if (ac && booking.status !== 'Cancelled') {
-        acc[ac.model] = (acc[ac.model] || 0) + 1;
+        const duration = booking.flightDuration || 0;
+        acc[ac.model] = (acc[ac.model] || 0) + duration;
       }
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(bookingsByAircraft).map(([name, numBookings]) => ({
+    return Object.entries(bookingsByAircraft).map(([name, hours]) => ({
       name,
-      bookings: numBookings,
+      'Flight Hours': parseFloat(hours.toFixed(1)),
     }));
   }, [bookings, aircraft]);
 
@@ -33,16 +37,17 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={utilizationData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis type="number" />
+        <XAxis type="number" unit="h" />
         <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
         <Tooltip
           contentStyle={{
             backgroundColor: 'hsl(var(--background))',
             border: '1px solid hsl(var(--border))',
           }}
+          formatter={(value) => `${value} hrs`}
         />
         <Legend />
-        <Bar dataKey="bookings" name="Total Bookings" fill="hsl(var(--primary))" />
+        <Bar dataKey="Flight Hours" fill="hsl(var(--primary))" />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -162,6 +167,14 @@ function ReportsPage() {
                       </div>
                   </div>
               </CardContent>
+              <CardFooter>
+                  <Button asChild variant="outline" size="sm">
+                      <Link href="/reports/bookings">
+                          View All Bookings
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                  </Button>
+              </CardFooter>
           </Card>
             <Card>
               <CardHeader>
@@ -176,7 +189,7 @@ function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Aircraft Utilization</CardTitle>
-          <CardDescription>Total number of bookings per aircraft model.</CardDescription>
+          <CardDescription>Total flight hours per aircraft model.</CardDescription>
         </CardHeader>
         <CardContent>
             <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
