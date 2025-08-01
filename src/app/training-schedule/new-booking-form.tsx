@@ -50,10 +50,9 @@ interface NewBookingFormProps {
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'>) => void;
 }
 
-const availableEndTimes = (startTime: string) => {
-    const startHour = parseInt(startTime.split(':')[0], 10);
+const availableTimes = (startHour = 6) => {
     return Array.from({ length: 24 - startHour }, (_, i) => {
-        const hour = startHour + i + 1;
+        const hour = startHour + i;
         return `${hour.toString().padStart(2, '0')}:00`;
     });
 };
@@ -69,6 +68,7 @@ export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBook
   });
   
   const purpose = form.watch('purpose');
+  const watchedStartTime = form.watch('startTime');
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
@@ -153,10 +153,24 @@ export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBook
         )}
 
         <div className="grid grid-cols-2 gap-4">
-             <FormItem>
-                <FormLabel>Start Time</FormLabel>
-                <Input value={startTime} disabled />
-             </FormItem>
+             <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Start Time</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select start time" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                        {availableTimes().map(time => (
+                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             <FormField
                 control={form.control}
                 name="endTime"
@@ -166,7 +180,7 @@ export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBook
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select end time" /></SelectTrigger></FormControl>
                         <SelectContent>
-                        {availableEndTimes(startTime).map(time => (
+                        {availableTimes(parseInt(watchedStartTime?.split(':')[0] || '6', 10) + 1).map(time => (
                             <SelectItem key={time} value={time}>{time}</SelectItem>
                         ))}
                         </SelectContent>
