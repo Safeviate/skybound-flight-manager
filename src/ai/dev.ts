@@ -13,6 +13,7 @@ import '@/ai/flows/suggest-icao-category-flow.ts';
 import '@/ai/flows/generate-audit-checklist-flow.ts';
 import '@/ai/flows/generate-quality-cap-flow.ts';
 import '@/ai/flows/send-email-flow.ts';
+import '@/ai/flows/send-email-with-attachment-flow.ts';
 import '@/ai/flows/read-hobbs-from-image-flow.ts';
 import '@/ai/flows/read-registration-from-image-flow.ts';
 

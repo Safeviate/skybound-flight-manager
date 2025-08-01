@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -29,7 +29,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import { sendEmailWithAttachment } from '@/ai/flows/send-email-with-attachment-flow';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -289,7 +291,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         </Table>
     );
     
-    const handleDownloadChecklist = (checklist: CompletedChecklist) => {
+    const generatePdf = (checklist: CompletedChecklist) => {
         const doc = new jsPDF();
         const { results } = checklist;
         const isPreFlight = checklist.type === 'Pre-Flight';
@@ -348,7 +350,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         doc.text(splitText, 14, yPos);
         yPos += splitText.length * 5; 
 
-        yPos += 20; // Increased spacing to move photos down
+        yPos += 20;
 
         const addImageSection = (title: string, dataUrl: string | undefined) => {
             if (dataUrl) {
@@ -377,7 +379,47 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             addImageSection('Defect Photo:', (results as any).defectPhoto);
         }
         
+        return doc;
+    };
+    
+    const handleDownloadChecklist = (checklist: CompletedChecklist) => {
+        const doc = generatePdf(checklist);
         doc.save(`checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`);
+    };
+
+    const handleEmailChecklist = async (checklist: CompletedChecklist, email: string) => {
+        if (!email) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please enter a valid email address.' });
+            return;
+        }
+
+        const doc = generatePdf(checklist);
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        
+        try {
+            await sendEmailWithAttachment({
+                to: email,
+                subject: `Checklist Report: ${checklist.type} for ${checklist.aircraftTailNumber}`,
+                htmlBody: `
+                    <p>Please find the attached checklist report for ${checklist.aircraftTailNumber}.</p>
+                    <p>
+                        <b>Type:</b> ${checklist.type}<br/>
+                        <b>Aircraft:</b> ${checklist.aircraftTailNumber}<br/>
+                        <b>Completed By:</b> ${checklist.userName}<br/>
+                        <b>Date:</b> ${format(parseISO(checklist.dateCompleted), 'PPP p')}
+                    </p>
+                    <p>This is an automated message from SkyBound Flight Manager.</p>
+                `,
+                attachment: {
+                    filename: `checklist_${checklist.aircraftTailNumber}_${checklist.id}.pdf`,
+                    content: pdfBase64,
+                }
+            });
+            toast({ title: 'Email Sent', description: `The report has been sent to ${email}.` });
+        } catch (error) {
+            console.error('Email sending failed:', error);
+            toast({ variant: 'destructive', title: 'Email Failed', description: 'Could not send the report. Please try again.' });
+        }
     };
 
   return (
@@ -538,7 +580,34 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                              <p className="text-sm p-2 bg-muted rounded-md">{(viewingChecklist.results as any).report || "No issues reported."}</p>
                         </div>
                     </div>
-                     <DialogFooter>
+                     <DialogFooter className="gap-2">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Mail className="mr-2 h-4 w-4"/>
+                                    Email Report
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Email Checklist Report</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Enter the recipient's email address below.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="py-4">
+                                    <Label htmlFor="email-input">Email Address</Label>
+                                    <Input id="email-input" type="email" placeholder="recipient@example.com" />
+                                </div>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => {
+                                        const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
+                                        handleEmailChecklist(viewingChecklist, email);
+                                    }}>Send Email</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <Button variant="outline" onClick={() => handleDownloadChecklist(viewingChecklist)}>
                             <Download className="mr-2 h-4 w-4"/>
                             Download PDF
