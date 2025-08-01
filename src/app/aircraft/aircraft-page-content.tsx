@@ -502,7 +502,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               <Tabs defaultValue="checklists">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
-                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
+                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Operations History</TabsTrigger>
                 </TabsList>
                  <TabsContent value="checklists" className="pt-6">
                     <div className="max-w-2xl mx-auto space-y-6">
@@ -574,7 +574,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                     <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Type</TableHead>
+                                            <TableHead>Operation</TableHead>
                                             <TableHead>User</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
@@ -596,7 +596,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                                 ) : (
                                     <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                         <p className="text-muted-foreground">
-                                            {selectedDay ? "No checklists for this day." : "Select a day to see history."}
+                                            {selectedDay ? "No operations for this day." : "Select a day to see history."}
                                         </p>
                                     </div>
                                 )}
