@@ -38,6 +38,12 @@ export function FlightSchedulePageContent({
         setBookings(bookings);
         setPersonnel(personnel);
     };
+
+    useEffect(() => {
+        if (company) {
+            refreshData();
+        }
+    }, [company]);
     
     const handleOpenDialog = (aircraftId: string | null = null) => {
         setSelectedAircraftId(aircraftId);
