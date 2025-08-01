@@ -142,45 +142,44 @@ function ReportsPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
+      <div className="grid md:grid-cols-2 gap-8">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Flight Volume</CardTitle>
+                  <CardDescription>An overview of scheduled flight operations.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="text-4xl font-bold">{totalBookings}</div>
+                  <p className="text-xs text-muted-foreground">Total Bookings</p>
+                  <div className="grid grid-cols-2 mt-4 text-sm">
+                      <div>
+                          <p className="font-semibold text-green-600">{completedFlights}</p>
+                          <p className="text-muted-foreground">Completed</p>
+                      </div>
+                      <div>
+                          <p className="font-semibold text-red-600">{cancelledFlights}</p>
+                          <p className="text-muted-foreground">Cancelled</p>
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+            <Card>
+              <CardHeader>
+                  <CardTitle>Cancellation Reasons</CardTitle>
+                  <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <CancellationReasonChart bookings={bookingData} />
+              </CardContent>
+          </Card>
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle>Operational Metrics</CardTitle>
-          <CardDescription>Insights into aircraft usage and flight activity across the fleet.</CardDescription>
+          <CardTitle>Aircraft Utilization</CardTitle>
+          <CardDescription>Total number of bookings per aircraft model.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8">
-            <div className="grid md:grid-cols-2 gap-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Flight Volume</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-4xl font-bold">{totalBookings}</div>
-                        <p className="text-xs text-muted-foreground">Total Bookings</p>
-                        <div className="grid grid-cols-2 mt-4 text-sm">
-                            <div>
-                                <p className="font-semibold text-green-600">{completedFlights}</p>
-                                <p className="text-muted-foreground">Completed</p>
-                            </div>
-                            <div>
-                                <p className="font-semibold text-red-600">{cancelledFlights}</p>
-                                <p className="text-muted-foreground">Cancelled</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Cancellation Reasons</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CancellationReasonChart bookings={bookingData} />
-                    </CardContent>
-                </Card>
-            </div>
-          <div>
-            <h3 className="text-lg font-semibold text-center mb-4">Aircraft Utilization by Bookings</h3>
+        <CardContent>
             <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
-          </div>
         </CardContent>
       </Card>
     </main>
