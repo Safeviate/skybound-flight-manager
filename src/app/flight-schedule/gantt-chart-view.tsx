@@ -6,6 +6,7 @@ import type { Booking, Aircraft } from '@/lib/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUser } from '@/context/user-provider';
 
 const getBookingColor = (purpose: Booking['purpose']) => {
     switch (purpose) {
@@ -22,13 +23,16 @@ const END_HOUR = 24;
 export function GanttChartView({
     bookings,
     aircraft,
-    selectedDay
+    selectedDay,
+    onNewBooking,
 }: {
     bookings: Booking[];
     aircraft: Aircraft[];
     selectedDay: Date;
+    onNewBooking: (aircraft: Aircraft, time: string) => void;
 }) {
-
+    const { user } = useUser();
+    const canEdit = user?.permissions.includes('Bookings:Edit') || user?.permissions.includes('Super User');
     const dayString = format(selectedDay, 'yyyy-MM-dd');
     const dayBookings = bookings.filter(b => b.date === dayString);
     const totalHours = END_HOUR - START_HOUR;
@@ -94,10 +98,18 @@ export function GanttChartView({
                                 className="col-start-2 relative"
                                 style={{ gridRow: `${rowIndex + 2}`, gridColumn: '2 / -1' }}
                             >
-                                {/* Background Grid Lines */}
-                                <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${totalHours * 4}, minmax(0, 1fr))`}}>
-                                    {Array.from({ length: totalHours * 4 }).map((_, i) => (
-                                        <div key={i} className={cn("border-r", (i + 1) % 4 !== 0 && "border-dashed", i === (totalHours * 4) -1 && "border-r-0")}></div>
+                                {/* Background Grid Lines & Clickable Cells */}
+                                <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${totalHours}, minmax(0, 1fr))`}}>
+                                    {hours.map((hour, hourIndex) => (
+                                        <div key={hourIndex} className="border-r h-full relative group" >
+                                             <div 
+                                                className="absolute inset-0 hover:bg-muted/50 cursor-pointer"
+                                                onClick={() => canEdit && onNewBooking(ac, `${String(hour).padStart(2, '0')}:00`)}
+                                             />
+                                             <div className="h-full border-r border-dashed" style={{left: '25%'}}></div>
+                                             <div className="h-full border-r border-dashed" style={{left: '50%'}}></div>
+                                             <div className="h-full border-r border-dashed" style={{left: '75%'}}></div>
+                                        </div>
                                     ))}
                                 </div>
                                 <div className="absolute inset-0 border-b"></div>
@@ -111,7 +123,7 @@ export function GanttChartView({
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <div
-                                                        className={cn("absolute top-1/2 -translate-y-1/2 h-4/6 rounded-md text-white text-xs font-semibold flex items-center px-2 overflow-hidden cursor-pointer", getBookingColor(booking.purpose))}
+                                                        className={cn("absolute top-1/2 -translate-y-1/2 h-4/6 rounded-md text-white text-xs font-semibold flex items-center px-2 overflow-hidden cursor-pointer z-10", getBookingColor(booking.purpose))}
                                                         style={{ left, width }}
                                                     >
                                                         <p className="truncate">{booking.purpose}: {booking.student || booking.instructor || booking.maintenanceType}</p>

@@ -145,6 +145,7 @@ export function FlightSchedulePageContent({
                                 bookings={bookings}
                                 aircraft={aircraft.filter(a => a.status !== 'Archived')}
                                 selectedDay={selectedDay}
+                                onNewBooking={openBookingDialog}
                             />
                         </TabsContent>
                         <TabsContent value="month" className="flex-1">
