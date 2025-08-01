@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon, ListChecks, CheckCircle2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -453,7 +452,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     };
 
   return (
-    <main className="flex-1 p-4 md:p-8">
+    <main className="flex-1 p-4 md:p-8 space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
@@ -467,19 +466,32 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="active">
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="active">Active Fleet</TabsTrigger>
-                    <TabsTrigger value="archived">Archived</TabsTrigger>
-                    <TabsTrigger value="checklists">Aircraft Checklist</TabsTrigger>
-                    <TabsTrigger value="history">Checklist History</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="active">Active Fleet ({activeAircraft.length})</TabsTrigger>
+                    <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
                 </TabsList>
-                <TabsContent value="active">
+                <TabsContent value="active" className="mt-4">
                     <AircraftTable aircraft={activeAircraft} />
                 </TabsContent>
-                <TabsContent value="archived">
+                <TabsContent value="archived" className="mt-4">
                      <AircraftTable aircraft={archivedAircraft} isArchived />
                 </TabsContent>
-                <TabsContent value="checklists" className="pt-6">
+            </Tabs>
+        </CardContent>
+      </Card>
+      
+      <Card>
+          <CardHeader>
+              <CardTitle>Aircraft Operations</CardTitle>
+              <CardDescription>Perform checklists and view historical records.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Tabs defaultValue="checklists">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
+                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
+                </TabsList>
+                 <TabsContent value="checklists" className="pt-6">
                     <div className="max-w-2xl mx-auto space-y-6">
                         {!selectedAircraftForChecklist ? (
                             <ChecklistStarter 
@@ -579,9 +591,10 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                         </div>
                     )}
                 </TabsContent>
-            </Tabs>
-        </CardContent>
+              </Tabs>
+          </CardContent>
       </Card>
+
       <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
           <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
@@ -593,6 +606,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
           </DialogContent>
         </Dialog>
+
         {viewingChecklist && (
              <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>
                 <DialogContent className="sm:max-w-xl">
