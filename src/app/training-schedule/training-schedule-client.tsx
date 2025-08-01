@@ -1,29 +1,76 @@
 
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import type { Aircraft, Booking, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
-interface TrainingSchedulePageContentProps {
-  aircraft: Aircraft[];
-  bookings: Booking[];
-  users: User[];
-  onBookingCreated: () => void;
-}
+interface TrainingSchedulePageContentProps {}
 
-export function TrainingSchedulePageContent({ aircraft, bookings, users, onBookingCreated }: TrainingSchedulePageContentProps) {
+export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps) {
   const { company } = useUser();
   const { toast } = useToast();
+  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+
+  const fetchData = useCallback(() => {
+    if (!company) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+
+    const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
+    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+    const usersQuery = query(collection(db, `companies/${company.id}/users`));
+
+    const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
+        setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching aircraft:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
+        setLoading(false);
+    });
+
+    const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+    }, (error) => {
+        console.error("Error fetching bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data.' });
+    });
+
+    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
+        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+    }, (error) => {
+        console.error("Error fetching users:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load user data.' });
+    });
+
+    return () => {
+        unsubAircraft();
+        unsubBookings();
+        unsubUsers();
+    };
+  }, [company, toast]);
+
+  useEffect(() => {
+    const unsubscribe = fetchData();
+    return () => unsubscribe && unsubscribe();
+  }, [fetchData]);
+
 
   useEffect(() => {
     const calendarBtn = document.getElementById('showCalendarBtn');
@@ -119,9 +166,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
             toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
         }
         
-        onBookingCreated();
-        setNewBookingSlot(null);
-        setEditingBooking(null);
+        handleDialogClose();
     } catch (error) {
         console.error("Error saving booking:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the booking.' });
@@ -136,7 +181,6 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
     try {
         await deleteDoc(doc(db, `companies/${company.id}/bookings`, bookingId));
         toast({ title: 'Booking Deleted', description: 'The booking has been removed from the schedule.' });
-        onBookingCreated();
         handleDialogClose();
     } catch (error) {
         console.error("Error deleting booking:", error);
@@ -147,6 +191,15 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
   const handleDialogClose = () => {
     setNewBookingSlot(null);
     setEditingBooking(null);
+  }
+
+  if (loading) {
+    return (
+        <div className="flex flex-1 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="ml-2">Loading schedule...</p>
+        </div>
+    );
   }
 
   return (
