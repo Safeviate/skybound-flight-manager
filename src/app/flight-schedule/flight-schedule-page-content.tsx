@@ -19,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { MonthlyCalendarView } from './monthly-calendar-view';
 import { DayViewCalendar } from './day-view-calendar';
+import { GanttChartView } from './gantt-chart-view';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
@@ -127,6 +128,7 @@ export function FlightSchedulePageContent({
                     <Tabs defaultValue="day" className="h-full flex flex-col">
                         <TabsList className="w-fit">
                             <TabsTrigger value="day">Day View</TabsTrigger>
+                            <TabsTrigger value="gantt">Gantt View</TabsTrigger>
                             <TabsTrigger value="month">Monthly View</TabsTrigger>
                         </TabsList>
                         <TabsContent value="day" className="flex-1">
@@ -137,6 +139,13 @@ export function FlightSchedulePageContent({
                                 onDayChange={handleDayChange}
                                 onNewBooking={openBookingDialog}
                              />
+                        </TabsContent>
+                        <TabsContent value="gantt" className="flex-1">
+                            <GanttChartView
+                                bookings={bookings}
+                                aircraft={aircraft.filter(a => a.status !== 'Archived')}
+                                selectedDay={selectedDay}
+                            />
                         </TabsContent>
                         <TabsContent value="month" className="flex-1">
                             <MonthlyCalendarView bookings={bookings} onDaySelect={handleDayChange} />
