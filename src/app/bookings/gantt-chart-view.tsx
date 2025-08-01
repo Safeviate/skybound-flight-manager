@@ -56,15 +56,15 @@ export function GanttChartView({ aircraft, bookings }: GanttChartViewProps) {
   );
 
   return (
-    <div className="w-full overflow-x-auto border rounded-lg">
-      <Table className="min-w-[1200px] border-collapse">
+    <div className="relative w-full overflow-x-auto border rounded-lg">
+      <Table className="min-w-[1600px] border-collapse">
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-48 sticky left-0 bg-background z-10 font-semibold">
+          <TableRow className="bg-muted/50">
+            <TableHead className="w-48 sticky left-0 bg-muted font-semibold z-10 border-r">
               Aircraft
             </TableHead>
             {HOURS.map((hour) => (
-              <TableHead key={hour} className="text-center border-l w-24">
+              <TableHead key={hour} className="text-center border-l w-28">
                 {`${String(hour).padStart(2, '0')}:00`}
               </TableHead>
             ))}
@@ -85,7 +85,7 @@ export function GanttChartView({ aircraft, bookings }: GanttChartViewProps) {
                         {/* Background grid lines for hours */}
                         <div className="absolute inset-0 flex">
                             {HOURS.map(hour => (
-                                <div key={`grid-${hour}`} className="w-1/12 border-r last:border-r-0 h-full"></div>
+                                <div key={`grid-${hour}`} className="w-[calc(100%/12)] md:w-[calc(100%/24)] border-r last:border-r-0 h-full"></div>
                             ))}
                         </div>
                         {/* Bookings */}
