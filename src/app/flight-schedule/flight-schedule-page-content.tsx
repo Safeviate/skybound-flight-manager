@@ -72,6 +72,8 @@ export function FlightSchedulePageContent({
             });
         }
     };
+    
+    const availableAircraft = aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight');
 
     return (
         <main className="flex-1 p-4 md:p-8">
@@ -95,9 +97,9 @@ export function FlightSchedulePageContent({
                                     <DropdownMenuSeparator />
                                      <DropdownMenuItem onSelect={() => handleOpenDialog(null)}>
                                         <PlusCircle className="mr-2 h-4 w-4" />
-                                        New Booking
+                                        New Booking without Aircraft
                                     </DropdownMenuItem>
-                                    {aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight').map(ac => (
+                                    {availableAircraft.map(ac => (
                                         <DropdownMenuItem key={ac.id} onSelect={() => handleOpenDialog(ac.id)}>
                                             <Plane className="mr-2 h-4 w-4" />
                                             {ac.model} ({ac.tailNumber})
