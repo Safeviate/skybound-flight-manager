@@ -1,10 +1,15 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
-import type { Aircraft } from '@/lib/types';
+import React, { useEffect, useMemo } from 'react';
+import type { Aircraft, Booking } from '@/lib/types';
 
-export function TrainingSchedulePageContent({ aircraft }: { aircraft: Aircraft[] }) {
+interface TrainingSchedulePageContentProps {
+  aircraft: Aircraft[];
+  bookings: Booking[];
+}
+
+export function TrainingSchedulePageContent({ aircraft, bookings }: TrainingSchedulePageContentProps) {
   useEffect(() => {
     // Get references to the buttons and view containers
     const calendarBtn = document.getElementById('showCalendarBtn');
@@ -41,6 +46,42 @@ export function TrainingSchedulePageContent({ aircraft }: { aircraft: Aircraft[]
         ganttBtn?.removeEventListener('click', () => switchView('gantt'));
     };
   }, []);
+
+  const timeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
+  
+  const getBookingForSlot = (aircraftId: string, time: string) => {
+    const hour = parseInt(time.split(':')[0], 10);
+    return bookings.find(b => {
+      if (b.aircraft !== aircraftId) return false;
+      const startHour = parseInt(b.startTime.split(':')[0], 10);
+      const endHour = parseInt(b.endTime.split(':')[0], 10);
+      return hour >= startHour && hour < endHour;
+    });
+  };
+
+  const calculateColSpan = (booking: Booking, time: string) => {
+      const startHour = parseInt(booking.startTime.split(':')[0], 10);
+      const endHour = parseInt(booking.endTime.split(':')[0], 10);
+      const currentHour = parseInt(time.split(':')[0], 10);
+      if (startHour !== currentHour) return 0; // Only calculate span for the starting cell
+      return endHour - startHour;
+  };
+
+  const getBookingLabel = (booking: Booking) => {
+    if (booking.purpose === 'Maintenance') {
+      return `Maintenance: ${booking.maintenanceType || 'Scheduled'}`;
+    }
+    return `${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
+  };
+  
+  const getBookingVariant = (purpose: Booking['purpose']) => {
+    switch (purpose) {
+      case 'Training': return 'bg-blue-500';
+      case 'Maintenance': return 'bg-yellow-500';
+      case 'Private': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
+  };
 
   return (
     <>
@@ -125,13 +166,14 @@ export function TrainingSchedulePageContent({ aircraft }: { aircraft: Aircraft[]
         
         /* Gantt Bar Styling */
         .gantt-bar {
-            background-color: #0d6efd;
             color: white;
             padding: 8px;
             border-radius: 4px;
             text-align: center;
             font-size: 14px;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
       `}</style>
       <div className="container">
@@ -174,33 +216,41 @@ export function TrainingSchedulePageContent({ aircraft }: { aircraft: Aircraft[]
                     <thead>
                         <tr>
                             <th>Aircraft</th>
-                            <th>06:00</th>
-                            <th>07:00</th>
-                            <th>08:00</th>
-                            <th>09:00</th>
-                            <th>10:00</th>
-                            <th>11:00</th>
-                            <th>12:00</th>
-                            <th>13:00</th>
-                            <th>14:00</th>
-                            <th>15:00</th>
-                            <th>16:00</th>
-                            <th>17:00</th>
-                            <th>18:00</th>
-                            <th>19:00</th>
-                            <th>20:00</th>
-                            <th>21:00</th>
-                            <th>22:00</th>
-                            <th>23:00</th>
+                            {timeSlots.map(time => <th key={time}>{time}</th>)}
                         </tr>
                     </thead>
                     <tbody>
-                        {aircraft.map(ac => (
+                        {aircraft.map(ac => {
+                          const renderedSlots = new Set();
+                          return (
                            <tr key={ac.id}>
                                 <td>{ac.tailNumber}</td>
-                                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                            </tr> 
-                        ))}
+                                {timeSlots.map(time => {
+                                  if (renderedSlots.has(time)) return null;
+
+                                  const booking = getBookingForSlot(ac.id, time);
+                                  if (booking) {
+                                    const colSpan = calculateColSpan(booking, time);
+                                    if (colSpan > 0) {
+                                      // Mark subsequent slots as rendered
+                                      for (let i = 1; i < colSpan; i++) {
+                                        const nextHour = parseInt(time.split(':')[0], 10) + i;
+                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
+                                      }
+                                      return (
+                                        <td key={time} colSpan={colSpan}>
+                                          <div className={`gantt-bar ${getBookingVariant(booking.purpose)}`}>
+                                            {getBookingLabel(booking)}
+                                          </div>
+                                        </td>
+                                      )
+                                    }
+                                  }
+                                  return <td key={time}></td>;
+                                })}
+                            </tr>
+                          )
+                        })}
                     </tbody>
                 </table>
             </div>
