@@ -22,13 +22,10 @@ export function GanttAircraftColumn({ aircraft, isOdd }: GanttAircraftColumnProp
   };
 
   const renderStatusBadge = () => {
-    if (aircraft.status !== 'Available') {
-        return <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>;
+    if (aircraft.status === 'Available') {
+        return <Badge variant="success">Available</Badge>
     }
-    if (aircraft.checklistStatus === 'needs-post-flight') {
-        return <Badge variant="warning">Needs Post-Flight</Badge>
-    }
-    return <Badge variant="success">Available</Badge>
+    return <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>;
   }
 
   return (
