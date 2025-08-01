@@ -36,6 +36,7 @@ export function FlightSchedulePageContent({
     const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [selectedDay, setSelectedDay] = useState(new Date());
+    const [activeTab, setActiveTab] = useState('day');
     const { toast } = useToast();
 
     const refreshData = useCallback(async () => {
@@ -86,6 +87,9 @@ export function FlightSchedulePageContent({
 
     const handleDayChange = (newDate: Date) => {
         setSelectedDay(newDate);
+        if (activeTab === 'month') {
+            setActiveTab('day');
+        }
     }
     
     const changeDay = (offset: number) => {
@@ -125,7 +129,7 @@ export function FlightSchedulePageContent({
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 -mt-4">
-                    <Tabs defaultValue="day" className="h-full flex flex-col">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                         <TabsList className="w-fit">
                             <TabsTrigger value="day">Day View</TabsTrigger>
                             <TabsTrigger value="gantt">Gantt View</TabsTrigger>
