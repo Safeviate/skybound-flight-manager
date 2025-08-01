@@ -117,9 +117,13 @@ export function DayViewCalendar({
                         {/* Columns for each aircraft */}
                         {aircraft.map((ac, index) => (
                              <div key={ac.id} className="col-start-2 col-span-1 relative border-r">
-                                {/* Grid lines */}
+                                {/* Grid lines and clickable cells */}
                                 {HOURS.map(hour => (
-                                    <div key={hour} className="h-[60px] border-b" />
+                                    <div 
+                                        key={hour} 
+                                        className="h-[60px] border-b hover:bg-muted/50 cursor-pointer"
+                                        onClick={() => canEdit && onNewBooking(ac, `${String(hour).padStart(2, '0')}:00`)}
+                                    />
                                 ))}
                                 
                                 {/* Bookings */}
