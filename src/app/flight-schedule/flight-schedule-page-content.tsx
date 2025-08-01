@@ -83,47 +83,6 @@ export function FlightSchedulePageContent({
                         <CardTitle>Flight Schedule</CardTitle>
                         <CardDescription>View and manage aircraft and personnel schedules.</CardDescription>
                     </div>
-                    <div className="flex items-center gap-4">
-                         <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        New Booking
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuLabel>Select an Aircraft (Optional)</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                     <DropdownMenuItem onSelect={() => handleOpenDialog(null)}>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        New Booking without Aircraft
-                                    </DropdownMenuItem>
-                                    {availableAircraft.map(ac => (
-                                        <DropdownMenuItem key={ac.id} onSelect={() => handleOpenDialog(ac.id)}>
-                                            <Plane className="mr-2 h-4 w-4" />
-                                            {ac.model} ({ac.tailNumber})
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                             </DropdownMenu>
-                             <DialogContent className="sm:max-w-xl">
-                                <DialogHeader>
-                                    <DialogTitle>Create New Booking</DialogTitle>
-                                    <DialogDescription>
-                                        Fill out the details below to schedule a flight or maintenance event.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <NewBookingForm 
-                                    aircraft={aircraft}
-                                    students={students}
-                                    instructors={instructors}
-                                    onSubmit={handleNewBooking}
-                                    initialAircraftId={selectedAircraftId}
-                                />
-                            </DialogContent>
-                        </Dialog>
-                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
