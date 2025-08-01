@@ -189,18 +189,18 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         .view-switcher { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid #0d6efd; background-color: #ffffff; color: #0d6efd; border-radius: 5px; margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
         .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: #0d6efd; color: #ffffff; }
-        table { width: 100%; border-collapse: collapse; background-color: #ffffff; }
-        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; min-width: 80px; }
-        th { background-color: #e9ecef; text-align: center; }
+        table { width: 100%; border-collapse: collapse; background-color: #ffffff; table-layout: fixed; }
+        th, td { border: 1px solid #dee2e6; padding: 0; text-align: left; height: 50px; }
+        th { background-color: #e9ecef; text-align: center; padding: 12px 0; }
         td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
         td.empty-slot:hover { background-color: #e9ecef; }
-        .booking-slot { cursor: pointer; }
+        .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
         .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
         .gantt-table { width: 1800px; }
-        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; text-align: left; }
+        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; text-align: left; padding: 12px; }
         .gantt-table thead th { z-index: 3; }
-        .gantt-bar { color: white; padding: 8px; border-radius: 4px; text-align: center; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .gantt-bar { color: white; padding: 8px; border-radius: 4px; text-align: center; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
       `}</style>
       <div className="container">
         <div className="view-switcher">
