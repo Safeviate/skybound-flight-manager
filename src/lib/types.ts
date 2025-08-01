@@ -213,8 +213,8 @@ export type Booking = {
   startTime: string;
   endTime: string;
   aircraft: string;
-  student: string;
-  instructor: string;
+  student?: string;
+  instructor?: string;
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Approved' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
