@@ -30,7 +30,7 @@ export function GanttAircraftColumn({ aircraft, isOdd }: GanttAircraftColumnProp
 
   return (
     <div className={cn(
-        "sticky left-0 z-10 flex flex-col justify-center p-2 border-b border-r h-16",
+        "flex flex-col justify-center p-2 border-b border-r h-16",
         isOdd ? 'bg-background' : 'bg-muted/50'
     )}>
       <p className="font-semibold text-sm">{aircraft.model}</p>
