@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getFlightSchedulePageData } from './data';
 import { GanttChart } from './gantt-chart';
@@ -61,6 +61,14 @@ export function FlightSchedulePageContent({
         
         try {
             await addDoc(collection(db, `companies/${company.id}/bookings`), bookingData);
+            
+            // Update aircraft checklist status
+            const bookedAircraft = aircraft.find(a => a.tailNumber === data.aircraft);
+            if (bookedAircraft) {
+                const aircraftRef = doc(db, `companies/${company.id}/aircraft`, bookedAircraft.id);
+                await updateDoc(aircraftRef, { checklistStatus: 'needs-post-flight' });
+            }
+
             toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
             setIsBookingDialogOpen(false);
             refreshData();

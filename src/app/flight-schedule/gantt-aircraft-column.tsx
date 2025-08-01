@@ -21,14 +21,6 @@ export function GanttAircraftColumn({ aircraft, isOdd }: GanttAircraftColumnProp
     }
   };
 
-  const getChecklistStatusVariant = (status: Aircraft['checklistStatus']) => {
-     switch (status) {
-        case 'needs-post-flight': return 'warning';
-        case 'needs-pre-flight': return 'success';
-        default: return 'outline';
-     }
-  }
-
   const renderStatusBadge = () => {
     if (aircraft.status !== 'Available') {
         return <Badge variant={getStatusVariant(aircraft.status)}>{aircraft.status}</Badge>;
