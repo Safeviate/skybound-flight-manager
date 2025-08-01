@@ -5,6 +5,8 @@ import { isSameDay, parse, setHours } from 'date-fns';
 import type { Booking, Aircraft } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface GanttChartViewProps {
   currentDate: Date;
@@ -29,74 +31,71 @@ export function GanttChartView({ currentDate, bookings, aircraft }: GanttChartVi
   const totalMinutesInView = 18 * 60; // 18 hours from 6:00 to 24:00
 
   return (
-    <div className="overflow-x-auto">
-      <div className="inline-block min-w-full align-middle">
-        <table className="min-w-full border-separate" style={{ borderSpacing: '0 4px' }}>
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-20 w-32 bg-background py-2 pr-2 text-left text-sm font-semibold">
-                Aircraft
-              </th>
-              {hours.map((hour) => (
-                <th key={hour} className="w-12 border-l pl-1 pr-2 text-center text-sm font-normal text-muted-foreground">
-                  {hour.toString().padStart(2, '0')}:00
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {aircraft.map((ac) => {
-              const aircraftBookings = dayBookings.filter((b) => b.aircraft === ac.tailNumber);
-              return (
-                <tr key={ac.id}>
-                  <td className="sticky left-0 z-10 w-32 whitespace-nowrap bg-background py-2 pr-2 text-sm font-medium">
-                    {ac.make} {ac.model} ({ac.tailNumber})
-                  </td>
-                  <td colSpan={18} className="relative p-0">
-                    <div className="relative h-10 border-t border-b">
-                      {hours.map((hour, index) => (
-                        <div key={hour} className="absolute h-full border-l" style={{ left: `${(index / 18) * 100}%` }}></div>
-                      ))}
-                      {aircraftBookings.map((booking) => {
-                        const start = parse(booking.startTime, 'HH:mm', new Date());
-                        const end = parse(booking.endTime, 'HH:mm', new Date());
-                        const startMinutes = Math.max(0, start.getHours() * 60 + start.getMinutes() - 360); // Subtract 6 hours (360 minutes)
-                        const endMinutes = Math.min(totalMinutesInView, end.getHours() * 60 + end.getMinutes() - 360);
-
-                        if (endMinutes <= startMinutes) return null;
-
-                        const left = (startMinutes / totalMinutesInView) * 100;
-                        const width = ((endMinutes - startMinutes) / totalMinutesInView) * 100;
-
+    <div className="flex w-full">
+        <div className="w-48 flex-shrink-0">
+             <div className="h-10 flex items-center p-2 font-semibold text-sm">Aircraft</div>
+             {aircraft.map((ac) => (
+                <div key={ac.id} className="h-12 flex items-center p-2 border-t text-sm font-medium whitespace-nowrap">
+                    {ac.model} ({ac.tailNumber})
+                </div>
+             ))}
+        </div>
+        <ScrollArea className="flex-1 whitespace-nowrap">
+            <div className="relative" style={{ width: `${18 * 4}rem` }}>
+                <div className="h-10 grid grid-cols-18">
+                    {hours.map(hour => (
+                        <div key={hour} className="w-16 flex items-center justify-center text-sm text-muted-foreground border-l">
+                            {hour.toString().padStart(2, '0')}:00
+                        </div>
+                    ))}
+                </div>
+                <div className="relative">
+                    {aircraft.map((ac, acIndex) => {
+                        const aircraftBookings = dayBookings.filter(b => b.aircraft === ac.tailNumber);
                         return (
-                          <div
-                            key={booking.id}
-                            className={cn(
-                              'absolute h-full rounded-md p-1 text-white text-xs border-l-4 truncate',
-                              getBookingColor(booking.purpose)
-                            )}
-                            style={{ left: `${left}%`, width: `${width}%` }}
-                          >
-                            <span className="font-semibold">{booking.student || booking.purpose}</span>
-                            <span className="ml-2 opacity-80">{booking.instructor}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-             {aircraft.length === 0 && (
-                <tr>
-                    <td colSpan={19} className="py-10 text-center text-muted-foreground">
-                        No aircraft available to display.
-                    </td>
-                </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                             <div key={ac.id} className="relative h-12 border-t">
+                                <div className="grid grid-cols-18 h-full">
+                                    {hours.map(hour => <div key={hour} className="w-16 h-full border-l"></div>)}
+                                </div>
+                                {aircraftBookings.map(booking => {
+                                    const start = parse(booking.startTime, 'HH:mm', new Date());
+                                    const end = parse(booking.endTime, 'HH:mm', new Date());
+                                    const startMinutes = Math.max(0, start.getHours() * 60 + start.getMinutes() - 360);
+                                    const endMinutes = Math.min(totalMinutesInView, end.getHours() * 60 + end.getMinutes() - 360);
+
+                                    if (endMinutes <= startMinutes) return null;
+                                    
+                                    const totalWidth = 18 * 4; // 18 hours * 4rem per hour
+                                    const left = (startMinutes / totalMinutesInView) * totalWidth;
+                                    const width = ((endMinutes - startMinutes) / totalMinutesInView) * totalWidth;
+
+                                    return (
+                                        <div
+                                            key={booking.id}
+                                            className={cn(
+                                                'absolute top-1/2 -translate-y-1/2 h-10 rounded-md p-1 text-white text-xs border-l-4 truncate',
+                                                getBookingColor(booking.purpose)
+                                            )}
+                                            style={{ left: `${left}rem`, width: `${width}rem` }}
+                                        >
+                                            <span className="font-semibold">{booking.student || booking.purpose}</span>
+                                            <span className="ml-2 opacity-80">{booking.instructor}</span>
+                                        </div>
+                                    );
+                                })}
+                             </div>
+                        )
+                    })}
+                     {aircraft.length === 0 && (
+                        <div className="h-24 flex items-center justify-center text-muted-foreground">
+                            No aircraft available to display.
+                        </div>
+                    )}
+                </div>
+            </div>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
     </div>
   );
 }
+
