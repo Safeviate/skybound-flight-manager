@@ -87,8 +87,6 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit }: Ne
     onSubmit(bookingData);
   }
 
-  const availableAircraft = aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight');
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -130,13 +128,9 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit }: Ne
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {availableAircraft.length > 0 ? (
-                                availableAircraft.map(ac => (
-                                    <SelectItem key={ac.id} value={ac.tailNumber}>{ac.model} ({ac.tailNumber})</SelectItem>
-                                ))
-                            ) : (
-                                <SelectItem value="none" disabled>No aircraft available for booking</SelectItem>
-                            )}
+                            {aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight').map(ac => (
+                                <SelectItem key={ac.id} value={ac.tailNumber}>{ac.model} ({ac.tailNumber})</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -205,40 +199,70 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit }: Ne
                 </div>
 
                 {purpose === 'Training' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="student"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Student</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            {students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="instructor"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Instructor</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            {instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
-                            name="student"
+                            name="trainingExercise"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Student</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="instructor"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Instructor</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <FormLabel>Training Exercise</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., PPL Lesson 5: Stalls" {...field} />
+                                </FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
+                )}
+                 {purpose === 'Maintenance' && (
+                    <FormField
+                        control={form.control}
+                        name="maintenanceType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Maintenance Type</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., 100-hour inspection" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 )}
             </>
         )}

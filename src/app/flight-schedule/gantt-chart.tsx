@@ -1,0 +1,51 @@
+
+'use client';
+
+import React from 'react';
+import type { Aircraft, Booking } from '@/lib/types';
+import { GanttHeader } from './gantt-header';
+import { GanttAircraftColumn } from './gantt-aircraft-column';
+import { GanttBookingBar } from './gantt-booking-bar';
+
+interface GanttChartProps {
+  aircraft: Aircraft[];
+  bookings: Booking[];
+  date: Date;
+}
+
+export function GanttChart({ aircraft, bookings, date }: GanttChartProps) {
+  const ganttStartTime = 6; // 6 AM
+  const ganttEndTime = 22; // 10 PM
+  const totalHours = ganttEndTime - ganttStartTime;
+
+  return (
+    <div className="relative overflow-x-auto border rounded-lg">
+      <div className="grid min-w-[1200px]" style={{ gridTemplateColumns: `200px repeat(${totalHours}, 1fr)` }}>
+        {/* Corner */}
+        <div className="sticky left-0 z-10 p-2 font-semibold bg-muted border-b border-r">Aircraft</div>
+        
+        {/* Header */}
+        <GanttHeader startTime={ganttStartTime} endTime={ganttEndTime} />
+        
+        {/* Aircraft Rows */}
+        {aircraft.map((ac, index) => (
+          <React.Fragment key={ac.id}>
+            <GanttAircraftColumn aircraft={ac} isOdd={index % 2 !== 0} />
+            
+            {/* Timeline Row */}
+            <div className={`col-start-2 col-span-full grid grid-cols-subgrid relative ${index % 2 !== 0 ? 'bg-background' : 'bg-muted/50'}`}>
+                {Array.from({ length: totalHours }).map((_, i) => (
+                    <div key={i} className="h-16 border-r last:border-r-0"></div>
+                ))}
+
+                {/* Bookings for this aircraft */}
+                {bookings.filter(b => b.aircraft === ac.tailNumber).map(booking => (
+                    <GanttBookingBar key={booking.id} booking={booking} ganttStartTime={ganttStartTime} />
+                ))}
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
