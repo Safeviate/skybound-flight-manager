@@ -19,6 +19,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function FlightSchedulePageContent({ 
     initialAircraft, 
@@ -29,6 +30,7 @@ export function FlightSchedulePageContent({
     const [bookings, setBookings] = useState(initialBookings);
     const [personnel, setPersonnel] = useState(initialPersonnel);
     const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
+    const [initialAircraftId, setInitialAircraftId] = useState<string | null>(null);
     const { company } = useUser();
     const { toast } = useToast();
     const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
@@ -62,6 +64,7 @@ export function FlightSchedulePageContent({
                 description: `Flight for ${data.aircraft} has been scheduled successfully.`,
             });
             setIsNewBookingOpen(false);
+            setInitialAircraftId(null);
             refreshData();
 
         } catch (error) {
@@ -72,6 +75,11 @@ export function FlightSchedulePageContent({
                 description: 'Could not create the new booking.',
             });
         }
+    };
+
+    const handleOpenBookingDialog = (aircraftId?: string) => {
+        setInitialAircraftId(aircraftId || null);
+        setIsNewBookingOpen(true);
     };
 
     return (
@@ -105,13 +113,22 @@ export function FlightSchedulePageContent({
                                 />
                             </PopoverContent>
                         </Popover>
-                        <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    New Booking
-                                </Button>
-                            </DialogTrigger>
+                         <Dialog open={isNewBookingOpen} onOpenChange={setIsNewBookingOpen}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                     <Button>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        New Booking
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    {activeAircraft.map(ac => (
+                                        <DropdownMenuItem key={ac.id} onSelect={() => handleOpenBookingDialog(ac.id)}>
+                                            {ac.model} ({ac.tailNumber})
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <DialogContent className="sm:max-w-xl">
                                 <DialogHeader>
                                     <DialogTitle>Create New Booking</DialogTitle>
@@ -123,7 +140,8 @@ export function FlightSchedulePageContent({
                                     aircraft={aircraft}
                                     students={students}
                                     instructors={instructors}
-                                    onSubmit={handleNewBooking} 
+                                    onSubmit={handleNewBooking}
+                                    initialAircraftId={initialAircraftId}
                                 />
                             </DialogContent>
                         </Dialog>

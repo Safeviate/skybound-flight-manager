@@ -66,9 +66,10 @@ interface NewBookingFormProps {
     students: User[];
     instructors: User[];
     onSubmit: (data: Omit<Booking, 'id' | 'companyId'>) => void;
+    initialAircraftId?: string | null;
 }
 
-export function NewBookingForm({ aircraft, students, instructors, onSubmit }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, students, instructors, onSubmit, initialAircraftId }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -77,6 +78,15 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit }: Ne
   });
 
   const purpose = form.watch('purpose');
+
+  useEffect(() => {
+    if (initialAircraftId) {
+        const selectedAircraft = aircraft.find(a => a.id === initialAircraftId);
+        if (selectedAircraft) {
+            form.setValue('aircraft', selectedAircraft.tailNumber);
+        }
+    }
+  }, [initialAircraftId, aircraft, form]);
 
   function handleFormSubmit(data: BookingFormValues) {
     const bookingData = {
@@ -121,7 +131,7 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit }: Ne
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Aircraft</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select an aircraft" />
