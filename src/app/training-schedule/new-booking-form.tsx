@@ -69,8 +69,8 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
       date: existingBooking?.date || format(new Date(), 'yyyy-MM-dd'),
-      startTime: existingBooking?.startTime,
-      endTime: existingBooking?.endTime,
+      startTime: existingBooking?.startTime || '',
+      endTime: existingBooking?.endTime || '',
       purpose: existingBooking?.purpose,
       student: existingBooking?.student,
       instructor: existingBooking?.instructor,
