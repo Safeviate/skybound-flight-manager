@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface TrainingSchedulePageContentProps {
   aircraft: Aircraft[];
@@ -21,7 +22,8 @@ interface TrainingSchedulePageContentProps {
 export function TrainingSchedulePageContent({ aircraft, bookings, users, onBookingCreated }: TrainingSchedulePageContentProps) {
   const { company } = useUser();
   const { toast } = useToast();
-  const [bookingSlot, setBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
+  const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     const calendarBtn = document.getElementById('showCalendarBtn');
@@ -78,11 +80,15 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
     if (booking.purpose === 'Maintenance') {
       return `Maintenance: ${booking.maintenanceType || 'Scheduled'}`;
     }
+    if(booking.purpose === 'Private') {
+        const user = users.find(u => u.name === booking.student);
+        return `Private: ${user?.name || booking.student}`;
+    }
     return `${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
   const getBookingVariant = (aircraftForBooking: Aircraft | undefined) => {
-    if (!aircraftForBooking) return 'bg-gray-400'; // Should not happen
+    if (!aircraftForBooking) return 'bg-gray-400';
 
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-pre-flight':
@@ -96,27 +102,36 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
     }
   };
 
-  const handleNewBooking = async (data: Omit<Booking, 'id' | 'companyId' | 'status'>) => {
+  const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company) {
       toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
       return;
     }
     
     try {
-        const newBooking = {
-            ...data,
-            companyId: company.id,
-            status: 'Approved',
-        };
-        await addDoc(collection(db, `companies/${company.id}/bookings`), newBooking);
-        toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
-        onBookingCreated(); // Refresh data
-        setBookingSlot(null); // Close dialog
+        if ('id' in data) { // This is an existing booking
+             const bookingRef = doc(db, `companies/${company.id}/bookings`, data.id);
+             await updateDoc(bookingRef, data as Partial<Booking>);
+             toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
+        } else { // This is a new booking
+            const newBooking = { ...data, companyId: company.id, status: 'Approved' };
+            await addDoc(collection(db, `companies/${company.id}/bookings`), newBooking);
+            toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
+        }
+        
+        onBookingCreated();
+        setNewBookingSlot(null);
+        setEditingBooking(null);
     } catch (error) {
-        console.error("Error creating booking:", error);
-        toast({ variant: 'destructive', title: 'Booking Failed', description: 'Could not create the booking.' });
+        console.error("Error saving booking:", error);
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the booking.' });
     }
   };
+  
+  const handleDialogClose = () => {
+    setNewBookingSlot(null);
+    setEditingBooking(null);
+  }
 
   return (
     <>
@@ -136,6 +151,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
         th { background-color: #e9ecef; text-align: center; }
         td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
         td.empty-slot:hover { background-color: #e9ecef; }
+        .booking-slot { cursor: pointer; }
         h2 { margin-top: 20px; }
         .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
         .gantt-table { width: 1800px; }
@@ -194,7 +210,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
                                       }
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       return (
-                                        <td key={time} colSpan={colSpan}>
+                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => setEditingBooking(booking)}>
                                           <div className={cn('gantt-bar', getBookingVariant(aircraftForBooking))}>
                                             {getBookingLabel(booking)}
                                           </div>
@@ -203,7 +219,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
                                     }
                                   }
                                   return (
-                                    <td key={time} className="empty-slot" onClick={() => setBookingSlot({ aircraft: ac, time })}></td>
+                                    <td key={time} className="empty-slot" onClick={() => setNewBookingSlot({ aircraft: ac, time })}></td>
                                   );
                                 })}
                             </tr>
@@ -214,20 +230,23 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
             </div>
         </div>
       </div>
-       <Dialog open={!!bookingSlot} onOpenChange={() => setBookingSlot(null)}>
+       <Dialog open={!!newBookingSlot || !!editingBooking} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Create New Booking</DialogTitle>
+            <DialogTitle>{editingBooking ? 'Edit Booking' : 'Create New Booking'}</DialogTitle>
             <DialogDescription>
-              Creating a booking for {bookingSlot?.aircraft.tailNumber} at {bookingSlot?.time}
+              {editingBooking 
+                ? `Editing booking for ${editingBooking.aircraft} on ${editingBooking.date}`
+                : `Creating a booking for ${newBookingSlot?.aircraft.tailNumber} at ${newBookingSlot?.time}`
+              }
             </DialogDescription>
           </DialogHeader>
-          {bookingSlot && (
+          {(newBookingSlot || editingBooking) && (
             <NewBookingForm
-              aircraft={bookingSlot.aircraft}
-              startTime={bookingSlot.time}
+              aircraft={editingBooking?.aircraft ? aircraft.find(a => a.tailNumber === editingBooking.aircraft)! : newBookingSlot!.aircraft}
               users={users}
-              onSubmit={handleNewBooking}
+              onSubmit={handleBookingSubmit}
+              existingBooking={editingBooking}
             />
           )}
         </DialogContent>

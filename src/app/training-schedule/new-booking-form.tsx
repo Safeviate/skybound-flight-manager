@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import type { Aircraft, User, Booking, Role } from '@/lib/types';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
 const bookingFormSchema = z.object({
@@ -30,7 +30,7 @@ const bookingFormSchema = z.object({
     return true;
 }, {
     message: "Student and Instructor are required for Training bookings.",
-    path: ["student"], // You can also put this on "instructor"
+    path: ["student"],
 }).refine(data => {
     if (data.purpose === 'Maintenance') {
         return !!data.maintenanceType;
@@ -45,9 +45,9 @@ type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
 interface NewBookingFormProps {
   aircraft: Aircraft;
-  startTime: string;
   users: User[];
-  onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'>) => void;
+  onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
+  existingBooking?: Booking | null;
 }
 
 const availableTimes = (startHour = 6) => {
@@ -57,15 +57,23 @@ const availableTimes = (startHour = 6) => {
     });
 };
 
-export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, onSubmit, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
-    defaultValues: {
-      aircraft: aircraft.tailNumber,
-      date: format(new Date(), 'yyyy-MM-dd'),
-      startTime: startTime,
-    },
   });
+
+  useEffect(() => {
+    form.reset({
+      aircraft: existingBooking?.aircraft || aircraft.tailNumber,
+      date: existingBooking?.date || format(new Date(), 'yyyy-MM-dd'),
+      startTime: existingBooking?.startTime,
+      endTime: existingBooking?.endTime,
+      purpose: existingBooking?.purpose,
+      student: existingBooking?.student,
+      instructor: existingBooking?.instructor,
+      maintenanceType: existingBooking?.maintenanceType,
+    });
+  }, [existingBooking, aircraft, form]);
   
   const purpose = form.watch('purpose');
   const watchedStartTime = form.watch('startTime');
@@ -74,7 +82,11 @@ export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBook
   const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
 
   function handleFormSubmit(data: BookingFormValues) {
-    onSubmit(data);
+    if (existingBooking) {
+      onSubmit({ ...existingBooking, ...data });
+    } else {
+      onSubmit(data as Omit<Booking, 'id' | 'companyId' | 'status'>);
+    }
   }
 
   return (
@@ -191,7 +203,7 @@ export function NewBookingForm({ aircraft, startTime, users, onSubmit }: NewBook
             />
         </div>
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Booking</Button>
+          <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
         </div>
       </form>
     </Form>
