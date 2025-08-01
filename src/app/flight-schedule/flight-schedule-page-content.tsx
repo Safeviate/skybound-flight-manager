@@ -123,9 +123,11 @@ export function FlightSchedulePageContent({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     {activeAircraft.map(ac => (
-                                        <DropdownMenuItem key={ac.id} onSelect={() => handleOpenBookingDialog(ac.id)}>
-                                            {ac.model} ({ac.tailNumber})
-                                        </DropdownMenuItem>
+                                         <DialogTrigger asChild key={ac.id}>
+                                            <DropdownMenuItem onSelect={() => handleOpenBookingDialog(ac.id)}>
+                                                {ac.model} ({ac.tailNumber})
+                                            </DropdownMenuItem>
+                                        </DialogTrigger>
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
