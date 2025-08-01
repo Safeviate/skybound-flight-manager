@@ -11,7 +11,8 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AreaChart } from 'lucide-react';
+import Link from 'next/link';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -182,9 +183,9 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             background-color: #f8f9fa;
             color: #212529;
         }
-        .view-switcher { margin-bottom: 20px; }
-        .view-switcher button { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid #0d6efd; background-color: #ffffff; color: #0d6efd; border-radius: 5px; margin-right: 10px; transition: background-color 0.2s, color 0.2s; }
-        .view-switcher button.active, .view-switcher button:hover { background-color: #0d6efd; color: #ffffff; }
+        .view-switcher { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid #0d6efd; background-color: #ffffff; color: #0d6efd; border-radius: 5px; margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: #0d6efd; color: #ffffff; }
         table { width: 100%; border-collapse: collapse; background-color: #ffffff; }
         th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; min-width: 80px; }
         th { background-color: #e9ecef; text-align: center; }
@@ -201,6 +202,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
       <div className="container">
         <div className="view-switcher">
             <button id="showGanttBtn" className="active">Gantt Chart View</button>
+            <Link href="/reports">
+                <AreaChart size={18} />
+                Statistics
+            </Link>
         </div>
 
         <div id="ganttView">
