@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 import type { Aircraft, User, Booking, Role } from '@/lib/types';
 import React, { useEffect, useMemo } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const bookingFormSchema = z.object({
   purpose: z.enum(['Training', 'Maintenance', 'Private']),
@@ -47,6 +50,7 @@ interface NewBookingFormProps {
   aircraft: Aircraft;
   users: User[];
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
+  onDelete?: (bookingId: string) => void;
   existingBooking?: Booking | null;
 }
 
@@ -57,7 +61,7 @@ const availableTimes = (startHour = 6) => {
     });
 };
 
-export function NewBookingForm({ aircraft, users, onSubmit, existingBooking }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
   });
@@ -202,8 +206,34 @@ export function NewBookingForm({ aircraft, users, onSubmit, existingBooking }: N
                 )}
             />
         </div>
-        <div className="flex justify-end pt-4">
-          <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
+        <div className="flex justify-between items-center pt-4">
+           {existingBooking && onDelete && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button type="button" variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete Booking
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the booking.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(existingBooking.id)}>
+                                Yes, Delete Booking
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+           )}
+           <div className={cn("flex-1 flex justify-end", !existingBooking && 'w-full')}>
+                <Button type="submit">{existingBooking ? 'Save Changes' : 'Create Booking'}</Button>
+           </div>
         </div>
       </form>
     </Form>

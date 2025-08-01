@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -127,6 +127,22 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the booking.' });
     }
   };
+
+  const handleBookingDelete = async (bookingId: string) => {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
+        return;
+    }
+    try {
+        await deleteDoc(doc(db, `companies/${company.id}/bookings`, bookingId));
+        toast({ title: 'Booking Deleted', description: 'The booking has been removed from the schedule.' });
+        onBookingCreated();
+        handleDialogClose();
+    } catch (error) {
+        console.error("Error deleting booking:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the booking.' });
+    }
+  }
   
   const handleDialogClose = () => {
     setNewBookingSlot(null);
@@ -246,6 +262,7 @@ export function TrainingSchedulePageContent({ aircraft, bookings, users, onBooki
               aircraft={editingBooking?.aircraft ? aircraft.find(a => a.tailNumber === editingBooking.aircraft)! : newBookingSlot!.aircraft}
               users={users}
               onSubmit={handleBookingSubmit}
+              onDelete={handleBookingDelete}
               existingBooking={editingBooking}
             />
           )}
