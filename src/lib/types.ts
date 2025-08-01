@@ -212,14 +212,14 @@ export type Booking = {
   startTime: string;
   endTime: string;
   aircraft: string;
-  student?: string;
-  instructor?: string;
+  student?: string | null;
+  instructor?: string | null;
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Approved' | 'Completed' | 'Cancelled';
   isChecklistComplete?: boolean;
   isPostFlightChecklistComplete?: boolean;
   flightDuration?: number;
-  maintenanceType?: string;
+  maintenanceType?: string | null;
   trainingExercise?: string;
 };
 

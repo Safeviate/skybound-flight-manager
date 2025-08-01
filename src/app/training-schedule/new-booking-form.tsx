@@ -86,10 +86,17 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
   const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
 
   function handleFormSubmit(data: BookingFormValues) {
+    const cleanData = {
+        ...data,
+        student: data.purpose === 'Training' ? data.student : null,
+        instructor: data.purpose === 'Training' ? data.instructor : null,
+        maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
+    };
+
     if (existingBooking) {
-      onSubmit({ ...existingBooking, ...data });
+      onSubmit({ ...existingBooking, ...cleanData });
     } else {
-      onSubmit(data as Omit<Booking, 'id' | 'companyId' | 'status'>);
+      onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>);
     }
   }
 
@@ -149,6 +156,25 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
             />
           </div>
         )}
+        
+        {purpose === 'Private' && (
+          <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
+            <FormField
+              control={form.control}
+              name="student"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pilot</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
+                    <SelectContent>{users.filter(u => u.role !== 'Student').map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         {purpose === 'Maintenance' && (
              <div className="p-4 border rounded-lg">
@@ -175,7 +201,7 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select start time" /></SelectTrigger></FormControl>
                         <SelectContent>
                         {availableTimes().map(time => (
