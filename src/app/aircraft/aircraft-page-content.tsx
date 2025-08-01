@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon, ListChecks, CheckCircle2, XCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -23,7 +23,7 @@ import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { ChecklistStarter } from './checklist-starter';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import jsPDF from 'jspdf';
@@ -31,7 +31,6 @@ import autoTable from 'jspdf-autotable';
 import { sendEmailWithAttachment } from '@/ai/flows/send-email-with-attachment-flow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
@@ -58,7 +57,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
-    const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
     
     useEffect(() => {
         const fetchContacts = async () => {
@@ -103,17 +101,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         if (!selectedChecklistAircraftId) return null;
         return activeAircraft.find(ac => ac.id === selectedChecklistAircraftId);
     }, [activeAircraft, selectedChecklistAircraftId]);
-
-    const bookedDays = useMemo(() => {
-        return checklistHistory.map(h => parseISO(h.dateCompleted));
-    }, [checklistHistory]);
-
-    const selectedDayChecklists = useMemo(() => {
-        if (!selectedDay) return [];
-        return checklistHistory
-            .filter(h => isSameDay(parseISO(h.dateCompleted), selectedDay))
-            .sort((a, b) => parseISO(b.dateCompleted).getTime() - parseISO(a.dateCompleted).getTime());
-    }, [checklistHistory, selectedDay]);
 
     const handleSuccess = () => {
         setIsNewAircraftDialogOpen(false);
@@ -502,7 +489,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
               <Tabs defaultValue="checklists">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
-                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Operations History</TabsTrigger>
+                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
                 </TabsList>
                  <TabsContent value="checklists" className="pt-6">
                     <div className="max-w-2xl mx-auto space-y-6">
@@ -536,71 +523,48 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 </TabsContent>
                  <TabsContent value="history" className="pt-6">
                     <div className="space-y-2">
-                         <p className="text-sm font-medium text-center text-muted-foreground">Select an aircraft to view its history</p>
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {activeAircraft.map(ac => (
-                                <Button 
-                                    key={ac.id} 
-                                    variant={selectedHistoryAircraftId === ac.id ? 'default' : 'outline'}
-                                    onClick={() => setSelectedHistoryAircraftId(ac.id)}
-                                >
-                                    {ac.tailNumber}
-                                </Button>
-                            ))}
-                        </div>
+                        <Label>Select an aircraft to view history</Label>
+                        <Select onValueChange={setSelectedHistoryAircraftId}>
+                            <SelectTrigger className="w-[300px]">
+                                <SelectValue placeholder="Select aircraft..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {activeAircraft.map(ac => (
+                                    <SelectItem key={ac.id} value={ac.id}>{ac.tailNumber} ({ac.model})</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    {selectedHistoryAircraftId && (
-                        <div className="grid md:grid-cols-2 gap-8 mt-6">
-                            <div className="flex justify-center">
-                                <Calendar
-                                    mode="single"
-                                    selected={selectedDay}
-                                    onSelect={setSelectedDay}
-                                    className="rounded-md border"
-                                    modifiers={{ booked: bookedDays }}
-                                    modifiersClassNames={{
-                                    booked: 'bg-primary/20 text-primary-foreground rounded-full',
-                                    }}
-                                />
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <CalendarIcon className="h-6 w-6"/>
-                                    <h3 className="text-xl font-semibold">
-                                        {selectedDay ? format(selectedDay, 'EEEE, MMMM d') : 'No date selected'}
-                                    </h3>
-                                </div>
-                                {selectedDayChecklists.length > 0 ? (
-                                    <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Operation</TableHead>
-                                            <TableHead>User</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {selectedDayChecklists.map(item => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">{item.type} Checklist</TableCell>
-                                            <TableCell>{item.userName}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
-                                                    <Eye className="mr-2 h-4 w-4" /> View
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                        ))}
-                                    </TableBody>
-                                    </Table>
-                                ) : (
-                                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                        <p className="text-muted-foreground">
-                                            {selectedDay ? "No operations for this day." : "Select a day to see history."}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
+                    {checklistHistory.length > 0 ? (
+                        <Table className="mt-4">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>User</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {checklistHistory.map(item => (
+                            <TableRow key={item.id}>
+                                <TableCell>{format(parseISO(item.dateCompleted), 'PPP p')}</TableCell>
+                                <TableCell>{item.type}</TableCell>
+                                <TableCell>{item.userName}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
+                                        <Eye className="mr-2 h-4 w-4" /> View
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                        </Table>
+                    ) : (
+                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">
+                                {selectedHistoryAircraftId ? "No checklist history for this aircraft." : "Select an aircraft to see history."}
+                            </p>
                         </div>
                     )}
                 </TabsContent>
