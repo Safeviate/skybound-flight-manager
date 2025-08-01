@@ -56,7 +56,7 @@ export function GanttChartView({ aircraft, bookings }: GanttChartViewProps) {
   );
 
   return (
-    <div className="relative w-full overflow-x-auto border rounded-lg">
+    <div className="border rounded-lg">
       <Table className="min-w-[1600px] border-collapse">
         <TableHeader>
           <TableRow className="bg-muted/50">

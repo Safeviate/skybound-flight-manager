@@ -16,7 +16,9 @@ function BookingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <GanttChartView aircraft={[]} bookings={[]} />
+            <div className="relative overflow-x-auto">
+                <GanttChartView aircraft={[]} bookings={[]} />
+            </div>
         </CardContent>
       </Card>
     </main>
