@@ -8,8 +8,9 @@ import { WeekView } from './week-view';
 import { DayView } from './day-view';
 import { CalendarHeader } from './calendar-header';
 import { startOfToday } from 'date-fns';
+import { GanttChartView } from './gantt-chart-view';
 
-type CalendarViewMode = 'month' | 'week' | 'day';
+type CalendarViewMode = 'month' | 'week' | 'day' | 'gantt';
 
 interface CalendarViewProps {
   bookings: Booking[];
@@ -32,6 +33,7 @@ export function CalendarView({ bookings, aircraft }: CalendarViewProps) {
         {view === 'month' && <MonthView currentDate={currentDate} bookings={bookings} />}
         {view === 'week' && <WeekView currentDate={currentDate} bookings={bookings} />}
         {view === 'day' && <DayView currentDate={currentDate} bookings={bookings} />}
+        {view === 'gantt' && <GanttChartView currentDate={currentDate} bookings={bookings} aircraft={aircraft}/>}
       </div>
     </div>
   );
