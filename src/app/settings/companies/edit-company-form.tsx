@@ -24,7 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const features: { id: Feature, label: string, description: string }[] = [
     { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
     { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
-    { id: 'Bookings', label: 'Bookings & Scheduling', description: 'Enables the aircraft booking and scheduling system.' },
+    { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
     { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
     { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
     { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },

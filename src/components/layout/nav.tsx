@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -52,6 +51,7 @@ const navItems: {
 }[] = [
   { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
+  { href: '/flight-schedule', label: 'Flight Schedule', icon: Calendar, requiredPermissions: ['Bookings:View'], requiredFeature: 'Bookings'},
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },

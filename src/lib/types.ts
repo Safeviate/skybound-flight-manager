@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -45,6 +44,7 @@ export type Feature =
     | 'Aircraft' 
     | 'Students' 
     | 'Personnel'
+    | 'Bookings'
     | 'AdvancedAnalytics';
 
 export type Company = {
@@ -121,6 +121,8 @@ export type Permission =
   | 'Reports:View'
   | 'Reports:Edit'
   | 'Settings:Edit'
+  | 'Bookings:View'
+  | 'Bookings:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -144,6 +146,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Reports:View',
     'Reports:Edit',
     'Settings:Edit',
+    'Bookings:View',
+    'Bookings:Edit',
     'Super User',
 ];
 
@@ -417,6 +421,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
     'Checklists:View',
     'Alerts:View',
     'Reports:View',
+    'Bookings:View',
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
