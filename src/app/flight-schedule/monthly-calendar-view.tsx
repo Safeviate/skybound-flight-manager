@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-export function MonthlyCalendarView({ bookings }: { bookings: Booking[] }) {
+export function MonthlyCalendarView({ bookings, onDaySelect }: { bookings: Booking[], onDaySelect: (date: Date) => void }) {
     const [currentDate, setCurrentDate] = React.useState(new Date());
 
     const year = currentDate.getFullYear();
@@ -35,7 +35,7 @@ export function MonthlyCalendarView({ bookings }: { bookings: Booking[] }) {
             const dayEvents = bookings.filter(b => b.date === dayString);
 
             days.push(
-                <div key={day} className="border p-2 h-32 flex flex-col rounded-md">
+                <div key={day} className="border p-2 h-32 flex flex-col rounded-md" onClick={() => onDaySelect(new Date(year, month, day))}>
                     <div className="font-bold text-sm text-right">{day}</div>
                     <div className="flex-grow overflow-y-auto text-xs space-y-1 mt-1 pr-1">
                         {dayEvents.map(event => (

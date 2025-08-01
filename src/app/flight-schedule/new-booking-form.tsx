@@ -68,13 +68,14 @@ interface NewBookingFormProps {
     onSubmit: (data: Omit<Booking, 'id' | 'companyId'>) => void;
     initialAircraftId?: string | null;
     initialTime?: string | null;
+    initialDate?: Date | null;
 }
 
-export function NewBookingForm({ aircraft, students, instructors, onSubmit, initialAircraftId, initialTime }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, students, instructors, onSubmit, initialAircraftId, initialTime, initialDate }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      date: new Date(),
+      date: initialDate || new Date(),
       purpose: undefined,
       aircraft: '',
       startTime: '',
@@ -98,7 +99,10 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
     if(initialTime) {
         form.setValue('startTime', initialTime);
     }
-  }, [initialAircraftId, initialTime, aircraft, form]);
+    if(initialDate){
+        form.setValue('date', initialDate);
+    }
+  }, [initialAircraftId, initialTime, initialDate, aircraft, form]);
 
   function handleFormSubmit(data: BookingFormValues) {
     const bookingData = {
@@ -150,7 +154,7 @@ export function NewBookingForm({ aircraft, students, instructors, onSubmit, init
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {aircraft.filter(a => a.status === 'Available' && a.checklistStatus !== 'needs-post-flight').map(ac => (
+                            {aircraft.filter(a => a.status !== 'Archived').map(ac => (
                                 <SelectItem key={ac.id} value={ac.tailNumber}>{ac.model} ({ac.tailNumber})</SelectItem>
                             ))}
                         </SelectContent>
