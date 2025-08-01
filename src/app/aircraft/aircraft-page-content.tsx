@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon, ListChecks, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, Calendar as CalendarIcon, ListChecks, CheckCircle2, XCircle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -32,6 +32,7 @@ import { sendEmailWithAttachment } from '@/ai/flows/send-email-with-attachment-f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
+import { Separator } from '@/components/ui/separator';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -227,6 +228,7 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         
         try {
             await deleteDoc(checklistRef);
+            setViewingChecklist(null);
             toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
             fetchHistory(); // Refresh the list
         } catch (error) {
@@ -450,6 +452,17 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             toast({ variant: 'destructive', title: 'Email Failed', description: 'Could not send the report. Please try again.' });
         }
     };
+    
+    const ChecklistItemDisplay = ({ label, value }: { label: string; value: boolean | undefined }) => {
+        const Icon = value ? CheckCircle2 : XCircle;
+        const color = value ? 'text-green-500' : 'text-destructive';
+        return (
+            <div className="flex items-center text-sm">
+                <Icon className={cn("mr-2 h-4 w-4", color)} />
+                <span className={cn(color, !value && "line-through")}>{label}</span>
+            </div>
+        );
+    };
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -609,77 +622,122 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
 
         {viewingChecklist && (
              <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>
-                <DialogContent className="sm:max-w-xl">
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>{viewingChecklist.type} Checklist</DialogTitle>
+                        <DialogTitle>{viewingChecklist.type} Checklist: {viewingChecklist.aircraftTailNumber}</DialogTitle>
                         <DialogDescription>
-                            Details for {viewingChecklist.aircraftTailNumber} on {format(parseISO(viewingChecklist.dateCompleted), 'PPP p')}
+                            Completed by {viewingChecklist.userName} on {format(parseISO(viewingChecklist.dateCompleted), 'PPP p')}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
-                        <p className="text-sm">Completed by: <span className="font-semibold">{viewingChecklist.userName}</span></p>
+                        <div className="space-y-1">
+                            <h4 className="font-semibold text-sm">Flight Details</h4>
+                            <p className="text-sm"><strong>Hobbs:</strong> {(viewingChecklist.results as any).hobbs}</p>
+                        </div>
+                        <Separator />
+
+                        {(viewingChecklist.type === 'Pre-Flight') && (
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Document Checks</h4>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                    <ChecklistItemDisplay label="Aircraft Checklist/POH" value={(viewingChecklist.results as PreFlightChecklistFormValues).checklistOnboard} />
+                                    <ChecklistItemDisplay label="Flight Ops Manual" value={(viewingChecklist.results as PreFlightChecklistFormValues).fomOnboard} />
+                                    <ChecklistItemDisplay label="Cert. of Airworthiness" value={(viewingChecklist.results as PreFlightChecklistFormValues).airworthinessOnboard} />
+                                    <ChecklistItemDisplay label="Insurance Certificate" value={(viewingChecklist.results as PreFlightChecklistFormValues).insuranceOnboard} />
+                                    <ChecklistItemDisplay label="Release to Service" value={(viewingChecklist.results as PreFlightChecklistFormValues).releaseToServiceOnboard} />
+                                    <ChecklistItemDisplay label="Cert. of Registration" value={(viewingChecklist.results as PreFlightChecklistFormValues).registrationOnboard} />
+                                    <ChecklistItemDisplay label="Mass & Balance" value={(viewingChecklist.results as PreFlightChecklistFormValues).massAndBalanceOnboard} />
+                                    <ChecklistItemDisplay label="Radio Station License" value={(viewingChecklist.results as PreFlightChecklistFormValues).radioLicenseOnboard} />
+                                </div>
+                            </div>
+                        )}
+                        <Separator />
+
                         <div className="space-y-2">
                              <h4 className="font-semibold text-sm">Photos</h4>
-                             <div className="grid grid-cols-2 gap-2">
+                             <div className="flex flex-wrap gap-2">
                                 {(viewingChecklist.results as any).leftSidePhoto && <Image src={(viewingChecklist.results as any).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
                                 {(viewingChecklist.results as any).rightSidePhoto && <Image src={(viewingChecklist.results as any).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
                                 {(viewingChecklist.results as any).defectPhoto && <Image src={(viewingChecklist.results as any).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
                              </div>
                         </div>
+                        <Separator />
                         <div className="space-y-2">
                              <h4 className="font-semibold text-sm">Report</h4>
-                             <p className="text-sm p-2 bg-muted rounded-md">{(viewingChecklist.results as any).report || "No issues reported."}</p>
+                             <p className="text-sm p-2 bg-muted rounded-md min-h-16">{(viewingChecklist.results as any).report || "No issues reported."}</p>
                         </div>
                     </div>
-                     <DialogFooter className="gap-2">
+                     <DialogFooter className="gap-2 sm:justify-between">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="outline">
-                                    <Mail className="mr-2 h-4 w-4"/>
-                                    Email Report
+                                <Button variant="destructive" size="sm">
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Delete Record
                                 </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Email Checklist Report</AlertDialogTitle>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Select a recipient from your external contacts or enter an email address manually.
+                                        This will permanently delete this checklist record. This action cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <div className="py-4 space-y-4">
-                                    <Select onValueChange={(value) => {
-                                        const emailInput = document.getElementById('email-input') as HTMLInputElement;
-                                        if (emailInput) emailInput.value = value;
-                                    }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select from external contacts..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {externalContacts.map(contact => {
-                                                const key = `${contact.id}-${contact.email}`;
-                                                return <SelectItem key={key} value={contact.email}>{contact.name} ({contact.email})</SelectItem>
-                                            })}
-                                        </SelectContent>
-                                    </Select>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email-input">Or enter email manually</Label>
-                                        <Input id="email-input" type="email" placeholder="recipient@example.com" />
-                                    </div>
-                                </div>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => {
-                                        const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
-                                        handleEmailChecklist(viewingChecklist, email);
-                                    }}>Send Email</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDeleteChecklist(viewingChecklist.id)}>Yes, Delete Record</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                        <Button variant="outline" onClick={() => handleDownloadChecklist(viewingChecklist)}>
-                            <Download className="mr-2 h-4 w-4"/>
-                            Download PDF
-                        </Button>
-                    </DialogFooter>
+                        <div className="flex gap-2">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Mail className="mr-2 h-4 w-4"/>
+                                        Email Report
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Email Checklist Report</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Select a recipient from your external contacts or enter an email address manually.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <div className="py-4 space-y-4">
+                                        <Select onValueChange={(value) => {
+                                            const emailInput = document.getElementById('email-input') as HTMLInputElement;
+                                            if (emailInput) emailInput.value = value;
+                                        }}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select from external contacts..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {externalContacts.map(contact => {
+                                                    const key = `${contact.id}-${contact.email}`;
+                                                    return <SelectItem key={key} value={contact.email}>{contact.name} ({contact.email})</SelectItem>
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email-input">Or enter email manually</Label>
+                                            <Input id="email-input" type="email" placeholder="recipient@example.com" />
+                                        </div>
+                                    </div>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => {
+                                            const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
+                                            handleEmailChecklist(viewingChecklist, email);
+                                        }}>Send Email</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            <Button variant="outline" onClick={() => handleDownloadChecklist(viewingChecklist)}>
+                                <Download className="mr-2 h-4 w-4"/>
+                                Download PDF
+                            </Button>
+                        </div>
+                     </DialogFooter>
                 </DialogContent>
              </Dialog>
         )}
