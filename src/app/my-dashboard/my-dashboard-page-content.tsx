@@ -70,52 +70,7 @@ const handleAcknowledge = async (alertId: string) => {
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar />
-              Your Upcoming Bookings
-            </CardTitle>
-            <CardDescription>
-                These are your scheduled flights and training sessions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcomingBookings.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Aircraft</TableHead>
-                            <TableHead>Time</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {upcomingBookings.map(booking => (
-                            <TableRow key={booking.id}>
-                                <TableCell>
-                                    <Badge variant={isToday(parseISO(booking.date)) ? "default" : "outline"}>
-                                        {format(parseISO(booking.date), 'MMM d, yyyy')}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                    <Plane className="h-4 w-4 text-muted-foreground" />
-                                    {booking.aircraft}
-                                </TableCell>
-                                <TableCell>
-                                    <Clock className="h-4 w-4 text-muted-foreground inline mr-2" />
-                                    {booking.startTime} - {booking.endTime}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            ) : (
-                <p className="text-sm text-muted-foreground text-center py-10">You have no upcoming bookings.</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-8 lg:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -1,5 +1,4 @@
 
-
 import { MyDashboardPageContent } from './my-dashboard-page-content';
 import { getDashboardData } from './data';
 import type { Booking } from '@/lib/types';
@@ -36,4 +35,3 @@ export default async function MyDashboardPage() {
 }
 
 MyDashboardPage.title = 'My Dashboard';
-
