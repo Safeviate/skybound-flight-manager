@@ -208,19 +208,21 @@ export function NewBookingForm({ onBookingCreated, onBookingUpdated, existingBoo
   
   const today = new Date('2024-08-15');
   today.setHours(0, 0, 0, 0);
-
+  
   const availableAircraft = aircraftData.filter(ac => {
+    if (ac.status === 'Archived') return false;
+
     const airworthinessExpired = ac.airworthinessExpiry ? isBefore(parseISO(ac.airworthinessExpiry), today) : false;
     const insuranceExpired = ac.insuranceExpiry ? isBefore(parseISO(ac.insuranceExpiry), today) : false;
-    
-    if (ac.status === 'Archived' || ac.checklistStatus === 'needs-post-flight') return false;
+    if (airworthinessExpired || insuranceExpired) return false;
 
-    if (purpose === 'Maintenance') {
-        return !airworthinessExpired && !insuranceExpired;
-    }
+    if (purpose === 'Maintenance') return true;
+
+    // For other purposes, apply checklist logic
+    const isReadyForFlight = ac.checklistStatus !== 'needs-post-flight';
+    const isInMaintenance = settings.enforcePostMaintenanceCheck ? ac.status === 'In Maintenance' : false;
     
-    const isAvailable = settings.enforcePostMaintenanceCheck ? ac.status === 'Available' : ac.status !== 'In Maintenance';
-    return isAvailable && !airworthinessExpired && !insuranceExpired;
+    return isReadyForFlight && !isInMaintenance;
   });
 
   const availableInstructors = userData.filter(p => {
