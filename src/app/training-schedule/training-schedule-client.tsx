@@ -1,11 +1,9 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
-import type { Aircraft } from '@/lib/types';
 
 // This page was created based on the HTML provided.
-export function TrainingScheduleClient({ aircraft }: { aircraft: Aircraft[] }) {
+export default function TrainingSchedulePage() {
   useEffect(() => {
     // Get references to the buttons and view containers
     const calendarBtn = document.getElementById('showCalendarBtn');
@@ -98,7 +96,7 @@ export function TrainingScheduleClient({ aircraft }: { aircraft: Aircraft[] }) {
 
         /* Gantt Chart Specific Styling */
         .gantt-container {
-            overflow-x: auto; /* This is the key property to enable horizontal scrolling */
+            overflow-x: auto; /* Enables horizontal scrolling */
             border: 1px solid #dee2e6;
             border-radius: 5px;
         }
@@ -174,7 +172,7 @@ export function TrainingScheduleClient({ aircraft }: { aircraft: Aircraft[] }) {
                 <table className="gantt-table">
                     <thead>
                         <tr>
-                            <th>Aircraft</th>
+                            <th></th>
                             <th>06:00</th>
                             <th>07:00</th>
                             <th>08:00</th>
@@ -196,12 +194,30 @@ export function TrainingScheduleClient({ aircraft }: { aircraft: Aircraft[] }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {aircraft.map((ac) => (
-                           <tr key={ac.id}>
-                                <td>{ac.tailNumber}</td>
-                                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                           </tr>
-                        ))}
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -210,3 +226,5 @@ export function TrainingScheduleClient({ aircraft }: { aircraft: Aircraft[] }) {
     </>
   );
 }
+
+TrainingSchedulePage.title = "Training Schedule";
