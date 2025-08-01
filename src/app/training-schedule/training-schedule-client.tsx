@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
+import type { Aircraft } from '@/lib/types';
 
-// This page was created based on the HTML provided.
-export default function TrainingSchedulePage() {
+export function TrainingSchedulePageContent({ aircraft }: { aircraft: Aircraft[] }) {
   useEffect(() => {
     // Get references to the buttons and view containers
     const calendarBtn = document.getElementById('showCalendarBtn');
@@ -172,7 +173,7 @@ export default function TrainingSchedulePage() {
                 <table className="gantt-table">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th>Aircraft</th>
                             <th>06:00</th>
                             <th>07:00</th>
                             <th>08:00</th>
@@ -194,30 +195,12 @@ export default function TrainingSchedulePage() {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-                        </tr>
+                        {aircraft.map(ac => (
+                           <tr key={ac.id}>
+                                <td>{ac.tailNumber}</td>
+                                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            </tr> 
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -226,5 +209,3 @@ export default function TrainingSchedulePage() {
     </>
   );
 }
-
-TrainingSchedulePage.title = "Training Schedule";
