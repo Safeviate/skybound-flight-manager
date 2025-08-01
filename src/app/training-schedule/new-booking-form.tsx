@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import type { Aircraft, User, Booking, Role } from '@/lib/types';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 const bookingFormSchema = z.object({
   purpose: z.enum(['Training', 'Maintenance', 'Private']),
@@ -56,9 +57,20 @@ interface NewBookingFormProps {
   aircraft: Aircraft;
   users: User[];
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
-  onDelete?: (bookingId: string) => void;
+  onDelete?: (bookingId: string, reason: string) => void;
   existingBooking?: Booking | null;
 }
+
+const deletionReasons = [
+    'Maintenance',
+    'Weather',
+    'Congested Airspace',
+    'No show - Pilot',
+    'No show - Student',
+    'Illness - Pilot',
+    'Illness - Student',
+    'Other',
+];
 
 export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
@@ -68,6 +80,9 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
       endTime: '',
     }
   });
+
+  const [deleteReason, setDeleteReason] = useState('');
+  const [otherReason, setOtherReason] = useState('');
 
   useEffect(() => {
     form.reset({
@@ -99,6 +114,14 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
       onSubmit({ ...existingBooking, ...cleanData });
     } else {
       onSubmit(cleanData as Omit<Booking, 'id' | 'companyId' | 'status'>);
+    }
+  }
+
+  const handleDeleteConfirm = () => {
+    if (existingBooking && onDelete) {
+        const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
+        if (!finalReason) return; // Prevent deletion without a reason
+        onDelete(existingBooking.id, finalReason);
     }
   }
 
@@ -235,14 +258,36 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>Reason for Deletion</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the booking.
+                                Please select a reason for deleting this booking. This information is used for reporting.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="py-4 space-y-4">
+                            <Select value={deleteReason} onValueChange={setDeleteReason}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a reason..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {deletionReasons.map(reason => (
+                                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {deleteReason === 'Other' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="other-reason">Please specify:</Label>
+                                    <Textarea
+                                        id="other-reason"
+                                        value={otherReason}
+                                        onChange={(e) => setOtherReason(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                        </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(existingBooking.id)}>
+                            <AlertDialogAction onClick={handleDeleteConfirm} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
                                 Yes, Delete Booking
                             </AlertDialogAction>
                         </AlertDialogFooter>

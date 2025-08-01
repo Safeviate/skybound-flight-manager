@@ -143,14 +143,14 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     }
   };
 
-  const handleBookingDelete = async (bookingId: string) => {
+  const handleBookingDelete = async (bookingId: string, reason: string) => {
     if (!company) {
         toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
         return;
     }
     try {
         await deleteDoc(doc(db, `companies/${company.id}/bookings`, bookingId));
-        toast({ title: 'Booking Deleted', description: 'The booking has been removed from the schedule.' });
+        toast({ title: 'Booking Deleted', description: `Reason: ${reason}` });
         handleDialogClose();
     } catch (error) {
         console.error("Error deleting booking:", error);
