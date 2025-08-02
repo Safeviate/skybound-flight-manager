@@ -8,6 +8,8 @@ import type { Booking } from '@/lib/types';
 export async function getBookingsPageData(companyId: string): Promise<Booking[]> {
     if (!companyId) return [];
     
-    // Return an empty array to ensure the bookings log is empty.
-    return [];
+    const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`), orderBy('date', 'desc'));
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    return bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
 }
+
