@@ -175,6 +175,25 @@ export function AircraftPageContent() {
         }
     };
 
+    const handleReturnToService = async (aircraft: Aircraft) => {
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        try {
+            await updateDoc(aircraftRef, { status: 'Available' });
+            toast({
+                title: 'Aircraft Returned to Service',
+                description: `${aircraft.tailNumber} is now marked as Available.`,
+            });
+        } catch (error) {
+            console.error("Error returning to service:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Action Failed',
+                description: 'Could not return the aircraft to service.',
+            });
+        }
+    };
+
     const openNewDialog = () => {
         setEditingAircraft(null);
         setIsNewAircraftDialogOpen(true);
@@ -282,7 +301,7 @@ export function AircraftPageContent() {
 
         // Create a new alert
         const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-        const q = query(alertsCollection, where('type', '==', 'Yellow Tag'), orderBy('number', 'desc'));
+        const q = query(alertsCollection, where('type', '==', 'Task'), orderBy('number', 'desc'));
         const querySnapshot = await getDocs(q);
         const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
         const newAlertNumber = (lastAlert?.number || 0) + 1;
@@ -290,7 +309,7 @@ export function AircraftPageContent() {
         const newAlertData: Omit<Alert, 'id'> = {
             companyId: company.id,
             number: newAlertNumber,
-            type: 'Yellow Tag',
+            type: 'Task',
             title: `Defect Reported: ${aircraft.tailNumber}`,
             description: issueDetails.description,
             author: user.name,
@@ -375,6 +394,12 @@ export function AircraftPageContent() {
                                     </DropdownMenuItem>
                                 ) : (
                                     <>
+                                        {ac.status === 'In Maintenance' && (
+                                            <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
+                                                <Check className="mr-2 h-4 w-4" />
+                                                Return to Service
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem onClick={() => handleEdit(ac)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Edit
