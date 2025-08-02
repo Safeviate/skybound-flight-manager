@@ -266,8 +266,8 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                           const renderedSlots = new Set();
                           return (
                           <tr key={ac.id}>
-                                <td>
-                                  <div className="flex items-center justify-between">
+                                <td className="p-0">
+                                  <div className="flex items-center justify-between px-3 h-full">
                                     <span>{ac.tailNumber}</span>
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedChecklistAircraft(ac)}>
                                       <ListChecks className={cn(
