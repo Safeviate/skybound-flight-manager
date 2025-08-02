@@ -559,6 +559,7 @@ export function AircraftPageContent() {
                                     <PostFlightChecklistForm 
                                         onSuccess={handleChecklistSuccess}
                                         aircraft={selectedAircraftForChecklist}
+                                        startHobbs={bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId)?.startHobbs}
                                     />
                                 ) : (
                                     <PreFlightChecklistForm 

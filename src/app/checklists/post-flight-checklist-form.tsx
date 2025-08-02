@@ -32,9 +32,10 @@ export type PostFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 interface PostFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PostFlightChecklistFormValues) => void;
+    startHobbs?: number;
 }
 
-export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightChecklistFormProps) {
+export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: PostFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -87,27 +88,41 @@ export function PostFlightChecklistForm({ aircraft, onSuccess }: PostFlightCheck
                 <CardDescription>Complete all items for {aircraft.tailNumber} before submitting.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="hobbs"
-                    render={({ field }) => (
-                         <FormItem>
-                            <FormLabel>Closing Hobbs Meter</FormLabel>
-                            <div className="flex items-center gap-2">
-                                <Hash className="h-5 w-5 text-muted-foreground" />
-                                <Input 
-                                    type="number" 
-                                    step="0.1" 
-                                    placeholder="Enter closing Hobbs hours" 
-                                    {...field} 
-                                    onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                    className="flex-1" 
-                                />
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormItem>
+                        <FormLabel>Starting Hobbs Meter</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <Hash className="h-5 w-5 text-muted-foreground" />
+                            <Input 
+                                type="number" 
+                                value={startHobbs?.toFixed(1) || 'N/A'} 
+                                readOnly 
+                                className="flex-1 bg-muted"
+                            />
+                        </div>
+                    </FormItem>
+                    <FormField
+                        control={form.control}
+                        name="hobbs"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Closing Hobbs Meter</FormLabel>
+                                <div className="flex items-center gap-2">
+                                    <Hash className="h-5 w-5 text-muted-foreground" />
+                                    <Input 
+                                        type="number" 
+                                        step="0.1" 
+                                        placeholder="Enter closing Hobbs hours" 
+                                        {...field} 
+                                        onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="flex-1" 
+                                    />
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
