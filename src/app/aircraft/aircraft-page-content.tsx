@@ -16,7 +16,7 @@ import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert } fr
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot, writeBatch, where } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot, writeBatch, where, getCountFromServer } from 'firebase/firestore';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
@@ -274,27 +274,36 @@ export function AircraftPageContent() {
         const aircraft = aircraftList.find(a => a.id === aircraftId);
         if (!aircraft) return;
 
-        const bookingForAircraft = bookings.find(b => b.id === aircraft.activeBookingId);
-        
         const batch = writeBatch(db);
         
+        // Set aircraft status to In Maintenance
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         batch.update(aircraftRef, { status: 'In Maintenance' });
 
-        if (bookingForAircraft) {
-            const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForAircraft.id);
-            batch.update(bookingRef, { 
-                hasIssue: true, 
-                issueDetails: issueDetails.description,
-                issuePhoto: issueDetails.photo || null
-            });
-        }
+        // Create a new alert
+        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        const q = query(alertsCollection, where('type', '==', 'Yellow Tag'), orderBy('number', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const lastAlert = querySnapshot.empty ? null : querySnapshot.docs[0].data() as Alert;
+        const newAlertNumber = (lastAlert?.number || 0) + 1;
+
+        const newAlertData: Omit<Alert, 'id'> = {
+            companyId: company.id,
+            number: newAlertNumber,
+            type: 'Yellow Tag',
+            title: `Defect Reported: ${aircraft.tailNumber}`,
+            description: issueDetails.description,
+            author: user.name,
+            date: new Date().toISOString(),
+            readBy: [user.id], // The person reporting has "read" it
+        };
+        batch.set(doc(alertsCollection), newAlertData);
 
         try {
             await batch.commit();
             toast({ 
-                title: 'Issue Reported', 
-                description: `Aircraft ${aircraft.tailNumber} status set to In Maintenance and booking flagged.`
+                title: 'Issue Reported & Alert Sent', 
+                description: `Aircraft ${aircraft.tailNumber} status set to In Maintenance. An alert has been sent.`
             });
         } catch (error) {
             console.error('Error reporting issue:', error);

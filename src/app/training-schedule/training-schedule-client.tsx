@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import type { Aircraft, Booking, User, CompletedChecklist } from '@/lib/types';
+import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
@@ -29,7 +29,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [viewingIssueBooking, setViewingIssueBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
@@ -129,7 +128,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   };
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
-    if (booking.hasIssue) {
+    if (aircraftForBooking?.status === 'In Maintenance') {
         return { className: 'bg-destructive' };
     }
     if (booking.status === 'Completed') {
@@ -260,7 +259,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const handleDialogClose = () => {
     setNewBookingSlot(null);
     setEditingBooking(null);
-    setViewingIssueBooking(null);
     setSelectedChecklistAircraft(null);
     setChecklistWarning(null);
   }
@@ -273,10 +271,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   }
   
   const handleBookingClick = (booking: Booking) => {
-    if (booking.hasIssue) {
-        setViewingIssueBooking(booking);
-        return;
-    }
     if (booking.status === 'Completed' && !user?.permissions.includes('Super User')) {
       toast({
         variant: 'destructive',
@@ -396,7 +390,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                         <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
                                           <div className={cn('gantt-bar', variant.className)} style={variant.style}>
                                              <div className="flex items-center gap-2">
-                                                {(checklistOutstanding || booking.hasIssue) && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title={booking.hasIssue ? `Issue: ${booking.issueDetails}` : "Checklist Due"} />}
+                                                {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
                                                 <span>{getBookingLabel(booking)}</span>
                                               </div>
                                           </div>
@@ -438,32 +432,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
               startTime={newBookingSlot?.time}
             />
           )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={!!viewingIssueBooking} onOpenChange={handleDialogClose}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="text-destructive" /> Reported Issue Details
-                </DialogTitle>
-                <DialogDescription>
-                    The following issue was reported for booking {viewingIssueBooking?.bookingNumber} on {viewingIssueBooking?.aircraft}.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <div>
-                    <h4 className="font-semibold text-sm">Issue Description</h4>
-                    <p className="text-sm p-2 bg-muted rounded-md min-h-16 mt-1">{viewingIssueBooking?.issueDetails}</p>
-                </div>
-                {viewingIssueBooking?.issuePhoto && (
-                     <div>
-                        <h4 className="font-semibold text-sm">Attached Photo</h4>
-                        <div className="mt-1 border rounded-md p-2 flex justify-center">
-                            <Image src={viewingIssueBooking.issuePhoto} alt="Defect photo" width={400} height={225} className="rounded-md" />
-                        </div>
-                    </div>
-                )}
-            </div>
         </DialogContent>
       </Dialog>
       <Dialog open={!!selectedChecklistAircraft} onOpenChange={handleDialogClose}>
