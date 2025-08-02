@@ -24,14 +24,14 @@ const checklistSchema = z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
-  checklistOnboard: z.boolean().default(false),
-  fomOnboard: z.boolean().default(false),
-  airworthinessOnboard: z.boolean().default(false),
-  insuranceOnboard: z.boolean().default(false),
-  releaseToServiceOnboard: z.boolean().default(false),
-  registrationOnboard: z.boolean().default(false),
-  massAndBalanceOnboard: z.boolean().default(false),
-  radioLicenseOnboard: z.boolean().default(false),
+  checklistOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  fomOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  airworthinessOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  insuranceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  releaseToServiceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  registrationOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  massAndBalanceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  radioLicenseOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
   bookingNumber: z.string().optional(),
@@ -191,14 +191,14 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                 <div className="space-y-4 rounded-lg border p-4">
                     <h4 className="font-medium text-sm flex items-center gap-2"><FileCheck className="h-4 w-4"/> Document Checks</h4>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="checklistOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Aircraft Checklist / POH</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="fomOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Flight Ops Manual</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Airworthiness</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="insuranceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Insurance Certificate</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="releaseToServiceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Release to Service</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="registrationOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Registration</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="massAndBalanceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Mass and Balance</FormLabel></FormItem>)} />
-                        <FormField control={form.control} name="radioLicenseOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Radio Station License</FormLabel></FormItem>)} />
+                        <FormField control={form.control} name="checklistOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Aircraft Checklist / POH</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="fomOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Flight Ops Manual</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="airworthinessOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Airworthiness</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="insuranceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Insurance Certificate</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="releaseToServiceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Release to Service</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="registrationOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Certificate of Registration</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="massAndBalanceOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Mass and Balance</FormLabel><FormMessage/></FormItem>)} />
+                        <FormField control={form.control} name="radioLicenseOnboard" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel className="font-normal">Radio Station License</FormLabel><FormMessage/></FormItem>)} />
                     </div>
                 </div>
 

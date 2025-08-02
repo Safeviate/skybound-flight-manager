@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -31,6 +31,7 @@ import { sendEmailWithAttachment } from '@/ai/flows/send-email-with-attachment-f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -44,9 +45,52 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
 }
 
+const ReportIssueForm = ({ aircraftList, onSubmit }: { aircraftList: Aircraft[], onSubmit: (aircraftId: string, title: string, description: string) => void }) => {
+    const [aircraftId, setAircraftId] = useState('');
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+
+    const handleSubmit = () => {
+        if (aircraftId && title && description) {
+            onSubmit(aircraftId, title, description);
+        }
+    };
+    
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="issue-aircraft">Aircraft</Label>
+                <Select onValueChange={setAircraftId}>
+                    <SelectTrigger id="issue-aircraft">
+                        <SelectValue placeholder="Select aircraft..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {aircraftList.map(ac => (
+                            <SelectItem key={ac.id} value={ac.id}>{ac.tailNumber} ({ac.model})</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="issue-title">Issue Title</Label>
+                <Input id="issue-title" placeholder="e.g., Left tire looks flat" value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="issue-description">Description</Label>
+                <Textarea id="issue-description" placeholder="Provide details about the issue..." value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <DialogFooter>
+                 <Button onClick={handleSubmit} disabled={!aircraftId || !title || !description}>Submit Report</Button>
+            </DialogFooter>
+        </div>
+    )
+};
+
+
 export function AircraftPageContent() {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
+    const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading } = useUser();
     const { toast } = useToast();
@@ -310,6 +354,37 @@ export function AircraftPageContent() {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
         }
     };
+    
+    const handleReportIssue = async (aircraftId: string, title: string, description: string) => {
+        if (!company || !user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot report issue without company/user context.' });
+            return;
+        }
+
+        const aircraft = aircraftList.find(a => a.id === aircraftId);
+        if (!aircraft) return;
+
+        const newAlert: Omit<Alert, 'id' | 'number'> = {
+            companyId: company.id,
+            type: 'Yellow Tag',
+            title: `Issue Reported: ${aircraft.tailNumber} - ${title}`,
+            description,
+            author: user.name,
+            date: new Date().toISOString(),
+            readBy: [user.id],
+        };
+
+        try {
+            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+            await addDoc(alertsCollection, newAlert);
+            toast({ title: 'Issue Reported', description: 'An alert has been raised and sent to relevant personnel.'});
+            setIsReportIssueDialogOpen(false);
+        } catch (error) {
+            console.error('Error reporting issue:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to report the issue.'});
+        }
+    };
+
 
     const handleDeleteChecklist = async (checklistId: string) => {
         if (!company || !selectedHistoryAircraftId) {
@@ -587,9 +662,28 @@ export function AircraftPageContent() {
       </Card>
       
       <Card>
-          <CardHeader>
-              <CardTitle>Aircraft Operations</CardTitle>
-              <CardDescription>Perform checklists and view historical records.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle>Aircraft Operations</CardTitle>
+                <CardDescription>Perform checklists and view historical records.</CardDescription>
+              </div>
+              <Dialog open={isReportIssueDialogOpen} onOpenChange={setIsReportIssueDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="destructive">
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        Report Issue
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Report an Issue</DialogTitle>
+                        <DialogDescription>
+                            File a yellow tag alert for a specific aircraft. This should be used for ad-hoc issues found outside of a normal checklist.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ReportIssueForm aircraftList={activeAircraft} onSubmit={handleReportIssue} />
+                </DialogContent>
+              </Dialog>
           </CardHeader>
           <CardContent>
               <Tabs defaultValue="checklists">
