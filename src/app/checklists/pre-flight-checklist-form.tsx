@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
+import { Label } from '@/components/ui/label';
 
 
 const checklistSchema = z.object({
