@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { getRiskScore } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const hazardAreas = [
     'Flight Operations', 
@@ -129,141 +130,143 @@ export function NewRiskForm({ onSubmit, existingRisk }: NewRiskFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="hazard"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Hazard</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Describe the condition with potential to cause harm..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <FormField
-          control={form.control}
-          name="risk"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Associated Risk</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Describe the potential negative consequence..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
+        <ScrollArea className="h-[70vh] pr-4">
+            <div className="space-y-4">
+                <FormField
                 control={form.control}
-                name="hazardArea"
+                name="hazard"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Hazard Area</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select an area" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="process"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Process / Activity</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a process" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base">Initial Risk Assessment</CardTitle>
-            </CardHeader>
-            <CardContent>
-                 <RiskAssessmentTool
-                    onCellClick={handleAssessmentChange}
-                    selectedCode={getSelectedCode()}
-                 />
-                 {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
-                 {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}
-            </CardContent>
-        </Card>
-
-        <FormField
-          control={form.control}
-          name="mitigation"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mitigation Controls</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Describe the controls in place or proposed..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
-           <FormField
-                control={form.control}
-                name="riskOwner"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Risk Owner (Optional)</FormLabel>
+                    <FormLabel>Hazard</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Safety Manager" {...field} />
+                        <Textarea placeholder="Describe the condition with potential to cause harm..." {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-            <FormField
+                />
+                <FormField
                 control={form.control}
-                name="status"
+                name="risk"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Open">Open</SelectItem>
-                            <SelectItem value="Mitigated">Mitigated</SelectItem>
-                            <SelectItem value="Closed">Closed</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <FormLabel>Associated Risk</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Describe the potential negative consequence..." {...field} />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-        </div>
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="hazardArea"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Hazard Area</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an area" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {hazardAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="process"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Process / Activity</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a process" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {processes.map(proc => <SelectItem key={proc} value={proc}>{proc}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Initial Risk Assessment</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <RiskAssessmentTool
+                            onCellClick={handleAssessmentChange}
+                            selectedCode={getSelectedCode()}
+                        />
+                        {form.formState.errors.likelihood && <FormMessage>{form.formState.errors.likelihood.message}</FormMessage>}
+                        {form.formState.errors.severity && <FormMessage>{form.formState.errors.severity.message}</FormMessage>}
+                    </CardContent>
+                </Card>
 
-
+                <FormField
+                control={form.control}
+                name="mitigation"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Mitigation Controls</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Describe the controls in place or proposed..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                <FormField
+                        control={form.control}
+                        name="riskOwner"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Risk Owner (Optional)</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., Safety Manager" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a status" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Open">Open</SelectItem>
+                                    <SelectItem value="Mitigated">Mitigated</SelectItem>
+                                    <SelectItem value="Closed">Closed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </div>
+        </ScrollArea>
         <div className="flex justify-end pt-4">
           <Button type="submit">{existingRisk ? 'Save Changes' : 'Add Risk'}</Button>
         </div>
