@@ -12,11 +12,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, CompletedChecklist, ExternalContact, Booking } from '@/lib/types';
+import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot, writeBatch, where } from 'firebase/firestore';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
@@ -234,6 +234,55 @@ export function AircraftPageContent() {
         }
         
         batch.update(aircraftRef, aircraftUpdate);
+
+        // Notification Logic
+        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+        let notificationSent = false;
+
+        const documentChecks = [
+            { key: 'checklistOnboard', name: 'Aircraft Checklist/POH' },
+            { key: 'fomOnboard', name: 'Flight Ops Manual' },
+            { key: 'airworthinessOnboard', name: 'Cert. of Airworthiness' },
+            { key: 'insuranceOnboard', name: 'Insurance Certificate' },
+            { key: 'releaseToServiceOnboard', name: 'Release to Service' },
+            { key: 'registrationOnboard', name: 'Cert. of Registration' },
+            { key: 'massAndBalanceOnboard', name: 'Mass & Balance' },
+            { key: 'radioLicenseOnboard', name: 'Radio Station License' },
+        ];
+
+        if (isPreFlight) {
+            const missingDocs = documentChecks
+                .filter(doc => !(data as PreFlightChecklistFormValues)[doc.key as keyof PreFlightChecklistFormValues])
+                .map(doc => doc.name);
+
+            if (missingDocs.length > 0) {
+                const alert: Omit<Alert, 'id' | 'number'> = {
+                    companyId: company.id,
+                    type: 'Yellow Tag',
+                    title: `Missing Documents on ${selectedAircraftForChecklist.tailNumber}`,
+                    description: `A pre-flight check found the following documents missing: ${missingDocs.join(', ')}.`,
+                    author: 'System',
+                    date: new Date().toISOString(),
+                    readBy: [],
+                };
+                batch.set(doc(alertsCollection), alert);
+                notificationSent = true;
+            }
+        }
+
+        if ((data as any).report && (data as any).report.length > 0) {
+            const alert: Omit<Alert, 'id' | 'number'> = {
+                companyId: company.id,
+                type: 'Yellow Tag',
+                title: `New Defect Reported on ${selectedAircraftForChecklist.tailNumber}`,
+                description: `A defect was reported during a ${isPreFlight ? 'pre-flight' : 'post-flight'} check: "${(data as any).report}"`,
+                author: 'System',
+                date: new Date().toISOString(),
+                readBy: [],
+            };
+            batch.set(doc(alertsCollection), alert);
+            notificationSent = true;
+        }
     
         try {
             await batch.commit();
@@ -243,10 +292,18 @@ export function AircraftPageContent() {
                 toastDescription += ` Booking ${bookingForChecklist.bookingNumber} has been marked as completed.`
             }
 
-            toast({
-                title: 'Checklist Submitted',
-                description: toastDescription
-            });
+            if (notificationSent) {
+                toast({
+                    title: 'Checklist Submitted & Alert Raised',
+                    description: 'The checklist is saved and relevant managers have been notified of the issue.',
+                });
+            } else {
+                 toast({
+                    title: 'Checklist Submitted',
+                    description: toastDescription
+                });
+            }
+
             setSelectedChecklistAircraftId(null);
         } catch (error) {
             console.error("Error submitting checklist:", error);
