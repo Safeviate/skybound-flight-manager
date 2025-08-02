@@ -138,13 +138,6 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         <Label>Lead Auditor</Label>
                         <Input value={user?.name || 'Current User'} readOnly disabled />
                     </div>
-                    <div>
-                        <Label>Auditee</Label>
-                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
-                            <SelectTrigger><SelectValue placeholder="Select primary auditee" /></SelectTrigger>
-                            <SelectContent>{personnel.map(p => (<SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>))}</SelectContent>
-                        </Select>
-                    </div>
                      <div>
                         <Label>Audit Team</Label>
                         <Popover>
@@ -181,6 +174,13 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                                 </Command>
                            </PopoverContent>
                         </Popover>
+                    </div>
+                    <div>
+                        <Label>Auditee</Label>
+                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
+                            <SelectTrigger><SelectValue placeholder="Select primary auditee" /></SelectTrigger>
+                            <SelectContent>{personnel.map(p => (<SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>))}</SelectContent>
+                        </Select>
                     </div>
                      <div>
                         <Label>Audit Scope / Evidence to be Sampled</Label>
