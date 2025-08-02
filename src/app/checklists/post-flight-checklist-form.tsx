@@ -24,6 +24,7 @@ const checklistSchema = z.object({
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
+  bookingNumber: z.string().optional(),
 });
 
 export type PostFlightChecklistFormValues = z.infer<typeof checklistSchema>;

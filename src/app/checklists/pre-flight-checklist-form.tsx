@@ -34,6 +34,7 @@ const checklistSchema = z.object({
   radioLicenseOnboard: z.boolean().refine(val => val === true, { message: "You must confirm the Radio Station License is onboard." }),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
+  bookingNumber: z.string().optional(),
 });
 
 export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;

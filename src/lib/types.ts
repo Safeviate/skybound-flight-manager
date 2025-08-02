@@ -73,6 +73,7 @@ export type Aircraft = {
   radioStationLicenseExpiry: string;
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
+  activeBookingId?: string | null;
 };
 
 export type Endorsement = {
@@ -207,6 +208,7 @@ export type User = {
 
 export type Booking = {
   id: string;
+  bookingNumber?: string;
   companyId: string;
   date: string;
   endDate?: string;
@@ -494,6 +496,7 @@ export type CompletedChecklist = {
     dateCompleted: string;
     type: 'Pre-Flight' | 'Post-Flight';
     results: any; // Can be PreFlightChecklistFormValues or PostFlightChecklistFormValues
+    bookingNumber?: string;
 };
 
 

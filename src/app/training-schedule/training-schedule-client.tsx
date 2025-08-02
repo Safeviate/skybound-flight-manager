@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -131,17 +131,28 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
       return;
     }
     
+    const batch = writeBatch(db);
+
     try {
         if ('id' in data) { // This is an existing booking
              const bookingRef = doc(db, `companies/${company.id}/bookings`, data.id);
-             await updateDoc(bookingRef, data as Partial<Booking>);
+             batch.update(bookingRef, data as Partial<Booking>);
              toast({ title: 'Booking Updated', description: 'The booking has been successfully updated.' });
         } else { // This is a new booking
-            const newBooking = { ...data, companyId: company.id, status: 'Approved' };
-            await addDoc(collection(db, `companies/${company.id}/bookings`), newBooking);
-            toast({ title: 'Booking Created', description: 'The new booking has been added to the schedule.' });
+            const newBookingId = doc(collection(db, 'temp')).id;
+            const newBooking = { ...data, id: newBookingId, companyId: company.id, status: 'Approved' as const };
+            const bookingRef = doc(db, `companies/${company.id}/bookings`, newBookingId);
+            batch.set(bookingRef, newBooking);
+
+            // Link booking to aircraft
+            if (newBooking.purpose !== 'Maintenance') {
+                const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
+                batch.update(aircraftRef, { activeBookingId: newBookingId });
+            }
+            toast({ title: 'Booking Created', description: `Booking ${newBooking.bookingNumber} has been added to the schedule.` });
         }
         
+        await batch.commit();
         handleDialogClose();
     } catch (error) {
         console.error("Error saving booking:", error);
@@ -170,6 +181,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         
         const isPreFlight = 'registration' in data;
         const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
+        const bookingForChecklist = bookings.find(b => b.id === selectedChecklistAircraft.activeBookingId);
+        const bookingNumber = bookingForChecklist?.bookingNumber;
+
+        const batch = writeBatch(db);
 
         const historyDoc: Omit<CompletedChecklist, 'id'> = {
             aircraftId: selectedChecklistAircraft.id,
@@ -179,24 +194,38 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             dateCompleted: new Date().toISOString(),
             type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
             results: data,
+            bookingNumber: bookingNumber,
         };
 
         try {
             // Update aircraft status
             const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedChecklistAircraft.id);
-            await updateDoc(aircraftRef, { checklistStatus: newStatus });
+            const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
+            // If it's a post-flight, clear the active booking
+            if (!isPreFlight) {
+                aircraftUpdate.activeBookingId = null;
+            }
+            batch.update(aircraftRef, aircraftUpdate);
 
             // Add to checklist history
             const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedChecklistAircraft.id}/completed-checklists`);
-            await addDoc(historyCollectionRef, historyDoc);
+            batch.set(doc(historyCollectionRef), historyDoc);
+
+            // If post-flight, complete the associated booking
+            if (!isPreFlight && bookingForChecklist) {
+                const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
+                batch.update(bookingRef, { status: 'Completed' });
+            }
+
+            await batch.commit();
 
             toast({
                 title: 'Checklist Submitted',
-                description: `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`
+                description: `The checklist has been saved. ${!isPreFlight && bookingForChecklist ? 'Booking has been completed.' : ''}`
             });
              setSelectedChecklistAircraft(null);
         } catch (error) {
-            console.error("Error updating checklist status or history:", error);
+            console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
         }
     };
@@ -327,6 +356,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             <NewBookingForm
               aircraft={editingBooking?.aircraft ? aircraft.find(a => a.tailNumber === editingBooking.aircraft)! : newBookingSlot!.aircraft}
               users={users}
+              bookings={bookings}
               onSubmit={handleBookingSubmit}
               onDelete={handleBookingDelete}
               existingBooking={editingBooking}
@@ -347,13 +377,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                     </DialogDescription>
                 </DialogHeader>
                 {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? (
-                     <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Post-Flight Checklist Outstanding</AlertTitle>
-                        <AlertDescription>
-                            The previous crew must complete their post-flight checklist before a new pre-flight can be initiated for this aircraft.
-                        </AlertDescription>
-                    </Alert>
+                    <PostFlightChecklistForm 
+                        onSuccess={handleChecklistSuccess}
+                        aircraft={selectedChecklistAircraft}
+                     />
                 ) : (
                     <PreFlightChecklistForm 
                         onSuccess={handleChecklistSuccess} 

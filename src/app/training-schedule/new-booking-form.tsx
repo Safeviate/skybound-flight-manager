@@ -27,6 +27,7 @@ const bookingFormSchema = z.object({
   student: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
+  bookingNumber: z.string().optional(), // Added for the new system
 }).refine(data => {
     if (data.purpose === 'Training') {
         return !!data.student && !!data.instructor;
@@ -56,6 +57,7 @@ type BookingFormValues = z.infer<typeof bookingFormSchema>;
 interface NewBookingFormProps {
   aircraft: Aircraft;
   users: User[];
+  bookings: Booking[];
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
   onDelete?: (bookingId: string, reason: string) => void;
   existingBooking?: Booking | null;
@@ -72,7 +74,7 @@ const deletionReasons = [
     'Other',
 ];
 
-export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -94,6 +96,7 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
       student: existingBooking?.student,
       instructor: existingBooking?.instructor,
       maintenanceType: existingBooking?.maintenanceType,
+      bookingNumber: existingBooking?.bookingNumber,
     });
   }, [existingBooking, aircraft, form]);
   
@@ -103,9 +106,16 @@ export function NewBookingForm({ aircraft, users, onSubmit, onDelete, existingBo
   const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
 
   function handleFormSubmit(data: BookingFormValues) {
+    
+    // Generate booking number only for new, non-maintenance bookings
+    if (!existingBooking && data.purpose !== 'Maintenance') {
+        const bookingCount = bookings.filter(b => b.bookingNumber).length;
+        data.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
+    }
+
     const cleanData = {
         ...data,
-        student: data.purpose === 'Training' ? data.student : null,
+        student: data.purpose === 'Training' || data.purpose === 'Private' ? data.student : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
     };
