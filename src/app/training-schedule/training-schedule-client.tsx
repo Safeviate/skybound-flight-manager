@@ -301,7 +301,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid #0d6efd; background-color: #ffffff; color: #0d6efd; border-radius: 5px; margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
         .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: #0d6efd; color: #ffffff; }
         table { width: 100%; border-collapse: collapse; background-color: #ffffff; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; padding: 0; text-align: left; height: 50px; }
+        th, td { border: 1px solid #dee2e6; padding: 0; text-align: left; height: 60px; }
         th { background-color: #e9ecef; text-align: center; padding: 12px 0; }
         td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
         td.empty-slot:hover { background-color: #e9ecef; }
