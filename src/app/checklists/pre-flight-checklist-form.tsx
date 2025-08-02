@@ -43,7 +43,7 @@ export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
-    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string }) => void;
+    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => void;
 }
 
 export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: PreFlightChecklistFormProps) {
@@ -105,7 +105,8 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     }
     onReportIssue(aircraft.id, {
         title: `Defect on ${aircraft.tailNumber}`,
-        description: reportText
+        description: reportText,
+        photo: getValues("defectPhoto"),
     });
     setValue('report', '');
     setValue('defectPhoto', '');

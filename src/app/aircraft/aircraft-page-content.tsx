@@ -261,7 +261,7 @@ export function AircraftPageContent() {
         }
     };
     
-    const handleReportIssue = async (aircraftId: string, issueDetails: { title: string, description: string }) => {
+    const handleReportIssue = async (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => {
         if (!company || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot report issue without company/user context.' });
             return;
@@ -279,7 +279,11 @@ export function AircraftPageContent() {
 
         if (bookingForAircraft) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForAircraft.id);
-            batch.update(bookingRef, { hasIssue: true, issueDetails: issueDetails.description });
+            batch.update(bookingRef, { 
+                hasIssue: true, 
+                issueDetails: issueDetails.description,
+                issuePhoto: issueDetails.photo || null
+            });
         }
 
         try {

@@ -227,6 +227,7 @@ export type Booking = {
   endHobbs?: number;
   hasIssue?: boolean;
   issueDetails?: string;
+  issuePhoto?: string;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
