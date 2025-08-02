@@ -281,7 +281,10 @@ export function AircraftPageContent() {
 
         try {
             await batch.commit();
-            toast({ title: 'Issue Reported', description: `Aircraft ${aircraft.tailNumber} status set to In Maintenance and booking flagged.`});
+            toast({ 
+                title: 'Issue Reported', 
+                description: `Aircraft ${aircraft.tailNumber} status set to In Maintenance and booking flagged.`
+            });
         } catch (error) {
             console.error('Error reporting issue:', error);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to report the issue.'});
@@ -797,5 +800,7 @@ export function AircraftPageContent() {
     </main>
   );
 }
+
+    
 
     
