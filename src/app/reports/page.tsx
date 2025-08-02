@@ -137,7 +137,7 @@ function ReportsPage() {
   const recentBookings = useMemo(() => {
     return bookingData
       .filter(b => b.bookingNumber)
-      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
+      .sort((a, b) => (a.bookingNumber || '').localeCompare(b.bookingNumber || ''))
       .slice(0, 10);
   }, [bookingData]);
 
@@ -184,8 +184,8 @@ function ReportsPage() {
                   </Table>
                 </ScrollArea>
               </CardContent>
-          </Card>>
-            <Card>
+          </Card>
+          <Card>
               <CardHeader>
                   <CardTitle>Cancellation Reasons</CardTitle>
                   <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
