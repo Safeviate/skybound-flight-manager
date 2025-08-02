@@ -12,12 +12,13 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import type { Booking, Aircraft, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, parseISO, startOfMonth, getDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -258,6 +259,7 @@ function ReportsPage() {
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
   const [userData, setUserData] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -301,9 +303,23 @@ function ReportsPage() {
         const numA = parseInt(a.bookingNumber!.split('-')[1]);
         const numB = parseInt(b.bookingNumber!.split('-')[1]);
         return numA - numB;
-      })
-      .slice(0, 50);
+      });
   }, [bookingData]);
+
+  const filteredBookings = useMemo(() => {
+      if (!searchTerm) return recentBookings;
+      const lowercasedFilter = searchTerm.toLowerCase();
+      return recentBookings.filter(booking => {
+          return (
+              booking.bookingNumber?.toLowerCase().includes(lowercasedFilter) ||
+              booking.aircraft.toLowerCase().includes(lowercasedFilter) ||
+              booking.purpose.toLowerCase().includes(lowercasedFilter) ||
+              booking.student?.toLowerCase().includes(lowercasedFilter) ||
+              booking.instructor?.toLowerCase().includes(lowercasedFilter) ||
+              booking.status.toLowerCase().includes(lowercasedFilter)
+          );
+      });
+  }, [searchTerm, recentBookings]);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -384,9 +400,20 @@ function ReportsPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle>Recent Bookings</CardTitle>
-                        <CardDescription>A log of the 50 most recent flights.</CardDescription>
+                        <CardDescription>A log of all flights in the system.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex items-center py-4">
+                          <div className="relative w-full max-w-sm">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                              placeholder="Search bookings..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="pl-10"
+                              />
+                          </div>
+                        </div>
                         <ScrollArea className="h-[70vh]">
                         <Table>
                             <TableHeader>
@@ -402,8 +429,8 @@ function ReportsPage() {
                             </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {recentBookings.length > 0 ? (
-                                recentBookings.map((booking) => (
+                            {filteredBookings.length > 0 ? (
+                                filteredBookings.map((booking) => (
                                 <TableRow key={booking.id}>
                                     <TableCell>{booking.bookingNumber}</TableCell>
                                     <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
@@ -423,7 +450,7 @@ function ReportsPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={8} className="text-center h-24">No recent bookings.</TableCell>
+                                <TableCell colSpan={8} className="text-center h-24">No recent bookings found.</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
