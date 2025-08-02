@@ -101,14 +101,15 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   };
 
   const getBookingLabel = (booking: Booking) => {
+    const bookingNumPart = booking.bookingNumber ? `${booking.bookingNumber} - ` : '';
     if (booking.purpose === 'Maintenance') {
       return `Maintenance: ${booking.maintenanceType || 'Scheduled'}`;
     }
     if(booking.purpose === 'Private') {
         const user = users.find(u => u.name === booking.student);
-        return `Private: ${user?.name || booking.student}`;
+        return `${bookingNumPart}Private: ${user?.name || booking.student}`;
     }
-    return `${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
+    return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined) => {
