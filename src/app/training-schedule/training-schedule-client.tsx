@@ -11,11 +11,12 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks, AlertTriangle } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Image from 'next/image';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -28,6 +29,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [viewingIssueBooking, setViewingIssueBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
@@ -258,6 +260,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const handleDialogClose = () => {
     setNewBookingSlot(null);
     setEditingBooking(null);
+    setViewingIssueBooking(null);
     setSelectedChecklistAircraft(null);
     setChecklistWarning(null);
   }
@@ -270,6 +273,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   }
   
   const handleBookingClick = (booking: Booking) => {
+    if (booking.hasIssue) {
+        setViewingIssueBooking(booking);
+        return;
+    }
     if (booking.status === 'Completed' && !user?.permissions.includes('Super User')) {
       toast({
         variant: 'destructive',
@@ -433,6 +440,32 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
           )}
         </DialogContent>
       </Dialog>
+      <Dialog open={!!viewingIssueBooking} onOpenChange={handleDialogClose}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="text-destructive" /> Reported Issue Details
+                </DialogTitle>
+                <DialogDescription>
+                    The following issue was reported for booking {viewingIssueBooking?.bookingNumber} on {viewingIssueBooking?.aircraft}.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div>
+                    <h4 className="font-semibold text-sm">Issue Description</h4>
+                    <p className="text-sm p-2 bg-muted rounded-md min-h-16 mt-1">{viewingIssueBooking?.issueDetails}</p>
+                </div>
+                {viewingIssueBooking?.issuePhoto && (
+                     <div>
+                        <h4 className="font-semibold text-sm">Attached Photo</h4>
+                        <div className="mt-1 border rounded-md p-2 flex justify-center">
+                            <Image src={viewingIssueBooking.issuePhoto} alt="Defect photo" width={400} height={225} className="rounded-md" />
+                        </div>
+                    </div>
+                )}
+            </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!selectedChecklistAircraft} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-2xl">
            {selectedChecklistAircraft && (
@@ -475,5 +508,3 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     </>
   );
 }
-
-    
