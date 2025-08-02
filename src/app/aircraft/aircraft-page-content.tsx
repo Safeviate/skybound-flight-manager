@@ -12,11 +12,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, CompletedChecklist, ExternalContact } from '@/lib/types';
+import type { Aircraft, CompletedChecklist, ExternalContact, Booking } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
@@ -56,6 +56,7 @@ export function AircraftPageContent() {
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
+    const [bookings, setBookings] = useState<Booking[]>([]);
     
     useEffect(() => {
         const fetchContacts = async () => {
@@ -78,15 +79,24 @@ export function AircraftPageContent() {
             orderBy('tailNumber')
         );
 
-        const unsubscribe = onSnapshot(aircraftQuery, (snapshot) => {
+        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+        
+        const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
             const aircraft = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
             setAircraftList(aircraft);
         }, (error) => {
             console.error("Error fetching aircraft in real-time:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
         });
+        
+        const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+            setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+        });
 
-        return () => unsubscribe();
+        return () => { 
+            unsubAircraft();
+            unsubBookings();
+        }
     }, [company, toast]);
     
     const fetchHistory = useCallback(async () => {
@@ -176,10 +186,15 @@ export function AircraftPageContent() {
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
         if (!selectedAircraftForChecklist || !company || !user) return;
-        
+    
         const isPreFlight = 'registration' in data;
         const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
-
+        const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
+        const bookingNumber = bookingForChecklist?.bookingNumber;
+    
+        const batch = writeBatch(db);
+    
+        // 1. History Document
         const historyDoc: Omit<CompletedChecklist, 'id'> = {
             aircraftId: selectedAircraftForChecklist.id,
             aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
@@ -188,24 +203,40 @@ export function AircraftPageContent() {
             dateCompleted: new Date().toISOString(),
             type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
             results: data,
+            bookingNumber: bookingNumber,
         };
-
+        const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
+        batch.set(doc(historyCollectionRef), historyDoc);
+    
+        // 2. Aircraft Document
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
+        const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
+        if (!isPreFlight) {
+            aircraftUpdate.activeBookingId = null;
+        }
+        batch.update(aircraftRef, aircraftUpdate);
+    
+        // 3. Booking Document (if post-flight)
+        if (!isPreFlight && bookingForChecklist) {
+            const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
+            batch.update(bookingRef, { status: 'Completed' });
+        }
+    
         try {
-            // Update aircraft status
-            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
-            await updateDoc(aircraftRef, { checklistStatus: newStatus });
-
-            // Add to checklist history
-            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
-            await addDoc(historyCollectionRef, historyDoc);
+            await batch.commit();
+            
+            let toastDescription = `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`;
+            if (!isPreFlight && bookingForChecklist) {
+                toastDescription += ` Booking ${bookingForChecklist.bookingNumber} has been marked as completed.`
+            }
 
             toast({
                 title: 'Checklist Submitted',
-                description: `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`
+                description: toastDescription
             });
-             setSelectedChecklistAircraftId(null);
+            setSelectedChecklistAircraftId(null);
         } catch (error) {
-            console.error("Error updating checklist status or history:", error);
+            console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
         }
     };
