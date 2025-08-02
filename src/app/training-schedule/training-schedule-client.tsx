@@ -292,7 +292,24 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         .gantt-table { min-width: 1800px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
-        .gantt-bar { color: white; padding: 4px 8px; border-radius: 4px; text-align: center; font-size: 12px; white-space: normal; overflow: hidden; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .gantt-bar { 
+            color: white; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            text-align: center; 
+            font-size: 12px; 
+            white-space: normal; 
+            overflow: hidden; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+        }
       `}</style>
       <div className="container">
         <div className="view-switcher">
