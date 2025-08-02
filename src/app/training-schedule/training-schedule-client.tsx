@@ -269,7 +269,12 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                   <div className="flex items-center justify-between">
                                     <span>{ac.tailNumber}</span>
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedChecklistAircraft(ac)}>
-                                      <ListChecks className="h-4 w-4" />
+                                      <ListChecks className={cn(
+                                        "h-4 w-4",
+                                        ac.checklistStatus === 'needs-post-flight' ? 'text-destructive' :
+                                        (ac.checklistStatus === 'ready' || ac.checklistStatus === 'needs-pre-flight') ? 'text-green-500' :
+                                        'text-muted-foreground'
+                                      )} />
                                     </Button>
                                   </div>
                                 </td>
