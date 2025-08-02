@@ -381,10 +381,14 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                       }
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       const variant = getBookingVariant(booking, aircraftForBooking);
+                                      const checklistOutstanding = aircraftForBooking?.checklistStatus === 'needs-pre-flight' || aircraftForBooking?.checklistStatus === 'needs-post-flight';
                                       return (
                                         <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
                                           <div className={cn('gantt-bar', variant.className)} style={variant.style}>
-                                            {getBookingLabel(booking)}
+                                             <div className="flex items-center gap-2">
+                                                {checklistOutstanding && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Checklist Due" />}
+                                                <span>{getBookingLabel(booking)}</span>
+                                              </div>
                                           </div>
                                         </td>
                                       )
