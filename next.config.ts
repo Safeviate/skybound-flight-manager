@@ -52,6 +52,14 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version,
+  },
+  webpack: (config, { isServer }) => {
+    // This is to fix a bug in genkit with handlebars
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'handlebars': 'handlebars/dist/handlebars.js',
+    }
+    return config
   }
 };
 
