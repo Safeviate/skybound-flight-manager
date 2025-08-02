@@ -297,7 +297,11 @@ function ReportsPage() {
   const recentBookings = useMemo(() => {
     return bookingData
       .filter(b => b.bookingNumber)
-      .sort((a, b) => (b.bookingNumber || '').localeCompare(a.bookingNumber || ''))
+      .sort((a, b) => {
+        const numA = parseInt(a.bookingNumber!.split('-')[1]);
+        const numB = parseInt(b.bookingNumber!.split('-')[1]);
+        return numA - numB;
+      })
       .slice(0, 50);
   }, [bookingData]);
 
