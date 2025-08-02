@@ -13,6 +13,9 @@ import type { Booking, Aircraft } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { format, parseISO } from 'date-fns';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -131,9 +134,12 @@ function ReportsPage() {
       fetchData();
   }, [company]);
   
-  const totalBookings = 8;
-  const completedFlights = 0;
-  const cancelledFlights = 5;
+  const recentBookings = useMemo(() => {
+    return bookingData
+      .filter(b => b.bookingNumber)
+      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
+      .slice(0, 10);
+  }, [bookingData]);
 
 
   if (loading || dataLoading || !user) {
@@ -149,24 +155,35 @@ function ReportsPage() {
       <div className="grid md:grid-cols-2 gap-8">
           <Card>
               <CardHeader>
-                  <CardTitle>Flight Volume</CardTitle>
-                  <CardDescription>An overview of scheduled flight operations.</CardDescription>
+                  <CardTitle>Recent Bookings</CardTitle>
+                  <CardDescription>A log of the 10 most recent flights.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <div className="text-4xl font-bold">{totalBookings}</div>
-                  <p className="text-xs text-muted-foreground">Total Bookings</p>
-                  <div className="grid grid-cols-2 mt-4 text-sm">
-                      <div>
-                          <p className="font-semibold text-green-600">{completedFlights}</p>
-                          <p className="text-muted-foreground">Completed</p>
-                      </div>
-                      <div>
-                          <p className="font-semibold text-red-600">{cancelledFlights}</p>
-                          <p className="text-muted-foreground">Cancelled</p>
-                      </div>
-                  </div>
+                <ScrollArea className="h-72">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Booking #</TableHead>
+                        <TableHead>Booking Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentBookings.length > 0 ? (
+                        recentBookings.map((booking) => (
+                          <TableRow key={booking.id}>
+                            <TableCell>{booking.bookingNumber}</TableCell>
+                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center">No recent bookings.</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
               </CardContent>
-              
           </Card>
             <Card>
               <CardHeader>
