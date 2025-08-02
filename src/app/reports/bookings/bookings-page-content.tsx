@@ -7,22 +7,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useTableControls } from '@/hooks/use-table-controls';
 import type { Booking } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Search, ArrowUpDown, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export function BookingsPageContent({ initialBookings }: { initialBookings: Booking[] }) {
-    const {
-        items: bookings,
-        searchTerm,
-        setSearchTerm,
-        sortConfig,
-        requestSort,
-    } = useTableControls<Booking>(initialBookings, {
-        initialSort: { key: 'date', direction: 'desc' },
-        searchKeys: ['aircraft', 'purpose', 'status', 'student', 'instructor', 'bookingNumber'],
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const bookings = initialBookings.filter(booking => {
+        if (!searchTerm) return true;
+        const lowercasedTerm = searchTerm.toLowerCase();
+        return (
+            booking.aircraft?.toLowerCase().includes(lowercasedTerm) ||
+            booking.purpose?.toLowerCase().includes(lowercasedTerm) ||
+            booking.status?.toLowerCase().includes(lowercasedTerm) ||
+            booking.student?.toLowerCase().includes(lowercasedTerm) ||
+            booking.instructor?.toLowerCase().includes(lowercasedTerm) ||
+            booking.bookingNumber?.toLowerCase().includes(lowercasedTerm)
+        );
     });
 
     const getStatusVariant = (status: Booking['status']) => {
@@ -33,18 +36,7 @@ export function BookingsPageContent({ initialBookings }: { initialBookings: Book
             default: return 'outline';
         }
     };
-
-    const SortableHeader = ({ label, sortKey }: { label: string; sortKey: keyof Booking }) => (
-        <Button variant="ghost" onClick={() => requestSort(sortKey)}>
-            {label}
-            {sortConfig?.key === sortKey ? (
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.direction === 'asc' ? '' : 'rotate-180'}`} />
-            ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />
-            )}
-        </Button>
-    );
-
+    
     return (
         <main className="flex-1 p-4 md:p-8">
             <Card>
@@ -75,13 +67,13 @@ export function BookingsPageContent({ initialBookings }: { initialBookings: Book
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead><SortableHeader label="Date" sortKey="date" /></TableHead>
-                                <TableHead><SortableHeader label="Booking #" sortKey="bookingNumber" /></TableHead>
-                                <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Booking #</TableHead>
+                                <TableHead>Aircraft</TableHead>
                                 <TableHead>Time</TableHead>
-                                <TableHead><SortableHeader label="Purpose" sortKey="purpose" /></TableHead>
+                                <TableHead>Purpose</TableHead>
                                 <TableHead>Personnel</TableHead>
-                                <TableHead><SortableHeader label="Status" sortKey="status" /></TableHead>
+                                <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
