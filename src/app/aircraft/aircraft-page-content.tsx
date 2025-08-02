@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -16,7 +16,7 @@ import type { Aircraft, CompletedChecklist, ExternalContact } from '@/lib/types'
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, orderBy, query, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { getAircraftPageData } from './data';
 import { getExpiryBadge, cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
@@ -45,8 +45,8 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
 }
 
-export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
-    const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
+export function AircraftPageContent() {
+    const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading } = useUser();
@@ -55,7 +55,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
-    const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
     
     useEffect(() => {
@@ -68,17 +67,27 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
         fetchContacts();
     }, [company]);
 
-    const refreshData = useCallback(async () => {
-        if (!company) return;
-        const data = await getAircraftPageData(company.id);
-        setAircraftList(data);
-    }, [company]);
-    
     useEffect(() => {
-        if (company) {
-            refreshData();
+        if (!company) {
+            setAircraftList([]);
+            return;
         }
-    }, [company, refreshData]);
+
+        const aircraftQuery = query(
+            collection(db, `companies/${company.id}/aircraft`),
+            orderBy('tailNumber')
+        );
+
+        const unsubscribe = onSnapshot(aircraftQuery, (snapshot) => {
+            const aircraft = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+            setAircraftList(aircraft);
+        }, (error) => {
+            console.error("Error fetching aircraft in real-time:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
+        });
+
+        return () => unsubscribe();
+    }, [company, toast]);
     
     const fetchHistory = useCallback(async () => {
         if (company && selectedHistoryAircraftId) {
@@ -105,7 +114,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     const handleSuccess = () => {
         setIsNewAircraftDialogOpen(false);
         setEditingAircraft(null);
-        refreshData();
     };
     
     const handleEdit = (aircraft: Aircraft) => {
@@ -122,7 +130,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 title: 'Aircraft Archived',
                 description: `${aircraft.tailNumber} has been moved to the archives.`,
             });
-            refreshData();
         } catch (error) {
             console.error("Error archiving aircraft:", error);
             toast({
@@ -142,7 +149,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
                 title: 'Aircraft Restored',
                 description: `${aircraft.tailNumber} has been restored to the active fleet.`,
             });
-            refreshData();
         } catch (error) {
             console.error("Error restoring aircraft:", error);
             toast({
@@ -193,7 +199,6 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
             const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             await addDoc(historyCollectionRef, historyDoc);
 
-            refreshData();
             toast({
                 title: 'Checklist Submitted',
                 description: `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`
