@@ -53,7 +53,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         registration: aircraft.tailNumber,
-        hobbs: 0,
+        hobbs: aircraft.hours || 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
         checklistOnboard: false,
@@ -71,6 +71,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
 
   useEffect(() => {
     form.setValue('registration', aircraft.tailNumber);
+    form.setValue('hobbs', aircraft.hours || 0);
   }, [aircraft, form]);
 
 
