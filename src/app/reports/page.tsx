@@ -16,6 +16,7 @@ import { ArrowRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, parseISO } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -137,9 +138,18 @@ function ReportsPage() {
   const recentBookings = useMemo(() => {
     return bookingData
       .filter(b => b.bookingNumber)
-      .sort((a, b) => (a.bookingNumber || '').localeCompare(b.bookingNumber || ''))
+      .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime))
       .slice(0, 10);
   }, [bookingData]);
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'Approved': return 'warning';
+      case 'Completed': return 'success';
+      case 'Cancelled': return 'destructive';
+      default: return 'outline';
+    }
+  }
 
 
   if (loading || dataLoading || !user) {
@@ -159,12 +169,17 @@ function ReportsPage() {
                   <CardDescription>A log of the 10 most recent flights.</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-72">
+                <ScrollArea className="h-96">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Booking #</TableHead>
-                        <TableHead>Booking Date</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Aircraft</TableHead>
+                        <TableHead>Purpose</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -173,11 +188,22 @@ function ReportsPage() {
                           <TableRow key={booking.id}>
                             <TableCell>{booking.bookingNumber}</TableCell>
                             <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
+                            <TableCell>{booking.aircraft}</TableCell>
+                            <TableCell>{booking.purpose}</TableCell>
+                            <TableCell>
+                                {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
+                                {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
+                                {booking.purpose === 'Maintenance' && booking.maintenanceType}
+                            </TableCell>
+                            <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center">No recent bookings.</TableCell>
+                          <TableCell colSpan={7} className="text-center h-24">No recent bookings.</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
