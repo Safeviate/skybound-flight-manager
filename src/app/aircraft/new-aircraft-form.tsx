@@ -33,6 +33,7 @@ const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
   model: z.string().min(1, 'Aircraft model is required.'),
   tailNumber: z.string().min(1, 'Aircraft registration is required.'),
+  hours: z.coerce.number().min(0, 'Hobbs hours must be a positive number.'),
   airworthinessExpiry: z.date().optional(),
   insuranceExpiry: z.date().optional(),
   certificateOfReleaseToServiceExpiry: z.date().optional(),
@@ -73,6 +74,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       make: '',
       model: '',
       tailNumber: '',
+      hours: 0,
     },
   });
 
@@ -102,7 +104,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
             // Add new aircraft
             const newAircraft: Omit<Aircraft, 'id'> = {
                 ...aircraftDataToSave,
-                hours: 0, // Enforce starting hours at 0
                 companyId: company.id,
                 status: 'Available',
                 location: 'Default Base', // Placeholder
@@ -127,7 +128,9 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     if (data.registration) {
       form.setValue('tailNumber', data.registration);
     }
-    // Note: Hobbs field is removed, so no action needed for data.hobbs
+    if (data.hobbs) {
+      form.setValue('hours', data.hobbs);
+    }
     setIsScannerOpen(false);
     toast({
       title: 'Scan Successful',
@@ -222,6 +225,26 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     </Button>
                 )}
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="hours"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Current Hobbs Hours</FormLabel>
+               <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} />
+                    </FormControl>
+                    {settings.useAiChecklists && (
+                        <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
+                            <Bot className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
               <FormMessage />
             </FormItem>
           )}

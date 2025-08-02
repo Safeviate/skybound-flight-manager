@@ -236,30 +236,30 @@ export function AircraftPageContent() {
             checklistStatus: isPreFlight ? 'needs-post-flight' : 'ready' 
         };
 
-        // 2. Handle booking updates
-        if (bookingForChecklist) {
-            const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-            if (isPreFlight) {
-                batch.update(bookingRef, { startHobbs: data.hobbs });
-            } else {
-                const postFlightData = data as PostFlightChecklistFormValues;
-                const startHobbs = bookingForChecklist.startHobbs || 0;
-                const endHobbs = postFlightData.hobbs;
-                const flightDuration = parseFloat((endHobbs - startHobbs).toFixed(1));
+        // 2. Handle booking and aircraft hour updates
+        if (isPreFlight) {
+            if (bookingForChecklist) {
+                batch.update(doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id), { startHobbs: data.hobbs });
+            }
+        } else { // Post-flight
+            const postFlightData = data as PostFlightChecklistFormValues;
+            const startHobbs = bookingForChecklist?.startHobbs || 0;
+            const endHobbs = postFlightData.hobbs;
+            const flightDuration = parseFloat((endHobbs - startHobbs).toFixed(1));
 
-                if (flightDuration > 0) {
-                    batch.update(bookingRef, { 
+            if (flightDuration > 0) {
+                 if(bookingForChecklist) {
+                    batch.update(doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id), { 
                         endHobbs: endHobbs,
                         flightDuration: flightDuration,
                         status: 'Completed' 
                     });
-                    // Only update aircraft hours on post-flight completion with valid duration
-                    aircraftUpdate.hours = (selectedAircraftForChecklist.hours || 0) + flightDuration;
-                } else {
-                    batch.update(bookingRef, { status: 'Completed' });
-                }
-                aircraftUpdate.activeBookingId = null;
+                 }
+                aircraftUpdate.hours = (selectedAircraftForChecklist.hours || 0) + flightDuration;
+            } else if (bookingForChecklist) {
+                batch.update(doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id), { status: 'Completed' });
             }
+            aircraftUpdate.activeBookingId = null;
         }
         
         // 3. Update aircraft status
