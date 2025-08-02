@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
@@ -82,15 +84,16 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date, scope: string) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
+    const [scope, setScope] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
         if (auditee && auditDate) {
-            onStart(template, auditee, auditDate);
+            onStart(template, auditee, auditDate, scope);
             setIsOpen(false);
         }
     };
@@ -102,53 +105,64 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                     <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
-                        Please select the primary auditee and date for this audit.
+                        Please select the primary auditee, date, and define the scope for this audit.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                    <div>
-                        <Label htmlFor="auditee-select">Select Auditee</Label>
-                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
-                            <SelectTrigger id="auditee-select">
-                                <SelectValue placeholder="Select a person" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {personnel.map(p => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                        {p.name} ({p.role})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="auditee-select">Select Auditee</Label>
+                            <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
+                                <SelectTrigger id="auditee-select">
+                                    <SelectValue placeholder="Select a person" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {personnel.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>
+                                            {p.name} ({p.role})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>Select Audit Date</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !auditDate && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={auditDate}
+                                    onSelect={setAuditDate}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                     </div>
                     <div>
-                        <Label>Select Audit Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !auditDate && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                mode="single"
-                                selected={auditDate}
-                                onSelect={setAuditDate}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                        <Label htmlFor="audit-scope">Audit Scope / Evidence to be Sampled</Label>
+                        <Textarea 
+                            id="audit-scope"
+                            placeholder="e.g., Review maintenance records for ZS-ABC from Jan-Mar. Interview all new pilots hired in Q1."
+                            value={scope}
+                            onChange={(e) => setScope(e.target.value)}
+                        />
                     </div>
                 </div>
                 <Button onClick={handleConfirm} disabled={!selectedAuditeeId || !auditDate}>
@@ -189,7 +203,7 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date) => {
+    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date, scope: string) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
@@ -207,6 +221,7 @@ export function AuditChecklistsManager() {
             checklistItems: template.items,
             nonConformanceIssues: [],
             summary: '',
+            scope: scope,
             investigationTeam: [user.name, auditee.name]
         };
 

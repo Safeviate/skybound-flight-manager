@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -807,6 +808,16 @@ export default function QualityAuditDetailPage() {
                   </div>
               </div>
               <div className="space-y-2 border-t pt-6">
+                  <Label htmlFor="audit-scope" className="font-semibold">Audit Scope</Label>
+                  <Textarea 
+                  id="audit-scope"
+                  placeholder="Define the scope of the audit here..."
+                  className="min-h-[80px]"
+                  value={audit.scope || ''}
+                  onChange={(e) => handleAuditUpdate({ ...audit, scope: e.target.value }, false)}
+                  />
+              </div>
+              <div className="space-y-2 border-t pt-6">
                   <Label htmlFor="audit-summary" className="font-semibold">Audit Summary</Label>
                   <Textarea 
                   id="audit-summary"
@@ -931,6 +942,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

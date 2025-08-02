@@ -539,6 +539,7 @@ export type QualityAudit = {
   investigationTeam?: string[];
   auditorSignature?: string;
   auditeeSignature?: string;
+  scope?: string;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
