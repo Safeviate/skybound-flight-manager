@@ -128,7 +128,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
     if (booking.status === 'Completed') {
-        return { style: { backgroundColor: '#7C3AED', color: 'white' } };
+        return { style: { backgroundColor: '#7C3AED' } };
     }
 
     if (!aircraftForBooking) {
@@ -316,7 +316,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             padding: 4px 8px; 
             border-radius: 4px; 
             text-align: center; 
-            font-size: 12px; 
+            font-size: 11px; 
             white-space: normal; 
             overflow: hidden; 
             position: absolute; 
