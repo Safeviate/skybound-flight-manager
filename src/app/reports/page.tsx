@@ -21,10 +21,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 
 
-const AircraftUtilizationChart = ({ bookings }: { bookings: Booking[] }) => {
+const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
   const utilizationData = useMemo(() => {
+    const activeAircraftTails = new Set(aircraft.filter(a => a.status !== 'Archived').map(a => a.tailNumber));
+
     const bookingsByAircraft = bookings.reduce((acc, booking) => {
-      if (booking.aircraft && booking.status !== 'Cancelled') {
+      if (booking.aircraft && activeAircraftTails.has(booking.aircraft) && booking.status !== 'Cancelled') {
         const duration = booking.flightDuration || 0;
         acc[booking.aircraft] = (acc[booking.aircraft] || 0) + duration;
       }
@@ -35,7 +37,7 @@ const AircraftUtilizationChart = ({ bookings }: { bookings: Booking[] }) => {
       name,
       'Flight Hours': parseFloat(hours.toFixed(1)),
     })).sort((a, b) => b['Flight Hours'] - a['Flight Hours']);
-  }, [bookings]);
+  }, [bookings, aircraft]);
 
   return (
     <ResponsiveContainer width="100%" height={300}>
@@ -363,7 +365,7 @@ function ReportsPage() {
                             <CardDescription>Total flight hours per aircraft.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <AircraftUtilizationChart bookings={bookingData} />
+                            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
                         </CardContent>
                     </Card>
                     <Card>
