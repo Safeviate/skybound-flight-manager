@@ -112,20 +112,24 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
-  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined) => {
-    if (booking.status === 'Completed') return 'bg-purple-600';
+  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
+    if (booking.status === 'Completed') {
+        return { style: { backgroundColor: '#7C3AED', color: 'white' } };
+    }
 
-    if (!aircraftForBooking) return 'bg-gray-400';
+    if (!aircraftForBooking) {
+        return { className: 'bg-gray-400' };
+    }
 
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-pre-flight':
-        return 'bg-yellow-500';
+        return { className: 'bg-yellow-500' };
       case 'needs-post-flight':
-        return 'bg-blue-500';
+        return { className: 'bg-blue-500' };
       case 'ready':
-        return 'bg-green-500';
+        return { className: 'bg-green-500' };
       default:
-        return 'bg-gray-400';
+        return { className: 'bg-gray-400' };
     }
   };
 
@@ -359,9 +363,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                         renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
                                       }
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+                                      const variant = getBookingVariant(booking, aircraftForBooking);
                                       return (
                                         <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
-                                          <div className={cn('gantt-bar', getBookingVariant(booking, aircraftForBooking))}>
+                                          <div className={cn('gantt-bar', variant.className)} style={variant.style}>
                                             {getBookingLabel(booking)}
                                           </div>
                                         </td>
