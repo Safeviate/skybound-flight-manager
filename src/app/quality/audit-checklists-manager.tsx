@@ -88,7 +88,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
 
 const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
-    const [auditType, setAuditType] = useState<'Internal' | 'External'>('Internal');
+    const [auditType, setAuditType] = useState<'Internal' | 'External' | 'Self Audit'>('Internal');
     const [auditTeam, setAuditTeam] = useState<string[]>([]);
     const [auditeeTeam, setAuditeeTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
@@ -101,16 +101,16 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
-        if (auditee && auditDate && user) {
+        if (auditDate && user) {
             onStart({
                 date: format(auditDate, 'yyyy-MM-dd'),
                 type: auditType,
                 auditor: user.name,
-                auditeeName: auditee.name,
-                auditeePosition: auditee.role === 'Auditee' ? auditee.externalPosition : auditee.role,
+                auditeeName: auditee?.name || 'N/A',
+                auditeePosition: auditee?.role === 'Auditee' ? auditee.externalPosition : auditee?.role,
                 area: template.area,
                 auditTeam: [user.name, ...auditTeam],
-                auditeeTeam: [auditee.name, ...auditeeTeam],
+                auditeeTeam: auditee ? [auditee.name, ...auditeeTeam] : [...auditeeTeam],
                 scope: scope,
                 evidenceReference: evidenceReference,
             });
@@ -151,11 +151,12 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         </div>
                          <div>
                             <Label>Type of Audit</Label>
-                            <Select value={auditType} onValueChange={(v: 'Internal' | 'External') => setAuditType(v)}>
+                            <Select value={auditType} onValueChange={(v: 'Internal' | 'External' | 'Self Audit') => setAuditType(v)}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Internal">Internal</SelectItem>
                                     <SelectItem value="External">External</SelectItem>
+                                    <SelectItem value="Self Audit">Self Audit</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -262,7 +263,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         />
                     </div>
                 </div>
-                <Button onClick={handleConfirm} disabled={!selectedAuditeeId || !auditDate}>
+                <Button onClick={handleConfirm} disabled={!auditDate}>
                     Confirm and Start Audit
                 </Button>
             </DialogContent>

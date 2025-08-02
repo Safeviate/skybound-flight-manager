@@ -459,7 +459,7 @@ export type QualityAudit = {
   companyId: string;
   title: string;
   date: string;
-  type: 'Internal' | 'External';
+  type: 'Internal' | 'External' | 'Self Audit';
   auditor: string;
   auditeeName?: string | null;
   auditeePosition?: string | null;
