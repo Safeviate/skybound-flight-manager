@@ -176,7 +176,7 @@ export function AuditChecklistsManager() {
         
         const [templatesSnapshot, personnelSnapshot] = await Promise.all([
             getDocs(templatesQuery),
-            getDocs(personnelQuery),
+            getDocs(personnelSnapshot),
         ]);
 
         setChecklistTemplates(templatesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
@@ -332,7 +332,7 @@ export function AuditChecklistsManager() {
                 )}
             </CardContent>
              <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
                     </DialogHeader>
