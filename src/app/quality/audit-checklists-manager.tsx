@@ -221,18 +221,21 @@ export function AuditChecklistsManager() {
 
     const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
+
+        // Check if we are editing an existing template or creating a new one (including from AI)
+        const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
         
-        const isNew = !editingTemplate;
+        const templateData = { ...data, companyId: company.id };
 
         if (isNew) {
-            const newTemplate = { ...data, companyId: company.id };
-            await addDoc(collection(db, `companies/${company.id}/audit-checklists`), newTemplate);
+            await addDoc(collection(db, `companies/${company.id}/audit-checklists`), templateData);
             toast({ title: "Template Created" });
         } else {
             const templateRef = doc(db, `companies/${company.id}/audit-checklists`, editingTemplate.id);
-            await updateDoc(templateRef, data as any);
+            await updateDoc(templateRef, templateData as any);
             toast({ title: "Template Updated" });
         }
+        
         fetchTemplates();
         closeDialog();
     };
@@ -242,7 +245,7 @@ export function AuditChecklistsManager() {
             id: `temp-${Date.now()}`,
             companyId: company?.id || '',
             title: data.title,
-            area: 'Management', // Default or could be asked
+            area: 'Management',
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
@@ -250,11 +253,11 @@ export function AuditChecklistsManager() {
                 finding: null,
                 level: null,
             })),
-            category: 'Pre-Flight', // This seems incorrect for a quality audit
+            category: 'Pre-Flight',
         };
         setEditingTemplate(newTemplate);
         setCreationMode('manual');
-        setIsDialogOpen(true); // Open the dialog to show the populated form
+        setIsDialogOpen(true);
     };
 
     const handleEdit = (template: Checklist) => {
