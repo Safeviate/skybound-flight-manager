@@ -11,10 +11,11 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -339,17 +340,20 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
               <>
                 <DialogHeader>
                     <DialogTitle>
-                        {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? 'Post-Flight' : 'Pre-Flight'} Checklist
+                        Aircraft Checklist
                     </DialogTitle>
                      <DialogDescription>
                         For aircraft: {selectedChecklistAircraft.tailNumber}
                     </DialogDescription>
                 </DialogHeader>
                 {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? (
-                    <PostFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={selectedChecklistAircraft}
-                    />
+                     <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Post-Flight Checklist Outstanding</AlertTitle>
+                        <AlertDescription>
+                            The previous crew must complete their post-flight checklist before a new pre-flight can be initiated for this aircraft.
+                        </AlertDescription>
+                    </Alert>
                 ) : (
                     <PreFlightChecklistForm 
                         onSuccess={handleChecklistSuccess} 
