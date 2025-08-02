@@ -48,7 +48,6 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
 export function AircraftPageContent() {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
-    const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading } = useUser();
     const { toast } = useToast();
@@ -257,7 +256,7 @@ export function AircraftPageContent() {
         }
     };
     
-    const handleReportIssue = async (aircraftId: string, title: string, description: string) => {
+    const handleReportIssue = async (aircraftId: string, issueDetails: { title: string, description: string }) => {
         if (!company || !user) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot report issue without company/user context.' });
             return;
@@ -266,21 +265,23 @@ export function AircraftPageContent() {
         const aircraft = aircraftList.find(a => a.id === aircraftId);
         if (!aircraft) return;
 
-        const newAlert: Omit<Alert, 'id' | 'number'> = {
-            companyId: company.id,
-            type: 'Yellow Tag',
-            title: `Issue Reported: ${aircraft.tailNumber} - ${title}`,
-            description,
-            author: user.name,
-            date: new Date().toISOString(),
-            readBy: [user.id],
-        };
+        const bookingForAircraft = bookings.find(b => b.id === aircraft.activeBookingId);
+        
+        const batch = writeBatch(db);
+        
+        // Update aircraft status to In Maintenance
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        batch.update(aircraftRef, { status: 'In Maintenance' });
+
+        // Update booking with an issue flag
+        if (bookingForAircraft) {
+            const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForAircraft.id);
+            batch.update(bookingRef, { hasIssue: true, issueDetails: issueDetails.description });
+        }
 
         try {
-            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-            await addDoc(alertsCollection, newAlert);
-            toast({ title: 'Issue Reported', description: 'An alert has been raised and sent to relevant personnel.'});
-            setIsReportIssueDialogOpen(false);
+            await batch.commit();
+            toast({ title: 'Issue Reported', description: `Aircraft ${aircraft.tailNumber} status set to In Maintenance and booking flagged.`});
         } catch (error) {
             console.error('Error reporting issue:', error);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to report the issue.'});
@@ -796,3 +797,5 @@ export function AircraftPageContent() {
     </main>
   );
 }
+
+    

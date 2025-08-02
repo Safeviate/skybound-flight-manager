@@ -127,6 +127,9 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   };
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
+    if (booking.hasIssue) {
+        return { className: 'bg-destructive' };
+    }
     if (booking.status === 'Completed') {
         return { style: { backgroundColor: '#7C3AED' } };
     }
@@ -386,7 +389,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                         <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
                                           <div className={cn('gantt-bar', variant.className)} style={variant.style}>
                                              <div className="flex items-center gap-2">
-                                                {checklistOutstanding && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Checklist Due" />}
+                                                {(checklistOutstanding || booking.hasIssue) && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title={booking.hasIssue ? `Issue: ${booking.issueDetails}` : "Checklist Due"} />}
                                                 <span>{getBookingLabel(booking)}</span>
                                               </div>
                                           </div>
@@ -455,11 +458,13 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                         <PostFlightChecklistForm 
                             onSuccess={handleChecklistSuccess}
                             aircraft={selectedChecklistAircraft}
+                            onReportIssue={() => {}}
                         />
                     ) : (
                         <PreFlightChecklistForm 
                             onSuccess={handleChecklistSuccess} 
                             aircraft={selectedChecklistAircraft}
+                            onReportIssue={() => {}}
                         />
                     )
                 )}
@@ -470,3 +475,5 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     </>
   );
 }
+
+    

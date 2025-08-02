@@ -225,6 +225,8 @@ export type Booking = {
   cancellationReason?: string;
   startHobbs?: number;
   endHobbs?: number;
+  hasIssue?: boolean;
+  issueDetails?: string;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
@@ -592,3 +594,5 @@ export type ExternalContact = {
   email: string;
   description?: string;
 };
+
+    

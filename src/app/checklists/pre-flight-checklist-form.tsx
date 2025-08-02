@@ -43,14 +43,13 @@ export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
-    onReportIssue: (aircraftId: string, title: string, description: string) => void;
+    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string }) => void;
 }
 
 export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
-  const [showDefectReport, setShowDefectReport] = useState(false);
 
   const form = useForm<PreFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -104,8 +103,11 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
         toast({ variant: 'destructive', title: 'Error', description: 'Please describe the issue before submitting.'});
         return;
     }
-    onReportIssue(aircraft.id, `Defect on ${aircraft.tailNumber}`, reportText);
-    setShowDefectReport(false);
+    onReportIssue(aircraft.id, {
+        title: `Defect on ${aircraft.tailNumber}`,
+        description: reportText
+    });
+    // Clear the form fields after submission
     setValue('report', '');
     setValue('defectPhoto', '');
   };
@@ -217,12 +219,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                     </div>
                 </div>
 
-                {!showDefectReport ? (
-                    <Button variant="destructive" onClick={() => setShowDefectReport(true)} className="w-full">
-                        <AlertTriangle className="mr-2 h-4 w-4" /> Report an Issue
-                    </Button>
-                ) : (
-                 <div className="space-y-4 p-4 border-destructive/50 border rounded-lg">
+                 <div className="space-y-4 p-4 border rounded-lg">
                     <Label className="font-medium">Defect Report</Label>
                     <FormField
                         control={form.control}
@@ -262,7 +259,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                         </Button>
                     </div>
                 </div>
-                )}
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Pre-Flight Checklist</Button>
@@ -287,3 +283,5 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     </Form>
   )
 }
+
+    
