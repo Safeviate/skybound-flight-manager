@@ -140,11 +140,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     }
 
     switch (aircraftForBooking.checklistStatus) {
-      case 'needs-pre-flight':
-        return { className: 'bg-yellow-500' }; // Yellow
       case 'needs-post-flight':
         return { className: 'bg-blue-500' }; // Blue
       case 'ready':
+      case 'needs-pre-flight':
         return { className: 'bg-green-500' }; // Green
       default:
         return { className: 'bg-gray-400' }; // Gray
@@ -350,7 +349,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             <h2>Daily Schedule</h2>
              <div className="color-legend">
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
-                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#ffc107'}}></div>Pre-Flight Outstanding</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
