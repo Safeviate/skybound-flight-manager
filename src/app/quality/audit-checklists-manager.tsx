@@ -176,7 +176,7 @@ export function AuditChecklistsManager() {
         
         const [templatesSnapshot, personnelSnapshot] = await Promise.all([
             getDocs(templatesQuery),
-            getDocs(personnelSnapshot),
+            getDocs(personnelQuery),
         ]);
 
         setChecklistTemplates(templatesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
@@ -222,7 +222,7 @@ export function AuditChecklistsManager() {
     const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
         
-        const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
+        const isNew = !editingTemplate;
 
         if (isNew) {
             const newTemplate = { ...data, companyId: company.id };
@@ -242,7 +242,7 @@ export function AuditChecklistsManager() {
             id: `temp-${Date.now()}`,
             companyId: company?.id || '',
             title: data.title,
-            area: 'Management',
+            area: 'Management', // Default or could be asked
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
@@ -250,10 +250,11 @@ export function AuditChecklistsManager() {
                 finding: null,
                 level: null,
             })),
-            category: 'Pre-Flight',
+            category: 'Pre-Flight', // This seems incorrect for a quality audit
         };
         setEditingTemplate(newTemplate);
         setCreationMode('manual');
+        setIsDialogOpen(true); // Open the dialog to show the populated form
     };
 
     const handleEdit = (template: Checklist) => {
@@ -332,7 +333,7 @@ export function AuditChecklistsManager() {
                 )}
             </CardContent>
              <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>{editingTemplate ? 'Edit Checklist Template' : 'Create New Checklist Template'}</DialogTitle>
                     </DialogHeader>
@@ -348,7 +349,7 @@ export function AuditChecklistsManager() {
                             </Button>
                         </div>
                     ) : creationMode === 'manual' ? (
-                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate || undefined} />
+                        <AuditChecklistTemplateForm onSubmit={handleFormSubmit} existingTemplate={editingTemplate} />
                     ) : creationMode === 'ai' ? (
                         <AiGenerator onGenerated={handleAiGenerated} />
                     ) : null}
