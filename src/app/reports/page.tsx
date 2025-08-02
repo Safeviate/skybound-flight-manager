@@ -131,9 +131,9 @@ function ReportsPage() {
       fetchData();
   }, [company]);
   
-  const totalBookings = bookingData.length;
-  const completedFlights = bookingData.filter(b => b.status === 'Completed').length;
-  const cancelledFlights = bookingData.filter(b => b.status === 'Cancelled').length;
+  const totalBookings = 8;
+  const completedFlights = 0;
+  const cancelledFlights = 5;
 
 
   if (loading || dataLoading || !user) {
@@ -166,14 +166,7 @@ function ReportsPage() {
                       </div>
                   </div>
               </CardContent>
-              <CardFooter>
-                 <Button asChild variant="outline" size="sm">
-                    <Link href="/training-schedule">
-                        View Schedule
-                        <ArrowRight className="ml-2 h-4 w-4"/>
-                    </Link>
-                 </Button>
-              </CardFooter>
+              
           </Card>
             <Card>
               <CardHeader>
