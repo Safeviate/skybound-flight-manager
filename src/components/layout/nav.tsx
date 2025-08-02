@@ -70,7 +70,6 @@ const mobileNavItems = [
 
 const reportsNavItems = [
     { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
-    { href: '/reports/bookings', label: 'Bookings Log', icon: BookOpen, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
 ]
 
