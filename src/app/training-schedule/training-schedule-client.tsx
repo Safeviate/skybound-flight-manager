@@ -132,22 +132,22 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         return { className: 'bg-destructive' };
     }
     if (booking.status === 'Completed') {
-        return { style: { backgroundColor: '#7C3AED' } };
+        return { style: { backgroundColor: '#7C3AED' } }; // Purple
     }
 
     if (!aircraftForBooking) {
-        return { className: 'bg-gray-400' };
+        return { className: 'bg-gray-400' }; // Gray
     }
 
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-pre-flight':
-        return { className: 'bg-yellow-500' };
+        return { className: 'bg-yellow-500' }; // Yellow
       case 'needs-post-flight':
-        return { className: 'bg-blue-500' };
+        return { className: 'bg-blue-500' }; // Blue
       case 'ready':
-        return { className: 'bg-green-500' };
+        return { className: 'bg-green-500' }; // Green
       default:
-        return { className: 'bg-gray-400' };
+        return { className: 'bg-gray-400' }; // Gray
     }
   };
 
@@ -333,6 +333,9 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
             justify-content: center; 
             cursor: pointer; 
         }
+        .color-legend { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; font-size: 12px; align-items: center;}
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="container">
         <div className="view-switcher">
@@ -345,6 +348,13 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
 
         <div id="ganttView">
             <h2>Daily Schedule</h2>
+             <div className="color-legend">
+                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
+                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#ffc107'}}></div>Pre-Flight Outstanding</div>
+                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
+                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
+                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
+            </div>
              <div className="gantt-container">
                 <table className="gantt-table">
                     <thead>
