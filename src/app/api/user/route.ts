@@ -42,8 +42,18 @@ export async function GET(request: NextRequest) {
     const { password, ...userToSend } = userData;
 
     // Fetch upcoming bookings for the user
-    // This is now removed, an empty array will be returned.
-    const bookings: Booking[] = [];
+    const bookingsQuery = query(
+        collection(db, `companies/${companyId}/bookings`),
+        or(
+            where('student', '==', userData.name),
+            where('instructor', '==', userData.name)
+        ),
+        where('date', '>=', format(new Date(), 'yyyy-MM-dd')),
+        orderBy('date'),
+        orderBy('startTime')
+    );
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
 
     // Fetch unacknowledged alerts for the user
     const alertsQuery = query(collection(db, `companies/${companyId}/alerts`));

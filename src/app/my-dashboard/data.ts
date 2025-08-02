@@ -16,6 +16,19 @@ export async function getDashboardData(companyId: string, userId: string) {
 
     const user = userSnap.data() as User;
     
-    // Bookings are no longer fetched
-    return { bookingsList: [] };
+    const bookingsQuery = query(
+        collection(db, `companies/${companyId}/bookings`),
+        or(
+            where('student', '==', user.name),
+            where('instructor', '==', user.name)
+        ),
+        where('date', '>=', format(new Date(), 'yyyy-MM-dd')),
+        orderBy('date'),
+        orderBy('startTime')
+    );
+
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    
+    return { bookingsList };
 }
