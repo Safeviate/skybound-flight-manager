@@ -22,7 +22,7 @@ export function BookingsPageContent({ initialBookings }: { initialBookings: Book
         requestSort,
     } = useTableControls<Booking>(initialBookings, {
         initialSort: { key: 'date', direction: 'desc' },
-        searchKeys: ['aircraft', 'purpose', 'status', 'student', 'instructor'],
+        searchKeys: ['aircraft', 'purpose', 'status', 'student', 'instructor', 'bookingNumber'],
     });
 
     const getStatusVariant = (status: Booking['status']) => {
@@ -76,6 +76,7 @@ export function BookingsPageContent({ initialBookings }: { initialBookings: Book
                         <TableHeader>
                             <TableRow>
                                 <TableHead><SortableHeader label="Date" sortKey="date" /></TableHead>
+                                <TableHead><SortableHeader label="Booking #" sortKey="bookingNumber" /></TableHead>
                                 <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
                                 <TableHead>Time</TableHead>
                                 <TableHead><SortableHeader label="Purpose" sortKey="purpose" /></TableHead>
@@ -87,6 +88,7 @@ export function BookingsPageContent({ initialBookings }: { initialBookings: Book
                             {bookings.map((booking) => (
                                 <TableRow key={booking.id}>
                                     <TableCell>{format(parseISO(booking.date), 'dd MMM yyyy')}</TableCell>
+                                    <TableCell>{booking.bookingNumber}</TableCell>
                                     <TableCell className="font-medium">{booking.aircraft}</TableCell>
                                     <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
                                     <TableCell>{booking.purpose}</TableCell>
