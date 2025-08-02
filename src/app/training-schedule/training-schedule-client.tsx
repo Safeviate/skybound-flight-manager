@@ -245,6 +245,18 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     }
     setSelectedChecklistAircraft(aircraft);
   }
+  
+  const handleBookingClick = (booking: Booking) => {
+    if (booking.status === 'Completed' && !user?.permissions.includes('Super User')) {
+      toast({
+        variant: 'destructive',
+        title: 'Booking Locked',
+        description: 'Completed bookings cannot be edited.',
+      });
+      return;
+    }
+    setEditingBooking(booking);
+  };
 
   if (loading) {
     return (
@@ -329,7 +341,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                       }
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       return (
-                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => setEditingBooking(booking)}>
+                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
                                           <div className={cn('gantt-bar', getBookingVariant(booking, aircraftForBooking))}>
                                             {getBookingLabel(booking)}
                                           </div>
