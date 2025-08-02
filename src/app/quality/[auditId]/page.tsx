@@ -245,7 +245,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         <CardTitle className="text-2xl">{audit.title}</CardTitle>
                         <CardDescription>
                           Audit Number: {audit.id} <br />
-                          Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')}
+                          Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
@@ -957,6 +957,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

@@ -86,8 +86,9 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date, auditTeam: string[], auditeeTeam: string[], evidenceReference: string) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
+    const [auditType, setAuditType] = useState<'Internal' | 'External'>('Internal');
     const [auditTeam, setAuditTeam] = useState<string[]>([]);
     const [auditeeTeam, setAuditeeTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
@@ -99,8 +100,18 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
-        if (auditee && auditDate) {
-            onStart(template, auditee, auditDate, auditTeam, auditeeTeam, evidenceReference);
+        if (auditee && auditDate && user) {
+            onStart({
+                date: format(auditDate, 'yyyy-MM-dd'),
+                type: auditType,
+                auditor: user.name,
+                auditeeName: auditee.name,
+                auditeePosition: auditee.role === 'Auditee' ? auditee.externalPosition : auditee.role,
+                area: template.area,
+                auditTeam: [user.name, ...auditTeam],
+                auditeeTeam: [auditee.name, ...auditeeTeam],
+                evidenceReference: evidenceReference,
+            });
             setIsOpen(false);
         }
     };
@@ -120,20 +131,32 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                    <div>
-                        <Label>Audit Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn("w-full justify-start text-left font-normal", !auditDate && "text-muted-foreground")}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={auditDate} onSelect={setAuditDate} initialFocus /></PopoverContent>
-                        </Popover>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>Audit Date</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn("w-full justify-start text-left font-normal", !auditDate && "text-muted-foreground")}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={auditDate} onSelect={setAuditDate} initialFocus /></PopoverContent>
+                            </Popover>
+                        </div>
+                         <div>
+                            <Label>Type of Audit</Label>
+                            <Select value={auditType} onValueChange={(v: 'Internal' | 'External') => setAuditType(v)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Internal">Internal</SelectItem>
+                                    <SelectItem value="External">External</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                      <div>
                         <Label>Lead Auditor</Label>
@@ -267,27 +290,19 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date, auditTeam: string[], auditeeTeam: string[], evidenceReference: string) => {
+    const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
+            ...data,
             id: newAuditId,
             companyId: company.id,
-            title: template.title,
-            date: format(auditDate, 'yyyy-MM-dd'),
-            type: 'Internal',
-            auditor: user.name,
-            auditeeName: auditee.name,
-            auditeePosition: auditee.role,
-            area: template.area,
+            title: editingTemplate?.title || 'Untitled Audit',
             status: 'Open',
             complianceScore: 0,
-            checklistItems: template.items,
+            checklistItems: editingTemplate?.items || [],
             nonConformanceIssues: [],
             summary: '',
-            auditTeam: [user.name, ...auditTeam],
-            auditeeTeam: [auditee.name, ...auditeeTeam],
-            evidenceReference: evidenceReference,
         };
 
         try {
