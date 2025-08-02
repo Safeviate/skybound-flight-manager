@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Bot, Camera, Plane, Hash, Image as ImageIcon } from 'lucide-react';
+import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import { Input } from '@/components/ui/input';
 import type { Aircraft } from '@/lib/types';
 import { StandardCamera } from '@/components/ui/standard-camera';
+import { Label } from '@/components/ui/label';
 
 
 const checklistSchema = z.object({
@@ -40,6 +41,8 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
+  const [isReportingDefect, setIsReportingDefect] = useState(false);
+
 
   const form = useForm<PostFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -168,14 +171,18 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
                         )}
                     />
                  </div>
-
-                <div className="space-y-2">
+                 {!isReportingDefect ? (
+                    <Button variant="destructive" className="w-full" onClick={() => setIsReportingDefect(true)}>
+                        <AlertTriangle className="mr-2 h-4 w-4" /> Report an Issue / Defect
+                    </Button>
+                ) : (
+                <div className="space-y-4 p-4 border-destructive/50 border rounded-lg">
+                    <Label>Defect Report</Label>
                     <FormField
                         control={form.control}
                         name="report"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Anything to Report?</FormLabel>
                                 <FormControl>
                                     <Textarea placeholder="Note any defects, issues, or observations..." {...field} />
                                 </FormControl>
@@ -204,6 +211,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
                         )}
                     />
                 </div>
+                )}
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Post-Flight Checklist</Button>
