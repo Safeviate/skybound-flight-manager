@@ -35,7 +35,7 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
   }, [user, company, loading, router, initialBookings]);
   
     useEffect(() => {
-        const unacknowledged = getUnacknowledgedAlerts([]);
+        const unacknowledged = getUnacknowledgedAlerts();
         setAlerts(unacknowledged);
     }, [getUnacknowledgedAlerts]);
 

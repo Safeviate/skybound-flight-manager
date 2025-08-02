@@ -7,25 +7,16 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Building, Globe, Paintbrush, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, Loader2, AlertTriangle, Activity, BellOff } from 'lucide-react';
+import { Building, Rocket, PlusCircle, Edit, MoreHorizontal, Users, Plane, ShieldAlert, User, AlertTriangle, Activity, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewCompanyForm } from '@/app/corporate/new-company-form';
-import type { Company, User as CompanyUser, SafetyReport, Feature } from '@/lib/types';
-import { ROLE_PERMISSIONS } from '@/lib/types';
+import type { Company } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, collection, getDocs, updateDoc, query, where, getCountFromServer, Timestamp, limit, orderBy } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, auth } from '@/lib/firebase';
-import config from '@/config';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { subDays, formatDistanceToNow, parseISO } from 'date-fns';
 import Loading from './loading';
-import { Sidebar, SidebarInset } from '@/components/ui/sidebar';
-import Nav from '@/components/layout/nav';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
 
 interface CompanyWithStats extends Company {
   userCount: number;
@@ -33,6 +24,29 @@ interface CompanyWithStats extends Company {
   openSafetyReports: number;
   lastBookingDate?: string;
 }
+
+const mockCompanies: CompanyWithStats[] = [
+    {
+        id: 'skybound-aero',
+        name: 'SkyBound Aero',
+        trademark: 'Excellence in Aviation',
+        enabledFeatures: ['Safety', 'Quality', 'Aircraft', 'Students', 'Personnel', 'Bookings', 'AdvancedAnalytics'],
+        userCount: 15,
+        aircraftCount: 5,
+        openSafetyReports: 2,
+        lastBookingDate: subDays(new Date(), 5).toISOString(),
+    },
+    {
+        id: 'summit-flights',
+        name: 'Summit Flights',
+        trademark: 'Reach New Heights',
+        enabledFeatures: ['Safety', 'Bookings', 'Aircraft'],
+        userCount: 8,
+        aircraftCount: 3,
+        openSafetyReports: 0,
+        lastBookingDate: subDays(new Date(), 40).toISOString(),
+    }
+];
 
 const SystemHealth = ({ companies }: { companies: CompanyWithStats[] }) => {
   const [healthAlerts, setHealthAlerts] = useState<
@@ -110,9 +124,9 @@ const SystemHealth = ({ companies }: { companies: CompanyWithStats[] }) => {
 }
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: CompanyWithStats[] }) {
-  const { user, loading, setCompany: setGlobalCompany, updateCompany } = useUser();
+  const { user, loading, setCompany: setGlobalCompany } = useUser();
   const router = useRouter();
-  const [companies, setCompanies] = useState<CompanyWithStats[]>(initialCompanies);
+  const [companies, setCompanies] = useState<CompanyWithStats[]>(mockCompanies);
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -125,89 +139,22 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
   }, [user, loading, router]);
 
 
-  const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<CompanyUser, 'id' | 'companyId' | 'role' | 'permissions'>, password: string) => {
-    const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
-        const newUserId = userCredential.user.uid;
-
-        const companyDocRef = doc(db, 'companies', companyId);
-        const finalCompanyData = { ...newCompanyData, id: companyId };
-        await setDoc(companyDocRef, finalCompanyData);
-        
-        const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
-        const finalUserData: Omit<CompanyUser, 'password'> = {
-            ...adminData,
-            id: newUserId,
-            companyId: companyId,
-            role: 'Admin',
-            permissions: ROLE_PERMISSIONS['Admin'],
-        };
-        await setDoc(userDocRef, finalUserData);
-
-        toast({
-            title: "Company Registered Successfully!",
-            description: `The company "${newCompanyData.name}" has been created.`
-        });
-        
-        setCompanies(prev => [...prev, { ...finalCompanyData, userCount: 1, aircraftCount: 0, openSafetyReports: 0 }]);
-        setIsNewDialogOpen(false);
-
-    } catch (error: any) {
-        console.error("Error creating company:", error);
-        const errorCode = error.code;
-        let errorMessage = "An unknown error occurred.";
-        if (errorCode === 'auth/email-already-in-use') {
-            errorMessage = "This email address is already in use by another account.";
-        } else if (errorCode === 'auth/weak-password') {
-            errorMessage = "The password is too weak. Please use at least 8 characters.";
-        }
-        toast({
-            variant: 'destructive',
-            title: "Registration Failed",
-            description: errorMessage,
-        });
-    }
+  const handleNewCompany = () => {
+    toast({ title: "Company Registered", description: `This is a mock action.` });
+    setIsNewDialogOpen(false);
   };
 
-  const handleEditCompany = async (updatedData: Partial<Company>, logoFile?: File) => {
+  const handleEditCompany = () => {
     if (!editingCompany) return;
-
-    let logoUrl = editingCompany.logoUrl;
-    if (logoFile) {
-        const reader = new FileReader();
-        reader.readAsDataURL(logoFile);
-        await new Promise<void>((resolve, reject) => {
-            reader.onload = () => {
-                logoUrl = reader.result as string;
-                resolve();
-            };
-            reader.onerror = (error) => reject(error);
-        });
-    }
-
-    const finalData = { ...editingCompany, ...updatedData, logoUrl };
-    
-    const success = await updateCompany(finalData);
-
-    if (success) {
-      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...finalData } : c));
-      toast({
-            title: 'Company Updated',
-            description: `${editingCompany.name} has been updated.`,
-      });
-      setIsEditDialogOpen(false);
-      setEditingCompany(null);
-    } else {
-       toast({ variant: 'destructive', title: 'Error', description: 'Could not save company updates.'});
-    }
+    toast({ title: 'Company Updated', description: `${editingCompany.name} has been updated.`});
+    setIsEditDialogOpen(false);
+    setEditingCompany(null);
   };
   
   const handleLoginAs = (company: CompanyWithStats) => {
     toast({
         title: `Switching to ${company.name}`,
-        description: `This would log you in as an admin for this company. (Feature not fully implemented)`,
+        description: `This would log you in as an admin for this company.`,
     });
     setGlobalCompany(company);
     router.push('/my-dashboard');
@@ -297,7 +244,8 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                             Set up a new portal for an organization.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewCompanyForm onSubmit={handleNewCompany} />
+                    {/* The form now has a simplified onSubmit */}
+                    <NewCompanyForm onSubmit={() => handleNewCompany()} />
                 </DialogContent>
             </Dialog>
         </CardHeader>
@@ -361,7 +309,8 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                         Update the details for this organization.
                         </DialogDescription>
                     </DialogHeader>
-                    <EditCompanyForm company={editingCompany} onSubmit={handleEditCompany} />
+                    {/* The form now has a simplified onSubmit */}
+                    <EditCompanyForm company={editingCompany} onSubmit={() => handleEditCompany()} />
                 </DialogContent>
             </Dialog>
         )}
