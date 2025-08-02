@@ -32,7 +32,6 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { getStudentsPageData } from './data';
 
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
