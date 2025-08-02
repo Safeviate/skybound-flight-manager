@@ -34,7 +34,7 @@ interface PostFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PostFlightChecklistFormValues) => void;
     startHobbs?: number;
-    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => void;
+    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
 }
 
 export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onReportIssue }: PostFlightChecklistFormProps) {
@@ -82,13 +82,13 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     form.reset();
   }
 
-  const handleIssueSubmit = () => {
+  const handleIssueSubmit = async () => {
     const reportText = getValues("report");
     if (!reportText) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please describe the issue before submitting.'});
         return;
     }
-    onReportIssue(aircraft.id, {
+    await onReportIssue(aircraft.id, {
         title: `Defect on ${aircraft.tailNumber}`,
         description: reportText,
         photo: getValues("defectPhoto"),

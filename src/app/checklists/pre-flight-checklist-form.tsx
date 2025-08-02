@@ -43,7 +43,7 @@ export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
-    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => void;
+    onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
 }
 
 export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: PreFlightChecklistFormProps) {
@@ -97,13 +97,13 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     form.reset();
   }
   
-  const handleIssueSubmit = () => {
+  const handleIssueSubmit = async () => {
     const reportText = getValues("report");
     if (!reportText) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please describe the issue before submitting.'});
         return;
     }
-    onReportIssue(aircraft.id, {
+    await onReportIssue(aircraft.id, {
         title: `Defect on ${aircraft.tailNumber}`,
         description: reportText,
         photo: getValues("defectPhoto"),
