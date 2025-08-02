@@ -86,7 +86,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[], template: Checklist }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
     const [auditType, setAuditType] = useState<'Internal' | 'External' | 'Self Audit'>('Internal');
     const [auditTeam, setAuditTeam] = useState<string[]>([]);
@@ -301,17 +301,17 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => {
+    const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>, template: Checklist) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
             ...data,
             id: newAuditId,
             companyId: company.id,
-            title: editingTemplate?.title || 'Untitled Audit',
+            title: template.title || 'Untitled Audit',
             status: 'Open',
             complianceScore: 0,
-            checklistItems: editingTemplate?.items || [],
+            checklistItems: template.items || [],
             nonConformanceIssues: [],
             summary: '',
         };
@@ -424,7 +424,11 @@ export function AuditChecklistsManager() {
                                     </ul>
                                 </CardContent>
                                 <CardFooter className="flex justify-end gap-2">
-                                    <StartAuditDialog template={template} onStart={handleStartAudit} personnel={personnel} />
+                                    <StartAuditDialog 
+                                        template={template} 
+                                        onStart={(data) => handleStartAudit(data, template)} 
+                                        personnel={personnel} 
+                                    />
                                     <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                         <Edit className="mr-2 h-4 w-4" />
                                     </Button>
