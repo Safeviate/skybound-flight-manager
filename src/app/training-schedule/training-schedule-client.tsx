@@ -287,11 +287,11 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         td.empty-slot:hover { background-color: #e9ecef; }
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
-        .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; width: 100%; }
-        .gantt-table { min-width: 1800px; width: 100%; }
+        .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
+        .gantt-table { min-width: 1800px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
-        .gantt-bar { color: white; padding: 8px; border-radius: 4px; text-align: center; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .gantt-bar { color: white; padding: 4px 8px; border-radius: 4px; text-align: center; font-size: 12px; white-space: normal; overflow: hidden; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
       `}</style>
       <div className="container">
         <div className="view-switcher">
