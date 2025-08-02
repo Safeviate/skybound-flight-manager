@@ -107,7 +107,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
         title: `Defect on ${aircraft.tailNumber}`,
         description: reportText
     });
-    // Clear the form fields after submission
     setValue('report', '');
     setValue('defectPhoto', '');
   };
@@ -283,5 +282,3 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     </Form>
   )
 }
-
-    

@@ -92,7 +92,6 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
         title: `Defect on ${aircraft.tailNumber}`,
         description: reportText
     });
-    // Clear the form fields after submission
     setValue('report', '');
     setValue('defectPhoto', '');
   };
@@ -261,5 +260,3 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     </Form>
   )
 }
-
-    

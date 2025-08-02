@@ -121,6 +121,11 @@ export function AircraftPageContent() {
         if (!selectedChecklistAircraftId) return null;
         return activeAircraft.find(ac => ac.id === selectedChecklistAircraftId);
     }, [activeAircraft, selectedChecklistAircraftId]);
+    
+    const activeBookingForSelectedAircraft = useMemo(() => {
+        if (!selectedAircraftForChecklist || !selectedAircraftForChecklist.activeBookingId) return null;
+        return bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
+    }, [selectedAircraftForChecklist, bookings]);
 
     const handleSuccess = () => {
         setIsNewAircraftDialogOpen(false);
@@ -269,11 +274,9 @@ export function AircraftPageContent() {
         
         const batch = writeBatch(db);
         
-        // Update aircraft status to In Maintenance
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         batch.update(aircraftRef, { status: 'In Maintenance' });
 
-        // Update booking with an issue flag
         if (bookingForAircraft) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForAircraft.id);
             batch.update(bookingRef, { hasIssue: true, issueDetails: issueDetails.description });
@@ -599,7 +602,7 @@ export function AircraftPageContent() {
                                     <PostFlightChecklistForm 
                                         onSuccess={handleChecklistSuccess}
                                         aircraft={selectedAircraftForChecklist}
-                                        startHobbs={bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId)?.startHobbs}
+                                        startHobbs={activeBookingForSelectedAircraft?.startHobbs}
                                         onReportIssue={handleReportIssue}
                                     />
                                 ) : (
@@ -800,7 +803,3 @@ export function AircraftPageContent() {
     </main>
   );
 }
-
-    
-
-    
