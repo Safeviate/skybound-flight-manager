@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import type { Aircraft, Booking, User } from '@/lib/types';
+import type { Aircraft, Booking, User, CompletedChecklist } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
@@ -12,13 +11,15 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks } from 'lucide-react';
 import Link from 'next/link';
+import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
+import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 
 interface TrainingSchedulePageContentProps {}
 
 export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps) {
-  const { company } = useUser();
+  const { user, company } = useUser();
   const { toast } = useToast();
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -27,6 +28,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
+  const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
 
   const fetchData = useCallback(() => {
     if (!company) {
@@ -161,10 +163,47 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         toast({ variant: 'destructive', title: 'Cancellation Failed', description: 'Could not cancel the booking.' });
     }
   }
+
+    const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
+        if (!selectedChecklistAircraft || !company || !user) return;
+        
+        const isPreFlight = 'registration' in data;
+        const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
+
+        const historyDoc: Omit<CompletedChecklist, 'id'> = {
+            aircraftId: selectedChecklistAircraft.id,
+            aircraftTailNumber: selectedChecklistAircraft.tailNumber,
+            userId: user.id,
+            userName: user.name,
+            dateCompleted: new Date().toISOString(),
+            type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
+            results: data,
+        };
+
+        try {
+            // Update aircraft status
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedChecklistAircraft.id);
+            await updateDoc(aircraftRef, { checklistStatus: newStatus });
+
+            // Add to checklist history
+            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedChecklistAircraft.id}/completed-checklists`);
+            await addDoc(historyCollectionRef, historyDoc);
+
+            toast({
+                title: 'Checklist Submitted',
+                description: `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`
+            });
+             setSelectedChecklistAircraft(null);
+        } catch (error) {
+            console.error("Error updating checklist status or history:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
+        }
+    };
   
   const handleDialogClose = () => {
     setNewBookingSlot(null);
     setEditingBooking(null);
+    setSelectedChecklistAircraft(null);
   }
 
   if (loading) {
@@ -226,7 +265,14 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                           const renderedSlots = new Set();
                           return (
                            <tr key={ac.id}>
-                                <td>{ac.tailNumber}</td>
+                                <td>
+                                  <div className="flex items-center justify-between">
+                                    <span>{ac.tailNumber}</span>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedChecklistAircraft(ac)}>
+                                      <ListChecks className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
                                 {timeSlots.map(time => {
                                   if (renderedSlots.has(time)) return null;
 
@@ -280,6 +326,33 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
               existingBooking={editingBooking}
             />
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!selectedChecklistAircraft} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-2xl">
+           {selectedChecklistAircraft && (
+              <>
+                <DialogHeader>
+                    <DialogTitle>
+                        {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? 'Post-Flight' : 'Pre-Flight'} Checklist
+                    </DialogTitle>
+                     <DialogDescription>
+                        For aircraft: {selectedChecklistAircraft.tailNumber}
+                    </DialogDescription>
+                </DialogHeader>
+                {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? (
+                    <PostFlightChecklistForm 
+                        onSuccess={handleChecklistSuccess}
+                        aircraft={selectedChecklistAircraft}
+                    />
+                ) : (
+                    <PreFlightChecklistForm 
+                        onSuccess={handleChecklistSuccess} 
+                        aircraft={selectedChecklistAircraft}
+                    />
+                )}
+              </>
+           )}
         </DialogContent>
       </Dialog>
     </>
