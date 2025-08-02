@@ -61,6 +61,7 @@ interface NewBookingFormProps {
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
   onDelete?: (bookingId: string, reason: string) => void;
   existingBooking?: Booking | null;
+  startTime?: string;
 }
 
 const deletionReasons = [
@@ -74,7 +75,7 @@ const deletionReasons = [
     'Other',
 ];
 
-export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking, startTime }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -98,7 +99,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
       date: existingBooking?.date || format(new Date(), 'yyyy-MM-dd'),
-      startTime: existingBooking?.startTime || '',
+      startTime: existingBooking?.startTime || startTime,
       endTime: existingBooking?.endTime || '',
       purpose: existingBooking?.purpose,
       student: existingBooking?.student,
@@ -106,7 +107,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       maintenanceType: existingBooking?.maintenanceType,
       bookingNumber: existingBooking?.bookingNumber,
     });
-  }, [existingBooking, aircraft, form]);
+  }, [existingBooking, aircraft, startTime, form]);
   
   const purpose = form.watch('purpose');
 
@@ -244,7 +245,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
                         <SelectContent>
                             {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}

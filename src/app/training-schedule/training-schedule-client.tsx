@@ -128,7 +128,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
     if (booking.status === 'Completed') {
-        return { style: { backgroundColor: '#7C3AED' } };
+        return { style: { backgroundColor: '#7C3AED', color: 'white' } };
     }
 
     if (!aircraftForBooking) {
@@ -421,6 +421,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
               onSubmit={handleBookingSubmit}
               onDelete={handleBookingDelete}
               existingBooking={editingBooking}
+              startTime={newBookingSlot?.time}
             />
           )}
         </DialogContent>
