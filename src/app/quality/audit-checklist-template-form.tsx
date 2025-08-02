@@ -41,7 +41,7 @@ type ChecklistFormValues = z.infer<typeof auditChecklistFormSchema>;
 
 interface AuditChecklistTemplateFormProps {
     onSubmit: (data: Omit<AuditChecklist, 'id' | 'companyId'>) => void;
-    existingTemplate?: AuditChecklist;
+    existingTemplate?: AuditChecklist | null;
 }
 
 const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
