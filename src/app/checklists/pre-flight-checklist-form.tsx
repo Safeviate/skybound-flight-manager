@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { Bot, Camera, Check, FileCheck, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -25,14 +25,14 @@ const checklistSchema = z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
-  checklistOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  fomOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  airworthinessOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  insuranceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  releaseToServiceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  registrationOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  massAndBalanceOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
-  radioLicenseOnboard: z.boolean().default(false).refine(val => val === true, { message: "This must be checked."}),
+  checklistOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  fomOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  airworthinessOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  insuranceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  releaseToServiceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  registrationOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  massAndBalanceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  radioLicenseOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
   bookingNumber: z.string().optional(),
@@ -43,12 +43,14 @@ export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
+    onReportIssue: (aircraftId: string, title: string, description: string) => void;
 }
 
-export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightChecklistFormProps) {
+export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
+  const [showDefectReport, setShowDefectReport] = useState(false);
 
   const form = useForm<PreFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -76,7 +78,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
   }, [aircraft, form]);
 
 
-  const { setValue, watch } = form;
+  const { setValue, watch, getValues } = form;
   const watchedValues = watch();
   
   const handlePhotoSuccess = (dataUrl: string) => {
@@ -95,6 +97,18 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
     onSuccess(data);
     form.reset();
   }
+  
+  const handleIssueSubmit = () => {
+    const reportText = getValues("report");
+    if (!reportText) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please describe the issue before submitting.'});
+        return;
+    }
+    onReportIssue(aircraft.id, `Defect on ${aircraft.tailNumber}`, reportText);
+    setShowDefectReport(false);
+    setValue('report', '');
+    setValue('defectPhoto', '');
+  };
 
   return (
     <Form {...form}>
@@ -203,7 +217,12 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                     </div>
                 </div>
 
-                 <div className="space-y-4 p-4 border rounded-lg">
+                {!showDefectReport ? (
+                    <Button variant="destructive" onClick={() => setShowDefectReport(true)} className="w-full">
+                        <AlertTriangle className="mr-2 h-4 w-4" /> Report an Issue
+                    </Button>
+                ) : (
+                 <div className="space-y-4 p-4 border-destructive/50 border rounded-lg">
                     <Label className="font-medium">Defect Report</Label>
                     <FormField
                         control={form.control}
@@ -237,7 +256,13 @@ export function PreFlightChecklistForm({ aircraft, onSuccess }: PreFlightCheckli
                             </FormItem>
                         )}
                     />
+                    <div className="flex justify-end">
+                        <Button type="button" variant="destructive" onClick={handleIssueSubmit}>
+                           <Send className="mr-2 h-4 w-4"/> Submit Issue Report
+                        </Button>
+                    </div>
                 </div>
+                )}
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Pre-Flight Checklist</Button>

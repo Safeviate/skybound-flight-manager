@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
 import { Input } from '@/components/ui/input';
@@ -34,13 +34,16 @@ interface PostFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PostFlightChecklistFormValues) => void;
     startHobbs?: number;
+    onReportIssue: (aircraftId: string, title: string, description: string) => void;
 }
 
-export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: PostFlightChecklistFormProps) {
+export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onReportIssue }: PostFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
+  const [showDefectReport, setShowDefectReport] = useState(false);
+
 
   const form = useForm<PostFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
@@ -53,7 +56,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
     }
   });
 
-  const { setValue, watch } = form;
+  const { setValue, watch, getValues } = form;
   const watchedValues = watch();
 
   const handleScanSuccess = (data: { registration?: string; hobbs?: number }) => {
@@ -79,6 +82,18 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
     onSuccess(data);
     form.reset();
   }
+
+  const handleIssueSubmit = () => {
+    const reportText = getValues("report");
+    if (!reportText) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please describe the issue before submitting.'});
+        return;
+    }
+    onReportIssue(aircraft.id, `Defect on ${aircraft.tailNumber}`, reportText);
+    setShowDefectReport(false);
+    setValue('report', '');
+    setValue('defectPhoto', '');
+  };
 
   return (
     <Form {...form}>
@@ -169,7 +184,12 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
                         )}
                     />
                  </div>
-                <div className="space-y-4 p-4 border rounded-lg">
+                {!showDefectReport ? (
+                    <Button variant="destructive" onClick={() => setShowDefectReport(true)} className="w-full">
+                        <AlertTriangle className="mr-2 h-4 w-4" /> Report an Issue
+                    </Button>
+                ) : (
+                <div className="space-y-4 p-4 border-destructive/50 border rounded-lg">
                     <Label className="font-medium">Defect Report</Label>
                     <FormField
                         control={form.control}
@@ -203,7 +223,13 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs }: Pos
                             </FormItem>
                         )}
                     />
+                     <div className="flex justify-end">
+                        <Button type="button" variant="destructive" onClick={handleIssueSubmit}>
+                           <Send className="mr-2 h-4 w-4"/> Submit Issue Report
+                        </Button>
+                    </div>
                 </div>
+                )}
             </CardContent>
             <CardFooter>
                  <Button type="submit" className="w-full">Submit Post-Flight Checklist</Button>

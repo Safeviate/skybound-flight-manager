@@ -45,48 +45,6 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompletedChecklist));
 }
 
-const ReportIssueForm = ({ aircraftList, onSubmit }: { aircraftList: Aircraft[], onSubmit: (aircraftId: string, title: string, description: string) => void }) => {
-    const [aircraftId, setAircraftId] = useState('');
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-
-    const handleSubmit = () => {
-        if (aircraftId && title && description) {
-            onSubmit(aircraftId, title, description);
-        }
-    };
-    
-    return (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="issue-aircraft">Aircraft</Label>
-                <Select onValueChange={setAircraftId}>
-                    <SelectTrigger id="issue-aircraft">
-                        <SelectValue placeholder="Select aircraft..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {aircraftList.map(ac => (
-                            <SelectItem key={ac.id} value={ac.id}>{ac.tailNumber} ({ac.model})</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="issue-title">Issue Title</Label>
-                <Input id="issue-title" placeholder="e.g., Left tire looks flat" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="issue-description">Description</Label>
-                <Textarea id="issue-description" placeholder="Provide details about the issue..." value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-            <DialogFooter>
-                 <Button onClick={handleSubmit} disabled={!aircraftId || !title || !description}>Submit Report</Button>
-            </DialogFooter>
-        </div>
-    )
-};
-
-
 export function AircraftPageContent() {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
@@ -278,55 +236,6 @@ export function AircraftPageContent() {
         }
         
         batch.update(aircraftRef, aircraftUpdate);
-
-        // Notification Logic
-        const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-        let notificationSent = false;
-
-        const documentChecks = [
-            { key: 'checklistOnboard', name: 'Aircraft Checklist/POH' },
-            { key: 'fomOnboard', name: 'Flight Ops Manual' },
-            { key: 'airworthinessOnboard', name: 'Cert. of Airworthiness' },
-            { key: 'insuranceOnboard', name: 'Insurance Certificate' },
-            { key: 'releaseToServiceOnboard', name: 'Release to Service' },
-            { key: 'registrationOnboard', name: 'Cert. of Registration' },
-            { key: 'massAndBalanceOnboard', name: 'Mass & Balance' },
-            { key: 'radioLicenseOnboard', name: 'Radio Station License' },
-        ];
-
-        if (isPreFlight) {
-            const missingDocs = documentChecks
-                .filter(doc => !(data as PreFlightChecklistFormValues)[doc.key as keyof PreFlightChecklistFormValues])
-                .map(doc => doc.name);
-
-            if (missingDocs.length > 0) {
-                const alert: Omit<Alert, 'id' | 'number'> = {
-                    companyId: company.id,
-                    type: 'Yellow Tag',
-                    title: `Missing Documents on ${selectedAircraftForChecklist.tailNumber}`,
-                    description: `A pre-flight check found the following documents missing: ${missingDocs.join(', ')}.`,
-                    author: 'System',
-                    date: new Date().toISOString(),
-                    readBy: [],
-                };
-                batch.set(doc(alertsCollection), alert);
-                notificationSent = true;
-            }
-        }
-
-        if ((data as any).report && (data as any).report.length > 0) {
-            const alert: Omit<Alert, 'id' | 'number'> = {
-                companyId: company.id,
-                type: 'Yellow Tag',
-                title: `New Defect Reported on ${selectedAircraftForChecklist.tailNumber}`,
-                description: `A defect was reported during a ${isPreFlight ? 'pre-flight' : 'post-flight'} check: "${(data as any).report}"`,
-                author: 'System',
-                date: new Date().toISOString(),
-                readBy: [],
-            };
-            batch.set(doc(alertsCollection), alert);
-            notificationSent = true;
-        }
     
         try {
             await batch.commit();
@@ -336,17 +245,10 @@ export function AircraftPageContent() {
                 toastDescription += ` Booking ${bookingForChecklist.bookingNumber} has been marked as completed.`
             }
 
-            if (notificationSent) {
-                toast({
-                    title: 'Checklist Submitted & Alert Raised',
-                    description: 'The checklist is saved and relevant managers have been notified of the issue.',
-                });
-            } else {
-                 toast({
-                    title: 'Checklist Submitted',
-                    description: toastDescription
-                });
-            }
+            toast({
+                title: 'Checklist Submitted',
+                description: toastDescription
+            });
 
             setSelectedChecklistAircraftId(null);
         } catch (error) {
@@ -662,28 +564,11 @@ export function AircraftPageContent() {
       </Card>
       
       <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
               <div className="space-y-1">
                 <CardTitle>Aircraft Operations</CardTitle>
                 <CardDescription>Perform checklists and view historical records.</CardDescription>
               </div>
-              <Dialog open={isReportIssueDialogOpen} onOpenChange={setIsReportIssueDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="destructive">
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                        Report Issue
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Report an Issue</DialogTitle>
-                        <DialogDescription>
-                            File a yellow tag alert for a specific aircraft. This should be used for ad-hoc issues found outside of a normal checklist.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <ReportIssueForm aircraftList={activeAircraft} onSubmit={handleReportIssue} />
-                </DialogContent>
-              </Dialog>
           </CardHeader>
           <CardContent>
               <Tabs defaultValue="checklists">
@@ -711,11 +596,13 @@ export function AircraftPageContent() {
                                         onSuccess={handleChecklistSuccess}
                                         aircraft={selectedAircraftForChecklist}
                                         startHobbs={bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId)?.startHobbs}
+                                        onReportIssue={handleReportIssue}
                                     />
                                 ) : (
                                     <PreFlightChecklistForm 
                                         onSuccess={handleChecklistSuccess} 
                                         aircraft={selectedAircraftForChecklist}
+                                        onReportIssue={handleReportIssue}
                                     />
                                 )}
                             </>
