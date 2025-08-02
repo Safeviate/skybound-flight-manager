@@ -15,7 +15,6 @@ import { Loader2, AreaChart, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -215,19 +214,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         </div>
     );
   }
-  
-  const handleChecklistClick = (aircraft: Aircraft) => {
-    if (aircraft.checklistStatus === 'needs-post-flight') {
-      toast({
-        variant: 'destructive',
-        title: 'Post-Flight Outstanding',
-        description: 'The previous crew needs to complete their post-flight checklist.',
-        duration: 6000,
-      });
-    } else {
-      setSelectedChecklistAircraft(aircraft);
-    }
-  };
 
   return (
     <>
@@ -266,63 +252,58 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
 
         <div id="ganttView">
             <h2>Daily Schedule</h2>
-             <ScrollArea className="whitespace-nowrap rounded-md border">
-              <div className="gantt-container">
-                  <table className="gantt-table">
-                      <thead>
-                          <tr>
-                              <th>Aircraft</th>
-                              {timeSlots.map(time => <th key={time}>{time}</th>)}
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {aircraft.map(ac => {
-                            const renderedSlots = new Set();
-                            const checklistColor = ac.checklistStatus === 'needs-post-flight' ? 'text-red-500' : 'text-green-500';
+             <div className="gantt-container">
+                <table className="gantt-table">
+                    <thead>
+                        <tr>
+                            <th>Aircraft</th>
+                            {timeSlots.map(time => <th key={time}>{time}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {aircraft.map(ac => {
+                          const renderedSlots = new Set();
+                          return (
+                          <tr key={ac.id}>
+                                <td>
+                                  <div className="flex items-center justify-between">
+                                    <span>{ac.tailNumber}</span>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedChecklistAircraft(ac)}>
+                                      <ListChecks className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                                {timeSlots.map(time => {
+                                  if (renderedSlots.has(time)) return null;
 
-                            return (
-                            <tr key={ac.id}>
-                                  <td>
-                                    <div className="flex items-center justify-between">
-                                      <span>{ac.tailNumber}</span>
-                                      <Button variant="ghost" size="icon" className={cn("h-7 w-7", checklistColor)} onClick={() => handleChecklistClick(ac)}>
-                                        <ListChecks className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </td>
-                                  {timeSlots.map(time => {
-                                    if (renderedSlots.has(time)) return null;
-
-                                    const booking = getBookingForSlot(ac.tailNumber, time);
-                                    if (booking) {
-                                      const colSpan = calculateColSpan(booking, time);
-                                      if (colSpan > 0) {
-                                        for (let i = 1; i < colSpan; i++) {
-                                          const nextHour = parseInt(time.split(':')[0], 10) + i;
-                                          renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
-                                        }
-                                        const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-                                        return (
-                                          <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => setEditingBooking(booking)}>
-                                            <div className={cn('gantt-bar', getBookingVariant(aircraftForBooking))}>
-                                              {getBookingLabel(booking)}
-                                            </div>
-                                          </td>
-                                        )
+                                  const booking = getBookingForSlot(ac.tailNumber, time);
+                                  if (booking) {
+                                    const colSpan = calculateColSpan(booking, time);
+                                    if (colSpan > 0) {
+                                      for (let i = 1; i < colSpan; i++) {
+                                        const nextHour = parseInt(time.split(':')[0], 10) + i;
+                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
                                       }
+                                      const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+                                      return (
+                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => setEditingBooking(booking)}>
+                                          <div className={cn('gantt-bar', getBookingVariant(aircraftForBooking))}>
+                                            {getBookingLabel(booking)}
+                                          </div>
+                                        </td>
+                                      )
                                     }
-                                    return (
-                                      <td key={time} className="empty-slot" onClick={() => setNewBookingSlot({ aircraft: ac, time })}></td>
-                                    );
-                                  })}
-                              </tr>
-                            )
-                          })}
-                      </tbody>
-                  </table>
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+                                  }
+                                  return (
+                                    <td key={time} className="empty-slot" onClick={() => setNewBookingSlot({ aircraft: ac, time })}></td>
+                                  );
+                                })}
+                            </tr>
+                          )
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
       </div>
        <Dialog open={!!newBookingSlot || !!editingBooking} onOpenChange={handleDialogClose}>
