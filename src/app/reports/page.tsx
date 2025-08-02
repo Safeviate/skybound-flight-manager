@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Header from '@/components/layout/header';
@@ -23,17 +24,24 @@ import { Input } from '@/components/ui/input';
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
   const utilizationData = useMemo(() => {
-    const activeAircraftTails = new Set(aircraft.filter(a => a.status !== 'Archived').map(a => a.tailNumber));
+    // 1. Create a map of all active aircraft, initialized to 0 hours.
+    const hoursByAircraft = new Map<string, number>();
+    aircraft.forEach(ac => {
+        if (ac.status !== 'Archived') {
+            hoursByAircraft.set(ac.tailNumber, 0);
+        }
+    });
 
-    const bookingsByAircraft = bookings.reduce((acc, booking) => {
-      if (booking.aircraft && activeAircraftTails.has(booking.aircraft) && booking.status !== 'Cancelled') {
-        const duration = booking.flightDuration || 0;
-        acc[booking.aircraft] = (acc[booking.aircraft] || 0) + duration;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+    // 2. Add flight hours from bookings to the map.
+    bookings.forEach(booking => {
+        if (booking.aircraft && hoursByAircraft.has(booking.aircraft) && booking.status !== 'Cancelled' && booking.flightDuration) {
+            const currentHours = hoursByAircraft.get(booking.aircraft) || 0;
+            hoursByAircraft.set(booking.aircraft, currentHours + booking.flightDuration);
+        }
+    });
 
-    return Object.entries(bookingsByAircraft).map(([name, hours]) => ({
+    // 3. Convert the map to the format required by the chart.
+    return Array.from(hoursByAircraft.entries()).map(([name, hours]) => ({
       name,
       'Flight Hours': parseFloat(hours.toFixed(1)),
     })).sort((a, b) => b['Flight Hours'] - a['Flight Hours']);
