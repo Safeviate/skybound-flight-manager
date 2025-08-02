@@ -253,6 +253,7 @@ export function AircraftPageContent() {
                         flightDuration: flightDuration,
                         status: 'Completed' 
                     });
+                    // Only update aircraft hours on post-flight completion with valid duration
                     aircraftUpdate.hours = (selectedAircraftForChecklist.hours || 0) + flightDuration;
                 } else {
                     batch.update(bookingRef, { status: 'Completed' });
