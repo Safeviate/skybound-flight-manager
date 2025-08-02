@@ -221,24 +221,28 @@ export function AuditChecklistsManager() {
 
     const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
+        
+        const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
 
-        if (editingTemplate) {
-            const templateRef = doc(db, `companies/${company.id}/audit-checklists`, editingTemplate.id);
-            await updateDoc(templateRef, data as any);
-            toast({ title: "Template Updated" });
-        } else {
+        if (isNew) {
             const newTemplate = { ...data, companyId: company.id };
             await addDoc(collection(db, `companies/${company.id}/audit-checklists`), newTemplate);
             toast({ title: "Template Created" });
+        } else {
+            const templateRef = doc(db, `companies/${company.id}/audit-checklists`, editingTemplate.id);
+            await updateDoc(templateRef, data as any);
+            toast({ title: "Template Updated" });
         }
         fetchTemplates();
         closeDialog();
     };
 
     const handleAiGenerated = (data: { title: string; items: { text: string; regulationReference: string }[] }) => {
-        const newTemplate: Omit<Checklist, 'id' | 'companyId'> = {
+        const newTemplate: Checklist = {
+            id: `temp-${Date.now()}`,
+            companyId: company?.id || '',
             title: data.title,
-            area: 'Management', // Default area, can be changed
+            area: 'Management',
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
@@ -246,8 +250,10 @@ export function AuditChecklistsManager() {
                 finding: null,
                 level: null,
             })),
+            category: 'Pre-Flight',
         };
-        handleFormSubmit(newTemplate);
+        setEditingTemplate(newTemplate);
+        setCreationMode('manual');
     };
 
     const handleEdit = (template: Checklist) => {
