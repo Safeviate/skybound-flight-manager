@@ -123,7 +123,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                     <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
@@ -244,7 +244,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         </Popover>
                     </div>
                      <div>
-                        <Label>Audit Scope / Evidence to be Sampled</Label>
+                        <Label>Evidence Reference / Scope</Label>
                         <Textarea 
                             placeholder="e.g., Review maintenance records for ZS-ABC from Jan-Mar..." 
                             value={evidenceReference}
