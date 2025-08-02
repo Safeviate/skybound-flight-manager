@@ -49,7 +49,11 @@ const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Reco
 export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(auditChecklistFormSchema),
-    defaultValues: {
+    defaultValues: existingTemplate ? {
+        title: existingTemplate.title,
+        area: existingTemplate.area,
+        items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
+    } : {
       title: '',
       area: 'Management',
       items: [{ text: '', regulationReference: '' }],
