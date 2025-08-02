@@ -79,9 +79,9 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   }, [fetchData]);
 
 
-  const timeSlots = Array.from({ length: 18 * 6 }, (_, i) => {
-      const hour = Math.floor(i / 6) + 6;
-      const minute = (i % 6) * 10;
+  const timeSlots = Array.from({ length: 18 * 4 }, (_, i) => {
+      const hour = Math.floor(i / 4) + 6;
+      const minute = (i % 4) * 15;
       return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
   
@@ -111,7 +111,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
 
       const endTimeInMinutes = timeToMinutes(booking.endTime);
       const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
-      return Math.ceil(durationInMinutes / 10);
+      return Math.ceil(durationInMinutes / 15);
   };
 
   const getBookingLabel = (booking: Booking) => {
@@ -308,7 +308,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
         .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
-        .gantt-table { min-width: 3000px; }
+        .gantt-table { min-width: 2000px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
@@ -346,7 +346,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                     <thead>
                         <tr>
                             <th>Aircraft</th>
-                            {hourlyTimeSlots.map(time => <th key={time} colSpan={6}>{time}</th>)}
+                            {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
                         </tr>
                     </thead>
                     <tbody>
@@ -374,7 +374,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                     if (colSpan > 0) {
                                       const startTimeInMinutes = timeToMinutes(booking.startTime);
                                       for (let i = 1; i < colSpan; i++) {
-                                        const nextSlotTimeInMinutes = startTimeInMinutes + i * 10;
+                                        const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
                                         const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
                                         const nextMinute = nextSlotTimeInMinutes % 60;
                                         renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
