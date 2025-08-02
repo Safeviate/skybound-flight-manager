@@ -12,4 +12,3 @@ export async function getBookingsPageData(companyId: string): Promise<Booking[]>
     const bookingsSnapshot = await getDocs(bookingsQuery);
     return bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
 }
-

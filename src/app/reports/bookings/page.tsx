@@ -4,8 +4,11 @@ import { BookingsPageContent } from './bookings-page-content';
 import type { Booking } from '@/lib/types';
 import { cookies } from 'next/headers';
 
-async function getInitialData(companyId: string): Promise<Booking[]> {
+async function getInitialData(): Promise<Booking[]> {
+    const cookieStore = cookies();
+    const companyId = cookieStore.get('skybound_last_company_id')?.value || 'skybound-aero';
     if (!companyId) return [];
+
     try {
         return await getBookingsPageData(companyId);
     } catch (error) {
@@ -15,9 +18,7 @@ async function getInitialData(companyId: string): Promise<Booking[]> {
 }
 
 export default async function BookingsPage() {
-    const cookieStore = cookies();
-    const companyId = cookieStore.get('skybound_last_company_id')?.value || 'skybound-aero';
-    const initialBookings = await getInitialData(companyId);
+    const initialBookings = await getInitialData();
     
     return <BookingsPageContent initialBookings={initialBookings} />;
 }
