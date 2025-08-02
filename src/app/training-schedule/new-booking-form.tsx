@@ -86,6 +86,14 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const [deleteReason, setDeleteReason] = useState('');
   const [otherReason, setOtherReason] = useState('');
 
+  const timeSlots = useMemo(() => {
+    return Array.from({ length: (24) * 4 }, (_, i) => {
+        const hour = Math.floor(i / 4);
+        const minute = (i % 4) * 15;
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    });
+  }, []);
+
   useEffect(() => {
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
@@ -236,9 +244,12 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -249,9 +260,12 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>End Time</FormLabel>
-                     <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                     </FormItem>
                 )}
