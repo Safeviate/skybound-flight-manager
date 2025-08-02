@@ -92,8 +92,9 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const { user } = useUser();
     
-    const availableTeamMembers = personnel.filter(p => p.id !== selectedAuditeeId);
+    const availableTeamMembers = personnel.filter(p => p.id !== selectedAuditeeId && p.id !== user?.id);
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
@@ -132,6 +133,10 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={auditDate} onSelect={setAuditDate} initialFocus /></PopoverContent>
                         </Popover>
+                    </div>
+                     <div>
+                        <Label>Lead Auditor</Label>
+                        <Input value={user?.name || 'Current User'} readOnly disabled />
                     </div>
                     <div>
                         <Label>Auditee</Label>
@@ -178,7 +183,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         </Popover>
                     </div>
                      <div>
-                        <Label>Evidence Reference / Scope</Label>
+                        <Label>Audit Scope / Evidence to be Sampled</Label>
                         <Textarea 
                             placeholder="e.g., Review maintenance records for ZS-ABC from Jan-Mar..." 
                             value={evidenceReference}
