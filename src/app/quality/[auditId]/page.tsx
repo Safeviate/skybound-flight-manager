@@ -284,6 +284,12 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             <Badge variant="success" className="text-lg mt-1">Closed</Badge>
                         </div>
                     </div>
+                    {audit.evidenceReference && (
+                        <div className="pt-2">
+                            <h4 className="font-semibold text-sm">Evidence Reference / Scope</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.evidenceReference}</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -806,7 +812,26 @@ export default function QualityAuditDetailPage() {
                       <p className="font-semibold text-muted-foreground">Auditee</p>
                       <p>{audit.auditeeName || 'Not yet assigned'}</p>
                   </div>
+                  {audit.investigationTeam && audit.investigationTeam.length > 0 && (
+                        <div className="md:col-span-4">
+                            <p className="font-semibold text-muted-foreground">Team Members</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {audit.investigationTeam.map(member => <Badge key={member} variant="secondary">{member}</Badge>)}
+                            </div>
+                        </div>
+                    )}
               </div>
+               {audit.evidenceReference && (
+                <div className="space-y-2 border-t pt-6">
+                    <Label htmlFor="audit-evidence" className="font-semibold">Evidence Reference / Scope</Label>
+                    <Textarea 
+                        id="audit-evidence"
+                        readOnly
+                        value={audit.evidenceReference}
+                        className="min-h-[100px] bg-muted"
+                    />
+                </div>
+              )}
               <div className="space-y-2 border-t pt-6">
                   <Label htmlFor="audit-summary" className="font-semibold">Audit Summary</Label>
                   <Textarea 
@@ -932,6 +957,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

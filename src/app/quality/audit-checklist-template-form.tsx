@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,7 +79,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
   const handleFormSubmit = (data: ChecklistFormValues) => {
     const newChecklist = {
       ...data,
-      items: data.items.map(item => ({ ...item, id: item.id || `item-${Date.now()}-${Math.random()}`, finding: null, level: null })),
+      items: data.items.map(item => ({ ...item, id: item.id || `item-${Date.now()}-${Math.random()}`, finding: null, level: null, evidence: '' })),
     };
     onSubmit(newChecklist);
     form.reset();
@@ -135,19 +136,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormControl>
-                                        <Textarea placeholder={`Item #${index + 1} text`} {...field} className="min-h-[40px]"/>
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name={`items.${index}.regulationReference`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormControl>
-                                        <Input placeholder="Regulation Reference (e.g., SACAA CAR 61.01.1)" {...field} />
+                                        <Textarea placeholder={`Item #${index + 1} text (include regulation in text if applicable)`} {...field} className="min-h-[40px]"/>
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>

@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check } from 'lucide-react';
 
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
@@ -84,15 +86,19 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date, team: string[], evidenceReference: string) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
+    const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
+    const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    
+    const availableTeamMembers = personnel.filter(p => p.id !== selectedAuditeeId);
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
         if (auditee && auditDate) {
-            onStart(template, auditee, auditDate);
+            onStart(template, auditee, auditDate, selectedTeam, evidenceReference);
             setIsOpen(false);
         }
     };
@@ -108,49 +114,76 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
-                        Please select the primary auditee and date for this audit.
+                        Configure the details for this audit session.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div>
-                        <Label htmlFor="auditee-select">Select Auditee</Label>
-                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
-                            <SelectTrigger id="auditee-select">
-                                <SelectValue placeholder="Select a person" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {personnel.map(p => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                        {p.name} ({p.role})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div>
-                        <Label>Select Audit Date</Label>
+                        <Label>Audit Date</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                 variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !auditDate && "text-muted-foreground"
-                                )}
+                                className={cn("w-full justify-start text-left font-normal", !auditDate && "text-muted-foreground")}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {auditDate ? format(auditDate, "PPP") : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                mode="single"
-                                selected={auditDate}
-                                onSelect={setAuditDate}
-                                initialFocus
-                                />
-                            </PopoverContent>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={auditDate} onSelect={setAuditDate} initialFocus /></PopoverContent>
                         </Popover>
+                    </div>
+                    <div>
+                        <Label>Auditee</Label>
+                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
+                            <SelectTrigger><SelectValue placeholder="Select primary auditee" /></SelectTrigger>
+                            <SelectContent>{personnel.map(p => (<SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>))}</SelectContent>
+                        </Select>
+                    </div>
+                     <div>
+                        <Label>Audit Team</Label>
+                        <Popover>
+                           <PopoverTrigger asChild>
+                               <Button variant="outline" className="w-full justify-start">
+                                   <Users className="mr-2 h-4 w-4" />
+                                   {selectedTeam.length > 0 ? `${selectedTeam.length} selected` : 'Select team members'}
+                                </Button>
+                           </PopoverTrigger>
+                           <PopoverContent className="p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search..." />
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {availableTeamMembers.map(p => (
+                                                <CommandItem
+                                                    key={p.id}
+                                                    onSelect={() => {
+                                                        const isSelected = selectedTeam.includes(p.name);
+                                                        if (isSelected) {
+                                                            setSelectedTeam(selectedTeam.filter(name => name !== p.name));
+                                                        } else {
+                                                            setSelectedTeam([...selectedTeam, p.name]);
+                                                        }
+                                                    }}
+                                                >
+                                                     <Check className={cn("mr-2 h-4 w-4", selectedTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
+                                                    {p.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                           </PopoverContent>
+                        </Popover>
+                    </div>
+                     <div>
+                        <Label>Evidence Reference / Scope</Label>
+                        <Textarea 
+                            placeholder="e.g., Review maintenance records for ZS-ABC from Jan-Mar..." 
+                            value={evidenceReference}
+                            onChange={(e) => setEvidenceReference(e.target.value)}
+                        />
                     </div>
                 </div>
                 <Button onClick={handleConfirm} disabled={!selectedAuditeeId || !auditDate}>
@@ -191,7 +224,7 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date) => {
+    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date, team: string[], evidenceReference: string) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
@@ -209,7 +242,8 @@ export function AuditChecklistsManager() {
             checklistItems: template.items,
             nonConformanceIssues: [],
             summary: '',
-            investigationTeam: [user.name, auditee.name]
+            investigationTeam: [user.name, auditee.name, ...team],
+            evidenceReference: evidenceReference,
         };
 
         try {

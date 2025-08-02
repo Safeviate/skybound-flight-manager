@@ -540,6 +540,7 @@ export type QualityAudit = {
   auditorSignature?: string;
   auditeeSignature?: string;
   scope?: string;
+  evidenceReference?: string;
 };
 
 export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled';
