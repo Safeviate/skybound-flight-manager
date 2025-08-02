@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, AreaChart } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -112,13 +113,26 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
 
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-pre-flight':
-        return 'bg-gray-400';
+        return 'bg-yellow-500';
       case 'needs-post-flight':
         return 'bg-blue-500';
       case 'ready':
         return 'bg-green-500';
       default:
         return 'bg-gray-400';
+    }
+  };
+
+  const getChecklistStatusBadge = (status: Aircraft['checklistStatus']) => {
+    switch (status) {
+        case 'ready':
+            return <Badge variant="success">Ready</Badge>;
+        case 'needs-pre-flight':
+            return <Badge variant="warning">Needs Pre-Flight</Badge>;
+        case 'needs-post-flight':
+            return <Badge variant="default" className="bg-blue-500 text-white">Needs Post-Flight</Badge>;
+        default:
+            return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
@@ -226,7 +240,12 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                           const renderedSlots = new Set();
                           return (
                            <tr key={ac.id}>
-                                <td>{ac.tailNumber}</td>
+                                <td>
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold">{ac.tailNumber}</span>
+                                        {getChecklistStatusBadge(ac.checklistStatus)}
+                                    </div>
+                                </td>
                                 {timeSlots.map(time => {
                                   if (renderedSlots.has(time)) return null;
 
