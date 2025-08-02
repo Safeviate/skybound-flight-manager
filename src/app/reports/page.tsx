@@ -152,7 +152,7 @@ function ReportsPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-1 gap-8">
           <Card>
               <CardHeader>
                   <CardTitle>Recent Bookings</CardTitle>
@@ -184,7 +184,7 @@ function ReportsPage() {
                   </Table>
                 </ScrollArea>
               </CardContent>
-          </Card>
+          </Card>>
             <Card>
               <CardHeader>
                   <CardTitle>Cancellation Reasons</CardTitle>
