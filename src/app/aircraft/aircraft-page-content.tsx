@@ -194,11 +194,11 @@ export function AircraftPageContent() {
         if (!selectedAircraftForChecklist || !company || !user) return;
     
         const isPreFlight = 'registration' in data;
-        const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
         
         const batch = writeBatch(db);
     
+        // 1. Create history record
         const historyDoc: Omit<CompletedChecklist, 'id'> = {
             aircraftId: selectedAircraftForChecklist.id,
             aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
@@ -213,8 +213,11 @@ export function AircraftPageContent() {
         batch.set(doc(historyCollectionRef), historyDoc);
     
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
-        const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
-    
+        const aircraftUpdate: Partial<Aircraft> = { 
+            checklistStatus: isPreFlight ? 'needs-post-flight' : 'ready' 
+        };
+
+        // 2. Handle booking updates
         if (bookingForChecklist) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
             if (isPreFlight) {
@@ -239,12 +242,13 @@ export function AircraftPageContent() {
             }
         }
         
+        // 3. Update aircraft status
         batch.update(aircraftRef, aircraftUpdate);
     
         try {
             await batch.commit();
             
-            let toastDescription = `The checklist has been saved. The aircraft is now ${newStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`;
+            let toastDescription = `The checklist has been saved. The aircraft is now ${aircraftUpdate.checklistStatus === 'needs-post-flight' ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`;
             if (!isPreFlight && bookingForChecklist) {
                 toastDescription += ` Booking ${bookingForChecklist.bookingNumber} has been marked as completed.`
             }
