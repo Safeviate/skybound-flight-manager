@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -39,6 +40,9 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        purple: {
+            '600': '#7C3AED',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
