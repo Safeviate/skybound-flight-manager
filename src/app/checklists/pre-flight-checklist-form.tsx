@@ -25,18 +25,26 @@ const checklistSchema = z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
-  checklistOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  fomOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  airworthinessOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  insuranceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  releaseToServiceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  registrationOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  massAndBalanceOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
-  radioLicenseOnboard: z.boolean().refine(val => val === true, { message: "This must be checked."}),
+  checklistOnboard: z.boolean(),
+  fomOnboard: z.boolean(),
+  airworthinessOnboard: z.boolean(),
+  insuranceOnboard: z.boolean(),
+  releaseToServiceOnboard: z.boolean(),
+  registrationOnboard: z.boolean(),
+  massAndBalanceOnboard: z.boolean(),
+  radioLicenseOnboard: z.boolean(),
   report: z.string().optional(),
   defectPhoto: z.string().optional(),
   bookingNumber: z.string().optional(),
-});
+}).refine(data => data.checklistOnboard, { path: ['checklistOnboard'], message: 'This must be checked.' })
+  .refine(data => data.fomOnboard, { path: ['fomOnboard'], message: 'This must be checked.' })
+  .refine(data => data.airworthinessOnboard, { path: ['airworthinessOnboard'], message: 'This must be checked.' })
+  .refine(data => data.insuranceOnboard, { path: ['insuranceOnboard'], message: 'This must be checked.' })
+  .refine(data => data.releaseToServiceOnboard, { path: ['releaseToServiceOnboard'], message: 'This must be checked.' })
+  .refine(data => data.registrationOnboard, { path: ['registrationOnboard'], message: 'This must be checked.' })
+  .refine(data => data.massAndBalanceOnboard, { path: ['massAndBalanceOnboard'], message: 'This must be checked.' })
+  .refine(data => data.radioLicenseOnboard, { path: ['radioLicenseOnboard'], message: 'This must be checked.' });
+
 
 export type PreFlightChecklistFormValues = z.infer<typeof checklistSchema>;
 
@@ -108,8 +116,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
         description: reportText,
         photo: getValues("defectPhoto"),
     });
-    setValue('report', '');
-    setValue('defectPhoto', '');
   };
 
   return (

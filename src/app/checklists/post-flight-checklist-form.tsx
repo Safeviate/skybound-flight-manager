@@ -93,8 +93,6 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
         description: reportText,
         photo: getValues("defectPhoto"),
     });
-    setValue('report', '');
-    setValue('defectPhoto', '');
   };
 
   return (
