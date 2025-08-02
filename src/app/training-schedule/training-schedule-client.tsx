@@ -30,6 +30,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
+  const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
     if (!company) {
@@ -110,7 +111,8 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     return `${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
   
-  const getBookingVariant = (aircraftForBooking: Aircraft | undefined) => {
+  const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined) => {
+    if (booking.status === 'Completed') return 'bg-purple-600';
     if (!aircraftForBooking) return 'bg-gray-400';
 
     switch (aircraftForBooking.checklistStatus) {
@@ -234,6 +236,14 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     setNewBookingSlot(null);
     setEditingBooking(null);
     setSelectedChecklistAircraft(null);
+    setChecklistWarning(null);
+  }
+
+  const handleChecklistIconClick = (aircraft: Aircraft) => {
+    if (aircraft.checklistStatus === 'needs-post-flight') {
+      setChecklistWarning("A post-flight check is outstanding for this aircraft. The previous crew must complete their checks before a new pre-flight can be initiated.");
+    }
+    setSelectedChecklistAircraft(aircraft);
   }
 
   if (loading) {
@@ -298,12 +308,10 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                 <td>
                                   <div className="flex items-center justify-between px-3 h-full">
                                     <span>{ac.tailNumber}</span>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedChecklistAircraft(ac)}>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChecklistIconClick(ac)}>
                                       <ListChecks className={cn(
                                         "h-4 w-4",
-                                        ac.checklistStatus === 'needs-post-flight' ? 'text-destructive' :
-                                        (ac.checklistStatus === 'ready' || ac.checklistStatus === 'needs-pre-flight') ? 'text-green-500' :
-                                        'text-muted-foreground'
+                                        ac.checklistStatus === 'needs-post-flight' ? 'text-red-500' : 'text-green-500'
                                       )} />
                                     </Button>
                                   </div>
@@ -322,7 +330,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       return (
                                         <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => setEditingBooking(booking)}>
-                                          <div className={cn('gantt-bar', getBookingVariant(aircraftForBooking))}>
+                                          <div className={cn('gantt-bar', getBookingVariant(booking, aircraftForBooking))}>
                                             {getBookingLabel(booking)}
                                           </div>
                                         </td>
@@ -376,16 +384,26 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                         For aircraft: {selectedChecklistAircraft.tailNumber}
                     </DialogDescription>
                 </DialogHeader>
-                {selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? (
-                    <PostFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={selectedChecklistAircraft}
-                     />
+                {checklistWarning ? (
+                    <Alert variant="destructive" className="mt-4">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Action Required</AlertTitle>
+                        <AlertDescription>
+                            {checklistWarning}
+                        </AlertDescription>
+                    </Alert>
                 ) : (
-                    <PreFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess} 
-                        aircraft={selectedChecklistAircraft}
-                    />
+                    selectedChecklistAircraft.checklistStatus === 'needs-post-flight' ? (
+                        <PostFlightChecklistForm 
+                            onSuccess={handleChecklistSuccess}
+                            aircraft={selectedChecklistAircraft}
+                        />
+                    ) : (
+                        <PreFlightChecklistForm 
+                            onSuccess={handleChecklistSuccess} 
+                            aircraft={selectedChecklistAircraft}
+                        />
+                    )
                 )}
               </>
            )}
