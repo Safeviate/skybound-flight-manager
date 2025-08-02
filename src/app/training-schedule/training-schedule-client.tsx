@@ -79,25 +79,39 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   }, [fetchData]);
 
 
-  const timeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
+  const timeSlots = Array.from({ length: 18 * 6 }, (_, i) => {
+      const hour = Math.floor(i / 6) + 6;
+      const minute = (i % 6) * 10;
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  });
+  
+  const hourlyTimeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
+
+
+  const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+  }
   
   const getBookingForSlot = (aircraftTailNumber: string, time: string) => {
-    const hour = parseInt(time.split(':')[0], 10);
+    const slotTimeInMinutes = timeToMinutes(time);
     return bookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
       if (b.status === 'Cancelled') return false;
-      const startHour = parseInt(b.startTime.split(':')[0], 10);
-      const endHour = parseInt(b.endTime.split(':')[0], 10);
-      return hour >= startHour && hour < endHour;
+      const startTimeInMinutes = timeToMinutes(b.startTime);
+      const endTimeInMinutes = timeToMinutes(b.endTime);
+      return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
     });
   };
 
   const calculateColSpan = (booking: Booking, time: string) => {
-      const startHour = parseInt(booking.startTime.split(':')[0], 10);
-      const endHour = parseInt(booking.endTime.split(':')[0], 10);
-      const currentHour = parseInt(time.split(':')[0], 10);
-      if (startHour !== currentHour) return 0;
-      return endHour - startHour;
+      const startTimeInMinutes = timeToMinutes(booking.startTime);
+      const slotTimeInMinutes = timeToMinutes(time);
+      if (startTimeInMinutes !== slotTimeInMinutes) return 0;
+
+      const endTimeInMinutes = timeToMinutes(booking.endTime);
+      const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
+      return Math.ceil(durationInMinutes / 10);
   };
 
   const getBookingLabel = (booking: Booking) => {
@@ -294,7 +308,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
         .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
-        .gantt-table { min-width: 1800px; }
+        .gantt-table { min-width: 3000px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
@@ -332,7 +346,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                     <thead>
                         <tr>
                             <th>Aircraft</th>
-                            {timeSlots.map(time => <th key={time}>{time}</th>)}
+                            {hourlyTimeSlots.map(time => <th key={time} colSpan={6}>{time}</th>)}
                         </tr>
                     </thead>
                     <tbody>
@@ -358,9 +372,12 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                                   if (booking) {
                                     const colSpan = calculateColSpan(booking, time);
                                     if (colSpan > 0) {
+                                      const startTimeInMinutes = timeToMinutes(booking.startTime);
                                       for (let i = 1; i < colSpan; i++) {
-                                        const nextHour = parseInt(time.split(':')[0], 10) + i;
-                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:00`);
+                                        const nextSlotTimeInMinutes = startTimeInMinutes + i * 10;
+                                        const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                        const nextMinute = nextSlotTimeInMinutes % 60;
+                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
                                       }
                                       const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                       const variant = getBookingVariant(booking, aircraftForBooking);
