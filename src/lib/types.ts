@@ -219,12 +219,12 @@ export type Booking = {
   instructor?: string | null;
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Approved' | 'Completed' | 'Cancelled';
-  isChecklistComplete?: boolean;
-  isPostFlightChecklistComplete?: boolean;
   flightDuration?: number;
   maintenanceType?: string | null;
   trainingExercise?: string;
   cancellationReason?: string;
+  startHobbs?: number;
+  endHobbs?: number;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';

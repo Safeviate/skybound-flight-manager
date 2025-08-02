@@ -190,11 +190,9 @@ export function AircraftPageContent() {
         const isPreFlight = 'registration' in data;
         const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
-        const bookingNumber = bookingForChecklist?.bookingNumber;
-    
+        
         const batch = writeBatch(db);
     
-        // 1. History Document
         const historyDoc: Omit<CompletedChecklist, 'id'> = {
             aircraftId: selectedAircraftForChecklist.id,
             aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
@@ -203,24 +201,39 @@ export function AircraftPageContent() {
             dateCompleted: new Date().toISOString(),
             type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
             results: data,
-            bookingNumber: bookingNumber,
+            bookingNumber: bookingForChecklist?.bookingNumber,
         };
         const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
         batch.set(doc(historyCollectionRef), historyDoc);
     
-        // 2. Aircraft Document
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
         const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
-        if (!isPreFlight) {
-            aircraftUpdate.activeBookingId = null;
-        }
-        batch.update(aircraftRef, aircraftUpdate);
     
-        // 3. Booking Document (if post-flight)
-        if (!isPreFlight && bookingForChecklist) {
+        if (bookingForChecklist) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-            batch.update(bookingRef, { status: 'Completed' });
+            if (isPreFlight) {
+                batch.update(bookingRef, { startHobbs: data.hobbs });
+            } else {
+                const postFlightData = data as PostFlightChecklistFormValues;
+                const startHobbs = bookingForChecklist.startHobbs || 0;
+                const endHobbs = postFlightData.hobbs;
+                const flightDuration = parseFloat((endHobbs - startHobbs).toFixed(1));
+
+                if (flightDuration > 0) {
+                    batch.update(bookingRef, { 
+                        endHobbs: endHobbs,
+                        flightDuration: flightDuration,
+                        status: 'Completed' 
+                    });
+                    aircraftUpdate.hours = (selectedAircraftForChecklist.hours || 0) + flightDuration;
+                } else {
+                    batch.update(bookingRef, { status: 'Completed' });
+                }
+                aircraftUpdate.activeBookingId = null;
+            }
         }
+        
+        batch.update(aircraftRef, aircraftUpdate);
     
         try {
             await batch.commit();
