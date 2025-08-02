@@ -284,9 +284,15 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                             <Badge variant="success" className="text-lg mt-1">Closed</Badge>
                         </div>
                     </div>
+                    {audit.scope && (
+                        <div className="pt-2">
+                            <h4 className="font-semibold text-sm">Audit Scope</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.scope}</p>
+                        </div>
+                    )}
                     {audit.evidenceReference && (
                         <div className="pt-2">
-                            <h4 className="font-semibold text-sm">Evidence Reference / Scope</h4>
+                            <h4 className="font-semibold text-sm">Evidence Reference</h4>
                             <p className="text-sm text-muted-foreground whitespace-pre-wrap p-2 border rounded-md min-h-[60px]">{audit.evidenceReference}</p>
                         </div>
                     )}
@@ -821,9 +827,20 @@ export default function QualityAuditDetailPage() {
                         </div>
                     )}
               </div>
-               {audit.evidenceReference && (
+               {audit.scope && (
                 <div className="space-y-2 border-t pt-6">
-                    <Label htmlFor="audit-evidence" className="font-semibold">Evidence Reference / Scope</Label>
+                    <Label htmlFor="audit-scope" className="font-semibold">Audit Scope</Label>
+                    <Textarea 
+                        id="audit-scope"
+                        readOnly
+                        value={audit.scope}
+                        className="min-h-[100px] bg-muted"
+                    />
+                </div>
+              )}
+              {audit.evidenceReference && (
+                <div className="space-y-2 border-t pt-6">
+                    <Label htmlFor="audit-evidence" className="font-semibold">Evidence Reference</Label>
                     <Textarea 
                         id="audit-evidence"
                         readOnly
@@ -957,6 +974,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

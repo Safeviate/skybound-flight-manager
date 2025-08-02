@@ -92,6 +92,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
     const [auditTeam, setAuditTeam] = useState<string[]>([]);
     const [auditeeTeam, setAuditeeTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
+    const [scope, setScope] = useState('');
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const { user } = useUser();
@@ -110,6 +111,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                 area: template.area,
                 auditTeam: [user.name, ...auditTeam],
                 auditeeTeam: [auditee.name, ...auditeeTeam],
+                scope: scope,
                 evidenceReference: evidenceReference,
             });
             setIsOpen(false);
@@ -123,7 +125,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                     <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
@@ -244,9 +246,17 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                         </Popover>
                     </div>
                      <div>
-                        <Label>Evidence Reference / Scope</Label>
+                        <Label>Audit Scope</Label>
                         <Textarea 
                             placeholder="e.g., Review maintenance records for ZS-ABC from Jan-Mar..." 
+                            value={scope}
+                            onChange={(e) => setScope(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <Label>Evidence Reference</Label>
+                        <Textarea 
+                            placeholder="e.g., Maintenance Logbook Ref: 12345, Flight Folio 678" 
                             value={evidenceReference}
                             onChange={(e) => setEvidenceReference(e.target.value)}
                         />

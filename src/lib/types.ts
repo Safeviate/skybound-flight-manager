@@ -402,75 +402,7 @@ export type AuditChecklistItem = {
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
 
-export type AuditChecklist = {
-    id: string;
-    companyId: string;
-    title: string;
-    area: AuditArea;
-    items: ChecklistItem[];
-    department?: string;
-    auditeeName?: string;
-    auditeePosition?: string;
-    auditor?: string;
-    category: ChecklistCategory;
-}
-
-export const VIEW_ALL_PAGES: Permission[] = [
-    'Aircraft:View',
-    'Students:View',
-    'Personnel:View',
-    'Safety:View',
-    'Quality:View',
-    'Checklists:View',
-    'Alerts:View',
-    'Reports:View',
-    'Bookings:View',
-];
-
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-    'Accountable Manager': ['Super User'],
-    'Admin': ['Super User'],
-    'Operations Manager': ['Super User'],
-    'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-    'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-    'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-    'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
-    'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
-    'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-    'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-    'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
-    'Front Office': [...VIEW_ALL_PAGES],
-    'Student': [...VIEW_ALL_PAGES, 'Safety:View'],
-    'Driver': ['Alerts:View', 'Safety:View'],
-    'Auditee': ['Quality:View', 'Alerts:View', 'Safety:View'],
-};
-
-export const ICAO_OCCURRENCE_CATEGORIES = [
-    'ADRM', 'AMAN', 'ARC', 'ATM', 'BIRD', 'CABIN', 'CFIT', 'CTOL', 'EVAC', 'EXTL', 'F-NI', 'F-POST', 'FUEL', 'GCOL', 'GTOW', 'ICE', 'LALT', 'LOC-G', 'LOC-I', 'LOLI', 'MAC', 'MED', 'NAV', 'OTHR', 'RAMP', 'RE', 'RI', 'SCF-NP', 'SCF-PP', 'SEC', 'TURB', 'UIMC', 'UNK', 'USOS', 'WILD', 'WSTRW'
-].sort();
-
-export const ICAO_PHASES_OF_FLIGHT = [
-    'Standing',
-    'Pushback/Towing',
-    'Taxi',
-    'Take-off',
-    'Initial Climb',
-    'Climb',
-    'Cruise',
-    'Descent',
-    'Approach',
-    'Landing',
-    'Go-around',
-    'Circling',
-    'Emergency Descent',
-    'Holding',
-    'Parked',
-    'Maintenance',
-    'Other'
-].sort();
-
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
-export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs';
 
 export type ChecklistItem = {
     id: string;
@@ -478,6 +410,8 @@ export type ChecklistItem = {
     type: ChecklistItemType;
     completed: boolean;
     value?: string | number | boolean;
+    regulationReference?: string;
+    evidence?: string;
 };
 
 export type CompletedChecklistItemResult = {
