@@ -536,7 +536,8 @@ export type QualityAudit = {
   nonConformanceIssues: NonConformanceIssue[];
   summary: string;
   discussion?: DiscussionEntry[];
-  investigationTeam?: string[];
+  auditTeam?: string[];
+  auditeeTeam?: string[];
   auditorSignature?: string;
   auditeeSignature?: string;
   scope?: string;

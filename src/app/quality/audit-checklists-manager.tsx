@@ -86,20 +86,21 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date, team: string[], evidenceReference: string) => void, personnel: User[] }) => {
+const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklist, onStart: (template: Checklist, auditee: User, auditDate: Date, auditTeam: string[], auditeeTeam: string[], evidenceReference: string) => void, personnel: User[] }) => {
     const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
-    const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
+    const [auditTeam, setAuditTeam] = useState<string[]>([]);
+    const [auditeeTeam, setAuditeeTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const { user } = useUser();
     
-    const availableTeamMembers = personnel.filter(p => p.id !== selectedAuditeeId && p.id !== user?.id);
+    const availablePersonnel = personnel.filter(p => p.id !== selectedAuditeeId && p.id !== user?.id);
 
     const handleConfirm = () => {
         const auditee = personnel.find(p => p.id === selectedAuditeeId);
         if (auditee && auditDate) {
-            onStart(template, auditee, auditDate, selectedTeam, evidenceReference);
+            onStart(template, auditee, auditDate, auditTeam, auditeeTeam, evidenceReference);
             setIsOpen(false);
         }
     };
@@ -144,7 +145,7 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                            <PopoverTrigger asChild>
                                <Button variant="outline" className="w-full justify-start">
                                    <Users className="mr-2 h-4 w-4" />
-                                   {selectedTeam.length > 0 ? `${selectedTeam.length} selected` : 'Select team members'}
+                                   {auditTeam.length > 0 ? `${auditTeam.length} selected` : 'Select audit team members'}
                                 </Button>
                            </PopoverTrigger>
                            <PopoverContent className="p-0">
@@ -153,19 +154,19 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                                     <CommandList>
                                         <CommandEmpty>No results found.</CommandEmpty>
                                         <CommandGroup>
-                                            {availableTeamMembers.map(p => (
+                                            {availablePersonnel.map(p => (
                                                 <CommandItem
                                                     key={p.id}
                                                     onSelect={() => {
-                                                        const isSelected = selectedTeam.includes(p.name);
+                                                        const isSelected = auditTeam.includes(p.name);
                                                         if (isSelected) {
-                                                            setSelectedTeam(selectedTeam.filter(name => name !== p.name));
+                                                            setAuditTeam(auditTeam.filter(name => name !== p.name));
                                                         } else {
-                                                            setSelectedTeam([...selectedTeam, p.name]);
+                                                            setAuditTeam([...auditTeam, p.name]);
                                                         }
                                                     }}
                                                 >
-                                                     <Check className={cn("mr-2 h-4 w-4", selectedTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
+                                                     <Check className={cn("mr-2 h-4 w-4", auditTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
                                                     {p.name}
                                                 </CommandItem>
                                             ))}
@@ -181,6 +182,43 @@ const StartAuditDialog = ({ template, onStart, personnel }: { template: Checklis
                             <SelectTrigger><SelectValue placeholder="Select primary auditee" /></SelectTrigger>
                             <SelectContent>{personnel.map(p => (<SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>))}</SelectContent>
                         </Select>
+                    </div>
+                     <div>
+                        <Label>Auditee Team</Label>
+                        <Popover>
+                           <PopoverTrigger asChild>
+                               <Button variant="outline" className="w-full justify-start">
+                                   <Users className="mr-2 h-4 w-4" />
+                                   {auditeeTeam.length > 0 ? `${auditeeTeam.length} selected` : 'Select auditee team members'}
+                                </Button>
+                           </PopoverTrigger>
+                           <PopoverContent className="p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search..." />
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {availablePersonnel.map(p => (
+                                                <CommandItem
+                                                    key={p.id}
+                                                    onSelect={() => {
+                                                        const isSelected = auditeeTeam.includes(p.name);
+                                                        if (isSelected) {
+                                                            setAuditeeTeam(auditeeTeam.filter(name => name !== p.name));
+                                                        } else {
+                                                            setAuditeeTeam([...auditeeTeam, p.name]);
+                                                        }
+                                                    }}
+                                                >
+                                                     <Check className={cn("mr-2 h-4 w-4", auditeeTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
+                                                    {p.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                           </PopoverContent>
+                        </Popover>
                     </div>
                      <div>
                         <Label>Audit Scope / Evidence to be Sampled</Label>
@@ -229,7 +267,7 @@ export function AuditChecklistsManager() {
         }
     }, [company]);
 
-    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date, team: string[], evidenceReference: string) => {
+    const handleStartAudit = async (template: Checklist, auditee: User, auditDate: Date, auditTeam: string[], auditeeTeam: string[], evidenceReference: string) => {
         if (!company || !user) return;
         const newAuditId = doc(collection(db, 'temp')).id;
         const newAudit: QualityAudit = {
@@ -247,7 +285,8 @@ export function AuditChecklistsManager() {
             checklistItems: template.items,
             nonConformanceIssues: [],
             summary: '',
-            investigationTeam: [user.name, auditee.name, ...team],
+            auditTeam: [user.name, ...auditTeam],
+            auditeeTeam: [auditee.name, ...auditeeTeam],
             evidenceReference: evidenceReference,
         };
 

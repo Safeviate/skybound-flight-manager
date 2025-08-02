@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { QualityAudit, User } from '@/lib/types';
 import { UserPlus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 const teamFormSchema = z.object({
   personnel: z.string().min(1, 'You must select a person to add.'),
@@ -40,77 +41,53 @@ interface AuditTeamFormProps {
 
 export function AuditTeamForm({ audit, personnel, onUpdate }: AuditTeamFormProps) {
   const { toast } = useToast();
-  const [team, setTeam] = React.useState<string[]>([]);
-
-  React.useEffect(() => {
-    const initialTeam = new Set(audit.investigationTeam || []);
-    if (audit.auditor) initialTeam.add(audit.auditor);
-    if (audit.auditeeName) initialTeam.add(audit.auditeeName);
-    setTeam(Array.from(initialTeam));
-  }, [audit.investigationTeam, audit.auditor, audit.auditeeName]);
-
-  const availablePersonnel = personnel.filter(
-    (u) => u.role !== 'Student' && !team.includes(u.name)
-  );
-
-  const form = useForm<TeamFormValues>({
-    resolver: zodResolver(teamFormSchema),
-  });
-
-  function onAddMember(data: TeamFormValues) {
-    const newTeam = [...team, data.personnel];
-    setTeam(newTeam);
-    onUpdate({ ...audit, investigationTeam: newTeam });
-    form.reset();
-    toast({
-      title: 'Team Member Added',
-      description: `${data.personnel} has been added to the investigation.`,
-    });
-  }
-
-  function onRemoveMember(memberName: string) {
-    if (memberName === audit.auditor || memberName === audit.auditeeName) {
-      toast({
-        variant: 'destructive',
-        title: 'Action Not Allowed',
-        description: 'The auditor or primary auditee cannot be removed.',
-      });
-      return;
-    }
-    const newTeam = team.filter((m) => m !== memberName);
-    setTeam(newTeam);
-    onUpdate({ ...audit, investigationTeam: newTeam });
-    toast({
-      title: 'Team Member Removed',
-      description: `${memberName} has been removed from the investigation.`,
-    });
-  }
   
   const auditorUser = personnel.find(p => p.name === audit.auditor);
   const auditeeUser = personnel.find(p => p.name === audit.auditeeName);
   const auditeePosition = auditeeUser?.role === 'Auditee' ? auditeeUser.externalPosition : auditeeUser?.role;
 
+  const auditTeamUsers = audit.auditTeam || [];
+  const auditeeTeamUsers = audit.auditeeTeam || [];
+
   return (
     <Card>
         <CardHeader>
-            <CardTitle>Audit Team</CardTitle>
+            <CardTitle>Audit Team & Participants</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg bg-muted/50">
-                    <h4 className="font-semibold text-muted-foreground">Lead Auditor</h4>
-                    <p className="text-lg font-bold">{audit.auditor}</p>
-                    <p className="text-sm text-muted-foreground">{auditorUser?.role}</p>
-                </div>
-                <div className="p-4 border rounded-lg bg-muted/50">
-                    <h4 className="font-semibold text-muted-foreground">Auditee</h4>
-                    <p className="text-lg font-bold">{audit.auditeeName}</p>
-                    <p className="text-sm text-muted-foreground">
-                        {auditeePosition}
-                    </p>
+        <CardContent className="space-y-6">
+            <div className="space-y-4">
+                <h4 className="font-semibold text-muted-foreground">Audit Team</h4>
+                <div className="flex flex-wrap gap-4">
+                    <div className="p-4 border rounded-lg bg-muted/50 min-w-[200px]">
+                        <p className="text-sm font-semibold text-primary">Lead Auditor</p>
+                        <p className="text-lg font-bold">{audit.auditor}</p>
+                        <p className="text-sm text-muted-foreground">{auditorUser?.role}</p>
+                    </div>
+                     {auditTeamUsers.filter(name => name !== audit.auditor).map((name, index) => (
+                        <div key={index} className="p-4 border rounded-lg bg-muted/50 min-w-[200px]">
+                            <p className="text-sm font-semibold text-primary">Team Member</p>
+                            <p className="text-lg font-bold">{name}</p>
+                        </div>
+                     ))}
                 </div>
             </div>
-            {/* Additional team members can be added here if needed */}
+            <Separator />
+            <div className="space-y-4">
+                <h4 className="font-semibold text-muted-foreground">Auditee Team</h4>
+                <div className="flex flex-wrap gap-4">
+                    <div className="p-4 border rounded-lg bg-muted/50 min-w-[200px]">
+                        <p className="text-sm font-semibold text-primary">Primary Auditee</p>
+                        <p className="text-lg font-bold">{audit.auditeeName}</p>
+                        <p className="text-sm text-muted-foreground">{auditeePosition}</p>
+                    </div>
+                    {auditeeTeamUsers.filter(name => name !== audit.auditeeName).map((name, index) => (
+                        <div key={index} className="p-4 border rounded-lg bg-muted/50 min-w-[200px]">
+                            <p className="text-sm font-semibold text-primary">Team Member</p>
+                            <p className="text-lg font-bold">{name}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </CardContent>
     </Card>
   );
