@@ -3,19 +3,19 @@
 
 import Header from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useMemo, useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
-import type { Booking, Aircraft } from '@/lib/types';
+import type { Booking, Aircraft, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, getDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -34,7 +34,7 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
     return Object.entries(bookingsByAircraft).map(([name, hours]) => ({
       name,
       'Flight Hours': parseFloat(hours.toFixed(1)),
-    }));
+    })).sort((a, b) => b['Flight Hours'] - a['Flight Hours']);
   }, [bookings, aircraft]);
 
   return (
@@ -56,6 +56,92 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
     </ResponsiveContainer>
   );
 };
+
+const InstructorHoursChart = ({ bookings, users }: { bookings: Booking[], users: User[] }) => {
+    const instructorData = useMemo(() => {
+        const hoursByInstructor = bookings.reduce((acc, booking) => {
+            if (booking.instructor && booking.status !== 'Cancelled' && booking.flightDuration) {
+                acc[booking.instructor] = (acc[booking.instructor] || 0) + booking.flightDuration;
+            }
+            return acc;
+        }, {} as Record<string, number>);
+
+        return Object.entries(hoursByInstructor).map(([name, hours]) => ({
+            name,
+            'Flight Hours': parseFloat(hours.toFixed(1))
+        })).sort((a,b) => b['Flight Hours'] - a['Flight Hours']);
+
+    }, [bookings]);
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={instructorData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis />
+                <Tooltip formatter={(value) => `${value} hrs`} />
+                <Legend />
+                <Bar dataKey="Flight Hours" fill="hsl(var(--primary))" />
+            </BarChart>
+        </ResponsiveContainer>
+    );
+};
+
+const BookingsOverTimeChart = ({ bookings }: { bookings: Booking[] }) => {
+    const data = useMemo(() => {
+        const bookingsByMonth = bookings.reduce((acc, booking) => {
+            const month = format(startOfMonth(parseISO(booking.date)), 'MMM yy');
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        
+        return Object.keys(bookingsByMonth).map(month => ({
+            name: month,
+            Bookings: bookingsByMonth[month]
+        })).reverse(); // Show most recent months first
+    }, [bookings]);
+    
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Bookings" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+            </LineChart>
+        </ResponsiveContainer>
+    );
+};
+
+const BookingPurposeChart = ({ bookings }: { bookings: Booking[] }) => {
+    const data = useMemo(() => {
+        const purposeCounts = bookings.reduce((acc, booking) => {
+            if(booking.status !== 'Cancelled') {
+                acc[booking.purpose] = (acc[booking.purpose] || 0) + 1;
+            }
+            return acc;
+        }, {} as Record<string, number>);
+        
+        return Object.entries(purposeCounts).map(([name, value]) => ({ name, value }));
+    }, [bookings]);
+    
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+                <Pie data={data} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} outerRadius={80} fill="#8884d8" dataKey="value">
+                    {data.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend />
+            </PieChart>
+        </ResponsiveContainer>
+    );
+};
+
 
 const CancellationReasonChart = ({ bookings }: { bookings: Booking[] }) => {
     const cancellationData = useMemo(() => {
@@ -97,11 +183,80 @@ const CancellationReasonChart = ({ bookings }: { bookings: Booking[] }) => {
     );
 };
 
+const KeyMetrics = ({ bookings }: { bookings: Booking[] }) => {
+    const metrics = useMemo(() => {
+        const totalBookings = bookings.length;
+        const completedFlights = bookings.filter(b => b.status === 'Completed').length;
+        const cancelledFlights = bookings.filter(b => b.status === 'Cancelled').length;
+        const totalFlightHours = bookings.reduce((sum, b) => b.status === 'Completed' ? sum + (b.flightDuration || 0) : sum, 0);
+        
+        const cancellationRate = totalBookings > 0 ? (cancelledFlights / totalBookings) * 100 : 0;
+        const avgDuration = completedFlights > 0 ? totalFlightHours / completedFlights : 0;
+
+        return {
+            totalBookings,
+            completedFlights,
+            cancelledFlights,
+            totalFlightHours: totalFlightHours.toFixed(1),
+            cancellationRate: cancellationRate.toFixed(1),
+            avgDuration: avgDuration.toFixed(1)
+        }
+    }, [bookings]);
+
+    return (
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.totalBookings}</div></CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Completed Flights</CardTitle>
+                    <Check className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.completedFlights}</div></CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Flight Hours</CardTitle>
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.totalFlightHours}</div></CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Average Duration</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.avgDuration} hrs</div></CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Cancelled Bookings</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.cancelledFlights}</div></CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Cancellation Rate</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent><div className="text-2xl font-bold">{metrics.cancellationRate}%</div></CardContent>
+            </Card>
+        </div>
+    )
+}
+
 function ReportsPage() {
   const { user, company, loading } = useUser();
   const router = useRouter();
   const [bookingData, setBookingData] = useState<Booking[]>([]);
   const [aircraftData, setAircraftData] = useState<Aircraft[]>([]);
+  const [userData, setUserData] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -118,14 +273,17 @@ function ReportsPage() {
           try {
               const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
               const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`));
+              const usersQuery = query(collection(db, `companies/${company.id}/users`));
               
-              const [bookingsSnapshot, aircraftSnapshot] = await Promise.all([
+              const [bookingsSnapshot, aircraftSnapshot, usersSnapshot] = await Promise.all([
                   getDocs(bookingsQuery),
-                  getDocs(aircraftQuery)
+                  getDocs(aircraftQuery),
+                  getDocs(usersQuery)
               ]);
 
               setBookingData(bookingsSnapshot.docs.map(doc => doc.data() as Booking));
               setAircraftData(aircraftSnapshot.docs.map(doc => doc.data() as Aircraft));
+              setUserData(usersSnapshot.docs.map(doc => doc.data() as User));
           } catch (error) {
               console.error("Error fetching report data:", error);
           } finally {
@@ -139,8 +297,8 @@ function ReportsPage() {
   const recentBookings = useMemo(() => {
     return bookingData
       .filter(b => b.bookingNumber)
-      .sort((a, b) => (a.bookingNumber || '').localeCompare(b.bookingNumber || ''))
-      .slice(0, 10);
+      .sort((a, b) => (b.bookingNumber || '').localeCompare(a.bookingNumber || ''))
+      .slice(0, 50);
   }, [bookingData]);
 
   const getStatusVariant = (status: string) => {
@@ -168,9 +326,46 @@ function ReportsPage() {
                 <TabsTrigger value="overview">Charts & Overview</TabsTrigger>
                 <TabsTrigger value="bookings">Recent Bookings Log</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="mt-4">
+            <TabsContent value="overview" className="mt-4 space-y-8">
+                 <KeyMetrics bookings={bookingData} />
                  <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card>
+                        <CardHeader>
+                            <CardTitle>Bookings Over Time</CardTitle>
+                            <CardDescription>Number of bookings created per month.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <BookingsOverTimeChart bookings={bookingData} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Aircraft Utilization</CardTitle>
+                            <CardDescription>Total flight hours per aircraft model.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Instructor Hours</CardTitle>
+                            <CardDescription>Total flight hours per instructor.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <InstructorHoursChart bookings={bookingData} users={userData} />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Booking Purpose</CardTitle>
+                            <CardDescription>Breakdown of bookings by their purpose.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <BookingPurposeChart bookings={bookingData} />
+                        </CardContent>
+                    </Card>
+                     <Card>
                         <CardHeader>
                             <CardTitle>Cancellation Reasons</CardTitle>
                             <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
@@ -179,25 +374,16 @@ function ReportsPage() {
                             <CancellationReasonChart bookings={bookingData} />
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader>
-                        <CardTitle>Aircraft Utilization</CardTitle>
-                        <CardDescription>Total flight hours per aircraft model.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
-                        </CardContent>
-                    </Card>
                  </div>
             </TabsContent>
             <TabsContent value="bookings" className="mt-4">
                  <Card>
                     <CardHeader>
                         <CardTitle>Recent Bookings</CardTitle>
-                        <CardDescription>A log of the 10 most recent flights.</CardDescription>
+                        <CardDescription>A log of the 50 most recent flights.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-96">
+                        <ScrollArea className="h-[70vh]">
                         <Table>
                             <TableHeader>
                             <TableRow>
