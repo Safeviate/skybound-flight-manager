@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -162,76 +163,86 @@ function ReportsPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-      <div className="grid md:grid-cols-1 gap-8">
-          <Card>
-              <CardHeader>
-                  <CardTitle>Recent Bookings</CardTitle>
-                  <CardDescription>A log of the 10 most recent flights.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-96">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Booking #</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Aircraft</TableHead>
-                        <TableHead>Purpose</TableHead>
-                        <TableHead>Details</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Reason for Cancellation</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentBookings.length > 0 ? (
-                        recentBookings.map((booking) => (
-                          <TableRow key={booking.id}>
-                            <TableCell>{booking.bookingNumber}</TableCell>
-                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
-                            <TableCell>{booking.aircraft}</TableCell>
-                            <TableCell>{booking.purpose}</TableCell>
-                            <TableCell>
-                                {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
-                                {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
-                                {booking.purpose === 'Maintenance' && booking.maintenanceType}
-                            </TableCell>
-                            <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
-                            </TableCell>
-                            <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center h-24">No recent bookings.</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </CardContent>
-          </Card>
-           <Card>
-              <CardHeader>
-                  <CardTitle>Cancellation Reasons</CardTitle>
-                  <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <CancellationReasonChart bookings={bookingData} />
-              </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Aircraft Utilization</CardTitle>
-              <CardDescription>Total flight hours per aircraft model.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
-            </CardContent>
-          </Card>
-      </div>
+        <Tabs defaultValue="overview">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="overview">Charts & Overview</TabsTrigger>
+                <TabsTrigger value="bookings">Recent Bookings Log</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-4">
+                 <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Cancellation Reasons</CardTitle>
+                            <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <CancellationReasonChart bookings={bookingData} />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                        <CardTitle>Aircraft Utilization</CardTitle>
+                        <CardDescription>Total flight hours per aircraft model.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
+                        </CardContent>
+                    </Card>
+                 </div>
+            </TabsContent>
+            <TabsContent value="bookings" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Bookings</CardTitle>
+                        <CardDescription>A log of the 10 most recent flights.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-96">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Booking #</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Aircraft</TableHead>
+                                <TableHead>Purpose</TableHead>
+                                <TableHead>Details</TableHead>
+                                <TableHead>Duration</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Reason for Cancellation</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {recentBookings.length > 0 ? (
+                                recentBookings.map((booking) => (
+                                <TableRow key={booking.id}>
+                                    <TableCell>{booking.bookingNumber}</TableCell>
+                                    <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
+                                    <TableCell>{booking.aircraft}</TableCell>
+                                    <TableCell>{booking.purpose}</TableCell>
+                                    <TableCell>
+                                        {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
+                                        {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
+                                        {booking.purpose === 'Maintenance' && booking.maintenanceType}
+                                    </TableCell>
+                                    <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={8} className="text-center h-24">No recent bookings.</TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
     </main>
   );
 }
