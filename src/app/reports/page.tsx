@@ -138,7 +138,7 @@ function ReportsPage() {
   const recentBookings = useMemo(() => {
     return bookingData
       .filter(b => b.bookingNumber)
-      .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime))
+      .sort((a, b) => (a.bookingNumber || '').localeCompare(b.bookingNumber || ''))
       .slice(0, 10);
   }, [bookingData]);
 
@@ -180,6 +180,7 @@ function ReportsPage() {
                         <TableHead>Details</TableHead>
                         <TableHead>Duration</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Reason for Cancellation</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -199,11 +200,12 @@ function ReportsPage() {
                             <TableCell>
                                 <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
                             </TableCell>
+                            <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center h-24">No recent bookings.</TableCell>
+                          <TableCell colSpan={8} className="text-center h-24">No recent bookings.</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -211,7 +213,7 @@ function ReportsPage() {
                 </ScrollArea>
               </CardContent>
           </Card>
-          <Card>
+           <Card>
               <CardHeader>
                   <CardTitle>Cancellation Reasons</CardTitle>
                   <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
@@ -220,16 +222,16 @@ function ReportsPage() {
                   <CancellationReasonChart bookings={bookingData} />
               </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Aircraft Utilization</CardTitle>
+              <CardDescription>Total flight hours per aircraft model.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
+            </CardContent>
+          </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Aircraft Utilization</CardTitle>
-          <CardDescription>Total flight hours per aircraft model.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
-        </CardContent>
-      </Card>
     </main>
   );
 }
