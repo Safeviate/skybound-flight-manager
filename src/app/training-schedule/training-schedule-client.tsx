@@ -114,6 +114,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined) => {
     if (booking.status === 'Completed') return 'bg-purple-600';
+
     if (!aircraftForBooking) return 'bg-gray-400';
 
     switch (aircraftForBooking.checklistStatus) {
