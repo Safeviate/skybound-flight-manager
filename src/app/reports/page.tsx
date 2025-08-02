@@ -166,6 +166,14 @@ function ReportsPage() {
                       </div>
                   </div>
               </CardContent>
+              <CardFooter>
+                 <Button asChild variant="outline" size="sm">
+                    <Link href="/training-schedule">
+                        View Schedule
+                        <ArrowRight className="ml-2 h-4 w-4"/>
+                    </Link>
+                 </Button>
+              </CardFooter>
           </Card>
             <Card>
               <CardHeader>
