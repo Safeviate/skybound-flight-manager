@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, AreaChart } from 'lucide-react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 
 interface TrainingSchedulePageContentProps {}
 
@@ -123,19 +122,6 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
     }
   };
 
-  const getChecklistStatusBadge = (status: Aircraft['checklistStatus']) => {
-    switch (status) {
-        case 'ready':
-            return <Badge variant="success">Ready</Badge>;
-        case 'needs-pre-flight':
-            return <Badge variant="warning">Needs Pre-Flight</Badge>;
-        case 'needs-post-flight':
-            return <Badge variant="default" className="bg-blue-500 text-white">Needs Post-Flight</Badge>;
-        default:
-            return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
   const handleBookingSubmit = async (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => {
     if (!company) {
       toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
@@ -240,12 +226,7 @@ export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps
                           const renderedSlots = new Set();
                           return (
                            <tr key={ac.id}>
-                                <td>
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold">{ac.tailNumber}</span>
-                                        {getChecklistStatusBadge(ac.checklistStatus)}
-                                    </div>
-                                </td>
+                                <td>{ac.tailNumber}</td>
                                 {timeSlots.map(time => {
                                   if (renderedSlots.has(time)) return null;
 
