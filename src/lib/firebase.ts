@@ -4,6 +4,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getPerformance, isSupported } from "firebase/performance";
 
 // Your web app's Firebase configuration (DEVELOPMENT)
 const firebaseConfigDev = {
@@ -44,23 +45,12 @@ const firebaseConfig = getFirebaseConfig();
 // Initialize Firebase app instance (ensuring it's only initialized once)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Declare variables for Firebase services
-let db;
-let auth;
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Initialize Firestore (client-side specific initialization)
-if (typeof window !== 'undefined') {
-  db = initializeFirestore(app, {
-    ignoreUndefinedProperties: true,
-    cacheSizeBytes: 100 * 1024 * 1024, // 100mb cache
-  });
-} else {
-  // Fallback for server-side if 'initializeFirestore' with options isn't desired there
-  db = getFirestore(app);
-}
+// Conditionally initialize performance only on the client side
+const perf = typeof window !== 'undefined' ? getPerformance(app) : null;
 
-// Initialize Authentication
-auth = getAuth(app);
 
 // Export all initialized services for use throughout your application
-export { app, db, auth };
+export { app, db, auth, perf };
