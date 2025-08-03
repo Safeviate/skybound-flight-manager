@@ -638,7 +638,9 @@ export function AircraftPageContent() {
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => {
                                             const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
-                                            handleEmailChecklist(viewingChecklist, email);
+                                            if (viewingChecklist) {
+                                                handleEmailChecklist(viewingChecklist, email);
+                                            }
                                         }}>Send Email</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
