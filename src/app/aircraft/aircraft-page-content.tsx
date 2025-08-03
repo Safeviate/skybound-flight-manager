@@ -45,6 +45,7 @@ export function AircraftPageContent() {
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
+    // Beacon's marker to force a recompile due to persistent caching
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
     
