@@ -1,11 +1,10 @@
-
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getPerformance, isSupported } from "firebase/performance";
+import { getPerformance } from "firebase/performance"; // Removed 'isSupported' from here
 
 // Your web app's Firebase configuration (DEVELOPMENT)
 const firebaseConfigDev = {
@@ -69,11 +68,8 @@ if (typeof window !== 'undefined') {
 
 // Initialize Performance Monitoring (client-side only)
 if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
-    if (supported) {
-      perf = getPerformance(app);
-    }
-  });
+  // Direct initialization: getPerformance will handle checking for browser support internally
+  perf = getPerformance(app);
 } else {
     perf = null; // Ensure perf is null when running on the server
 }
