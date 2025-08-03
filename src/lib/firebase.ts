@@ -4,8 +4,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getPerformance } from 'firebase/performance'; // Added this import for Performance Monitoring
-
 
 // Your web app's Firebase configuration (DEVELOPMENT)
 const firebaseConfigDev = {
@@ -49,7 +47,6 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Declare variables for Firebase services
 let db;
 let auth;
-let perf; // Declare 'perf' for Performance Monitoring
 
 // Initialize Firestore (client-side specific initialization)
 if (typeof window !== 'undefined') {
@@ -63,15 +60,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Initialize Authentication
-auth = getAuth(app); // Assign 'auth' here
-
-
-// Initialize Performance Monitoring (client-side only, like Firestore's specific init)
-if (typeof window !== 'undefined') {
-    perf = getPerformance(app);
-    console.log("Firebase Performance Monitoring initialized!"); // Optional: for debugging
-}
-
+auth = getAuth(app);
 
 // Export all initialized services for use throughout your application
-export { app, db, auth, perf }; // <-- 'perf' is now exported!
+export { app, db, auth };
