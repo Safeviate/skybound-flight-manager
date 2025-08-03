@@ -1,24 +1,25 @@
-
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getPerformance } from 'firebase/performance'; // Added this import for Performance Monitoring
 
-// Your web app's Firebase configuration
+
+// Your web app's Firebase configuration (DEVELOPMENT)
 const firebaseConfigDev = {
-  apiKey: "AIzaSyAdO8csz94jyQa8hxvGvruxjt-_cjWqhE0", 
+  apiKey: "AIzaSyAdO8csz94jyQa8hxvGvruxjt-_cjWqhE0",
   authDomain: "skybound-flight-manager.firebaseapp.com",
   projectId: "skybound-flight-manager",
   storageBucket: "skybound-flight-manager.appspot.com",
   messagingSenderId: "270096056362",
-  appId: "1:270096056362:web:4bfc002f20d91174090353"
+  appId: "1:270096056362:web:fb34e234d2703809090353"
 };
 
 // In a real-world scenario, you would have a separate config for production
 const firebaseConfigProd = {
-  apiKey: "YOUR_PROD_API_KEY", 
+  apiKey: "YOUR_PROD_API_KEY",
   authDomain: "your-prod-app.firebaseapp.com",
   projectId: "your-prod-project-id",
   storageBucket: "your-prod-project.appspot.com",
@@ -29,33 +30,48 @@ const firebaseConfigProd = {
 const getFirebaseConfig = () => {
     // This environment variable would be set in your deployment environment (e.g., Vercel, Netlify, Firebase Hosting).
     const env = process.env.NEXT_PUBLIC_FIREBASE_ENV;
-    
+
     if (env === 'production') {
         // For now, we'll return the dev config for both to ensure the app runs.
         // In a real setup, you'd replace this with your actual production config.
         // return firebaseConfigProd;
-        return firebaseConfigDev; 
+        return firebaseConfigDev; // Currently returns dev config even for 'production' env
     }
-    return firebaseConfigDev;
+    return firebaseConfigDev; // Always returns dev config for other environments
 };
 
 
 const firebaseConfig = getFirebaseConfig();
 
-// Initialize Firebase
+// Initialize Firebase app instance (ensuring it's only initialized once)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+// Declare variables for Firebase services
 let db;
+let auth;
+let perf; // Declare 'perf' for Performance Monitoring
+
+// Initialize Firestore (client-side specific initialization)
 if (typeof window !== 'undefined') {
   db = initializeFirestore(app, {
     ignoreUndefinedProperties: true,
     cacheSizeBytes: 100 * 1024 * 1024, // 100mb cache
   });
 } else {
+  // Fallback for server-side if 'initializeFirestore' with options isn't desired there
   db = getFirestore(app);
 }
 
-const auth = getAuth(app);
+// Initialize Authentication
+auth = getAuth(app); // Assign 'auth' here
 
 
-export { app, db, auth };
+// Initialize Performance Monitoring (client-side only, like Firestore's specific init)
+if (typeof window !== 'undefined') {
+    perf = getPerformance(app);
+    console.log("Firebase Performance Monitoring initialized!"); // Optional: for debugging
+}
+
+
+// Export all initialized services for use throughout your application
+export { app, db, auth, perf }; // <-- 'perf' is now exported!

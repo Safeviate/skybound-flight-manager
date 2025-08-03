@@ -21,12 +21,6 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
   const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
   
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-  
-  useEffect(() => {
     if (user && company) {
       setUpcomingBookings(initialBookings);
     } else if (!loading && !company && user?.permissions.includes('Super User')) {

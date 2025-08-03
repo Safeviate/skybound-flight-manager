@@ -39,6 +39,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setLoginError(null);
     
+    // The login function in the mock provider always returns true
     const loginSuccess = await login(email, password);
 
     if (!loginSuccess) {
@@ -62,7 +63,7 @@ export default function LoginPage() {
                 Login
             </CardTitle>
             <CardDescription>
-                Enter your email and password below to login.
+                Enter any email and password to continue.
             </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

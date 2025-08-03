@@ -530,4 +530,31 @@ export type ExternalContact = {
   description?: string;
 };
 
+export const VIEW_ALL_PAGES: Permission[] = [
+  'Aircraft:View',
+  'Students:View',
+  'Personnel:View',
+  'Safety:View',
+  'Quality:View',
+  'Checklists:View',
+  'Alerts:View',
+  'Reports:View',
+  'Bookings:View',
+];
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  'Accountable Manager': ['Super User'],
+  'Admin': ['Super User'],
+  'Operations Manager': ['Super User'],
+  'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
+  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
+  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
+  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
+  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
+  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+};
+
+
     

@@ -132,13 +132,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!loading && (!user || !user.permissions.includes('Super User'))) {
-      router.push('/my-dashboard');
-    }
-  }, [user, loading, router]);
-
-
   const handleNewCompany = () => {
     toast({ title: "Company Registered", description: `This is a mock action.` });
     setIsNewDialogOpen(false);
