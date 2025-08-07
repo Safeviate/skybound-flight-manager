@@ -10,4 +10,4 @@ env:
     value: AIzaSyBcfoL43_W7G-iJpslEqF19kxGd4eNBy64 # <--- PASTE YOUR REAL KEY HERE!
     availability:
       - BUILD
-      - RUNTIME
+      - RUNTIME/home/user/studio/public

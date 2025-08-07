@@ -62,12 +62,6 @@ const navItems: {
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
 ];
 
-const mobileNavItems = [
-    { href: '/aircraft', label: 'Checklists', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
-    { href: '/safety', label: 'File Report', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
-    { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
-];
-
 const reportsNavItems = [
     { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
@@ -132,7 +126,7 @@ export default function Nav() {
     return null; // Don't render nav if not logged in
   }
 
-  const itemsToDisplay = isMobile ? mobileNavItems : navItems;
+  const itemsToDisplay = navItems;
 
   const visibleNavItems = itemsToDisplay.filter(item => {
     if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
