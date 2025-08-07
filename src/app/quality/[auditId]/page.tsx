@@ -190,7 +190,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                  const newAlert: Omit<Alert, 'id' | 'number'> = {
                     companyId: company.id,
                     type: 'Signature Request',
-                    title: `Signature Required: Audit ${audit.id.substring(0,8)}`,
+                    title: `Signature Required: Audit ${audit.auditNumber || audit.id.substring(0,8)}`,
                     description: `Your signature is required on the audit report: "${audit.title}"`,
                     author: user.name,
                     date: new Date().toISOString(),
@@ -244,7 +244,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     <div>
                         <CardTitle className="text-2xl">{audit.title}</CardTitle>
                         <CardDescription>
-                          Audit Number: {audit.id} <br />
+                          Audit Number: {audit.auditNumber || audit.id} <br />
                           Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
                         </CardDescription>
                     </div>
@@ -974,6 +974,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 

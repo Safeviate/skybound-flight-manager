@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
 import type { AuditChecklist as Checklist, QualityAudit, User } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
@@ -303,20 +303,43 @@ export function AuditChecklistsManager() {
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>, template: Checklist) => {
         if (!company || !user) return;
-        const newAuditId = doc(collection(db, 'temp')).id;
-        const newAudit: QualityAudit = {
-            ...data,
-            id: newAuditId,
-            companyId: company.id,
-            title: template.title || 'Untitled Audit',
-            status: 'Open',
-            complianceScore: 0,
-            checklistItems: template.items || [],
-            nonConformanceIssues: [],
-            summary: '',
-        };
-
+        
         try {
+            // Get the next audit number
+            const auditsCollection = collection(db, `companies/${company.id}/quality-audits`);
+            const currentYear = new Date().getFullYear();
+            const yearPrefix = `AUD-${currentYear}-`;
+            
+            const q = query(auditsCollection, 
+                where('auditNumber', '>=', yearPrefix),
+                where('auditNumber', '<', `AUD-${currentYear+1}-`),
+                orderBy('auditNumber', 'desc'),
+                limit(1)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            let nextNumber = 1;
+            if (!querySnapshot.empty) {
+                const lastAudit = querySnapshot.docs[0].data() as QualityAudit;
+                const lastNumber = parseInt(lastAudit.auditNumber!.split('-')[2], 10);
+                nextNumber = lastNumber + 1;
+            }
+            const newAuditNumber = `${yearPrefix}${String(nextNumber).padStart(3, '0')}`;
+
+            const newAuditId = doc(collection(db, 'temp')).id;
+            const newAudit: QualityAudit = {
+                ...data,
+                id: newAuditId,
+                auditNumber: newAuditNumber,
+                companyId: company.id,
+                title: template.title || 'Untitled Audit',
+                status: 'Open',
+                complianceScore: 0,
+                checklistItems: template.items || [],
+                nonConformanceIssues: [],
+                summary: '',
+            };
+
             await setDoc(doc(db, `companies/${company.id}/quality-audits`, newAuditId), newAudit);
             router.push(`/quality/${newAuditId}`);
         } catch (error) {

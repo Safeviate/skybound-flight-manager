@@ -457,6 +457,7 @@ export type NonConformanceIssue = {
 export type QualityAudit = {
   id: string;
   companyId: string;
+  auditNumber?: string;
   title: string;
   date: string;
   type: 'Internal' | 'External' | 'Self Audit';
@@ -555,6 +556,3 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
 };
-
-
-    
