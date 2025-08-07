@@ -30,9 +30,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc } from 'firebase/firestore';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
+    if (!companyId || !aircraftId) return [];
     const historyRef = collection(db, `companies/${companyId}/aircraft/${aircraftId}/completed-checklists`);
     const snapshot = await getDocs(historyRef);
     if (snapshot.empty) {
@@ -55,11 +56,10 @@ export function AircraftPageContent() {
     const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
-    // Beacon's marker to force a recompile due to persistent caching
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
-        if (userLoading || !company) {
+        if (userLoading || !company?.id) {
             setIsDataLoading(!userLoading);
             return;
         }
@@ -186,20 +186,56 @@ export function AircraftPageContent() {
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
         if (!selectedAircraftForChecklist || !company || !user) return;
-    
+
         const isPreFlight = 'registration' in data;
-        
-        let toastDescription = `The checklist has been saved. The aircraft is now ${isPreFlight ? 'ready for its flight' : 'ready for its next Pre-Flight'}.`;
-        if (!isPreFlight) {
-            toastDescription += ` Booking has been marked as completed.`
+        const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
+        const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
+        const bookingNumber = bookingForChecklist?.bookingNumber;
+
+        const batch = writeBatch(db);
+
+        const historyDoc: Omit<CompletedChecklist, 'id'> = {
+            aircraftId: selectedAircraftForChecklist.id,
+            aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
+            userId: user.id,
+            userName: user.name,
+            dateCompleted: new Date().toISOString(),
+            type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
+            results: data,
+            bookingNumber: bookingNumber,
+        };
+
+        try {
+            // Update aircraft status
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
+            const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
+            // If it's a post-flight, clear the active booking
+            if (!isPreFlight) {
+                aircraftUpdate.activeBookingId = null;
+            }
+            batch.update(aircraftRef, aircraftUpdate);
+
+            // Add to checklist history
+            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
+            batch.set(doc(historyCollectionRef), historyDoc);
+
+            // If post-flight, complete the associated booking
+            if (!isPreFlight && bookingForChecklist) {
+                const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
+                batch.update(bookingRef, { status: 'Completed' });
+            }
+
+            await batch.commit();
+
+            toast({
+                title: 'Checklist Submitted',
+                description: `The checklist has been saved. ${!isPreFlight && bookingForChecklist ? 'Booking has been completed.' : ''}`
+            });
+             setSelectedChecklistAircraftId(null);
+        } catch (error) {
+            console.error("Error submitting checklist:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
         }
-
-        toast({
-            title: 'Checklist Submitted',
-            description: toastDescription
-        });
-
-        setSelectedChecklistAircraftId(null);
     };
     
     const handleReportIssue = async (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => {
@@ -223,10 +259,17 @@ export function AircraftPageContent() {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete checklist without company or aircraft context.' });
             return;
         }
-
-        setViewingChecklist(null);
-        toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
-        fetchHistory(); // Refresh the list
+        
+        try {
+            const docRef = doc(db, `companies/${company.id}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
+            await deleteDoc(docRef);
+            setViewingChecklist(null);
+            toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
+            fetchHistory(); // Refresh the list
+        } catch(e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete checklist.' });
+        }
     };
     
     const handleAircraftSelected = (aircraftId: string | null) => {
