@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -167,6 +167,16 @@ export function AircraftPageContent() {
         toast({
             title: 'Aircraft Returned to Service',
             description: `${aircraft.tailNumber} is now marked as Available.`,
+        });
+    };
+    
+    const handleClearPostFlight = async (aircraft: Aircraft) => {
+        const companyId = 'skybound-aero';
+        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
+        await updateDoc(aircraftRef, { checklistStatus: 'ready' });
+        toast({
+            title: 'Post-Flight Cleared',
+            description: `Aircraft ${aircraft.tailNumber} is now marked as ready.`,
         });
     };
 
@@ -343,6 +353,12 @@ export function AircraftPageContent() {
                                             <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
                                                 <Check className="mr-2 h-4 w-4" />
                                                 Return to Service
+                                            </DropdownMenuItem>
+                                        )}
+                                        {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
+                                            <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
+                                                <ListChecks className="mr-2 h-4 w-4" />
+                                                Clear Post-Flight
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem onClick={() => handleEdit(ac)}>
