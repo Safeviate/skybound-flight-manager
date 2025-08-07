@@ -59,10 +59,9 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
+        if (userLoading) return;
         if (!company) {
-            if (!userLoading) {
-                setIsDataLoading(false);
-            }
+            setIsDataLoading(false);
             return;
         }
 
@@ -234,6 +233,8 @@ export function AircraftPageContent() {
     const handleAircraftSelected = (aircraftId: string | null) => {
         setSelectedChecklistAircraftId(aircraftId);
     };
+
+    const isSuperUser = user?.permissions.includes('Super User');
 
     const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
         if (isDataLoading) {
@@ -455,6 +456,55 @@ export function AircraftPageContent() {
             </div>
         );
     };
+    
+  const ChecklistForms = () => (
+      <>
+          <div className="mb-4">
+              <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Change Aircraft
+              </Button>
+          </div>
+          {isSuperUser ? (
+              <Tabs defaultValue="pre-flight">
+                  <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="pre-flight">Pre-Flight</TabsTrigger>
+                      <TabsTrigger value="post-flight">Post-Flight</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pre-flight" className="pt-4">
+                      <PreFlightChecklistForm
+                          onSuccess={handleChecklistSuccess}
+                          aircraft={selectedAircraftForChecklist!}
+                          onReportIssue={handleReportIssue}
+                      />
+                  </TabsContent>
+                  <TabsContent value="post-flight" className="pt-4">
+                      <PostFlightChecklistForm
+                          onSuccess={handleChecklistSuccess}
+                          aircraft={selectedAircraftForChecklist!}
+                          startHobbs={activeBookingForSelectedAircraft?.startHobbs}
+                          onReportIssue={handleReportIssue}
+                      />
+                  </TabsContent>
+              </Tabs>
+          ) : (
+              selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight' ? (
+                  <PostFlightChecklistForm
+                      onSuccess={handleChecklistSuccess}
+                      aircraft={selectedAircraftForChecklist}
+                      startHobbs={activeBookingForSelectedAircraft?.startHobbs}
+                      onReportIssue={handleReportIssue}
+                  />
+              ) : (
+                  <PreFlightChecklistForm
+                      onSuccess={handleChecklistSuccess}
+                      aircraft={selectedAircraftForChecklist}
+                      onReportIssue={handleReportIssue}
+                  />
+              )
+          )}
+      </>
+  );
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -506,28 +556,7 @@ export function AircraftPageContent() {
                                 onAircraftSelected={handleAircraftSelected} 
                             />
                         ) : (
-                            <>
-                                <div className="mb-4">
-                                    <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
-                                        <ArrowLeft className="mr-2 h-4 w-4" />
-                                        Change Aircraft
-                                    </Button>
-                                </div>
-                                {selectedAircraftForChecklist.checklistStatus === 'needs-post-flight' ? (
-                                    <PostFlightChecklistForm 
-                                        onSuccess={handleChecklistSuccess}
-                                        aircraft={selectedAircraftForChecklist}
-                                        startHobbs={activeBookingForSelectedAircraft?.startHobbs}
-                                        onReportIssue={handleReportIssue}
-                                    />
-                                ) : (
-                                    <PreFlightChecklistForm 
-                                        onSuccess={handleChecklistSuccess} 
-                                        aircraft={selectedAircraftForChecklist}
-                                        onReportIssue={handleReportIssue}
-                                    />
-                                )}
-                            </>
+                           <ChecklistForms />
                         )}
                     </div>
                 </TabsContent>
