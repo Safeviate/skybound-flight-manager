@@ -59,8 +59,8 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
-        if (userLoading || !company?.id) {
-            setIsDataLoading(!userLoading);
+        if (!company?.id) {
+            setIsDataLoading(!userLoading); // Set loading to false if there's no company
             return;
         }
 
@@ -100,16 +100,17 @@ export function AircraftPageContent() {
             unsubBookings();
             unsubContacts();
         };
-    }, [company, userLoading, toast]);
+    }, [company?.id, userLoading, toast]);
     
     const fetchHistory = useCallback(async () => {
-        if (company && selectedHistoryAircraftId) {
-            const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
+        if (selectedHistoryAircraftId) {
+            const companyId = 'skybound-aero';
+            const history = await getChecklistHistory(companyId, selectedHistoryAircraftId);
             setChecklistHistory(history);
         } else {
             setChecklistHistory([]);
         }
-    }, [company, selectedHistoryAircraftId]);
+    }, [selectedHistoryAircraftId]);
 
     useEffect(() => {
         fetchHistory();
@@ -140,8 +141,8 @@ export function AircraftPageContent() {
     };
 
     const handleArchive = async (aircraft: Aircraft) => {
-        if (!company) return;
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        const companyId = 'skybound-aero';
+        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Archived' });
         toast({
             title: 'Aircraft Archived',
@@ -150,8 +151,8 @@ export function AircraftPageContent() {
     };
     
     const handleRestore = async (aircraft: Aircraft) => {
-        if (!company) return;
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        const companyId = 'skybound-aero';
+        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Restored',
@@ -160,8 +161,8 @@ export function AircraftPageContent() {
     };
 
     const handleReturnToService = async (aircraft: Aircraft) => {
-        if (!company) return;
-        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        const companyId = 'skybound-aero';
+        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Returned to Service',
@@ -185,8 +186,9 @@ export function AircraftPageContent() {
     };
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
-        if (!selectedAircraftForChecklist || !company || !user) return;
+        if (!selectedAircraftForChecklist || !user) return;
 
+        const companyId = 'skybound-aero';
         const isPreFlight = 'registration' in data;
         const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
@@ -207,7 +209,7 @@ export function AircraftPageContent() {
 
         try {
             // Update aircraft status
-            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
+            const aircraftRef = doc(db, `companies/${companyId}/aircraft`, selectedAircraftForChecklist.id);
             const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
             // If it's a post-flight, clear the active booking
             if (!isPreFlight) {
@@ -216,12 +218,12 @@ export function AircraftPageContent() {
             batch.update(aircraftRef, aircraftUpdate);
 
             // Add to checklist history
-            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
+            const historyCollectionRef = collection(db, `companies/${companyId}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             batch.set(doc(historyCollectionRef), historyDoc);
 
             // If post-flight, complete the associated booking
             if (!isPreFlight && bookingForChecklist) {
-                const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
+                const bookingRef = doc(db, `companies/${companyId}/bookings`, bookingForChecklist.id);
                 batch.update(bookingRef, { status: 'Completed' });
             }
 
@@ -239,8 +241,8 @@ export function AircraftPageContent() {
     };
     
     const handleReportIssue = async (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => {
-        if (!company || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Cannot report issue without company/user context.' });
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot report issue without user context.' });
             return;
         }
 
@@ -255,13 +257,14 @@ export function AircraftPageContent() {
 
 
     const handleDeleteChecklist = async (checklistId: string) => {
-        if (!company || !selectedHistoryAircraftId) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete checklist without company or aircraft context.' });
+        if (!selectedHistoryAircraftId) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete checklist without aircraft context.' });
             return;
         }
         
+        const companyId = 'skybound-aero';
         try {
-            const docRef = doc(db, `companies/${company.id}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
+            const docRef = doc(db, `companies/${companyId}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
             await deleteDoc(docRef);
             setViewingChecklist(null);
             toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
@@ -791,3 +794,5 @@ export function AircraftPageContent() {
     </main>
   );
 }
+
+    
