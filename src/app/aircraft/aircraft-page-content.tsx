@@ -59,9 +59,8 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
-        if (userLoading) return;
-        if (!company) {
-            setIsDataLoading(false);
+        if (userLoading || !company) {
+            setIsDataLoading(!userLoading);
             return;
         }
 
@@ -491,14 +490,14 @@ export function AircraftPageContent() {
               selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight' ? (
                   <PostFlightChecklistForm
                       onSuccess={handleChecklistSuccess}
-                      aircraft={selectedAircraftForChecklist}
+                      aircraft={selectedAircraftForChecklist!}
                       startHobbs={activeBookingForSelectedAircraft?.startHobbs}
                       onReportIssue={handleReportIssue}
                   />
               ) : (
                   <PreFlightChecklistForm
                       onSuccess={handleChecklistSuccess}
-                      aircraft={selectedAircraftForChecklist}
+                      aircraft={selectedAircraftForChecklist!}
                       onReportIssue={handleReportIssue}
                   />
               )
