@@ -7,7 +7,7 @@ runConfig:
   maxInstances: 1
 env:
   - variable: GEMINI_API_KEY
-    value: AIzaSyBcfoL43_W7G-iJpslEqF19kxGd4eNBy64 # <--- PASTE YOUR REAL KEY HERE!
+    value: YOUR_ACTUAL_GEMINI_API_KEY_GOES_HERE # <--- Double-check this value
     availability:
       - BUILD
-      - RUNTIME/home/user/studio/public
+      - RUNTIME
