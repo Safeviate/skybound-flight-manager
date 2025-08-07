@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -29,43 +29,80 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { db } from '@/lib/firebase';
+import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch } from 'firebase/firestore';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
-    return [];
+    const historyRef = collection(db, `companies/${companyId}/aircraft/${aircraftId}/completed-checklists`);
+    const snapshot = await getDocs(historyRef);
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
 }
+
 
 export function AircraftPageContent() {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
+    const [isDataLoading, setIsDataLoading] = useState(true);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
-    const { user, company, loading } = useUser();
+    const { user, company, loading: userLoading } = useUser();
     const { toast } = useToast();
     const { settings } = useSettings();
     const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
-    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
     // Beacon's marker to force a recompile due to persistent caching
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
-    const [bookings, setBookings] = useState<Booking[]>([]);
     
     useEffect(() => {
-        const fetchContacts = async () => {
-            if (!company) return;
-            setExternalContacts([]);
-        };
-        fetchContacts();
-    }, [company]);
-
-    useEffect(() => {
         if (!company) {
-            setAircraftList([]);
+            if (!userLoading) {
+                setIsDataLoading(false);
+            }
             return;
         }
-        setAircraftList([]);
-        setBookings([]);
 
-    }, [company, toast]);
+        const companyId = 'skybound-aero';
+        setIsDataLoading(true);
+
+        const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
+        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+        const contactsQuery = query(collection(db, `companies/${companyId}/external-contacts`));
+
+        const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
+            const aircraft = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Aircraft));
+            setAircraftList(aircraft);
+            setIsDataLoading(false);
+        }, (error) => {
+            console.error("Error fetching aircraft:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
+            setIsDataLoading(false);
+        });
+
+        const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+            const bookingsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
+            setBookings(bookingsData);
+        }, (error) => {
+            console.error("Error fetching bookings:", error);
+        });
+
+        const unsubContacts = onSnapshot(contactsQuery, (snapshot) => {
+            const contactsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ExternalContact));
+            setExternalContacts(contactsData);
+        }, (error) => {
+            console.error("Error fetching contacts:", error);
+        });
+
+        return () => {
+            unsubAircraft();
+            unsubBookings();
+            unsubContacts();
+        };
+    }, [company, userLoading, toast]);
     
     const fetchHistory = useCallback(async () => {
         if (company && selectedHistoryAircraftId) {
@@ -106,6 +143,8 @@ export function AircraftPageContent() {
 
     const handleArchive = async (aircraft: Aircraft) => {
         if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        await updateDoc(aircraftRef, { status: 'Archived' });
         toast({
             title: 'Aircraft Archived',
             description: `${aircraft.tailNumber} has been moved to the archives.`,
@@ -114,6 +153,8 @@ export function AircraftPageContent() {
     
     const handleRestore = async (aircraft: Aircraft) => {
         if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Restored',
             description: `${aircraft.tailNumber} has been restored to the active fleet.`,
@@ -122,6 +163,8 @@ export function AircraftPageContent() {
 
     const handleReturnToService = async (aircraft: Aircraft) => {
         if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
+        await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Returned to Service',
             description: `${aircraft.tailNumber} is now marked as Available.`,
@@ -192,39 +235,57 @@ export function AircraftPageContent() {
         setSelectedChecklistAircraftId(aircraftId);
     };
 
-    const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Registration</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Total Hours</TableHead>
-                    <TableHead>Airworthiness</TableHead>
-                    <TableHead>Insurance</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {aircraft.map((ac) => {
-                    return (
-                    <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
-                        <TableCell className="font-medium">{ac.tailNumber}</TableCell>
-                        <TableCell>{ac.make} {ac.model}</TableCell>
-                        <TableCell>{ac.hours.toFixed(1)}</TableCell>
-                        <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                        <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                           <DropdownMenu>
-                               <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon">
-                                       <MoreHorizontal className="h-4 w-4" />
-                                   </Button>
-                               </DropdownMenuTrigger>
-                               <DropdownMenuContent>
+    const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
+        if (isDataLoading) {
+            return (
+                <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                    <p className="text-muted-foreground">Loading aircraft...</p>
+                </div>
+            )
+        }
+        
+        if (aircraft.length === 0) {
+            return (
+                <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No aircraft found in this category.</p>
+                </div>
+            )
+        }
+
+        return (
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Registration</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>Total Hours</TableHead>
+                        <TableHead>Airworthiness</TableHead>
+                        <TableHead>Insurance</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {aircraft.map((ac) => {
+                        return (
+                        <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
+                            <TableCell className="font-medium">{ac.tailNumber}</TableCell>
+                            <TableCell>{ac.make} {ac.model}</TableCell>
+                            <TableCell>{ac.hours.toFixed(1)}</TableCell>
+                            <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                            <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
                                 {isArchived ? (
                                     <DropdownMenuItem onClick={() => handleRestore(ac)}>
                                         <RotateCw className="mr-2 h-4 w-4" />
@@ -264,14 +325,15 @@ export function AircraftPageContent() {
                                         </AlertDialog>
                                     </>
                                 )}
-                               </DropdownMenuContent>
-                           </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                )})}
-            </TableBody>
-        </Table>
-    );
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                    )})}
+                </TableBody>
+            </Table>
+        )
+    };
     
     const generatePdf = (checklist: CompletedChecklist) => {
         const doc = new jsPDF();
