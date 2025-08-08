@@ -14,7 +14,7 @@ import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, updateDoc, writeBatch, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, updateDoc, writeBatch, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,7 +25,6 @@ import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
-import { getQualityPageData } from './data';
 
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -105,6 +104,37 @@ export function QualityPageContent({
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  useEffect(() => {
+    if (!company) {
+      setDataLoading(false);
+      return;
+    }
+
+    setDataLoading(true);
+    const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
+    const unsubAudits = onSnapshot(auditsQuery, (snapshot) => {
+      setAudits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit)));
+      setDataLoading(false);
+    }, (error) => {
+      console.error("Error fetching audits:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not load real-time audit data.' });
+      setDataLoading(false);
+    });
+
+    const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
+    const unsubSchedule = onSnapshot(scheduleQuery, (snapshot) => {
+        setSchedule(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem)));
+    }, (error) => {
+        console.error("Error fetching schedule:", error);
+    });
+
+    return () => {
+      unsubAudits();
+      unsubSchedule();
+    };
+  }, [company, toast]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -418,7 +448,7 @@ export function QualityPageContent({
                                       )}
                                       <TableCell>
                                       <Link href={`/quality/${audit.id}`} className="hover:underline">
-                                          {audit.id.substring(0, 8)}...
+                                          {audit.auditNumber || audit.id.substring(0, 8)}
                                       </Link>
                                       </TableCell>
                                       <TableCell>{format(parseISO(audit.date), 'MMM d, yyyy')}</TableCell>
