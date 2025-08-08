@@ -47,7 +47,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
             toast({
                 variant: 'destructive',
                 title: 'AI Generation Failed',
-                description: 'Could not generate the checklist. Please check the server logs for more details.',
+                description: 'Could not generate the checklist. This is likely due to an invalid or missing API key. Please check the server logs for more details.',
             });
         } finally {
             setIsLoading(false);
