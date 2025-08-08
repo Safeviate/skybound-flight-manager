@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -75,7 +76,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                 const isOverdue = cap.status !== 'Closed' && differenceInDays(new Date(), parseISO(cap.completionDate)) > 0;
                 
                 return (
-                    <TableRow key={item.finding.id}>
+                    <TableRow key={`${item.auditId}-${item.finding.id}`}>
                         <TableCell>
                             <Link href={`/quality/${item.auditId}`} className="hover:underline text-primary">
                                 <div className="font-medium">{item.auditTitle}</div>

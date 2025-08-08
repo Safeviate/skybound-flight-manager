@@ -705,7 +705,7 @@ export default function QualityAuditDetailPage() {
     const nonConformanceIssues = audit.checklistItems
         .filter(item => item.finding === 'Non-compliant' || item.finding === 'Partial')
         .map(item => ({
-            id: item.id,
+            id: `${item.id}-${Date.now()}`, // Ensure unique ID for non-conformance issue
             itemText: item.text,
             regulationReference: item.regulationReference,
             finding: item.finding!,
@@ -974,6 +974,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
