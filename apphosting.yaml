@@ -11,3 +11,7 @@ env:
     availability:
       - BUILD
       - RUNTIME
+ -  variable: RESEND_API_KEY # This is the environment variable name your app expects
+    secret: resend-api-key   # This is the name of the secret in Cloud Secret Manager
+    availability:
+      - RUNTIME  
