@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -151,7 +150,7 @@ function CompaniesPage() {
     try {
       const companiesCol = collection(db, 'companies');
       const companySnapshot = await getDocs(companiesCol);
-      const companyList = companySnapshot.docs.map(doc => doc.data() as Company);
+      const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Company));
       
       const companiesWithStats = await Promise.all(
         companyList.map(async (company) => {
@@ -450,3 +449,5 @@ function CompaniesPage() {
 
 CompaniesPage.title = 'Company Management';
 export default CompaniesPage;
+
+    
