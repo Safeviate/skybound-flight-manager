@@ -6,12 +6,13 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
 env:
-  - variable: GEMINI_API_KEY
-    secret: gemini-api-key # <--- Double-check this value
+  - variable: GEMINI_API_KEY   # This hyphen has 2 spaces before it
+    secret: gemini-api-key
     availability:
       - BUILD
       - RUNTIME
- -  variable: RESEND_API_KEY # This is the environment variable name your app expects
-    secret: resend-api-key   # This is the name of the secret in Cloud Secret Manager
+  - variable: RESEND_API_KEY   # <--- THIS HYPHEN MUST ALSO HAVE 2 SPACES BEFORE IT
+    secret: resend-api-key
     availability:
-      - RUNTIME  
+      - RUNTIME
+ 
