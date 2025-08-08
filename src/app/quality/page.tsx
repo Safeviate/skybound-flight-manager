@@ -3,10 +3,13 @@ import { getQualityPageData } from './data';
 import { QualityPageContent } from './quality-page-content';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 
-async function getInitialData(companyId: string) {
+async function getInitialData(companyId: string | undefined) {
+    if (!companyId) {
+        return { auditsList: [], scheduleList: [] };
+    }
     try {
-        const { auditsList, scheduleList } = await getQualityPageData(companyId);
-        return { auditsList, scheduleList };
+        const data = await getQualityPageData(companyId);
+        return data || { auditsList: [], scheduleList: [] };
     } catch (error) {
         console.error("Failed to fetch initial data for quality page:", error);
         return { auditsList: [], scheduleList: [] };
