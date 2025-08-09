@@ -21,17 +21,6 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const MOCK_USER: User = {
-    id: 'super-admin-id',
-    companyId: 'skybound-aero',
-    name: 'Super Admin',
-    role: 'Admin',
-    email: 'admin@skybound.com',
-    phone: '555-123-4567',
-    permissions: ['Super User'],
-    status: 'Active',
-};
-
 const MOCK_COMPANY: Company = {
     id: 'skybound-aero',
     name: 'SkyBound Aero',
@@ -44,8 +33,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [company, setCompany] = useState<Company | null>(null);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  
+  useEffect(() => {
+    // In a real app, you would check for a stored token or session here
+    // For this mock setup, we simulate an async check and then decide.
+    const timer = setTimeout(() => {
+        // If no user is set after checking, we are not logged in.
+        if (!user) {
+            setLoading(false);
+        }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
 
   const setActiveCompany = (newCompany: Company | null) => {
     setCompany(newCompany);
@@ -53,16 +56,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password?: string): Promise<boolean> => {
     // This is a mock login. In a real app, you'd verify credentials.
+    // Forcing a hardcoded user for demo purposes.
+    const MOCK_USER: User = {
+        id: 'super-admin-id',
+        companyId: 'skybound-aero',
+        name: 'Super Admin',
+        role: 'Admin',
+        email: 'admin@skybound.com',
+        phone: '555-123-4567',
+        permissions: ['Super User'],
+        status: 'Active',
+    };
     setUser(MOCK_USER);
     setCompany(MOCK_COMPANY);
     setUserCompanies([MOCK_COMPANY]);
-    console.log("Mock login successful");
+    setLoading(false); // We are done loading after a successful login
     return true;
   };
 
   const logout = useCallback(() => {
     setUser(null);
     setCompany(null);
+    setUserCompanies([]);
     // Use window.location to force a full page reload and redirect to the login page.
     // This is more reliable than router.push for logout sequences.
     window.location.href = '/login';

@@ -21,6 +21,10 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
   const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
   
   useEffect(() => {
+    if (!loading && !user) {
+        router.push('/login');
+        return;
+    }
     if (user && company) {
       setUpcomingBookings(initialBookings);
     } else if (!loading && !company && user?.permissions.includes('Super User')) {
@@ -33,7 +37,7 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
         setAlerts(unacknowledged);
     }, [getUnacknowledgedAlerts]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
         <main className="flex-1 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
