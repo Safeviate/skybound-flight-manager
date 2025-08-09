@@ -55,7 +55,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         }
 
         const newUserId = doc(collection(db, 'temp')).id;
-        const permissions = ROLE_PERMISSIONS[data.role] || [];
         const temporaryPassword = Math.random().toString(36).slice(-8);
 
         const newPersonnel: PersonnelUser = {
@@ -63,7 +62,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             id: newUserId,
             companyId: company.id,
             status: 'Active',
-            permissions,
+            // Permissions are now passed directly from the form
         };
 
         try {
