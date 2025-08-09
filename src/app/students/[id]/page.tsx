@@ -50,11 +50,11 @@ function StudentProfilePage() {
         const fetchStudent = async () => {
             if (!studentId) return;
             setLoading(true);
-            const studentRef = doc(db, `companies/${company.id}/users`, studentId);
+            const studentRef = doc(db, `companies/${company.id}/students`, studentId);
             const studentSnap = await getDoc(studentRef);
 
-            if (studentSnap.exists() && studentSnap.data().role === 'Student') {
-                setStudent(studentSnap.data() as StudentUser);
+            if (studentSnap.exists()) {
+                setStudent({ ...studentSnap.data(), id: studentSnap.id } as StudentUser);
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: 'Student not found.' });
             }
@@ -74,7 +74,7 @@ function StudentProfilePage() {
 
     const handleUpdate = async (updateData: Partial<StudentUser>) => {
         if (!student || !company) return;
-        const studentRef = doc(db, `companies/${company.id}/users`, student.id);
+        const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         try {
             await updateDoc(studentRef, updateData);
             setStudent(prev => prev ? { ...prev, ...updateData } : null);

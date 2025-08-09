@@ -1,5 +1,5 @@
 
-import { getStudentsPageData as getPersonnelPageData } from './data';
+import { getPersonnelPageData } from './data';
 import { PersonnelPageContent } from './personnel-page-content';
 import type { User } from '@/lib/types';
 

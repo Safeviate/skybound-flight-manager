@@ -48,7 +48,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
 
   const handleStatusChange = async (studentId: string, newStatus: 'Active' | 'Archived') => {
     if (!company) return;
-    const studentRef = doc(db, `companies/${company.id}/users`, studentId);
+    const studentRef = doc(db, `companies/${company.id}/students`, studentId);
     try {
         await updateDoc(studentRef, { status: newStatus });
         setStudents(prev => prev.map(s => s.id === studentId ? {...s, status: newStatus} : s));
@@ -87,7 +87,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
         };
         delete studentToAdd.password;
 
-        await setDoc(doc(db, `companies/${company.id}/users`, newUserId), studentToAdd);
+        await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentToAdd);
         setStudents(prev => [...prev, studentToAdd]);
         toast({
             title: 'Student Added',
