@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -34,7 +33,7 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.void(),
   },
-  async ({ to, subject, emailData }) => {
+  async ({ to, subject, emailData }) => { // 'to' and 'subject' are correctly received here
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Cannot send email.';
@@ -69,17 +68,14 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
 
-    // For Resend sandbox, you can only send to the verified email.
-    // If you are using a sandbox key, change `to` to your verified email.
-    const recipient = 'barry@safeviate.com'; 
-    const finalSubject = subject;
-
+    // Removed: const recipient = 'barry@safeviate.com';
+    // Removed: const finalSubject = subject;
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'SkyBound Flight Manager <barry@safeviate.com>',
-        to: recipient,
-        subject: finalSubject,
+        from: 'SkyBound Flight Manager <barry@safeviate.com>', // This is good, using your verified domain
+        to: to, // Now directly using the 'to' passed into the flow
+        subject: subject, // Now directly using the 'subject' passed into the flow
         html: htmlBody,
         headers: {
             'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
