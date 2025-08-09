@@ -77,7 +77,7 @@ const sendEmailFlow = ai.defineFlow(
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'SkyBound Flight Manager <onboarding@resend.dev>',
+        from: 'SkyBound Flight Manager <barry@safeviate.com>',
         to: recipient,
         subject: finalSubject,
         html: htmlBody,
