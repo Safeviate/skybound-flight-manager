@@ -1,3 +1,4 @@
+
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
 // Do not include any server-side secrets or sensitive information here.
 
@@ -67,11 +68,11 @@ if (typeof window !== 'undefined') {
 }
 
 // Initialize Performance Monitoring (client-side only)
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && firebaseConfig.performanceInstrumentationEnabled) {
   // Direct initialization: getPerformance will handle checking for browser support internally
   perf = getPerformance(app);
 } else {
-    perf = null; // Ensure perf is null when running on the server
+    perf = null; // Ensure perf is null when running on the server or disabled
 }
 
 
