@@ -40,9 +40,9 @@ const MOCK_COMPANY: Company = {
 
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(MOCK_USER);
-  const [company, setCompany] = useState<Company | null>(MOCK_COMPANY);
-  const [userCompanies, setUserCompanies] = useState<Company[]>([MOCK_COMPANY]);
+  const [user, setUser] = useState<User | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -52,6 +52,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password?: string): Promise<boolean> => {
+    // This is a mock login. In a real app, you'd verify credentials.
+    setUser(MOCK_USER);
+    setCompany(MOCK_COMPANY);
+    setUserCompanies([MOCK_COMPANY]);
     console.log("Mock login successful");
     return true;
   };
