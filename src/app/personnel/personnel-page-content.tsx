@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { getStudentsPageData as getPersonnelPageData } from './data';
+import { getPersonnelPageData } from './data';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
