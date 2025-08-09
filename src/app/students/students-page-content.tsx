@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import { sendEmail } from '@/ai/flows/send-email-flow';
 
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
@@ -72,6 +73,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     
     try {
         const newUserId = doc(collection(db, 'temp')).id;
+        const temporaryPassword = Math.random().toString(36).slice(-8);
 
         const studentToAdd: User = {
             ...newStudentData,
@@ -89,10 +91,30 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
 
         await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentToAdd);
         setStudents(prev => [...prev, studentToAdd]);
-        toast({
-            title: 'Student Added',
-            description: `${newStudentData.name} has been added to the roster.`
-        });
+        
+        if (newStudentData.email) {
+            await sendEmail({
+                to: newStudentData.email,
+                subject: `Welcome to ${company.name}`,
+                emailData: {
+                    userName: newStudentData.name,
+                    companyName: company.name,
+                    userEmail: newStudentData.email,
+                    temporaryPassword: temporaryPassword,
+                    loginUrl: window.location.origin + '/login',
+                },
+            });
+            toast({
+                title: 'Student Added',
+                description: `${newStudentData.name} has been added and a welcome email has been sent.`
+            });
+        } else {
+            toast({
+                title: 'Student Added',
+                description: `${newStudentData.name} has been added to the roster.`
+            });
+        }
+
     } catch (error: any) {
         console.error("Error creating student:", error);
         toast({ variant: 'destructive', title: 'Error', description: "Could not create new student." });
