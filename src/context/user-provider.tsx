@@ -59,8 +59,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     setCompany(null);
-    router.push('/login');
-  }, [router]);
+    // Use window.location to force a full page reload and redirect to the login page.
+    // This is more reliable than router.push for logout sequences.
+    window.location.href = '/login';
+  }, []);
   
   const updateUser = async (updatedData: Partial<User>): Promise<boolean> => {
     setUser(prev => prev ? { ...prev, ...updatedData } : null);
