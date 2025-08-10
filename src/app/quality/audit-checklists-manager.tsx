@@ -163,8 +163,11 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                     </div>
                      <div>
                         <Label>Lead Auditor</Label>
-                        <Input value={user?.name || 'Current User'} readOnly disabled />
+                       <Input
+                            placeholder="Enter Lead Auditor Name"
+                        />
                     </div>
+
                      <div>
                         <Label>Audit Team</Label>
                         <Popover>
