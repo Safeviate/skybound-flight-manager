@@ -87,30 +87,27 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
 }
 
 const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[], template: Checklist }) => {
-    const [selectedAuditeeId, setSelectedAuditeeId] = useState('');
+    const [leadAuditor, setLeadAuditor] = useState('');
+    const [auditeeName, setAuditeeName] = useState('');
+    const [auditTeam, setAuditTeam] = useState('');
+    const [auditeeTeam, setAuditeeTeam] = useState('');
     const [auditType, setAuditType] = useState<'Internal' | 'External' | 'Self Audit'>('Internal');
-    const [auditTeam, setAuditTeam] = useState<string[]>([]);
-    const [auditeeTeam, setAuditeeTeam] = useState<string[]>([]);
     const [auditDate, setAuditDate] = useState<Date | undefined>(new Date());
     const [scope, setScope] = useState('');
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const { user } = useUser();
     
-    const availablePersonnel = personnel.filter(p => p.id !== selectedAuditeeId && p.id !== user?.id);
-
     const handleConfirm = () => {
-        const auditee = personnel.find(p => p.id === selectedAuditeeId);
         if (auditDate && user) {
             onStart({
                 date: format(auditDate, 'yyyy-MM-dd'),
                 type: auditType,
-                auditor: user.name,
-                auditeeName: auditee?.name || 'N/A',
-                auditeePosition: auditee?.role === 'Auditee' ? auditee.externalPosition : auditee?.role,
+                auditor: leadAuditor,
+                auditeeName: auditeeName,
                 area: template.area,
-                auditTeam: [user.name, ...auditTeam],
-                auditeeTeam: auditee ? [auditee.name, ...auditeeTeam] : [...auditeeTeam],
+                auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
+                auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
                 scope: scope,
                 evidenceReference: evidenceReference,
             });
@@ -125,7 +122,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                     <PlayCircle className="mr-2 h-4 w-4" /> Start Audit
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Start Audit: {template.title}</DialogTitle>
                     <DialogDescription>
@@ -165,89 +162,33 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                         <Label>Lead Auditor</Label>
                        <Input
                             placeholder="Enter Lead Auditor Name"
+                            value={leadAuditor}
+                            onChange={(e) => setLeadAuditor(e.target.value)}
                         />
                     </div>
-
                      <div>
                         <Label>Audit Team</Label>
-                        <Popover>
-                           <PopoverTrigger asChild>
-                               <Button variant="outline" className="w-full justify-start">
-                                   <Users className="mr-2 h-4 w-4" />
-                                   {auditTeam.length > 0 ? `${auditTeam.length} selected` : 'Select audit team members'}
-                                </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search..." />
-                                    <CommandList>
-                                        <CommandEmpty>No results found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {availablePersonnel.map(p => (
-                                                <CommandItem
-                                                    key={p.id}
-                                                    onSelect={() => {
-                                                        const isSelected = auditTeam.includes(p.name);
-                                                        if (isSelected) {
-                                                            setAuditTeam(auditTeam.filter(name => name !== p.name));
-                                                        } else {
-                                                            setAuditTeam([...auditTeam, p.name]);
-                                                        }
-                                                    }}
-                                                >
-                                                     <Check className={cn("mr-2 h-4 w-4", auditTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
-                                                    {p.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                           </PopoverContent>
-                        </Popover>
+                        <Input
+                            placeholder="Enter team member names, comma separated"
+                            value={auditTeam}
+                            onChange={(e) => setAuditTeam(e.target.value)}
+                        />
                     </div>
                     <div>
                         <Label>Auditee</Label>
-                        <Select value={selectedAuditeeId} onValueChange={setSelectedAuditeeId}>
-                            <SelectTrigger><SelectValue placeholder="Select primary auditee" /></SelectTrigger>
-                            <SelectContent>{personnel.map(p => (<SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>))}</SelectContent>
-                        </Select>
+                         <Input
+                            placeholder="Enter Primary Auditee Name"
+                            value={auditeeName}
+                            onChange={(e) => setAuditeeName(e.target.value)}
+                        />
                     </div>
                      <div>
                         <Label>Auditee Team</Label>
-                        <Popover>
-                           <PopoverTrigger asChild>
-                               <Button variant="outline" className="w-full justify-start">
-                                   <Users className="mr-2 h-4 w-4" />
-                                   {auditeeTeam.length > 0 ? `${auditeeTeam.length} selected` : 'Select auditee team members'}
-                                </Button>
-                           </PopoverTrigger>
-                           <PopoverContent className="p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search..." />
-                                    <CommandList>
-                                        <CommandEmpty>No results found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {availablePersonnel.map(p => (
-                                                <CommandItem
-                                                    key={p.id}
-                                                    onSelect={() => {
-                                                        const isSelected = auditeeTeam.includes(p.name);
-                                                        if (isSelected) {
-                                                            setAuditeeTeam(auditeeTeam.filter(name => name !== p.name));
-                                                        } else {
-                                                            setAuditeeTeam([...auditeeTeam, p.name]);
-                                                        }
-                                                    }}
-                                                >
-                                                     <Check className={cn("mr-2 h-4 w-4", auditeeTeam.includes(p.name) ? "opacity-100" : "opacity-0")} />
-                                                    {p.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                           </PopoverContent>
-                        </Popover>
+                        <Input
+                            placeholder="Enter team member names, comma separated"
+                            value={auditeeTeam}
+                            onChange={(e) => setAuditeeTeam(e.target.value)}
+                        />
                     </div>
                      <div>
                         <Label>Audit Scope</Label>
