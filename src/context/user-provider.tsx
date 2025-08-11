@@ -74,6 +74,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (companySnap.exists()) {
         setCompany(companySnap.data() as Company);
       } else {
+        // If the company doc has no fields, it won't "exist". We rely on the fallback.
         console.warn("Company doc does not have fields, using fallback data. This is expected if the document only holds subcollections.");
         setCompany(fallbackCompany);
       }
@@ -105,8 +106,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const companyId = 'skybound-aero'; // Hardcoded for single-tenant app
 
             try {
-                // We no longer check if the company exists, we assume the path is correct
-                // and proceed to check for the user document within it.
+                // Since the company document might not have fields, we don't check for its existence here.
+                // We proceed directly to check for the user document within the known company path.
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
