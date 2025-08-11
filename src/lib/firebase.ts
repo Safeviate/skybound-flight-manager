@@ -18,6 +18,25 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Add a robust check to ensure all required Firebase config values are present.
+// This provides a clear error message if the .env.local file is not set up correctly.
+const requiredConfig = [
+    'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
+];
+
+const isConfigValid = Object.entries(firebaseConfig).every(([key, value]) => {
+    if(requiredConfig.includes(key)) {
+        return !!value && !value.startsWith('YOUR_');
+    }
+    return true;
+});
+
+
+if (!isConfigValid) {
+    throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
+}
+
+
 // Initialize Firebase app instance (ensuring it's only initialized once)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
