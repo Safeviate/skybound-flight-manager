@@ -101,6 +101,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
                 <div className="space-y-3">
                     {fields.map((field, index) => (
                     <div key={field.id} className="flex items-start gap-2 p-2 border rounded-md">
+                        <span className="font-semibold text-sm pt-2">{index + 1}.</span>
                         <div className="flex-1 space-y-2">
                              <FormField
                                 control={form.control}
@@ -108,7 +109,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormControl>
-                                        <Textarea placeholder={`Item #${index + 1} text (include regulation in text if applicable)`} {...field} className="min-h-[40px]"/>
+                                        <Textarea placeholder={`Item text (include regulation in text if applicable)`} {...field} className="min-h-[40px]"/>
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
