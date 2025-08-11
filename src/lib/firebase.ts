@@ -1,4 +1,3 @@
-
 'use client';
 
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
@@ -11,13 +10,13 @@ import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration is now read from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyAd08csz94jyQa8hxvGvruxjt-_cjWqhE0",
-  authDomain: "skybound-flight-manager.firebaseapp.com",
-  projectId: "skybound-flight-manager",
-  storageBucket: "skybound-flight-manager.appspot.com",
-  messagingSenderId: "270096056362",
-  appId: "1:270096056362:web:787c4a3b6793e3d6090353",
-  measurementId: "G-955BDKKR02",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 
@@ -26,27 +25,24 @@ const isConfigValid = Object.values(firebaseConfig).every(value => !!value);
 
 let app: FirebaseApp;
 
-const getFirebaseApp = () => {
-    if (!isConfigValid) {
-         throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
-    }
+if (!isConfigValid) {
+     throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
+}
 
-    if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
-    }
-    return app;
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+} else {
+    app = getApp();
 }
 
 
-const auth = getAuth(getFirebaseApp());
-const db = getFirestore(getFirebaseApp());
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 let perf: any = null;
 if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
-  perf = getPerformance(getFirebaseApp());
+  perf = getPerformance(app);
 }
 
 
-export { getFirebaseApp, db, auth, perf };
+export { app as getFirebaseApp, db, auth, perf };
