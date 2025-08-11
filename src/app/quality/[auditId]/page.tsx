@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -38,6 +38,7 @@ import { SignaturePad } from '@/components/ui/signature-pad';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -418,6 +419,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                             </Badge>
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
                                 )
                             })}
@@ -451,6 +453,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                                             </Badge>
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                        {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                     </div>
                                 )
                             })}
@@ -636,6 +639,7 @@ export default function QualityAuditDetailPage() {
   const [loading, setLoading] = useState(true);
   const auditId = params.auditId as string;
   const [personnel, setPersonnel] = useState<User[]>([]);
+  const [cameraItemId, setCameraItemId] = useState<string | null>(null);
 
   useEffect(() => {
     if (userLoading) return;
@@ -771,6 +775,13 @@ export default function QualityAuditDetailPage() {
       title: 'Audit Seeded',
       description: 'The audit checklist has been pre-filled with sample data.',
     });
+  };
+
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (cameraItemId) {
+        handleItemChange(cameraItemId, 'photo', dataUrl);
+    }
+    setCameraItemId(null);
   };
 
   if (loading || userLoading) {
@@ -943,19 +954,26 @@ export default function QualityAuditDetailPage() {
                                               />
                                       </div>
 
-                                      <div className="flex items-center gap-4 text-sm pt-2 border-t">
-                                          <div className="flex items-center gap-2">
-                                              <span className="font-semibold">Result:</span>
-                                              <Badge variant={findingInfo.variant} className="whitespace-nowrap">
-                                                  {findingInfo.icon}
-                                                  <span className="ml-2">{findingInfo.text}</span>
-                                              </Badge>
-                                              {levelInfo && (
-                                                  <Badge variant={levelInfo.variant} className="whitespace-nowrap">
-                                                  {item.level}
-                                                  </Badge>
-                                              )}
-                                          </div>
+                                      <div className="flex items-center justify-between pt-2 border-t">
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => setCameraItemId(item.id)}>
+                                                <Camera className="mr-2 h-4 w-4" />
+                                                {item.photo ? 'Retake Photo' : 'Take Photo'}
+                                            </Button>
+                                            {item.photo && <ImageIcon className="h-5 w-5 text-green-500" />}
+                                        </div>
+                                        <div className="flex items-center gap-4 text-sm">
+                                            <span className="font-semibold">Result:</span>
+                                            <Badge variant={findingInfo.variant} className="whitespace-nowrap">
+                                                {findingInfo.icon}
+                                                <span className="ml-2">{findingInfo.text}</span>
+                                            </Badge>
+                                            {levelInfo && (
+                                                <Badge variant={levelInfo.variant} className="whitespace-nowrap">
+                                                {item.level}
+                                                </Badge>
+                                            )}
+                                        </div>
                                       </div>
                                   </div>
                               )
@@ -976,27 +994,20 @@ export default function QualityAuditDetailPage() {
           </Card>
       </>
       )}
+
+      {/* Camera Dialog */}
+      <Dialog open={!!cameraItemId} onOpenChange={(isOpen) => !isOpen && setCameraItemId(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Take Photo</DialogTitle>
+                <DialogDescription>Attach a photo as evidence for this checklist item.</DialogDescription>
+            </DialogHeader>
+            <StandardCamera onSuccess={handlePhotoSuccess} />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
     
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

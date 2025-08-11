@@ -383,6 +383,7 @@ export type AuditChecklistItem = {
     regulationReference?: string;
     reference?: string;
     comment?: string;
+    photo?: string;
 }
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
