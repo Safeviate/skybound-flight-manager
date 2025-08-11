@@ -12,7 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { db, auth } from '@/lib/firebase';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getFirebaseApp } from '@/lib/firebase';
 import config from '@/config';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +24,10 @@ export default function CorporatePage() {
     const router = useRouter();
 
     const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+        const app = getFirebaseApp();
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';

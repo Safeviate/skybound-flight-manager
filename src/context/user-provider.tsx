@@ -4,9 +4,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs } from 'firebase/firestore';
+import { getFirebaseApp } from '@/lib/firebase';
 
 interface UserContextType {
   user: User | null;
@@ -63,6 +63,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   
   const setupListeners = useCallback((userId: string, companyId?: string | null) => {
+    const db = getFirestore(getFirebaseApp());
     const userDocRef = doc(db, `users`, userId);
 
     const unsubUser = onSnapshot(userDocRef, async (userSnap) => {
@@ -119,6 +120,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   
 
   useEffect(() => {
+    const auth = getAuth(getFirebaseApp());
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
@@ -148,6 +150,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password?: string): Promise<boolean> => {
     setLoading(true);
+    const auth = getAuth(getFirebaseApp());
+    const db = getFirestore(getFirebaseApp());
     try {
         if (!password) throw new Error("Password is required.");
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -179,6 +183,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = useCallback(async () => {
+    const auth = getAuth(getFirebaseApp());
     await signOut(auth);
     setUser(null);
     setCompany(null);
@@ -190,6 +195,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   
   const updateUser = async (updatedData: Partial<User>): Promise<boolean> => {
     if (!user) return false;
+    const db = getFirestore(getFirebaseApp());
     try {
         const userRef = doc(db, `users`, user.id);
         await updateDoc(userRef, updatedData);
@@ -202,6 +208,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const updateCompany = async (updatedData: Partial<Company>): Promise<boolean> => {
     if (!company) return false;
+    const db = getFirestore(getFirebaseApp());
     try {
         const companyRef = doc(db, 'companies', company.id);
         await updateDoc(companyRef, updatedData);
@@ -227,6 +234,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
     if (!user || !company) return;
+    const db = getFirestore(getFirebaseApp());
     try {
         const batch = writeBatch(db);
         alertIds.forEach(alertId => {
