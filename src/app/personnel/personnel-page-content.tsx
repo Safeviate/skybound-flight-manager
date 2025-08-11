@@ -36,17 +36,15 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
 
+    useEffect(() => {
+        setPersonnel(initialPersonnel);
+    }, [initialPersonnel]);
+
     const fetchPersonnel = async () => {
         if (!company) return;
         const personnelData = await getPersonnelPageData(company.id);
         setPersonnel(personnelData);
     };
-
-    useEffect(() => {
-        if(company) {
-            fetchPersonnel();
-        }
-    }, [company]);
 
     const handleNewPersonnel = async (data: Omit<PersonnelUser, 'id'>) => {
         if (!company) {
@@ -83,7 +81,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 });
             }
             
-            setPersonnel(prev => [...prev, newPersonnel]);
+            await fetchPersonnel();
             setIsNewPersonnelOpen(false);
             toast({
                 title: 'Personnel Added',
@@ -102,7 +100,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             const userRef = doc(db, `companies/${company.id}/users`, updatedData.id);
             const permissions = ROLE_PERMISSIONS[updatedData.role] || [];
             await updateDoc(userRef, { ...updatedData, permissions });
-            setPersonnel(prev => prev.map(p => p.id === updatedData.id ? { ...updatedData, permissions } : p));
+            await fetchPersonnel();
             setEditingPersonnel(null);
             toast({ title: 'Personnel Updated', description: `${updatedData.name}'s details have been saved.` });
         } catch (error) {
@@ -115,7 +113,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         if (!company) return;
         try {
             await deleteDoc(doc(db, `companies/${company.id}/users`, personnelId));
-            setPersonnel(prev => prev.filter(p => p.id !== personnelId));
+            await fetchPersonnel();
             toast({ title: 'Personnel Deleted', description: 'The user has been removed from the roster.' });
         } catch (error) {
             console.error("Error deleting personnel:", error);
