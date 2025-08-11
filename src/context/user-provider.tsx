@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
 interface UserContextType {
@@ -61,6 +61,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    setUser(null);
+    setCompany(null);
+    setUserCompanies([]);
+    eraseCookie('skybound_last_company_id');
+    eraseCookie('skybound_last_user_id');
+    router.push('/login');
+  }, [router]);
   
   const setupListeners = useCallback((userId: string, companyId: string) => {
     if (!companyId) {
@@ -106,41 +116,50 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
   
-  const logout = useCallback(async () => {
-    await signOut(auth);
-    setUser(null);
-    setCompany(null);
-    setUserCompanies([]);
-    eraseCookie('skybound_last_company_id');
-    eraseCookie('skybound_last_user_id');
-    router.push('/login');
-  }, [router]);
-
   useEffect(() => {
+    const findAndSetCompanyForUser = async (userId: string) => {
+        const companiesCol = collection(db, 'companies');
+        const companiesSnapshot = await getDocs(companiesCol);
+        for (const companyDoc of companiesSnapshot.docs) {
+            const companyId = companyDoc.id;
+            const userInCompanyRef = doc(db, 'companies', companyId, 'users', userId);
+            const userInCompanySnap = await getDoc(userInCompanyRef);
+            if (userInCompanySnap.exists()) {
+                // Found the user's company. Create the mapping document.
+                const userMappingRef = doc(db, 'users', userId);
+                await setDoc(userMappingRef, { companyId });
+                return companyId;
+            }
+        }
+        return null; // User not found in any company
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
             
-            // New logic: Fetch the companyId from the top-level 'users' collection.
             const userCompanyRef = doc(db, 'users', userId);
             try {
                 const userCompanySnap = await getDoc(userCompanyRef);
+                let companyId;
                 if (userCompanySnap.exists()) {
-                    const { companyId } = userCompanySnap.data();
-                    if (companyId) {
-                        setupListeners(userId, companyId);
-                        setCookie('skybound_last_user_id', userId, 7);
-                        setCookie('skybound_last_company_id', companyId, 7);
-                    } else {
-                         console.error("User document exists but is missing companyId.");
-                         logout();
-                    }
+                    companyId = userCompanySnap.data()?.companyId;
                 } else {
-                    console.error("User mapping not found in 'users' collection. Please re-authenticate or contact support.");
+                    // Mapping doesn't exist, try to find the user's company
+                    companyId = await findAndSetCompanyForUser(userId);
+                }
+
+                if (companyId) {
+                    setupListeners(userId, companyId);
+                    setCookie('skybound_last_user_id', userId, 7);
+                    setCookie('skybound_last_company_id', companyId, 7);
+                } else {
+                    console.error("User authenticated but company could not be determined. Please contact support.");
                     logout();
                 }
+
             } catch (error) {
-                console.error("Error fetching user's company mapping:", error);
+                console.error("Error determining user's company:", error);
                 logout();
             }
 
