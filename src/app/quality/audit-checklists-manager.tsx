@@ -242,8 +242,8 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
     );
 }
 
-export function AuditChecklistsManager() {
-    const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>([]);
+export function AuditChecklistsManager({ initialTemplates }: { initialTemplates: Checklist[] }) {
+    const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
     const [personnel, setPersonnel] = useState<User[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
@@ -267,10 +267,17 @@ export function AuditChecklistsManager() {
     };
 
     useEffect(() => {
-        if (company) {
-            fetchTemplates();
+        setChecklistTemplates(initialTemplates);
+         if (company) {
+            const fetchPersonnelData = async () => {
+                const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
+                const personnelSnapshot = await getDocs(personnelQuery);
+                 setPersonnel(personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+            }
+            fetchPersonnelData();
         }
-    }, [company]);
+    }, [initialTemplates, company]);
+
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>, template: Checklist) => {
         if (!company || !user) return;

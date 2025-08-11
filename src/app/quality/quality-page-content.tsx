@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -104,11 +105,18 @@ export function QualityPageContent({
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
+  const [auditChecklists, setAuditChecklists] = useState<any[]>([]);
   
   useEffect(() => {
     setAudits(initialAudits);
     setSchedule(initialSchedule);
-  }, [initialAudits, initialSchedule]);
+    if(company?.id) {
+        const checklistsQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
+        onSnapshot(checklistsQuery, (snapshot) => {
+            setAuditChecklists(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+        });
+    }
+  }, [initialAudits, initialSchedule, company?.id]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -475,7 +483,7 @@ export function QualityPageContent({
               </Card>
           </TabsContent>
           <TabsContent value="checklists" className="mt-4">
-              <AuditChecklistsManager />
+              <AuditChecklistsManager initialTemplates={auditChecklists} />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">
               <CapTracker audits={audits} />
