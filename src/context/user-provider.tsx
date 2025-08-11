@@ -31,15 +31,15 @@ const fallbackCompany: Company = {
     trademark: 'Your Trusted Partner in Aviation',
     enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
     theme: {
-        primary: '#4287f5',
-        background: '#f0f0f0',
-        accent: '#ffa500',
+        primary: '#2563eb', // Default Blue
+        background: '#f4f4f5', // Light Gray
+        accent: '#f59e0b', // Amber
     }
 };
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<Company | null>(fallbackCompany);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +48,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     await signOut(auth);
     setUser(null);
-    setCompany(null);
+    setCompany(fallbackCompany);
     setUserCompanies([]);
+    setAllAlerts([]);
     router.push('/login');
   }, [router]);
   
@@ -64,25 +65,29 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(userSnap.data() as User);
       }
-    }, (error) => console.error("User listener error:", error));
+    }, (error) => {
+        console.error("User listener error:", error);
+        logout();
+    });
 
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
       if (companySnap.exists()) {
         setCompany(companySnap.data() as Company);
       } else {
-        // If the live listener fails to find the doc, use the fallback.
-        console.warn("Company doc not found by listener, using fallback.");
+        console.warn("Company doc does not have fields, using fallback data. This is expected if the document only holds subcollections.");
         setCompany(fallbackCompany);
       }
     });
 
     const alertsQuery = query(
-        collection(db, `companies/${companyId}/alerts`),
-        where('readBy', 'not-in', [userId || ' '])
+        collection(db, `companies/${companyId}/alerts`)
     );
     const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
         const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-        const filteredAlerts = alertsData.filter(alert => !alert.targetUserId || alert.targetUserId === userId);
+        const filteredAlerts = alertsData.filter(alert => 
+            !alert.readBy.includes(userId) && 
+            (!alert.targetUserId || alert.targetUserId === userId)
+        );
         setAllAlerts(filteredAlerts);
     });
 
@@ -97,42 +102,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
-            const companyId = 'skybound-aero';
+            const companyId = 'skybound-aero'; // Hardcoded for single-tenant app
 
             try {
-                const companyDocRef = doc(db, 'companies', companyId);
-                const companyDocSnap = await getDoc(companyDocRef);
-
-                if (!companyDocSnap.exists()) {
-                    console.warn(`Company document with ID "${companyId}" does not exist. Using fallback.`);
-                    setCompany(fallbackCompany);
-                } else {
-                    setCompany(companyDocSnap.data() as Company);
-                }
-
+                // We no longer check if the company exists, we assume the path is correct
+                // and proceed to check for the user document within it.
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
-                if (!userDocSnap.exists()) {
-                    console.error(`User document for user ID "${userId}" not found in company "${companyId}".`);
+                if (userDocSnap.exists()) {
+                    setupListeners(userId, companyId);
+                } else {
+                    console.error(`User document for user ID "${userId}" not found in company "${companyId}". Logging out.`);
                     logout();
-                    return;
                 }
-                
-                setupListeners(userId, companyId);
 
             } catch (error) {
                 console.error("Error during initial data fetch:", error);
-                // If there's any error, we still use the fallback company data to prevent a crash.
-                setCompany(fallbackCompany);
-                // We still need to check if the user exists though.
-                const userDocRef = doc(db, 'companies', companyId, 'users', userId);
-                const userDocSnap = await getDoc(userDocRef).catch(() => null);
-                if (userDocSnap?.exists()) {
-                    setupListeners(userId, companyId);
-                } else {
-                   logout();
-                }
+                logout();
             }
         } else {
             setUser(null);
@@ -150,6 +137,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
         if (!password) throw new Error("Password is required.");
         await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged will handle the rest
         return true;
     } catch (error) {
         console.error("Login failed:", error);
@@ -203,7 +191,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             });
         });
         await batch.commit();
-        setAllAlerts(prev => prev.filter(a => !alertIds.includes(a.id)));
     } catch (error) {
         console.error("Failed to acknowledge alerts:", error);
     }

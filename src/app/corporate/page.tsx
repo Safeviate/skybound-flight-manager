@@ -50,26 +50,27 @@ export default function CorporatePage() {
             
             const batch = writeBatch(db);
 
-            // 1. Create or merge company document
+            // 1. Create or merge company document with data
             const companyDocRef = doc(db, 'companies', companyId);
-            const finalCompanyData = {
+            const finalCompanyData: Company = {
                 ...companyData,
                 id: companyId,
                 logoUrl: logoUrl,
-                name: 'SkyBound Flight Manager', // Fixed name
-                trademark: 'Your Trusted Partner in Aviation' // Fixed trademark
+                name: 'SkyBound Flight Manager',
+                trademark: 'Your Trusted Partner in Aviation',
             };
             batch.set(companyDocRef, finalCompanyData, { merge: true });
 
             // 2. Create the user document inside the company's subcollection
             const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
-            const finalUserData: Omit<User, 'password'> = {
+            const finalUserData: User = {
                 ...adminData,
                 id: newUserId,
                 companyId: companyId,
                 role: 'Admin',
                 permissions: ROLE_PERMISSIONS['Admin'],
-            };
+                status: 'Active',
+            } as User;
             batch.set(userInCompanyRef, finalUserData);
 
             await batch.commit();
