@@ -1,3 +1,4 @@
+
 'use client';
 
 // IMPORTANT: This file is for client-side Firebase configuration and initialization.
@@ -19,23 +20,14 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-
 // Add a robust check to ensure all required Firebase config values are present.
 const isConfigValid = Object.values(firebaseConfig).every(value => !!value);
-
-let app: FirebaseApp;
 
 if (!isConfigValid) {
      throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
 }
 
-if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-} else {
-    app = getApp();
-}
-
-
+const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -43,6 +35,5 @@ let perf: any = null;
 if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
   perf = getPerformance(app);
 }
-
 
 export { app as getFirebaseApp, db, auth, perf };
