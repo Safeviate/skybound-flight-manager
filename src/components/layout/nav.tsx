@@ -51,7 +51,6 @@ const navItems: {
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
 }[] = [
-  { href: '/', label: 'Companies', icon: Building, requiredPermissions: ['Super User'] },
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
