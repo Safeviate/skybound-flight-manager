@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import type { QualityAudit, NonConformanceIssue } from '@/lib/types';
-import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface CapItem {
@@ -20,21 +19,19 @@ interface CapItem {
 }
 
 export function CapTracker({ audits }: { audits: QualityAudit[] }) {
-  const allCaps = React.useMemo(() => {
+  const allFindings = React.useMemo(() => {
     return audits
       .filter(audit => audit.status !== 'Archived')
       .flatMap(audit =>
-        (audit.nonConformanceIssues || [])
-          .filter(issue => issue.correctiveActionPlan)
-          .map(issue => ({
-            auditId: audit.id,
-            auditTitle: audit.title,
-            finding: issue,
-          }))
+        (audit.nonConformanceIssues || []).map(issue => ({
+          auditId: audit.id,
+          auditTitle: audit.title,
+          finding: issue,
+        }))
       );
   }, [audits]);
   
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string | undefined) => {
     switch (status) {
       case 'Open': return 'warning';
       case 'In Progress': return 'primary';
@@ -43,7 +40,8 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
     }
   }
   
-  const getOverdueVariant = (dueDate: string) => {
+  const getOverdueVariant = (dueDate: string | undefined) => {
+    if (!dueDate) return 'default';
     const days = differenceInDays(new Date(), parseISO(dueDate));
     if (days > 0) return 'destructive';
     if (days > -7) return 'warning';
@@ -55,7 +53,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
       <CardHeader>
         <CardTitle>Corrective Action Plan (CAP) Tracker</CardTitle>
         <CardDescription>
-          A centralized view of all active corrective action plans for non-conformance findings.
+          A centralized view of all non-conformance findings and their corrective action plans.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,10 +68,10 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allCaps.length > 0 ? (
-              allCaps.map(item => {
-                const cap = item.finding.correctiveActionPlan!;
-                const isOverdue = cap.status !== 'Closed' && differenceInDays(new Date(), parseISO(cap.completionDate)) > 0;
+            {allFindings.length > 0 ? (
+              allFindings.map(item => {
+                const cap = item.finding.correctiveActionPlan;
+                const isOverdue = cap && cap.status !== 'Closed' && differenceInDays(new Date(), parseISO(cap.completionDate)) > 0;
                 
                 return (
                     <TableRow key={`${item.auditId}-${item.finding.id}`}>
@@ -87,30 +85,47 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                             <p className="font-semibold">{item.finding.itemText}</p>
                             <p className="text-xs text-muted-foreground mb-2">{item.finding.regulationReference}</p>
                             <Separator />
-                            <div className="space-y-2 mt-2 text-xs">
-                                <div>
-                                    <p className="font-medium text-muted-foreground">Root Cause</p>
-                                    <p>{cap.rootCause}</p>
+                            {cap ? (
+                                <div className="space-y-2 mt-2 text-xs">
+                                    <div>
+                                        <p className="font-medium text-muted-foreground">Root Cause</p>
+                                        <p>{cap.rootCause}</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-muted-foreground">Corrective Action</p>
+                                        <p>{cap.correctiveAction}</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-muted-foreground">Preventative Action</p>
+                                        <p>{cap.preventativeAction}</p>
+                                    </div>
                                 </div>
-                                 <div>
-                                    <p className="font-medium text-muted-foreground">Corrective Action</p>
-                                    <p>{cap.correctiveAction}</p>
+                            ) : (
+                                <div className="mt-2 text-xs text-muted-foreground italic">
+                                    Corrective action plan pending.
                                 </div>
-                                 <div>
-                                    <p className="font-medium text-muted-foreground">Preventative Action</p>
-                                    <p>{cap.preventativeAction}</p>
-                                </div>
-                            </div>
+                            )}
                         </TableCell>
-                        <TableCell>{cap.responsiblePerson}</TableCell>
+                        <TableCell>{cap?.responsiblePerson || 'N/A'}</TableCell>
                         <TableCell>
-                            <Badge variant={getOverdueVariant(cap.completionDate)}>
-                                {isOverdue && <Clock className="mr-1 h-3 w-3" />}
-                                {format(parseISO(cap.completionDate), 'MMM d, yyyy')}
-                            </Badge>
+                            {cap ? (
+                                <Badge variant={getOverdueVariant(cap.completionDate)}>
+                                    {isOverdue && <Clock className="mr-1 h-3 w-3" />}
+                                    {format(parseISO(cap.completionDate), 'MMM d, yyyy')}
+                                </Badge>
+                            ) : 'N/A'}
                         </TableCell>
                         <TableCell>
-                            <Badge variant={getStatusVariant(cap.status)}>{cap.status}</Badge>
+                            {cap ? (
+                                <Badge variant={getStatusVariant(cap.status)}>{cap.status}</Badge>
+                            ) : (
+                                <Link href={`/quality/${item.auditId}`}>
+                                    <Button variant="secondary" size="sm">
+                                        <Edit className="mr-2 h-3 w-3" />
+                                        Create CAP
+                                    </Button>
+                                </Link>
+                            )}
                         </TableCell>
                     </TableRow>
                 )
@@ -118,7 +133,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No active Corrective Action Plans found.
+                  No non-conformance findings or corrective action plans found.
                 </TableCell>
               </TableRow>
             )}
