@@ -1,4 +1,3 @@
-
 'use server';
 
 // This file is no longer used for fetching initial data for the schedule page,
