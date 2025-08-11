@@ -11,38 +11,30 @@ import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration is now read from environment variables
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyAd08csz94jyQa8hxvGvruxjt-_cjWqhE0",
+  authDomain: "skybound-flight-manager.firebaseapp.com",
+  projectId: "skybound-flight-manager",
+  storageBucket: "skybound-flight-manager.appspot.com",
+  messagingSenderId: "270096056362",
+  appId: "1:270096056362:web:787c4a3b6793e3d6090353",
+  measurementId: "G-955BDKKR02",
 };
 
-// Add a robust check to ensure all required Firebase config values are present.
-const requiredConfig = [
-    'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
-];
 
-const isConfigValid = Object.entries(firebaseConfig).every(([key, value]) => {
-    if(requiredConfig.includes(key)) {
-        return !!value && !value.startsWith('YOUR_');
-    }
-    return true;
-});
+// Add a robust check to ensure all required Firebase config values are present.
+const isConfigValid = Object.values(firebaseConfig).every(value => !!value);
 
 let app: FirebaseApp;
-if (isConfigValid) {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-} else {
-    // This will be caught by the initialization logic in components.
-    // This setup allows server-side code to import this file without crashing the build.
-}
 
 const getFirebaseApp = () => {
     if (!isConfigValid) {
          throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
+    }
+
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
     return app;
 }
