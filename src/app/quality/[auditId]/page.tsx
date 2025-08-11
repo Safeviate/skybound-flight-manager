@@ -249,7 +249,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" className="no-print">
+                        <Button asChild variant="outline" className="no-print" data-perf-trace-id="back-to-audits-button">
                             <Link href="/quality?tab=audits">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Back to Audits
@@ -984,6 +984,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
