@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -14,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface CapItem {
   auditId: string;
+  auditNumber?: string;
   auditTitle: string;
   finding: NonConformanceIssue;
 }
@@ -25,6 +27,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
       .flatMap(audit =>
         (audit.nonConformanceIssues || []).map(issue => ({
           auditId: audit.id,
+          auditNumber: audit.auditNumber,
           auditTitle: audit.title,
           finding: issue,
         }))
@@ -91,7 +94,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                         <TableCell>
                             <Link href={`/quality/${item.auditId}`} className="hover:underline text-primary">
                                 <div className="font-medium">{item.auditTitle}</div>
-                                <div className="text-xs text-muted-foreground">{item.auditId.substring(0,8)}...</div>
+                                <div className="text-xs text-muted-foreground">{item.auditNumber || item.auditId.substring(0,8) + '...'}</div>
                             </Link>
                         </TableCell>
                         <TableCell className="max-w-sm">
