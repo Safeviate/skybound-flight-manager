@@ -72,33 +72,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
   
   const setupListeners = useCallback((userId: string, companyId: string) => {
-    if (!companyId) {
-        console.error("No company ID provided, cannot set up listeners.");
-        setLoading(false);
-        return () => {}; 
-    }
-
     const userDocRef = doc(db, 'companies', companyId, 'users', userId);
+    const companyDocRef = doc(db, 'companies', companyId);
+
     const unsubUser = onSnapshot(userDocRef, (userSnap) => {
-      if (userSnap.exists()) {
-        setUser(userSnap.data() as User);
-      } else {
-        // Since this is a regular user app now, if the user doc isn't found, it's a critical error.
+      if (!userSnap.exists()) {
         console.error("User document not found for listener at", userDocRef.path);
         logout();
+      } else {
+        setUser(userSnap.data() as User);
       }
-    }, (error) => {
-        console.error("User listener error:", error);
-    });
+    }, (error) => console.error("User listener error:", error));
 
-    const companyDocRef = doc(db, 'companies', companyId);
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
-        if (companySnap.exists()) {
-            setCompany(companySnap.data() as Company);
-        } else {
-            console.error("Company document not found for listener at", companyDocRef.path);
-            logout();
-        }
+      if (!companySnap.exists()) {
+        console.error("Company document not found for listener at", companyDocRef.path);
+        logout();
+      } else {
+        setCompany(companySnap.data() as Company);
+      }
     });
 
     const alertsQuery = query(
@@ -111,8 +103,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setAllAlerts(filteredAlerts);
     });
 
-    setLoading(false);
-
     return () => {
         unsubUser();
         unsubCompany();
@@ -124,21 +114,47 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
-            // Since this is a single-company app now, we hardcode the companyId.
             const companyId = 'skybound-aero';
-            
-            setupListeners(userId, companyId);
-            setCookie('skybound_last_user_id', userId, 7);
+
+            try {
+                // First, check if the company document exists before setting up listeners
+                const companyDocRef = doc(db, 'companies', companyId);
+                const companyDocSnap = await getDoc(companyDocRef);
+
+                if (!companyDocSnap.exists()) {
+                    console.error(`Company document with ID "${companyId}" does not exist.`);
+                    logout();
+                    return;
+                }
+
+                // Next, check if the user document exists within that company
+                const userDocRef = doc(db, 'companies', companyId, 'users', userId);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (!userDocSnap.exists()) {
+                    console.error(`User document for user ID "${userId}" not found in company "${companyId}".`);
+                    logout();
+                    return;
+                }
+                
+                // If both exist, proceed to set up real-time listeners
+                setupListeners(userId, companyId);
+                setCookie('skybound_last_user_id', userId, 7);
+
+            } catch (error) {
+                console.error("Error during initial data fetch on auth state change:", error);
+                logout();
+            }
 
         } else {
             setUser(null);
             setCompany(null);
-            setLoading(false);
         }
+        setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [setupListeners]);
+  }, [logout, setupListeners]);
 
 
   const login = async (email: string, password?: string): Promise<boolean> => {
