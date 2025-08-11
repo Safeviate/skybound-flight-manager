@@ -24,35 +24,18 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-function setCookie(name: string, value: string, days: number) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
+// A hardcoded fallback company object to prevent startup crashes.
+const fallbackCompany: Company = {
+    id: 'skybound-aero',
+    name: 'SkyBound Flight Manager',
+    trademark: 'Your Trusted Partner in Aviation',
+    enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
+    theme: {
+        primary: '#4287f5',
+        background: '#f0f0f0',
+        accent: '#ffa500',
     }
-    if (typeof document !== 'undefined') {
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-    }
-}
-
-function getCookie(name: string): string | null {
-    if (typeof document === 'undefined') return null;
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for(let i=0;i < ca.length;i++) {
-        let c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-    }
-    return null;
-}
-
-function eraseCookie(name: string) {   
-    if (typeof document !== 'undefined') {
-        document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    }
-}
+};
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -67,7 +50,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setCompany(null);
     setUserCompanies([]);
-    eraseCookie('skybound_last_user_id');
     router.push('/login');
   }, [router]);
   
@@ -85,11 +67,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }, (error) => console.error("User listener error:", error));
 
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
-      if (!companySnap.exists()) {
-        console.error("Company document not found for listener at", companyDocRef.path);
-        logout();
-      } else {
+      if (companySnap.exists()) {
         setCompany(companySnap.data() as Company);
+      } else {
+        // If the live listener fails to find the doc, use the fallback.
+        console.warn("Company doc not found by listener, using fallback.");
+        setCompany(fallbackCompany);
       }
     });
 
@@ -117,17 +100,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const companyId = 'skybound-aero';
 
             try {
-                // First, check if the company document exists before setting up listeners
                 const companyDocRef = doc(db, 'companies', companyId);
                 const companyDocSnap = await getDoc(companyDocRef);
 
                 if (!companyDocSnap.exists()) {
-                    console.error(`Company document with ID "${companyId}" does not exist.`);
-                    logout();
-                    return;
+                    console.warn(`Company document with ID "${companyId}" does not exist. Using fallback.`);
+                    setCompany(fallbackCompany);
+                } else {
+                    setCompany(companyDocSnap.data() as Company);
                 }
 
-                // Next, check if the user document exists within that company
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
@@ -137,15 +119,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                     return;
                 }
                 
-                // If both exist, proceed to set up real-time listeners
                 setupListeners(userId, companyId);
-                setCookie('skybound_last_user_id', userId, 7);
 
             } catch (error) {
-                console.error("Error during initial data fetch on auth state change:", error);
-                logout();
+                console.error("Error during initial data fetch:", error);
+                // If there's any error, we still use the fallback company data to prevent a crash.
+                setCompany(fallbackCompany);
+                // We still need to check if the user exists though.
+                const userDocRef = doc(db, 'companies', companyId, 'users', userId);
+                const userDocSnap = await getDoc(userDocRef).catch(() => null);
+                if (userDocSnap?.exists()) {
+                    setupListeners(userId, companyId);
+                } else {
+                   logout();
+                }
             }
-
         } else {
             setUser(null);
             setCompany(null);
@@ -162,7 +150,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
         if (!password) throw new Error("Password is required.");
         await signInWithEmailAndPassword(auth, email, password);
-        // The onAuthStateChanged listener will handle everything else once this completes.
         return true;
     } catch (error) {
         console.error("Login failed:", error);
@@ -196,8 +183,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
   
   const setActiveCompany = (companyToSet: Company | null) => {
-    // This function is kept for potential future use but is no longer
-    // relevant in a single-company context.
     if(companyToSet?.id !== company?.id) {
         setCompany(companyToSet);
     }
