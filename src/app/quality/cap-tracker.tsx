@@ -48,6 +48,18 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
     return 'default';
   }
 
+  const getFindingLevelBadge = (finding: NonConformanceIssue): { variant: 'destructive' | 'warning' | 'orange' | 'secondary' | 'outline', text: string } => {
+    if (finding.finding === 'Observation') {
+        return { variant: 'secondary', text: 'OBS' };
+    }
+    switch (finding.level) {
+        case 'Level 1 Finding': return { variant: 'warning', text: 'L1' };
+        case 'Level 2 Finding': return { variant: 'orange', text: 'L2' };
+        case 'Level 3 Finding': return { variant: 'destructive', text: 'L3' };
+        default: return { variant: 'outline', text: 'N/A' };
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -72,6 +84,7 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
               allFindings.map(item => {
                 const cap = item.finding.correctiveActionPlan;
                 const isOverdue = cap && cap.status !== 'Closed' && differenceInDays(new Date(), parseISO(cap.completionDate)) > 0;
+                const levelBadge = getFindingLevelBadge(item.finding);
                 
                 return (
                     <TableRow key={`${item.auditId}-${item.finding.id}`}>
@@ -82,8 +95,11 @@ export function CapTracker({ audits }: { audits: QualityAudit[] }) {
                             </Link>
                         </TableCell>
                         <TableCell className="max-w-sm">
-                            <p className="font-semibold">{item.finding.itemText}</p>
-                            <p className="text-xs text-muted-foreground mb-2">{item.finding.regulationReference}</p>
+                            <div className="flex items-start gap-2">
+                                <Badge variant={levelBadge.variant}>{levelBadge.text}</Badge>
+                                <p className="font-semibold">{item.finding.itemText}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2 pl-8">{item.finding.regulationReference}</p>
                             <Separator />
                             {cap ? (
                                 <div className="space-y-2 mt-2 text-xs">
