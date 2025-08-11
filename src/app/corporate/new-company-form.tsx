@@ -33,12 +33,6 @@ const features: { id: Feature, label: string, description: string }[] = [
 ];
 
 const companyFormSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Company name must be at least 2 characters.',
-  }),
-  trademark: z.string().min(2, {
-    message: 'Trademark must be at least 2 characters.',
-  }),
   primaryColor: z.string().optional(),
   backgroundColor: z.string().optional(),
   accentColor: z.string().optional(),
@@ -51,7 +45,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id' | 'name' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
 }
 
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
@@ -62,14 +56,12 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         primaryColor: '#2563eb',
         backgroundColor: '#f4f4f5',
         accentColor: '#f59e0b',
-        enabledFeatures: ['Safety'],
+        enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
     }
   });
 
   function handleFormSubmit(data: CompanyFormValues) {
-    const newCompany: Omit<Company, 'id'> = {
-        name: data.name,
-        trademark: data.trademark,
+    const newCompany: Omit<Company, 'id' | 'name' | 'trademark'> = {
         theme: {
             primary: data.primaryColor,
             background: data.backgroundColor,
@@ -95,40 +87,42 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
-            <div className="space-y-2">
-                <h4 className="font-semibold">Company Details</h4>
-                 <FormField
+            <div className="space-y-4">
+                <h4 className="font-semibold">Administrator Account</h4>
+                <FormField
                     control={form.control}
-                    name="name"
+                    name="adminName"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Company Name</FormLabel>
+                        <FormLabel>Admin Full Name</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., AeroVentures Flight Academy" {...field} />
+                            <Input placeholder="e.g., Jane Smith" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
-                    />
-                <FormField
+                />
+                 <FormField
                     control={form.control}
-                    name="trademark"
+                    name="adminEmail"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Trademark / Slogan</FormLabel>
+                        <FormLabel>Admin Email</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Flying High Since 2002" {...field} />
+                            <Input placeholder="admin@yourcompany.com" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                 />
             </div>
-
+            
+            <Separator />
+            
             <div className="space-y-4">
                 <FormLabel className="flex items-center gap-2">
                     <Paintbrush className="h-4 w-4" />
-                    Theme Colors (Optional)
+                    Theme Colors & Logo (Optional)
                 </FormLabel>
                 <div className="grid grid-cols-3 gap-2">
                     <FormField
@@ -238,42 +232,10 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     </FormItem>
                 )}
             />
-            
-            <Separator />
-            
-            <div className="space-y-4">
-                <h4 className="font-semibold">Administrator Account</h4>
-                <FormField
-                    control={form.control}
-                    name="adminName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Admin Full Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Jane Smith" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="adminEmail"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Admin Email</FormLabel>
-                        <FormControl>
-                            <Input placeholder="admin@yourcompany.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
           </div>
         </ScrollArea>
         <div className="flex justify-end pt-4">
-          <Button type="submit">Register Company</Button>
+          <Button type="submit">Create Administrator Account</Button>
         </div>
       </form>
     </Form>

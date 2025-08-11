@@ -23,9 +23,8 @@ export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'name' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
         
-        // Hardcode the company ID for this specific application
         const companyId = 'skybound-aero';
         
         let logoUrl = '';
@@ -51,9 +50,16 @@ export default function CorporatePage() {
             
             const batch = writeBatch(db);
 
-            // 1. Create company document
+            // 1. Create or merge company document
             const companyDocRef = doc(db, 'companies', companyId);
-            batch.set(companyDocRef, { ...newCompanyData, id: companyId, logoUrl });
+            const finalCompanyData = {
+                ...companyData,
+                id: companyId,
+                logoUrl: logoUrl,
+                name: 'SkyBound Flight Manager', // Fixed name
+                trademark: 'Your Trusted Partner in Aviation' // Fixed trademark
+            };
+            batch.set(companyDocRef, finalCompanyData, { merge: true });
 
             // 2. Create the user document inside the company's subcollection
             const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
@@ -69,8 +75,8 @@ export default function CorporatePage() {
             await batch.commit();
 
             toast({
-                title: "Company Registered Successfully!",
-                description: `The company "${newCompanyData.name}" has been created. Redirecting to login...`
+                title: "Administrator Account Created!",
+                description: `The company portal is ready. Redirecting to login...`
             });
 
             router.push('/login');
@@ -112,14 +118,14 @@ export default function CorporatePage() {
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
-                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your organization or log in to continue.
+                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your administrator account or log in to continue.
                 </p>
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Register Your Company</CardTitle>
+                    <CardTitle>Create Administrator Account</CardTitle>
                     <CardDescription>
-                        Set up your organization's portal. This will also create the first administrator account.
+                        Set up the first administrator account for your company portal.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
