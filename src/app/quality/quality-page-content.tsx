@@ -104,37 +104,11 @@ export function QualityPageContent({
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-
+  
   useEffect(() => {
-    if (!company) {
-      setDataLoading(false);
-      return;
-    }
-
-    setDataLoading(true);
-    const auditsQuery = query(collection(db, `companies/${company.id}/quality-audits`));
-    const unsubAudits = onSnapshot(auditsQuery, (snapshot) => {
-      setAudits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QualityAudit)));
-      setDataLoading(false);
-    }, (error) => {
-      console.error("Error fetching audits:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load real-time audit data.' });
-      setDataLoading(false);
-    });
-
-    const scheduleQuery = query(collection(db, `companies/${company.id}/audit-schedule-items`));
-    const unsubSchedule = onSnapshot(scheduleQuery, (snapshot) => {
-        setSchedule(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditScheduleItem)));
-    }, (error) => {
-        console.error("Error fetching schedule:", error);
-    });
-
-    return () => {
-      unsubAudits();
-      unsubSchedule();
-    };
-  }, [company, toast]);
+    setAudits(initialAudits);
+    setSchedule(initialSchedule);
+  }, [initialAudits, initialSchedule]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -145,6 +119,7 @@ export function QualityPageContent({
     const searchLower = searchTerm.toLowerCase();
     return (
         audit.id.toLowerCase().includes(searchLower) ||
+        (audit.auditNumber && audit.auditNumber.toLowerCase().includes(searchLower)) ||
         audit.title.toLowerCase().includes(searchLower) ||
         audit.auditor.toLowerCase().includes(searchLower) ||
         audit.status.toLowerCase().includes(searchLower) ||
