@@ -15,12 +15,13 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
   performanceInstrumentationEnabled: false,
 };
 
 // Basic validation to ensure environment variables are set
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
-    console.error("Firebase API key is not set. Please check your .env.local file.");
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR")) {
+    console.error("Firebase configuration is not set correctly. Please check your .env.local file.");
 }
 
 
