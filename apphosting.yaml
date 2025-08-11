@@ -6,13 +6,12 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
 env:
-  - variable: GEMINI_API_KEY   # This hyphen has 2 spaces before it
+  - variable: GEMINI_API_KEY
     secret: gemini-api-key
     availability:
       - BUILD
       - RUNTIME
-  - variable: RESEND_API_KEY   # <--- THIS HYPHEN MUST ALSO HAVE 2 SPACES BEFORE IT
+  - variable: RESEND_API_KEY
     secret: resend-api-key
     availability:
       - RUNTIME
- 

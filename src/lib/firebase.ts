@@ -18,12 +18,6 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Basic validation to ensure environment variables are set
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR")) {
-    throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
-}
-
-
 // Initialize Firebase app instance (ensuring it's only initialized once)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
@@ -42,7 +36,8 @@ if (typeof window !== 'undefined') {
   db = getFirestore(app);
 }
 
-if (typeof window !== 'undefined' && firebaseConfig.performanceInstrumentationEnabled) {
+// Make performance instrumentation optional based on measurementId
+if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
   perf = getPerformance(app);
 } else {
     perf = null;
