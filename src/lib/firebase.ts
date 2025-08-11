@@ -25,7 +25,11 @@ const db = getFirestore(app);
 
 let perf: any = null;
 if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
-  perf = getPerformance(app);
+  try {
+    perf = getPerformance(app);
+  } catch (error) {
+    console.log("Could not initialize Firebase Performance", error);
+  }
 }
 
 export { app, db, auth, perf };
