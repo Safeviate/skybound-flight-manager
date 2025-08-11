@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { EditCompanyForm } from '@/app/settings/companies/edit-company-form';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { subDays, formatDistanceToNow, parseISO } from 'date-fns';
-import Loading from './loading';
+import Loading from '../loading';
 
 // This page is now deprecated as the application is single-company.
 // It is being kept for now but could be removed in the future.
