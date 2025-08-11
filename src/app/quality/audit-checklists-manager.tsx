@@ -10,7 +10,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, where, orderBy, limit } from 'firebase/firestore';
-import type { AuditChecklist as Checklist, QualityAudit, User } from '@/lib/types';
+import type { AuditChecklist as Checklist, QualityAudit, User, AuditArea } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditChecklistTemplateForm } from './audit-checklist-template-form';
 import { generateAuditChecklist } from '@/ai/flows/generate-audit-checklist-flow';
@@ -86,6 +86,8 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
+const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
+
 const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>) => void, personnel: User[], template: Checklist }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
@@ -96,6 +98,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
     const [scope, setScope] = useState('');
     const [evidenceReference, setEvidenceReference] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [area, setArea] = useState<AuditArea>('Management');
     const { user } = useUser();
     
     const handleConfirm = () => {
@@ -105,7 +108,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                 type: auditType,
                 auditor: leadAuditor,
                 auditeeName: auditeeName,
-                area: template.area,
+                area: area,
                 auditTeam: auditTeam.split(',').map(s => s.trim()).filter(Boolean),
                 auditeeTeam: auditeeTeam.split(',').map(s => s.trim()).filter(Boolean),
                 scope: scope,
@@ -157,6 +160,15 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+                     <div>
+                        <Label>Audit Area</Label>
+                         <Select value={area} onValueChange={(v: AuditArea) => setArea(v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {auditAreas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div>
                         <Label>Lead Auditor</Label>
@@ -302,13 +314,13 @@ export function AuditChecklistsManager() {
         }
     }
 
-    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
+    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'area'>) => {
         if (!company) return;
 
         // Check if we are editing an existing template or creating a new one (including from AI)
         const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
         
-        const templateData = { ...data, companyId: company.id };
+        const templateData = { ...data, companyId: company.id, area: 'Management' as AuditArea }; // Set default area
 
         if (isNew) {
             await addDoc(collection(db, `companies/${company.id}/audit-checklists`), templateData);

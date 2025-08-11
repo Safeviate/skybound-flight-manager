@@ -32,7 +32,6 @@ const auditChecklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
-  area: z.custom<AuditArea>(),
   items: z.array(auditChecklistItemSchema).min(1, {
       message: "You must add at least one checklist item."
   }),
@@ -41,22 +40,18 @@ const auditChecklistFormSchema = z.object({
 type ChecklistFormValues = z.infer<typeof auditChecklistFormSchema>;
 
 interface AuditChecklistTemplateFormProps {
-    onSubmit: (data: Omit<AuditChecklist, 'id' | 'companyId'>) => void;
+    onSubmit: (data: Omit<AuditChecklist, 'id' | 'companyId' | 'area'>) => void;
     existingTemplate?: AuditChecklist | null;
 }
-
-const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
 
 export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(auditChecklistFormSchema),
     defaultValues: existingTemplate ? {
         title: existingTemplate.title,
-        area: existingTemplate.area,
         items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
     } : {
       title: '',
-      area: 'Management',
       items: [{ text: '', regulationReference: '' }],
     },
   });
@@ -65,7 +60,6 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
     if (existingTemplate) {
         form.reset({
             title: existingTemplate.title,
-            area: existingTemplate.area,
             items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
         });
     }
@@ -100,28 +94,6 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
               <FormMessage />
             </FormItem>
           )}
-        />
-        <FormField
-        control={form.control}
-        name="area"
-        render={({ field }) => (
-            <FormItem>
-            <FormLabel>Audit Area</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select an area" />
-                </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {auditAreas.map(area => (
-                        <SelectItem key={area} value={area}>{area}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <FormMessage />
-            </FormItem>
-        )}
         />
         <div>
             <FormLabel>Checklist Items</FormLabel>
