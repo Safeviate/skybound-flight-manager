@@ -314,13 +314,13 @@ export function AuditChecklistsManager() {
         }
     }
 
-    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'area'>) => {
+    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
         if (!company) return;
 
         // Check if we are editing an existing template or creating a new one (including from AI)
         const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
         
-        const templateData = { ...data, companyId: company.id, area: 'Management' as AuditArea }; // Set default area
+        const templateData = { ...data, companyId: company.id };
 
         if (isNew) {
             await addDoc(collection(db, `companies/${company.id}/audit-checklists`), templateData);
@@ -340,7 +340,6 @@ export function AuditChecklistsManager() {
             id: `temp-${Date.now()}`,
             companyId: company?.id || '',
             title: data.title,
-            area: 'Management',
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
@@ -402,7 +401,6 @@ export function AuditChecklistsManager() {
                             <Card key={template.id} className="flex flex-col">
                                 <CardHeader>
                                     <CardTitle>{template.title}</CardTitle>
-                                    <CardDescription>{template.area}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1">
                                     <ul className="list-disc list-inside text-sm text-muted-foreground">
