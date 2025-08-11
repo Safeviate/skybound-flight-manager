@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -89,10 +88,12 @@ const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records'
 
 export function QualityPageContent({
     initialAudits,
-    initialSchedule
+    initialSchedule,
+    initialChecklists,
 }: {
     initialAudits: QualityAudit[],
-    initialSchedule: AuditScheduleItem[]
+    initialSchedule: AuditScheduleItem[],
+    initialChecklists: AuditChecklist[],
 }) {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
@@ -105,18 +106,11 @@ export function QualityPageContent({
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedAudits, setSelectedAudits] = useState<string[]>([]);
-  const [auditChecklists, setAuditChecklists] = useState<any[]>([]);
   
   useEffect(() => {
     setAudits(initialAudits);
     setSchedule(initialSchedule);
-    if(company?.id) {
-        const checklistsQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
-        onSnapshot(checklistsQuery, (snapshot) => {
-            setAuditChecklists(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
-        });
-    }
-  }, [initialAudits, initialSchedule, company?.id]);
+  }, [initialAudits, initialSchedule]);
 
   const activeAudits = useMemo(() => audits.filter(audit => audit.status !== 'Archived'), [audits]);
   const archivedAudits = useMemo(() => audits.filter(audit => audit.status === 'Archived'), [audits]);
@@ -483,7 +477,7 @@ export function QualityPageContent({
               </Card>
           </TabsContent>
           <TabsContent value="checklists" className="mt-4">
-              <AuditChecklistsManager initialTemplates={auditChecklists} />
+              <AuditChecklistsManager initialTemplates={initialChecklists} />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">
               <CapTracker audits={audits} />
