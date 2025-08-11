@@ -10,7 +10,7 @@ import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -44,16 +44,18 @@ export default function CorporatePage() {
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
             const newUserId = userCredential.user.uid;
             
-            // Store companyId in the auth user's profile for retrieval on login
             await updateProfile(userCredential.user, {
                 displayName: adminData.name,
-                photoURL: companyId
             });
+            
+            const batch = writeBatch(db);
 
+            // 1. Create company document
             const companyDocRef = doc(db, 'companies', companyId);
-            await setDoc(companyDocRef, { ...newCompanyData, id: companyId, logoUrl });
+            batch.set(companyDocRef, { ...newCompanyData, id: companyId, logoUrl });
 
-            const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+            // 2. Create the user document inside the company's subcollection
+            const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
             const finalUserData: Omit<User, 'password'> = {
                 ...adminData,
                 id: newUserId,
@@ -61,7 +63,13 @@ export default function CorporatePage() {
                 role: 'Admin',
                 permissions: ROLE_PERMISSIONS['Admin'],
             };
-            await setDoc(userDocRef, finalUserData);
+            batch.set(userInCompanyRef, finalUserData);
+
+            // 3. Create the top-level user mapping document
+            const userMappingRef = doc(db, 'users', newUserId);
+            batch.set(userMappingRef, { companyId: companyId });
+
+            await batch.commit();
 
             toast({
                 title: "Company Registered Successfully!",

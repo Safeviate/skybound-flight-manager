@@ -7,13 +7,13 @@ import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration is now hardcoded to fix initialization errors.
 const firebaseConfig = {
-  apiKey: "AIzaSyA5A_wz9iZ7p7b8Y7q5c6V4w3c2B1a0G9o",
+  apiKey: "AIzaSyAdO8csz94jyQa8hxvGvruxjt-_cjWqhE0",
   authDomain: "skybound-flight-manager.firebaseapp.com",
   projectId: "skybound-flight-manager",
-  storageBucket: "skybound-flight-manager.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:a1b2c3d4e5f6a7b8c9d0e1",
-  measurementId: "G-ABC123XYZ"
+  storageBucket: "skybound-flight-manager.firebasestorage.app",
+  messagingSenderId: "270096056362",
+  appId: "1:270096056362:web:787c4a3b6793e3d6090353",
+  measurementId: "G-955BDKKR02"
 };
 
 
