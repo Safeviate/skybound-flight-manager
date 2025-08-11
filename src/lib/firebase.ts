@@ -7,39 +7,22 @@ import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getPerformance } from "firebase/performance";
 
-// Your web app's Firebase configuration (DEVELOPMENT)
-const firebaseConfigDev = {
-  apiKey: "YOUR_DEV_API_KEY",
-  authDomain: "skybound-flight-manager.firebaseapp.com",
-  projectId: "skybound-flight-manager",
-  storageBucket: "skybound-flight-manager.appspot.com",
-  messagingSenderId: "YOUR_DEV_SENDER_ID",
-  appId: "YOUR_DEV_APP_ID",
+// Your web app's Firebase configuration is now read from environment variables
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   performanceInstrumentationEnabled: false,
 };
 
-// In a real-world scenario, you would have a separate config for production
-const firebaseConfigProd = {
-  apiKey: "YOUR_PROD_API_KEY",
-  authDomain: "your-prod-app.firebaseapp.com",
-  projectId: "your-prod-project-id",
-  storageBucket: "your-prod-project.appspot.com",
-  messagingSenderId: "YOUR_PROD_MESSAGING_SENDER_ID",
-  appId: "YOUR_PROD_APP_ID",
-  performanceInstrumentationEnabled: false,
-};
+// Basic validation to ensure environment variables are set
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
+    console.error("Firebase API key is not set. Please check your .env.local file.");
+}
 
-const getFirebaseConfig = () => {
-    // This environment variable would be set in your deployment environment (e.g., Vercel, Netlify, Firebase Hosting).
-    const env = process.env.NEXT_PUBLIC_FIREBASE_ENV;
-
-    if (env === 'production') {
-        return firebaseConfigDev;
-    }
-    return firebaseConfigDev;
-};
-
-const firebaseConfig = getFirebaseConfig();
 
 // Initialize Firebase app instance (ensuring it's only initialized once)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
