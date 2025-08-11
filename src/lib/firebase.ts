@@ -16,12 +16,11 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  performanceInstrumentationEnabled: false,
 };
 
 // Basic validation to ensure environment variables are set
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR")) {
-    console.error("Firebase configuration is not set correctly. Please check your .env.local file.");
+    throw new Error("Firebase configuration is not set correctly. Please ensure you have created a .env.local file with your project's credentials and have restarted the Next.js development server.");
 }
 
 
