@@ -14,7 +14,7 @@ async function getInitialData(companyId: string): Promise<{ alertsList: Alert[] 
 
 export default async function AlertsPageContainer() {
     // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero'; // Placeholder
+    const companyId = 'skybound-aero'; 
     const { alertsList } = await getInitialData(companyId);
 
     return <AlertsPageContent initialAlerts={alertsList} />;

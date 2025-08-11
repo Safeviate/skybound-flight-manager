@@ -67,7 +67,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setCompany(null);
     setUserCompanies([]);
-    eraseCookie('skybound_last_company_id');
     eraseCookie('skybound_last_user_id');
     router.push('/login');
   }, [router]);
@@ -84,7 +83,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (userSnap.exists()) {
         setUser(userSnap.data() as User);
       } else {
+        // Since this is a regular user app now, if the user doc isn't found, it's a critical error.
         console.error("User document not found for listener at", userDocRef.path);
+        logout();
       }
     }, (error) => {
         console.error("User listener error:", error);
@@ -94,6 +95,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
         if (companySnap.exists()) {
             setCompany(companySnap.data() as Company);
+        } else {
+            console.error("Company document not found for listener at", companyDocRef.path);
+            logout();
         }
     });
 
@@ -114,54 +118,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         unsubCompany();
         unsubAlerts();
     };
-  }, []);
+  }, [logout]);
   
   useEffect(() => {
-    const findAndSetCompanyForUser = async (userId: string) => {
-        const companiesCol = collection(db, 'companies');
-        const companiesSnapshot = await getDocs(companiesCol);
-        for (const companyDoc of companiesSnapshot.docs) {
-            const companyId = companyDoc.id;
-            const userInCompanyRef = doc(db, 'companies', companyId, 'users', userId);
-            const userInCompanySnap = await getDoc(userInCompanyRef);
-            if (userInCompanySnap.exists()) {
-                // Found the user's company. Create the mapping document.
-                const userMappingRef = doc(db, 'users', userId);
-                await setDoc(userMappingRef, { companyId });
-                return companyId;
-            }
-        }
-        return null; // User not found in any company
-    };
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
+            // Since this is a single-company app now, we hardcode the companyId.
+            const companyId = 'skybound-aero';
             
-            const userCompanyRef = doc(db, 'users', userId);
-            try {
-                const userCompanySnap = await getDoc(userCompanyRef);
-                let companyId;
-                if (userCompanySnap.exists()) {
-                    companyId = userCompanySnap.data()?.companyId;
-                } else {
-                    // Mapping doesn't exist, try to find the user's company
-                    companyId = await findAndSetCompanyForUser(userId);
-                }
-
-                if (companyId) {
-                    setupListeners(userId, companyId);
-                    setCookie('skybound_last_user_id', userId, 7);
-                    setCookie('skybound_last_company_id', companyId, 7);
-                } else {
-                    console.error("User authenticated but company could not be determined. Please contact support.");
-                    logout();
-                }
-
-            } catch (error) {
-                console.error("Error determining user's company:", error);
-                logout();
-            }
+            setupListeners(userId, companyId);
+            setCookie('skybound_last_user_id', userId, 7);
 
         } else {
             setUser(null);
@@ -171,7 +138,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [setupListeners, logout]);
+  }, [setupListeners]);
 
 
   const login = async (email: string, password?: string): Promise<boolean> => {
@@ -213,16 +180,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
   
   const setActiveCompany = (companyToSet: Company | null) => {
+    // This function is kept for potential future use but is no longer
+    // relevant in a single-company context.
     if(companyToSet?.id !== company?.id) {
         setCompany(companyToSet);
-        if(companyToSet) {
-            setCookie('skybound_last_company_id', companyToSet.id, 7);
-            if(user) {
-                setupListeners(user.id, companyToSet.id);
-            }
-        } else {
-            eraseCookie('skybound_last_company_id');
-        }
     }
   }
 

@@ -3,7 +3,7 @@ import { getQualityPageData } from './data';
 import { QualityPageContent } from './quality-page-content';
 import type { QualityAudit, AuditScheduleItem } from '@/lib/types';
 
-async function getInitialData(companyId: string | undefined) {
+async function getInitialData(companyId: string) {
     if (!companyId) {
         return { auditsList: [], scheduleList: [] };
     }
@@ -17,8 +17,7 @@ async function getInitialData(companyId: string | undefined) {
 }
 
 export default async function QualityPageContainer() {
-    // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero'; // Placeholder
+    const companyId = 'skybound-aero';
     const { auditsList, scheduleList } = await getInitialData(companyId);
     
     return <QualityPageContent initialAudits={auditsList} initialSchedule={scheduleList} />;

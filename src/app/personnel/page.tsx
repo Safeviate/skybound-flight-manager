@@ -14,7 +14,7 @@ async function getInitialData(companyId: string): Promise<User[]> {
 
 export default async function PersonnelPageContainer() {
     // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero'; // Placeholder
+    const companyId = 'skybound-aero'; 
     const initialPersonnel = await getInitialData(companyId);
     
     return <PersonnelPageContent initialPersonnel={initialPersonnel} />;

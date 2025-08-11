@@ -25,7 +25,8 @@ export default function CorporatePage() {
 
     const handleNewCompany = async (newCompanyData: Omit<Company, 'id'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
         
-        const companyId = newCompanyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        // Hardcode the company ID for this specific application
+        const companyId = 'skybound-aero';
         
         let logoUrl = '';
         if (logoFile) {
@@ -64,10 +65,6 @@ export default function CorporatePage() {
                 permissions: ROLE_PERMISSIONS['Admin'],
             };
             batch.set(userInCompanyRef, finalUserData);
-
-            // 3. Create the top-level user mapping document
-            const userMappingRef = doc(db, 'users', newUserId);
-            batch.set(userMappingRef, { companyId: companyId });
 
             await batch.commit();
 
@@ -120,9 +117,9 @@ export default function CorporatePage() {
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Register a New Company</CardTitle>
+                    <CardTitle>Register Your Company</CardTitle>
                     <CardDescription>
-                        Set up a new portal for your organization. This will also create the first administrator account.
+                        Set up your organization's portal. This will also create the first administrator account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

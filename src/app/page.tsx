@@ -17,8 +17,7 @@ function RootPage() {
       return;
     }
     if (user) {
-        // All users, regardless of role, are now directed to their dashboard.
-        // The concept of a separate "super user" company management page is removed.
+        // All users are directed to the main dashboard.
         router.push('/my-dashboard');
     } else {
         router.push('/login');
