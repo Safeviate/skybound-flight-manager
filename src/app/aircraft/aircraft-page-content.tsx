@@ -43,11 +43,11 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
 }
 
 
-export function AircraftPageContent() {
-    const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
+    const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
-    const [isDataLoading, setIsDataLoading] = useState(true);
+    const [isDataLoading, setIsDataLoading] = useState(false);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading: userLoading } = useUser();
@@ -59,27 +59,18 @@ export function AircraftPageContent() {
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
+        setAircraftList(initialAircraft);
+    }, [initialAircraft]);
+    
+    useEffect(() => {
         if (!company?.id) {
-            setIsDataLoading(!userLoading); // Set loading to false if there's no company
             return;
         }
 
         const companyId = 'skybound-aero';
-        setIsDataLoading(true);
 
-        const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
         const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
         const contactsQuery = query(collection(db, `companies/${companyId}/external-contacts`));
-
-        const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
-            const aircraft = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Aircraft));
-            setAircraftList(aircraft);
-            setIsDataLoading(false);
-        }, (error) => {
-            console.error("Error fetching aircraft:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
-            setIsDataLoading(false);
-        });
 
         const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
             const bookingsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
@@ -96,7 +87,6 @@ export function AircraftPageContent() {
         });
 
         return () => {
-            unsubAircraft();
             unsubBookings();
             unsubContacts();
         };
@@ -810,5 +800,3 @@ export function AircraftPageContent() {
     </main>
   );
 }
-
-    
