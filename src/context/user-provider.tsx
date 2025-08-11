@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
 interface UserContextType {
@@ -71,10 +71,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     });
 
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
-      if (companySnap.exists()) {
+      if (companySnap.exists() && Object.keys(companySnap.data()).length > 0) {
         setCompany(companySnap.data() as Company);
       } else {
-        // If the company doc has no fields, it won't "exist". We use the fallback.
+        // If the company doc has no fields, it won't "exist" in a meaningful way.
+        // We use the fallback but keep the listener active for future updates.
         setCompany(fallbackCompany);
       }
     });
@@ -102,9 +103,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
+            // Hardcode companyId to 'skybound-aero'
             const companyId = 'skybound-aero';
 
             try {
+                // The company document doesn't need to exist with fields for the app to function,
+                // but the user document does.
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 

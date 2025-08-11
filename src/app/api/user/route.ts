@@ -2,7 +2,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, doc, getDoc, getDocs, query, where, or, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, or, orderBy, and } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User, Alert, Booking } from '@/lib/types';
 import { format } from 'date-fns';
@@ -44,11 +44,13 @@ export async function GET(request: NextRequest) {
     // Fetch upcoming bookings for the user
     const bookingsQuery = query(
         collection(db, `companies/${companyId}/bookings`),
-        or(
-            where('student', '==', userData.name),
-            where('instructor', '==', userData.name)
+        and(
+            or(
+                where('student', '==', userData.name),
+                where('instructor', '==', userData.name)
+            ),
+            where('date', '>=', format(new Date(), 'yyyy-MM-dd'))
         ),
-        where('date', '>=', format(new Date(), 'yyyy-MM-dd')),
         orderBy('date'),
         orderBy('startTime')
     );
