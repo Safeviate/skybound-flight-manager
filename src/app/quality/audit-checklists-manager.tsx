@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
@@ -132,6 +133,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                         Configure the details for this audit session.
                     </DialogDescription>
                 </DialogHeader>
+                <ScrollArea className="h-[70vh] pr-4">
                 <div className="py-4 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -229,9 +231,12 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                         />
                     </div>
                 </div>
-                <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName}>
-                    Confirm and Start Audit
-                </Button>
+                </ScrollArea>
+                <div className="pt-4 border-t">
+                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName} className="w-full">
+                        Confirm and Start Audit
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );
@@ -314,7 +319,7 @@ export function AuditChecklistsManager() {
         }
     }
 
-    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId'>) => {
+    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'category'>) => {
         if (!company) return;
 
         // Check if we are editing an existing template or creating a new one (including from AI)
