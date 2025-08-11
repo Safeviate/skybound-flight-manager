@@ -18,25 +18,9 @@ export type Airport = {
 };
 
 export type ThemeColors = {
-  background: string;
-  foreground: string;
-  card: string;
-  cardForeground: string;
-  popover: string;
-  popoverForeground: string;
-  primary: string;
-  primaryForeground: string;
-  secondary: string;
-  secondaryForeground: string;
-  muted: string;
-  mutedForeground: string;
-  accent: string;
-  accentForeground: string;
-  destructive: string;
-  destructiveForeground: string;
-  border: string;
-  input: string;
-  ring: string;
+  primary?: string;
+  background?: string;
+  accent?: string;
 };
 
 export type Feature = 
@@ -169,7 +153,8 @@ export type Role =
   | 'Quality Manager'
   | 'Safety Manager'
   | 'Student'
-  | 'Auditee';
+  | 'Auditee'
+  | 'Super User';
 
 export type User = {
     id: string;
@@ -404,6 +389,8 @@ export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' |
 
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs';
+
 export type ChecklistItem = {
     id: string;
     text: string;
@@ -483,7 +470,7 @@ export type AuditStatus = 'Scheduled' | 'Completed' | 'Pending' | 'Not Scheduled
 
 export type AuditScheduleItem = {
   id: string;
-  companyId: string;
+  companyId?: string;
   area: string;
   year: number;
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
@@ -544,6 +531,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  'Super User': ['Super User'],
   'Accountable Manager': ['Super User'],
   'Admin': ['Super User'],
   'Operations Manager': ['Super User'],
@@ -555,4 +543,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
+  'Auditee': ['Quality:View'],
+  'Driver': [],
+  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
 };

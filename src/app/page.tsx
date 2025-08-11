@@ -116,7 +116,7 @@ function CompaniesPage() {
 
   const fetchStatsForCompany = async (companyId: string): Promise<Omit<CompanyWithStats, keyof Company>> => {
     try {
-      const usersRef = collection(db, `companies/${companyId}/users`);
+      const usersRef = query(collection(db, 'users'), where('companyId', '==', companyId));
       const aircraftRef = collection(db, `companies/${companyId}/aircraft`);
       const safetyReportsRef = collection(db, `companies/${companyId}/safety-reports`);
       const openSafetyReportsQuery = query(safetyReportsRef, where('status', '!=', 'Closed'));
@@ -192,7 +192,7 @@ function CompaniesPage() {
         const finalCompanyData = { ...newCompanyData, id: companyId };
         await setDoc(companyDocRef, finalCompanyData);
         
-        const userDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+        const userDocRef = doc(db, `users`, newUserId);
         const finalUserData: Omit<CompanyUser, 'password'> = {
             ...adminData,
             id: newUserId,
@@ -207,7 +207,7 @@ function CompaniesPage() {
             description: `The company "${newCompanyData.name}" has been created.`
         });
         
-        setCompanies(prev => [...prev, { ...finalCompanyData, userCount: 1, aircraftCount: 0, openSafetyReports: 0 }]);
+        fetchCompanies();
         setIsNewDialogOpen(false);
 
     } catch (error: any) {
@@ -263,7 +263,7 @@ function CompaniesPage() {
   const handleLoginAs = (company: CompanyWithStats) => {
     toast({
         title: `Switching to ${company.name}`,
-        description: `This would log you in as an admin for this company. (Feature not fully implemented)`,
+        description: `This will now show you the dashboard for this company.`,
     });
     setGlobalCompany(company);
     router.push('/my-dashboard');
@@ -449,5 +449,3 @@ function CompaniesPage() {
 
 CompaniesPage.title = 'Company Management';
 export default CompaniesPage;
-
-    

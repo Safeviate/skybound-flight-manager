@@ -6,7 +6,7 @@ import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs } from 'firebase/firestore';
 
 interface UserContextType {
   user: User | null;
@@ -62,19 +62,47 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
-  const setupListeners = useCallback((companyId: string, userId: string) => {
-    const userDocRef = doc(db, `companies/${companyId}/users`, userId);
-    const companyDocRef = doc(db, 'companies', companyId);
-    
-    // Alerts query: unread by the user, and either global or targeted to them
-    const alertsQuery = query(
-        collection(db, `companies/${companyId}/alerts`),
-        where('readBy', 'not-in', [userId || ' ']) // Use a placeholder if userId is transiently falsy
-    );
+  const setupListeners = useCallback((userId: string, companyId?: string | null) => {
+    const userDocRef = doc(db, `users`, userId);
 
-    const unsubUser = onSnapshot(userDocRef, (doc) => {
-      if (doc.exists()) {
-        setUser(doc.data() as User);
+    const unsubUser = onSnapshot(userDocRef, async (userSnap) => {
+      if (userSnap.exists()) {
+        const userData = userSnap.data() as User;
+        setUser(userData);
+        
+        const currentCompanyId = companyId || userData.companyId;
+
+        if (currentCompanyId) {
+             const companyDocRef = doc(db, 'companies', currentCompanyId);
+             const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
+                if (companySnap.exists()) {
+                    setCompany(companySnap.data() as Company);
+                }
+             });
+            
+             const alertsQuery = query(
+                collection(db, `companies/${currentCompanyId}/alerts`),
+                where('readBy', 'not-in', [userId || ' '])
+            );
+            const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
+                const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+                const filteredAlerts = alertsData.filter(alert => !alert.targetUserId || alert.targetUserId === userId);
+                setAllAlerts(filteredAlerts);
+            });
+
+            // Return a function to unsubscribe from company-specific listeners
+            return () => {
+                unsubCompany();
+                unsubAlerts();
+            };
+        }
+        
+        if (userData.role === 'Super User') {
+          const companiesQuery = query(collection(db, 'companies'));
+          const companiesSnapshot = await getDocs(companiesQuery);
+          setUserCompanies(companiesSnapshot.docs.map(d => d.data() as Company));
+        }
+
       } else {
         console.error("User document not found for listener");
       }
@@ -84,31 +112,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
     });
 
-    const unsubCompany = onSnapshot(companyDocRef, (doc) => {
-      if (doc.exists()) {
-        setCompany(doc.data() as Company);
-      } else {
-        console.error("Company document not found for listener");
-      }
-    }, (error) => console.error("Company listener error:", error));
-    
-    const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
-        const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-        const filteredAlerts = alertsData.filter(alert => !alert.targetUserId || alert.targetUserId === userId);
-        setAllAlerts(filteredAlerts);
-    }, (error) => console.error("Alerts listener error:", error));
-
-    // TODO: Fetch all companies for a super admin
-    getDoc(companyDocRef).then(doc => {
-      if (doc.exists()) {
-        setUserCompanies([doc.data() as Company]);
-      }
-    });
-
     return () => {
         unsubUser();
-        unsubCompany();
-        unsubAlerts();
     };
   }, []);
   
@@ -116,38 +121,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-            // There's a delay between user creation and profile update (photoURL).
-            // We'll give it a moment to become available.
-            const checkProfile = async (attempts: number): Promise<void> => {
-                await firebaseUser.reload(); // Refresh user data
-                const companyId = firebaseUser.photoURL;
-                const userId = firebaseUser.uid;
-
-                if (companyId && userId) {
-                    setupListeners(companyId, userId);
-                    setCookie('skybound_last_company_id', companyId, 7);
-                    setCookie('skybound_last_user_id', userId, 7);
-                    return; // Success
-                }
-
-                if (attempts > 0) {
-                    // If no companyId, wait and try again.
-                    setTimeout(() => checkProfile(attempts - 1), 500);
-                } else {
-                    console.error("Auth user missing companyId or userId after multiple attempts.");
-                    setLoading(false);
-                    // Consider logging out the user here if this state is invalid
-                    logout();
-                }
-            };
-
-            checkProfile(5); // Try up to 5 times over 2.5 seconds
+            const userId = firebaseUser.uid;
+            
+            // For a superuser, companyId is not needed immediately.
+            // For others, we get it from their user document.
+            // The setupListeners function will handle fetching company details.
+            setupListeners(userId, getCookie('skybound_last_company_id'));
+            setCookie('skybound_last_user_id', userId, 7);
         } else {
             // If no user is found via auth state, check cookies for a session
-            const companyId = getCookie('skybound_last_company_id');
             const userId = getCookie('skybound_last_user_id');
-            if (companyId && userId) {
-                setupListeners(companyId, userId);
+            const companyId = getCookie('skybound_last_company_id');
+            if (userId) {
+                setupListeners(userId, companyId);
             } else {
                 setUser(null);
                 setCompany(null);
@@ -157,7 +143,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [setupListeners]); // setupListeners is now stable
+  }, [setupListeners]); 
 
 
   const login = async (email: string, password?: string): Promise<boolean> => {
@@ -166,15 +152,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (!password) throw new Error("Password is required.");
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
-        const companyId = firebaseUser.photoURL;
+        const userId = firebaseUser.uid;
 
-        if (!companyId) {
-            throw new Error("Company ID not found on user profile.");
+        // Fetch user document to get companyId and role
+        const userDocRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userDocRef);
+
+        if (!userSnap.exists()) {
+             throw new Error("User data not found in Firestore.");
         }
+        const userData = userSnap.data() as User;
         
-        // Listeners are now set up by onAuthStateChanged, so we just need to set cookies.
-        setCookie('skybound_last_company_id', companyId, 7);
-        setCookie('skybound_last_user_id', firebaseUser.uid, 7);
+        // Listeners are now set up by onAuthStateChanged.
+        // We just need to set cookies for session persistence.
+        setCookie('skybound_last_user_id', userId, 7);
+        if (userData.companyId) {
+            setCookie('skybound_last_company_id', userData.companyId, 7);
+        }
 
         return true;
     } catch (error) {
@@ -195,9 +189,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
   
   const updateUser = async (updatedData: Partial<User>): Promise<boolean> => {
-    if (!user || !company) return false;
+    if (!user) return false;
     try {
-        const userRef = doc(db, `companies/${company.id}/users`, user.id);
+        const userRef = doc(db, `users`, user.id);
         await updateDoc(userRef, updatedData);
         return true;
     } catch (error) {
@@ -217,6 +211,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         return false;
     }
   };
+  
+  const setActiveCompany = (companyToSet: Company | null) => {
+    setCompany(companyToSet);
+    if(companyToSet) {
+        setCookie('skybound_last_company_id', companyToSet.id, 7);
+    } else {
+        eraseCookie('skybound_last_company_id');
+    }
+  }
 
   const getUnacknowledgedAlerts = useCallback((): Alert[] => {
     return allAlerts;
@@ -240,7 +243,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, company, setCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
+    <UserContext.Provider value={{ user, company, setCompany: setActiveCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );

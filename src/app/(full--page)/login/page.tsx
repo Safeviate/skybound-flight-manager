@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
-  const { user, login, company } = useUser();
+  const { user, login, company, loading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -24,22 +24,21 @@ export default function LoginPage() {
 
 
   useEffect(() => {
-    // If a user is already logged in, redirect them away from the login page.
-    if (user) {
+    // Redirect logged-in users
+    if (!loading && user) {
         if(user.permissions.includes('Super User')) {
             router.push('/');
         } else {
             router.push('/my-dashboard');
         }
     }
-  }, [user, router]);
+  }, [user, loading, router]);
   
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setLoginError(null);
     
-    // The login function in the mock provider always returns true
     const loginSuccess = await login(email, password);
 
     if (!loginSuccess) {
@@ -63,7 +62,7 @@ export default function LoginPage() {
                 Login
             </CardTitle>
             <CardDescription>
-                Enter any email and password to continue.
+                Enter your credentials to access your account.
             </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
