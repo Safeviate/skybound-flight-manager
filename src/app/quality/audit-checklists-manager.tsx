@@ -160,11 +160,16 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                     </div>
                      <div>
                         <Label>Lead Auditor</Label>
-                       <Input
-                            placeholder="Enter Lead Auditor Name"
-                            value={leadAuditor}
-                            onChange={(e) => setLeadAuditor(e.target.value)}
-                        />
+                         <Select value={leadAuditor} onValueChange={setLeadAuditor}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Lead Auditor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {personnel.map(p => (
+                                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div>
                         <Label>Audit Team</Label>
@@ -176,11 +181,16 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                     </div>
                     <div>
                         <Label>Auditee</Label>
-                         <Input
-                            placeholder="Enter Primary Auditee Name"
-                            value={auditeeName}
-                            onChange={(e) => setAuditeeName(e.target.value)}
-                        />
+                        <Select value={auditeeName} onValueChange={setAuditeeName}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Primary Auditee" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {personnel.map(p => (
+                                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div>
                         <Label>Auditee Team</Label>
@@ -207,7 +217,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                         />
                     </div>
                 </div>
-                <Button onClick={handleConfirm} disabled={!auditDate}>
+                <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName}>
                     Confirm and Start Audit
                 </Button>
             </DialogContent>
