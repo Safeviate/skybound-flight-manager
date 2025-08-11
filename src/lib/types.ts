@@ -461,7 +461,9 @@ export type QualityAudit = {
   auditTeam?: string[];
   auditeeTeam?: string[];
   auditorSignature?: string;
+  auditorSignatureDate?: string;
   auditeeSignature?: string;
+  auditeeSignatureDate?: string;
   scope?: string;
   evidenceReference?: string;
 };
@@ -548,3 +550,23 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Driver': [],
   'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
 };
+
+export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
+    "ADRM", "AMAN", "ARC", "ATM", "BIRD", "CABIN", "CFIT", "CTOL", "EVAC", "EXTL",
+    "F-NI", "F-POST", "FUEL", "GCOL", "GTOW", "ICE", "LALT", "LOC-G", "LOC-I",
+    "LOLI", "MAC", "MED", "NAV", "OTHR", "RAMP", "RE", "RI", "SCF-NP", "SCF-PP",
+    "SEC", "TURB", "UIMC", "UNK", "USOS", "WILD", "WSTRW"
+];
+
+export const ICAO_PHASES_OF_FLIGHT: string[] = [
+    'Standing',
+    'Pushback/Towing',
+    'Taxi',
+    'Take-off',
+    'Initial Climb',
+    'En-route',
+    'Approach',
+    'Landing',
+    'Go-around',
+    'Post-impact'
+];

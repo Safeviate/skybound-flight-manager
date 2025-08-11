@@ -209,7 +209,7 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
     };
 
     const handleResetSignatures = () => {
-        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined }, true);
+        onUpdate({ ...audit, auditorSignature: undefined, auditeeSignature: undefined, auditorSignatureDate: undefined, auditeeSignatureDate: undefined }, true);
         toast({
             title: 'Signatures Cleared',
             description: 'The signature fields for this audit have been reset.',
@@ -594,9 +594,14 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                     <div className="space-y-2">
                         <h4 className="font-semibold">Lead Auditor: {audit.auditor}</h4>
                         {audit.auditorSignature ? (
-                            <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            <div>
+                                <Image src={audit.auditorSignature} alt="Auditor Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                {audit.auditorSignatureDate && (
+                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditorSignatureDate), 'PPP p')}</p>
+                                )}
+                            </div>
                         ) : canSign(user, audit.auditor) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditorSignature: signature, auditorSignatureDate: new Date().toISOString() }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -604,9 +609,14 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                      <div className="space-y-2">
                         <h4 className="font-semibold">Auditee: {audit.auditeeName}</h4>
                          {audit.auditeeSignature ? (
-                            <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                            <div>
+                                <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                {audit.auditeeSignatureDate && (
+                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditeeSignatureDate), 'PPP p')}</p>
+                                )}
+                            </div>
                         ) : canSign(user, audit.auditeeName) ? (
-                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature }, true)} />
+                             <SignaturePad onSubmit={(signature) => onUpdate({ ...audit, auditeeSignature: signature, auditeeSignatureDate: new Date().toISOString() }, true)} />
                         ) : (
                             <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
                         )}
@@ -974,6 +984,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
