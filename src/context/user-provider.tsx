@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
@@ -62,51 +62,50 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
-  const setupListeners = useCallback((userId: string, companyId?: string | null) => {
-    const userDocRef = doc(db, `users`, userId);
+  const setupListeners = useCallback((userId: string, companyId: string) => {
+    // With the new structure, we always need a companyId to find the user.
+    if (!companyId) {
+        console.error("No company ID provided, cannot set up listeners.");
+        setLoading(false);
+        return () => {}; // Return an empty unsubscribe function
+    }
+
+    const userDocRef = doc(db, 'companies', companyId, 'users', userId);
 
     const unsubUser = onSnapshot(userDocRef, async (userSnap) => {
       if (userSnap.exists()) {
         const userData = userSnap.data() as User;
         setUser(userData);
         
-        const currentCompanyId = companyId || userData.companyId;
-
-        if (currentCompanyId) {
-             const companyDocRef = doc(db, 'companies', currentCompanyId);
-             const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
-                if (companySnap.exists()) {
-                    setCompany(companySnap.data() as Company);
-                }
-             });
-            
-             const alertsQuery = query(
-                collection(db, `companies/${currentCompanyId}/alerts`),
-                where('readBy', 'not-in', [userId || ' '])
-            );
-            const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
-                const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
-                const filteredAlerts = alertsData.filter(alert => !alert.targetUserId || alert.targetUserId === userId);
-                setAllAlerts(filteredAlerts);
-            });
-
-            // Return a function to unsubscribe from company-specific listeners
-            return () => {
-                unsubCompany();
-                unsubAlerts();
-            };
-        }
+        const companyDocRef = doc(db, 'companies', companyId);
+        const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
+            if (companySnap.exists()) {
+                setCompany(companySnap.data() as Company);
+            }
+        });
         
-        if (userData.role === 'Super User') {
-          const companiesQuery = query(collection(db, 'companies'));
-          const companiesSnapshot = await getDocs(companiesQuery);
-          setUserCompanies(companiesSnapshot.docs.map(d => d.data() as Company));
-        }
+        const alertsQuery = query(
+            collection(db, `companies/${companyId}/alerts`),
+            where('readBy', 'not-in', [userId || ' '])
+        );
+        const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
+            const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
+            const filteredAlerts = alertsData.filter(alert => !alert.targetUserId || alert.targetUserId === userId);
+            setAllAlerts(filteredAlerts);
+        });
+
+        setLoading(false);
+
+        // Return a function to unsubscribe from all listeners
+        return () => {
+            unsubCompany();
+            unsubAlerts();
+        };
 
       } else {
-        console.error("User document not found for listener");
+        console.error("User document not found for listener at", userDocRef.path);
+        setLoading(false);
       }
-      setLoading(false);
     }, (error) => {
         console.error("User listener error:", error);
         setLoading(false);
@@ -122,23 +121,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
-            
-            // For a superuser, companyId is not needed immediately.
-            // For others, we get it from their user document.
-            // The setupListeners function will handle fetching company details.
-            setupListeners(userId, getCookie('skybound_last_company_id'));
-            setCookie('skybound_last_user_id', userId, 7);
-        } else {
-            // If no user is found via auth state, check cookies for a session
-            const userId = getCookie('skybound_last_user_id');
-            const companyId = getCookie('skybound_last_company_id');
-            if (userId) {
+            // The user's company ID should be stored in their auth profile's photoURL field during registration.
+            const companyId = firebaseUser.photoURL;
+
+            if (companyId) {
                 setupListeners(userId, companyId);
+                setCookie('skybound_last_user_id', userId, 7);
+                setCookie('skybound_last_company_id', companyId, 7);
             } else {
-                setUser(null);
-                setCompany(null);
-                setLoading(false);
+                // This case handles users created before the photoURL/companyId logic was in place
+                console.error("User is authenticated but no company ID found in profile. Please re-authenticate.");
+                logout(); // Force logout to clear state
             }
+        } else {
+            setUser(null);
+            setCompany(null);
+            setLoading(false);
         }
     });
 
@@ -150,26 +148,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
         if (!password) throw new Error("Password is required.");
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const firebaseUser = userCredential.user;
-        const userId = firebaseUser.uid;
-
-        // Fetch user document to get companyId and role
-        const userDocRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userDocRef);
-
-        if (!userSnap.exists()) {
-             throw new Error("User data not found in Firestore.");
-        }
-        const userData = userSnap.data() as User;
-        
-        // Listeners are now set up by onAuthStateChanged.
-        // We just need to set cookies for session persistence.
-        setCookie('skybound_last_user_id', userId, 7);
-        if (userData.companyId) {
-            setCookie('skybound_last_company_id', userData.companyId, 7);
-        }
-
+        // The onAuthStateChanged listener will handle everything else once this completes.
+        await signInWithEmailAndPassword(auth, email, password);
         return true;
     } catch (error) {
         console.error("Login failed:", error);
@@ -189,9 +169,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
   
   const updateUser = async (updatedData: Partial<User>): Promise<boolean> => {
-    if (!user) return false;
+    if (!user || !company) return false;
     try {
-        const userRef = doc(db, `users`, user.id);
+        const userRef = doc(db, 'companies', company.id, 'users', user.id);
         await updateDoc(userRef, updatedData);
         return true;
     } catch (error) {
@@ -213,11 +193,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
   
   const setActiveCompany = (companyToSet: Company | null) => {
-    setCompany(companyToSet);
-    if(companyToSet) {
-        setCookie('skybound_last_company_id', companyToSet.id, 7);
-    } else {
-        eraseCookie('skybound_last_company_id');
+    // This function is now less relevant for regular users but kept for potential future use.
+    if(companyToSet?.id !== company?.id) {
+        setCompany(companyToSet);
+        if(companyToSet) {
+            setCookie('skybound_last_company_id', companyToSet.id, 7);
+            // Re-setup listeners for the new company context
+            if(user) {
+                setupListeners(user.id, companyToSet.id);
+            }
+        } else {
+            eraseCookie('skybound_last_company_id');
+        }
     }
   }
 
