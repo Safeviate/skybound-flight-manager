@@ -39,7 +39,7 @@ const fallbackCompany: Company = {
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [company, setCompany] = useState<Company | null>(fallbackCompany);
+  const [company, setCompany] = useState<Company | null>(null);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     await signOut(auth);
     setUser(null);
-    setCompany(fallbackCompany);
+    setCompany(null);
     setUserCompanies([]);
     setAllAlerts([]);
     router.push('/login');
@@ -74,8 +74,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (companySnap.exists()) {
         setCompany(companySnap.data() as Company);
       } else {
-        // If the company doc has no fields, it won't "exist". We rely on the fallback.
-        console.warn("Company doc does not have fields, using fallback data. This is expected if the document only holds subcollections.");
+        // If the company doc has no fields, it won't "exist". We use the fallback.
         setCompany(fallbackCompany);
       }
     });
@@ -103,11 +102,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
-            const companyId = 'skybound-aero'; // Hardcoded for single-tenant app
+            const companyId = 'skybound-aero';
 
             try {
-                // Since the company document might not have fields, we don't check for its existence here.
-                // We proceed directly to check for the user document within the known company path.
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
@@ -163,7 +160,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!company) return false;
     try {
         const companyRef = doc(db, 'companies', company.id);
-        await updateDoc(companyRef, updatedData);
+        await setDoc(companyRef, updatedData, { merge: true });
         return true;
     } catch (error) {
         console.error("Failed to update company:", error);

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
-import config from '@/config';
 import { useRouter } from 'next/navigation';
 
 
@@ -52,12 +48,12 @@ export default function CorporatePage() {
 
             // 1. Create or merge company document with data
             const companyDocRef = doc(db, 'companies', companyId);
-            const finalCompanyData: Company = {
-                ...companyData,
+            const finalCompanyData: Partial<Company> = {
                 id: companyId,
                 logoUrl: logoUrl,
                 name: 'SkyBound Flight Manager',
                 trademark: 'Your Trusted Partner in Aviation',
+                ...companyData,
             };
             batch.set(companyDocRef, finalCompanyData, { merge: true });
 
