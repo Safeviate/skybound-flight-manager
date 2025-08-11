@@ -39,7 +39,7 @@ const fallbackCompany: Company = {
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<Company | null>(fallbackCompany);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);

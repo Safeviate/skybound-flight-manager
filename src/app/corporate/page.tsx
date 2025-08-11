@@ -46,7 +46,7 @@ export default function CorporatePage() {
             
             const batch = writeBatch(db);
 
-            // 1. Create or merge company document with data
+            // 1. Create or merge company document with data. This ensures it exists with fields.
             const companyDocRef = doc(db, 'companies', companyId);
             const finalCompanyData: Partial<Company> = {
                 id: companyId,
