@@ -31,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc } from 'firebase/firestore';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -281,90 +282,92 @@ export function AircraftPageContent({
         }
 
         return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Registration</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Total Hours</TableHead>
-                        <TableHead>Airworthiness</TableHead>
-                        <TableHead>Insurance</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {aircraft.map((ac) => {
-                        return (
-                        <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
-                            <TableCell className="font-medium">{ac.tailNumber}</TableCell>
-                            <TableCell>{ac.make} {ac.model}</TableCell>
-                            <TableCell>{ac.hours.toFixed(1)}</TableCell>
-                            <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                            <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                {isArchived ? (
-                                    <DropdownMenuItem onClick={() => handleRestore(ac)}>
-                                        <RotateCw className="mr-2 h-4 w-4" />
-                                        Restore
-                                    </DropdownMenuItem>
-                                ) : (
-                                    <>
-                                        {ac.status === 'In Maintenance' && (
-                                            <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
-                                                <Check className="mr-2 h-4 w-4" />
-                                                Return to Service
-                                            </DropdownMenuItem>
-                                        )}
-                                        {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
-                                            <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
-                                                <ListChecks className="mr-2 h-4 w-4" />
-                                                Clear Post-Flight
-                                            </DropdownMenuItem>
-                                        )}
-                                        <DropdownMenuItem onClick={() => handleEdit(ac)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Edit
-                                        </DropdownMenuItem>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                        <Archive className="mr-2 h-4 w-4" />
-                                                        Archive
-                                                    </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
-                                                        </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </>
-                                )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </TableCell>
+            <ScrollArea orientation="horizontal">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Registration</TableHead>
+                            <TableHead>Model</TableHead>
+                            <TableHead>Total Hours</TableHead>
+                            <TableHead>Airworthiness</TableHead>
+                            <TableHead>Insurance</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                    )})}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {aircraft.map((ac) => {
+                            return (
+                            <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
+                                <TableCell className="font-medium">{ac.tailNumber}</TableCell>
+                                <TableCell>{ac.make} {ac.model}</TableCell>
+                                <TableCell>{ac.hours.toFixed(1)}</TableCell>
+                                <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                                <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                    {isArchived ? (
+                                        <DropdownMenuItem onClick={() => handleRestore(ac)}>
+                                            <RotateCw className="mr-2 h-4 w-4" />
+                                            Restore
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        <>
+                                            {ac.status === 'In Maintenance' && (
+                                                <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
+                                                    <Check className="mr-2 h-4 w-4" />
+                                                    Return to Service
+                                                </DropdownMenuItem>
+                                            )}
+                                            {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
+                                                <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
+                                                    <ListChecks className="mr-2 h-4 w-4" />
+                                                    Clear Post-Flight
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem onClick={() => handleEdit(ac)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Archive className="mr-2 h-4 w-4" />
+                                                            Archive
+                                                        </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
+                                                            </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </>
+                                    )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        )})}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
         )
     };
     
