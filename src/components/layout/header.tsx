@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -36,9 +36,12 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import type { UserDocument } from '@/lib/types';
+import type { UserDocument, User as AppUser } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -61,11 +64,31 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
-  const { user, company, userCompanies, setCompany, logout, updateUser } = useUser();
+  const { user, company, userCompanies, setCompany, logout, updateUser, impersonatedUser, switchUser, switchBack } = useUser();
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!company || !user?.permissions.includes('Super User')) return;
+    
+    const fetchAllUsers = async () => {
+        const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
+        const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
+        const [personnelSnapshot, studentsSnapshot] = await Promise.all([
+            getDocs(personnelQuery),
+            getDocs(studentsQuery)
+        ]);
+        const personnel = personnelSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as AppUser));
+        const students = studentsSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as AppUser));
+        setAllUsers([...personnel, ...students]);
+    };
+    fetchAllUsers();
+  }, [company, user]);
+
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -161,9 +184,26 @@ export default function Header({ title, children }: { title: string, children?: 
     }
     setIsSwitcherOpen(false);
   }
+
+  const handleSwitchUser = (selectedUser: AppUser) => {
+    switchUser(selectedUser);
+    setIsUserSwitcherOpen(false);
+    toast({ title: "Switched User", description: `You are now viewing as ${selectedUser.name}.` });
+  }
+
+  const currentUser = impersonatedUser || user;
   
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
+      {impersonatedUser && (
+        <div className="absolute top-16 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-semibold p-1 z-20 flex items-center justify-center gap-2">
+            Viewing as {impersonatedUser.name} ({impersonatedUser.role})
+            <Button variant="ghost" size="sm" className="h-auto px-2 py-0.5 text-yellow-900 hover:bg-yellow-500" onClick={switchBack}>
+                <Repeat className="mr-1 h-3 w-3" />
+                Switch Back
+            </Button>
+        </div>
+      )}
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
@@ -181,8 +221,8 @@ export default function Header({ title, children }: { title: string, children?: 
               <DropdownMenuTrigger asChild>
                   <Button variant="default" className="relative h-auto px-4 py-2 text-left">
                       <div className="flex flex-col">
-                          <span>{user?.name}</span>
-                          <span className="text-xs text-primary-foreground/80 -mt-1">{user?.role}</span>
+                          <span>{currentUser?.name}</span>
+                          <span className="text-xs text-primary-foreground/80 -mt-1">{currentUser?.role}</span>
                       </div>
                   </Button>
               </DropdownMenuTrigger>
@@ -200,6 +240,12 @@ export default function Header({ title, children }: { title: string, children?: 
                      <DropdownMenuItem onSelect={() => setIsSwitcherOpen(true)}>
                         <Building className="mr-2 h-4 w-4" />
                         <span>Switch Company</span>
+                    </DropdownMenuItem>
+                   )}
+                   {user?.permissions.includes('Super User') && (
+                     <DropdownMenuItem onSelect={() => setIsUserSwitcherOpen(true)}>
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>Switch User</span>
                     </DropdownMenuItem>
                    )}
                   <DropdownMenuSeparator />
@@ -383,6 +429,23 @@ export default function Header({ title, children }: { title: string, children?: 
               </form>
             </Form>
           </DialogContent>
+        </Dialog>
+        <Dialog open={isUserSwitcherOpen} onOpenChange={setIsUserSwitcherOpen}>
+             <DialogContent className="p-0">
+                <Command>
+                    <CommandInput placeholder="Search for a user to switch to..." />
+                    <CommandList>
+                        <CommandEmpty>No users found.</CommandEmpty>
+                        <CommandGroup>
+                            {allUsers.map((u) => (
+                                <CommandItem key={u.id} onSelect={() => handleSwitchUser(u)}>
+                                    <span>{u.name} ({u.role})</span>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </DialogContent>
         </Dialog>
         <Dialog open={isSwitcherOpen} onOpenChange={setIsSwitcherOpen}>
              <DialogContent>
