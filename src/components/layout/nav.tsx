@@ -38,6 +38,7 @@ import {
   PlusCircle,
   Contact,
   BookOpen,
+  FlaskConical,
 } from 'lucide-react';
 import type { Permission, Feature } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -58,17 +59,17 @@ const navItems: {
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'], requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredPermissions: ['Students:View'], requiredFeature: 'Students' },
+  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
 ];
 
-const reportsNavItems = [
-    { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
+const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
+    { href: '/settings/operational', label: 'Operational Settings', icon: FlaskConical, requiredPermissions: ['Super User'] },
 ]
 
 const settingsNavItems = [
-    { href: '/settings/operational', label: 'Operational Settings', icon: Cog, requiredPermissions: ['Settings:Edit'] },
     { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
     { href: '/settings', label: 'Appearance', icon: Settings },
 ];
@@ -116,7 +117,7 @@ export default function Nav() {
         return pathname === '/';
     }
     if(href === '/reports') {
-        return pathname === href;
+        return pathname.startsWith('/reports');
     }
     if(href === '/my-dashboard') {
         return pathname === href;
@@ -144,7 +145,7 @@ export default function Nav() {
     return hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature)
   });
   
-  const visibleReportsItems = reportsNavItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
+  const visibleAdminItems = adminNavItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
   const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
 
   return (
@@ -175,10 +176,10 @@ export default function Nav() {
               </Link>
             </SidebarMenuItem>
           ))}
-          {!isMobile && visibleReportsItems.length > 0 && (
+          {!isMobile && visibleAdminItems.length > 0 && (
             <SidebarMenuItem>
-                <div className="px-3 pt-2 pb-1 text-xs font-semibold text-sidebar-foreground/70">Reports</div>
-                {visibleReportsItems.map((item) => (
+                <div className="px-3 pt-2 pb-1 text-xs font-semibold text-sidebar-foreground/70">Webapp Administration</div>
+                {visibleAdminItems.map((item) => (
                      <Link key={item.href} href={item.href} passHref>
                         <SidebarMenuButton
                             as="a"
