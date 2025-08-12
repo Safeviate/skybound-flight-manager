@@ -56,7 +56,7 @@ const getFindingInfo = (finding: FindingStatus | null) => {
         case 'Non-compliant': return { icon: <XCircle className="h-5 w-5 text-red-600" />, variant: 'destructive' as const, text: 'Non-compliant' };
         case 'Observation': return { icon: <MessageSquareWarning className="h-5 w-5 text-blue-600" />, variant: 'secondary' as const, text: 'Observation' };
         case 'Not Applicable': return { icon: <Ban className="h-5 w-5 text-gray-500" />, variant: 'outline' as const, text: 'N/A' };
-        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: finding || 'Not Set' };
+        default: return { icon: <ListChecks className="h-5 w-5" />, variant: 'outline' as const, text: 'Not Set' };
     }
 };
 
@@ -419,6 +419,12 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                        {item.suggestedImprovement && (
+                                            <div className="mt-2">
+                                                <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                                <p className="text-sm p-2 bg-primary/10 rounded-md">{item.suggestedImprovement}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -453,6 +459,12 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                         </div>
                                         {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
+                                        {item.suggestedImprovement && (
+                                            <div className="mt-2">
+                                                <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
+                                                <p className="text-sm p-2 bg-primary/10 rounded-md">{item.suggestedImprovement}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -976,7 +988,7 @@ export default function QualityAuditDetailPage() {
                                           <Textarea
                                               placeholder="Document references, evidence, etc."
                                               value={item.reference || ''}
-                                              onChange={(e) => setAudit({ ...audit, checklistItems: audit.checklistItems.map(ci => ci.id === item.id ? { ...ci, reference: e.target.value } : ci)})}
+                                              onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
                                               />
                                       </div>
                                       <div className="space-y-2">
@@ -984,7 +996,15 @@ export default function QualityAuditDetailPage() {
                                           <Textarea
                                               placeholder="Auditor comments, observations..."
                                               value={item.comment || ''}
-                                               onChange={(e) => setAudit({ ...audit, checklistItems: audit.checklistItems.map(ci => ci.id === item.id ? { ...ci, comment: e.target.value } : ci)})}
+                                               onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                              />
+                                      </div>
+                                      <div className="space-y-2">
+                                          <Label className="text-sm font-medium">Suggested Improvement</Label>
+                                          <Textarea
+                                              placeholder="Provide a suggestion for improvement..."
+                                              value={item.suggestedImprovement || ''}
+                                               onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
                                               />
                                       </div>
 
@@ -1047,4 +1067,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 

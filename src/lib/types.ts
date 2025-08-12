@@ -384,6 +384,7 @@ export type AuditChecklistItem = {
     reference?: string;
     comment?: string;
     photo?: string;
+    suggestedImprovement?: string;
 }
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Flight Operations' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
