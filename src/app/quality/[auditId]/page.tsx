@@ -9,7 +9,7 @@ import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -39,6 +39,7 @@ import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StandardCamera } from '@/components/ui/standard-camera';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -71,7 +72,7 @@ const getLevelInfo = (level: FindingLevel) => {
 const findingOptions: FindingStatus[] = ['Compliant', 'Non-compliant', 'Partial', 'Observation', 'Not Applicable'];
 const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
-const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[] }) => {
+const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit: QualityAudit, onUpdate: (updatedAudit: QualityAudit, showToast?: boolean) => void, personnel: User[], onNavigateBack: () => void }) => {
     const [editingIssue, setEditingIssue] = React.useState<NonConformanceIssue | null>(null);
     const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
     const [suggestedCap, setSuggestedCap] = React.useState<GenerateQualityCapOutput | null>(null);
@@ -250,11 +251,9 @@ const AuditReportView = ({ audit, onUpdate, personnel }: { audit: QualityAudit, 
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" className="no-print" data-perf-trace-id="back-to-audits-button">
-                            <Link href="/quality?tab=audits">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Audits
-                            </Link>
+                         <Button variant="outline" className="no-print" onClick={onNavigateBack}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Audits
                         </Button>
                         <Button variant="outline" className="no-print" onClick={handleRequestSignatures}>
                             <Signature className="mr-2 h-4 w-4" />
@@ -636,10 +635,14 @@ export default function QualityAuditDetailPage() {
   const { user, company, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [audit, setAudit] = useState<QualityAudit | null>(null);
+  const [savedAudit, setSavedAudit] = useState<QualityAudit | null>(null);
   const [loading, setLoading] = useState(true);
   const auditId = params.auditId as string;
   const [personnel, setPersonnel] = useState<User[]>([]);
   const [cameraItemId, setCameraItemId] = useState<string | null>(null);
+  const [isBackAlertOpen, setIsBackAlertOpen] = useState(false);
+
+  const hasUnsavedChanges = JSON.stringify(audit) !== JSON.stringify(savedAudit);
 
   useEffect(() => {
     if (userLoading) return;
@@ -662,7 +665,9 @@ export default function QualityAuditDetailPage() {
         ]);
 
         if (auditSnap.exists()) {
-          setAudit({ ...auditSnap.data(), id: auditSnap.id } as QualityAudit);
+          const fetchedAudit = { ...auditSnap.data(), id: auditSnap.id } as QualityAudit;
+          setAudit(fetchedAudit);
+          setSavedAudit(fetchedAudit); // Set initial saved state
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
         }
@@ -685,7 +690,7 @@ export default function QualityAuditDetailPage() {
     const updatedItems = audit.checklistItems.map(item => 
         item.id === itemId ? { ...item, [field]: value } : item
     );
-    handleAuditUpdate({ ...audit, checklistItems: updatedItems }, false);
+    setAudit({ ...audit, checklistItems: updatedItems });
   }
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
@@ -699,6 +704,7 @@ export default function QualityAuditDetailPage() {
     try {
         const auditRef = doc(db, `companies/${companyId}/quality-audits`, auditId);
         await setDoc(auditRef, cleanAudit, { merge: true });
+        setSavedAudit(cleanAudit); // Update saved state after successful save
         if (showToast) {
             toast({ title: 'Audit Updated', description: 'Your changes have been saved.' });
         }
@@ -769,7 +775,7 @@ export default function QualityAuditDetailPage() {
         return { ...item, finding, level, comment, reference };
     });
 
-    handleAuditUpdate({ ...audit, checklistItems: seededItems }, true);
+    setAudit({ ...audit, checklistItems: seededItems });
     toast({
       title: 'Audit Seeded',
       description: 'The audit checklist has been pre-filled with sample data.',
@@ -781,6 +787,14 @@ export default function QualityAuditDetailPage() {
         handleItemChange(cameraItemId, 'photo', dataUrl);
     }
     setCameraItemId(null);
+  };
+
+  const handleNavigateBack = () => {
+    if (hasUnsavedChanges) {
+      setIsBackAlertOpen(true);
+    } else {
+      router.push('/quality?tab=audits');
+    }
   };
 
   if (loading || userLoading) {
@@ -803,8 +817,25 @@ export default function QualityAuditDetailPage() {
   
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8 max-w-6xl mx-auto">
+       <AlertDialog open={isBackAlertOpen} onOpenChange={setIsBackAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Do you want to leave without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/quality?tab=audits')}>
+              Leave Without Saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {isAuditClosed ? (
-          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} />
+          <AuditReportView audit={audit} onUpdate={handleAuditUpdate} personnel={personnel} onNavigateBack={handleNavigateBack} />
       ) : (
       <>
           <h2 className="text-2xl font-bold">Audit Questionnaire</h2>
@@ -876,7 +907,7 @@ export default function QualityAuditDetailPage() {
                   placeholder="Enter the overall audit summary here..."
                   className="min-h-[100px]"
                   value={audit.summary}
-                  onChange={(e) => handleAuditUpdate({ ...audit, summary: e.target.value }, false)}
+                  onChange={(e) => setAudit({ ...audit, summary: e.target.value })}
                   />
               </div>
           </CardContent>
@@ -886,6 +917,10 @@ export default function QualityAuditDetailPage() {
               <CardHeader className="flex flex-row justify-between items-center">
                   <CardTitle>Audit Checklist</CardTitle>
                   <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleNavigateBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Audits
+                  </Button>
                   <Button onClick={handleSeedData} variant="outline">
                       <Database className="mr-2 h-4 w-4" />
                       Seed Data
@@ -941,7 +976,7 @@ export default function QualityAuditDetailPage() {
                                           <Textarea
                                               placeholder="Document references, evidence, etc."
                                               value={item.reference || ''}
-                                              onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                              onChange={(e) => setAudit({ ...audit, checklistItems: audit.checklistItems.map(ci => ci.id === item.id ? { ...ci, reference: e.target.value } : ci)})}
                                               />
                                       </div>
                                       <div className="space-y-2">
@@ -949,7 +984,7 @@ export default function QualityAuditDetailPage() {
                                           <Textarea
                                               placeholder="Auditor comments, observations..."
                                               value={item.comment || ''}
-                                              onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                               onChange={(e) => setAudit({ ...audit, checklistItems: audit.checklistItems.map(ci => ci.id === item.id ? { ...ci, comment: e.target.value } : ci)})}
                                               />
                                       </div>
 
