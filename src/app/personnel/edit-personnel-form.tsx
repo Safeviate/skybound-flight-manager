@@ -16,13 +16,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Role, User, Permission } from '@/lib/types';
+import type { Role, User, Permission, UserDocument } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
 
 const documents = [
   "Passport",
@@ -54,7 +59,10 @@ const personnelFormSchema = z.object({
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
-  requiredDocuments: z.array(z.string()).optional(),
+  documents: z.array(z.object({
+      type: z.string(),
+      expiryDate: z.date().nullable(),
+  })).optional(),
   permissions: z.array(z.string()).min(1, 'At least one permission must be selected.'),
 });
 
@@ -91,13 +99,22 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   const selectedRole = form.watch('role');
 
   useEffect(() => {
+    const existingDocs = personnel.documents || [];
+    const formDocs = documents.map(docType => {
+        const existing = existingDocs.find(d => d.type === docType);
+        return {
+            type: docType,
+            expiryDate: existing?.expiryDate ? parseISO(existing.expiryDate) : null,
+        }
+    });
+
     form.reset({
       name: personnel.name || '',
       email: personnel.email || '',
       role: personnel.role,
       phone: personnel.phone || '',
       consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
-      requiredDocuments: personnel.requiredDocuments || [],
+      documents: formDocs,
       permissions: personnel.permissions || [],
     })
   }, [personnel, form]);
@@ -111,10 +128,19 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
+    const documentsToSave: UserDocument[] = (data.documents || [])
+        .filter(doc => doc.expiryDate) // Only save documents that have an expiry date set
+        .map(doc => ({
+            id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
+            type: doc.type,
+            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+        }));
+
     const updatedPersonnel: User = {
         ...personnel,
         ...data,
         permissions: data.permissions as Permission[],
+        documents: documentsToSave,
     };
     onSubmit(updatedPersonnel);
   }
@@ -240,48 +266,46 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                 
                 <FormField
                     control={form.control}
-                    name="requiredDocuments"
+                    name="documents"
                     render={() => (
                         <FormItem>
                         <div className="mb-4">
-                            <FormLabel className="text-base">Required Documents</FormLabel>
+                            <FormLabel className="text-base">Document Expiry Dates</FormLabel>
                             <FormDescription>
-                            Select the documents this user is required to upload. They will be notified.
+                            Set the expiry date for each relevant document.
                             </FormDescription>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {documents.map((item) => (
-                            <FormField
-                                key={item}
-                                control={form.control}
-                                name="requiredDocuments"
-                                render={({ field }) => {
-                                return (
-                                    <FormItem
-                                    key={item}
-                                    className="flex flex-row items-center space-x-3 space-y-0"
-                                    >
-                                    <FormControl>
-                                        <Checkbox
-                                        checked={field.value?.includes(item)}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                            ? field.onChange([...(field.value || []), item])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                    (value) => value !== item
-                                                )
-                                                )
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                        {item}
-                                    </FormLabel>
-                                    </FormItem>
-                                )
-                                }}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            {documents.map((docType, index) => (
+                                <FormField
+                                    key={docType}
+                                    control={form.control}
+                                    name={`documents.${index}.expiryDate`}
+                                    render={({ field }) => {
+                                      const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
+                                      return (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>{docType}</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant={"outline"}
+                                                            className={cn("pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}
+                                                        >
+                                                            {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}}
+                                />
                             ))}
                         </div>
                         <FormMessage />
