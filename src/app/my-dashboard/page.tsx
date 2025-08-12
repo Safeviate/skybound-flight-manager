@@ -1,44 +1,41 @@
 
-
 'use client';
 
 import { MyDashboardPageContent } from './my-dashboard-page-content';
 import type { Booking } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
-import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, onSnapshot, or, and } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { format } from 'date-fns';
+import { useEffect, useState, useCallback } from 'react';
+import { getDashboardData } from './data';
+import { Loader2 } from 'lucide-react';
+
 
 export default function MyDashboardPage() {
-    const { user, company } = useUser();
+    const { user, company, loading: userLoading } = useUser();
     const [bookings, setBookings] = useState<Booking[]>([]);
-    
-    useEffect(() => {
+    const [dataLoading, setDataLoading] = useState(true);
+
+    const fetchDashboardData = useCallback(async () => {
         if (!user || !company) return;
-
-        const bookingsQuery = query(
-            collection(db, `companies/${company.id}/bookings`),
-            and(
-                or(
-                    where('student', '==', user.name),
-                    where('instructor', '==', user.name)
-                ),
-                where('date', '>=', format(new Date(), 'yyyy-MM-dd'))
-            ),
-            orderBy('date'),
-            orderBy('startTime')
-        );
-
-        const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
-            const bookingsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-            setBookings(bookingsList);
-        });
-
-        return () => unsubscribe();
-
+        setDataLoading(true);
+        const { bookingsList } = await getDashboardData(company.id, user.id);
+        setBookings(bookingsList);
+        setDataLoading(false);
     }, [user, company]);
 
+    useEffect(() => {
+        if (!userLoading) {
+            fetchDashboardData();
+        }
+    }, [userLoading, fetchDashboardData]);
+
+    if (userLoading || dataLoading) {
+        return (
+            <main className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </main>
+        );
+    }
+    
     return (
         <MyDashboardPageContent initialBookings={bookings} />
     );

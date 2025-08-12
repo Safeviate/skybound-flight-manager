@@ -68,7 +68,52 @@ const handleAcknowledge = async (alertId: string) => {
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
-      <div className="grid gap-8 lg:grid-cols-1">
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar />
+              Upcoming Bookings
+            </CardTitle>
+            <CardDescription>
+                Your scheduled flights and maintenance events.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {upcomingBookings.length > 0 ? (
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Aircraft</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead>Time</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {upcomingBookings.slice(0, 5).map(booking => (
+                            <TableRow key={booking.id}>
+                                <TableCell>
+                                    <Badge variant={isToday(parseISO(booking.date)) ? 'destructive' : 'outline'}>
+                                        {format(parseISO(booking.date), 'MMM dd')}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">{booking.aircraft}</TableCell>
+                                <TableCell>{booking.purpose === 'Training' ? `w/ ${booking.instructor}` : booking.purpose}</TableCell>
+                                <TableCell>{booking.startTime} - {booking.endTime}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center py-10">
+                    <Plane className="h-12 w-12 text-muted-foreground bg-muted rounded-full p-2 mb-4" />
+                    <p className="font-semibold">No Upcoming Bookings</p>
+                    <p className="text-sm text-muted-foreground">Your schedule is clear.</p>
+                </div>
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

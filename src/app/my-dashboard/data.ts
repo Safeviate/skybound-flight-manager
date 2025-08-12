@@ -1,12 +1,12 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, or } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, or, and } from 'firebase/firestore';
 import { format } from 'date-fns';
 import type { Booking, User } from '@/lib/types';
 import { doc, getDoc } from 'firebase/firestore';
 
-export async function getDashboardData(companyId: string, userId: string) {
+export async function getDashboardData(companyId: string, userId: string): Promise<{ bookingsList: Booking[] }> {
     
     const userRef = doc(db, `companies/${companyId}/users`, userId);
     const userSnap = await getDoc(userRef);
@@ -19,11 +19,13 @@ export async function getDashboardData(companyId: string, userId: string) {
     
     const bookingsQuery = query(
         collection(db, `companies/${companyId}/bookings`),
-        or(
-            where('student', '==', user.name),
-            where('instructor', '==', user.name)
+        and(
+            or(
+                where('student', '==', user.name),
+                where('instructor', '==', user.name)
+            ),
+            where('date', '>=', format(new Date(), 'yyyy-MM-dd'))
         ),
-        where('date', '>=', format(new Date(), 'yyyy-MM-dd')),
         orderBy('date'),
         orderBy('startTime')
     );
