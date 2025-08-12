@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -73,7 +74,7 @@ const sendEmailFlow = ai.defineFlow(
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'SkyBound Flight Manager <barry@safeviate.com>', // This is good, using your verified domain
+        from: 'Safeviate <barry@safeviate.com>', // This is good, using your verified domain
         to: to, // Now directly using the 'to' passed into the flow
         subject: subject, // Now directly using the 'subject' passed into the flow
         html: htmlBody,

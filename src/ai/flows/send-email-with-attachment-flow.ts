@@ -46,7 +46,7 @@ const sendEmailWithAttachmentFlow = ai.defineFlow(
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'SkyBound Flight Manager <onboarding@resend.dev>',
+        from: 'Safeviate <onboarding@resend.dev>',
         to: recipient,
         subject: finalSubject,
         html: htmlBody,

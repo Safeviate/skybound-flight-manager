@@ -27,7 +27,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 // A hardcoded fallback company object to prevent startup crashes.
 const fallbackCompany: Company = {
     id: 'skybound-aero',
-    name: 'SkyBound Flight Manager',
+    name: 'Safeviate',
     trademark: 'Your Trusted Partner in Aviation',
     enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
     theme: {
