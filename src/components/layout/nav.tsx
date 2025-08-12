@@ -66,7 +66,7 @@ const navItems: {
 
 const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
-    { href: '/settings/operational', label: 'Operational Settings', icon: FlaskConical, requiredPermissions: ['Super User'] },
+    { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
 ]
 
 const settingsNavItems = [
@@ -121,6 +121,9 @@ export default function Nav() {
     }
     if(href === '/my-dashboard') {
         return pathname === href;
+    }
+    if (href.startsWith('/settings')) {
+        return pathname.startsWith('/settings') && (pathname === href || pathname.startsWith(`${href}/`));
     }
     return pathname.startsWith(href);
   };
