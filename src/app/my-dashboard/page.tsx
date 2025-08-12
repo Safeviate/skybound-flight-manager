@@ -23,10 +23,10 @@ export default function MyDashboardPage() {
     }, [user, company]);
 
     useEffect(() => {
-        if (!userLoading) {
+        if (!userLoading && user && company) {
             fetchDashboardData();
         }
-    }, [userLoading, fetchDashboardData]);
+    }, [userLoading, user, company, fetchDashboardData]);
 
     if (userLoading || dataLoading) {
         return (
