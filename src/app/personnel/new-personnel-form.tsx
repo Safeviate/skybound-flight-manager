@@ -37,6 +37,7 @@ const documents = [
   "Pilot License",
   "Medical Certificate",
   "Logbook",
+  "Airport Access",
 ] as const;
 
 const phoneRegex = new RegExp(
