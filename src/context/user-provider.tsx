@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, Alert, Company, QualityAudit, Permission } from '@/lib/types';
+import type { User, Alert, Company, QualityAudit, Permission, ThemeColors } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and } from 'firebase/firestore';
@@ -37,6 +37,46 @@ const fallbackCompany: Company = {
     }
 };
 
+const hexToHSL = (hex: string): string | null => {
+    if (!hex) return null;
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+        r = parseInt(hex[1] + hex[1], 16);
+        g = parseInt(hex[2] + hex[2], 16);
+        b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+        r = parseInt(hex.substring(1, 3), 16);
+        g = parseInt(hex.substring(3, 5), 16);
+        b = parseInt(hex.substring(5, 7), 16);
+    } else {
+        return null;
+    }
+
+    r /= 255; g /= 255; b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+
+    return `${h} ${s}% ${l}%`;
+};
+
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(fallbackCompany);
@@ -44,6 +84,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const applyTheme = (theme: Partial<ThemeColors> | undefined) => {
+        if (typeof window === 'undefined') return;
+
+        const styleId = 'dynamic-theme-style';
+        let styleElement = document.getElementById(styleId);
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = styleId;
+            document.head.appendChild(styleElement);
+        }
+
+        if (!theme) {
+            styleElement.innerHTML = '';
+            return;
+        }
+
+        const primary = theme.primary ? hexToHSL(theme.primary) : null;
+        const background = theme.background ? hexToHSL(theme.background) : null;
+        const accent = theme.accent ? hexToHSL(theme.accent) : null;
+
+        const css = `
+        :root {
+          ${primary ? `--primary: ${primary};` : ''}
+          ${background ? `--background: ${background};` : ''}
+          ${accent ? `--accent: ${accent};` : ''}
+        }
+      `;
+      styleElement.innerHTML = css;
+    };
+    applyTheme(company?.theme);
+  }, [company]);
 
   const logout = useCallback(async () => {
     await signOut(auth);
@@ -74,8 +147,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (companySnap.exists() && Object.keys(companySnap.data()).length > 0) {
         setCompany(companySnap.data() as Company);
       } else {
-        // If the company doc has no fields, it won't "exist" in a meaningful way.
-        // We use the fallback but keep the listener active for future updates.
         setCompany(fallbackCompany);
       }
     });
@@ -103,12 +174,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userId = firebaseUser.uid;
-            // Hardcode companyId to 'skybound-aero'
             const companyId = 'skybound-aero';
 
             try {
-                // The company document doesn't need to exist with fields for the app to function,
-                // but the user document does.
                 const userDocRef = doc(db, 'companies', companyId, 'users', userId);
                 const userDocSnap = await getDoc(userDocRef);
 
@@ -138,9 +206,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
         if (!password) return false;
-        // This is a normal password-based login
         await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged will handle the rest
         return true;
     } catch (error) {
         console.error("Login failed:", error);

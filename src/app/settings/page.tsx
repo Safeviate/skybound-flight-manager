@@ -17,71 +17,15 @@ import { Separator } from "@/components/ui/separator"
 import { useScale } from "@/context/scale-provider"
 import { Slider } from "@/components/ui/slider"
 
+const hexColorRegex = /^#([0-9a-f]{3}){1,2}$/i;
+
 const themeFormSchema = z.object({
-  primaryColor: z.string(),
-  backgroundColor: z.string(),
-  accentColor: z.string(),
+  primary: z.string().regex(hexColorRegex, 'Invalid hex color'),
+  background: z.string().regex(hexColorRegex, 'Invalid hex color'),
+  accent: z.string().regex(hexColorRegex, 'Invalid hex color'),
 })
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>
-
-const hexToHSL = (hex: string): string | null => {
-    if (!hex) return null;
-    let r = 0, g = 0, b = 0;
-    if (hex.length === 4) {
-        r = parseInt(hex[1] + hex[1], 16);
-        g = parseInt(hex[2] + hex[2], 16);
-        b = parseInt(hex[3] + hex[3], 16);
-    } else if (hex.length === 7) {
-        r = parseInt(hex.substring(1, 3), 16);
-        g = parseInt(hex.substring(3, 5), 16);
-        b = parseInt(hex.substring(5, 7), 16);
-    } else {
-        return null;
-    }
-
-    r /= 255;
-    g /= 255;
-    b /= 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-
-    if (max !== min) {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-    }
-
-    h = Math.round(h * 360);
-    s = Math.round(s * 100);
-    l = Math.round(l * 100);
-
-    return `${h} ${s}% ${l}%`;
-};
-
-const applyTheme = (theme: { primary?: string, background?: string, accent?: string }) => {
-    const root = document.documentElement;
-    const themeProperties = {
-        '--primary': hexToHSL(theme.primary as string),
-        '--background': hexToHSL(theme.background as string),
-        '--accent': hexToHSL(theme.accent as string),
-    };
-
-    for (const [property, value] of Object.entries(themeProperties)) {
-        if (value) {
-            root.style.setProperty(property, value);
-        } else {
-            root.style.removeProperty(property);
-        }
-    }
-};
 
 function SettingsPage() {
   const { user, company, updateCompany, loading } = useUser();
@@ -92,20 +36,19 @@ function SettingsPage() {
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primaryColor: '#2563eb',
-      backgroundColor: '#f4f4f5',
-      accentColor: '#f59e0b',
+      primary: '#2563eb',
+      background: '#f4f4f5',
+      accent: '#f59e0b',
     },
   });
   
   React.useEffect(() => {
     if (company?.theme) {
       form.reset({
-        primaryColor: company.theme.primary || '#2563eb',
-        backgroundColor: company.theme.background || '#f4f4f5',
-        accentColor: company.theme.accent || '#f59e0b',
+        primary: company.theme.primary || '#2563eb',
+        background: company.theme.background || '#f4f4f5',
+        accent: company.theme.accent || '#f59e0b',
       });
-      applyTheme(company.theme);
     }
   }, [company, form]);
   
@@ -119,15 +62,14 @@ function SettingsPage() {
     if (!company) return;
 
     const newThemeSettings = {
-      primary: data.primaryColor,
-      background: data.backgroundColor,
-      accent: data.accentColor,
+      primary: data.primary,
+      background: data.background,
+      accent: data.accent,
     };
     
     const success = await updateCompany({ theme: newThemeSettings });
     
     if (success) {
-      applyTheme(newThemeSettings);
       toast({
         title: 'Theme Updated',
         description: 'Your new theme colors have been saved.',
@@ -193,12 +135,12 @@ function SettingsPage() {
                         Company Theme Colors
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        Set your organization's brand colors.
+                        Set your organization's brand colors. These are applied on top of the base theme.
                     </p>
                     <div className="grid grid-cols-3 gap-4">
                         <FormField
                         control={form.control}
-                        name="primaryColor"
+                        name="primary"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Primary</FormLabel>
@@ -211,7 +153,7 @@ function SettingsPage() {
                         />
                         <FormField
                         control={form.control}
-                        name="backgroundColor"
+                        name="background"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Background</FormLabel>
@@ -224,7 +166,7 @@ function SettingsPage() {
                         />
                         <FormField
                         control={form.control}
-                        name="accentColor"
+                        name="accent"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Accent</FormLabel>
