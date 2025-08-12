@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -51,10 +50,6 @@ export type Aircraft = {
   hours: number;
   airworthinessExpiry: string;
   insuranceExpiry: string;
-  certificateOfReleaseToServiceExpiry: string;
-  certificateOfRegistrationExpiry: string;
-  massAndBalanceExpiry: string;
-  radioStationLicenseExpiry: string;
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
   activeBookingId?: string | null;
@@ -154,6 +149,7 @@ export type Role =
   | 'Safety Manager'
   | 'Student'
   | 'Auditee'
+  | 'System Admin'
   | 'Super User';
 
 export type User = {
@@ -538,6 +534,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Super User': ['Super User'],
   'Accountable Manager': ['Super User'],
+  'System Admin': ['Super User'],
   'Admin': ['Super User'],
   'Operations Manager': ['Super User'],
   'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],

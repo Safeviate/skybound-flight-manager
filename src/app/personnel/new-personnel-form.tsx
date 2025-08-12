@@ -37,7 +37,6 @@ const documents = [
   "Pilot License",
   "Medical Certificate",
   "Logbook",
-  "Radio station license",
 ] as const;
 
 const phoneRegex = new RegExp(
@@ -72,6 +71,7 @@ interface NewPersonnelFormProps {
 const personnelRoles: Role[] = [
     'Accountable Manager',
     'Admin',
+    'System Admin',
     'Aircraft Manager',
     'Auditee',
     'Chief Flight Instructor',
