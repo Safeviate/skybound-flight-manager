@@ -68,15 +68,14 @@ const sendEmailFlow = ai.defineFlow(
         </p>
       </div>
     `;
-
-    // Removed: const recipient = 'barry@safeviate.com';
-    // Removed: const finalSubject = subject;
+    
+    const fromAddress = `${companyName} <barry@safeviate.com>`;
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'Safeviate <barry@safeviate.com>', // This is good, using your verified domain
-        to: to, // Now directly using the 'to' passed into the flow
-        subject: subject, // Now directly using the 'subject' passed into the flow
+        from: fromAddress, // Now dynamic
+        to: to,
+        subject: subject,
         html: htmlBody,
         headers: {
             'X-Entity-Ref-ID': `${to}-${subject}-${new Date().getTime()}`,
