@@ -15,8 +15,11 @@ function RootPage() {
       return;
     }
     if (user) {
-        // All users are directed to the main dashboard.
-        router.push('/my-dashboard');
+        if (user.permissions?.includes('Super User')) {
+            router.push('/dashboard');
+        } else {
+            router.push('/my-dashboard');
+        }
     } else {
         router.push('/login');
     }
