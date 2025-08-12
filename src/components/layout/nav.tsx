@@ -63,13 +63,13 @@ const navItems: {
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
-  { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
 ];
 
 const adminNavItems = [
     { href: '/settings/companies', label: 'Manage Companies', icon: Building, requiredPermissions: ['Super User'] },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
     { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
+    { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
 ]
 
 const settingsNavItems: {
@@ -79,7 +79,7 @@ const settingsNavItems: {
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
 }[] = [
-    // items moved to main nav
+    // items moved to main nav or admin nav
 ];
 
 export default function Nav() {
@@ -121,18 +121,12 @@ export default function Nav() {
   };
   
   const getIsActive = (href: string) => {
+    // For the root path, we want an exact match.
     if (href === '/') {
         return pathname === '/';
     }
-    if(href === '/reports') {
-        return pathname.startsWith('/reports');
-    }
-    if(href === '/my-dashboard') {
-        return pathname === href;
-    }
-    if (href.startsWith('/settings')) {
-        return pathname.startsWith('/settings') && (pathname === href || pathname.startsWith(`${href}/`));
-    }
+    // For other paths, we check if the current pathname starts with the href.
+    // This makes parent routes active for any of their sub-routes.
     return pathname.startsWith(href);
   };
 
