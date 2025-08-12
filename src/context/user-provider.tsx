@@ -145,7 +145,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const unsubCompany = onSnapshot(companyDocRef, (companySnap) => {
       if (companySnap.exists() && Object.keys(companySnap.data()).length > 0) {
-        setCompany(companySnap.data() as Company);
+        setCompany({ id: companySnap.id, ...companySnap.data() } as Company);
       } else {
         setCompany(fallbackCompany);
       }
