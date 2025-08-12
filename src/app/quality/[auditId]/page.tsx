@@ -652,33 +652,34 @@ export default function QualityAuditDetailPage() {
       return;
     }
     
-    const fetchAudit = async () => {
+    const fetchAuditAndPersonnel = async () => {
       setLoading(true);
       try {
         const auditRef = doc(db, `companies/${company!.id}/quality-audits`, auditId);
-        const auditSnap = await getDoc(auditRef);
+        const personnelQuery = collection(db, `companies/${company!.id}/users`);
+        
+        const [auditSnap, personnelSnapshot] = await Promise.all([
+          getDoc(auditRef),
+          getDocs(personnelQuery)
+        ]);
 
         if (auditSnap.exists()) {
           setAudit({ ...auditSnap.data(), id: auditSnap.id } as QualityAudit);
         } else {
           toast({ variant: 'destructive', title: 'Error', description: 'Audit not found.' });
         }
+        
+        setPersonnel(personnelSnapshot.docs.map(doc => doc.data() as User));
+
       } catch (error) {
-        console.error("Error fetching audit:", error);
+        console.error("Error fetching audit details:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch audit details.' });
       } finally {
         setLoading(false);
       }
     };
     
-    const fetchPersonnel = async () => {
-        const personnelQuery = collection(db, `companies/${company!.id}/users`);
-        const snapshot = await getDocs(personnelQuery);
-        setPersonnel(snapshot.docs.map(doc => doc.data() as User));
-    };
-
-    fetchAudit();
-    fetchPersonnel();
+    fetchAuditAndPersonnel();
   }, [auditId, user, company, userLoading, router, toast]);
   
   const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
@@ -1010,4 +1011,6 @@ export default function QualityAuditDetailPage() {
 }
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
+    
+
     
