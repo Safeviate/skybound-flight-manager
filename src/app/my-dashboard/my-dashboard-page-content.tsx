@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -14,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AtAGlanceCard } from './at-a-glance-card';
 import { getDashboardData } from './data';
+import { DevTodoList } from './dev-todo-list';
 
 const getAlertIcon = (type: AlertType['type']) => {
     switch (type) {
@@ -177,6 +177,7 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                         )}
                     </CardContent>
                 </Card>
+                 {process.env.NODE_ENV === 'development' && <DevTodoList />}
             </div>
             <div className="lg:col-span-1">
                  <Card>
