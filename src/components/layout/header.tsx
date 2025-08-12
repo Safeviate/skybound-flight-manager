@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -74,7 +74,7 @@ export default function Header({ title, children }: { title: string, children?: 
 
   useEffect(() => {
     const fetchAllUsers = async () => {
-        if (!company || !user?.permissions.includes('Super User')) return;
+        if (!company || !user || !user.permissions.includes('Super User')) return;
         
         const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
         const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
@@ -477,3 +477,4 @@ export default function Header({ title, children }: { title: string, children?: 
     </header>
   );
 }
+
