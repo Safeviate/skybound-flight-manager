@@ -87,11 +87,11 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
+const auditAreas: AuditArea[] = ['Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
 const companyDepartments: Department[] = ['Flight Operations', 'Ground Operation', 'Administrative', 'Maintenance', 'Cargo'];
 
 
-const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary' | 'department'> & { department?: Department }) => void, personnel: User[], template: Checklist }) => {
+const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }) => void, personnel: User[], template: Checklist }) => {
     const [leadAuditor, setLeadAuditor] = useState('');
     const [auditeeName, setAuditeeName] = useState('');
     const [auditTeam, setAuditTeam] = useState('');
@@ -106,7 +106,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
     const { user } = useUser();
     
     const handleConfirm = () => {
-        if (auditDate && user) {
+        if (auditDate && user && department) {
             onStart({
                 date: format(auditDate, 'yyyy-MM-dd'),
                 type: auditType,
@@ -246,7 +246,7 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
                 </div>
                 </ScrollArea>
                 <div className="pt-4 border-t">
-                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName} className="w-full">
+                    <Button onClick={handleConfirm} disabled={!auditDate || !leadAuditor || !auditeeName || !department} className="w-full">
                         Confirm and Start Audit
                     </Button>
                 </div>
@@ -284,18 +284,22 @@ export function AuditChecklistsManager({
     }, [initialTemplates, initialPersonnel]);
 
 
-    const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>, template: Checklist) => {
-        if (!company || !user) return;
+    const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'> & { department?: Department }, template: Checklist) => {
+        if (!company || !user || !data.department) return;
         
         try {
-            // Get the next audit number
             const auditsCollection = collection(db, `companies/${company.id}/quality-audits`);
-            const currentYear = new Date().getFullYear();
-            const yearPrefix = `AUD-${currentYear}-`;
             
-            const q = query(auditsCollection, 
-                where('auditNumber', '>=', yearPrefix),
-                where('auditNumber', '<', `AUD-${currentYear+1}-`),
+            // New audit number format logic
+            const deptCode = data.department.substring(0, 2).toUpperCase();
+            const typeCode = data.type.substring(0, 1).toUpperCase();
+            const areaCode = data.area.substring(0, 2).toUpperCase();
+            const auditPrefix = `${deptCode}-${typeCode}-${areaCode}-`;
+
+            const q = query(
+                auditsCollection,
+                where('auditNumber', '>=', auditPrefix),
+                where('auditNumber', '<', auditPrefix + 'z'), // lexicographical trick
                 orderBy('auditNumber', 'desc'),
                 limit(1)
             );
@@ -304,10 +308,13 @@ export function AuditChecklistsManager({
             let nextNumber = 1;
             if (!querySnapshot.empty) {
                 const lastAudit = querySnapshot.docs[0].data() as QualityAudit;
-                const lastNumber = parseInt(lastAudit.auditNumber!.split('-')[2], 10);
-                nextNumber = lastNumber + 1;
+                const lastNumberStr = lastAudit.auditNumber?.split('-').pop();
+                const lastNumber = lastNumberStr ? parseInt(lastNumberStr, 10) : 0;
+                if (!isNaN(lastNumber)) {
+                    nextNumber = lastNumber + 1;
+                }
             }
-            const newAuditNumber = `${yearPrefix}${String(nextNumber).padStart(3, '0')}`;
+            const newAuditNumber = `${auditPrefix}${String(nextNumber).padStart(3, '0')}`;
 
             const newAuditId = doc(collection(db, 'temp')).id;
             const newAudit: QualityAudit = {
@@ -331,7 +338,7 @@ export function AuditChecklistsManager({
         }
     }
 
-    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'category'>) => {
+    const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'area'>) => {
         if (!company) return;
 
         // Check if we are editing an existing template or creating a new one (including from AI)
