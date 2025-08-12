@@ -25,7 +25,6 @@ import {
   UserCircle,
   CheckSquare,
   ClipboardCheck,
-  LogOut,
   Bell,
   AreaChart,
   Cog,
@@ -62,16 +61,24 @@ const navItems: {
   { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
   { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
+  { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
+  { href: '/settings', label: 'Appearance', icon: Settings },
 ];
 
 const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
     { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
+    { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
 ]
 
-const settingsNavItems = [
-    { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
-    { href: '/settings', label: 'Appearance', icon: Settings },
+const settingsNavItems: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  requiredPermissions?: Permission[];
+  requiredFeature?: Feature;
+}[] = [
+    // items moved to main nav
 ];
 
 export default function Nav() {
