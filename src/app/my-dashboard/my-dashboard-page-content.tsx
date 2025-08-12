@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,32 +12,48 @@ import { Calendar, Bell, Plane, Clock, Check, AlertTriangle, Loader2 } from 'luc
 import { format, parseISO, isToday, isFuture } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getDashboardData } from './data';
 
-export function MyDashboardPageContent({ initialBookings }: { initialBookings: Booking[] }) {
-  const { user, company, loading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
+export function MyDashboardPageContent() {
+  const { user, company, loading: userLoading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
   const router = useRouter();
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>(initialBookings);
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [acknowledgedOnPage, setAcknowledgedOnPage] = useState<string[]>([]);
-  
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!user || !company) return;
+    setDataLoading(true);
+    try {
+        const { bookingsList } = await getDashboardData(company.id, user.id);
+        setUpcomingBookings(bookingsList);
+    } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+    } finally {
+        setDataLoading(false);
+    }
+  }, [user, company]);
+
   useEffect(() => {
-    if (!loading && !user) {
+    if (userLoading) return;
+    if (!user) {
         router.push('/login');
         return;
     }
     if (user && company) {
-      setUpcomingBookings(initialBookings);
-    } else if (!loading && !company && user?.permissions.includes('Super User')) {
+      fetchDashboardData();
+    } else if (user?.permissions.includes('Super User')) {
         router.push('/');
     }
-  }, [user, company, loading, router, initialBookings]);
+  }, [user, company, userLoading, router, fetchDashboardData]);
   
     useEffect(() => {
         const unacknowledged = getUnacknowledgedAlerts();
         setAlerts(unacknowledged);
     }, [getUnacknowledgedAlerts]);
 
-  if (loading || !user) {
+  if (userLoading || dataLoading || !user) {
     return (
         <main className="flex-1 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
