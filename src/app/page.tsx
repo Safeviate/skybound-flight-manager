@@ -18,7 +18,7 @@ function RootPage() {
     }
     if (user) {
         // All users are directed to the main dashboard.
-        router.push('/my-dashboard');
+        router.push('/aircraft');
     } else {
         router.push('/login');
     }
