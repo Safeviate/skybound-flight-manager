@@ -63,11 +63,11 @@ const navItems: {
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
+  { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
 ];
 
 const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
-    { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
     { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
 ]
 
