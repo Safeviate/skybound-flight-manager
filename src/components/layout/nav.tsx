@@ -121,9 +121,9 @@ export default function Nav() {
   };
   
   const getIsActive = (href: string) => {
-    // For the root path, we want an exact match.
-    if (href === '/') {
-        return pathname === '/';
+    // For the root path and settings, we want an exact match.
+    if (href === '/' || href === '/settings') {
+        return pathname === href;
     }
     // For other paths, we check if the current pathname starts with the href.
     // This makes parent routes active for any of their sub-routes.
