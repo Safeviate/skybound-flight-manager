@@ -18,66 +18,30 @@ import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 
-interface TrainingSchedulePageContentProps {}
+interface TrainingSchedulePageContentProps {
+  initialAircraft: Aircraft[];
+  initialBookings: Booking[];
+  initialUsers: User[];
+}
 
-export function TrainingSchedulePageContent({}: TrainingSchedulePageContentProps) {
+export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
-  const [aircraft, setAircraft] = useState<Aircraft[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [aircraft, setAircraft] = useState<Aircraft[]>(initialAircraft);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [loading, setLoading] = useState(false);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
 
-  const fetchData = useCallback(() => {
-    if (!company) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-
-    const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
-    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-    const usersQuery = query(collection(db, `companies/${company.id}/users`));
-
-    const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
-        setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching aircraft:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load aircraft data.' });
-        setLoading(false);
-    });
-
-    const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
-        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
-    }, (error) => {
-        console.error("Error fetching bookings:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data.' });
-    });
-
-    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
-    }, (error) => {
-        console.error("Error fetching users:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load user data.' });
-    });
-
-    return () => {
-        unsubAircraft();
-        unsubBookings();
-        unsubUsers();
-    };
-  }, [company, toast]);
-
   useEffect(() => {
-    const unsubscribe = fetchData();
-    return () => unsubscribe && unsubscribe();
-  }, [fetchData]);
+    setAircraft(initialAircraft);
+    setBookings(initialBookings);
+    setUsers(initialUsers);
+  }, [initialAircraft, initialBookings, initialUsers]);
 
 
   const timeSlots = Array.from({ length: 18 * 4 }, (_, i) => {
