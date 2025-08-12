@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Paintbrush, ZoomIn } from "lucide-react"
+import { Paintbrush, ZoomIn, Eraser } from "lucide-react"
 import { useUser } from "@/context/user-provider"
 import { useRouter } from "next/navigation"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -27,6 +27,12 @@ const themeFormSchema = z.object({
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>
 
+const defaultTheme = {
+  primary: '#2563eb',
+  background: '#f4f4f5',
+  accent: '#f59e0b',
+};
+
 function SettingsPage() {
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
@@ -36,18 +42,18 @@ function SettingsPage() {
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primary: '#2563eb',
-      background: '#f4f4f5',
-      accent: '#f59e0b',
+      primary: company?.theme?.primary || defaultTheme.primary,
+      background: company?.theme?.background || defaultTheme.background,
+      accent: company?.theme?.accent || defaultTheme.accent,
     },
   });
   
   React.useEffect(() => {
     if (company?.theme) {
       form.reset({
-        primary: company.theme.primary || '#2563eb',
-        background: company.theme.background || '#f4f4f5',
-        accent: company.theme.accent || '#f59e0b',
+        primary: company.theme.primary || defaultTheme.primary,
+        background: company.theme.background || defaultTheme.background,
+        accent: company.theme.accent || defaultTheme.accent,
       });
     }
   }, [company, form]);
@@ -83,6 +89,24 @@ function SettingsPage() {
     }
   };
 
+  const handleResetTheme = async () => {
+    if (!company) return;
+    const success = await updateCompany({ theme: defaultTheme });
+
+    if (success) {
+        form.reset(defaultTheme);
+        toast({
+            title: 'Theme Reset',
+            description: 'The theme has been reset to its default colors.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Reset Failed',
+            description: 'Could not reset the theme. Please try again.',
+        });
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -179,8 +203,12 @@ function SettingsPage() {
                         />
                     </div>
                     </div>
-                    <div className="flex justify-end">
-                    <Button type="submit">Save Theme</Button>
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={handleResetTheme}>
+                            <Eraser className="mr-2 h-4 w-4" />
+                            Reset Theme
+                        </Button>
+                        <Button type="submit">Save Theme</Button>
                     </div>
                 </form>
                 </Form>
