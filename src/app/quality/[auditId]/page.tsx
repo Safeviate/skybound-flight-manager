@@ -39,7 +39,7 @@ import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StandardCamera } from '@/components/ui/standard-camera';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const discussionFormSchema = z.object({
   recipient: z.string().optional(),
@@ -1047,3 +1047,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
