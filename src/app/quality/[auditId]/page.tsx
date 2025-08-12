@@ -4,7 +4,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert } from '@/lib/types';
+import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, AuditChecklistItem, User, DiscussionEntry, CorrectiveActionPlan, Alert, Department } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -866,12 +866,12 @@ export default function QualityAuditDetailPage() {
           <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm border-t pt-6">
                   <div>
-                      <p className="font-semibold text-muted-foreground">Area Audited</p>
-                      <p>{audit.area}</p>
+                      <p className="font-semibold text-muted-foreground">Department</p>
+                      <p>{audit.department || 'N/A'}</p>
                   </div>
                   <div>
-                      <p className="font-semibold text-muted-foreground">Audit Type</p>
-                      <p>{audit.type}</p>
+                      <p className="font-semibold text-muted-foreground">Area Audited</p>
+                      <p>{audit.area}</p>
                   </div>
                    <div>
                       <p className="font-semibold text-muted-foreground">Auditor</p>
@@ -1067,5 +1067,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 

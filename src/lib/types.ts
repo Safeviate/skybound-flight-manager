@@ -136,7 +136,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Super User',
 ];
 
-export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External';
+export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External' | 'Administrative' | 'Cargo';
 
 export type Role =
   | 'Accountable Manager'
@@ -454,6 +454,7 @@ export type QualityAudit = {
   auditeeName?: string | null;
   auditeePosition?: string | null;
   area: AuditArea;
+  department?: Department;
   status: 'Open' | 'Closed' | 'Archived';
   complianceScore: number;
   checklistItems: AuditChecklistItem[];
