@@ -22,15 +22,38 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const features: { id: Feature, label: string, description: string }[] = [
-    { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
-    { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
-    { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
-    { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
-    { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
-    { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
-    { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
+    {
+        title: 'Core Operations',
+        features: [
+            { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
+            { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
+        ]
+    },
+    {
+        title: 'Personnel & Training',
+        features: [
+            { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
+            { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
+        ]
+    },
+    {
+        title: 'Safety & Quality',
+        features: [
+            { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
+            { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
+        ]
+    },
+    {
+        title: 'Data & Analytics',
+        features: [
+            { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+        ]
+    }
 ];
+
+const allFeatures = featureGroups.flatMap(g => g.features);
+
 
 const companyFormSchema = z.object({
   primaryColor: z.string().optional(),
@@ -188,44 +211,51 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         Select the modules that this company will have access to.
                         </FormDescription>
                     </div>
-                    <div className="space-y-4">
-                        {features.map((item) => (
-                        <FormField
-                            key={item.id}
-                            control={form.control}
-                            name="enabledFeatures"
-                            render={({ field }) => {
-                            return (
-                                <FormItem
-                                key={item.id}
-                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                >
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...(field.value || []), item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                                (value) => value !== item.id
-                                            )
-                                            )
-                                    }}
+                    <div className="space-y-6">
+                        {featureGroups.map((group) => (
+                            <div key={group.title}>
+                                <h4 className="font-semibold text-sm mb-3">{group.title}</h4>
+                                <div className="space-y-4">
+                                {group.features.map((item) => (
+                                    <FormField
+                                        key={item.id}
+                                        control={form.control}
+                                        name="enabledFeatures"
+                                        render={({ field }) => {
+                                        return (
+                                            <FormItem
+                                            key={item.id}
+                                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
+                                            >
+                                            <FormControl>
+                                                <Checkbox
+                                                checked={field.value?.includes(item.id)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                    ? field.onChange([...(field.value || []), item.id])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                            (value) => value !== item.id
+                                                        )
+                                                        )
+                                                }}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel className="font-normal">
+                                                    {item.label}
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    {item.description}
+                                                </FormDescription>
+                                            </div>
+                                            </FormItem>
+                                        )
+                                        }}
                                     />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-normal">
-                                        {item.label}
-                                    </FormLabel>
-                                    <FormDescription>
-                                        {item.description}
-                                    </FormDescription>
+                                ))}
                                 </div>
-                                </FormItem>
-                            )
-                            }}
-                        />
+                            </div>
                         ))}
                     </div>
                     <FormMessage />
