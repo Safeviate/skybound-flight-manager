@@ -296,7 +296,7 @@ export type SafetyReport = {
   // Dynamic fields based on category
   phaseOfFlight?: string;
   crewInvolved?: string;
-  pilotInCommand?: string;
+  pilotInCommand?: string | null;
   pilotFlying?: 'PIC' | 'First Officer' | null;
   raCallout?: string;
   raFollowed?: 'Yes' | 'No' | null;

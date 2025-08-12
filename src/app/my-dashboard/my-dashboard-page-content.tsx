@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
-import type { Alert as AlertType, Booking } from '@/lib/types';
+import type { Alert as AlertType, Booking, SafetyReport, QualityAudit, User as StudentUser } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -12,6 +12,8 @@ import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AtAGlanceCard } from './at-a-glance-card';
+import { getDashboardData } from './data';
 
 const getAlertIcon = (type: AlertType['type']) => {
     switch (type) {
@@ -22,16 +24,47 @@ const getAlertIcon = (type: AlertType['type']) => {
     }
 }
 
-export function MyDashboardPageContent({ initialBookings }: { initialBookings: Booking[] }) {
-  const { user, loading: userLoading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+interface DashboardData {
+    upcomingBookings: Booking[];
+    allUserBookings: Booking[];
+    openSafetyReports: SafetyReport[];
+    openQualityAudits: QualityAudit[];
+    assignedStudents: StudentUser[];
+}
+
+export function MyDashboardPageContent({ initialData }: { initialData: DashboardData }) {
+  const { user, company, loading: userLoading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
+  const [data, setData] = useState<DashboardData>(initialData);
+  const [dataLoading, setDataLoading] = useState(false);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
   const { toast } = useToast();
   
-  useEffect(() => {
-    setBookings(initialBookings);
-  }, [initialBookings]);
+  const fetchDashboardData = useCallback(async () => {
+    if (!user || !company) return;
+    setDataLoading(true);
+    try {
+        const fetchedData = await getDashboardData(company.id, user.id);
+        setData(fetchedData);
+    } catch (error) {
+        console.error("Error fetching dashboard data on client:", error);
+        toast({
+            variant: "destructive",
+            title: "Error Loading Data",
+            description: "Could not load all dashboard data. Please refresh the page.",
+        });
+    } finally {
+        setDataLoading(false);
+    }
+  }, [user, company, toast]);
 
+  useEffect(() => {
+    // This effect runs if the initial server-side fetch couldn't get a user ID.
+    // It refetches data on the client once the user context is available.
+    if (!userLoading && user && company && !initialData.upcomingBookings.length) {
+      fetchDashboardData();
+    }
+  }, [user, userLoading, company, fetchDashboardData, initialData.upcomingBookings.length]);
+  
   useEffect(() => {
     if (!userLoading && user) {
         setAlerts(getUnacknowledgedAlerts());
@@ -46,6 +79,8 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
         description: "The item has been removed from your inbox.",
     });
   }
+  
+  const isLoading = userLoading || dataLoading;
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -56,6 +91,15 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+                 <AtAGlanceCard 
+                    user={user} 
+                    bookings={data.allUserBookings} 
+                    openSafetyReports={data.openSafetyReports} 
+                    openQualityAudits={data.openQualityAudits}
+                    assignedStudents={data.assignedStudents}
+                    isLoading={isLoading}
+                />
+                
                 <Card>
                     <CardHeader>
                         <CardTitle>Quick Actions</CardTitle>
@@ -79,7 +123,7 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
                                 New Booking
                             </Link>
                         </Button>
-                        <Button variant="outline" className="h-20 flex-col gap-2" asChild>
+                         <Button variant="outline" className="h-20 flex-col gap-2" asChild>
                             <Link href="/students">
                                 <UserCheck />
                                 View Students
@@ -96,14 +140,14 @@ export function MyDashboardPageContent({ initialBookings }: { initialBookings: B
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {userLoading ? (
+                        {isLoading ? (
                             <div className="flex items-center justify-center h-48">
                                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                                 <p className="text-muted-foreground">Loading your schedule...</p>
                             </div>
-                        ) : bookings.length > 0 ? (
+                        ) : data.upcomingBookings.length > 0 ? (
                             <div className="space-y-4">
-                                {bookings.slice(0, 5).map(booking => (
+                                {data.upcomingBookings.slice(0, 5).map(booking => (
                                     <div key={booking.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">

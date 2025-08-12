@@ -2,10 +2,10 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { differenceInDays, format, parseISO, subDays } from 'date-fns';
+import { differenceInDays, format, parseISO, subDays, startOfDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import React, { useCallback } from 'react';
-import type { RiskLikelihood, RiskSeverity, TrainingLogEntry } from './types';
+import type { RiskLikelihood, RiskSeverity, TrainingLogEntry, Booking } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -139,22 +139,23 @@ export const getRiskScoreColorWithOpacity = (score: number | null | undefined, o
 }
 
 // Fatigue Risk Management
-export const calculateFlightHours = (logs: TrainingLogEntry[], periodInDays: number): number => {
-  const today = new Date('2024-08-15');
+export const calculateFlightHours = (bookings: Booking[], periodInDays: number): number => {
+  const today = startOfDay(new Date('2024-08-15'));
   const startDate = subDays(today, periodInDays - 1);
   
-  const relevantLogs = logs.filter(log => {
-    const logDate = parseISO(log.date);
-    return logDate >= startDate && logDate <= today;
+  const relevantBookings = bookings.filter(booking => {
+    if (booking.status !== 'Completed') return false;
+    const bookingDate = startOfDay(parseISO(booking.date));
+    return bookingDate >= startDate && bookingDate <= today;
   });
 
-  const totalHours = relevantLogs.reduce((sum, log) => sum + log.flightDuration, 0);
+  const totalHours = relevantBookings.reduce((sum, booking) => sum + (booking.flightDuration || 0), 0);
   return parseFloat(totalHours.toFixed(1));
 };
+
 
 export const getNextService = (hours: number): { type: string; hoursUntil: number } => {
     return { type: 'A-Check', hoursUntil: 50 - (hours % 50) };
 };
 
     
-
