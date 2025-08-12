@@ -20,9 +20,6 @@ interface UserContextType {
   updateCompany: (updatedData: Partial<Company>) => Promise<boolean>;
   getUnacknowledgedAlerts: (audits?: QualityAudit[]) => Alert[];
   acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
-  impersonatedUser: User | null;
-  switchUser: (newUser: User) => void;
-  switchBack: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -42,7 +39,6 @@ const fallbackCompany: Company = {
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(fallbackCompany);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
@@ -55,17 +51,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setCompany(null);
     setUserCompanies([]);
     setAllAlerts([]);
-    setImpersonatedUser(null);
     router.push('/login');
   }, [router]);
-
-  const switchUser = (newUser: User) => {
-    setImpersonatedUser(newUser);
-  };
-
-  const switchBack = () => {
-    setImpersonatedUser(null);
-  };
   
   const setupListeners = useCallback((userId: string, companyId: string) => {
     const userDocRef = doc(db, 'companies', companyId, 'users', userId);
@@ -150,22 +137,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string): Promise<boolean> => {
     setLoading(true);
     try {
-        if (!password) {
-            // This is the "switch user" case
-            const userQuery = query(collection(db, `companies/${company!.id}/users`), where("email", "==", email));
-            const studentQuery = query(collection(db, `companies/${company!.id}/students`), where("email", "==", email));
-            const [userSnapshot, studentSnapshot] = await Promise.all([getDocs(userQuery), getDocs(studentQuery)]);
-
-            if (!userSnapshot.empty) {
-                switchUser(userSnapshot.docs[0].data() as User);
-            } else if (!studentSnapshot.empty) {
-                switchUser(studentSnapshot.docs[0].data() as User);
-            } else {
-                throw new Error("User not found for switching.");
-            }
-             setLoading(false);
-            return true;
-        }
+        if (!password) return false;
         // This is a normal password-based login
         await signInWithEmailAndPassword(auth, email, password);
         // onAuthStateChanged will handle the rest
@@ -208,25 +180,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getUnacknowledgedAlerts = useCallback((): Alert[] => {
-    const currentUserId = impersonatedUser?.id || user?.id;
-    if (!currentUserId) return [];
+    if (!user) return [];
 
     return allAlerts.filter(alert =>
-        !alert.readBy.includes(currentUserId) && 
-        (!alert.targetUserId || alert.targetUserId === currentUserId)
+        !alert.readBy.includes(user.id) && 
+        (!alert.targetUserId || alert.targetUserId === user.id)
     );
-  }, [allAlerts, user, impersonatedUser]);
+  }, [allAlerts, user]);
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {
     if (!user || !company) return;
-    const currentUserId = impersonatedUser?.id || user.id;
 
     try {
         const batch = writeBatch(db);
         alertIds.forEach(alertId => {
             const alertRef = doc(db, `companies/${company.id}/alerts`, alertId);
             batch.update(alertRef, {
-                readBy: arrayUnion(currentUserId)
+                readBy: arrayUnion(user.id)
             });
         });
         await batch.commit();
@@ -235,10 +205,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const contextUser = impersonatedUser || user;
-
   return (
-    <UserContext.Provider value={{ user: contextUser, company, setCompany: setActiveCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts, impersonatedUser, switchUser, switchBack }}>
+    <UserContext.Provider value={{ user, company, setCompany: setActiveCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );
