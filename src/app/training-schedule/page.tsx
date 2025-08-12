@@ -1,3 +1,4 @@
+
 import { TrainingSchedulePageContent } from './training-schedule-client';
 import { getSchedulePageData } from './data';
 

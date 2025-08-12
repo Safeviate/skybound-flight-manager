@@ -647,16 +647,14 @@ export default function QualityAuditDetailPage() {
       router.push('/login');
       return;
     }
-    if (!company) {
-      setLoading(false);
-      return;
-    }
+    
+    const companyId = 'skybound-aero';
     
     const fetchAuditAndPersonnel = async () => {
       setLoading(true);
       try {
-        const auditRef = doc(db, `companies/${company!.id}/quality-audits`, auditId);
-        const personnelQuery = collection(db, `companies/${company!.id}/users`);
+        const auditRef = doc(db, `companies/${companyId}/quality-audits`, auditId);
+        const personnelQuery = collection(db, `companies/${companyId}/users`);
         
         const [auditSnap, personnelSnapshot] = await Promise.all([
           getDoc(auditRef),
@@ -680,7 +678,7 @@ export default function QualityAuditDetailPage() {
     };
     
     fetchAuditAndPersonnel();
-  }, [auditId, user, company, userLoading, router, toast]);
+  }, [auditId, user, userLoading, router, toast]);
   
   const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
@@ -691,7 +689,7 @@ export default function QualityAuditDetailPage() {
   }
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
-    if (!company) return;
+    const companyId = 'skybound-aero';
 
     const cleanAudit = JSON.parse(JSON.stringify(updatedAudit, (key, value) => {
         return value === undefined ? null : value;
@@ -699,7 +697,7 @@ export default function QualityAuditDetailPage() {
 
     setAudit(cleanAudit); 
     try {
-        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+        const auditRef = doc(db, `companies/${companyId}/quality-audits`, auditId);
         await setDoc(auditRef, cleanAudit, { merge: true });
         if (showToast) {
             toast({ title: 'Audit Updated', description: 'Your changes have been saved.' });

@@ -387,11 +387,13 @@ function SafetyReportInvestigationPage() {
         return;
     }
     
+    const companyId = 'skybound-aero';
+    
     async function fetchReport() {
-        if (!company || !reportId) return;
+        if (!reportId) return;
         setDataLoading(true);
         try {
-            const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+            const reportRef = doc(db, `companies/${companyId}/safety-reports`, reportId);
             const reportSnap = await getDoc(reportRef);
 
             if (reportSnap.exists()) {
@@ -410,15 +412,14 @@ function SafetyReportInvestigationPage() {
     }
     
     async function fetchPersonnel() {
-      if (!company) return;
-      const usersRef = collection(db, `companies/${company.id}/users`);
+      const usersRef = collection(db, `companies/${companyId}/users`);
       const snapshot = await getDocs(usersRef);
       setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
     };
 
     fetchReport();
     fetchPersonnel();
-  }, [reportId, company, user, userLoading, router, toast]);
+  }, [reportId, user, userLoading, router, toast]);
 
   const investigationTeamMembers = useMemo(() => {
     if (!report || !personnel.length || !report.investigationTeam) return [];
@@ -438,10 +439,12 @@ function SafetyReportInvestigationPage() {
 
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
-    if (!user || !report || !company) {
+    if (!user || !report) {
         toast({ variant: 'destructive', title: 'You must be logged in to post.'});
         return;
     }
+
+    const companyId = 'skybound-aero';
 
     const newEntry: DiscussionEntry = {
         id: `d-${Date.now()}`,
@@ -485,15 +488,16 @@ function SafetyReportInvestigationPage() {
     } else if (icaoState.message && !icaoState.message.includes('complete')) {
        toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
     }
-  }, [icaoState]);
+  }, [icaoState, report, toast]); // Simplified dependencies
 
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
-    if (!company || !report) return;
+    if (!report) return;
+    const companyId = 'skybound-aero';
     const newReport = { ...report, ...updatedReport };
     setReport(newReport); // Optimistic update
     try {
-        const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
+        const reportRef = doc(db, `companies/${companyId}/safety-reports`, reportId);
         await setDoc(reportRef, newReport, { merge: true });
         if (showToast) {
             toast({ title: 'Report Updated', description: 'Your changes have been saved.' });
@@ -506,9 +510,9 @@ function SafetyReportInvestigationPage() {
   };
 
   const handlePromoteRisk = async (newRisk: Risk) => {
-    if (!company) return;
+    const companyId = 'skybound-aero';
     try {
-        const riskRef = doc(db, `companies/${company.id}/risks`, newRisk.id);
+        const riskRef = doc(db, `companies/${companyId}/risks`, newRisk.id);
         await setDoc(riskRef, newRisk);
     } catch (error) {
         console.error("Error promoting risk:", error);
