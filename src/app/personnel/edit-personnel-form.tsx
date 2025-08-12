@@ -95,9 +95,13 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
   useEffect(() => {
     form.reset({
-        ...personnel,
-        phone: personnel.phone || '',
-        documents: personnel.documents?.map(d => ({...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null})) || [],
+      name: personnel.name || '',
+      email: personnel.email || '',
+      role: personnel.role,
+      phone: personnel.phone || '',
+      consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
+      requiredDocuments: personnel.requiredDocuments || [],
+      documents: personnel.documents?.map(d => ({...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null})) || [],
     })
   }, [personnel, form]);
 
