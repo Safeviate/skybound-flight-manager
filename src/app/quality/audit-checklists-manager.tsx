@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -242,9 +241,15 @@ const StartAuditDialog = ({ onStart, personnel, template }: { onStart: (data: Om
     );
 }
 
-export function AuditChecklistsManager({ initialTemplates }: { initialTemplates: Checklist[] }) {
+export function AuditChecklistsManager({ 
+    initialTemplates,
+    initialPersonnel
+}: { 
+    initialTemplates: Checklist[],
+    initialPersonnel: User[],
+}) {
     const [checklistTemplates, setChecklistTemplates] = useState<Checklist[]>(initialTemplates);
-    const [personnel, setPersonnel] = useState<User[]>([]);
+    const [personnel, setPersonnel] = useState<User[]>(initialPersonnel);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<Checklist | null>(null);
     const { user, company, loading } = useUser();
@@ -255,28 +260,14 @@ export function AuditChecklistsManager({ initialTemplates }: { initialTemplates:
     const fetchTemplates = async () => {
         if (!company) return;
         const templatesQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
-        const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-        
-        const [templatesSnapshot, personnelSnapshot] = await Promise.all([
-            getDocs(templatesQuery),
-            getDocs(personnelQuery),
-        ]);
-
+        const templatesSnapshot = await getDocs(templatesQuery);
         setChecklistTemplates(templatesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Checklist)));
-        setPersonnel(personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
     };
 
     useEffect(() => {
         setChecklistTemplates(initialTemplates);
-         if (company) {
-            const fetchPersonnelData = async () => {
-                const personnelQuery = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
-                const personnelSnapshot = await getDocs(personnelQuery);
-                 setPersonnel(personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
-            }
-            fetchPersonnelData();
-        }
-    }, [initialTemplates, company]);
+        setPersonnel(initialPersonnel);
+    }, [initialTemplates, initialPersonnel]);
 
 
     const handleStartAudit = async (data: Omit<QualityAudit, 'id' | 'companyId' | 'title' | 'status' | 'complianceScore' | 'checklistItems' | 'nonConformanceIssues' | 'summary'>, template: Checklist) => {

@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist } from '@/lib/types';
+import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, CorrectiveActionPlan, Risk, SafetyObjective, AuditChecklist, User } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -90,10 +90,12 @@ export function QualityPageContent({
     initialAudits,
     initialSchedule,
     initialChecklists,
+    initialPersonnel,
 }: {
     initialAudits: QualityAudit[],
     initialSchedule: AuditScheduleItem[],
     initialChecklists: AuditChecklist[],
+    initialPersonnel: User[],
 }) {
   const searchParams = useSearchParams();
   const [audits, setAudits] = useState<QualityAudit[]>(initialAudits);
@@ -477,7 +479,10 @@ export function QualityPageContent({
               </Card>
           </TabsContent>
           <TabsContent value="checklists" className="mt-4">
-              <AuditChecklistsManager initialTemplates={initialChecklists} />
+              <AuditChecklistsManager 
+                initialTemplates={initialChecklists} 
+                initialPersonnel={initialPersonnel}
+              />
           </TabsContent>
           <TabsContent value="cap-tracker" className="mt-4">
               <CapTracker audits={audits} />
