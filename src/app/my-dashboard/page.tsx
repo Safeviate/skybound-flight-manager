@@ -1,38 +1,40 @@
-import { getDashboardData } from './data';
+
 import { MyDashboardPageContent } from './my-dashboard-page-content';
-import type { Booking } from '@/lib/types';
-import { getAuth } from 'firebase/auth';
+import { getDashboardData } from './data';
+import { UserProvider, useUser } from '@/context/user-provider'; // We need a way to get the user on the server
 import { auth } from '@/lib/firebase';
-import { headers } from 'next/headers';
-import { getDoc, doc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import type { User, Booking } from '@/lib/types';
 
-// This function is a placeholder for server-side auth.
-// In a real app, you would use a more robust method like NextAuth.js or server-side cookies.
-async function getUserId(): Promise<string | null> {
-    const user = auth.currentUser;
-    return user ? user.uid : null;
+
+// This is a simplified way to get the current user on the server.
+// In a real app, you might use a more robust session management system.
+async function getCurrentUser(): Promise<User | null> {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+        // This will be the case on initial server render.
+        // The client-side UserProvider will handle auth state changes.
+        return null; 
+    }
+
+    const companyId = 'skybound-aero'; // Hardcoded for this app
+    const userRef = doc(db, `companies/${companyId}/users`, firebaseUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+        return userSnap.data() as User;
+    }
+
+    return null;
 }
 
-async function getInitialData(companyId: string, userId: string): Promise<{ bookingsList: Booking[] }> {
-    if (!userId) {
-        return { bookingsList: [] };
-    }
-    try {
-        return await getDashboardData(companyId, userId);
-    } catch (error) {
-        console.error("Failed to fetch initial data for dashboard:", error);
-        return { bookingsList: [] };
-    }
-}
 
 export default async function MyDashboardPage() {
-    // This is a simplified way to get user/company for server components.
-    // In a real app, this would come from a secure session.
-    const companyId = 'skybound-aero';
-    // This is not a reliable way to get the user on the server.
-    // We will assume a placeholder or handle it client-side for now.
-    // A more robust solution is needed for production.
+    // This page will now fetch data on the server.
+    // However, getting the current user on the server is complex with client-side auth.
+    // The best approach here is to let the client component trigger the data fetch once the user is available.
+    // The page itself remains a simple container.
     return <MyDashboardPageContent />;
 }
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -10,8 +11,9 @@ import Link from 'next/link';
 import { PlusCircle, Shield, ListChecks, Calendar, Plane, Clock, UserCheck } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
 
-function MyDashboardPageContent() {
+export function MyDashboardPageContent() {
   const { user, company, loading: userLoading } = useUser();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +81,7 @@ function MyDashboardPageContent() {
             <CardContent>
                  {isLoading ? (
                     <div className="flex items-center justify-center h-48">
+                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                         <p className="text-muted-foreground">Loading your schedule...</p>
                     </div>
                 ) : bookings.length > 0 ? (
