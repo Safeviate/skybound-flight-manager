@@ -43,10 +43,18 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
 }
 
 
-export function AircraftPageContent({ initialAircraft }: { initialAircraft: Aircraft[] }) {
+export function AircraftPageContent({ 
+    initialAircraft,
+    initialBookings,
+    initialExternalContacts
+}: { 
+    initialAircraft: Aircraft[],
+    initialBookings: Booking[],
+    initialExternalContacts: ExternalContact[]
+}) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>(initialExternalContacts);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
@@ -60,37 +68,10 @@ export function AircraftPageContent({ initialAircraft }: { initialAircraft: Airc
     
     useEffect(() => {
         setAircraftList(initialAircraft);
-    }, [initialAircraft]);
+        setBookings(initialBookings);
+        setExternalContacts(initialExternalContacts);
+    }, [initialAircraft, initialBookings, initialExternalContacts]);
     
-    useEffect(() => {
-        if (!company?.id) {
-            return;
-        }
-
-        const companyId = 'skybound-aero';
-
-        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
-        const contactsQuery = query(collection(db, `companies/${companyId}/external-contacts`));
-
-        const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
-            const bookingsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Booking));
-            setBookings(bookingsData);
-        }, (error) => {
-            console.error("Error fetching bookings:", error);
-        });
-
-        const unsubContacts = onSnapshot(contactsQuery, (snapshot) => {
-            const contactsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ExternalContact));
-            setExternalContacts(contactsData);
-        }, (error) => {
-            console.error("Error fetching contacts:", error);
-        });
-
-        return () => {
-            unsubBookings();
-            unsubContacts();
-        };
-    }, [company?.id, userLoading, toast]);
     
     const fetchHistory = useCallback(async () => {
         if (selectedHistoryAircraftId) {
