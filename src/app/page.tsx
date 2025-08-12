@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect } from 'react';
@@ -18,7 +17,7 @@ function RootPage() {
     }
     if (user) {
         // All users are directed to the main dashboard.
-        router.push('/aircraft');
+        router.push('/my-dashboard');
     } else {
         router.push('/login');
     }

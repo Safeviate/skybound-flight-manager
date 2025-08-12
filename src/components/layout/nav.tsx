@@ -51,6 +51,7 @@ const navItems: {
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
 }[] = [
+  { href: '/my-dashboard', label: 'My Dashboard', icon: LayoutDashboard },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
@@ -116,6 +117,9 @@ export default function Nav() {
     if(href === '/reports') {
         return pathname === href;
     }
+    if(href === '/my-dashboard') {
+        return pathname === href;
+    }
     return pathname.startsWith(href);
   };
 
@@ -132,6 +136,9 @@ export default function Nav() {
     }
     if (item.href === '/' && !user.permissions.includes('Super User')) {
       return false;
+    }
+    if (item.href === '/my-dashboard' && !user.permissions.includes('Super User')) {
+        return true;
     }
     return hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature)
   });
