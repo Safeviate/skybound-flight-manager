@@ -312,7 +312,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <CardTitle>Audit Summary</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px]">{audit.summary || 'No summary was provided.'}</p>
+                            <p className="text-sm text-muted-foreground p-2 border rounded-md min-h-[60px] whitespace-pre-wrap">{audit.summary || 'No summary was provided.'}</p>
                         </CardContent>
                     </Card>
 
@@ -332,7 +332,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                     <Badge variant={getLevelInfo(issue.level)?.variant || 'secondary'}>{issue.level}</Badge>
                                                     <p className="font-medium mt-2">{issue.itemText}</p>
                                                     <p className="text-xs text-muted-foreground">{issue.regulationReference || 'N/A'}</p>
-                                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md">{issue.comment}</p>
+                                                    <p className="text-sm mt-1 p-2 bg-muted rounded-md whitespace-pre-wrap">{issue.comment}</p>
                                                 </div>
                                                 <Dialog>
                                                     <DialogTrigger asChild>
@@ -417,12 +417,12 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 <span className="ml-2">{text}</span>
                                             </Badge>
                                         </div>
-                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                         {item.suggestedImprovement && (
                                             <div className="mt-2">
                                                 <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                <p className="text-sm p-2 bg-primary/10 rounded-md">{item.suggestedImprovement}</p>
+                                                <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
                                             </div>
                                         )}
                                     </div>
@@ -457,12 +457,12 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                                 <span className="ml-2">{text}</span>
                                             </Badge>
                                         </div>
-                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{item.comment}</p>}
+                                        {item.comment && <p className="text-sm mt-2 p-2 bg-muted rounded-md whitespace-pre-wrap">{item.comment}</p>}
                                         {item.photo && <Image src={item.photo} alt={`Photo for ${item.text}`} width={200} height={112} className="mt-2 rounded-md" />}
                                         {item.suggestedImprovement && (
                                             <div className="mt-2">
                                                 <p className="text-xs font-semibold text-primary">Suggested Improvement:</p>
-                                                <p className="text-sm p-2 bg-primary/10 rounded-md">{item.suggestedImprovement}</p>
+                                                <p className="text-sm p-2 bg-primary/10 rounded-md whitespace-pre-wrap">{item.suggestedImprovement}</p>
                                             </div>
                                         )}
                                     </div>
@@ -897,7 +897,7 @@ export default function QualityAuditDetailPage() {
                         id="audit-scope"
                         readOnly
                         value={audit.scope}
-                        className="min-h-[100px] bg-muted"
+                        className="min-h-[100px] bg-muted whitespace-pre-wrap"
                     />
                 </div>
               )}
@@ -908,7 +908,7 @@ export default function QualityAuditDetailPage() {
                         id="audit-evidence"
                         readOnly
                         value={audit.evidenceReference}
-                        className="min-h-[100px] bg-muted"
+                        className="min-h-[100px] bg-muted whitespace-pre-wrap"
                     />
                 </div>
               )}
@@ -917,7 +917,7 @@ export default function QualityAuditDetailPage() {
                   <Textarea 
                   id="audit-summary"
                   placeholder="Enter the overall audit summary here..."
-                  className="min-h-[100px]"
+                  className="min-h-[100px] whitespace-pre-wrap"
                   value={audit.summary}
                   onChange={(e) => setAudit({ ...audit, summary: e.target.value })}
                   />
@@ -989,6 +989,7 @@ export default function QualityAuditDetailPage() {
                                               placeholder="Document references, evidence, etc."
                                               value={item.reference || ''}
                                               onChange={(e) => handleItemChange(item.id, 'reference', e.target.value)}
+                                              className="whitespace-pre-wrap"
                                               />
                                       </div>
                                       <div className="space-y-2">
@@ -997,6 +998,7 @@ export default function QualityAuditDetailPage() {
                                               placeholder="Auditor comments, observations..."
                                               value={item.comment || ''}
                                                onChange={(e) => handleItemChange(item.id, 'comment', e.target.value)}
+                                               className="whitespace-pre-wrap"
                                               />
                                       </div>
                                       <div className="space-y-2">
@@ -1005,6 +1007,7 @@ export default function QualityAuditDetailPage() {
                                               placeholder="Provide a suggestion for improvement..."
                                               value={item.suggestedImprovement || ''}
                                                onChange={(e) => handleItemChange(item.id, 'suggestedImprovement', e.target.value)}
+                                               className="whitespace-pre-wrap"
                                               />
                                       </div>
 
@@ -1067,6 +1070,7 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
     
 
     
+
 
 
 
