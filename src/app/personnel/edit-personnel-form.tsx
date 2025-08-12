@@ -91,6 +91,13 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      permissions: [],
+      documents: documents.map(docType => ({ type: docType, expiryDate: null })),
+    },
   });
   
   const selectedRole = form.watch('role');
