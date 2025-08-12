@@ -67,8 +67,6 @@ export default function Header({ title, children }: { title: string, children?: 
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
-  const [isImpersonating, setIsImpersonating] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
@@ -102,29 +100,6 @@ export default function Header({ title, children }: { title: string, children?: 
 
     return Array.from(combined.values());
   }, [user]);
-
-  useEffect(() => {
-    const fetchAllUsers = async () => {
-        if (!company || !user?.permissions.includes('Super User')) return;
-        
-        const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
-        const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
-        const [personnelSnapshot, studentsSnapshot] = await Promise.all([
-            getDocs(personnelQuery),
-            getDocs(studentsQuery)
-        ]);
-
-        const all = [
-            ...personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AppUser)),
-            ...studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AppUser)),
-        ];
-
-        setAllUsers(all);
-    };
-
-    fetchAllUsers();
-  }, [company, user]);
-
 
   useEffect(() => {
     if (user && isProfileOpen) {
@@ -188,28 +163,8 @@ export default function Header({ title, children }: { title: string, children?: 
     setIsSwitcherOpen(false);
   }
 
-  const handleSwitchUser = (userId: string) => {
-    const targetUser = allUsers.find(u => u.id === userId);
-    if(targetUser) {
-        logout();
-        login(targetUser.email!, "password");
-    }
-    setIsSwitcherOpen(false);
-  }
-  
-  const handleSwitchBack = () => {
-    logout();
-  }
-
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
-      {isImpersonating && (
-        <div className="absolute top-full left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold p-1 flex items-center justify-center gap-2">
-            <Repeat className="h-3 w-3" />
-            <span>Impersonating: {user?.name}.</span>
-            <button onClick={handleSwitchBack} className="underline font-bold">Switch Back</button>
-        </div>
-      )}
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
@@ -246,12 +201,6 @@ export default function Header({ title, children }: { title: string, children?: 
                      <DropdownMenuItem onSelect={() => setIsSwitcherOpen(true)}>
                         <Building className="mr-2 h-4 w-4" />
                         <span>Switch Company</span>
-                    </DropdownMenuItem>
-                   )}
-                   {user?.permissions.includes('Super User') && (
-                     <DropdownMenuItem onSelect={() => setIsSwitcherOpen(true)}>
-                        <Users className="mr-2 h-4 w-4" />
-                        <span>Switch User</span>
                     </DropdownMenuItem>
                    )}
                   <DropdownMenuSeparator />
@@ -439,14 +388,13 @@ export default function Header({ title, children }: { title: string, children?: 
         <Dialog open={isSwitcherOpen} onOpenChange={setIsSwitcherOpen}>
              <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Switch Account</DialogTitle>
+                    <DialogTitle>Switch Company</DialogTitle>
                     <DialogDescription>
-                       Select a company or user to switch to.
+                       Select a company to switch to.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-sm font-semibold mb-2">Companies</h4>
                         {userCompanies.map(c => (
                             <button
                                 key={c.id}
@@ -461,30 +409,6 @@ export default function Header({ title, children }: { title: string, children?: 
                                 {company?.id === c.id && <Check className="h-5 w-5" />}
                             </button>
                         ))}
-                    </div>
-                     <div>
-                        <h4 className="text-sm font-semibold mb-2">Users</h4>
-                        <ScrollArea className="h-60">
-                           <div className="space-y-1">
-                                {allUsers.map(u => (
-                                    <button
-                                        key={u.id}
-                                        className={cn(
-                                            "w-full text-left p-3 rounded-md flex items-center justify-between transition-colors",
-                                            user?.id === u.id ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                                        )}
-                                        onClick={() => handleSwitchUser(u.id)}
-                                        disabled={user?.id === u.id}
-                                    >
-                                        <div className="flex flex-col">
-                                            <span>{u.name}</span>
-                                            <span className="text-xs opacity-70">{u.role}</span>
-                                        </div>
-                                        {user?.id === u.id && <Check className="h-5 w-5" />}
-                                    </button>
-                                ))}
-                           </div>
-                        </ScrollArea>
                     </div>
                 </div>
             </DialogContent>
