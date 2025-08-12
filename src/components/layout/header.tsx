@@ -69,6 +69,7 @@ export default function Header({ title, children }: { title: string, children?: 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { toast } = useToast();
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -102,6 +103,30 @@ export default function Header({ title, children }: { title: string, children?: 
     return Array.from(combined.values());
   }, [user]);
 
+
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+        // This is the corrected check to prevent the crash
+        if (!company || !user || !user.permissions || !user.permissions.includes('Super User')) {
+            return;
+        }
+        
+        try {
+            const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
+            const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
+            const [personnelSnapshot, studentsSnapshot] = await Promise.all([
+                getDocs(personnelQuery),
+                getDocs(studentsQuery)
+            ]);
+            const personnel = personnelSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AppUser));
+            const students = studentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AppUser));
+            setAllUsers([...personnel, ...students]);
+        } catch(e) {
+            console.error("Failed to fetch all users for switcher:", e);
+        }
+    };
+    fetchAllUsers();
+  }, [user, company]);
 
   useEffect(() => {
     if (user && isProfileOpen) {
