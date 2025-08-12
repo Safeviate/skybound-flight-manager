@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -86,7 +87,7 @@ const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
     )
 }
 
-const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
+const auditAreas: AuditArea[] = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
 const companyDepartments: Department[] = ['Flight Operations', 'Ground Operation', 'Administrative', 'Maintenance', 'Cargo'];
 
 

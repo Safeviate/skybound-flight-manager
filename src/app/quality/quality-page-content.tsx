@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -84,7 +85,7 @@ const NonConformanceChart = ({ data }: { data: QualityAudit[] }) => {
     );
 };
 
-const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Flight Operations', 'Ground Ops'];
+const INITIAL_AUDIT_AREAS = ['Personnel', 'Maintenance', 'Facilities', 'Records', 'Management', 'Ground Ops'];
 
 export function QualityPageContent({
     initialAudits,
