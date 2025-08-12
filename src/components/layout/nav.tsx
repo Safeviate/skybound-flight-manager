@@ -212,12 +212,6 @@ export default function Nav() {
                     </Link>
                 </SidebarMenuItem>
             ))}
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Logout' }}>
-                    <LogOut />
-                    <span>Logout</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
          </SidebarMenu>
       </SidebarFooter>
     </>
