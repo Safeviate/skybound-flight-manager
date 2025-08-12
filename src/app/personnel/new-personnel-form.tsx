@@ -37,7 +37,6 @@ const documents = [
   "Pilot License",
   "Medical Certificate",
   "Logbook",
-  "Mass and balance",
   "Radio station license",
 ] as const;
 

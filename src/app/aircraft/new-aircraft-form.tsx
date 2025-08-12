@@ -36,9 +36,6 @@ const aircraftFormSchema = z.object({
   hours: z.coerce.number().min(0, 'Hobbs hours must be a positive number.'),
   airworthinessExpiry: z.date().optional(),
   insuranceExpiry: z.date().optional(),
-  certificateOfReleaseToServiceExpiry: z.date().optional(),
-  certificateOfRegistrationExpiry: z.date().optional(),
-  massAndBalanceExpiry: z.date().optional(),
   radioStationLicenseExpiry: z.date().optional(),
 });
 
@@ -66,9 +63,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         ...initialData,
         airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
         insuranceExpiry: parseDate(initialData.insuranceExpiry),
-        certificateOfReleaseToServiceExpiry: parseDate(initialData.certificateOfReleaseToServiceExpiry),
-        certificateOfRegistrationExpiry: parseDate(initialData.certificateOfRegistrationExpiry),
-        massAndBalanceExpiry: parseDate(initialData.massAndBalanceExpiry),
         radioStationLicenseExpiry: parseDate(initialData.radioStationLicenseExpiry),
     } : {
       make: '',
@@ -88,10 +82,11 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         ...data,
         airworthinessExpiry: data.airworthinessExpiry ? data.airworthinessExpiry.toISOString() : new Date().toISOString(),
         insuranceExpiry: data.insuranceExpiry ? data.insuranceExpiry.toISOString() : new Date().toISOString(),
-        certificateOfReleaseToServiceExpiry: data.certificateOfReleaseToServiceExpiry ? data.certificateOfReleaseToServiceExpiry.toISOString() : new Date().toISOString(),
-        certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? data.certificateOfRegistrationExpiry.toISOString() : new Date().toISOString(),
-        massAndBalanceExpiry: data.massAndBalanceExpiry ? data.massAndBalanceExpiry.toISOString() : new Date().toISOString(),
         radioStationLicenseExpiry: data.radioStationLicenseExpiry ? data.radioStationLicenseExpiry.toISOString() : new Date().toISOString(),
+        // These are no longer in the form, so we must remove them or provide a default
+        certificateOfReleaseToServiceExpiry: initialData?.certificateOfReleaseToServiceExpiry || new Date().toISOString(),
+        certificateOfRegistrationExpiry: initialData?.certificateOfRegistrationExpiry || new Date().toISOString(),
+        massAndBalanceExpiry: initialData?.massAndBalanceExpiry || new Date().toISOString(),
     };
 
     try {
@@ -255,9 +250,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePickerField name="airworthinessExpiry" label="Certificate of Airworthiness" />
             <DatePickerField name="insuranceExpiry" label="Insurance" />
-            <DatePickerField name="certificateOfReleaseToServiceExpiry" label="Certificate of Release to Service" />
-            <DatePickerField name="certificateOfRegistrationExpiry" label="Certificate of Registration" />
-            <DatePickerField name="massAndBalanceExpiry" label="Mass and Balance" />
             <DatePickerField name="radioStationLicenseExpiry" label="Radio Station License" />
           </div>
         </div>
