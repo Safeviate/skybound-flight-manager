@@ -8,7 +8,7 @@ import type { QualityAudit, NonConformanceIssue, FindingStatus, FindingLevel, Au
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ListChecks, MessageSquareWarning, Microscope, Ban, MinusCircle, XCircle, FileText, Save, Send, PlusCircle, Database, Check, Percent, Bot, Printer, Rocket, ArrowLeft, Signature, Eraser, Users, Camera, Image as ImageIcon, RotateCw } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/context/user-provider';
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, collection, getDocs, addDoc } from 'firebase/firestore';
@@ -217,6 +217,14 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
             description: 'The signature fields for this audit have been reset.',
         });
     };
+    
+    const handleReopenAudit = () => {
+        onUpdate({ ...audit, status: 'Open' }, true);
+        toast({
+            title: 'Audit Reopened',
+            description: 'The audit has been reopened for further editing.',
+        });
+    };
 
     const canSign = (user: User | null, personName: string | null | undefined): boolean => {
       if (!user || !personName || user.name !== personName) return false;
@@ -250,11 +258,16 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                           Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
                         </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                          <Button variant="outline" className="no-print" onClick={onNavigateBack}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to Audits
                         </Button>
+                        {audit.status === 'Closed' && (
+                            <Button variant="outline" className="no-print" onClick={handleReopenAudit}>
+                                <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
+                            </Button>
+                        )}
                         <Button variant="outline" className="no-print" onClick={handleRequestSignatures}>
                             <Signature className="mr-2 h-4 w-4" />
                             Request Signatures
@@ -1074,3 +1087,6 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
 
 
+
+
+    
