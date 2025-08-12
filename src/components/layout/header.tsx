@@ -76,6 +76,7 @@ export default function Header({ title, children }: { title: string, children?: 
     if (!company || !user?.permissions.includes('Super User')) return;
     
     const fetchAllUsers = async () => {
+        if (!company) return; // Added safety check
         const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
         const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
         const [personnelSnapshot, studentsSnapshot] = await Promise.all([
