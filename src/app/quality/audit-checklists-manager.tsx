@@ -26,6 +26,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
@@ -290,7 +298,6 @@ export function AuditChecklistsManager({
         try {
             const auditsCollection = collection(db, `companies/${company.id}/quality-audits`);
             
-            // New audit number format logic
             const deptCode = data.department.substring(0, 2).toUpperCase();
             const typeCode = data.type.substring(0, 1).toUpperCase();
             const areaCode = data.area.substring(0, 2).toUpperCase();
@@ -299,7 +306,7 @@ export function AuditChecklistsManager({
             const q = query(
                 auditsCollection,
                 where('auditNumber', '>=', auditPrefix),
-                where('auditNumber', '<', auditPrefix + 'z'), // lexicographical trick
+                where('auditNumber', '<', auditPrefix + 'z'), 
                 orderBy('auditNumber', 'desc'),
                 limit(1)
             );
@@ -341,7 +348,6 @@ export function AuditChecklistsManager({
     const handleFormSubmit = async (data: Omit<Checklist, 'id' | 'companyId' | 'area'>) => {
         if (!company) return;
 
-        // Check if we are editing an existing template or creating a new one (including from AI)
         const isNew = !editingTemplate || editingTemplate.id.startsWith('temp-');
         
         const templateData = { ...data, companyId: company.id };
@@ -419,42 +425,46 @@ export function AuditChecklistsManager({
                         New Checklist Template
                     </Button>
                 </div>
-                {checklistTemplates.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {checklistTemplates.map((template) => (
-                            <Card key={template.id} className="flex flex-col">
-                                <CardHeader>
-                                    <CardTitle>{template.title}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-1">
-                                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                                        {template.items.slice(0, 5).map(item => (
-                                            <li key={item.id} className="truncate">{item.text}</li>
-                                        ))}
-                                        {template.items.length > 5 && <li>...and {template.items.length - 5} more</li>}
-                                    </ul>
-                                </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <StartAuditDialog 
-                                        template={template} 
-                                        onStart={(data) => handleStartAudit(data, template)} 
-                                        personnel={personnel} 
-                                    />
-                                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                    </Button>
-                                    <Button variant="destructive" size="icon" onClick={() => handleDelete(template.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">No audit checklist templates found.</p>
-                    </div>
-                )}
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Items</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {checklistTemplates.length > 0 ? (
+                                checklistTemplates.map((template) => (
+                                    <TableRow key={template.id}>
+                                        <TableCell className="font-medium">{template.title}</TableCell>
+                                        <TableCell>{template.items.length}</TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            <StartAuditDialog 
+                                                template={template} 
+                                                onStart={(data) => handleStartAudit(data, template)} 
+                                                personnel={personnel} 
+                                            />
+                                            <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
+                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                            </Button>
+                                            <Button variant="destructive" size="icon" onClick={() => handleDelete(template.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="h-24 text-center">
+                                        No audit checklist templates found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
              <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
                 <DialogContent className="sm:max-w-3xl">
