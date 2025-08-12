@@ -73,10 +73,9 @@ export default function Header({ title, children }: { title: string, children?: 
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!company || !user?.permissions.includes('Super User')) return;
-    
     const fetchAllUsers = async () => {
-        if (!company) return; // Added safety check
+        if (!company || !user?.permissions.includes('Super User')) return;
+        
         const personnelQuery = query(collection(db, 'companies', company.id, 'users'));
         const studentsQuery = query(collection(db, 'companies', company.id, 'students'));
         const [personnelSnapshot, studentsSnapshot] = await Promise.all([
