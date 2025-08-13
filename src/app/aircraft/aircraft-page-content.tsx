@@ -292,9 +292,9 @@ export function AircraftPageContent({
                             <TableHead>Model</TableHead>
                             <TableHead>Total Hobbs</TableHead>
                             <TableHead>Total Tacho</TableHead>
-                            <TableHead>Hours Next 50 Insp</TableHead>
+                            <TableHead className="whitespace-normal">Hours Next 50 Insp</TableHead>
                             <TableHead>Target 50hr</TableHead>
-                            <TableHead>Hours Next 100 Insp</TableHead>
+                            <TableHead className="whitespace-normal">Hours Next 100 Insp</TableHead>
                             <TableHead>Target 100hr</TableHead>
                             <TableHead>Documents</TableHead>
                             <TableHead>Status</TableHead>
