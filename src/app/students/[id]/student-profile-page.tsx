@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,10 +20,11 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -120,13 +121,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         doc.save(fileName);
     };
 
-    const handleArchive = () => {
-        handleUpdate({ status: 'Archived' });
-        toast({
-            title: "Student Archived",
-            description: `${student?.name} has been moved to the archives.`,
-        });
-        router.push('/students');
+    const handleArchive = async () => {
+        if (!student || !company) return;
+        const studentRef = doc(db, `companies/${company.id}/students`, student.id);
+        try {
+            await deleteDoc(studentRef);
+            toast({
+                title: "Student Deleted",
+                description: `${student?.name} has been permanently deleted from the system.`,
+            });
+            router.push('/students');
+        } catch (error) {
+            console.error("Failed to delete student:", error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete student record.' });
+        }
     }
 
     if (userLoading) {
@@ -265,6 +273,34 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </Table>
                     </CardContent>
                 </Card>
+                {canEdit && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Admin Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="w-full">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Student Permanently
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete {student.name}'s profile, training logs, and all associated data.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleArchive}>Yes, Delete Student</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             <div className="lg:col-span-2">
                  <Card>
