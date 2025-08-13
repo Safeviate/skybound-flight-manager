@@ -2,11 +2,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, Alert, Company, QualityAudit, Permission, ThemeColors } from '@/lib/types';
+import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and, addDoc, limit } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
+import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 interface UserContextType {
   user: User | null;
@@ -76,6 +77,11 @@ const hexToHSL = (hex: string): string | null => {
     return `${h} ${s}% ${l}%`;
 };
 
+const defaultSettings = {
+    expiryWarningOrangeDays: 30,
+    expiryWarningYellowDays: 60,
+};
+
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -126,6 +132,63 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setAllAlerts([]);
     router.push('/login');
   }, [router]);
+
+  const checkExpiringDocuments = useCallback(async (user: User, companyId: string) => {
+    if (!user.documents || user.documents.length === 0) return;
+
+    let settings = defaultSettings;
+    try {
+        const storedSettings = localStorage.getItem('operationalSettings');
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            settings = { ...defaultSettings, ...parsed };
+        }
+    } catch(e) {
+        console.error("Could not read settings from local storage for expiry check.");
+    }
+    
+    const today = startOfDay(new Date());
+    const batch = writeBatch(db);
+    const alertsCollection = collection(db, 'companies', companyId, 'alerts');
+    const existingAlertsQuery = query(alertsCollection, where('targetUserId', '==', user.id), where('type', '==', 'Task'));
+    const existingAlertsSnap = await getDocs(existingAlertsQuery);
+    const existingExpiryAlerts = new Set(existingAlertsSnap.docs.map(d => d.data().title));
+    
+    for (const doc of user.documents) {
+        if (!doc.expiryDate) continue;
+        
+        const expiryDate = startOfDay(parseISO(doc.expiryDate));
+        const daysUntil = differenceInDays(expiryDate, today);
+
+        let alertLevel: 'orange' | 'yellow' | null = null;
+        if (daysUntil <= settings.expiryWarningOrangeDays) {
+            alertLevel = 'orange';
+        } else if (daysUntil <= settings.expiryWarningYellowDays) {
+            alertLevel = 'yellow';
+        }
+
+        if (alertLevel) {
+            const title = `Document Expiry: ${doc.type}`;
+            const description = `Your ${doc.type} is expiring in ${daysUntil} days on ${doc.expiryDate}. Please take action.`;
+
+            if (!existingExpiryAlerts.has(title)) {
+                const newAlertRef = doc(collection(db, 'temp'));
+                batch.set(newAlertRef, {
+                    companyId: companyId,
+                    type: 'Task',
+                    title: title,
+                    description: description,
+                    author: 'System',
+                    date: new Date().toISOString(),
+                    readBy: [],
+                    targetUserId: user.id,
+                });
+            }
+        }
+    }
+    await batch.commit();
+
+  }, []);
   
   const setupListeners = useCallback((userId: string, companyId: string) => {
     const userDocRef = doc(db, 'companies', companyId, 'users', userId);
@@ -136,7 +199,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.error("User document not found for listener at", userDocRef.path);
         logout();
       } else {
-        setUser(userSnap.data() as User);
+        const userData = userSnap.data() as User;
+        setUser(userData);
+        checkExpiringDocuments(userData, companyId);
       }
     }, (error) => {
         console.error("User listener error:", error);
@@ -168,7 +233,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         unsubCompany();
         unsubAlerts();
     };
-  }, [logout]);
+  }, [logout, checkExpiringDocuments]);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
