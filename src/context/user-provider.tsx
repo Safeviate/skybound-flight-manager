@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and, addDoc, limit } from 'firebase/firestore';
+import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and, addDoc, limit, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
@@ -154,10 +154,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const existingAlertsSnap = await getDocs(existingAlertsQuery);
     const existingExpiryAlerts = new Set(existingAlertsSnap.docs.map(d => d.data().title));
     
-    for (const doc of user.documents) {
-        if (!doc.expiryDate) continue;
+    for (const docItem of user.documents) {
+        if (!docItem.expiryDate) continue;
         
-        const expiryDate = startOfDay(parseISO(doc.expiryDate));
+        const expiryDate = startOfDay(parseISO(docItem.expiryDate));
         const daysUntil = differenceInDays(expiryDate, today);
 
         let alertLevel: 'orange' | 'yellow' | null = null;
@@ -168,11 +168,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (alertLevel) {
-            const title = `Document Expiry: ${doc.type}`;
-            const description = `Your ${doc.type} is expiring in ${daysUntil} days on ${doc.expiryDate}. Please take action.`;
+            const title = `Document Expiry: ${docItem.type}`;
+            const description = `Your ${docItem.type} is expiring in ${daysUntil} days on ${docItem.expiryDate}. Please take action.`;
 
             if (!existingExpiryAlerts.has(title)) {
-                const newAlertRef = doc(collection(db, 'temp'));
+                const newAlertRef = doc(collection(db, 'companies', companyId, 'alerts'));
                 batch.set(newAlertRef, {
                     companyId: companyId,
                     type: 'Task',
