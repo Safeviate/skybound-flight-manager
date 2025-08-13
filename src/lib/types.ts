@@ -74,9 +74,20 @@ export type TrainingLogEntry = {
   instructorSignature?: string;
 };
 
+export const ALL_DOCUMENTS = [
+  "Passport",
+  "Visa",
+  "Identification",
+  "Drivers License",
+  "Pilot License",
+  "Medical Certificate",
+  "Logbook",
+  "Airport Access",
+] as const;
+
 export type UserDocument = {
     id: string;
-    type: string;
+    type: typeof ALL_DOCUMENTS[number];
     expiryDate: string | null;
 };
 

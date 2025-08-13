@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,6 +23,8 @@ import { EditPersonnelForm } from './edit-personnel-form';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { getPersonnelPageData } from './data';
+import { Separator } from '@/components/ui/separator';
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
@@ -32,6 +34,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     const [personnel, setPersonnel] = useState<PersonnelUser[]>(initialPersonnel);
     const [isNewPersonnelOpen, setIsNewPersonnelOpen] = useState(false);
     const [editingPersonnel, setEditingPersonnel] = useState<PersonnelUser | null>(null);
+    const [viewingDocumentsFor, setViewingDocumentsFor] = useState<PersonnelUser | null>(null);
     const { toast } = useToast();
     
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Personnel:Edit');
@@ -157,7 +160,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                           <TableHead>Role</TableHead>
                           <TableHead>Department</TableHead>
                           <TableHead>Contact</TableHead>
-                          <TableHead>Required Documents</TableHead>
+                          <TableHead>Documents</TableHead>
                            {canEdit && <TableHead className="text-right">Actions</TableHead>}
                       </TableRow>
                   </TableHeader>
@@ -172,17 +175,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                   <div>{person.phone}</div>
                               </TableCell>
                               <TableCell>
-                                  {person.requiredDocuments && person.requiredDocuments.length > 0 ? (
-                                      <div className="flex flex-wrap gap-1">
-                                          {person.requiredDocuments.map(doc => (
-                                              <Badge key={doc} variant="secondary" className="font-normal">
-                                                  {doc}
-                                              </Badge>
-                                          ))}
-                                      </div>
-                                  ) : (
-                                      'N/A'
-                                  )}
+                                <Button variant="outline" size="sm" onClick={() => setViewingDocumentsFor(person)}>
+                                    <Eye className="mr-2 h-4 w-4" /> View
+                                </Button>
                               </TableCell>
                               {canEdit && (
                                   <TableCell className="text-right">
@@ -245,6 +240,29 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
               </DialogContent>
           </Dialog>
       )}
+       {viewingDocumentsFor && (
+            <Dialog open={!!viewingDocumentsFor} onOpenChange={() => setViewingDocumentsFor(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Document Expiry Dates for {viewingDocumentsFor.name}</DialogTitle>
+                        <DialogDescription>
+                            A list of all official documents and their expiry dates.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        {ALL_DOCUMENTS.map(docType => {
+                            const userDoc = viewingDocumentsFor.documents?.find(d => d.type === docType);
+                            return (
+                                <div key={docType} className="flex items-center justify-between text-sm">
+                                    <span>{docType}</span>
+                                    {getExpiryBadge(userDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                </div>
+                            )
+                        })}
+                    </div>
+                </DialogContent>
+            </Dialog>
+       )}
     </main>
   );
 }
