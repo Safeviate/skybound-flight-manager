@@ -110,31 +110,55 @@ export function DashboardPageContent({
         const openQualityAudits = 0; // Placeholder
         const activeAircraft = initialAircraft.filter(a => a.status === 'Available').length;
         const totalAircraft = initialAircraft.filter(a => a.status !== 'Archived').length;
+        const today = startOfDay(new Date());
 
-        const expiringDocs: { user: User, doc: UserDocument, daysUntil: number }[] = [];
+        const expiringUserDocs: { user: User, doc: UserDocument, daysUntil: number }[] = [];
         initialUsers.forEach(user => {
             if (user.status === 'Archived') return;
-            
-            const today = startOfDay(new Date());
             
             (user.documents || []).forEach(doc => {
                 if (!doc.expiryDate) return;
                 const expiry = startOfDay(parseISO(doc.expiryDate));
                 const daysUntil = differenceInDays(expiry, today);
                 if (daysUntil <= settings.expiryWarningYellowDays) {
-                    expiringDocs.push({ user, doc, daysUntil });
+                    expiringUserDocs.push({ user, doc, daysUntil });
                 }
             });
         });
 
-        expiringDocs.sort((a, b) => a.daysUntil - b.daysUntil);
+        expiringUserDocs.sort((a, b) => a.daysUntil - b.daysUntil);
+        
+        type ExpiringAircraftDoc = { aircraft: Aircraft; type: string; expiryDate: string; daysUntil: number };
+        const expiringAircraftDocs: ExpiringAircraftDoc[] = [];
+
+        initialAircraft.forEach(ac => {
+            if (ac.status === 'Archived') return;
+
+            const docsToCheck = [
+                { type: 'Airworthiness', expiryDate: ac.airworthinessExpiry },
+                { type: 'Insurance', expiryDate: ac.insuranceExpiry }
+            ];
+
+            docsToCheck.forEach(doc => {
+                 if (!doc.expiryDate) return;
+                const expiry = startOfDay(parseISO(doc.expiryDate));
+                const daysUntil = differenceInDays(expiry, today);
+                 if (daysUntil <= settings.expiryWarningYellowDays) {
+                    expiringAircraftDocs.push({ aircraft: ac, type: doc.type, expiryDate: doc.expiryDate, daysUntil });
+                }
+            });
+        });
+        
+        expiringAircraftDocs.sort((a,b) => a.daysUntil - b.daysUntil);
+
 
         return {
             openSafetyReports,
             openQualityAudits,
             activeAircraft,
             totalAircraft,
-            expiringDocs,
+            expiringUserDocs,
+            expiringAircraftDocs,
         }
     }, [initialAircraft, initialUsers, settings]);
 
@@ -142,9 +166,8 @@ export function DashboardPageContent({
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
             <div className="grid gap-6 lg:grid-cols-3">
-                {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
-                     <div className="grid gap-6 sm:grid-cols-2">
+                     <div className="grid gap-6 sm:grid-cols-3">
                          <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Active Aircraft</CardTitle>
@@ -202,25 +225,24 @@ export function DashboardPageContent({
                     </Card>
                 </div>
                 
-                {/* Right Column */}
-                 <div className="lg:col-span-1">
+                 <div className="lg:col-span-1 space-y-6">
                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle />
-                                Expiring Documents ({stats.expiringDocs.length})
+                                Expiring Personnel Docs ({stats.expiringUserDocs.length})
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {stats.expiringDocs.length > 0 ? (
-                                <ScrollArea className="h-[calc(100%-4rem)]">
-                                    <div className="space-y-4 pr-4">
-                                    {stats.expiringDocs.map((item, index) => {
+                            {stats.expiringUserDocs.length > 0 ? (
+                                <ScrollArea className="h-[calc(50%-2rem)] pr-4">
+                                    <div className="space-y-4">
+                                    {stats.expiringUserDocs.map((item, index) => {
                                         let itemClass = '';
                                         if (item.daysUntil < 0) {
-                                            itemClass = 'bg-destructive/20 border-destructive text-foreground';
+                                            itemClass = 'bg-destructive/10 text-foreground';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
-                                            itemClass = 'bg-yellow-400/20 border-yellow-500 text-foreground';
+                                            itemClass = 'bg-yellow-400/20 text-foreground';
                                         }
                                         return (
                                         <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
@@ -238,6 +260,43 @@ export function DashboardPageContent({
                                 </ScrollArea>
                             ) : (
                                 <p className="text-sm text-muted-foreground h-full flex items-center justify-center">No personnel documents are expiring soon.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle />
+                                Expiring Aircraft Docs ({stats.expiringAircraftDocs.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.expiringAircraftDocs.length > 0 ? (
+                                <ScrollArea className="h-[calc(50%-2rem)] pr-4">
+                                    <div className="space-y-4">
+                                    {stats.expiringAircraftDocs.map((item, index) => {
+                                        let itemClass = '';
+                                        if (item.daysUntil < 0) {
+                                            itemClass = 'bg-destructive/10 text-foreground';
+                                        } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-yellow-400/20 text-foreground';
+                                        }
+                                        return (
+                                        <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
+                                            <p className="font-semibold text-sm">{item.type}</p>
+                                            <p className="text-sm">{item.aircraft.tailNumber}</p>
+                                            <p className={cn("text-xs font-medium mt-1")}>
+                                                 {item.daysUntil < 0 
+                                                    ? `Has expired`
+                                                    : `Expires in ${item.daysUntil} days on ${format(parseISO(item.expiryDate!), 'MMM d, yyyy')}`
+                                                }
+                                            </p>
+                                        </div>
+                                    )})}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground h-full flex items-center justify-center">No aircraft documents are expiring soon.</p>
                             )}
                         </CardContent>
                     </Card>
