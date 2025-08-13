@@ -210,7 +210,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                         name="oilUplift"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Oil Uplift (Pints)</FormLabel>
+                                <FormLabel>Oil Uplift (Quarts)</FormLabel>
                                 <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                 <FormMessage />
                             </FormItem>
