@@ -300,8 +300,8 @@ export function AircraftPageContent({
                     </TableHeader>
                     <TableBody>
                         {aircraft.map((ac) => {
-                            const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - ac.hours) : -1;
-                            const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - ac.hours) : -1;
+                            const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
+                            const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
 
                             return (
                             <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
