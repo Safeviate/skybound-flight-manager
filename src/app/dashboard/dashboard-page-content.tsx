@@ -6,7 +6,7 @@ import type { Aircraft, Booking, User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO } from 'date-fns';
+import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO, differenceInDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { useSettings } from '@/context/settings-provider';
 import Link from 'next/link';
