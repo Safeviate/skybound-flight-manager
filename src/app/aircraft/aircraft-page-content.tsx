@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -292,7 +293,9 @@ export function AircraftPageContent({
                             <TableHead>Total Hobbs</TableHead>
                             <TableHead>Total Tacho</TableHead>
                             <TableHead>Hours Next 50 Insp</TableHead>
+                            <TableHead>Target 50hr</TableHead>
                             <TableHead>Hours Next 100 Insp</TableHead>
+                            <TableHead>Target 100hr</TableHead>
                             <TableHead>Documents</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -310,7 +313,9 @@ export function AircraftPageContent({
                                 <TableCell>{ac.hours.toFixed(1)}</TableCell>
                                 <TableCell>{ac.currentTachoReading?.toFixed(1) ?? 'N/A'}</TableCell>
                                 <TableCell>{hoursUntil50 >= 0 ? hoursUntil50.toFixed(1) : 'N/A'}</TableCell>
+                                <TableCell>{ac.next50HourInspection?.toFixed(1) ?? 'N/A'}</TableCell>
                                 <TableCell>{hoursUntil100 >= 0 ? hoursUntil100.toFixed(1) : 'N/A'}</TableCell>
+                                <TableCell>{ac.next100HourInspection?.toFixed(1) ?? 'N/A'}</TableCell>
                                 <TableCell>
                                     <Button variant="outline" size="sm" onClick={() => setViewingDocumentsForAircraft(ac)}>
                                         <Eye className="mr-2 h-4 w-4" /> View
