@@ -193,6 +193,31 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                     </div>
                 </div>
                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="fuelUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Fuel Uplift (Litres)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="oilUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Oil Uplift (Pints)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                  {/* Standard Camera Photos */}
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -238,31 +263,6 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                         )}
                     />
                  </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="fuelUplift"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fuel Uplift (Litres)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="oilUplift"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Oil Uplift (Pints)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
 
                 {/* Document Checks */}
                 <div className="space-y-4 rounded-lg border p-4">
