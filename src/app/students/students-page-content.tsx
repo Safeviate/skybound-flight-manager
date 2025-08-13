@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { sendEmail } from '@/ai/flows/send-email-flow';
+import { createUserAndSendWelcomeEmail } from '../actions';
 
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
@@ -69,56 +69,17 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   }
   
   const handleNewStudent = async (newStudentData: Omit<User, 'id'>) => {
-    if (!company) return;
-    
-    try {
-        const newUserId = doc(collection(db, 'temp')).id;
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-
-        const studentToAdd: User = {
-            ...newStudentData,
-            id: newUserId,
-            companyId: company.id,
-            role: 'Student',
-            status: 'Active',
-            permissions: ROLE_PERMISSIONS['Student'],
-            flightHours: 0,
-            progress: 0,
-            endorsements: [],
-            trainingLogs: [],
-        };
-        delete studentToAdd.password;
-
-        await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentToAdd);
-        setStudents(prev => [...prev, studentToAdd]);
-        
-        if (newStudentData.email) {
-            await sendEmail({
-                to: newStudentData.email,
-                subject: `Welcome to ${company.name}`,
-                emailData: {
-                    userName: newStudentData.name,
-                    companyName: company.name,
-                    userEmail: newStudentData.email,
-                    temporaryPassword: temporaryPassword,
-                    loginUrl: window.location.origin + '/login',
-                },
-            });
-            toast({
-                title: 'Student Added',
-                description: `${newStudentData.name} has been added and a welcome email has been sent.`
-            });
-        } else {
-            toast({
-                title: 'Student Added',
-                description: `${newStudentData.name} has been added to the roster.`
-            });
-        }
-
-    } catch (error: any) {
-        console.error("Error creating student:", error);
-        toast({ variant: 'destructive', title: 'Error', description: "Could not create new student." });
+    if (!company) {
+        return { success: false, message: 'No company context available.' };
     }
+    const result = await createUserAndSendWelcomeEmail(newStudentData, company.id, company.name);
+    if (result.success) {
+        // Refresh the student list from the server
+        const q = query(collection(db, `companies/${company.id}/students`));
+        const snapshot = await getDocs(q);
+        setStudents(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+    }
+    return result;
   }
 
 
@@ -201,7 +162,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                     <DialogHeader>
                         <DialogTitle>Add New Student</DialogTitle>
                         <DialogDescription>
-                            Fill out the form below to add a new student. This will create a user account for them.
+                            Fill out the form below to add a new student. This will create their user account.
                         </DialogDescription>
                     </DialogHeader>
                     <NewStudentForm onSubmit={handleNewStudent} />
