@@ -6,12 +6,14 @@ import type { Aircraft, Booking, User, UserDocument } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO, differenceInDays } from 'date-fns';
+import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { useSettings } from '@/context/settings-provider';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { differenceInDays } from 'date-fns';
+
 
 interface LiveFlight {
     booking: Booking;
@@ -136,20 +138,10 @@ export function DashboardPageContent({
         }
     }, [initialAircraft, initialUsers, settings]);
 
-    const soonestExpiring = stats.expiringDocs[0];
-
-    const expiryCardClass = useMemo(() => {
-        if (!soonestExpiring) return '';
-        if (soonestExpiring.daysUntil < 0) return 'bg-destructive/10 border-destructive';
-        if (soonestExpiring.daysUntil <= settings.expiryWarningOrangeDays) return 'bg-orange-500/10 border-orange-500';
-        if (soonestExpiring.daysUntil <= settings.expiryWarningYellowDays) return 'bg-yellow-500/10 border-yellow-500';
-        return '';
-    }, [soonestExpiring, settings]);
-
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3">
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
                      <div className="grid gap-6 sm:grid-cols-2">
@@ -211,7 +203,7 @@ export function DashboardPageContent({
                 </div>
                 
                 {/* Right Column */}
-                 <div className={cn("lg:col-span-1 space-y-6", expiryCardClass)}>
+                 <div className="lg:col-span-1">
                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -223,23 +215,27 @@ export function DashboardPageContent({
                             {stats.expiringDocs.length > 0 ? (
                                 <ScrollArea className="h-[calc(100%-4rem)]">
                                     <div className="space-y-4 pr-4">
-                                    {stats.expiringDocs.map((item, index) => (
-                                        <div key={index} className="p-3 border rounded-lg bg-background">
+                                    {stats.expiringDocs.map((item, index) => {
+                                        let itemClass = '';
+                                        if (item.daysUntil < 0) {
+                                            itemClass = 'bg-destructive/10 border-destructive text-destructive-foreground';
+                                        } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-orange/10 border-orange text-foreground';
+                                        } else if (item.daysUntil <= settings.expiryWarningYellowDays) {
+                                            itemClass = 'bg-yellow-400/20 border-yellow-500 text-foreground';
+                                        }
+                                        return (
+                                        <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
                                             <p className="font-semibold text-sm">{item.doc.type}</p>
-                                            <p className="text-sm text-muted-foreground">{item.user.name}</p>
-                                            <p className={cn(
-                                                "text-xs font-medium mt-1",
-                                                item.daysUntil < 0 ? 'text-destructive' :
-                                                item.daysUntil <= settings.expiryWarningOrangeDays ? 'text-orange-600' :
-                                                'text-yellow-600'
-                                            )}>
+                                            <p className="text-sm">{item.user.name}</p>
+                                            <p className={cn("text-xs font-medium mt-1")}>
                                                  {item.daysUntil < 0 
-                                                    ? `Expired`
-                                                    : `Expires in ${item.daysUntil} days`
-                                                } on {format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}
+                                                    ? `Expired on ${format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}`
+                                                    : `Expires in ${item.daysUntil} days on ${format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}`
+                                                }
                                             </p>
                                         </div>
-                                    ))}
+                                    )})}
                                     </div>
                                 </ScrollArea>
                             ) : (

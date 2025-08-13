@@ -21,9 +21,9 @@
     --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --warning: 51 98% 50%;
+    --warning: 48 96% 50%;
     --warning-foreground: 222.2 84% 4.9%;
-    --orange: 25 95% 53%;
+    --orange: 33 95% 53%;
     --orange-foreground: 210 40% 98%;
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 210 40% 98%;
@@ -63,9 +63,9 @@
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --warning: 51 98% 50%;
+    --warning: 48 96% 50%;
     --warning-foreground: 222.2 84% 4.9%;
-    --orange: 25 95% 53%;
+    --orange: 33 95% 53%;
     --orange-foreground: 210 40% 98%;
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 210 40% 98%;
@@ -102,10 +102,10 @@
 }
 
 @layer utilities {
-    .bg-orange-500\/10 {
+    .bg-orange\/10 {
         background-color: hsl(var(--orange) / 0.1);
     }
-    .border-orange-500 {
+    .border-orange {
         border-color: hsl(var(--orange));
     }
 }

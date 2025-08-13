@@ -41,6 +41,14 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        orange: {
+            DEFAULT: 'hsl(var(--orange))',
+            foreground: 'hsl(var(--orange-foreground))',
+        },
         purple: {
             '600': '#7C3AED',
         },
