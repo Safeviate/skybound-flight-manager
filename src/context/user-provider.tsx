@@ -169,7 +169,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         if (alertLevel) {
             const title = `Document Expiry: ${docItem.type}`;
-            const description = `Your ${docItem.type} is expiring in ${daysUntil} days on ${docItem.expiryDate}. Please take action.`;
+            let description = '';
+            if (daysUntil < 0) {
+                description = `Your ${docItem.type} has expired. Please take action immediately.`;
+            } else {
+                description = `Your ${docItem.type} is expiring in ${daysUntil} days on ${docItem.expiryDate}. Please take action.`;
+            }
 
             if (!existingExpiryAlerts.has(title)) {
                 const newAlertRef = doc(collection(db, 'companies', companyId, 'alerts'));
