@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 
 const checklistSchema = z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
+  tacho: z.coerce.number().optional(),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   report: z.string().optional(),
@@ -48,6 +49,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         hobbs: 0,
+        tacho: 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
         report: '',
@@ -117,27 +119,50 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                             />
                         </div>
                     </FormItem>
-                    <FormField
-                        control={form.control}
-                        name="hobbs"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Closing Hobbs Meter</FormLabel>
-                                <div className="flex items-center gap-2">
-                                    <Hash className="h-5 w-5 text-muted-foreground" />
-                                    <Input 
-                                        type="number" 
-                                        step="0.1" 
-                                        placeholder="Enter closing Hobbs hours" 
-                                        {...field} 
-                                        onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="flex-1" 
-                                    />
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                     <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="hobbs"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Closing Hobbs Meter</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Hash className="h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="number" 
+                                            step="0.1" 
+                                            placeholder="Enter closing Hobbs" 
+                                            {...field} 
+                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="flex-1" 
+                                        />
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="tacho"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Closing Tacho Meter</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Hash className="h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="number" 
+                                            step="0.1" 
+                                            placeholder="Enter closing Tacho" 
+                                            {...field} 
+                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="flex-1" 
+                                        />
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
                 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
