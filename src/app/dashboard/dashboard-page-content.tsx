@@ -4,10 +4,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import type { Aircraft, Booking, User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare } from 'lucide-react';
+import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format, parse, differenceInMinutes, isWithinInterval } from 'date-fns';
+import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parseISO } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
+import { useSettings } from '@/context/settings-provider';
+import Link from 'next/link';
 
 interface LiveFlight {
     booking: Booking;
@@ -67,6 +69,7 @@ export function DashboardPageContent({
     initialUsers
 }: DashboardPageContentProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
+    const { settings } = useSettings();
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
@@ -104,13 +107,29 @@ export function DashboardPageContent({
         const activeAircraft = initialAircraft.filter(a => a.status === 'Available').length;
         const totalAircraft = initialAircraft.filter(a => a.status !== 'Archived').length;
 
+        const expiringDocsCount = initialUsers.reduce((count, user) => {
+            if (user.status === 'Archived') return count;
+            
+            const today = startOfDay(new Date());
+            
+            const userExpiringDocs = (user.documents || []).filter(doc => {
+                if (!doc.expiryDate) return false;
+                const expiry = startOfDay(parseISO(doc.expiryDate));
+                const daysUntil = differenceInDays(expiry, today);
+                return daysUntil <= settings.expiryWarningYellowDays;
+            }).length;
+
+            return count + userExpiringDocs;
+        }, 0);
+
         return {
             openSafetyReports,
             openQualityAudits,
             activeAircraft,
-            totalAircraft
+            totalAircraft,
+            expiringDocsCount
         }
-    }, [initialAircraft]);
+    }, [initialAircraft, initialUsers, settings]);
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -123,6 +142,20 @@ export function DashboardPageContent({
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.activeAircraft} / {stats.totalAircraft}</div>
                         <p className="text-xs text-muted-foreground">Aircraft available for booking</p>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Expiring Documents</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.expiringDocsCount}</div>
+                        <p className="text-xs text-muted-foreground">
+                             <Link href="/personnel" className="hover:underline">
+                                View personnel roster
+                            </Link>
+                        </p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -143,16 +176,6 @@ export function DashboardPageContent({
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.openQualityAudits}</div>
                         <p className="text-xs text-muted-foreground">Audits currently in progress</p>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Flights</CardTitle>
-                        <Plane className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{liveFlights.length}</div>
-                        <p className="text-xs text-muted-foreground">Aircraft currently in the air</p>
                     </CardContent>
                 </Card>
             </div>
