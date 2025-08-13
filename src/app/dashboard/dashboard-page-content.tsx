@@ -157,9 +157,9 @@ export function DashboardPageContent({
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{expiringDocsCount}</div>
-                        {soonestExpiring ? (
+                        {soonestExpiring && soonestExpiring.doc.expiryDate ? (
                             <p className="text-xs text-muted-foreground">
-                                {soonestExpiring.doc.type} for {soonestExpiring.user.name} expires soonest.
+                                {soonestExpiring.doc.type} for {soonestExpiring.user.name} expires in {soonestExpiring.daysUntil} days on {format(parseISO(soonestExpiring.doc.expiryDate), 'MMM d, yyyy')}.
                                 {expiringDocsCount > 1 && ` (+${expiringDocsCount - 1} more)`}
                             </p>
                         ) : (
