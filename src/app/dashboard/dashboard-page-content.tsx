@@ -240,9 +240,9 @@ export function DashboardPageContent({
                                     {stats.expiringUserDocs.map((item, index) => {
                                         let itemClass = '';
                                         if (item.daysUntil < 0) {
-                                            itemClass = 'bg-destructive/10 text-foreground';
+                                            itemClass = 'bg-destructive/10 text-foreground border-destructive';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
-                                            itemClass = 'bg-yellow-400/20 text-foreground';
+                                            itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
                                         }
                                         return (
                                         <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
@@ -259,7 +259,7 @@ export function DashboardPageContent({
                                     </div>
                                 </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground h-full flex items-center justify-center">No personnel documents are expiring soon.</p>
+                                <p className="text-sm text-muted-foreground flex items-center justify-center">No personnel documents are expiring soon.</p>
                             )}
                         </CardContent>
                     </Card>
@@ -277,9 +277,9 @@ export function DashboardPageContent({
                                     {stats.expiringAircraftDocs.map((item, index) => {
                                         let itemClass = '';
                                         if (item.daysUntil < 0) {
-                                            itemClass = 'bg-destructive/10 text-foreground';
+                                            itemClass = 'bg-destructive/10 text-foreground border-destructive';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
-                                            itemClass = 'bg-yellow-400/20 text-foreground';
+                                            itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
                                         }
                                         return (
                                         <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
@@ -296,7 +296,7 @@ export function DashboardPageContent({
                                     </div>
                                 </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground h-full flex items-center justify-center">No aircraft documents are expiring soon.</p>
+                                <p className="text-sm text-muted-foreground flex items-center justify-center">No aircraft documents are expiring soon.</p>
                             )}
                         </CardContent>
                     </Card>
