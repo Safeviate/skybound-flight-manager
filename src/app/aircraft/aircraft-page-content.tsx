@@ -66,6 +66,7 @@ export function AircraftPageContent({
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
+    const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
     
     useEffect(() => {
         setAircraftList(initialAircraft);
@@ -291,6 +292,7 @@ export function AircraftPageContent({
                             <TableHead>Total Hours</TableHead>
                             <TableHead>Airworthiness</TableHead>
                             <TableHead>Insurance</TableHead>
+                            <TableHead>Documents</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -304,6 +306,11 @@ export function AircraftPageContent({
                                 <TableCell>{ac.hours.toFixed(1)}</TableCell>
                                 <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
                                 <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                                <TableCell>
+                                    <Button variant="outline" size="sm" onClick={() => setViewingDocumentsForAircraft(ac)}>
+                                        <Eye className="mr-2 h-4 w-4" /> View
+                                    </Button>
+                                </TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
                                 </TableCell>
@@ -657,6 +664,28 @@ export function AircraftPageContent({
               <NewAircraftForm onSuccess={handleSuccess} initialData={editingAircraft} />
           </DialogContent>
         </Dialog>
+        
+        <Dialog open={!!viewingDocumentsForAircraft} onOpenChange={(open) => !open && setViewingDocumentsForAircraft(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Document Expiry Dates for {viewingDocumentsForAircraft?.tailNumber}</DialogTitle>
+                    <DialogDescription>
+                        A list of all official documents and their expiry dates for this aircraft.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                        <span>Certificate of Airworthiness</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                        <span>Insurance Certificate</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+
 
         {viewingChecklist && (
              <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>

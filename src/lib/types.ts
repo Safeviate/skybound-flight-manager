@@ -50,6 +50,10 @@ export type Aircraft = {
   hours: number;
   airworthinessExpiry: string;
   insuranceExpiry: string;
+  certificateOfReleaseToServiceExpiry: string;
+  certificateOfRegistrationExpiry: string;
+  massAndBalanceExpiry: string;
+  radioStationLicenseExpiry: string;
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
   activeBookingId?: string | null;
