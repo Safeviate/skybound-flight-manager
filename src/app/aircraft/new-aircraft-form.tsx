@@ -70,6 +70,10 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         ...initialData,
         airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
         insuranceExpiry: parseDate(initialData.insuranceExpiry),
+        certificateOfReleaseToServiceExpiry: parseDate(initialData.certificateOfReleaseToServiceExpiry),
+        certificateOfRegistrationExpiry: parseDate(initialData.certificateOfRegistrationExpiry),
+        massAndBalanceExpiry: parseDate(initialData.massAndBalanceExpiry),
+        radioStationLicenseExpiry: parseDate(initialData.radioStationLicenseExpiry),
         currentTachoReading: initialData.currentTachoReading ?? undefined,
         next50HourInspection: initialData.next50HourInspection ?? undefined,
         next100HourInspection: initialData.next100HourInspection ?? undefined,
@@ -92,12 +96,12 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     
     const aircraftDataToSave = {
         ...data,
-        airworthinessExpiry: data.airworthinessExpiry ? data.airworthinessExpiry.toISOString() : new Date().toISOString(),
-        insuranceExpiry: data.insuranceExpiry ? data.insuranceExpiry.toISOString() : new Date().toISOString(),
-        certificateOfReleaseToServiceExpiry: data.certificateOfReleaseToServiceExpiry ? data.certificateOfReleaseToServiceExpiry.toISOString() : new Date().toISOString(),
-        certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? data.certificateOfRegistrationExpiry.toISOString() : new Date().toISOString(),
-        massAndBalanceExpiry: data.massAndBalanceExpiry ? data.massAndBalanceExpiry.toISOString() : new Date().toISOString(),
-        radioStationLicenseExpiry: data.radioStationLicenseExpiry ? data.radioStationLicenseExpiry.toISOString() : new Date().toISOString(),
+        airworthinessExpiry: data.airworthinessExpiry ? data.airworthinessExpiry.toISOString() : null,
+        insuranceExpiry: data.insuranceExpiry ? data.insuranceExpiry.toISOString() : null,
+        certificateOfReleaseToServiceExpiry: data.certificateOfReleaseToServiceExpiry ? data.certificateOfReleaseToServiceExpiry.toISOString() : null,
+        certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? data.certificateOfRegistrationExpiry.toISOString() : null,
+        massAndBalanceExpiry: data.massAndBalanceExpiry ? data.massAndBalanceExpiry.toISOString() : null,
+        radioStationLicenseExpiry: data.radioStationLicenseExpiry ? data.radioStationLicenseExpiry.toISOString() : null,
     };
 
     try {
