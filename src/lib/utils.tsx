@@ -41,9 +41,10 @@ export const getExpiryBadge = (
     }
 
     const formattedDate = format(date, 'MMM d, yyyy');
+    const label = daysUntil < 0 ? `Expired on ${formattedDate}` : formattedDate;
 
     return (
-        <Badge variant={variant}>{formattedDate}</Badge>
+        <Badge variant={variant}>{label}</Badge>
     )
   }
 

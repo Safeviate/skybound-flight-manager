@@ -10,6 +10,7 @@ import { format, parse, differenceInMinutes, isWithinInterval, startOfDay, parse
 import { Progress } from '@/components/ui/progress';
 import { useSettings } from '@/context/settings-provider';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface LiveFlight {
     booking: Booking;
@@ -137,6 +138,15 @@ export function DashboardPageContent({
     const expiringDocsCount = stats.expiringDocs.length;
     const soonestExpiring = stats.expiringDocs[0];
 
+    const expiryCardClass = useMemo(() => {
+        if (!soonestExpiring) return '';
+        if (soonestExpiring.daysUntil < 0) return 'bg-destructive/10 border-destructive';
+        if (soonestExpiring.daysUntil <= settings.expiryWarningOrangeDays) return 'bg-orange-500/10 border-orange-500';
+        if (soonestExpiring.daysUntil <= settings.expiryWarningYellowDays) return 'bg-warning/10 border-yellow-500';
+        return '';
+    }, [soonestExpiring, settings]);
+
+
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -150,7 +160,7 @@ export function DashboardPageContent({
                         <p className="text-xs text-muted-foreground">Aircraft available for booking</p>
                     </CardContent>
                 </Card>
-                 <Card>
+                 <Card className={cn(expiryCardClass)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Expiring Documents</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-muted-foreground" />
@@ -159,7 +169,11 @@ export function DashboardPageContent({
                         <div className="text-2xl font-bold">{expiringDocsCount}</div>
                         {soonestExpiring && soonestExpiring.doc.expiryDate ? (
                             <p className="text-xs text-muted-foreground">
-                                {soonestExpiring.doc.type} for {soonestExpiring.user.name} expires in {soonestExpiring.daysUntil} days on {format(parseISO(soonestExpiring.doc.expiryDate), 'MMM d, yyyy')}.
+                                {soonestExpiring.doc.type} for {soonestExpiring.user.name}{' '}
+                                {soonestExpiring.daysUntil < 0 
+                                    ? `has expired.`
+                                    : `expires in ${soonestExpiring.daysUntil} days on ${format(parseISO(soonestExpiring.doc.expiryDate), 'MMM d, yyyy')}.`
+                                }
                                 {expiringDocsCount > 1 && ` (+${expiringDocsCount - 1} more)`}
                             </p>
                         ) : (
