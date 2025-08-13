@@ -78,9 +78,9 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       model: '',
       tailNumber: '',
       hours: 0,
-      currentTachoReading: undefined,
-      next50HourInspection: undefined,
-      next100HourInspection: undefined,
+      currentTachoReading: 0,
+      next50HourInspection: 0,
+      next100HourInspection: 0,
     },
   });
 
