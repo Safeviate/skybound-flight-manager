@@ -218,10 +218,8 @@ export function DashboardPageContent({
                                     {stats.expiringDocs.map((item, index) => {
                                         let itemClass = '';
                                         if (item.daysUntil < 0) {
-                                            itemClass = 'bg-destructive/10 border-destructive text-destructive-foreground';
+                                            itemClass = 'bg-destructive/20 border-destructive text-foreground';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
-                                            itemClass = 'bg-orange/10 border-orange text-foreground';
-                                        } else if (item.daysUntil <= settings.expiryWarningYellowDays) {
                                             itemClass = 'bg-yellow-400/20 border-yellow-500 text-foreground';
                                         }
                                         return (
@@ -230,7 +228,7 @@ export function DashboardPageContent({
                                             <p className="text-sm">{item.user.name}</p>
                                             <p className={cn("text-xs font-medium mt-1")}>
                                                  {item.daysUntil < 0 
-                                                    ? `Expired on ${format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}`
+                                                    ? `Has expired`
                                                     : `Expires in ${item.daysUntil} days on ${format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}`
                                                 }
                                             </p>
