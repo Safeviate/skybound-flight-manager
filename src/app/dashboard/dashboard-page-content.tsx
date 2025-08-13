@@ -142,14 +142,14 @@ export function DashboardPageContent({
         if (!soonestExpiring) return '';
         if (soonestExpiring.daysUntil < 0) return 'bg-destructive/10 border-destructive';
         if (soonestExpiring.daysUntil <= settings.expiryWarningOrangeDays) return 'bg-orange-500/10 border-orange-500';
-        if (soonestExpiring.daysUntil <= settings.expiryWarningYellowDays) return 'bg-warning/10 border-yellow-500';
+        if (soonestExpiring.daysUntil <= settings.expiryWarningYellowDays) return 'bg-yellow-500/10 border-yellow-500';
         return '';
     }, [soonestExpiring, settings]);
 
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Aircraft</CardTitle>
