@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 const checklistSchema = z.object({
   registration: z.string().min(1, { message: "Aircraft registration scan is required." }),
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
+  tacho: z.coerce.number().optional(),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   checklistOnboard: z.boolean(),
@@ -64,6 +65,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     defaultValues: {
         registration: aircraft.tailNumber,
         hobbs: aircraft.hours || 0,
+        tacho: aircraft.currentTachoReading || 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
         checklistOnboard: false,
@@ -82,6 +84,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
   useEffect(() => {
     form.setValue('registration', aircraft.tailNumber);
     form.setValue('hobbs', aircraft.hours || 0);
+    form.setValue('tacho', aircraft.currentTachoReading || 0);
   }, [aircraft, form]);
 
 
@@ -142,26 +145,48 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                             </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="hobbs"
-                        render={({ field }) => (
-                             <FormItem>
-                                <FormLabel>Hobbs Meter</FormLabel>
-                                <div className="flex items-center gap-2">
-                                    <Hash className="h-5 w-5 text-muted-foreground" />
-                                    <Input 
-                                        type="number" 
-                                        step="0.1" 
-                                        placeholder="Enter current Hobbs hours" 
-                                        {...field} 
-                                        onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
-                                        className="flex-1" />
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                     <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="hobbs"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Hobbs Meter</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Hash className="h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="number" 
+                                            step="0.1" 
+                                            placeholder="Enter current Hobbs hours" 
+                                            {...field} 
+                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                                            className="flex-1" />
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="tacho"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tacho Meter</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Hash className="h-5 w-5 text-muted-foreground" />
+                                        <Input 
+                                            type="number" 
+                                            step="0.1" 
+                                            placeholder="Enter Tacho hours" 
+                                            {...field} 
+                                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                                            className="flex-1" />
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
                 
                  {/* Standard Camera Photos */}
