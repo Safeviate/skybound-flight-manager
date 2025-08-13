@@ -42,7 +42,6 @@ const aircraftFormSchema = z.object({
   massAndBalanceExpiry: z.date().optional(),
   radioStationLicenseExpiry: z.date().optional(),
   currentTachoReading: z.coerce.number().optional(),
-  totalTimeInService: z.coerce.number().optional(),
   next50HourInspection: z.coerce.number().optional(),
   next100HourInspection: z.coerce.number().optional(),
 });
@@ -77,7 +76,6 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       tailNumber: '',
       hours: 0,
       currentTachoReading: 0,
-      totalTimeInService: 0,
       next50HourInspection: 0,
       next100HourInspection: 0,
     },
@@ -259,20 +257,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         
         <Separator />
         <h4 className="font-medium text-center">Maintenance Information</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-             <FormField
-                control={form.control}
-                name="totalTimeInService"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Total Time in Service</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 5432.1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
              <FormField
                 control={form.control}
                 name="currentTachoReading"
