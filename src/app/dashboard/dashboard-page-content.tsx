@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { useSettings } from '@/context/settings-provider';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface LiveFlight {
     booking: Booking;
@@ -135,7 +136,6 @@ export function DashboardPageContent({
         }
     }, [initialAircraft, initialUsers, settings]);
 
-    const expiringDocsCount = stats.expiringDocs.length;
     const soonestExpiring = stats.expiringDocs[0];
 
     const expiryCardClass = useMemo(() => {
@@ -149,82 +149,106 @@ export function DashboardPageContent({
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Aircraft</CardTitle>
-                        <Plane className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.activeAircraft} / {stats.totalAircraft}</div>
-                        <p className="text-xs text-muted-foreground">Aircraft available for booking</p>
-                    </CardContent>
-                </Card>
-                 <Card className={cn(expiryCardClass)}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Expiring Documents</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{expiringDocsCount}</div>
-                        {soonestExpiring && soonestExpiring.doc.expiryDate ? (
-                            <p className="text-xs text-muted-foreground">
-                                {soonestExpiring.doc.type} for {soonestExpiring.user.name}{' '}
-                                {soonestExpiring.daysUntil < 0 
-                                    ? `has expired.`
-                                    : `expires in ${soonestExpiring.daysUntil} days on ${format(parseISO(soonestExpiring.doc.expiryDate), 'MMM d, yyyy')}.`
-                                }
-                                {expiringDocsCount > 1 && ` (+${expiringDocsCount - 1} more)`}
-                            </p>
-                        ) : (
-                            <p className="text-xs text-muted-foreground">No personnel documents are expiring soon.</p>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.openSafetyReports}</div>
-                         <p className="text-xs text-muted-foreground">Reports requiring investigation</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Open Quality Audits</CardTitle>
-                        <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.openQualityAudits}</div>
-                        <p className="text-xs text-muted-foreground">Audits currently in progress</p>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {/* Left Column */}
+                <div className="lg:col-span-2 space-y-6">
+                     <div className="grid gap-6 sm:grid-cols-2">
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Active Aircraft</CardTitle>
+                                <Plane className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.activeAircraft} / {stats.totalAircraft}</div>
+                                <p className="text-xs text-muted-foreground">Aircraft available for booking</p>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
+                                <Shield className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.openSafetyReports}</div>
+                                <p className="text-xs text-muted-foreground">Reports requiring investigation</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Open Quality Audits</CardTitle>
+                                <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.openQualityAudits}</div>
+                                <p className="text-xs text-muted-foreground">Audits currently in progress</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Live Flight Status</CardTitle>
+                            <CardDescription>
+                                Overview of all aircraft currently in flight based on schedule. Last updated: {format(currentTime, 'HH:mm')}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {liveFlights.length > 0 ? (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {liveFlights.map(flight => (
+                                        <LiveFlightCard key={flight.booking.id} flight={flight} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                    <Plane className="h-10 w-10 mb-2" />
+                                    <p className="font-medium">All aircraft are on the ground.</p>
+                                    <p className="text-xs">No active bookings at this time.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                {/* Right Column */}
+                 <div className={cn("lg:col-span-1 space-y-6", expiryCardClass)}>
+                    <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle />
+                                Expiring Documents ({stats.expiringDocs.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.expiringDocs.length > 0 ? (
+                                <ScrollArea className="h-[calc(100%-4rem)]">
+                                    <div className="space-y-4 pr-4">
+                                    {stats.expiringDocs.map((item, index) => (
+                                        <div key={index} className="p-3 border rounded-lg bg-background">
+                                            <p className="font-semibold text-sm">{item.doc.type}</p>
+                                            <p className="text-sm text-muted-foreground">{item.user.name}</p>
+                                            <p className={cn(
+                                                "text-xs font-medium mt-1",
+                                                item.daysUntil < 0 ? 'text-destructive' :
+                                                item.daysUntil <= settings.expiryWarningOrangeDays ? 'text-orange-600' :
+                                                'text-yellow-600'
+                                            )}>
+                                                 {item.daysUntil < 0 
+                                                    ? `Expired`
+                                                    : `Expires in ${item.daysUntil} days`
+                                                } on {format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground h-full flex items-center justify-center">No personnel documents are expiring soon.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Live Flight Status</CardTitle>
-                    <CardDescription>
-                        Overview of all aircraft currently in flight based on schedule. Last updated: {format(currentTime, 'HH:mm')}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {liveFlights.length > 0 ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {liveFlights.map(flight => (
-                                <LiveFlightCard key={flight.booking.id} flight={flight} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                            <Plane className="h-10 w-10 mb-2" />
-                            <p className="font-medium">All aircraft are on the ground.</p>
-                            <p className="text-xs">No active bookings at this time.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </main>
     );
 }
