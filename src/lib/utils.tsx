@@ -157,7 +157,10 @@ export const calculateFlightHours = (bookings: Booking[], periodInDays: number):
 
 
 export const getNextService = (hours: number): { type: string; hoursUntil: number } => {
-    return { type: 'A-Check', hoursUntil: 50 - (hours % 50) };
+    const mpiInterval = 150; // Major Periodic Inspection interval
+    const hoursSinceLastMPI = hours % mpiInterval;
+    const hoursUntilNextMPI = mpiInterval - hoursSinceLastMPI;
+    return { type: 'MPI', hoursUntil: hoursUntilNextMPI };
 };
 
     

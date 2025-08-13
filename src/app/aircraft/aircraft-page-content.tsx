@@ -15,7 +15,7 @@ import { NewAircraftForm } from './new-aircraft-form';
 import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { getExpiryBadge, cn } from '@/lib/utils';
+import { cn, getExpiryBadge, getNextService } from '@/lib/utils';
 import { useSettings } from '@/context/settings-provider';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
@@ -290,8 +290,7 @@ export function AircraftPageContent({
                             <TableHead>Registration</TableHead>
                             <TableHead>Model</TableHead>
                             <TableHead>Total Hours</TableHead>
-                            <TableHead>Airworthiness</TableHead>
-                            <TableHead>Insurance</TableHead>
+                            <TableHead>Hours Until Next MPI</TableHead>
                             <TableHead>Documents</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -299,13 +298,13 @@ export function AircraftPageContent({
                     </TableHeader>
                     <TableBody>
                         {aircraft.map((ac) => {
+                            const nextService = getNextService(ac.hours);
                             return (
                             <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
                                 <TableCell className="font-medium">{ac.tailNumber}</TableCell>
                                 <TableCell>{ac.make} {ac.model}</TableCell>
                                 <TableCell>{ac.hours.toFixed(1)}</TableCell>
-                                <TableCell>{getExpiryBadge(ac.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
-                                <TableCell>{getExpiryBadge(ac.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</TableCell>
+                                <TableCell>{nextService.hoursUntil.toFixed(1)}</TableCell>
                                 <TableCell>
                                     <Button variant="outline" size="sm" onClick={() => setViewingDocumentsForAircraft(ac)}>
                                         <Eye className="mr-2 h-4 w-4" /> View
