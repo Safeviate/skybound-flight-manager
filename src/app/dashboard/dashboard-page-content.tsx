@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import type { Aircraft, Booking, User } from '@/lib/types';
+import type { Aircraft, Booking, User, UserDocument } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plane, User as UserIcon, Clock, Users, Shield, CheckSquare, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -107,29 +107,35 @@ export function DashboardPageContent({
         const activeAircraft = initialAircraft.filter(a => a.status === 'Available').length;
         const totalAircraft = initialAircraft.filter(a => a.status !== 'Archived').length;
 
-        const expiringDocsCount = initialUsers.reduce((count, user) => {
-            if (user.status === 'Archived') return count;
+        const expiringDocs: { user: User, doc: UserDocument, daysUntil: number }[] = [];
+        initialUsers.forEach(user => {
+            if (user.status === 'Archived') return;
             
             const today = startOfDay(new Date());
             
-            const userExpiringDocs = (user.documents || []).filter(doc => {
-                if (!doc.expiryDate) return false;
+            (user.documents || []).forEach(doc => {
+                if (!doc.expiryDate) return;
                 const expiry = startOfDay(parseISO(doc.expiryDate));
                 const daysUntil = differenceInDays(expiry, today);
-                return daysUntil <= settings.expiryWarningYellowDays;
-            }).length;
+                if (daysUntil <= settings.expiryWarningYellowDays) {
+                    expiringDocs.push({ user, doc, daysUntil });
+                }
+            });
+        });
 
-            return count + userExpiringDocs;
-        }, 0);
+        expiringDocs.sort((a, b) => a.daysUntil - b.daysUntil);
 
         return {
             openSafetyReports,
             openQualityAudits,
             activeAircraft,
             totalAircraft,
-            expiringDocsCount
+            expiringDocs,
         }
     }, [initialAircraft, initialUsers, settings]);
+
+    const expiringDocsCount = stats.expiringDocs.length;
+    const soonestExpiring = stats.expiringDocs[0];
 
     return (
         <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -150,12 +156,15 @@ export function DashboardPageContent({
                         <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.expiringDocsCount}</div>
-                        <p className="text-xs text-muted-foreground">
-                             <Link href="/personnel" className="hover:underline">
-                                View personnel roster
-                            </Link>
-                        </p>
+                        <div className="text-2xl font-bold">{expiringDocsCount}</div>
+                        {soonestExpiring ? (
+                            <p className="text-xs text-muted-foreground">
+                                {soonestExpiring.doc.type} for {soonestExpiring.user.name} expires soonest.
+                                {expiringDocsCount > 1 && ` (+${expiringDocsCount - 1} more)`}
+                            </p>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">No personnel documents are expiring soon.</p>
+                        )}
                     </CardContent>
                 </Card>
                 <Card>
