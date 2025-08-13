@@ -57,6 +57,10 @@ export type Aircraft = {
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
   activeBookingId?: string | null;
+  currentTachoReading?: number;
+  next50HourInspection?: number;
+  next100HourInspection?: number;
+  totalTimeInService?: number;
 };
 
 export type Endorsement = {
