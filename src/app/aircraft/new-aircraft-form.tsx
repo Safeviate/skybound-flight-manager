@@ -70,14 +70,17 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         ...initialData,
         airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
         insuranceExpiry: parseDate(initialData.insuranceExpiry),
+        currentTachoReading: initialData.currentTachoReading ?? undefined,
+        next50HourInspection: initialData.next50HourInspection ?? undefined,
+        next100HourInspection: initialData.next100HourInspection ?? undefined,
     } : {
       make: '',
       model: '',
       tailNumber: '',
       hours: 0,
-      currentTachoReading: 0,
-      next50HourInspection: 0,
-      next100HourInspection: 0,
+      currentTachoReading: undefined,
+      next50HourInspection: undefined,
+      next100HourInspection: undefined,
     },
   });
 
@@ -265,7 +268,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     <FormItem>
                     <FormLabel>Current Tacho Reading</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} />
+                        <Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -278,7 +281,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     <FormItem>
                     <FormLabel>Next 50hr Insp.</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -291,7 +294,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     <FormItem>
                     <FormLabel>Next 100hr Insp.</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
