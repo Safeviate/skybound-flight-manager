@@ -226,7 +226,7 @@ export function DashboardPageContent({
                 </div>
                 
                  <div className="lg:col-span-1 space-y-6">
-                    <Card className="h-full">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle />
@@ -235,7 +235,7 @@ export function DashboardPageContent({
                         </CardHeader>
                         <CardContent>
                             {stats.expiringUserDocs.length > 0 ? (
-                                <ScrollArea className="h-[calc(50%-2rem)] pr-4">
+                                <ScrollArea className="h-64 pr-4">
                                     <div className="space-y-4">
                                     {stats.expiringUserDocs.map((item, index) => {
                                         let itemClass = '';
@@ -263,7 +263,7 @@ export function DashboardPageContent({
                             )}
                         </CardContent>
                     </Card>
-                    <Card className="h-full">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle />
@@ -272,7 +272,7 @@ export function DashboardPageContent({
                         </CardHeader>
                         <CardContent>
                             {stats.expiringAircraftDocs.length > 0 ? (
-                                <ScrollArea className="h-[calc(50%-2rem)] pr-4">
+                                <ScrollArea className="h-64 pr-4">
                                     <div className="space-y-4">
                                     {stats.expiringAircraftDocs.map((item, index) => {
                                         let itemClass = '';
