@@ -22,6 +22,8 @@ import { Label } from '@/components/ui/label';
 const checklistSchema = z.object({
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   tacho: z.coerce.number().optional(),
+  fuelUplift: z.coerce.number().optional(),
+  oilUplift: z.coerce.number().optional(),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   report: z.string().optional(),
@@ -50,6 +52,8 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     defaultValues: {
         hobbs: 0,
         tacho: 0,
+        fuelUplift: 0,
+        oilUplift: 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
         report: '',
@@ -209,6 +213,30 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                         )}
                     />
                  </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="fuelUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Fuel Uplift (Litres)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="oilUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Oil Uplift (Pints)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <div className="space-y-4 p-4 border rounded-lg">
                     <Label className="font-medium">Defect Report</Label>
                     <FormField

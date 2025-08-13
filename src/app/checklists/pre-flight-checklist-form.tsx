@@ -24,6 +24,8 @@ const checklistSchema = z.object({
   registration: z.string().min(1, { message: "Aircraft registration scan is required." }),
   hobbs: z.coerce.number().min(0.1, { message: "Hobbs meter reading is required." }),
   tacho: z.coerce.number().optional(),
+  fuelUplift: z.coerce.number().optional(),
+  oilUplift: z.coerce.number().optional(),
   leftSidePhoto: z.string().min(1, { message: "Photo of the left side is required." }),
   rightSidePhoto: z.string().min(1, { message: "Photo of the right side is required." }),
   checklistOnboard: z.boolean(),
@@ -66,6 +68,8 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
         registration: aircraft.tailNumber,
         hobbs: aircraft.hours || 0,
         tacho: aircraft.currentTachoReading || 0,
+        fuelUplift: 0,
+        oilUplift: 0,
         leftSidePhoto: '',
         rightSidePhoto: '',
         checklistOnboard: false,
@@ -234,6 +238,31 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
                         )}
                     />
                  </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="fuelUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Fuel Uplift (Litres)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="oilUplift"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Oil Uplift (Pints)</FormLabel>
+                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
                 {/* Document Checks */}
                 <div className="space-y-4 rounded-lg border p-4">
