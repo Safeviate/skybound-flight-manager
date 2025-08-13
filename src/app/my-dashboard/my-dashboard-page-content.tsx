@@ -8,13 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Shield, ListChecks, Calendar, Plane, Clock, UserCheck, BellRing, Inbox, Check, AlertTriangle, MessageSquare, Signature } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AtAGlanceCard } from './at-a-glance-card';
 import { getDashboardData } from './data';
 import { DevTodoList } from './dev-todo-list';
+import { useSettings } from '@/context/settings-provider';
+import { cn } from '@/lib/utils';
+
 
 const getAlertIcon = (type: AlertType['type']) => {
     switch (type) {
@@ -35,6 +38,7 @@ interface DashboardData {
 
 export function MyDashboardPageContent({ initialData }: { initialData: DashboardData }) {
   const { user, company, loading: userLoading, getUnacknowledgedAlerts, acknowledgeAlerts } = useUser();
+  const { settings } = useSettings();
   const [data, setData] = useState<DashboardData>(initialData);
   const [dataLoading, setDataLoading] = useState(false);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -80,6 +84,23 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
         description: "The item has been removed from your inbox.",
     });
   }
+  
+  const getAlertStyling = (alert: AlertType) => {
+    if (alert.title.startsWith("Document Expiry:")) {
+        const dateMatch = alert.description.match(/on (\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) {
+            const expiryDate = parseISO(dateMatch[1]);
+            const daysUntil = differenceInDays(expiryDate, new Date());
+            if (daysUntil < 0) {
+                return 'bg-destructive/10 text-foreground';
+            }
+            if (daysUntil <= settings.expiryWarningOrangeDays) {
+                return 'bg-yellow-400/20 text-foreground';
+            }
+        }
+    }
+    return 'bg-background hover:bg-muted/50';
+  };
   
   const isLoading = userLoading || dataLoading;
 
@@ -199,7 +220,7 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                         ) : alerts.length > 0 ? (
                             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                                 {alerts.map(alert => (
-                                    <div key={alert.id} className="p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors">
+                                    <div key={alert.id} className={cn("p-3 border rounded-lg transition-colors", getAlertStyling(alert))}>
                                         <div className="flex items-start gap-3">
                                             {getAlertIcon(alert.type)}
                                             <div className="flex-1">
