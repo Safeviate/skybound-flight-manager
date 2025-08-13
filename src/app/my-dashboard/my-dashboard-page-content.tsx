@@ -85,21 +85,28 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
     });
   }
   
-  const getAlertStyling = (alert: AlertType) => {
+  const getAlertStylingAndDescription = (alert: AlertType) => {
     if (alert.title.startsWith("Document Expiry:")) {
         const dateMatch = alert.description.match(/on (\d{4}-\d{2}-\d{2})/);
         if (dateMatch) {
             const expiryDate = parseISO(dateMatch[1]);
             const daysUntil = differenceInDays(expiryDate, new Date());
+
+            const description = daysUntil < 0 
+                ? `This document has expired.`
+                : `This document expires in ${daysUntil} days on ${format(expiryDate, 'MMM d, yyyy')}.`;
+            
+            let className = 'bg-background hover:bg-muted/50';
+
             if (daysUntil < 0) {
-                return 'bg-destructive/10 text-foreground';
+                className = 'bg-destructive/10 text-foreground';
+            } else if (daysUntil <= settings.expiryWarningOrangeDays) {
+                className = 'bg-yellow-400/20 text-foreground';
             }
-            if (daysUntil <= settings.expiryWarningOrangeDays) {
-                return 'bg-yellow-400/20 text-foreground';
-            }
+            return { className, description };
         }
     }
-    return 'bg-background hover:bg-muted/50';
+    return { className: 'bg-background hover:bg-muted/50', description: alert.description };
   };
   
   const isLoading = userLoading || dataLoading;
@@ -219,13 +226,15 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                             </div>
                         ) : alerts.length > 0 ? (
                             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                                {alerts.map(alert => (
-                                    <div key={alert.id} className={cn("p-3 border rounded-lg transition-colors", getAlertStyling(alert))}>
+                                {alerts.map(alert => {
+                                    const { className, description } = getAlertStylingAndDescription(alert);
+                                    return (
+                                    <div key={alert.id} className={cn("p-3 border rounded-lg transition-colors", className)}>
                                         <div className="flex items-start gap-3">
                                             {getAlertIcon(alert.type)}
                                             <div className="flex-1">
                                                 <p className="font-semibold text-sm leading-tight">{alert.title}</p>
-                                                <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
+                                                <p className="text-sm text-muted-foreground mt-1">{description}</p>
                                             </div>
                                         </div>
                                         <div className="flex justify-end items-center gap-2 mt-2 pt-2 border-t">
@@ -239,7 +248,7 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                                             </Button>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-48 text-center text-muted-foreground p-4">

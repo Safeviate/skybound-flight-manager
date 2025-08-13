@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, and, addDoc, limit, doc } from 'firebase/firestore';
+import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
@@ -169,7 +169,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         if (alertLevel) {
             const title = `Document Expiry: ${docItem.type}`;
-            const description = `Your ${docItem.type} is expiring in ${daysUntil} days on ${docItem.expiryDate}. Please take action.`;
+             // Pass the date in the description to be parsed by the display component
+            const description = `Your ${docItem.type} is expiring on ${docItem.expiryDate}. Please take action.`;
 
             if (!existingExpiryAlerts.has(title)) {
                 const newAlertRef = doc(collection(db, 'companies', companyId, 'alerts'));
