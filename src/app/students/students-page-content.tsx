@@ -30,10 +30,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
@@ -74,6 +75,8 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     try {
       const studentRef = doc(db, `companies/${company.id}/students`, studentId);
       await deleteDoc(studentRef);
+      // Note: Deleting from Firebase Auth should be handled by a backend function for security.
+      // This implementation only removes the database record.
       setStudents(prev => prev.filter(s => s.id !== studentId));
       toast({
         title: 'Student Deleted',
@@ -90,15 +93,21 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   };
   
   const handleNewStudent = async (newStudentData: Omit<User, 'id'>) => {
-    if (!company) return;
+    if (!company || !newStudentData.email) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No company context or email provided.' });
+        return;
+    }
     
+    const temporaryPassword = Math.random().toString(36).slice(-8);
+
     try {
-        const newUserId = doc(collection(db, 'temp')).id;
-        const temporaryPassword = Math.random().toString(36).slice(-8);
+        const { user: newStudentAuth } = await createUserWithEmailAndPassword(auth, newStudentData.email, temporaryPassword);
+        
+        await updateProfile(newStudentAuth, { displayName: newStudentData.name });
 
         const studentToAdd: User = {
             ...newStudentData,
-            id: newUserId,
+            id: newStudentAuth.uid,
             companyId: company.id,
             role: 'Student',
             status: 'Active',
@@ -108,37 +117,33 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
             endorsements: [],
             trainingLogs: [],
         };
-        delete studentToAdd.password;
-
-        await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentToAdd);
+        
+        await setDoc(doc(db, `companies/${company.id}/students`, newStudentAuth.uid), studentToAdd);
         setStudents(prev => [...prev, studentToAdd]);
         
-        if (newStudentData.email) {
-            await sendEmail({
-                to: newStudentData.email,
-                subject: `Welcome to ${company.name}`,
-                emailData: {
-                    userName: newStudentData.name,
-                    companyName: company.name,
-                    userEmail: newStudentData.email,
-                    temporaryPassword: temporaryPassword,
-                    loginUrl: window.location.origin + '/login',
-                },
-            });
-            toast({
-                title: 'Student Added',
-                description: `${newStudentData.name} has been added and a welcome email has been sent.`
-            });
-        } else {
-            toast({
-                title: 'Student Added',
-                description: `${newStudentData.name} has been added to the roster.`
-            });
-        }
+        await sendEmail({
+            to: newStudentData.email,
+            subject: `Welcome to ${company.name}`,
+            emailData: {
+                userName: newStudentData.name,
+                companyName: company.name,
+                userEmail: newStudentData.email,
+                temporaryPassword: temporaryPassword,
+                loginUrl: window.location.origin + '/login',
+            },
+        });
+        toast({
+            title: 'Student Added',
+            description: `${newStudentData.name} has been added and a welcome email has been sent.`
+        });
 
     } catch (error: any) {
         console.error("Error creating student:", error);
-        toast({ variant: 'destructive', title: 'Error', description: "Could not create new student." });
+         let errorMessage = "An unknown error occurred while adding the student.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "This email address is already in use by another account.";
+        }
+        toast({ variant: 'destructive', title: 'Error', description: errorMessage });
     }
   }
 
@@ -189,32 +194,36 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                                             Reactivate
                                         </DropdownMenuItem>
                                     ) : (
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem
-                                                onSelect={(e) => e.preventDefault()}
-                                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                                >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                                </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the student record for {student.name}.
-                                                </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteStudent(student.id)}>
-                                                    Yes, delete student
-                                                </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                         <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Archived')}>
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Archive
+                                        </DropdownMenuItem>
                                     )}
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem
+                                            onSelect={(e) => e.preventDefault()}
+                                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                            >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the student record for {student.name}.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteStudent(student.id)}>
+                                                Yes, delete student
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}

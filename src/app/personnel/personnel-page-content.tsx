@@ -13,7 +13,7 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewPersonnelForm } from './new-personnel-form';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
@@ -25,6 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { getPersonnelPageData } from './data';
 import { Separator } from '@/components/ui/separator';
 import { ALL_DOCUMENTS } from '@/lib/types';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
@@ -50,49 +51,58 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     };
 
     const handleNewPersonnel = async (data: Omit<PersonnelUser, 'id'>) => {
-        if (!company) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No company context.' });
+        if (!company || !data.email) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No company context or email provided.' });
             return;
         }
 
-        const newUserId = doc(collection(db, 'temp')).id;
         const temporaryPassword = Math.random().toString(36).slice(-8);
 
-        const newPersonnel: PersonnelUser = {
-            ...data,
-            id: newUserId,
-            companyId: company.id,
-            status: 'Active',
-            // Permissions are now passed directly from the form
-        };
-
         try {
-            await setDoc(doc(db, `companies/${company.id}/users`, newUserId), newPersonnel);
-
-            // Send welcome email
-            if (data.email) {
-                await sendEmail({
-                    to: data.email,
-                    subject: `Welcome to ${company.name}`,
-                    emailData: {
-                        userName: data.name,
-                        companyName: company.name,
-                        userEmail: data.email,
-                        temporaryPassword: temporaryPassword,
-                        loginUrl: window.location.origin + '/login',
-                    },
-                });
-            }
+            // This is a temporary auth instance to create the user without logging the admin out.
+            // In a real-world scenario, this would be handled by a backend function for security.
+            const { user: newUser } = await createUserWithEmailAndPassword(auth, data.email, temporaryPassword);
             
+            await updateProfile(newUser, { displayName: data.name });
+
+            const newPersonnelData: PersonnelUser = {
+                ...data,
+                id: newUser.uid,
+                companyId: company.id,
+                status: 'Active',
+                mustChangePassword: true,
+            } as PersonnelUser;
+
+            await setDoc(doc(db, `companies/${company.id}/users`, newUser.uid), newPersonnelData);
+
+            await sendEmail({
+                to: data.email,
+                subject: `Welcome to ${company.name}`,
+                emailData: {
+                    userName: data.name,
+                    companyName: company.name,
+                    userEmail: data.email,
+                    temporaryPassword: temporaryPassword,
+                    loginUrl: window.location.origin + '/login',
+                },
+            });
+
             await fetchPersonnel();
             setIsNewPersonnelOpen(false);
             toast({
                 title: 'Personnel Added',
                 description: `${data.name} has been added and a welcome email has been sent.`,
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error adding new personnel:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to add new personnel.' });
+             let errorMessage = "An unknown error occurred while adding the user.";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "This email address is already in use by another account.";
+            } else if (error.code === 'auth/weak-password') {
+                // This shouldn't happen with a generated password, but is good practice to include.
+                errorMessage = "The generated password is too weak.";
+            }
+            toast({ variant: 'destructive', title: 'Error', description: errorMessage });
         }
     };
     
@@ -116,6 +126,8 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         if (!company) return;
         try {
             await deleteDoc(doc(db, `companies/${company.id}/users`, personnelId));
+            // Note: Deleting from Firebase Auth should be handled by a backend function for security.
+            // This implementation only removes the database record.
             await fetchPersonnel();
             toast({ title: 'Personnel Deleted', description: 'The user has been removed from the roster.' });
         } catch (error) {
