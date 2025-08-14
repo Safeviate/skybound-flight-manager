@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser } from '@/lib/types';
+import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, deleteDoc, getDoc, collection, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
@@ -32,6 +32,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const { toast } = useToast();
     const router = useRouter();
     const [student, setStudent] = useState<StudentUser | null>(initialStudent);
+    const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
 
@@ -39,6 +40,29 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setStudent(initialStudent);
         setProgress(initialStudent?.progress || 0);
     }, [initialStudent]);
+
+     useEffect(() => {
+        const fetchPendingBookings = async () => {
+            if (!student || !company || !student.pendingBookingIds || student.pendingBookingIds.length === 0) {
+                setPendingBookings([]);
+                return;
+            }
+            try {
+                // Firestore 'in' queries are limited to 30 items. We may need to chunk this for students with many bookings.
+                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('id', 'in', student.pendingBookingIds.slice(0, 30)));
+                const snapshot = await getDocs(bookingsQuery);
+                const bookings = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Booking));
+                setPendingBookings(bookings);
+            } catch (error) {
+                console.error("Error fetching pending bookings:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load pending bookings for this student.' });
+            }
+        };
+
+        if (student) {
+            fetchPendingBookings();
+        }
+    }, [student, company, toast]);
     
     const canEdit = currentUser?.permissions.includes('Super User') || currentUser?.permissions.includes('Students:Edit');
 
@@ -67,10 +91,32 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         handleUpdate({ endorsements: arrayUnion(endorsementWithId) });
     };
 
-    const handleAddLogEntry = (newLogEntry: Omit<TrainingLogEntry, 'id'>) => {
+    const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => {
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
         const newTotalHours = (student?.flightHours || 0) + newLogEntry.flightDuration;
-        handleUpdate({ trainingLogs: arrayUnion(entryWithId), flightHours: newTotalHours });
+        
+        const updateData: Partial<StudentUser> = {
+            trainingLogs: arrayUnion(entryWithId),
+            flightHours: newTotalHours,
+        };
+
+        if (fromBookingId) {
+            const updatedPendingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
+            updateData.pendingBookingIds = updatedPendingIds;
+            setPendingBookings(prev => prev.filter(b => b.id !== fromBookingId));
+        }
+
+        await handleUpdate(updateData);
+
+        if (fromBookingId) {
+            const bookingRef = doc(db, `companies/${company!.id}/bookings`, fromBookingId);
+            await updateDoc(bookingRef, { status: 'Completed', flightDuration: newLogEntry.flightDuration });
+        }
+
+        toast({
+            title: 'Training Log Added',
+            description: 'A new entry has been added to the student logbook.',
+        });
     };
 
     const handleDownloadLogbook = () => {
@@ -178,7 +224,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Total Flight Hours: {student.flightHours?.toFixed(1)}</span>
+                            <span className="font-medium">Total Flight Hours: {student.flightHours?.toFixed(1) || '0.0'}</span>
                         </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
@@ -314,7 +360,39 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </Card>
                 )}
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
+                 {pendingBookings.length > 0 && (
+                    <Card>
+                         <CardHeader>
+                            <CardTitle>Pending Log Entries</CardTitle>
+                            <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                         </CardHeader>
+                         <CardContent className="space-y-2">
+                           {pendingBookings.map(booking => (
+                                <Dialog key={booking.id}>
+                                    <DialogTrigger asChild>
+                                        <button className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                            <div className="space-y-1">
+                                                <p className="font-semibold text-sm">Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                            </div>
+                                            <Button variant="secondary" size="sm">Log Flight</Button>
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add Training Log Entry</DialogTitle>
+                                            <DialogDescription>
+                                                Record details of the training session for {student.name}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <AddLogEntryForm studentId={student.id} onSubmit={(data) => handleAddLogEntry(data, booking.id)} />
+                                    </DialogContent>
+                                </Dialog>
+                           ))}
+                         </CardContent>
+                    </Card>
+                 )}
                  <Card>
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
