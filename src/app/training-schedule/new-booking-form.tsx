@@ -144,6 +144,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         student: data.purpose === 'Training' || data.purpose === 'Private' ? data.student : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
+        fuelUplift: data.fuelUplift ?? null,
+        oilUplift: data.oilUplift ?? null,
     };
 
     if (existingBooking) {
