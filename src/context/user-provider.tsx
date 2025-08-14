@@ -238,18 +238,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-            const userId = firebaseUser.uid;
+        if (firebaseUser && firebaseUser.email) {
             const companyId = 'skybound-aero';
 
             try {
-                const userDocRef = doc(db, 'companies', companyId, 'users', userId);
-                const userDocSnap = await getDoc(userDocRef);
+                // Query for the user by email instead of assuming UID matches doc ID
+                const usersCollectionRef = collection(db, 'companies', companyId, 'users');
+                const q = query(usersCollectionRef, where("email", "==", firebaseUser.email));
+                const querySnapshot = await getDocs(q);
 
-                if (userDocSnap.exists()) {
-                    setupListeners(userId, companyId);
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    setupListeners(userDoc.id, companyId);
                 } else {
-                    console.error(`User document for user ID "${userId}" not found in company "${companyId}". Logging out.`);
+                    console.error(`User document for email "${firebaseUser.email}" not found in company "${companyId}". Logging out.`);
                     logout();
                 }
 
