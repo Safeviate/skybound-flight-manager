@@ -350,7 +350,7 @@ export function AircraftPageContent({
                                                     Clear Post-Flight
                                                 </DropdownMenuItem>
                                             )}
-                                            <DropdownMenuItem onClick={() => handleEdit(ac)}>
+                                            <DropdownMenuItem onSelect={() => handleEdit(ac)}>
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 Edit
                                             </DropdownMenuItem>
