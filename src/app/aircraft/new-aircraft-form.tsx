@@ -135,6 +135,10 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? data.certificateOfRegistrationExpiry.toISOString() : null,
         massAndBalanceExpiry: data.massAndBalanceExpiry ? data.massAndBalanceExpiry.toISOString() : null,
         radioStationLicenseExpiry: data.radioStationLicenseExpiry ? data.radioStationLicenseExpiry.toISOString() : null,
+        // Ensure undefined number fields become null
+        currentTachoReading: data.currentTachoReading ?? null,
+        next50HourInspection: data.next50HourInspection ?? null,
+        next100HourInspection: data.next100HourInspection ?? null,
     };
 
     try {
