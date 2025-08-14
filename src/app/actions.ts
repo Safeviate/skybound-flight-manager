@@ -2,9 +2,9 @@
 'use server';
 
 import { db, auth } from '@/lib/firebase';
-import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, writeBatch, getDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import type { User } from '@/lib/types';
+import type { User, Company } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 
@@ -12,6 +12,7 @@ export async function createUserAndSendWelcomeEmail(
   userData: Omit<User, 'id'>, 
   companyId: string,
   companyName: string,
+  welcomeEmailEnabled: boolean,
 ): Promise<{ success: boolean; message: string }> {
 
   const temporaryPassword = Math.random().toString(36).slice(-8);
@@ -46,20 +47,24 @@ export async function createUserAndSendWelcomeEmail(
     // 3. Save user document to Firestore
     await setDoc(doc(db, `companies/${companyId}/students`, newUserId), studentToAdd);
 
-    // 4. Send welcome email
-    await sendEmail({
-        to: userData.email,
-        subject: `Welcome to ${companyName}`,
-        emailData: {
-            userName: userData.name,
-            companyName: companyName,
-            userEmail: userData.email,
-            temporaryPassword: temporaryPassword,
-            loginUrl: `https://${auth.app.options.authDomain}` || 'https://skybound-flight-manager.web.app/login',
-        },
-    });
+    // 4. Send welcome email ONLY if the feature is enabled
+    if (welcomeEmailEnabled) {
+        await sendEmail({
+            to: userData.email,
+            subject: `Welcome to ${companyName}`,
+            emailData: {
+                userName: userData.name,
+                companyName: companyName,
+                userEmail: userData.email,
+                temporaryPassword: temporaryPassword,
+                loginUrl: `https://${auth.app.options.authDomain}` || 'https://skybound-flight-manager.web.app/login',
+            },
+        });
+        return { success: true, message: `${userData.name} has been added and a welcome email has been sent.` };
+    } else {
+        return { success: true, message: `${userData.name} has been added. Welcome email was not sent as the feature is disabled.` };
+    }
 
-    return { success: true, message: `${userData.name} has been added and a welcome email has been sent.` };
 
   } catch (error: any) {
     console.error("Error creating student:", error);

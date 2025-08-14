@@ -29,6 +29,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createUserAndSendWelcomeEmail } from '../actions';
+import { useSettings } from '@/context/settings-provider';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -54,11 +55,12 @@ const studentFormSchema = z.object({
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 interface NewStudentFormProps {
-    onSubmit: (data: Omit<User, 'id'>) => Promise<{ success: boolean; message: string; }>;
+    onSubmit: (data: Omit<User, 'id'>, welcomeEmailEnabled: boolean) => Promise<{ success: boolean; message: string; }>;
 }
 
 export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
   const { company } = useUser();
+  const { settings } = useSettings();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   
@@ -91,7 +93,7 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
     } as unknown as Omit<User, 'id'>;
 
-    const result = await onSubmit(studentData);
+    const result = await onSubmit(studentData, settings.welcomeEmailEnabled);
 
     if (result.success) {
         toast({

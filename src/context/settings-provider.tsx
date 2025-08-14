@@ -13,6 +13,8 @@ interface Settings {
   dutyLimitMonthly: number;
   expiryWarningOrangeDays: number;
   expiryWarningYellowDays: number;
+  pwaEnabled: boolean;
+  welcomeEmailEnabled: boolean;
 }
 
 interface SettingsContextType {
@@ -32,6 +34,8 @@ const defaultSettings: Settings = {
     dutyLimitMonthly: 100,
     expiryWarningOrangeDays: 30,
     expiryWarningYellowDays: 60,
+    pwaEnabled: true,
+    welcomeEmailEnabled: true,
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {

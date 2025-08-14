@@ -1,14 +1,20 @@
+
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
+import { useSettings } from '@/context/settings-provider';
 
 function FunctionsPage() {
-  const [pwaEnabled, setPwaEnabled] = useState(true);
-  const [welcomeEmailEnabled, setWelcomeEmailEnabled] = useState(true);
+  const { settings, setSettings } = useSettings();
+
+  const handleToggle = (key: keyof typeof settings) => {
+    setSettings(prev => ({
+        ...prev,
+        [key]: !prev[key],
+    }));
+  };
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -32,8 +38,8 @@ function FunctionsPage() {
               </div>
               <Switch
                 id="pwa-enabled"
-                checked={pwaEnabled}
-                onCheckedChange={setPwaEnabled}
+                checked={settings.pwaEnabled}
+                onCheckedChange={() => handleToggle('pwaEnabled')}
               />
             </div>
              <div className="flex items-center justify-between rounded-lg border p-4">
@@ -47,8 +53,8 @@ function FunctionsPage() {
               </div>
               <Switch
                 id="welcome-email-enabled"
-                checked={welcomeEmailEnabled}
-                onCheckedChange={setWelcomeEmailEnabled}
+                checked={settings.welcomeEmailEnabled}
+                onCheckedChange={() => handleToggle('welcomeEmailEnabled')}
               />
             </div>
           </CardContent>

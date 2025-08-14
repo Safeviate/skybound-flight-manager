@@ -32,11 +32,13 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { createUserAndSendWelcomeEmail } from '../actions';
+import { useSettings } from '@/context/settings-provider';
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(initialStudents);
   const { user, company, loading } = useUser();
+  const { settings } = useSettings();
   const router = useRouter();
 
   const userPermissions = user?.permissions || [];
@@ -88,11 +90,11 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     }
   };
   
-  const handleNewStudent = async (newStudentData: Omit<User, 'id'>) => {
+  const handleNewStudent = async (newStudentData: Omit<User, 'id'>, welcomeEmailEnabled: boolean) => {
     if (!company) {
         return { success: false, message: 'No company context available.' };
     }
-    const result = await createUserAndSendWelcomeEmail(newStudentData, company.id, company.name);
+    const result = await createUserAndSendWelcomeEmail(newStudentData, company.id, company.name, welcomeEmailEnabled);
     if (result.success) {
         // Refresh the student list from the server
         const q = query(collection(db, `companies/${company.id}/students`));
@@ -209,7 +211,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                             Fill out the form below to add a new student. This will create their user account.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewStudentForm onSubmit={handleNewStudent} />
+                    <NewStudentForm onSubmit={(data) => handleNewStudent(data, settings.welcomeEmailEnabled)} />
                 </DialogContent>
             </Dialog>
           )}
