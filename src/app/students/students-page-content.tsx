@@ -31,9 +31,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { sendEmail } from '@/ai/flows/send-email-flow';
-// This action is being repurposed slightly, but the name is still applicable.
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { EditStudentForm } from './edit-student-form';
 
 
@@ -120,25 +118,13 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
       toast({ variant: 'destructive', title: 'Error', description: 'Student email is missing.'});
       return;
     }
-    const companyName = "Skybound Aero";
 
     try {
         await sendPasswordResetEmail(auth, student.email);
-
-        await sendEmail({
-            to: student.email,
-            subject: `Welcome to ${companyName}`,
-            emailData: {
-                userName: student.name,
-                companyName: companyName,
-                userEmail: student.email,
-                loginUrl: window.location.origin + '/login',
-            },
-        });
         
         toast({
-            title: 'Welcome Email Sent',
-            description: `A welcome email with a password reset link has been sent to ${student.name}.`,
+            title: 'Password Reset Email Sent',
+            description: `An email has been sent to ${student.name} with instructions to set their password.`,
         });
 
     } catch (error) {
@@ -146,7 +132,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
         toast({
             variant: 'destructive',
             title: 'Email Failed',
-            description: 'Could not send the welcome email. Please try again.',
+            description: 'Could not send the welcome email. Please check if the user exists in Firebase Authentication.',
         });
     }
   }
