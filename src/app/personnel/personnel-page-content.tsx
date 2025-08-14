@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -25,7 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { getPersonnelPageData } from './data';
 import { Separator } from '@/components/ui/separator';
 import { ALL_DOCUMENTS } from '@/lib/types';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
@@ -75,23 +75,11 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
 
             await setDoc(doc(db, `companies/${company.id}/users`, newUser.uid), newPersonnelData);
 
-            await sendEmail({
-                to: data.email,
-                subject: `Welcome to ${company.name}`,
-                emailData: {
-                    userName: data.name,
-                    companyName: company.name,
-                    userEmail: data.email,
-                    temporaryPassword: temporaryPassword,
-                    loginUrl: window.location.origin + '/login',
-                },
-            });
-
             await fetchPersonnel();
             setIsNewPersonnelOpen(false);
             toast({
                 title: 'Personnel Added',
-                description: `${data.name} has been added and a welcome email has been sent.`,
+                description: `${data.name} has been added. You can now send them a welcome email.`,
             });
         } catch (error: any) {
             console.error("Error adding new personnel:", error);
@@ -135,6 +123,43 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete personnel.' });
         }
     };
+    
+    const handleSendWelcomeEmail = async (person: PersonnelUser) => {
+        if (!company || !person.email) {
+          toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
+          return;
+        }
+
+        try {
+            // Send a password reset email, which acts as a secure way to set an initial password.
+            await sendPasswordResetEmail(auth, person.email);
+
+            await sendEmail({
+                to: person.email,
+                cc: 'barry@safeviate.com',
+                subject: `Welcome to ${company.name}`,
+                emailData: {
+                    userName: person.name,
+                    companyName: company.name,
+                    userEmail: person.email,
+                    loginUrl: window.location.origin + '/login',
+                },
+            });
+            
+            toast({
+                title: 'Welcome Email Sent',
+                description: `A welcome email with a password reset link has been sent to ${person.name}. A copy has been sent to barry@safeviate.com.`,
+            });
+
+        } catch (error) {
+            console.error("Error sending welcome email:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Email Failed',
+                description: 'Could not send the welcome email. Please try again.',
+            });
+        }
+    };
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -156,7 +181,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                           <DialogHeader>
                               <DialogTitle>Add New Personnel</DialogTitle>
                               <DialogDescription>
-                                  Add a new staff member to the system. This will create their user account and send them a welcome email.
+                                  Add a new staff member to the system. This will create their user account.
                               </DialogDescription>
                           </DialogHeader>
                           <NewPersonnelForm onSubmit={handleNewPersonnel} />
@@ -200,6 +225,10 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                               </Button>
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent>
+                                              <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
+                                                  <Mail className="mr-2 h-4 w-4" />
+                                                  Send Welcome Email
+                                              </DropdownMenuItem>
                                               <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
                                                   <Edit className="mr-2 h-4 w-4" />
                                                   Edit

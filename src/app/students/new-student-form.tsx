@@ -55,12 +55,11 @@ const studentFormSchema = z.object({
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 interface NewStudentFormProps {
-    onSubmit: (data: Omit<User, 'id'>, welcomeEmailEnabled: boolean) => Promise<{ success: boolean; message: string; }>;
+    onSuccess: () => void;
 }
 
-export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
+export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   const { company } = useUser();
-  const { settings } = useSettings();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   
@@ -87,13 +86,18 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
   }, [company]);
   
   async function handleFormSubmit(data: StudentFormValues) {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+        return;
+    }
+    
     const studentData = {
         ...data,
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
     } as unknown as Omit<User, 'id'>;
 
-    const result = await onSubmit(studentData, settings.welcomeEmailEnabled);
+    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
 
     if (result.success) {
         toast({
@@ -101,6 +105,7 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
             description: result.message,
         });
         form.reset();
+        onSuccess();
     } else {
         toast({
             variant: 'destructive',

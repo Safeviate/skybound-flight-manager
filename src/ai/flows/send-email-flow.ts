@@ -13,6 +13,7 @@ import { Resend } from 'resend';
 
 const SendEmailInputSchema = z.object({
   to: z.string().email(),
+  cc: z.string().email().optional(),
   subject: z.string(),
   emailData: z.object({
     userName: z.string(),
@@ -34,7 +35,7 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.void(),
   },
-  async ({ to, subject, emailData }) => {
+  async ({ to, cc, subject, emailData }) => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Email will not be sent.';
@@ -76,6 +77,7 @@ const sendEmailFlow = ai.defineFlow(
       const { data, error } = await resend.emails.send({
         from: fromAddress,
         to: to,
+        cc: cc,
         subject: subject,
         html: htmlBody,
         headers: {

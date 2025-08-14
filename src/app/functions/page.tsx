@@ -45,10 +45,10 @@ function FunctionsPage() {
              <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="welcome-email-enabled" className="text-base">
-                  Enable Welcome Email with Password
+                  Enable Automatic Welcome Email
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  When a new user is created, send them a welcome email containing a temporary password.
+                  When a new user is created, automatically send them a welcome email.
                 </p>
               </div>
               <Switch

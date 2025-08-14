@@ -47,23 +47,7 @@ export async function createUserAndSendWelcomeEmail(
     // 3. Save user document to Firestore
     await setDoc(doc(db, `companies/${companyId}/students`, newUserId), studentToAdd);
 
-    // 4. Send welcome email ONLY if the feature is enabled
-    if (welcomeEmailEnabled) {
-        await sendEmail({
-            to: userData.email,
-            subject: `Welcome to ${companyName}`,
-            emailData: {
-                userName: userData.name,
-                companyName: companyName,
-                userEmail: userData.email,
-                temporaryPassword: temporaryPassword,
-                loginUrl: `https://${auth.app.options.authDomain}` || 'https://skybound-flight-manager.web.app/login',
-            },
-        });
-        return { success: true, message: `${userData.name} has been added and a welcome email has been sent.` };
-    } else {
-        return { success: true, message: `${userData.name} has been added. Welcome email was not sent as the feature is disabled.` };
-    }
+    return { success: true, message: `${userData.name} has been added.` };
 
 
   } catch (error: any) {
@@ -79,3 +63,4 @@ export async function createUserAndSendWelcomeEmail(
     return { success: false, message: errorMessage };
   }
 }
+

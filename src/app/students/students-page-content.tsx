@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChevronRight, PlusCircle, Archive, RotateCw, Trash2, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, PlusCircle, Archive, RotateCw, Trash2, MoreHorizontal, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
@@ -31,14 +31,15 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { createUserAndSendWelcomeEmail } from '../actions';
-import { useSettings } from '@/context/settings-provider';
+import { sendEmail } from '@/ai/flows/send-email-flow';
+// This action is being repurposed slightly, but the name is still applicable.
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
   const [students, setStudents] = useState<User[]>(initialStudents);
   const { user, company, loading } = useUser();
-  const { settings } = useSettings();
   const router = useRouter();
 
   const userPermissions = user?.permissions || [];
@@ -46,6 +47,13 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
 
   const activeStudents = students.filter(s => s.status === 'Active');
   const archivedStudents = students.filter(s => s.status === 'Archived');
+
+  const fetchStudents = async () => {
+    if (!company) return;
+    const q = query(collection(db, `companies/${company.id}/students`));
+    const snapshot = await getDocs(q);
+    setStudents(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+  };
 
   const handleStatusChange = async (studentId: string, newStatus: 'Active' | 'Archived') => {
     if (!company) return;
@@ -89,19 +97,42 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
       });
     }
   };
-  
-  const handleNewStudent = async (newStudentData: Omit<User, 'id'>, welcomeEmailEnabled: boolean) => {
-    if (!company) {
-        return { success: false, message: 'No company context available.' };
+
+  const handleSendWelcomeEmail = async (student: User) => {
+    if (!company || !student.email) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
+      return;
     }
-    const result = await createUserAndSendWelcomeEmail(newStudentData, company.id, company.name, welcomeEmailEnabled);
-    if (result.success) {
-        // Refresh the student list from the server
-        const q = query(collection(db, `companies/${company.id}/students`));
-        const snapshot = await getDocs(q);
-        setStudents(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+
+    try {
+        // Generate a new temporary password by resetting it in Firebase Auth
+        await sendPasswordResetEmail(auth, student.email);
+
+        await sendEmail({
+            to: student.email,
+            cc: 'barry@safeviate.com',
+            subject: `Welcome to ${company.name}`,
+            emailData: {
+                userName: student.name,
+                companyName: company.name,
+                userEmail: student.email,
+                loginUrl: window.location.origin + '/login',
+            },
+        });
+        
+        toast({
+            title: 'Welcome Email Sent',
+            description: `A welcome email with a password reset link has been sent to ${student.name}. A copy has been sent to barry@safeviate.com.`,
+        });
+
+    } catch (error) {
+        console.error("Error sending welcome email:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Email Failed',
+            description: 'Could not send the welcome email. Please try again.',
+        });
     }
-    return result;
   }
 
   const StudentTable = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
@@ -144,6 +175,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleSendWelcomeEmail(student)}>
+                                        <Mail className="mr-2 h-4 w-4" />
+                                        Send Welcome Email
+                                    </DropdownMenuItem>
                                     {isArchived ? (
                                         <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Active')}>
                                             <RotateCw className="mr-2 h-4 w-4" />
@@ -211,7 +246,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                             Fill out the form below to add a new student. This will create their user account.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewStudentForm onSubmit={(data) => handleNewStudent(data, settings.welcomeEmailEnabled)} />
+                    <NewStudentForm onSuccess={fetchStudents} />
                 </DialogContent>
             </Dialog>
           )}
