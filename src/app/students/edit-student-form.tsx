@@ -42,6 +42,7 @@ const studentFormSchema = z.object({
   instructor: z.string({
     required_error: 'Please select an instructor.',
   }),
+  licenseType: z.string().optional(),
   medicalExpiry: z.date().optional().nullable(),
   licenseExpiry: z.date().optional().nullable(),
   passportExpiry: z.date().optional().nullable(),
@@ -74,6 +75,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             email: student.email || '',
             phone: student.phone,
             instructor: student.instructor,
+            licenseType: student.licenseType,
             medicalExpiry: student.medicalExpiry ? parseISO(student.medicalExpiry) : null,
             licenseExpiry: student.licenseExpiry ? parseISO(student.licenseExpiry) : null,
             passportExpiry: student.passportExpiry ? parseISO(student.passportExpiry) : null,
@@ -188,6 +190,27 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+            />
+            <FormField
+                control={form.control}
+                name="licenseType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>License Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a license type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="SPL">SPL</SelectItem>
+                            <SelectItem value="PPL">PPL</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
             <FormField
                 control={form.control}

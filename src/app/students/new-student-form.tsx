@@ -45,6 +45,7 @@ const studentFormSchema = z.object({
   instructor: z.string({
     required_error: 'Please select an instructor.',
   }),
+  licenseType: z.string().optional(),
   medicalExpiry: z.date().optional().nullable(),
   licenseExpiry: z.date().optional().nullable(),
   passportExpiry: z.date().optional().nullable(),
@@ -203,6 +204,27 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+            />
+             <FormField
+                control={form.control}
+                name="licenseType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>License Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a license type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="SPL">SPL</SelectItem>
+                            <SelectItem value="PPL">PPL</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
             <FormField
                 control={form.control}

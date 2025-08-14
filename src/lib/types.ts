@@ -194,6 +194,7 @@ export type User = {
     status?: 'Active' | 'Archived';
     endorsements?: Endorsement[];
     trainingLogs?: TrainingLogEntry[];
+    licenseType?: 'SPL' | 'PPL';
     // Personnel-specific
     department?: Department;
     medicalExpiry?: string | null;
