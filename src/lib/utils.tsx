@@ -162,5 +162,3 @@ export const getNextService = (hours: number): { type: string; hoursUntil: numbe
     const hoursUntilNextMPI = mpiInterval - hoursSinceLastMPI;
     return { type: 'MPI', hoursUntil: hoursUntilNextMPI };
 };
-
-    

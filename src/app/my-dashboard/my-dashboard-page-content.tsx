@@ -99,9 +99,11 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
             let className = 'bg-background hover:bg-muted/50';
 
             if (daysUntil < 0) {
-                className = 'bg-destructive/10 text-foreground';
+                className = 'bg-destructive/10 border-destructive text-foreground';
             } else if (daysUntil <= settings.expiryWarningOrangeDays) {
-                className = 'bg-yellow-400/20 text-foreground';
+                className = 'bg-orange/10 border-orange text-foreground';
+            } else if (daysUntil <= settings.expiryWarningYellowDays) {
+                className = 'bg-yellow-400/20 border-yellow-500 text-foreground';
             }
             return { className, description };
         }
