@@ -20,16 +20,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import type { Role, User } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { createUserAndSendWelcomeEmail } from '../actions';
-import { useSettings } from '@/context/settings-provider';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -54,26 +51,33 @@ const studentFormSchema = z.object({
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
-interface NewStudentFormProps {
-    onSuccess: () => void;
+interface EditStudentFormProps {
+    student: User;
+    onUpdate: (data: User) => void;
 }
 
-export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
+export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
   const { company } = useUser();
   const [instructors, setInstructors] = useState<User[]>([]);
-  const { toast } = useToast();
   
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      name: '',
-      studentCode: '',
-      email: '',
-      phone: '',
-      instructor: '',
-      consentDisplayContact: 'Not Consented',
-    }
   });
+
+  useEffect(() => {
+    if (student) {
+        form.reset({
+            name: student.name,
+            studentCode: student.studentCode || '',
+            email: student.email || '',
+            phone: student.phone,
+            instructor: student.instructor,
+            medicalExpiry: student.medicalExpiry ? parseISO(student.medicalExpiry) : null,
+            licenseExpiry: student.licenseExpiry ? parseISO(student.licenseExpiry) : null,
+            consentDisplayContact: student.consentDisplayContact || 'Not Consented',
+        });
+    }
+  }, [student, form]);
   
   useEffect(() => {
       const fetchInstructors = async () => {
@@ -86,35 +90,14 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       fetchInstructors();
   }, [company]);
   
-  async function handleFormSubmit(data: StudentFormValues) {
-    if (!company) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
-        return;
-    }
-    
-    const studentData = {
+  function handleFormSubmit(data: StudentFormValues) {
+    const updatedStudent: User = {
+        ...student,
         ...data,
-        role: 'Student',
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
-    } as unknown as Omit<User, 'id'>;
-
-    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
-
-    if (result.success) {
-        toast({
-            title: 'Student Added',
-            description: result.message,
-        });
-        form.reset();
-        onSuccess();
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Error Creating Student',
-            description: result.message,
-        });
-    }
+    };
+    onUpdate(updatedStudent);
   }
 
   return (
@@ -228,7 +211,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                             <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                                 mode="single"
-                                selected={field.value ?? undefined}
+                                selected={field.value}
                                 onSelect={field.onChange}
                                 initialFocus
                             />
@@ -266,7 +249,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                             <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                                 mode="single"
-                                selected={field.value ?? undefined}
+                                selected={field.value}
                                 onSelect={field.onChange}
                                 initialFocus
                             />
@@ -318,9 +301,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
 
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Adding Student...' : 'Add Student'}
-          </Button>
+          <Button type="submit">Save Changes</Button>
         </div>
       </form>
     </Form>

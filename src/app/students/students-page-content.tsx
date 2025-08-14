@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChevronRight, PlusCircle, Archive, RotateCw, Trash2, MoreHorizontal, Mail } from 'lucide-react';
+import { ChevronRight, PlusCircle, Archive, RotateCw, Trash2, MoreHorizontal, Mail, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
@@ -34,6 +34,7 @@ import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/
 import { sendEmail } from '@/ai/flows/send-email-flow';
 // This action is being repurposed slightly, but the name is still applicable.
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+import { EditStudentForm } from './edit-student-form';
 
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
@@ -41,6 +42,8 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   const [students, setStudents] = useState<User[]>(initialStudents);
   const { user, company, loading } = useUser();
   const router = useRouter();
+  const [isNewStudentOpen, setIsNewStudentOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<User | null>(null);
 
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
@@ -53,6 +56,20 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     const q = query(collection(db, `companies/${company.id}/students`));
     const snapshot = await getDocs(q);
     setStudents(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+  };
+
+  const handleUpdateStudent = async (updatedData: User) => {
+    if (!company) return;
+    try {
+        const studentRef = doc(db, `companies/${company.id}/students`, updatedData.id);
+        await updateDoc(studentRef, { ...updatedData });
+        fetchStudents();
+        setEditingStudent(null);
+        toast({ title: 'Student Updated', description: `${updatedData.name}'s details have been saved.` });
+    } catch (error) {
+        console.error('Failed to update student:', error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update student details.' });
+    }
   };
 
   const handleStatusChange = async (studentId: string, newStatus: 'Active' | 'Archived') => {
@@ -178,6 +195,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                                         <Mail className="mr-2 h-4 w-4" />
                                         Send Welcome Email
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setEditingStudent(student)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
                                     {isArchived ? (
                                         <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Active')}>
                                             <RotateCw className="mr-2 h-4 w-4" />
@@ -231,7 +252,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Student Roster</CardTitle>
           {canEdit && (
-            <Dialog>
+            <Dialog open={isNewStudentOpen} onOpenChange={setIsNewStudentOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -245,7 +266,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                             Fill out the form below to add a new student. This will create their user account.
                         </DialogDescription>
                     </DialogHeader>
-                    <NewStudentForm onSuccess={fetchStudents} />
+                    <NewStudentForm onSuccess={() => { fetchStudents(); setIsNewStudentOpen(false); }} />
                 </DialogContent>
             </Dialog>
           )}
@@ -265,6 +286,23 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
           </Tabs>
         </CardContent>
       </Card>
+
+      {editingStudent && (
+        <Dialog open={!!editingStudent} onOpenChange={(open) => !open && setEditingStudent(null)}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Edit Student: {editingStudent.name}</DialogTitle>
+                    <DialogDescription>
+                        Update the details for this student.
+                    </DialogDescription>
+                </DialogHeader>
+                <EditStudentForm 
+                    student={editingStudent}
+                    onUpdate={handleUpdateStudent}
+                />
+            </DialogContent>
+        </Dialog>
+      )}
     </main>
   );
 }
