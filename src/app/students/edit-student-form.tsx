@@ -75,7 +75,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             email: student.email || '',
             phone: student.phone,
             instructor: student.instructor,
-            licenseType: student.licenseType,
+            licenseType: student.licenseType || '',
             medicalExpiry: student.medicalExpiry ? parseISO(student.medicalExpiry) : null,
             licenseExpiry: student.licenseExpiry ? parseISO(student.licenseExpiry) : null,
             passportExpiry: student.passportExpiry ? parseISO(student.passportExpiry) : null,
@@ -197,7 +197,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>License Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a license type" />
