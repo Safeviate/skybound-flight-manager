@@ -30,7 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
@@ -65,10 +65,26 @@ export function AircraftPageContent({
     const [selectedChecklistAircraftId, setSelectedChecklistAircraftId] = useState<string | null>(null);
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
-    const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
     
     useEffect(() => {
+        if (!company) return;
+
+        const q = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+            setAircraftList(aircrafts);
+        }, (error) => {
+            console.error("Error fetching real-time aircraft data:", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
+        });
+
+        // Cleanup subscription on component unmount
+        return () => unsubscribe();
+    }, [company, toast]);
+    
+    useEffect(() => {
+        // We still set initial data to avoid flickering on load
         setAircraftList(initialAircraft);
         setBookings(initialBookings);
         setExternalContacts(initialExternalContacts);
@@ -76,14 +92,13 @@ export function AircraftPageContent({
     
     
     const fetchHistory = useCallback(async () => {
-        if (selectedHistoryAircraftId) {
-            const companyId = 'skybound-aero';
-            const history = await getChecklistHistory(companyId, selectedHistoryAircraftId);
+        if (selectedHistoryAircraftId && company) {
+            const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
             setChecklistHistory(history);
         } else {
             setChecklistHistory([]);
         }
-    }, [selectedHistoryAircraftId]);
+    }, [selectedHistoryAircraftId, company]);
 
     useEffect(() => {
         fetchHistory();
@@ -114,8 +129,8 @@ export function AircraftPageContent({
     };
 
     const handleArchive = async (aircraft: Aircraft) => {
-        const companyId = 'skybound-aero';
-        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Archived' });
         toast({
             title: 'Aircraft Archived',
@@ -124,8 +139,8 @@ export function AircraftPageContent({
     };
     
     const handleRestore = async (aircraft: Aircraft) => {
-        const companyId = 'skybound-aero';
-        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Restored',
@@ -134,8 +149,8 @@ export function AircraftPageContent({
     };
 
     const handleReturnToService = async (aircraft: Aircraft) => {
-        const companyId = 'skybound-aero';
-        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { status: 'Available' });
         toast({
             title: 'Aircraft Returned to Service',
@@ -144,8 +159,8 @@ export function AircraftPageContent({
     };
     
     const handleClearPostFlight = async (aircraft: Aircraft) => {
-        const companyId = 'skybound-aero';
-        const aircraftRef = doc(db, `companies/${companyId}/aircraft`, aircraft.id);
+        if (!company) return;
+        const aircraftRef = doc(db, `companies/${company.id}/aircraft`, aircraft.id);
         await updateDoc(aircraftRef, { checklistStatus: 'ready' });
         toast({
             title: 'Post-Flight Cleared',
@@ -169,9 +184,8 @@ export function AircraftPageContent({
     };
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
-        if (!selectedAircraftForChecklist || !user) return;
+        if (!selectedAircraftForChecklist || !user || !company) return;
 
-        const companyId = 'skybound-aero';
         const isPreFlight = 'registration' in data;
         const newStatus = isPreFlight ? 'needs-post-flight' : 'ready';
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
@@ -192,7 +206,7 @@ export function AircraftPageContent({
 
         try {
             // Update aircraft status
-            const aircraftRef = doc(db, `companies/${companyId}/aircraft`, selectedAircraftForChecklist.id);
+            const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
             const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
             // If it's a post-flight, clear the active booking
             if (!isPreFlight) {
@@ -201,12 +215,12 @@ export function AircraftPageContent({
             batch.update(aircraftRef, aircraftUpdate);
 
             // Add to checklist history
-            const historyCollectionRef = collection(db, `companies/${companyId}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
+            const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             batch.set(doc(historyCollectionRef), historyDoc);
 
             // If post-flight, complete the associated booking
             if (!isPreFlight && bookingForChecklist) {
-                const bookingRef = doc(db, `companies/${companyId}/bookings`, bookingForChecklist.id);
+                const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
                 batch.update(bookingRef, { status: 'Completed' });
             }
 
@@ -240,14 +254,13 @@ export function AircraftPageContent({
 
 
     const handleDeleteChecklist = async (checklistId: string) => {
-        if (!selectedHistoryAircraftId) {
+        if (!selectedHistoryAircraftId || !company) {
             toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete checklist without aircraft context.' });
             return;
         }
         
-        const companyId = 'skybound-aero';
         try {
-            const docRef = doc(db, `companies/${companyId}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
+            const docRef = doc(db, `companies/${company.id}/aircraft/${selectedHistoryAircraftId}/completed-checklists`, checklistId);
             await deleteDoc(docRef);
             setViewingChecklist(null);
             toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
