@@ -19,7 +19,7 @@ interface UserContextType {
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
   updateCompany: (updatedData: Partial<Company>) => Promise<boolean>;
-  getUnacknowledgedAlerts: (audits?: QualityAudit[]) => Alert[];
+  getUnacknowledgedAlerts: (types?: Alert['type'][]) => Alert[];
   acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
 }
 
@@ -317,13 +317,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const getUnacknowledgedAlerts = useCallback((): Alert[] => {
+  const getUnacknowledgedAlerts = useCallback((types?: Alert['type'][]): Alert[] => {
     if (!user) return [];
 
-    return allAlerts.filter(alert =>
+    let filteredAlerts = allAlerts.filter(alert =>
         !alert.readBy.includes(user.id) && 
         (!alert.targetUserId || alert.targetUserId === user.id)
     );
+
+    if (types && types.length > 0) {
+        filteredAlerts = filteredAlerts.filter(alert => types.includes(alert.type));
+    }
+    
+    return filteredAlerts;
   }, [allAlerts, user]);
 
   const acknowledgeAlerts = async (alertIds: string[]): Promise<void> => {

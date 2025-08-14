@@ -55,7 +55,8 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
   
   useEffect(() => {
     // The alerts from the UserProvider are real-time, so we prefer them if available
-    const unacknowledgedAlerts = getUnacknowledgedAlerts();
+    // We filter for only Red and Yellow tags here for the main alerts page.
+    const unacknowledgedAlerts = getUnacknowledgedAlerts(['Red Tag', 'Yellow Tag']);
     if (unacknowledgedAlerts.length > 0) {
         setAlerts(unacknowledgedAlerts);
     } else {
