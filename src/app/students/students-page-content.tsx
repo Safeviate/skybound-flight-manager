@@ -99,20 +99,21 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   };
 
   const handleSendWelcomeEmail = async (student: User) => {
-    if (!company || !student.email) {
-      toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
+    if (!student.email) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Student email is missing.'});
       return;
     }
+    const companyName = "Skybound Aero";
 
     try {
         await sendPasswordResetEmail(auth, student.email);
 
         await sendEmail({
             to: student.email,
-            subject: `Welcome to ${company.name}`,
+            subject: `Welcome to ${companyName}`,
             emailData: {
                 userName: student.name,
-                companyName: company.name,
+                companyName: companyName,
                 userEmail: student.email,
                 loginUrl: window.location.origin + '/login',
             },

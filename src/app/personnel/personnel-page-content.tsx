@@ -86,20 +86,21 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     };
     
     const handleSendWelcomeEmail = async (person: PersonnelUser) => {
-        if (!company || !person.email) {
-          toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
+        if (!person.email) {
+          toast({ variant: 'destructive', title: 'Error', description: 'User email is missing.'});
           return;
         }
+        const companyName = "Skybound Aero";
 
         try {
             await sendPasswordResetEmail(auth, person.email);
 
             await sendEmail({
                 to: person.email,
-                subject: `Welcome to ${company.name}`,
+                subject: `Welcome to ${companyName}`,
                 emailData: {
                     userName: person.name,
-                    companyName: company.name,
+                    companyName: companyName,
                     userEmail: person.email,
                     loginUrl: window.location.origin + '/login',
                 },
