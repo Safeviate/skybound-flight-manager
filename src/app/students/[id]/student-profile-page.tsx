@@ -25,6 +25,7 @@ import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { buttonVariants } from '@/components/ui/button';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -92,6 +93,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
 
     const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => {
+        if (!company || !student) return;
+
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
         const newTotalHours = (student?.flightHours || 0) + newLogEntry.flightDuration;
         
@@ -109,7 +112,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         await handleUpdate(updateData);
 
         if (fromBookingId) {
-            const bookingRef = doc(db, `companies/${company!.id}/bookings`, fromBookingId);
+            const bookingRef = doc(db, `companies/${company.id}/bookings`, fromBookingId);
             await updateDoc(bookingRef, { status: 'Completed', flightDuration: newLogEntry.flightDuration });
         }
 
@@ -371,13 +374,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                            {pendingBookings.map(booking => (
                                 <Dialog key={booking.id}>
                                     <DialogTrigger asChild>
-                                        <button className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
                                             <div className="space-y-1">
                                                 <p className="font-semibold text-sm">Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                 <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                             </div>
-                                            <Button variant="secondary" size="sm">Log Flight</Button>
-                                        </button>
+                                            <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
+                                        </div>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
