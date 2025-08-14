@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -69,11 +70,7 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
     
-<<<<<<< HEAD
     const fromAddress = `${companyName} <onboarding@resend.dev>`;
-=======
-    const fromAddress = `Safeviate <onboarding@resend.dev>`;
->>>>>>> 3b503700b9ce7f8fb8e393a85c200153e9cbb871
 
     try {
       const { data, error } = await resend.emails.send({
