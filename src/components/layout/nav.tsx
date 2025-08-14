@@ -70,6 +70,7 @@ const adminNavItems = [
     { href: '/settings/companies', label: 'Manage Companies', icon: Building, requiredPermissions: ['Super User'] },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
     { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
+    { href: '/functions', label: 'Functions', icon: FlaskConical, requiredPermissions: ['Super User'] },
 ]
 
 const settingsNavItems: {
