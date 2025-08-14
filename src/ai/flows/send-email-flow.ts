@@ -18,7 +18,6 @@ const SendEmailInputSchema = z.object({
     userName: z.string(),
     companyName: z.string(),
     userEmail: z.string().email(),
-    temporaryPassword: z.string().optional(),
     loginUrl: z.string().url(),
   }),
 });
@@ -45,20 +44,20 @@ const sendEmailFlow = ai.defineFlow(
     }
     const resend = new Resend(apiKey);
 
-    const { userName, companyName, loginUrl, userEmail, temporaryPassword } = emailData;
+    const { userName, companyName, loginUrl, userEmail } = emailData;
     
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333;">
         <h1 style="color: #2563eb; font-size: 24px;">Welcome to ${companyName}</h1>
         <p style="font-size: 16px; line-height: 1.5;">Hello ${userName},</p>
         <p style="font-size: 16px; line-height: 1.5;">
-          An account has been created for you in the ${companyName} portal. Please follow the instructions to set your password and log in.
+          An account has been created for you in the ${companyName} portal.
         </p>
         <p style="font-size: 16px; line-height: 1.5;">
-          Click the link below to set your password. If you did not request this, please ignore this email.
+          To get started, please visit the login page and use the "Forgot Password" link to set your password for the first time.
         </p>
         <a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-          Set Your Password & Login
+          Go to Login Page
         </a>
         <p style="margin-top: 30px; font-size: 12px; color: #777;">
           If you have any questions, please contact your system administrator.

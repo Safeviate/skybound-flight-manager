@@ -25,7 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { getPersonnelPageData } from './data';
 import { Separator } from '@/components/ui/separator';
 import { ALL_DOCUMENTS } from '@/lib/types';
-import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
@@ -50,49 +50,10 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         setPersonnel(personnelData);
     };
 
-    const handleNewPersonnel = async (data: Omit<PersonnelUser, 'id'>) => {
-        if (!company || !data.email) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No company context or email provided.' });
-            return;
-        }
-
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-
-        try {
-            // This is a temporary auth instance to create the user without logging the admin out.
-            // In a real-world scenario, this would be handled by a backend function for security.
-            const { user: newUser } = await createUserWithEmailAndPassword(auth, data.email, temporaryPassword);
-            
-            await updateProfile(newUser, { displayName: data.name });
-
-            const newPersonnelData: PersonnelUser = {
-                ...data,
-                id: newUser.uid,
-                companyId: company.id,
-                status: 'Active',
-                mustChangePassword: true,
-            } as PersonnelUser;
-
-            await setDoc(doc(db, `companies/${company.id}/users`, newUser.uid), newPersonnelData);
-
-            await fetchPersonnel();
-            setIsNewPersonnelOpen(false);
-            toast({
-                title: 'Personnel Added',
-                description: `${data.name} has been added. You can now send them a welcome email.`,
-            });
-        } catch (error: any) {
-            console.error("Error adding new personnel:", error);
-             let errorMessage = "An unknown error occurred while adding the user.";
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = "This email address is already in use by another account.";
-            } else if (error.code === 'auth/weak-password') {
-                // This shouldn't happen with a generated password, but is good practice to include.
-                errorMessage = "The generated password is too weak.";
-            }
-            toast({ variant: 'destructive', title: 'Error', description: errorMessage });
-        }
-    };
+    const handleSuccess = () => {
+        fetchPersonnel();
+        setIsNewPersonnelOpen(false);
+    }
     
     const handleUpdatePersonnel = async (updatedData: PersonnelUser) => {
         if (!company) return;
@@ -182,7 +143,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                   Add a new staff member to the system. This will create their user account.
                               </DialogDescription>
                           </DialogHeader>
-                          <NewPersonnelForm onSubmit={handleNewPersonnel} />
+                          <NewPersonnelForm onSuccess={handleSuccess} />
                       </DialogContent>
                   </Dialog>
               )}

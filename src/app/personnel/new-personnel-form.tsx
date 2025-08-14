@@ -28,6 +28,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { createUserAndSendWelcomeEmail } from '../actions';
+import { useUser } from '@/context/user-provider';
+import { useToast } from '@/hooks/use-toast';
 
 const documents = [
   "Passport",
@@ -66,7 +69,7 @@ const personnelFormSchema = z.object({
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
 
 interface NewPersonnelFormProps {
-    onSubmit: (data: Omit<User, 'id'>) => void;
+    onSuccess: () => void;
 }
 
 const personnelRoles: Role[] = [
@@ -87,7 +90,9 @@ const personnelRoles: Role[] = [
     'Safety Manager',
 ];
 
-export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
+export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
+  const { company } = useUser();
+  const { toast } = useToast();
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -111,7 +116,12 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
   }, [selectedRole, form]);
 
 
-  function handleFormSubmit(data: PersonnelFormValues) {
+  async function handleFormSubmit(data: PersonnelFormValues) {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+        return;
+    }
+
     const documentsToSave: UserDocument[] = (data.documents || [])
         .filter(doc => doc.expiryDate) // Only save documents that have an expiry date set
         .map(doc => ({
@@ -123,10 +133,24 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
     const dataToSubmit = {
         ...data,
         documents: documentsToSave,
-    }
+    } as unknown as Omit<User, 'id'>
 
-    onSubmit(dataToSubmit as unknown as Omit<User, 'id'>);
-    form.reset();
+    const result = await createUserAndSendWelcomeEmail(dataToSubmit, company.id, company.name, false);
+
+     if (result.success) {
+        toast({
+            title: 'Personnel Added',
+            description: result.message,
+        });
+        form.reset();
+        onSuccess();
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error Creating Personnel',
+            description: result.message,
+        });
+    }
   }
 
   return (
@@ -339,7 +363,9 @@ export function NewPersonnelForm({ onSubmit }: NewPersonnelFormProps) {
             </div>
         </ScrollArea>
         <div className="flex justify-end">
-          <Button type="submit">Add Personnel</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+             {form.formState.isSubmitting ? 'Adding...' : 'Add Personnel'}
+          </Button>
         </div>
       </form>
     </Form>

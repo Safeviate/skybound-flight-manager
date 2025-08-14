@@ -30,28 +30,33 @@ export async function createUserAndSendWelcomeEmail(
     });
 
     // 2. Prepare user document for Firestore
-    const studentToAdd: User = {
+    const userToAdd: User = {
         ...userData,
         id: newUserId,
         companyId: companyId,
-        role: 'Student',
+        permissions: ROLE_PERMISSIONS[userData.role] || [],
         status: 'Active',
-        permissions: ROLE_PERMISSIONS['Student'],
-        flightHours: 0,
-        progress: 0,
-        endorsements: [],
-        trainingLogs: [],
-    };
-    delete studentToAdd.password;
+        mustChangePassword: true,
+    } as User;
+
+    if (userData.role === 'Student') {
+        userToAdd.flightHours = 0;
+        userToAdd.progress = 0;
+        userToAdd.endorsements = [];
+        userToAdd.trainingLogs = [];
+    }
+
+    delete (userToAdd as any).password;
 
     // 3. Save user document to Firestore
-    await setDoc(doc(db, `companies/${companyId}/students`, newUserId), studentToAdd);
+    const collectionName = userData.role === 'Student' ? 'students' : 'users';
+    await setDoc(doc(db, `companies/${companyId}/${collectionName}`, newUserId), userToAdd);
 
     return { success: true, message: `${userData.name} has been added.` };
 
 
   } catch (error: any) {
-    console.error("Error creating student:", error);
+    console.error("Error creating user:", error);
     let errorMessage = "An unknown error occurred.";
     if (error.code === 'auth/email-already-in-use') {
         errorMessage = "This email address is already in use by another account.";
@@ -63,4 +68,3 @@ export async function createUserAndSendWelcomeEmail(
     return { success: false, message: errorMessage };
   }
 }
-

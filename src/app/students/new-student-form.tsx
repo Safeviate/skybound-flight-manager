@@ -94,6 +94,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     
     const studentData = {
         ...data,
+        role: 'Student',
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
     } as unknown as Omit<User, 'id'>;
@@ -140,7 +141,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                 <FormItem>
                   <FormLabel>Student Code</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., S12345" {...field} />
+                    <Input placeholder="e.g., S12345" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
