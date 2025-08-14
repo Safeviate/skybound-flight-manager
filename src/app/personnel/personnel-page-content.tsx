@@ -131,7 +131,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         }
 
         try {
-            // Send a password reset email, which acts as a secure way to set an initial password.
             await sendPasswordResetEmail(auth, person.email);
 
             await sendEmail({

@@ -105,7 +105,6 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     }
 
     try {
-        // Generate a new temporary password by resetting it in Firebase Auth
         await sendPasswordResetEmail(auth, student.email);
 
         await sendEmail({
