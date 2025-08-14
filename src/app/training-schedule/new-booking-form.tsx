@@ -27,7 +27,9 @@ const bookingFormSchema = z.object({
   student: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
-  bookingNumber: z.string().optional(), // Added for the new system
+  bookingNumber: z.string().optional(),
+  fuelUplift: z.coerce.number().optional(),
+  oilUplift: z.coerce.number().optional(),
 }).refine(data => {
     if (data.purpose === 'Training') {
         return !!data.student && !!data.instructor;
@@ -106,6 +108,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       instructor: existingBooking?.instructor,
       maintenanceType: existingBooking?.maintenanceType,
       bookingNumber: existingBooking?.bookingNumber,
+      fuelUplift: existingBooking?.fuelUplift,
+      oilUplift: existingBooking?.oilUplift,
     });
   }, [existingBooking, aircraft, startTime, form]);
   

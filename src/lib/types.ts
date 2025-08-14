@@ -225,6 +225,8 @@ export type Booking = {
   cancellationReason?: string;
   startHobbs?: number;
   endHobbs?: number;
+  fuelUplift?: number;
+  oilUplift?: number;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';

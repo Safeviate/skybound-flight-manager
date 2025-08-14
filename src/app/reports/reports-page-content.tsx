@@ -418,6 +418,8 @@ export function ReportsPageContent({
                                 <TableHead>Purpose</TableHead>
                                 <TableHead>Details</TableHead>
                                 <TableHead>Duration</TableHead>
+                                <TableHead>Fuel Uplift</TableHead>
+                                <TableHead>Oil Uplift</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Reason for Cancellation</TableHead>
                             </TableRow>
@@ -436,6 +438,8 @@ export function ReportsPageContent({
                                         {booking.purpose === 'Maintenance' && booking.maintenanceType}
                                     </TableCell>
                                     <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
+                                    <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
+                                    <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
                                     </TableCell>
@@ -444,7 +448,7 @@ export function ReportsPageContent({
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={8} className="text-center h-24">No recent bookings found.</TableCell>
+                                <TableCell colSpan={10} className="text-center h-24">No recent bookings found.</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
