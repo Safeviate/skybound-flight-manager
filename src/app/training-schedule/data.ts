@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -12,17 +13,22 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
     try {
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`), where('status', '!=', 'Archived'));
         const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
-        const usersQuery = query(collection(db, `companies/${companyId}/users`));
+        const personnelQuery = query(collection(db, `companies/${companyId}/users`));
+        const studentsQuery = query(collection(db, `companies/${companyId}/students`));
 
-        const [aircraftSnapshot, bookingsSnapshot, usersSnapshot] = await Promise.all([
+        const [aircraftSnapshot, bookingsSnapshot, personnelSnapshot, studentsSnapshot] = await Promise.all([
             getDocs(aircraftQuery),
             getDocs(bookingsQuery),
-            getDocs(usersQuery),
+            getDocs(personnelQuery),
+            getDocs(studentsQuery),
         ]);
 
         const aircraft = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+
+        const users = [...personnel, ...students];
 
         return { aircraft, bookings, users };
     } catch (error) {
