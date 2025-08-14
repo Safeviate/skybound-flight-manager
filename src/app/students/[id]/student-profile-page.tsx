@@ -125,15 +125,15 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!student || !company) return;
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         try {
-            await deleteDoc(studentRef);
+            await updateDoc(studentRef, { status: 'Archived' });
             toast({
-                title: "Student Deleted",
-                description: `${student?.name} has been permanently deleted from the system.`,
+                title: "Student Archived",
+                description: `${student?.name} has been moved to the archives.`,
             });
             router.push('/students');
         } catch (error) {
-            console.error("Failed to delete student:", error);
-            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete student record.' });
+            console.error("Failed to archive student:", error);
+            toast({ variant: 'destructive', title: 'Archive Failed', description: 'Could not archive student record.' });
         }
     }
 
@@ -281,20 +281,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         <CardContent>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="w-full">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Student Permanently
+                                    <Button variant="outline" className="w-full">
+                                        <Archive className="mr-2 h-4 w-4" /> Archive Student
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete {student.name}'s profile, training logs, and all associated data.
+                                            This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleArchive}>Yes, Delete Student</AlertDialogAction>
+                                        <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
