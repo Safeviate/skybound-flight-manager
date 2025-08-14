@@ -25,7 +25,7 @@ import { format, parseISO } from 'date-fns';
 import { CalendarIcon, Bot } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
@@ -87,6 +87,39 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       next100HourInspection: 0,
     },
   });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        ...initialData,
+        airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
+        insuranceExpiry: parseDate(initialData.insuranceExpiry),
+        certificateOfReleaseToServiceExpiry: parseDate(initialData.certificateOfReleaseToServiceExpiry),
+        certificateOfRegistrationExpiry: parseDate(initialData.certificateOfRegistrationExpiry),
+        massAndBalanceExpiry: parseDate(initialData.massAndBalanceExpiry),
+        radioStationLicenseExpiry: parseDate(initialData.radioStationLicenseExpiry),
+        currentTachoReading: initialData.currentTachoReading ?? undefined,
+        next50HourInspection: initialData.next50HourInspection ?? undefined,
+        next100HourInspection: initialData.next100HourInspection ?? undefined,
+      });
+    } else {
+      form.reset({
+        make: '',
+        model: '',
+        tailNumber: '',
+        hours: 0,
+        currentTachoReading: 0,
+        next50HourInspection: 0,
+        next100HourInspection: 0,
+        airworthinessExpiry: undefined,
+        insuranceExpiry: undefined,
+        certificateOfReleaseToServiceExpiry: undefined,
+        certificateOfRegistrationExpiry: undefined,
+        massAndBalanceExpiry: undefined,
+        radioStationLicenseExpiry: undefined,
+      });
+    }
+  }, [initialData, form]);
 
   async function handleFormSubmit(data: AircraftFormValues) {
     if (!company) {
