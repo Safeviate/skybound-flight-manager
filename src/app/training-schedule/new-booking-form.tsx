@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,6 +26,7 @@ const bookingFormSchema = z.object({
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   // Conditional fields
   student: z.string().optional(),
+  studentId: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
   bookingNumber: z.string().optional(),
@@ -105,6 +107,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       endTime: existingBooking?.endTime || '',
       purpose: existingBooking?.purpose,
       student: existingBooking?.student,
+      studentId: existingBooking?.studentId,
       instructor: existingBooking?.instructor,
       maintenanceType: existingBooking?.maintenanceType,
       bookingNumber: existingBooking?.bookingNumber,
@@ -125,6 +128,15 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         const bookingCount = bookings.filter(b => b.bookingNumber).length;
         data.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
     }
+    
+    // Find studentId if student name is selected
+    if (data.student && !data.studentId) {
+        const selectedStudent = users.find(u => u.name === data.student);
+        if (selectedStudent) {
+            data.studentId = selectedStudent.id;
+        }
+    }
+
 
     const cleanData = {
         ...data,

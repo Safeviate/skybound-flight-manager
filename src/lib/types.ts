@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -195,6 +196,7 @@ export type User = {
     endorsements?: Endorsement[];
     trainingLogs?: TrainingLogEntry[];
     licenseType?: 'SPL' | 'PPL';
+    pendingBookingIds?: string[];
     // Personnel-specific
     department?: Department;
     medicalExpiry?: string | null;
@@ -220,6 +222,7 @@ export type Booking = {
   endTime: string;
   aircraft: string;
   student?: string | null;
+  studentId?: string | null;
   instructor?: string | null;
   purpose: 'Training' | 'Maintenance' | 'Private';
   status: 'Approved' | 'Completed' | 'Cancelled';

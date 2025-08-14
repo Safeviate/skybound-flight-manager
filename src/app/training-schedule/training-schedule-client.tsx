@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -138,6 +139,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 const aircraftRef = doc(db, `companies/${company.id}/aircraft`, newBookingSlot!.aircraft.id);
                 batch.update(aircraftRef, { activeBookingId: newBookingId });
             }
+
+            // If it's a training booking, add its ID to the student's pending bookings
+            if (newBooking.purpose === 'Training' && newBooking.studentId) {
+                const studentRef = doc(db, `companies/${company.id}/students`, newBooking.studentId);
+                batch.update(studentRef, { pendingBookingIds: arrayUnion(newBooking.id) });
+            }
+            
             toast({ title: 'Booking Created', description: `Booking ${newBooking.bookingNumber} has been added to the schedule.` });
         }
         
