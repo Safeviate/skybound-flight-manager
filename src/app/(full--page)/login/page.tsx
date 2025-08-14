@@ -12,6 +12,9 @@ import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 export default function LoginPage() {
   const { user, login, company, loading } = useUser();
@@ -21,6 +24,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -46,6 +50,31 @@ export default function LoginPage() {
       setIsLoading(false);
     }
     // The useEffect hook will handle redirection on successful login
+  }
+
+  async function handlePasswordReset() {
+    if (!email) {
+      setLoginError('Please enter your email address to reset your password.');
+      return;
+    }
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `An email has been sent to ${email} with instructions to reset your password.`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === 'auth/user-not-found') {
+          setLoginError('No user found with this email address.');
+      } else {
+          setLoginError('Failed to send password reset email. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -79,7 +108,12 @@ export default function LoginPage() {
                 />
                 </div>
                 <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                     <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
+                        Forgot password?
+                    </Button>
+                  </div>
                 <Input 
                     id="password" 
                     type="password" 
