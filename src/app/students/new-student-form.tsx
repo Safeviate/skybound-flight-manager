@@ -38,6 +38,7 @@ const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
+  studentCode: z.string().optional(),
   email: z.string().email(),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   instructor: z.string({
@@ -123,6 +124,19 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+            />
+            <FormField
+              control={form.control}
+              name="studentCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Student Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., S12345" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <FormField
             control={form.control}

@@ -187,6 +187,7 @@ export type User = {
     nextOfKinPhone?: string;
     nextOfKinEmail?: string;
     // Student-specific
+    studentCode?: string;
     instructor?: string;
     flightHours?: number;
     progress?: number;
