@@ -191,8 +191,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   }, []);
   
-  const setupListeners = useCallback((userId: string, companyId: string) => {
-    const userDocRef = doc(db, 'companies', companyId, 'users', userId);
+  const setupListeners = useCallback((userDocRef: any, companyId: string, userId: string) => {
     const companyDocRef = doc(db, 'companies', companyId);
 
     const unsubUser = onSnapshot(userDocRef, (userSnap) => {
@@ -242,16 +241,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const companyId = 'skybound-aero';
 
             try {
-                // Query for the user by email instead of assuming UID matches doc ID
-                const usersCollectionRef = collection(db, 'companies', companyId, 'users');
-                const q = query(usersCollectionRef, where("email", "==", firebaseUser.email));
-                const querySnapshot = await getDocs(q);
+                // Try fetching from 'users' collection first
+                let userDocRef = doc(db, 'companies', companyId, 'users', firebaseUser.uid);
+                let userSnap = await getDoc(userDocRef);
 
-                if (!querySnapshot.empty) {
-                    const userDoc = querySnapshot.docs[0];
-                    setupListeners(userDoc.id, companyId);
+                // If not found in 'users', try 'students' collection
+                if (!userSnap.exists()) {
+                    userDocRef = doc(db, 'companies', companyId, 'students', firebaseUser.uid);
+                    userSnap = await getDoc(userDocRef);
+                }
+
+                if (userSnap.exists()) {
+                    setupListeners(userDocRef, companyId, firebaseUser.uid);
                 } else {
-                    console.error(`User document for email "${firebaseUser.email}" not found in company "${companyId}". Logging out.`);
+                    console.error(`User document for email "${firebaseUser.email}" not found in company "${companyId}" in users or students. Logging out.`);
                     logout();
                 }
 
@@ -286,7 +289,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const updateUser = async (updatedData: Partial<User>): Promise<boolean> => {
     if (!user || !company) return false;
     try {
-        const userRef = doc(db, 'companies', company.id, 'users', user.id);
+        const collectionName = user.role === 'Student' ? 'students' : 'users';
+        const userRef = doc(db, 'companies', company.id, collectionName, user.id);
         await updateDoc(userRef, updatedData);
         return true;
     } catch (error) {
