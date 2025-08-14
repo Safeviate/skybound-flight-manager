@@ -688,9 +688,25 @@ export function AircraftPageContent({
                         <span>Certificate of Airworthiness</span>
                         {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                     </div>
-                    <div className="flex items-center justify-between text-sm">
+                     <div className="flex items-center justify-between text-sm">
                         <span>Insurance Certificate</span>
                         {getExpiryBadge(viewingDocumentsForAircraft?.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                     <div className="flex items-center justify-between text-sm">
+                        <span>Certificate of Release to Service</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfReleaseToServiceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                     <div className="flex items-center justify-between text-sm">
+                        <span>Certificate of Registration</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfRegistrationExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                     <div className="flex items-center justify-between text-sm">
+                        <span>Mass & Balance</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.massAndBalanceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                    </div>
+                     <div className="flex items-center justify-between text-sm">
+                        <span>Radio Station License</span>
+                        {getExpiryBadge(viewingDocumentsForAircraft?.radioStationLicenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                     </div>
                 </div>
             </DialogContent>
