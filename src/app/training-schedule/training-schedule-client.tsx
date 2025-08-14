@@ -12,12 +12,16 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
+import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -37,12 +41,29 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
-    setAircraft(initialAircraft);
-    setBookings(initialBookings);
-    setUsers(initialUsers);
-  }, [initialAircraft, initialBookings, initialUsers]);
+    if (!company) return;
+
+    const bookingsUnsub = onSnapshot(collection(db, `companies/${company.id}/bookings`), (snapshot) => {
+        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+    });
+
+    const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
+        setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
+    });
+    
+    return () => {
+        bookingsUnsub();
+        aircraftUnsub();
+    };
+}, [company]);
+  
+  const filteredBookings = useMemo(() => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    return bookings.filter(b => b.date === dateStr);
+  }, [bookings, selectedDate]);
 
 
   const timeSlots = Array.from({ length: 18 * 4 }, (_, i) => {
@@ -61,7 +82,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const getBookingForSlot = (aircraftTailNumber: string, time: string) => {
     const slotTimeInMinutes = timeToMinutes(time);
-    return bookings.find(b => {
+    return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
       if (b.status === 'Cancelled') return false;
       const startTimeInMinutes = timeToMinutes(b.startTime);
@@ -318,7 +339,31 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         </div>
 
         <div id="ganttView">
-            <h2>Daily Schedule</h2>
+            <div className="flex justify-between items-center mb-4">
+                 <h2>Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-[280px] justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => setSelectedDate(date || new Date())}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+            </div>
              <div className="color-legend">
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
@@ -396,8 +441,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             <DialogTitle>{editingBooking ? 'Edit Booking' : 'Create New Booking'}</DialogTitle>
             <DialogDescription>
               {editingBooking 
-                ? `Editing booking for ${editingBooking.aircraft} on ${editingBooking.date}`
-                : `Creating a booking for ${newBookingSlot?.aircraft.tailNumber} at ${newBookingSlot?.time}`
+                ? `Editing booking for ${editingBooking.aircraft} on ${format(parseISO(editingBooking.date), 'PPP')}`
+                : `Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${format(selectedDate, 'PPP')}`
               }
             </DialogDescription>
           </DialogHeader>
@@ -405,7 +450,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             <NewBookingForm
               aircraft={editingBooking?.aircraft ? aircraft.find(a => a.tailNumber === editingBooking.aircraft)! : newBookingSlot!.aircraft}
               users={users}
-              bookings={bookings}
+              bookings={filteredBookings}
               onSubmit={handleBookingSubmit}
               onDelete={handleBookingDelete}
               existingBooking={editingBooking}

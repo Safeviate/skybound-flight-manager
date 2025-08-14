@@ -66,6 +66,7 @@ interface NewBookingFormProps {
   onDelete?: (bookingId: string, reason: string) => void;
   existingBooking?: Booking | null;
   startTime?: string;
+  selectedDate?: Date;
 }
 
 const deletionReasons = [
@@ -79,7 +80,7 @@ const deletionReasons = [
     'Other',
 ];
 
-export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking, startTime }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking, startTime, selectedDate }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -102,7 +103,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   useEffect(() => {
     form.reset({
       aircraft: existingBooking?.aircraft || aircraft.tailNumber,
-      date: existingBooking?.date || format(new Date(), 'yyyy-MM-dd'),
+      date: existingBooking?.date || format(selectedDate || new Date(), 'yyyy-MM-dd'),
       startTime: existingBooking?.startTime || startTime,
       endTime: existingBooking?.endTime || '',
       purpose: existingBooking?.purpose,
@@ -114,7 +115,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       fuelUplift: existingBooking?.fuelUplift,
       oilUplift: existingBooking?.oilUplift,
     });
-  }, [existingBooking, aircraft, startTime, form]);
+  }, [existingBooking, aircraft, startTime, form, selectedDate]);
   
   const purpose = form.watch('purpose');
 
