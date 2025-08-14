@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -34,18 +33,19 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.void(),
   },
-  async ({ to, subject, emailData }) => { // 'to' and 'subject' are correctly received here
+  async ({ to, subject, emailData }) => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      const errorMessage = 'Resend API key is not configured. Cannot send email.';
+      const errorMessage = 'Resend API key is not configured. Email will not be sent.';
       console.error(errorMessage);
-      throw new Error(errorMessage);
+      // We don't throw an error here to allow the rest of the process (e.g., user creation) to succeed.
+      // The calling function will handle notifying the user if necessary.
+      return; 
     }
     const resend = new Resend(apiKey);
 
     const { userName, companyName, loginUrl, userEmail, temporaryPassword } = emailData;
     
-    // Construct HTML directly
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333;">
         <h1 style="color: #2563eb; font-size: 24px;">Welcome to ${companyName}</h1>
@@ -69,11 +69,15 @@ const sendEmailFlow = ai.defineFlow(
       </div>
     `;
     
+<<<<<<< HEAD
     const fromAddress = `${companyName} <onboarding@resend.dev>`;
+=======
+    const fromAddress = `Safeviate <onboarding@resend.dev>`;
+>>>>>>> 3b503700b9ce7f8fb8e393a85c200153e9cbb871
 
     try {
       const { data, error } = await resend.emails.send({
-        from: fromAddress, // Now dynamic
+        from: fromAddress,
         to: to,
         subject: subject,
         html: htmlBody,

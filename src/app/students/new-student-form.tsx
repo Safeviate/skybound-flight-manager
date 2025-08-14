@@ -8,27 +8,27 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Copy, RefreshCw } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
 import type { Role, User } from '@/lib/types';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { createUserAndSendWelcomeEmail } from '../actions';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -38,7 +38,7 @@ const studentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  email: z.string().email().optional(),
+  email: z.string().email(),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   instructor: z.string({
     required_error: 'Please select an instructor.',
@@ -53,7 +53,7 @@ const studentFormSchema = z.object({
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 interface NewStudentFormProps {
-    onSubmit: (data: Omit<User, 'id'>) => void;
+    onSubmit: (data: Omit<User, 'id'>) => Promise<{ success: boolean; message: string; }>;
 }
 
 export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
@@ -83,13 +83,28 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
       fetchInstructors();
   }, [company]);
   
-  function handleFormSubmit(data: StudentFormValues) {
-    onSubmit({
+  async function handleFormSubmit(data: StudentFormValues) {
+    const studentData = {
         ...data,
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
-    } as unknown as Omit<User, 'id'>);
-    form.reset();
+    } as unknown as Omit<User, 'id'>;
+
+    const result = await onSubmit(studentData);
+
+    if (result.success) {
+        toast({
+            title: 'Student Added',
+            description: result.message,
+        });
+        form.reset();
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error Creating Student',
+            description: result.message,
+        });
+    }
   }
 
   return (
@@ -114,7 +129,7 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Email (Optional)</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                     <Input type="email" placeholder="student@email.com" {...field} />
                 </FormControl>
@@ -280,7 +295,9 @@ export function NewStudentForm({ onSubmit }: NewStudentFormProps) {
 
 
         <div className="flex justify-end">
-          <Button type="submit">Add Student</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Adding Student...' : 'Add Student'}
+          </Button>
         </div>
       </form>
     </Form>
