@@ -20,7 +20,7 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, deleteDoc, getDoc, collection, query, where, writeBatch } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, deleteDoc, getDoc, collection, query, where, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
