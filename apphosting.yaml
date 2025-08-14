@@ -12,6 +12,6 @@ env:
       - BUILD
       - RUNTIME
   - variable: RESEND_API_KEY
-    secret: resend-api-key
+    secret: resend-api-key@3
     availability:
       - RUNTIME
