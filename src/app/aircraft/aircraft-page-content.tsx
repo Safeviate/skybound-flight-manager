@@ -66,6 +66,7 @@ export function AircraftPageContent({
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
+    const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
         if (!company) return;
