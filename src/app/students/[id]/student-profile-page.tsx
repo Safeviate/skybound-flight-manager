@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2 } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,11 +20,13 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, deleteDoc, getDoc, collection, query, where, writeBatch, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -35,6 +37,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     useEffect(() => {
         setStudent(initialStudent);
@@ -65,7 +70,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     }, [student, company, toast]);
     
     const canEdit = currentUser?.permissions.includes('Super User') || currentUser?.permissions.includes('Students:Edit');
+    
+    const sortedLogs = useMemo(() => {
+        return student?.trainingLogs?.sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime()) || [];
+    }, [student?.trainingLogs]);
 
+    const filteredLogs = useMemo(() => {
+        if (!searchTerm) return sortedLogs;
+        return sortedLogs.filter(log =>
+            log.aircraft.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.instructorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.instructorNotes.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [sortedLogs, searchTerm]);
+
+    const paginatedLogs = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredLogs.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredLogs, currentPage]);
+
+    const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+
+    const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+    
     const handleUpdate = async (updateData: Partial<StudentUser>) => {
         if (!student || !company) return;
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
@@ -428,8 +456,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {student.trainingLogs && student.trainingLogs.length > 0 ? (
-                            student.trainingLogs.map((log) => (
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search log entries..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        {paginatedLogs.length > 0 ? (
+                            paginatedLogs.map((log) => (
                                 <div key={log.id} className="grid gap-2">
                                     <div className="flex justify-between items-center">
                                         <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
@@ -454,8 +491,34 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         ) : (
                              <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                                 <p className="text-muted-foreground">
-                                    No training logs have been added for this student.
+                                    No training logs found for your search criteria.
                                 </p>
+                            </div>
+                        )}
+
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center space-x-2 pt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handlePrevPage}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleNextPage}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
                             </div>
                         )}
                     </CardContent>
