@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChevronRight, PlusCircle, Archive, RotateCw } from 'lucide-react';
+import { ChevronRight, PlusCircle, Archive, RotateCw, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { NewStudentForm } from './new-student-form';
 import Link from 'next/link';
@@ -26,11 +26,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MoreHorizontal } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 
@@ -67,6 +68,26 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
         });
     }
   }
+
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!company) return;
+    try {
+      const studentRef = doc(db, `companies/${company.id}/students`, studentId);
+      await deleteDoc(studentRef);
+      setStudents(prev => prev.filter(s => s.id !== studentId));
+      toast({
+        title: 'Student Deleted',
+        description: 'The student has been permanently removed from the system.',
+      });
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the student record.',
+      });
+    }
+  };
   
   const handleNewStudent = async (newStudentData: Omit<User, 'id'>) => {
     if (!company) return;
@@ -168,10 +189,31 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                                             Reactivate
                                         </DropdownMenuItem>
                                     ) : (
-                                        <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Archived')}>
-                                            <Archive className="mr-2 h-4 w-4" />
-                                            Archive
-                                        </DropdownMenuItem>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem
+                                                onSelect={(e) => e.preventDefault()}
+                                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                                >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the student record for {student.name}.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteStudent(student.id)}>
+                                                    Yes, delete student
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
