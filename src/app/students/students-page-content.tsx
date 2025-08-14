@@ -29,7 +29,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { sendEmail } from '@/ai/flows/send-email-flow';
 // This action is being repurposed slightly, but the name is still applicable.
@@ -110,7 +110,6 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
 
         await sendEmail({
             to: student.email,
-            cc: 'barry@safeviate.com',
             subject: `Welcome to ${company.name}`,
             emailData: {
                 userName: student.name,
@@ -122,7 +121,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
         
         toast({
             title: 'Welcome Email Sent',
-            description: `A welcome email with a password reset link has been sent to ${student.name}. A copy has been sent to barry@safeviate.com.`,
+            description: `A welcome email with a password reset link has been sent to ${student.name}.`,
         });
 
     } catch (error) {

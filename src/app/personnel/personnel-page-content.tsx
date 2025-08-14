@@ -136,7 +136,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
 
             await sendEmail({
                 to: person.email,
-                cc: 'barry@safeviate.com',
                 subject: `Welcome to ${company.name}`,
                 emailData: {
                     userName: person.name,
@@ -148,7 +147,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             
             toast({
                 title: 'Welcome Email Sent',
-                description: `A welcome email with a password reset link has been sent to ${person.name}. A copy has been sent to barry@safeviate.com.`,
+                description: `A welcome email with a password reset link has been sent to ${person.name}.`,
             });
 
         } catch (error) {

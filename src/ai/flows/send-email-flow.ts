@@ -13,7 +13,6 @@ import { Resend } from 'resend';
 
 const SendEmailInputSchema = z.object({
   to: z.string().email(),
-  cc: z.string().email().optional(),
   subject: z.string(),
   emailData: z.object({
     userName: z.string(),
@@ -35,7 +34,7 @@ const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: z.void(),
   },
-  async ({ to, cc, subject, emailData }) => {
+  async ({ to, subject, emailData }) => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       const errorMessage = 'Resend API key is not configured. Email will not be sent.';
@@ -53,17 +52,13 @@ const sendEmailFlow = ai.defineFlow(
         <h1 style="color: #2563eb; font-size: 24px;">Welcome to ${companyName}</h1>
         <p style="font-size: 16px; line-height: 1.5;">Hello ${userName},</p>
         <p style="font-size: 16px; line-height: 1.5;">
-          An account has been created for you in the ${companyName} portal. You can use the following credentials to log in and access the system.
+          An account has been created for you in the ${companyName} portal. Please follow the instructions to set your password and log in.
         </p>
-        <div style="border: 1px solid #ddd; padding: 10px 20px; margin: 20px 0; background-color: #fff; border-radius: 5px;">
-          <p style="font-size: 16px; line-height: 1.5; margin: 10px 0;"><strong>Email:</strong> ${userEmail}</p>
-          ${temporaryPassword ? `<p style="font-size: 16px; line-height: 1.5; margin: 10px 0;"><strong>Temporary Password:</strong> ${temporaryPassword}</p>` : ''}
-        </div>
         <p style="font-size: 16px; line-height: 1.5;">
-          For security reasons, you will be required to change your temporary password upon your first login.
+          Click the link below to set your password. If you did not request this, please ignore this email.
         </p>
         <a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-          Login to Your Account
+          Set Your Password & Login
         </a>
         <p style="margin-top: 30px; font-size: 12px; color: #777;">
           If you have any questions, please contact your system administrator.
@@ -77,7 +72,6 @@ const sendEmailFlow = ai.defineFlow(
       const { data, error } = await resend.emails.send({
         from: fromAddress,
         to: to,
-        cc: cc,
         subject: subject,
         html: htmlBody,
         headers: {
