@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { AddEndorsementForm } from './add-endorsement-form';
-import { getExpiryBadge } from '@/lib/utils.tsx';
+import { getExpiryBadge, cn } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
 import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
@@ -25,7 +25,6 @@ import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { buttonVariants } from '@/components/ui/button';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
