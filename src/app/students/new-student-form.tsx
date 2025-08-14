@@ -67,6 +67,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       name: '',
+      studentCode: '',
       email: '',
       phone: '',
       instructor: '',
