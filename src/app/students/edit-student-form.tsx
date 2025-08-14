@@ -44,6 +44,8 @@ const studentFormSchema = z.object({
   }),
   medicalExpiry: z.date().optional().nullable(),
   licenseExpiry: z.date().optional().nullable(),
+  passportExpiry: z.date().optional().nullable(),
+  visaExpiry: z.date().optional().nullable(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -74,6 +76,8 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             instructor: student.instructor,
             medicalExpiry: student.medicalExpiry ? parseISO(student.medicalExpiry) : null,
             licenseExpiry: student.licenseExpiry ? parseISO(student.licenseExpiry) : null,
+            passportExpiry: student.passportExpiry ? parseISO(student.passportExpiry) : null,
+            visaExpiry: student.visaExpiry ? parseISO(student.visaExpiry) : null,
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
         });
     }
@@ -96,6 +100,8 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
         ...data,
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
+        passportExpiry: data.passportExpiry ? format(data.passportExpiry, 'yyyy-MM-dd') : null,
+        visaExpiry: data.visaExpiry ? format(data.visaExpiry, 'yyyy-MM-dd') : null,
     };
     onUpdate(updatedStudent);
   }
@@ -227,6 +233,82 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                         <FormLabel>License/Endorsement Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="passportExpiry"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Passport Expiry</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick expiry date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="visaExpiry"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Visa Expiry</FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                             <FormControl>

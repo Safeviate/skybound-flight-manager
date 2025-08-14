@@ -198,6 +198,8 @@ export type User = {
     department?: Department;
     medicalExpiry?: string | null;
     licenseExpiry?: string | null;
+    passportExpiry?: string | null;
+    visaExpiry?: string | null;
     documents?: UserDocument[];
     // External Auditee specific
     externalCompanyName?: string;

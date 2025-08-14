@@ -192,6 +192,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <span>License Exp: {getExpiryBadge(student.licenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
                         </div>
                         )}
+                         {student.passportExpiry && (
+                        <div className="flex items-center space-x-3">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                            <span>Passport Exp: {getExpiryBadge(student.passportExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                        </div>
+                        )}
+                         {student.visaExpiry && (
+                        <div className="flex items-center space-x-3">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                            <span>Visa Exp: {getExpiryBadge(student.visaExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                        </div>
+                        )}
                     </CardContent>
                 </Card>
 
