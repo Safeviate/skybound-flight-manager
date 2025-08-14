@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 
@@ -35,7 +35,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [aircraft, setAircraft] = useState<Aircraft[]>(initialAircraft);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [users, setUsers] = useState<User[]>(initialUsers);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [activeView, setActiveView] = useState<'calendar' | 'gantt'>('gantt');
@@ -43,19 +43,28 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
+  const fetchBookingsForDate = useCallback(async (date: Date) => {
+    if (!company) return;
+    setLoading(true);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('date', '==', dateStr));
+    const snapshot = await getDocs(bookingsQuery);
+    setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+    setLoading(false);
+  }, [company]);
+  
+  useEffect(() => {
+    fetchBookingsForDate(selectedDate);
+  }, [selectedDate, fetchBookingsForDate]);
+
   useEffect(() => {
     if (!company) return;
-
-    const bookingsUnsub = onSnapshot(collection(db, `companies/${company.id}/bookings`), (snapshot) => {
-        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
-    });
 
     const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
         setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
     });
     
     return () => {
-        bookingsUnsub();
         aircraftUnsub();
     };
 }, [company]);
@@ -172,6 +181,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         
         await batch.commit();
         handleDialogClose();
+        fetchBookingsForDate(selectedDate);
     } catch (error) {
         console.error("Error saving booking:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the booking.' });
@@ -188,6 +198,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         await updateDoc(bookingRef, { status: 'Cancelled', cancellationReason: reason });
         toast({ title: 'Booking Cancelled', description: `Reason: ${reason}` });
         handleDialogClose();
+        fetchBookingsForDate(selectedDate);
     } catch (error) {
         console.error("Error cancelling booking:", error);
         toast({ variant: 'destructive', title: 'Cancellation Failed', description: 'Could not cancel the booking.' });
@@ -455,6 +466,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
               onDelete={handleBookingDelete}
               existingBooking={editingBooking}
               startTime={newBookingSlot?.time}
+              selectedDate={selectedDate}
             />
           )}
         </DialogContent>
