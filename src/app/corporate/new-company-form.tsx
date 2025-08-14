@@ -41,7 +41,7 @@ const featureGroups: { title: string; features: { id: Feature, label: string, de
         title: 'Safety & Quality',
         features: [
             { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
-            { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
+            { id: 'Quality', label: 'Quality Management', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
         ]
     },
     {
