@@ -56,6 +56,7 @@ const allFeatures = featureGroups.flatMap(g => g.features);
 
 
 const companyFormSchema = z.object({
+  companyName: z.string().min(2, 'Company name is required.'),
   primaryColor: z.string().optional(),
   backgroundColor: z.string().optional(),
   accentColor: z.string().optional(),
@@ -68,7 +69,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id' | 'name' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
 }
 
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
@@ -76,6 +77,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
+        companyName: '',
         primaryColor: '#2563eb',
         backgroundColor: '#f4f4f5',
         accentColor: '#f59e0b',
@@ -84,7 +86,8 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   });
 
   function handleFormSubmit(data: CompanyFormValues) {
-    const newCompany: Omit<Company, 'id' | 'name' | 'trademark'> = {
+    const newCompany: Omit<Company, 'id' | 'trademark'> = {
+        name: data.companyName,
         theme: {
             primary: data.primaryColor,
             background: data.backgroundColor,
@@ -111,7 +114,20 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
             <div className="space-y-4">
-                <h4 className="font-semibold">Administrator Account</h4>
+                <h4 className="font-semibold">Company & Administrator Details</h4>
+                <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Company Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., AeroVentures Inc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="adminName"

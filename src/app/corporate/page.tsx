@@ -19,9 +19,9 @@ export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'name' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
         
-        const companyId = 'skybound-aero';
+        const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
         if (logoFile) {
@@ -51,8 +51,7 @@ export default function CorporatePage() {
             const finalCompanyData: Partial<Company> = {
                 id: companyId,
                 logoUrl: logoUrl,
-                name: 'Safeviate',
-                trademark: 'Your Trusted Partner in Aviation',
+                trademark: `Your Trusted Partner in Aviation`,
                 ...companyData,
             };
             batch.set(companyDocRef, finalCompanyData, { merge: true });
