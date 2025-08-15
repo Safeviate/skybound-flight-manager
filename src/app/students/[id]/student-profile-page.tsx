@@ -431,10 +431,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                              <CardDescription>Total Flight Hours: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                             <Button onClick={() => {}} variant="outline" className="w-full sm:w-auto">
-                                <BookOpen className="mr-2 h-4 w-4" />
-                                View Logbook
-                            </Button>
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Logbook
@@ -461,14 +457,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search log entries..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                            />
+                        <div className="flex items-center justify-between">
+                            <Button onClick={() => {}} variant="outline" className="w-full sm:w-auto">
+                                <BookOpen className="mr-2 h-4 w-4" />
+                                View Full Logbook
+                            </Button>
+                            <div className="relative w-full max-w-sm">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search log entries..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
                         </div>
                         {paginatedLogs.length > 0 ? (
                             paginatedLogs.map((log) => (
