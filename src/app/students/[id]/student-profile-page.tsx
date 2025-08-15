@@ -29,6 +29,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Progress } from '@/components/ui/progress';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -224,6 +225,39 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     };
 
+    const MilestoneProgress = ({ currentHours }: { currentHours: number }) => {
+        const milestones = [
+            { name: '10 Hour Check', target: 10 },
+            { name: '20 Hour Check', target: 20 },
+            { name: '30 Hour Check', target: 30 },
+        ];
+
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Milestone Progress</CardTitle>
+                    <CardDescription>Progress towards key flight hour milestones.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {milestones.map(milestone => {
+                        const progress = Math.min((currentHours / milestone.target) * 100, 100);
+                        const hoursRemaining = Math.max(milestone.target - currentHours, 0);
+
+                        return (
+                            <div key={milestone.name}>
+                                <div className="flex justify-between mb-1 text-sm">
+                                    <span className="font-medium">{milestone.name}</span>
+                                    <span className="text-muted-foreground">{hoursRemaining.toFixed(1)} hrs remaining</span>
+                                </div>
+                                <Progress value={progress} />
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
+        )
+    };
+
 
     if (userLoading) {
         return (
@@ -295,30 +329,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Training Progress</CardTitle>
-                        <CardDescription>Adjust the slider to update the student's overall progress.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <Label htmlFor="progress" className="font-bold text-2xl w-24">{progress}%</Label>
-                            <Slider
-                                id="progress"
-                                min={0}
-                                max={100}
-                                step={1}
-                                value={[progress]}
-                                onValueChange={(value) => setProgress(value[0])}
-                                disabled={!canEdit}
-                            />
-                        </div>
-                         <Button onClick={handleProgressSave} className="w-full" disabled={!canEdit}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Save Progress
-                        </Button>
-                    </CardContent>
-                </Card>
+                <MilestoneProgress currentHours={student.flightHours || 0} />
+
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div className="space-y-1">
@@ -566,3 +578,40 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+</content>
+</change>
+<change>
+<file>/src/components/ui/progress.tsx</file>
+<content><![CDATA[
+"use client"
+
+import * as React from "react"
+import * as ProgressPrimitive from "@radix-ui/react-progress"
+
+import { cn } from "@/lib/utils"
+
+interface ProgressProps extends React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> {
+    indicatorClassName?: string;
+}
+
+const Progress = React.forwardRef<
+  React.ElementRef<typeof ProgressPrimitive.Root>,
+  ProgressProps
+>(({ className, value, indicatorClassName, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
+      className
+    )}
+    {...props}
+  >
+    <ProgressPrimitive.Indicator
+      className={cn("h-full w-full flex-1 bg-primary transition-all", indicatorClassName)}
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+    />
+  </ProgressPrimitive.Root>
+))
+Progress.displayName = ProgressPrimitive.Root.displayName
+
+export { Progress }
