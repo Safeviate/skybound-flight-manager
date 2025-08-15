@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -426,7 +426,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                                    <Button asChild variant="link" className="p-0 h-auto">
                                         <Link href="#">
                                             <BookOpen className="mr-2 h-4 w-4" />
                                             View Full Logbook
@@ -552,34 +552,44 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </Card>
                 <Card>
                     <CardHeader>
-                        <div className="space-y-1">
-                            <CardTitle>Student Debrief</CardTitle>
-                            <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div className="space-y-1">
+                                <CardTitle>Student Debrief</CardTitle>
+                                <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </Button>
+                                {canEdit && (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button className="w-full sm:w-auto">
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Add Log Entry
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                                <DialogDescription>
+                                                    Record details of the training session for {student.name}.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </div>
                         </div>
-                         <div className="flex items-center gap-2 pt-2">
-                            <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
+                        <div className="pt-4">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/students">
+                                    <UsersIcon className="mr-2 h-4 w-4" />
+                                    View All Student Debriefs
+                                </Link>
                             </Button>
-                            {canEdit && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button className="w-full sm:w-auto">
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add Log Entry
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                            <DialogDescription>
-                                                Record details of the training session for {student.name}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                    </DialogContent>
-                                </Dialog>
-                            )}
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
