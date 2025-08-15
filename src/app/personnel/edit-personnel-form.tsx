@@ -139,11 +139,11 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
   useEffect(() => {
     // Only reset permissions if the role has been manually changed by the user
-    if (form.formState.dirtyFields.role) {
+    if (form.formState.isDirty && form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
     }
-  }, [selectedRole, form.formState.dirtyFields.role, form.setValue]);
+  }, [selectedRole, form.formState.isDirty, form.formState.dirtyFields.role, form.setValue]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
