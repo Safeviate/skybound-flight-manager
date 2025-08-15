@@ -150,9 +150,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const today = startOfDay(new Date());
     const batch = writeBatch(db);
     const alertsCollection = collection(db, 'companies', companyId, 'alerts');
-    const existingAlertsQuery = query(alertsCollection, where('targetUserId', '==', user.id), where('type', '==', 'Task'));
-    const existingAlertsSnap = await getDocs(existingAlertsQuery);
-    const existingExpiryAlerts = new Set(existingAlertsSnap.docs.map(d => d.data().title));
     
     for (const docItem of user.documents) {
         if (!docItem.expiryDate) continue;
@@ -166,25 +163,32 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         } else if (daysUntil <= settings.expiryWarningYellowDays) {
             alertLevel = 'yellow';
         }
+        
+        const title = `Document Expiry: ${docItem.type}`;
+        
+        // Check if an alert with this exact title already exists for this user
+        const existingAlertsQuery = query(
+            alertsCollection, 
+            where('targetUserId', '==', user.id), 
+            where('title', '==', title)
+        );
+        const existingAlertsSnap = await getDocs(existingAlertsQuery);
 
-        if (alertLevel) {
-            const title = `Document Expiry: ${docItem.type}`;
-             // Pass the date in the description to be parsed by the display component
+        if (alertLevel && existingAlertsSnap.empty) {
+            // Pass the date in the description to be parsed by the display component
             const description = `Your ${docItem.type} is expiring on ${docItem.expiryDate}. Please take action.`;
 
-            if (!existingExpiryAlerts.has(title)) {
-                const newAlertRef = doc(collection(db, 'companies', companyId, 'alerts'));
-                batch.set(newAlertRef, {
-                    companyId: companyId,
-                    type: 'Task',
-                    title: title,
-                    description: description,
-                    author: 'System',
-                    date: new Date().toISOString(),
-                    readBy: [],
-                    targetUserId: user.id,
-                });
-            }
+            const newAlertRef = doc(alertsCollection);
+            batch.set(newAlertRef, {
+                companyId: companyId,
+                type: 'Task',
+                title: title,
+                description: description,
+                author: 'System',
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: user.id,
+            });
         }
     }
     await batch.commit();
