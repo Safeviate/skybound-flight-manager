@@ -46,8 +46,6 @@ const logEntryFormSchema = z.object({
   endHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
-  startTacho: z.coerce.number().optional(),
-  endTacho: z.coerce.number().optional(),
   instructorName: z.string({
     required_error: 'Please select the instructor.',
   }),
@@ -85,8 +83,6 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
       startHobbs: booking?.startHobbs || 0,
       endHobbs: booking?.endHobbs || 0,
       instructorName: booking?.instructor,
-      startTacho: 0,
-      endTacho: 0,
       studentStrengths: '',
       areasForImprovement: '',
     },
@@ -228,8 +224,6 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="startTacho" render={({ field }) => (<FormItem><FormLabel>Start Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4321.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="endTacho" render={({ field }) => (<FormItem><FormLabel>End Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4322.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                     </CardContent>
                 </Card>
