@@ -213,6 +213,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             toast({ variant: 'destructive', title: 'Archive Failed', description: 'Could not archive student record.' });
         }
     }
+    
+    const formatDecimalTime = (decimalHours: number | undefined) => {
+        if (typeof decimalHours !== 'number' || isNaN(decimalHours)) {
+            return '00:00';
+        }
+        const hours = Math.floor(decimalHours);
+        const minutes = Math.round((decimalHours - hours) * 60);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+
 
     if (userLoading) {
         return (
@@ -255,7 +265,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Total Flight Hours: {student.flightHours?.toFixed(1) || '0.0'}</span>
+                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(student.flightHours)}</span>
                         </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
@@ -428,7 +438,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
                             <CardTitle>Training Log</CardTitle>
-                             <CardDescription>Total Flight Hours: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
+                             <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
@@ -458,9 +468,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between">
-                            <Button onClick={() => {}} variant="outline" className="w-full sm:w-auto">
-                                <BookOpen className="mr-2 h-4 w-4" />
-                                View Full Logbook
+                            <Button asChild onClick={() => {}} variant="outline" className="w-full sm:w-auto">
+                                <Link href="#">
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    View Full Logbook
+                                </Link>
                             </Button>
                             <div className="relative w-full max-w-sm">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
