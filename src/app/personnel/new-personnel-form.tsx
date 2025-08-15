@@ -33,6 +33,7 @@ import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { PermissionsListbox } from './permissions-listbox';
 
 
 const documents = [
@@ -51,63 +52,6 @@ const phoneRegex = new RegExp(
 );
 
 const companyDepartments: Department[] = ['Management', 'Flight Operations', 'Ground Operation', 'Maintenance', 'Administrative', 'Cargo', 'Finance', 'Human Resources'];
-
-// Dual Listbox Component for Permissions
-const PermissionsListbox = ({ control }: { control: any }) => {
-    const { field } = useController({ name: 'permissions', control });
-    const assignedPermissions = new Set(field.value || []);
-    const availablePermissions = ALL_PERMISSIONS.filter(p => !assignedPermissions.has(p));
-
-    const handleTogglePermission = (permission: Permission) => {
-        const newValue = new Set(field.value || []);
-        if (newValue.has(permission)) {
-            newValue.delete(permission);
-        } else {
-            newValue.add(permission);
-        }
-        field.onChange(Array.from(newValue));
-    };
-
-    const ListItem = ({ permission, onClick }: { permission: Permission, onClick: () => void }) => (
-        <button
-            type="button"
-            onClick={onClick}
-            className="w-full text-left p-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
-        >
-            {permission}
-        </button>
-    );
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-             <Card className="flex-1">
-                <CardHeader>
-                    <CardTitle className="text-base">Available Permissions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-64 border rounded-md p-2">
-                        {availablePermissions.length > 0 ? availablePermissions.map(p => (
-                            <ListItem key={p} permission={p} onClick={() => handleTogglePermission(p)} />
-                        )) : <p className="text-sm text-muted-foreground text-center p-4">All permissions assigned.</p>}
-                    </ScrollArea>
-                </CardContent>
-            </Card>
-             <Card className="flex-1">
-                <CardHeader>
-                    <CardTitle className="text-base">Assigned Permissions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-64 border rounded-md p-2">
-                         {assignedPermissions.size > 0 ? Array.from(assignedPermissions).map(p => (
-                            <ListItem key={p} permission={p} onClick={() => handleTogglePermission(p)} />
-                        )) : <p className="text-sm text-muted-foreground text-center p-4">No permissions assigned.</p>}
-                    </ScrollArea>
-                </CardContent>
-            </Card>
-        </div>
-    );
-};
-
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
