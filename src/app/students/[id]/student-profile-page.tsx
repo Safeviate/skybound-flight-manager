@@ -417,7 +417,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 Record details of the training session for {student.name}.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <AddLogEntryForm studentId={student.id} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
+                                        <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
                                     </DialogContent>
                                 </Dialog>
                            ))}
@@ -450,7 +450,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 Record details of the training session for {student.name}.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <AddLogEntryForm studentId={student.id} onSubmit={handleAddLogEntry} />
+                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
                                     </DialogContent>
                                 </Dialog>
                             )}

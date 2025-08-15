@@ -65,12 +65,12 @@ const logEntryFormSchema = z.object({
 type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
 
 interface AddLogEntryFormProps {
-    studentId: string;
+    student: User;
     onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => void;
     booking?: Booking;
 }
 
-export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFormProps) {
+export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -105,15 +105,18 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
   const startHobbs = watch('startHobbs');
   const endHobbs = watch('endHobbs');
 
-  const flightDuration = useMemo(() => {
+  const lessonDuration = useMemo(() => {
     if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
-        const durationDecimal = endHobbs - startHobbs;
-        const hours = Math.floor(durationDecimal);
-        const minutes = Math.round((durationDecimal - hours) * 60);
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        return endHobbs - startHobbs;
     }
-    return '00:00';
+    return 0;
   }, [startHobbs, endHobbs]);
+  
+  const formatDecimalTime = (decimalHours: number) => {
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.round((decimalHours - hours) * 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -233,8 +236,19 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5"/>Flight Duration</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold font-mono text-center p-4 bg-muted rounded-md">{flightDuration}</div>
+                    <CardContent className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Hours to Date</p>
+                            <p className="text-2xl font-bold font-mono">{(student?.flightHours || 0).toFixed(1)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">This Lesson</p>
+                            <p className="text-2xl font-bold font-mono">{formatDecimalTime(lessonDuration)}</p>
+                        </div>
+                         <div>
+                            <p className="text-sm text-muted-foreground">New Total Hours</p>
+                            <p className="text-2xl font-bold font-mono">{((student?.flightHours || 0) + lessonDuration).toFixed(1)}</p>
+                        </div>
                     </CardContent>
                 </Card>
                 
