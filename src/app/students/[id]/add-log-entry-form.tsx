@@ -120,12 +120,6 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     return 0;
   }, [startHobbs, endHobbs]);
   
-  const formatDecimalTime = (decimalHours: number) => {
-    const hours = Math.floor(decimalHours);
-    const minutes = Math.round((decimalHours - hours) * 60);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-  };
-
   useEffect(() => {
     const fetchData = async () => {
         if (!company) return;
@@ -165,7 +159,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         <CardTitle>Flight Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="date"
@@ -232,7 +226,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                 )}
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                             <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
@@ -243,7 +237,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5"/>Flight Duration</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-4 text-center">
+                    <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                         <div>
                             <p className="text-sm text-muted-foreground">Hours to Date</p>
                             <p className="text-2xl font-bold font-mono">{(student?.flightHours || 0).toFixed(1)}</p>
@@ -264,7 +258,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="instructorName"
@@ -332,7 +326,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                                 <RadioGroup
                                                     onValueChange={(value) => field.onChange(parseInt(value, 10))}
                                                     defaultValue={String(field.value)}
-                                                    className="flex items-center space-x-4"
+                                                    className="flex flex-wrap items-center gap-x-4 gap-y-2"
                                                 >
                                                     <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="1" /></FormControl><FormLabel className="font-normal">1 (Poor)</FormLabel></FormItem>
                                                     <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="2" /></FormControl><FormLabel className="font-normal">2 (Avg)</FormLabel></FormItem>
@@ -375,7 +369,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         <CardTitle>Signatures</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid md:grid-cols-2 gap-6 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                             <FormField
                                 control={form.control}
                                 name="instructorSignature"
