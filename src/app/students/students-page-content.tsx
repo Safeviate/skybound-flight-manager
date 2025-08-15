@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Table,
@@ -33,7 +33,8 @@ import { db, auth } from '@/lib/firebase';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { EditStudentForm } from './edit-student-form';
-
+import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
@@ -137,38 +138,17 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
     }
   }
 
-  const StudentTable = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
-     <Table>
-        <TableHeader>
-            <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Instructor</TableHead>
-            <TableHead>Flight Hours</TableHead>
-            <TableHead>Training Progress</TableHead>
-            <TableHead></TableHead>
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            {list.map((student) => (
-            <TableRow key={student.id}>
-                <TableCell className="font-medium">{student.name}</TableCell>
-                <TableCell>{student.instructor}</TableCell>
-                <TableCell>{student.flightHours?.toFixed(1)}</TableCell>
-                <TableCell>
-                <div className="flex items-center gap-2">
-                    <Progress value={student.progress} className="w-2/3" />
-                    <span>{student.progress}%</span>
-                </div>
-                </TableCell>
-                <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/students/${student.id}`}>
-                                View Profile
-                                <ChevronRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
-                        {canEdit && (
+  const StudentCardList = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {list.map((student) => (
+            <Card key={student.id} className={cn("flex flex-col", isArchived && 'bg-muted/50')}>
+                 <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>{student.name}</CardTitle>
+                            <CardDescription>Instructor: {student.instructor}</CardDescription>
+                        </div>
+                         {canEdit && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -225,11 +205,31 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                             </DropdownMenu>
                         )}
                     </div>
-                </TableCell>
-            </TableRow>
-            ))}
-        </TableBody>
-    </Table>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-grow">
+                    <div className="text-sm">
+                        <span className="text-muted-foreground">Total Flight Hours: </span>
+                        <span className="font-semibold">{student.flightHours?.toFixed(1) || '0.0'}</span>
+                    </div>
+                     <div>
+                        <div className="flex justify-between items-baseline mb-1">
+                            <span className="text-sm font-medium text-muted-foreground">Training Progress</span>
+                            <span className="text-sm font-bold">{student.progress || 0}%</span>
+                        </div>
+                        <Progress value={student.progress || 0} />
+                    </div>
+                </CardContent>
+                 <CardFooter className="border-t pt-4">
+                     <Button asChild variant="outline" size="sm" className="w-full">
+                        <Link href={`/students/${student.id}`}>
+                            View Profile
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        ))}
+    </div>
   );
 
   return (
@@ -264,10 +264,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                   <TabsTrigger value="archived">Archived ({archivedStudents.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="active" className="pt-4">
-                  <StudentTable list={activeStudents} />
+                  <StudentCardList list={activeStudents} />
               </TabsContent>
               <TabsContent value="archived" className="pt-4">
-                  <StudentTable list={archivedStudents} isArchived />
+                  <StudentCardList list={archivedStudents} isArchived />
               </TabsContent>
           </Tabs>
         </CardContent>
