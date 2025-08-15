@@ -416,29 +416,27 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 )}
             </div>
             <div className="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                                <CardTitle>Training Logbook</CardTitle>
-                                <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Button asChild variant="outline" className="w-full sm:w-auto">
-                                    <Link href="#">
-                                        <BookOpen className="mr-2 h-4 w-4" />
-                                        View Full Logbook
-                                    </Link>
-                                </Button>
-                                <div className="relative w-full sm:w-auto">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Search log entries..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10"
-                                    />
-                                </div>
+                 <Card>
+                    <CardHeader className="space-y-4">
+                        <div className="space-y-1">
+                            <CardTitle>Training Logbook</CardTitle>
+                            <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button asChild variant="outline" className="w-full sm:w-auto">
+                                <Link href="#">
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    View Full Logbook
+                                </Link>
+                            </Button>
+                            <div className="relative w-full sm:w-auto">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Search log entries..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
                             </div>
                         </div>
                     </CardHeader>
@@ -517,13 +515,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="space-y-4">
                         <div className="space-y-1">
                             <CardTitle>Student Debrief</CardTitle>
                             <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button onClick={handleDownloadLogbook} variant="outline">
+                             <Button onClick={handleDownloadLogbook} variant="outline">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download PDF
                             </Button>
