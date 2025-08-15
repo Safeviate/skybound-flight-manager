@@ -297,8 +297,8 @@ export function AircraftPageContent({
         }
 
         return (
-            <ScrollArea orientation="horizontal">
-                <Table>
+            <ScrollArea className="w-full" orientation="horizontal">
+                <Table className="min-w-max">
                     <TableHeader>
                         <TableRow>
                             <TableHead>Registration</TableHead>
@@ -574,12 +574,12 @@ export function AircraftPageContent({
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
                 <CardTitle>Manage Fleet</CardTitle>
                 <CardDescription>View and manage all aircraft in your fleet.</CardDescription>
             </div>
-            <Button onClick={openNewDialog}>
+            <Button onClick={openNewDialog} className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Aircraft
             </Button>
@@ -609,7 +609,7 @@ export function AircraftPageContent({
           </CardHeader>
           <CardContent>
               <Tabs defaultValue="checklists">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
                     <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
                 </TabsList>
@@ -629,7 +629,7 @@ export function AircraftPageContent({
                     <div className="space-y-2">
                         <Label>Select an aircraft to view history</Label>
                         <Select onValueChange={setSelectedHistoryAircraftId}>
-                            <SelectTrigger className="w-[300px]">
+                            <SelectTrigger className="w-full md:w-[300px]">
                                 <SelectValue placeholder="Select aircraft..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -640,30 +640,32 @@ export function AircraftPageContent({
                         </Select>
                     </div>
                     {checklistHistory.length > 0 ? (
-                        <Table className="mt-4">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>User</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {checklistHistory.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell>{format(parseISO(item.dateCompleted), 'PPP p')}</TableCell>
-                                <TableCell>{item.type}</TableCell>
-                                <TableCell>{item.userName}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
-                                        <Eye className="mr-2 h-4 w-4" /> View
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        </Table>
+                        <ScrollArea className="w-full" orientation="horizontal">
+                            <Table className="mt-4 min-w-max">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {checklistHistory.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell>{format(parseISO(item.dateCompleted), 'PPP p')}</TableCell>
+                                    <TableCell>{item.type}</TableCell>
+                                    <TableCell>{item.userName}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="outline" size="sm" onClick={() => setViewingChecklist(item)}>
+                                            <Eye className="mr-2 h-4 w-4" /> View
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                            </Table>
+                        </ScrollArea>
                     ) : (
                         <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                             <p className="text-muted-foreground">
@@ -696,32 +698,34 @@ export function AircraftPageContent({
                         A list of all official documents and their expiry dates for this aircraft.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                        <span>Certificate of Airworthiness</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                 <ScrollArea className="max-h-[70vh]">
+                    <div className="py-4 space-y-4 pr-4">
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Certificate of Airworthiness</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Insurance Certificate</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Certificate of Release to Service</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfReleaseToServiceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Certificate of Registration</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfRegistrationExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Mass & Balance</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.massAndBalanceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span>Radio Station License</span>
+                            {getExpiryBadge(viewingDocumentsForAircraft?.radioStationLicenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                        </div>
                     </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span>Insurance Certificate</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-                    </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span>Certificate of Release to Service</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfReleaseToServiceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-                    </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span>Certificate of Registration</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfRegistrationExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-                    </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span>Mass & Balance</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.massAndBalanceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-                    </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span>Radio Station License</span>
-                        {getExpiryBadge(viewingDocumentsForAircraft?.radioStationLicenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
-                    </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
 
@@ -735,45 +739,47 @@ export function AircraftPageContent({
                             Completed by {viewingChecklist.userName} on {format(parseISO(viewingChecklist.dateCompleted), 'PPP p')}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
-                        <div className="space-y-1">
-                            <h4 className="font-semibold text-sm">Flight Details</h4>
-                            <p className="text-sm"><strong>Hobbs:</strong> {(viewingChecklist.results as any).hobbs}</p>
-                        </div>
-                        <Separator />
+                    <ScrollArea className="max-h-[70vh] pr-4">
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <h4 className="font-semibold text-sm">Flight Details</h4>
+                                <p className="text-sm"><strong>Hobbs:</strong> {(viewingChecklist.results as any).hobbs}</p>
+                            </div>
+                            <Separator />
 
-                        {(viewingChecklist.type === 'Pre-Flight') && (
+                            {(viewingChecklist.type === 'Pre-Flight') && (
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm">Document Checks</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                                        <ChecklistItemDisplay label="Aircraft Checklist/POH" value={(viewingChecklist.results as PreFlightChecklistFormValues).checklistOnboard} />
+                                        <ChecklistItemDisplay label="Flight Ops Manual" value={(viewingChecklist.results as PreFlightChecklistFormValues).fomOnboard} />
+                                        <ChecklistItemDisplay label="Cert. of Airworthiness" value={(viewingChecklist.results as PreFlightChecklistFormValues).airworthinessOnboard} />
+                                        <ChecklistItemDisplay label="Insurance Certificate" value={(viewingChecklist.results as PreFlightChecklistFormValues).insuranceOnboard} />
+                                        <ChecklistItemDisplay label="Release to Service" value={(viewingChecklist.results as PreFlightChecklistFormValues).releaseToServiceOnboard} />
+                                        <ChecklistItemDisplay label="Cert. of Registration" value={(viewingChecklist.results as PreFlightChecklistFormValues).registrationOnboard} />
+                                        <ChecklistItemDisplay label="Mass & Balance" value={(viewingChecklist.results as PreFlightChecklistFormValues).massAndBalanceOnboard} />
+                                        <ChecklistItemDisplay label="Radio Station License" value={(viewingChecklist.results as PreFlightChecklistFormValues).radioLicenseOnboard} />
+                                    </div>
+                                </div>
+                            )}
+                            <Separator />
+
                             <div className="space-y-2">
-                                <h4 className="font-semibold text-sm">Document Checks</h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                    <ChecklistItemDisplay label="Aircraft Checklist/POH" value={(viewingChecklist.results as PreFlightChecklistFormValues).checklistOnboard} />
-                                    <ChecklistItemDisplay label="Flight Ops Manual" value={(viewingChecklist.results as PreFlightChecklistFormValues).fomOnboard} />
-                                    <ChecklistItemDisplay label="Cert. of Airworthiness" value={(viewingChecklist.results as PreFlightChecklistFormValues).airworthinessOnboard} />
-                                    <ChecklistItemDisplay label="Insurance Certificate" value={(viewingChecklist.results as PreFlightChecklistFormValues).insuranceOnboard} />
-                                    <ChecklistItemDisplay label="Release to Service" value={(viewingChecklist.results as PreFlightChecklistFormValues).releaseToServiceOnboard} />
-                                    <ChecklistItemDisplay label="Cert. of Registration" value={(viewingChecklist.results as PreFlightChecklistFormValues).registrationOnboard} />
-                                    <ChecklistItemDisplay label="Mass & Balance" value={(viewingChecklist.results as PreFlightChecklistFormValues).massAndBalanceOnboard} />
-                                    <ChecklistItemDisplay label="Radio Station License" value={(viewingChecklist.results as PreFlightChecklistFormValues).radioLicenseOnboard} />
+                                <h4 className="font-semibold text-sm">Photos</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {(viewingChecklist.results as any).leftSidePhoto && <Image src={(viewingChecklist.results as any).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
+                                    {(viewingChecklist.results as any).rightSidePhoto && <Image src={(viewingChecklist.results as any).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
+                                    {(viewingChecklist.results as any).defectPhoto && <Image src={(viewingChecklist.results as any).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
                                 </div>
                             </div>
-                        )}
-                        <Separator />
-
-                        <div className="space-y-2">
-                             <h4 className="font-semibold text-sm">Photos</h4>
-                             <div className="flex flex-wrap gap-2">
-                                {(viewingChecklist.results as any).leftSidePhoto && <Image src={(viewingChecklist.results as any).leftSidePhoto} alt="Left side" width={200} height={112} className="rounded-md" />}
-                                {(viewingChecklist.results as any).rightSidePhoto && <Image src={(viewingChecklist.results as any).rightSidePhoto} alt="Right side" width={200} height={112} className="rounded-md" />}
-                                {(viewingChecklist.results as any).defectPhoto && <Image src={(viewingChecklist.results as any).defectPhoto} alt="Defect" width={200} height={112} className="rounded-md" />}
-                             </div>
+                            <Separator />
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Report</h4>
+                                <p className="text-sm p-2 bg-muted rounded-md min-h-16">{(viewingChecklist.results as any).report || "No issues reported."}</p>
+                            </div>
                         </div>
-                        <Separator />
-                        <div className="space-y-2">
-                             <h4 className="font-semibold text-sm">Report</h4>
-                             <p className="text-sm p-2 bg-muted rounded-md min-h-16">{(viewingChecklist.results as any).report || "No issues reported."}</p>
-                        </div>
-                    </div>
-                     <DialogFooter className="gap-2 sm:justify-between">
+                    </ScrollArea>
+                     <DialogFooter className="gap-2 sm:justify-between flex-col sm:flex-row">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="sm">
@@ -794,7 +800,7 @@ export function AircraftPageContent({
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 justify-end">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="outline">
