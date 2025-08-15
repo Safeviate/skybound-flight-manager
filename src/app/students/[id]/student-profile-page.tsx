@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -416,19 +417,54 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 )}
             </div>
             <div className="lg:col-span-2 space-y-6">
-                 <Card>
-                    <CardHeader className="space-y-4">
+                <Card>
+                    <CardHeader>
                         <div className="space-y-1">
                             <CardTitle>Training Logbook</CardTitle>
                             <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Button asChild variant="outline" className="w-full sm:w-auto">
-                                <Link href="#">
-                                    <BookOpen className="mr-2 h-4 w-4" />
-                                    View Full Logbook
-                                </Link>
-                            </Button>
+                        <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                                        <Link href="#">
+                                            <BookOpen className="mr-2 h-4 w-4" />
+                                            View Full Logbook
+                                        </Link>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Full Training Logbook: {student.name}</DialogTitle>
+                                    </DialogHeader>
+                                    <ScrollArea className="h-[70vh]">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Aircraft</TableHead>
+                                                    <TableHead>Duration</TableHead>
+                                                    <TableHead>Instructor</TableHead>
+                                                    <TableHead>Exercises</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                            {filteredLogs.map((log) => (
+                                                <TableRow key={log.id}>
+                                                    <TableCell>{format(parseISO(log.date), 'dd MMM yy')}</TableCell>
+                                                    <TableCell>{log.aircraft}</TableCell>
+                                                    <TableCell>{log.flightDuration.toFixed(1)}</TableCell>
+                                                    <TableCell>{log.instructorName}</TableCell>
+                                                    <TableCell>
+                                                        {log.trainingExercises.map(e => e.exercise).join(', ')}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            </TableBody>
+                                        </Table>
+                                    </ScrollArea>
+                                </DialogContent>
+                            </Dialog>
                             <div className="relative w-full sm:w-auto">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input 
@@ -515,20 +551,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="space-y-4">
+                    <CardHeader>
                         <div className="space-y-1">
                             <CardTitle>Student Debrief</CardTitle>
                             <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                             <Button onClick={handleDownloadLogbook} variant="outline">
+                         <div className="flex items-center gap-2 pt-2">
+                            <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download PDF
                             </Button>
                             {canEdit && (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button>
+                                        <Button className="w-full sm:w-auto">
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             Add Log Entry
                                         </Button>
