@@ -75,6 +75,8 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
     resolver: zodResolver(logEntryFormSchema),
     defaultValues: {
       date: new Date(),
+      startHobbs: 0,
+      endHobbs: 0,
     },
   });
 
@@ -200,7 +202,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                     <FormItem>
                     <FormLabel>Start Hobbs</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="1234.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? 0} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -213,7 +215,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                     <FormItem>
                     <FormLabel>End Hobbs</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="1235.5" {...field} />
+                        <Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? 0} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
