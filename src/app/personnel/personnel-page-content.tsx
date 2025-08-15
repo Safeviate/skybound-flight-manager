@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -202,17 +202,28 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm flex-grow">
-                            <p className="text-muted-foreground">{person.department}</p>
-                            <Separator />
-                            <div>
-                                <p>{person.email}</p>
-                                <p>{person.phone}</p>
-                            </div>
+                             <div className="space-y-2 text-sm">
+                                <p className="text-muted-foreground">{person.department}</p>
+                                <Separator />
+                                <div className="flex items-center gap-2">
+                                     <Mail className="h-4 w-4 text-muted-foreground" />
+                                     <span>{person.email}</span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                     <Phone className="h-4 w-4 text-muted-foreground" />
+                                     <span>{person.phone}</span>
+                                 </div>
+                             </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex gap-2">
                             <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingDocumentsFor(person)}>
                                 <Eye className="mr-2 h-4 w-4" /> View Documents
                             </Button>
+                             {canEdit && (
+                                <Button variant="secondary" size="sm" className="w-full" onClick={() => setEditingPersonnel(person)}>
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                </Button>
+                             )}
                         </CardFooter>
                     </Card>
                 ))}
