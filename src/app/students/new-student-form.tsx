@@ -98,6 +98,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     const studentData = {
         ...data,
         role: 'Student',
+        status: 'Active',
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
         passportExpiry: data.passportExpiry ? format(data.passportExpiry, 'yyyy-MM-dd') : null,
