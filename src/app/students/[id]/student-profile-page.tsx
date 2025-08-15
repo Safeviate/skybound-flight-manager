@@ -431,6 +431,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                              <CardDescription>Total Flight Hours: {student.flightHours?.toFixed(1) || 0} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
+                             <Button onClick={() => {}} variant="outline" className="w-full sm:w-auto">
+                                <BookOpen className="mr-2 h-4 w-4" />
+                                View Logbook
+                            </Button>
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Logbook
