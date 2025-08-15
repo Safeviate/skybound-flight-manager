@@ -81,6 +81,7 @@ export type TrainingLogEntry = {
   instructorNotes: string;
   instructorName: string;
   instructorSignature?: string;
+  studentSignature?: string;
   trainingExercise?: string;
   weatherConditions?: string;
 };

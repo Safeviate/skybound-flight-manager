@@ -56,6 +56,7 @@ const logEntryFormSchema = z.object({
     message: 'Areas for improvement must be at least 10 characters long.',
   }),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
+  studentSignature: z.string().min(1, 'Student signature is required.'),
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
@@ -222,8 +223,8 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                            <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                     </CardContent>
                 </Card>
@@ -302,7 +303,7 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Instructor's Debrief & Signature</CardTitle>
+                        <CardTitle>Instructor's Debrief & Signatures</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <FormField
@@ -337,19 +338,34 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="instructorSignature"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Instructor Signature</FormLabel>
-                                    <FormControl>
-                                        <SignaturePad onSubmit={field.onChange} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid md:grid-cols-2 gap-6 pt-4">
+                            <FormField
+                                control={form.control}
+                                name="instructorSignature"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Instructor Signature</FormLabel>
+                                        <FormControl>
+                                            <SignaturePad onSubmit={field.onChange} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="studentSignature"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Student Signature</FormLabel>
+                                        <FormControl>
+                                            <SignaturePad onSubmit={field.onChange} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                     </CardContent>
                 </Card>
             </div>

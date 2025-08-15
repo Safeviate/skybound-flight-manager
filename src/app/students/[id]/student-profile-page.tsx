@@ -410,7 +410,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
                                         </div>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="max-w-4xl">
                                         <DialogHeader>
                                             <DialogTitle>Add Training Log Entry</DialogTitle>
                                             <DialogDescription>
@@ -443,7 +443,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             Add Log Entry
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="max-w-4xl">
                                         <DialogHeader>
                                             <DialogTitle>Add New Training Log Entry</DialogTitle>
                                             <DialogDescription>
@@ -481,14 +481,24 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
                                     </div>
                                     <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
-                                    {log.instructorSignature && (
-                                        <div className="pt-2">
-                                            <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
-                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                    <div className="grid grid-cols-2 gap-4 pt-2">
+                                        {log.instructorSignature && (
+                                            <div>
+                                                <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
+                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                    <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                        {log.studentSignature && (
+                                            <div>
+                                                <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
+                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                    <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         ) : (
