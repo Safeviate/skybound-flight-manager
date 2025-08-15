@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Role, User, Permission, UserDocument, NavMenuItem } from '@/lib/types';
+import type { Role, User, Permission, UserDocument, NavMenuItem, Department } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -48,6 +48,9 @@ const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );
 
+const companyDepartments: Department[] = ['Management', 'Flight Operations', 'Ground Operation', 'Maintenance', 'Administrative', 'Cargo', 'Finance', 'Human Resources'];
+
+
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
@@ -57,6 +60,7 @@ const personnelFormSchema = z.object({
   role: z.custom<Role>((val) => typeof val === 'string' && val !== 'Student', {
       message: 'A valid role must be selected.'
   }),
+  department: z.custom<Department>().optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -224,6 +228,30 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             {personnelRoles.map((role) => (
                                 <SelectItem key={role} value={role}>
                                 {role}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {companyDepartments.map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                {dept}
                                 </SelectItem>
                             ))}
                             </SelectContent>

@@ -159,7 +159,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Super User',
 ];
 
-export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External' | 'Administrative' | 'Cargo';
+export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External' | 'Administrative' | 'Cargo' | 'Finance' | 'Human Resources';
 
 export type Role =
   | 'Accountable Manager'
@@ -609,6 +609,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 
