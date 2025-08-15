@@ -250,7 +250,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">This Lesson</p>
-                            <p className="text-2xl font-bold font-mono">{formatDecimalTime(lessonDuration)}</p>
+                            <p className="text-2xl font-bold font-mono">{lessonDuration.toFixed(1)}</p>
                         </div>
                          <div>
                             <p className="text-sm text-muted-foreground">New Total Hours</p>
@@ -414,4 +414,3 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     </Form>
   );
 }
-
