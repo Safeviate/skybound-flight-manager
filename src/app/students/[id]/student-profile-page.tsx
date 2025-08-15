@@ -415,7 +415,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 )}
             </div>
             <div className="lg:col-span-2 space-y-6">
-                <Card>
+                 <Card>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="space-y-1">
@@ -449,7 +449,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             </div>
                         </div>
                          <div className="flex items-center justify-between pt-4">
-                            <Button asChild onClick={() => {}} variant="outline" className="w-full sm:w-auto">
+                            <Button asChild variant="outline" className="w-full sm:w-auto">
                                 <Link href="#">
                                     <BookOpen className="mr-2 h-4 w-4" />
                                     View Full Logbook
@@ -543,8 +543,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         )}
                     </CardContent>
                 </Card>
-
-                 {pendingBookings.length > 0 && (
+                
+                {pendingBookings.length > 0 && (
                     <Card>
                          <CardHeader>
                             <CardTitle>Student Debrief</CardTitle>
@@ -581,3 +581,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
