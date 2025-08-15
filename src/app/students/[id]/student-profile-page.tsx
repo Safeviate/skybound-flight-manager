@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -332,30 +330,32 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <MilestoneProgress currentHours={student.flightHours || 0} />
 
                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div className="space-y-1">
-                            <CardTitle>Endorsements</CardTitle>
-                            <CardDescription>Qualifications and completed milestones.</CardDescription>
+                    <CardHeader>
+                        <div className="flex flex-row items-center justify-between">
+                            <div className="space-y-1">
+                                <CardTitle>Endorsements</CardTitle>
+                                <CardDescription>Qualifications and completed milestones.</CardDescription>
+                            </div>
+                            {canEdit && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm">
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Add New Endorsement</DialogTitle>
+                                            <DialogDescription>
+                                                Fill out the form to add a new endorsement for {student.name}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                         </div>
-                        {canEdit && (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button size="sm">
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Add New Endorsement</DialogTitle>
-                                        <DialogDescription>
-                                            Fill out the form to add a new endorsement for {student.name}.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
-                                </DialogContent>
-                            </Dialog>
-                        )}
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -423,100 +423,66 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
                             </div>
                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download PDF
+                                <Button asChild variant="outline" className="w-full sm:w-auto">
+                                    <Link href="#">
+                                        <BookOpen className="mr-2 h-4 w-4" />
+                                        View Full Logbook
+                                    </Link>
                                 </Button>
-                                {canEdit && (
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button className="w-full sm:w-auto">
-                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                Add Log Entry
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                                <DialogDescription>
-                                                    Record details of the training session for {student.name}.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                        </DialogContent>
-                                    </Dialog>
-                                )}
-                            </div>
-                        </div>
-                         <div className="flex items-center justify-between pt-4">
-                            <Button asChild variant="outline" className="w-full sm:w-auto">
-                                <Link href="#">
-                                    <BookOpen className="mr-2 h-4 w-4" />
-                                    View Full Logbook
-                                </Link>
-                            </Button>
-                            <div className="relative w-full max-w-sm">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                    placeholder="Search log entries..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
+                                <div className="relative w-full sm:w-auto">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                        placeholder="Search log entries..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {paginatedLogs.length > 0 ? (
-                            paginatedLogs.map((log) => (
-                                <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
-                                        <Badge variant="outline">{log.instructorName}</Badge>
-                                    </div>
-                                    <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
-                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
-                                        <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
-                                        {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
-                                    </div>
-                                    <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
-                                        {log.trainingExercises.map((ex, index) => (
-                                            <div key={index}>
-                                                <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
-                                                {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 pt-2">
-                                        {log.instructorSignature && (
-                                            <div>
-                                                <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
-                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                    <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {log.studentSignature && (
-                                            <div>
-                                                <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
-                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                    <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                        {paginatedLogs.map((log) => (
+                            <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
+                                    <Badge variant="outline">{log.instructorName}</Badge>
                                 </div>
-                            ))
-                        ) : (
-                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">
-                                    No training logs found for your search criteria.
-                                </p>
+                                <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
+                                    <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
+                                    <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
+                                    <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
+                                    {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
+                                </div>
+                                <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
+                                    {log.trainingExercises.map((ex, index) => (
+                                        <div key={index}>
+                                            <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
+                                            {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                    {log.instructorSignature && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
+                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {log.studentSignature && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
+                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-
-                        {totalPages > 1 && (
+                        ))}
+                         {totalPages > 1 && (
                             <div className="flex items-center justify-center space-x-2 pt-4">
                                 <Button
                                     variant="outline"
@@ -543,42 +509,73 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         )}
                     </CardContent>
                 </Card>
-                
-                {pendingBookings.length > 0 && (
-                    <Card>
-                         <CardHeader>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="space-y-1">
                             <CardTitle>Student Debrief</CardTitle>
                             <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
-                         </CardHeader>
-                         <CardContent className="space-y-2">
-                           {pendingBookings.map(booking => (
-                                <Dialog key={booking.id}>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={handleDownloadLogbook} variant="outline">
+                                <Download className="mr-2 h-4 w-4" />
+                                Download PDF
+                            </Button>
+                            {canEdit && (
+                                <Dialog>
                                     <DialogTrigger asChild>
-                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
-                                            <div className="space-y-1">
-                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                            </div>
-                                            <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                        </div>
+                                        <Button>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add Log Entry
+                                        </Button>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-4xl">
                                         <DialogHeader>
-                                            <DialogTitle>Add Training Log Entry</DialogTitle>
+                                            <DialogTitle>Add New Training Log Entry</DialogTitle>
                                             <DialogDescription>
                                                 Record details of the training session for {student.name}.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
+                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
                                     </DialogContent>
                                 </Dialog>
-                           ))}
-                         </CardContent>
-                    </Card>
-                 )}
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                    {pendingBookings.length > 0 ? (
+                        pendingBookings.map(booking => (
+                            <Dialog key={booking.id}>
+                                <DialogTrigger asChild>
+                                    <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                        <div className="space-y-1">
+                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                        </div>
+                                        <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Add Training Log Entry</DialogTitle>
+                                        <DialogDescription>
+                                            Record details of the training session for {student.name}.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
+                                </DialogContent>
+                            </Dialog>
+                        ))
+                    ) : (
+                        <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">
+                                No flights awaiting debrief.
+                            </p>
+                        </div>
+                    )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
       </main>
   );
 }
-
