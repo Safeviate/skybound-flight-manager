@@ -2,10 +2,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -32,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -278,7 +278,7 @@ export function AircraftPageContent({
 
     const isSuperUser = user?.permissions.includes('Super User');
 
-    const AircraftTable = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
+    const AircraftCardList = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
         if (isDataLoading) {
             return (
                 <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
@@ -297,107 +297,100 @@ export function AircraftPageContent({
         }
 
         return (
-            <ScrollArea className="w-full" orientation="horizontal">
-                <Table className="min-w-max">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Registration</TableHead>
-                            <TableHead>Model</TableHead>
-                            <TableHead>Total Hobbs</TableHead>
-                            <TableHead>Total Tacho</TableHead>
-                            <TableHead className="align-middle">Hours Next<br/>50 Insp</TableHead>
-                            <TableHead>Target 50hr</TableHead>
-                            <TableHead className="align-middle">Hours Next<br/>100 Insp</TableHead>
-                            <TableHead>Target 100hr</TableHead>
-                            <TableHead>Documents</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {aircraft.map((ac) => {
-                            const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
-                            const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {aircraft.map((ac) => {
+                    const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
+                    const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
 
-                            return (
-                            <TableRow key={ac.id} className={cn(isArchived && 'text-muted-foreground')}>
-                                <TableCell className="font-medium">{ac.tailNumber}</TableCell>
-                                <TableCell>{ac.make} {ac.model}</TableCell>
-                                <TableCell>{ac.hours.toFixed(1)}</TableCell>
-                                <TableCell>{ac.currentTachoReading?.toFixed(1) ?? 'N/A'}</TableCell>
-                                <TableCell>{hoursUntil50 >= 0 ? hoursUntil50.toFixed(1) : 'N/A'}</TableCell>
-                                <TableCell>{ac.next50HourInspection?.toFixed(1) ?? 'N/A'}</TableCell>
-                                <TableCell>{hoursUntil100 >= 0 ? hoursUntil100.toFixed(1) : 'N/A'}</TableCell>
-                                <TableCell>{ac.next100HourInspection?.toFixed(1) ?? 'N/A'}</TableCell>
-                                <TableCell>
-                                    <Button variant="outline" size="sm" onClick={() => setViewingDocumentsForAircraft(ac)}>
-                                        <Eye className="mr-2 h-4 w-4" /> View
-                                    </Button>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                    {isArchived ? (
-                                        <DropdownMenuItem onClick={() => handleRestore(ac)}>
-                                            <RotateCw className="mr-2 h-4 w-4" />
-                                            Restore
-                                        </DropdownMenuItem>
-                                    ) : (
-                                        <>
-                                            {ac.status === 'In Maintenance' && (
-                                                <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
-                                                    <Check className="mr-2 h-4 w-4" />
-                                                    Return to Service
-                                                </DropdownMenuItem>
-                                            )}
-                                            {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
-                                                <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
-                                                    <ListChecks className="mr-2 h-4 w-4" />
-                                                    Clear Post-Flight
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuItem onSelect={() => handleEdit(ac)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                Edit
+                    return (
+                        <Card key={ac.id} className={cn("flex flex-col", isArchived && 'bg-muted/50')}>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle>{ac.tailNumber}</CardTitle>
+                                        <CardDescription>{ac.make} {ac.model}</CardDescription>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                        {isArchived ? (
+                                            <DropdownMenuItem onClick={() => handleRestore(ac)}>
+                                                <RotateCw className="mr-2 h-4 w-4" /> Restore
                                             </DropdownMenuItem>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
+                                        ) : (
+                                            <>
+                                                {ac.status === 'In Maintenance' && (
+                                                    <DropdownMenuItem onClick={() => handleReturnToService(ac)}>
+                                                        <Check className="mr-2 h-4 w-4" /> Return to Service
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {isSuperUser && ac.checklistStatus === 'needs-post-flight' && (
+                                                    <DropdownMenuItem onClick={() => handleClearPostFlight(ac)}>
+                                                        <ListChecks className="mr-2 h-4 w-4" /> Clear Post-Flight
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem onSelect={() => handleEdit(ac)}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </DropdownMenuItem>
+                                                 <DropdownMenuItem onSelect={() => setViewingDocumentsForAircraft(ac)}>
+                                                    <Eye className="mr-2 h-4 w-4" /> View Documents
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
                                                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                            <Archive className="mr-2 h-4 w-4" />
-                                                            Archive
+                                                            <Archive className="mr-2 h-4 w-4" /> Archive
                                                         </DropdownMenuItem>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
                                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>
                                                                 This will archive the aircraft "{ac.tailNumber}". It will be hidden from the active list but can be restored later.
                                                             </AlertDialogDescription>
-                                                    </AlertDialogHeader>
+                                                        </AlertDialogHeader>
                                                         <AlertDialogFooter>
                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                             <AlertDialogAction onClick={() => handleArchive(ac)}>Yes, archive aircraft</AlertDialogAction>
                                                         </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </>
-                                    )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        )})}
-                    </TableBody>
-                </Table>
-            </ScrollArea>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </>
+                                        )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <div className="pt-2">
+                                     <Badge variant={getStatusVariant(ac.status)}>{ac.status}</Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm flex-grow">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Total Hobbs</span>
+                                    <span>{ac.hours.toFixed(1)}</span>
+                                </div>
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Current Tacho</span>
+                                    <span>{ac.currentTachoReading?.toFixed(1) ?? 'N/A'}</span>
+                                </div>
+                                <Separator />
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Next 50hr Insp.</span>
+                                    <span>{hoursUntil50 >= 0 ? `${hoursUntil50.toFixed(1)} hrs` : 'N/A'}</span>
+                                </div>
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Next 100hr Insp.</span>
+                                    <span>{hoursUntil100 >= 0 ? `${hoursUntil100.toFixed(1)} hrs` : 'N/A'}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )
+                })}
+            </div>
         )
     };
     
@@ -591,10 +584,10 @@ export function AircraftPageContent({
                     <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active" className="mt-4">
-                    <AircraftTable aircraft={activeAircraft} />
+                    <AircraftCardList aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived" className="mt-4">
-                     <AircraftTable aircraft={archivedAircraft} isArchived />
+                     <AircraftCardList aircraft={archivedAircraft} isArchived />
                 </TabsContent>
             </Tabs>
         </CardContent>
