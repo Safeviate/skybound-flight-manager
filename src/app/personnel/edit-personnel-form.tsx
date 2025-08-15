@@ -91,7 +91,7 @@ const personnelRoles: Role[] = [
 ];
 
 const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissions?.includes('Super User')), ...adminNavItems]
-    .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data');
+    .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data' && item.label !== 'Manage Companies');
 
 export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProps) {
   

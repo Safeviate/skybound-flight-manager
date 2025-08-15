@@ -93,7 +93,7 @@ const personnelRoles: Role[] = [
 ];
 
 const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissions?.includes('Super User')), ...adminNavItems]
-  .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data'); // Exclude dev-only items
+  .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data' && item.label !== 'Manage Companies');
 
 export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   const { company } = useUser();
