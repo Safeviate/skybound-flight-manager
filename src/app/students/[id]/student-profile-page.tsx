@@ -402,13 +402,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                            {pendingBookings.map(booking => (
                                 <Dialog key={booking.id}>
                                     <DialogTrigger asChild>
-                                        <button className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
                                             <div className="space-y-1">
                                                 <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                 <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                             </div>
                                             <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                        </button>
+                                        </div>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
@@ -417,7 +417,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 Record details of the training session for {student.name}.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <AddLogEntryForm studentId={student.id} onSubmit={(data) => handleAddLogEntry(data, booking.id)} />
+                                        <AddLogEntryForm studentId={student.id} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
                                     </DialogContent>
                                 </Dialog>
                            ))}

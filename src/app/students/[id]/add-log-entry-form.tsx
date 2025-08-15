@@ -20,8 +20,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Clock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
-import { format } from 'date-fns';
-import type { Role, User, Aircraft, TrainingLogEntry } from '@/lib/types';
+import { format, parseISO } from 'date-fns';
+import type { Role, User, Aircraft, TrainingLogEntry, Booking } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/context/user-provider';
 import { useState, useEffect, useMemo } from 'react';
@@ -63,9 +63,10 @@ type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
 interface AddLogEntryFormProps {
     studentId: string;
     onSubmit: (data: Omit<TrainingLogEntry, 'id'>) => void;
+    booking?: Booking;
 }
 
-export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
+export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [instructors, setInstructors] = useState<User[]>([]);
@@ -79,6 +80,18 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
       endHobbs: 0,
     },
   });
+  
+  useEffect(() => {
+    if (booking) {
+        form.reset({
+            date: parseISO(booking.date),
+            aircraft: booking.aircraft,
+            startHobbs: booking.startHobbs || 0,
+            endHobbs: booking.endHobbs || 0,
+            instructorName: booking.instructor || '',
+        });
+    }
+  }, [booking, form]);
 
   const startHobbs = form.watch('startHobbs');
   const endHobbs = form.watch('endHobbs');
@@ -177,7 +190,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Aircraft</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select an aircraft" />
@@ -202,7 +215,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                     <FormItem>
                     <FormLabel>Start Hobbs</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? 0} />
+                        <Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -215,7 +228,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                     <FormItem>
                     <FormLabel>End Hobbs</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? 0} />
+                        <Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -264,7 +277,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Instructor</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an instructor" />
