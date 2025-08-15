@@ -73,6 +73,7 @@ export type Endorsement = {
 
 export type ExerciseLog = {
     exercise: string;
+    rating: number;
     comment?: string;
 }
 
@@ -605,4 +606,5 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 

@@ -32,9 +32,11 @@ import { trainingExercisesData } from '@/lib/data-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const exerciseLogSchema = z.object({
   exercise: z.string().min(1, "Please select an exercise."),
+  rating: z.coerce.number().min(1, "A rating is required.").max(4),
   comment: z.string().optional(),
 });
 
@@ -85,7 +87,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
       startHobbs: booking?.startHobbs || 0,
       endHobbs: booking?.endHobbs || 0,
       instructorName: booking?.instructor,
-      trainingExercises: [{ exercise: '', comment: '' }],
+      trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
     },
   });
 
@@ -102,7 +104,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             startHobbs: booking.startHobbs || 0,
             endHobbs: booking.endHobbs || 0,
             instructorName: booking.instructor || '',
-            trainingExercises: [{ exercise: '', comment: '' }],
+            trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
         });
     }
   }, [booking, form]);
@@ -320,6 +322,28 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                             </FormItem>
                                         )}
                                     />
+                                     <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.rating`}
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                            <FormLabel>Performance Rating</FormLabel>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                                                    defaultValue={String(field.value)}
+                                                    className="flex items-center space-x-4"
+                                                >
+                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="1" /></FormControl><FormLabel className="font-normal">1 (Poor)</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="2" /></FormControl><FormLabel className="font-normal">2 (Avg)</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="3" /></FormControl><FormLabel className="font-normal">3 (Good)</FormLabel></FormItem>
+                                                    <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="4" /></FormControl><FormLabel className="font-normal">4 (Excep.)</FormLabel></FormItem>
+                                                </RadioGroup>
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
                                     <FormField
                                         control={form.control}
                                         name={`trainingExercises.${index}.comment`}
@@ -338,7 +362,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                     </Button>
                                 </div>
                             ))}
-                            <Button type="button" variant="outline" className="w-full" onClick={() => append({ exercise: '', comment: '' })}>
+                            <Button type="button" variant="outline" className="w-full" onClick={() => append({ exercise: '', rating: 0, comment: '' })}>
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Add Another Exercise
                             </Button>
