@@ -30,11 +30,7 @@ export default function LoginPage() {
   useEffect(() => {
     // Redirect logged-in users
     if (!loading && user) {
-        if(user.permissions && user.permissions.includes('Super User')) {
-            router.push('/');
-        } else {
-            router.push('/my-dashboard');
-        }
+        router.push('/my-dashboard');
     }
   }, [user, loading, router]);
   

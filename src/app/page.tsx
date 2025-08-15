@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -15,11 +16,7 @@ function RootPage() {
       return;
     }
     if (user) {
-        if (user.permissions?.includes('Super User')) {
-            router.push('/dashboard');
-        } else {
-            router.push('/my-dashboard');
-        }
+        router.push('/my-dashboard');
     } else {
         router.push('/login');
     }
