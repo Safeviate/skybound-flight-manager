@@ -2,14 +2,14 @@
 'use client';
 
 import * as React from 'react';
-import { useController } from 'react-hook-form';
+import { useController, type Control } from 'react-hook-form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FormControl, FormDescription, FormItem, FormLabel } from '@/components/ui/form';
+import { FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { ALL_PERMISSIONS, type Permission } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PermissionsListboxProps {
-  control: any;
+  control: Control<any>;
 }
 
 export function PermissionsListbox({ control }: PermissionsListboxProps) {
@@ -45,3 +45,5 @@ export function PermissionsListbox({ control }: PermissionsListboxProps) {
     </ScrollArea>
   );
 }
+
+    
