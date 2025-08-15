@@ -122,6 +122,11 @@ export default function Nav() {
   };
   
   const isMenuItemVisible = (item: typeof navItems[0]) => {
+      // Special case for 'Manage Companies'
+      if (item.label === 'Manage Companies') {
+          return user?.email === 'barry@safeviate.com';
+      }
+
       // Always show for super users
     if (user?.permissions?.includes('Super User')) {
         return true;
