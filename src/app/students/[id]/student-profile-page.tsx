@@ -417,7 +417,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                  {pendingBookings.length > 0 && (
                     <Card>
                          <CardHeader>
-                            <CardTitle>Pending Log Entries</CardTitle>
+                            <CardTitle>Student Debrief</CardTitle>
                             <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                          </CardHeader>
                          <CardContent className="space-y-2">
