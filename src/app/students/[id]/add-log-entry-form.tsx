@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import type { Role, User, Aircraft, TrainingLogEntry } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/context/user-provider';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { SignaturePad } from '@/components/ui/signature-pad';
