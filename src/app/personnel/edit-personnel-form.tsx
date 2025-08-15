@@ -137,11 +137,11 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [personnel, form]);
 
   useEffect(() => {
-    if (selectedRole && form.formState.isDirty && !form.formState.dirtyFields.permissions) {
+    if (selectedRole && form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
     }
-  }, [selectedRole, form]);
+  }, [selectedRole, form.formState.dirtyFields.role, form.setValue]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
