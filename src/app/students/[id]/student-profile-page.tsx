@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -414,48 +415,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 )}
             </div>
             <div className="lg:col-span-2 space-y-6">
-                 {pendingBookings.length > 0 && (
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Student Debrief</CardTitle>
-                            <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
-                         </CardHeader>
-                         <CardContent className="space-y-2">
-                           {pendingBookings.map(booking => (
-                                <Dialog key={booking.id}>
-                                    <DialogTrigger asChild>
-                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
-                                            <div className="space-y-1">
-                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                            </div>
-                                            <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                        </div>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Add Training Log Entry</DialogTitle>
-                                            <DialogDescription>
-                                                Record details of the training session for {student.name}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
-                                    </DialogContent>
-                                </Dialog>
-                           ))}
-                         </CardContent>
-                    </Card>
-                 )}
-                 <Card>
+                <Card>
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1">
-                            <CardTitle>Training Log</CardTitle>
+                            <CardTitle>Training Logbook</CardTitle>
                              <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
                                 <Download className="mr-2 h-4 w-4" />
-                                Download Logbook
+                                Download PDF
                             </Button>
                             {canEdit && (
                                 <Dialog>
@@ -572,6 +541,39 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         )}
                     </CardContent>
                 </Card>
+
+                 {pendingBookings.length > 0 && (
+                    <Card>
+                         <CardHeader>
+                            <CardTitle>Student Debrief</CardTitle>
+                            <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                         </CardHeader>
+                         <CardContent className="space-y-2">
+                           {pendingBookings.map(booking => (
+                                <Dialog key={booking.id}>
+                                    <DialogTrigger asChild>
+                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                            <div className="space-y-1">
+                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                            </div>
+                                            <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl">
+                                        <DialogHeader>
+                                            <DialogTitle>Add Training Log Entry</DialogTitle>
+                                            <DialogDescription>
+                                                Record details of the training session for {student.name}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
+                                    </DialogContent>
+                                </Dialog>
+                           ))}
+                         </CardContent>
+                    </Card>
+                 )}
             </div>
         </div>
       </main>
