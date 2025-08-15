@@ -31,6 +31,7 @@ import { SignaturePad } from '@/components/ui/signature-pad';
 import { trainingExercisesData } from '@/lib/data-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const logEntryFormSchema = z.object({
   date: z.date({
@@ -66,7 +67,7 @@ type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
 
 interface AddLogEntryFormProps {
     studentId: string;
-    onSubmit: (data: Omit<TrainingLogEntry, 'id'>) => void;
+    onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => void;
     booking?: Booking;
 }
 
@@ -79,9 +80,11 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
     defaultValues: {
-      date: new Date(),
-      startHobbs: 0,
-      endHobbs: 0,
+      date: booking ? parseISO(booking.date) : new Date(),
+      aircraft: booking?.aircraft,
+      startHobbs: booking?.startHobbs || 0,
+      endHobbs: booking?.endHobbs || 0,
+      instructorName: booking?.instructor,
       startTacho: 0,
       endTacho: 0,
       studentStrengths: '',
@@ -140,7 +143,7 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
       date: format(data.date, 'yyyy-MM-dd'),
     };
     
-    onSubmit(newEntry);
+    onSubmit(newEntry, booking?.id);
     
     form.reset();
   }
@@ -148,212 +151,215 @@ export function AddLogEntryForm({ studentId, onSubmit, booking }: AddLogEntryFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <Card>
-            <CardHeader>
-                <CardTitle>Flight Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
+        <ScrollArea className="h-[70vh] pr-4">
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Flight Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="date"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                variant={"outline"}
+                                                className={cn(
+                                                    "w-full pl-3 text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                )}
+                                                >
+                                                {field.value ? (
+                                                    format(field.value, "PPP")
+                                                ) : (
+                                                    <span>Pick a date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                disabled={(date) =>
+                                                    date > new Date() || date < new Date("1900-01-01")
+                                                }
+                                                initialFocus
+                                            />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="aircraft"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Aircraft</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select an aircraft" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                        {aircraftList.map((ac) => (
+                                            <SelectItem key={ac.id} value={ac.tailNumber}>
+                                            {ac.model} ({ac.tailNumber})
+                                            </SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="startTacho" render={({ field }) => (<FormItem><FormLabel>Start Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4321.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="endTacho" render={({ field }) => (<FormItem><FormLabel>End Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4322.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5"/>Flight Duration</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold font-mono text-center p-4 bg-muted rounded-md">{flightDuration}</div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Training Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="instructorName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Instructor</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                     <FormControl>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-full pl-3 text-left font-normal",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value ? (
-                                            format(field.value, "PPP")
-                                        ) : (
-                                            <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an instructor" />
+                                    </SelectTrigger>
                                     </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={(date) =>
-                                            date > new Date() || date < new Date("1900-01-01")
-                                        }
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
+                                    <SelectContent>
+                                    {instructors.map((instructor) => (
+                                        <SelectItem key={instructor.id} value={instructor.name}>
+                                        {instructor.name}
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="aircraft"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Aircraft</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                </FormItem>
+                            )}
+                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="trainingExercise"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Training Exercise</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select exercise" /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            {trainingExercisesData.map((ex) => ( <SelectItem key={ex} value={ex}>{ex}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="weatherConditions"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Weather Conditions</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., VMC, Wind 270/10kts" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Instructor's Debrief & Signature</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="studentStrengths"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Student's Strengths</FormLabel>
                                 <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an aircraft" />
-                                </SelectTrigger>
+                                    <Textarea
+                                    placeholder="Note what the student did well during the session..."
+                                    {...field}
+                                    />
                                 </FormControl>
-                                <SelectContent>
-                                {aircraftList.map((ac) => (
-                                    <SelectItem key={ac.id} value={ac.tailNumber}>
-                                    {ac.model} ({ac.tailNumber})
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1234.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" placeholder="1235.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="startTacho" render={({ field }) => (<FormItem><FormLabel>Start Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4321.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="endTacho" render={({ field }) => (<FormItem><FormLabel>End Tacho</FormLabel><FormControl><Input type="number" step="0.1" placeholder="4322.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
-                 </div>
-            </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5"/>Flight Duration</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold font-mono text-center p-4 bg-muted rounded-md">{flightDuration}</div>
-            </CardContent>
-        </Card>
-        
-        <Card>
-             <CardHeader>
-                <CardTitle>Training Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <FormField
-                    control={form.control}
-                    name="instructorName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Instructor</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an instructor" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {instructors.map((instructor) => (
-                                <SelectItem key={instructor.id} value={instructor.name}>
-                                {instructor.name}
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="trainingExercise"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Training Exercise</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Select exercise" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {trainingExercisesData.map((ex) => ( <SelectItem key={ex} value={ex}>{ex}</SelectItem>))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="weatherConditions"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Weather Conditions</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g., VMC, Wind 270/10kts" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-            </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Instructor's Debrief & Signature</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <FormField
-                    control={form.control}
-                    name="studentStrengths"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Student's Strengths</FormLabel>
-                        <FormControl>
-                            <Textarea
-                            placeholder="Note what the student did well during the session..."
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="areasForImprovement"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Areas for Next Flight</FormLabel>
-                        <FormControl>
-                            <Textarea
-                            placeholder="Note what to focus on in the next session..."
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="instructorSignature"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Instructor Signature</FormLabel>
-                            <FormControl>
-                                <SignaturePad onSubmit={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-        </Card>
-
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="areasForImprovement"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Areas for Next Flight</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                    placeholder="Note what to focus on in the next session..."
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="instructorSignature"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Instructor Signature</FormLabel>
+                                    <FormControl>
+                                        <SignaturePad onSubmit={field.onChange} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
+        </ScrollArea>
         <div className="flex justify-end pt-4">
           <Button type="submit" size="lg">Add Log Entry</Button>
         </div>
