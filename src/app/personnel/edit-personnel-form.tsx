@@ -140,17 +140,16 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [personnel, form]);
 
   useEffect(() => {
-    // Only reset permissions if the role has been manually changed by the user
     if (form.formState.isDirty && form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
     }
-  }, [selectedRole, form]);
+  }, [selectedRole, form.formState.isDirty, form.formState.dirtyFields.role, form.setValue]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
-        .filter(doc => doc.expiryDate) // Only save documents that have an expiry date set
+        .filter(doc => doc.expiryDate) 
         .map(doc => ({
             id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
             type: doc.type,
