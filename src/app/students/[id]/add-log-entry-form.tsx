@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Clock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -28,6 +28,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { SignaturePad } from '@/components/ui/signature-pad';
+import { trainingExercisesData } from '@/lib/data-provider';
 
 
 const logEntryFormSchema = z.object({
@@ -46,6 +47,8 @@ const logEntryFormSchema = z.object({
   instructorName: z.string({
     required_error: 'Please select the instructor.',
   }),
+  trainingExercise: z.string().optional(),
+  weatherConditions: z.string().optional(),
   instructorNotes: z.string().min(10, {
     message: 'Notes must be at least 10 characters long.',
   }),
@@ -75,12 +78,22 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
     },
   });
 
+  const startHobbs = form.watch('startHobbs');
+  const endHobbs = form.watch('endHobbs');
+
+  const flightDuration = useMemo(() => {
+    if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
+        return (endHobbs - startHobbs).toFixed(1);
+    }
+    return '0.0';
+  }, [startHobbs, endHobbs]);
+
   useEffect(() => {
     const fetchData = async () => {
         if (!company) return;
         const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
         const instQuery = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
-        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '==', 'Available'));
+        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
         
         const [instSnapshot, acSnapshot] = await Promise.all([getDocs(instQuery), getDocs(acQuery)]);
         
@@ -91,11 +104,11 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
   }, [company]);
 
   function handleFormSubmit(data: LogEntryFormValues) {
-    const flightDuration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
     
     const newEntry = {
       ...data,
-      flightDuration,
+      flightDuration: duration,
       date: format(data.date, 'yyyy-MM-dd'),
     };
     
@@ -198,6 +211,42 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
                     <FormLabel>End Hobbs</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.1" placeholder="1235.5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+         <div className="flex items-center gap-2 rounded-md border p-3 bg-muted">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm font-medium">Calculated Flight Duration:</span>
+            <span className="font-bold text-sm">{flightDuration} hrs</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+             <FormField
+                control={form.control}
+                name="trainingExercise"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Training Exercise</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select exercise" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                            {trainingExercisesData.map((ex) => ( <SelectItem key={ex} value={ex}>{ex}</SelectItem>))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="weatherConditions"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Weather Conditions</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., VMC, Wind 270/10kts" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

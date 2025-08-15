@@ -81,6 +81,8 @@ export type TrainingLogEntry = {
   instructorNotes: string;
   instructorName: string;
   instructorSignature?: string;
+  trainingExercise?: string;
+  weatherConditions?: string;
 };
 
 export const ALL_DOCUMENTS = [

@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -402,13 +402,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                            {pendingBookings.map(booking => (
                                 <Dialog key={booking.id}>
                                     <DialogTrigger asChild>
-                                        <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                        <button className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
                                             <div className="space-y-1">
                                                 <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                 <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                             </div>
                                             <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                        </div>
+                                        </button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
@@ -473,10 +473,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
                                         <Badge variant="outline">{log.instructorName}</Badge>
                                     </div>
-                                    <div className="flex items-center text-sm text-muted-foreground gap-4">
+                                    <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
                                         <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
                                         <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
                                         <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
+                                        {log.trainingExercise && <span className="flex items-center gap-1.5"><Award className="h-4 w-4" /> {log.trainingExercise}</span>}
+                                        {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
                                     </div>
                                     <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
                                     {log.instructorSignature && (
