@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser } from '@/context/user-provider';
-import { cn } from '@/lib/utils';
 
 export default function Footer() {
   const { company } = useUser();
@@ -10,7 +9,7 @@ export default function Footer() {
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
   return (
-    <footer className={cn("w-full border-t border-border bg-background p-4 text-center text-xs text-muted-foreground no-print")}>
+    <footer className="w-full border-t border-border bg-background p-4 text-center text-xs text-muted-foreground no-print">
       <p>
         &copy; {new Date().getFullYear()} {companyName}. "{trademark}" is a trademark of the project owner. All rights reserved. Unauthorized use of this name is strictly prohibited.
         <span className="mx-2">|</span>
