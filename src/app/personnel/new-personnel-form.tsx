@@ -317,7 +317,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             <div className="mb-4">
                                 <FormLabel className="text-base">Permissions</FormLabel>
                                 <FormDescription>
-                                    Click a permission to move it between the "Available" and "Assigned" lists. Defaults are set by role.
+                                    Select all permissions that apply to this user. Defaults are set by role.
                                 </FormDescription>
                             </div>
                             <PermissionsListbox control={form.control} />
