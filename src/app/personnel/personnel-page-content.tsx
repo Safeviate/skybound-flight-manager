@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
@@ -150,79 +150,74 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
               )}
           </CardHeader>
           <CardContent>
-              <Table>
-                  <TableHeader>
-                      <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Department</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Documents</TableHead>
-                           {canEdit && <TableHead className="text-right">Actions</TableHead>}
-                      </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                      {personnel.map(person => (
-                          <TableRow key={person.id}>
-                              <TableCell className="font-medium">{person.name}</TableCell>
-                              <TableCell>{person.role}</TableCell>
-                              <TableCell>{person.department}</TableCell>
-                              <TableCell>
-                                  <div>{person.email}</div>
-                                  <div>{person.phone}</div>
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" onClick={() => setViewingDocumentsFor(person)}>
-                                    <Eye className="mr-2 h-4 w-4" /> View
-                                </Button>
-                              </TableCell>
-                              {canEdit && (
-                                  <TableCell className="text-right">
-                                      <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                              <Button variant="ghost" size="icon">
-                                                  <MoreHorizontal className="h-4 w-4" />
-                                              </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent>
-                                              <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                  <Mail className="mr-2 h-4 w-4" />
-                                                  Send Welcome Email
-                                              </DropdownMenuItem>
-                                              <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
-                                                  <Edit className="mr-2 h-4 w-4" />
-                                                  Edit
-                                              </DropdownMenuItem>
-                                              <AlertDialog>
-                                                  <AlertDialogTrigger asChild>
-                                                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                          <Trash2 className="mr-2 h-4 w-4" />
-                                                          Delete
-                                                      </DropdownMenuItem>
-                                                  </AlertDialogTrigger>
-                                                  <AlertDialogContent>
-                                                      <AlertDialogHeader>
-                                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                          <AlertDialogDescription>
-                                                              This action cannot be undone. This will permanently delete {person.name} from the system.
-                                                          </AlertDialogDescription>
-                                                      </AlertDialogHeader>
-                                                      <AlertDialogFooter>
-                                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                          <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
-                                                              Yes, Delete Personnel
-                                                          </AlertDialogAction>
-                                                      </AlertDialogFooter>
-                                                  </AlertDialogContent>
-                                              </AlertDialog>
-                                          </DropdownMenuContent>
-                                      </DropdownMenu>
-                                  </TableCell>
-                              )}
-                          </TableRow>
-                      ))}
-                  </TableBody>
-              </Table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {personnel.map(person => (
+                    <Card key={person.id} className="flex flex-col">
+                        <CardHeader>
+                             <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle>{person.name}</CardTitle>
+                                    <CardDescription>{person.role}</CardDescription>
+                                </div>
+                                {canEdit && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
+                                                <Mail className="mr-2 h-4 w-4" />
+                                                Send Welcome Email
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete {person.name} from the system.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
+                                                            Yes, Delete Personnel
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm flex-grow">
+                            <p className="text-muted-foreground">{person.department}</p>
+                            <Separator />
+                            <div>
+                                <p>{person.email}</p>
+                                <p>{person.phone}</p>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingDocumentsFor(person)}>
+                                <Eye className="mr-2 h-4 w-4" /> View Documents
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
           </CardContent>
       </Card>
       {editingPersonnel && (
