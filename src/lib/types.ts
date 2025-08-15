@@ -180,6 +180,8 @@ export type Role =
   | 'System Admin'
   | 'Super User';
 
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings';
+
 export type User = {
     id: string;
     companyId: string;
@@ -189,6 +191,7 @@ export type User = {
     phone: string;
     password?: string;
     permissions: Permission[];
+    visibleMenuItems?: NavMenuItem[];
     consentDisplayContact?: 'Consented' | 'Not Consented';
     mustChangePassword?: boolean;
     homeAddress?: string;
@@ -606,5 +609,6 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 

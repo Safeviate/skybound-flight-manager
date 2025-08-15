@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Role, User, Permission, UserDocument } from '@/lib/types';
+import type { Role, User, Permission, UserDocument, NavMenuItem } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -28,6 +28,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
 
 const documents = [
   "Passport",
@@ -61,6 +62,7 @@ const personnelFormSchema = z.object({
       expiryDate: z.date().nullable(),
   })).optional(),
   permissions: z.array(z.string()).min(1, 'At least one permission must be selected.'),
+  visibleMenuItems: z.array(z.string()).optional(),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -88,6 +90,9 @@ const personnelRoles: Role[] = [
     'Safety Manager',
 ];
 
+const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissions?.includes('Super User')), ...adminNavItems]
+    .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data');
+
 export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProps) {
   
   const form = useForm<PersonnelFormValues>({
@@ -98,6 +103,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       phone: '',
       permissions: [],
       documents: documents.map(docType => ({ type: docType, expiryDate: null })),
+      visibleMenuItems: [],
     },
   });
   
@@ -121,6 +127,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
       documents: formDocs,
       permissions: personnel.permissions || [],
+      visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
     })
   }, [personnel, form]);
 
@@ -144,6 +151,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     const updatedPersonnel: User = {
         ...personnel,
         ...data,
+        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         permissions: data.permissions as Permission[],
         documents: documentsToSave,
     };
@@ -226,6 +234,49 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                 
                 <Separator />
                 
+                <FormField
+                    control={form.control}
+                    name="visibleMenuItems"
+                    render={() => (
+                        <FormItem>
+                            <div className="mb-4">
+                                <FormLabel className="text-base">Visible Menu Items</FormLabel>
+                                <FormDescription>
+                                    Select the top-level navigation items this user will be able to see.
+                                </FormDescription>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {availableNavItems.map((item) => (
+                                    <FormField
+                                        key={item.label}
+                                        control={form.control}
+                                        name="visibleMenuItems"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(item.label)}
+                                                        onCheckedChange={(checked) => {
+                                                            const newItems = checked
+                                                                ? [...(field.value || []), item.label]
+                                                                : field.value?.filter((label) => label !== item.label);
+                                                            field.onChange(newItems);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal">{item.label}</FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <Separator />
+
                 <FormField
                     control={form.control}
                     name="permissions"

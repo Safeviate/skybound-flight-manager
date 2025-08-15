@@ -39,14 +39,14 @@ import {
   BookOpen,
   FlaskConical,
 } from 'lucide-react';
-import type { Permission, Feature } from '@/lib/types';
+import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
-const navItems: {
+export const navItems: {
   href: string;
-  label: string;
+  label: NavMenuItem;
   icon: React.ElementType;
   requiredPermissions?: Permission[];
   requiredFeature?: Feature;
@@ -66,7 +66,7 @@ const navItems: {
   { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
 ];
 
-const adminNavItems = [
+export const adminNavItems = [
     { href: '/settings/companies', label: 'Manage Companies', icon: Building, requiredPermissions: ['Super User'] },
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
     { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
@@ -121,6 +121,24 @@ export default function Nav() {
     return companyFeatures.includes(requiredFeature);
   };
   
+  const isMenuItemVisible = (item: typeof navItems[0]) => {
+      // Always show for super users
+    if (user?.permissions?.includes('Super User')) {
+        return true;
+    }
+    // Check feature flag first
+    if (item.requiredFeature && !companyFeatures.includes(item.requiredFeature)) {
+        return false;
+    }
+    // If visibleMenuItems is defined, use it as the source of truth
+    if (user?.visibleMenuItems) {
+        return user.visibleMenuItems.includes(item.label);
+    }
+    // Fallback to permission-based logic if visibleMenuItems is not set
+    return hasPermission(item.requiredPermissions);
+  }
+
+
   const getIsActive = (href: string) => {
     if (href === '/' || href === '/settings') {
         return pathname === href;
@@ -135,21 +153,9 @@ export default function Nav() {
 
   const itemsToDisplay = navItems;
 
-  const visibleNavItems = itemsToDisplay.filter(item => {
-    if (item.href === '/my-dashboard' && user.permissions.includes('Super User')) {
-      return true;
-    }
-    if (item.href === '/' && !user.permissions.includes('Super User')) {
-      return false;
-    }
-    if (item.href === '/my-dashboard' && !user.permissions.includes('Super User')) {
-        return true;
-    }
-    return hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature)
-  });
-  
-  const visibleAdminItems = adminNavItems.filter(item => hasPermission(item.requiredPermissions) && hasFeature(item.requiredFeature));
-  const visibleSettingsItems = settingsNavItems.filter(item => hasPermission(item.requiredPermissions));
+  const visibleNavItems = itemsToDisplay.filter(isMenuItemVisible);
+  const visibleAdminItems = adminNavItems.filter(isMenuItemVisible);
+  const visibleSettingsItems = settingsNavItems.filter(isMenuItemVisible);
 
   return (
     <>
