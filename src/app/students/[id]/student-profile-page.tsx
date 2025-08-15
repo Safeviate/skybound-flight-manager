@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -415,7 +416,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 )}
             </div>
             <div className="lg:col-span-2 space-y-6">
-                 <Card>
+                <Card>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="space-y-1">
@@ -442,46 +443,52 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {paginatedLogs.map((log) => (
-                            <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
-                                    <Badge variant="outline">{log.instructorName}</Badge>
-                                </div>
-                                <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
-                                    <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
-                                    <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
-                                    <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
-                                    {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
-                                </div>
-                                <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
-                                    {log.trainingExercises.map((ex, index) => (
-                                        <div key={index}>
-                                            <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
-                                            {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 pt-2">
-                                    {log.instructorSignature && (
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
-                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                         {paginatedLogs.length > 0 ? (
+                            paginatedLogs.map((log) => (
+                                <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
+                                        <Badge variant="outline">{log.instructorName}</Badge>
+                                    </div>
+                                    <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
+                                        <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
+                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
+                                        <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
+                                        {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
+                                    </div>
+                                    <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
+                                        {log.trainingExercises.map((ex, index) => (
+                                            <div key={index}>
+                                                <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
+                                                {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
                                             </div>
-                                        </div>
-                                    )}
-                                    {log.studentSignature && (
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
-                                            <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 pt-2">
+                                        {log.instructorSignature && (
+                                            <div>
+                                                <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
+                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                    <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                        {log.studentSignature && (
+                                            <div>
+                                                <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
+                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                    <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">No training logs found.</p>
+                             </div>
+                        )}
                          {totalPages > 1 && (
                             <div className="flex items-center justify-center space-x-2 pt-4">
                                 <Button
