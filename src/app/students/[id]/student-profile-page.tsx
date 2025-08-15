@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -14,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { AddEndorsementForm } from './add-endorsement-form';
-import { getExpiryBadge, cn } from '@/lib/utils.tsx';
+import { getExpiryBadge } from '@/lib/utils.tsx';
 import { AddLogEntryForm } from './add-log-entry-form';
 import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
@@ -26,7 +27,7 @@ import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
-
+import { cn } from '@/lib/utils';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -403,7 +404,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     <DialogTrigger asChild>
                                         <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
                                             <div className="space-y-1">
-                                                <p className="font-semibold text-sm">Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                 <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                             </div>
                                             <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
