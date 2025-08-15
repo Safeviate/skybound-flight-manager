@@ -83,9 +83,12 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
 
   const flightDuration = useMemo(() => {
     if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
-        return (endHobbs - startHobbs).toFixed(1);
+        const durationDecimal = endHobbs - startHobbs;
+        const hours = Math.floor(durationDecimal);
+        const minutes = Math.round((durationDecimal - hours) * 60);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
-    return '0.0';
+    return '00:00';
   }, [startHobbs, endHobbs]);
 
   useEffect(() => {
@@ -220,7 +223,7 @@ export function AddLogEntryForm({ studentId, onSubmit }: AddLogEntryFormProps) {
          <div className="flex items-center gap-2 rounded-md border p-3 bg-muted">
             <Clock className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium">Calculated Flight Duration:</span>
-            <span className="font-bold text-sm">{flightDuration} hrs</span>
+            <span className="font-bold text-sm">{flightDuration}</span>
         </div>
         <div className="grid grid-cols-2 gap-4">
              <FormField
