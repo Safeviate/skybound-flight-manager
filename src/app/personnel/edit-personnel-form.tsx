@@ -29,6 +29,7 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
+import { Badge } from '@/components/ui/badge';
 
 const documents = [
   "Passport",
@@ -141,7 +142,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
     }
-  }, [selectedRole, form.formState.dirtyFields.role, form.setValue]);
+  }, [selectedRole, form]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
@@ -306,47 +307,20 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
                 <Separator />
 
-                <FormField
-                    control={form.control}
-                    name="permissions"
-                    render={() => (
-                        <FormItem>
-                            <div className="mb-4">
-                                <FormLabel className="text-base">Permissions</FormLabel>
-                                <FormDescription>
-                                    Select the permissions this user will have. Defaults are set by role.
-                                </FormDescription>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {ALL_PERMISSIONS.map((permission) => (
-                                    <FormField
-                                        key={permission}
-                                        control={form.control}
-                                        name="permissions"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                                <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value?.includes(permission)}
-                                                        onCheckedChange={(checked) => {
-                                                            const newPermissions = checked
-                                                                ? [...field.value, permission]
-                                                                : field.value?.filter((p) => p !== permission);
-                                                            field.onChange(newPermissions);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">{permission}</FormLabel>
-                                            </FormItem>
-                                        )}
-                                    />
-                                ))}
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
+                <FormItem>
+                    <div className="mb-4">
+                        <FormLabel className="text-base">Active Permissions</FormLabel>
+                        <FormDescription>
+                            This is a read-only list of permissions based on the user's role.
+                        </FormDescription>
+                    </div>
+                    <div className="flex flex-wrap gap-2 rounded-lg border p-4">
+                        {(form.getValues('permissions') || []).map((permission) => (
+                            <Badge key={permission} variant="secondary">{permission}</Badge>
+                        ))}
+                    </div>
+                </FormItem>
+                
                 <Separator />
                 
                 <FormField
