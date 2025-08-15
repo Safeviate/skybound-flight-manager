@@ -71,6 +71,11 @@ export type Endorsement = {
     awardedBy: string;
 };
 
+export type ExerciseLog = {
+    exercise: string;
+    comment?: string;
+}
+
 export type TrainingLogEntry = {
   id:string;
   date: string;
@@ -78,11 +83,10 @@ export type TrainingLogEntry = {
   startHobbs: number;
   endHobbs: number;
   flightDuration: number;
-  instructorNotes: string;
   instructorName: string;
   instructorSignature?: string;
   studentSignature?: string;
-  trainingExercise?: string;
+  trainingExercises: ExerciseLog[];
   weatherConditions?: string;
 };
 
@@ -601,3 +605,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+

@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +17,11 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { CalendarIcon, Clock, PlusCircle, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
-import type { Role, User, Aircraft, TrainingLogEntry, Booking } from '@/lib/types';
+import type { Role, User, Aircraft, TrainingLogEntry, Booking, ExerciseLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/context/user-provider';
 import { useState, useEffect, useMemo } from 'react';
@@ -32,6 +32,11 @@ import { trainingExercisesData } from '@/lib/data-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+const exerciseLogSchema = z.object({
+  exercise: z.string().min(1, "Please select an exercise."),
+  comment: z.string().optional(),
+});
 
 const logEntryFormSchema = z.object({
   date: z.date({
@@ -49,12 +54,8 @@ const logEntryFormSchema = z.object({
   instructorName: z.string({
     required_error: 'Please select the instructor.',
   }),
-  trainingExercise: z.string().optional(),
+  trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   weatherConditions: z.string().optional(),
-  studentStrengths: z.string().optional(),
-  areasForImprovement: z.string().min(10, {
-    message: 'Areas for improvement must be at least 10 characters long.',
-  }),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
   studentSignature: z.string().min(1, 'Student signature is required.'),
 }).refine(data => data.endHobbs > data.startHobbs, {
@@ -84,9 +85,13 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
       startHobbs: booking?.startHobbs || 0,
       endHobbs: booking?.endHobbs || 0,
       instructorName: booking?.instructor,
-      studentStrengths: '',
-      areasForImprovement: '',
+      trainingExercises: [{ exercise: '', comment: '' }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "trainingExercises",
   });
   
   useEffect(() => {
@@ -97,6 +102,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             startHobbs: booking.startHobbs || 0,
             endHobbs: booking.endHobbs || 0,
             instructorName: booking.instructor || '',
+            trainingExercises: [{ exercise: '', comment: '' }],
         });
     }
   }, [booking, form]);
@@ -138,7 +144,6 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     
     const newEntry = {
       ...data,
-      instructorNotes: `Strengths: ${data.studentStrengths || 'N/A'}\nAreas for Improvement: ${data.areasForImprovement}`,
       flightDuration: duration,
       date: format(data.date, 'yyyy-MM-dd'),
     };
@@ -257,48 +262,32 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="instructorName"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Instructor</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an instructor" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {instructors.map((instructor) => (
-                                        <SelectItem key={instructor.id} value={instructor.name}>
-                                        {instructor.name}
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
-                                name="trainingExercise"
+                                name="instructorName"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Training Exercise</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="Select exercise" /></SelectTrigger></FormControl>
+                                    <FormLabel>Instructor</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select an instructor" />
+                                        </SelectTrigger>
+                                        </FormControl>
                                         <SelectContent>
-                                            {trainingExercisesData.map((ex) => ( <SelectItem key={ex} value={ex}>{ex}</SelectItem>))}
+                                        {instructors.map((instructor) => (
+                                            <SelectItem key={instructor.id} value={instructor.name}>
+                                            {instructor.name}
+                                            </SelectItem>
+                                        ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
                                     </FormItem>
                                 )}
-                            />
-                            <FormField
+                                />
+                             <FormField
                                 control={form.control}
                                 name="weatherConditions"
                                 render={({ field }) => (
@@ -312,46 +301,56 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                 )}
                             />
                         </div>
+                        <Separator />
+                        <div className="space-y-4">
+                            <FormLabel>Exercises Covered</FormLabel>
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-lg space-y-2 relative">
+                                    <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.exercise`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">Exercise</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select exercise..." /></SelectTrigger></FormControl>
+                                                    <SelectContent>{trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`trainingExercises.${index}.comment`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                 <FormLabel className="sr-only">Comment</FormLabel>
+                                                <FormControl>
+                                                    <Textarea placeholder="Add a comment for this exercise..." {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => remove(index)} disabled={fields.length <= 1}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button type="button" variant="outline" className="w-full" onClick={() => append({ exercise: '', comment: '' })}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Another Exercise
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Instructor's Debrief & Signatures</CardTitle>
+                        <CardTitle>Signatures</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="studentStrengths"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Student's Strengths</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                    placeholder="Note what the student did well during the session..."
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="areasForImprovement"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Areas for Next Flight</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                    placeholder="Note what to focus on in the next session..."
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
                         <div className="grid md:grid-cols-2 gap-6 pt-4">
                             <FormField
                                 control={form.control}
@@ -391,3 +390,4 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     </Form>
   );
 }
+

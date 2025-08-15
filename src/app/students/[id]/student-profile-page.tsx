@@ -81,7 +81,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         return sortedLogs.filter(log =>
             log.aircraft.toLowerCase().includes(searchTerm.toLowerCase()) ||
             log.instructorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.instructorNotes.toLowerCase().includes(searchTerm.toLowerCase())
+            log.trainingExercises.some(ex => ex.comment?.toLowerCase().includes(searchTerm.toLowerCase()) || ex.exercise.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [sortedLogs, searchTerm]);
 
@@ -185,7 +185,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     log.endHobbs.toFixed(1),
                     log.flightDuration.toFixed(1),
                     log.instructorName,
-                    log.instructorNotes,
+                    log.trainingExercises.map(e => `${e.exercise}: ${e.comment || ''}`).join('\n'),
                 ]),
                 headStyles: { fillColor: [34, 197, 94] },
                 columnStyles: {
@@ -477,10 +477,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
                                         <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
                                         <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
-                                        {log.trainingExercise && <span className="flex items-center gap-1.5"><Award className="h-4 w-4" /> {log.trainingExercise}</span>}
                                         {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
                                     </div>
-                                    <p className="text-sm border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">{log.instructorNotes}</p>
+                                    <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
+                                        {log.trainingExercises.map((ex, index) => (
+                                            <div key={index}>
+                                                <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
+                                                {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
+                                            </div>
+                                        ))}
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4 pt-2">
                                         {log.instructorSignature && (
                                             <div>
