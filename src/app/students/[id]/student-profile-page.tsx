@@ -416,39 +416,39 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             </div>
             <div className="lg:col-span-2 space-y-6">
                 <Card>
-                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <CardTitle>Training Logbook</CardTitle>
-                             <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
+                    <CardHeader>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <CardTitle>Training Logbook</CardTitle>
+                                <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download PDF
+                                </Button>
+                                {canEdit && (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button className="w-full sm:w-auto">
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Add Log Entry
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                                <DialogDescription>
+                                                    Record details of the training session for {student.name}.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
-                            </Button>
-                            {canEdit && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button className="w-full sm:w-auto">
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add Log Entry
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                            <DialogDescription>
-                                                Record details of the training session for {student.name}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="flex items-center justify-between">
+                         <div className="flex items-center justify-between pt-4">
                             <Button asChild onClick={() => {}} variant="outline" className="w-full sm:w-auto">
                                 <Link href="#">
                                     <BookOpen className="mr-2 h-4 w-4" />
@@ -465,9 +465,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 />
                             </div>
                         </div>
+                    </CardHeader>
+                    <CardContent>
                         {paginatedLogs.length > 0 ? (
                             paginatedLogs.map((log) => (
-                                <div key={log.id} className="grid gap-2">
+                                <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
                                     <div className="flex justify-between items-center">
                                         <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
                                         <Badge variant="outline">{log.instructorName}</Badge>
