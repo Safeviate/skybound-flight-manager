@@ -60,8 +60,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         
         try {
             const userRef = doc(db, `companies/${company.id}/users`, updatedData.id);
-            const permissions = ROLE_PERMISSIONS[updatedData.role] || [];
-            await updateDoc(userRef, { ...updatedData, permissions });
+            await updateDoc(userRef, { ...updatedData });
             await fetchPersonnel();
             setEditingPersonnel(null);
             toast({ title: 'Personnel Updated', description: `${updatedData.name}'s details have been saved.` });

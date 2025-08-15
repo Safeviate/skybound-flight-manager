@@ -138,11 +138,12 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [personnel, form]);
 
   useEffect(() => {
-    if (selectedRole && form.formState.dirtyFields.role) {
+    // Only reset permissions if the role has been manually changed by the user
+    if (form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
     }
-  }, [selectedRole, form]);
+  }, [selectedRole, form.formState.dirtyFields.role, form.setValue]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
@@ -307,19 +308,45 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
                 <Separator />
 
-                <FormItem>
-                    <div className="mb-4">
-                        <FormLabel className="text-base">Active Permissions</FormLabel>
-                        <FormDescription>
-                            This is a read-only list of permissions based on the user's role.
-                        </FormDescription>
-                    </div>
-                    <div className="flex flex-wrap gap-2 rounded-lg border p-4">
-                        {(form.getValues('permissions') || []).map((permission) => (
-                            <Badge key={permission} variant="secondary">{permission}</Badge>
-                        ))}
-                    </div>
-                </FormItem>
+                 <FormField
+                    control={form.control}
+                    name="permissions"
+                    render={() => (
+                        <FormItem>
+                            <div className="mb-4">
+                                <FormLabel className="text-base">Permissions</FormLabel>
+                                <FormDescription>
+                                    Select the specific permissions for this user. These will default based on the selected role.
+                                </FormDescription>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {ALL_PERMISSIONS.map((permission) => (
+                                    <FormField
+                                        key={permission}
+                                        control={form.control}
+                                        name="permissions"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(permission)}
+                                                        onCheckedChange={(checked) => {
+                                                            return checked
+                                                                ? field.onChange([...field.value, permission])
+                                                                : field.onChange(field.value?.filter((p) => p !== permission));
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal text-sm">{permission}</FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 
                 <Separator />
                 
