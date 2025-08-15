@@ -28,6 +28,7 @@ import { useSettings } from '@/context/settings-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
