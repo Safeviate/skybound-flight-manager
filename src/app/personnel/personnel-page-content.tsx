@@ -60,7 +60,11 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         
         try {
             const userRef = doc(db, `companies/${company.id}/users`, updatedData.id);
-            await updateDoc(userRef, { ...updatedData });
+            const dataToSave = {
+                ...updatedData,
+                department: updatedData.department || null,
+            };
+            await updateDoc(userRef, dataToSave);
             await fetchPersonnel();
             setEditingPersonnel(null);
             toast({ title: 'Personnel Updated', description: `${updatedData.name}'s details have been saved.` });
