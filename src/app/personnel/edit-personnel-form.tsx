@@ -31,6 +31,7 @@ import { format, parseISO } from 'date-fns';
 import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
 import { Badge } from '@/components/ui/badge';
 import { useUser } from '@/context/user-provider';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const documents = [
   "Passport",
