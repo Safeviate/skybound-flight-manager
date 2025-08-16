@@ -57,7 +57,7 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  email: z.string().email(),
+  email: z.string().email().optional().or(z.literal('')),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   role: z.custom<Role>((val) => typeof val === 'string' && val !== 'Student', {
       message: 'A valid role must be selected.'
@@ -192,10 +192,11 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                     name="email"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Email (Optional)</FormLabel>
                         <FormControl>
                             <Input type="email" placeholder="staff@company.com" {...field} />
                         </FormControl>
+                        <FormDescription>If provided, a user account will be created.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
