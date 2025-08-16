@@ -142,8 +142,6 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [personnel, form]);
 
   useEffect(() => {
-    // This effect now correctly depends only on `selectedRole`.
-    // It will only run when the value of the 'role' field changes.
     if (form.formState.isDirty && form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
