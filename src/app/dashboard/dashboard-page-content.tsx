@@ -168,6 +168,21 @@ export function DashboardPageContent({
         
         expiringAircraftDocs.sort((a,b) => a.daysUntil - b.daysUntil);
 
+        const studentMilestones = initialStudents
+            .filter(s => s.status === 'Active' && s.licenseType !== 'PPL')
+            .map(s => {
+                const hours = s.flightHours || 0;
+                const nextMilestone = [10, 20, 30].find(m => hours < m);
+                return {
+                    student: s,
+                    currentHours: hours,
+                    nextMilestone: nextMilestone,
+                    progress: nextMilestone ? (hours / nextMilestone) * 100 : 100,
+                };
+            })
+            .filter(s => s.nextMilestone) // Only include students with an upcoming milestone
+            .sort((a, b) => b.progress - a.progress);
+
 
         return {
             openSafetyReports,
@@ -177,6 +192,7 @@ export function DashboardPageContent({
             expiringUserDocs,
             expiringStudentDocs,
             expiringAircraftDocs,
+            studentMilestones,
         }
     }, [initialAircraft, initialUsers, initialStudents, settings]);
 
@@ -238,6 +254,39 @@ export function DashboardPageContent({
                                     <p className="font-medium">All aircraft are on the ground.</p>
                                     <p className="text-xs">No active bookings at this time.</p>
                                 </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Student Milestone Progress</CardTitle>
+                            <CardDescription>
+                                Students approaching their 10, 20, and 30-hour progress checks.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {stats.studentMilestones.length > 0 ? (
+                                <ScrollArea className="h-60 pr-4">
+                                <div className="space-y-4">
+                                    {stats.studentMilestones.map(item => (
+                                        <div key={item.student.id} className="p-3 border rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <Link href={`/students/${item.student.id}`} className="font-semibold text-sm hover:underline">{item.student.name}</Link>
+                                                <Badge variant="outline">Next: {item.nextMilestone} hrs</Badge>
+                                            </div>
+                                            <div className="mt-2">
+                                                <Progress value={item.progress} />
+                                                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                                    <span>{item.currentHours.toFixed(1)} hrs logged</span>
+                                                     <span>{item.progress.toFixed(0)}% complete</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground flex items-center justify-center h-24">No students are currently approaching a major flight-hour milestone.</p>
                             )}
                         </CardContent>
                     </Card>
