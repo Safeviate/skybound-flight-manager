@@ -53,6 +53,7 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
+  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -113,12 +114,16 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       role: personnel.role,
       department: personnel.department,
       phone: personnel.phone || '',
+      instructorGrade: personnel.instructorGrade,
       consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
       documents: formDocs,
       permissions: personnel.permissions || [],
       visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
     },
   });
+
+  const selectedRole = form.watch('role');
+  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
@@ -132,6 +137,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     const updatedPersonnel: User = {
         ...personnel,
         ...data,
+        instructorGrade: isInstructorRole ? data.instructorGrade : undefined,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         permissions: data.permissions as Permission[],
         documents: documentsToSave,
@@ -235,6 +241,30 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         </FormItem>
                     )}
                     />
+                    {isInstructorRole && (
+                        <FormField
+                        control={form.control}
+                        name="instructorGrade"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Instructor Grade</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select instructor grade" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Grade 1">Grade 1</SelectItem>
+                                    <SelectItem value="Grade 2">Grade 2</SelectItem>
+                                    <SelectItem value="Grade 3">Grade 3</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
                 </div>
                 
                 <Separator />

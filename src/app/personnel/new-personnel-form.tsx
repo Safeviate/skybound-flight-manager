@@ -53,6 +53,7 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
+  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -101,6 +102,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
       name: '',
       email: '',
       phone: '',
+      department: undefined,
       consentDisplayContact: 'Not Consented',
       documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
       permissions: [],
@@ -116,6 +118,8 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
       form.setValue('permissions', defaultPermissions);
     }
   }, [selectedRole, form]);
+
+  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
 
 
   async function handleFormSubmit(data: PersonnelFormValues) {
@@ -134,6 +138,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
 
     const dataToSubmit = {
         ...data,
+        instructorGrade: isInstructorRole ? data.instructorGrade : undefined,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>
@@ -252,6 +257,30 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                         </FormItem>
                     )}
                     />
+                    {isInstructorRole && (
+                        <FormField
+                        control={form.control}
+                        name="instructorGrade"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Instructor Grade</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select instructor grade" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Grade 1">Grade 1</SelectItem>
+                                    <SelectItem value="Grade 2">Grade 2</SelectItem>
+                                    <SelectItem value="Grade 3">Grade 3</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
                 </div>
                 
                 <Separator />
