@@ -1,4 +1,5 @@
 
+
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -19,14 +20,13 @@ export type Airport = {
 export type ThemeColors = {
   primary?: string;
   background?: string;
+  card?: string;
+  foreground?: string;
+  cardForeground?: string;
   accent?: string;
   sidebarBackground?: string;
+  sidebarForeground?: string;
   sidebarAccent?: string;
-  foreground?: string;
-  card?: string;
-  cardForeground?: string;
-  popover?: string;
-  popoverForeground?: string;
   secondary?: string;
   secondaryForeground?: string;
   muted?: string;

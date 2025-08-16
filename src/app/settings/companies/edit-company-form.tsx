@@ -21,6 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const features: { id: Feature, label: string, description: string }[] = [
     { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
@@ -44,8 +45,12 @@ const companyFormSchema = z.object({
   theme: z.object({
     primary: z.string().optional(),
     background: z.string().optional(),
+    card: z.string().optional(),
+    foreground: z.string().optional(),
+    cardForeground: z.string().optional(),
     accent: z.string().optional(),
     sidebarBackground: z.string().optional(),
+    sidebarForeground: z.string().optional(),
     sidebarAccent: z.string().optional(),
   }).optional(),
 });
@@ -64,12 +69,9 @@ const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyForm
         render={({ field }) => (
             <FormItem>
                 <FormLabel>{label}</FormLabel>
-                <div className="flex items-center gap-2">
-                    <FormControl>
-                        <Input placeholder="#ffffff" {...field} />
-                    </FormControl>
-                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: field.value || 'transparent' }} />
-                </div>
+                <FormControl>
+                    <Input type="color" {...field} />
+                </FormControl>
                 <FormMessage />
             </FormItem>
         )}
@@ -156,13 +158,42 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
             <Separator />
             
              <div className="space-y-2">
-                <h4 className="font-semibold flex items-center gap-2"><Paintbrush className="h-4 w-4"/>App Theming</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <ColorInput name="theme.primary" control={form.control} label="Primary" />
-                    <ColorInput name="theme.background" control={form.control} label="Background" />
-                    <ColorInput name="theme.accent" control={form.control} label="Accent" />
-                    <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
-                    <ColorInput name="theme.sidebarAccent" control={form.control} label="Sidebar Accent" />
+                <h4 className="font-semibold flex items-center gap-2"><Paintbrush className="h-4 w-4"/>Company Theme</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Main Backgrounds</CardTitle></CardHeader>
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                            <ColorInput name="theme.background" control={form.control} label="Background" />
+                            <ColorInput name="theme.card" control={form.control} label="Card" />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Main Text</CardTitle></CardHeader>
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                           <ColorInput name="theme.foreground" control={form.control} label="Foreground" />
+                           <ColorInput name="theme.cardForeground" control={form.control} label="Card Text" />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Accents</CardTitle></CardHeader>
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                            <ColorInput name="theme.primary" control={form.control} label="Primary" />
+                            <ColorInput name="theme.accent" control={form.control} label="Accent" />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Background</CardTitle></CardHeader>
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                            <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Text</CardTitle></CardHeader>
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                           <ColorInput name="theme.sidebarForeground" control={form.control} label="Foreground" />
+                           <ColorInput name="theme.sidebarAccent" control={form.control} label="Accent" />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 

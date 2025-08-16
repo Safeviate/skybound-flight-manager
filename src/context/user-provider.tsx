@@ -32,11 +32,15 @@ const fallbackCompany: Company = {
     trademark: 'Your Trusted Partner in Aviation',
     enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
     theme: {
-        primary: '#2563eb', // Default Blue
-        background: '#f4f4f5', // Light Gray
-        accent: '#f59e0b', // Amber
-        sidebarBackground: '#0c0a09', // Dark Gray for sidebar
-        sidebarAccent: '#1f2937' // Slightly lighter gray for highlight
+        primary: '#0d6efd',
+        background: '#f8f9fa',
+        card: '#ffffff',
+        accent: '#ffc107',
+        foreground: '#212529',
+        cardForeground: '#212529',
+        sidebarBackground: '#0c0a09',
+        sidebarForeground: '#f8f9fa',
+        sidebarAccent: '#1f2937',
     }
 };
 

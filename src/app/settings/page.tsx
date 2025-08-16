@@ -21,8 +21,12 @@ import type { ThemeColors } from "@/lib/types"
 const themeFormSchema = z.object({
   primary: z.string().optional(),
   background: z.string().optional(),
+  card: z.string().optional(),
+  foreground: z.string().optional(),
+  cardForeground: z.string().optional(),
   accent: z.string().optional(),
   sidebarBackground: z.string().optional(),
+  sidebarForeground: z.string().optional(),
   sidebarAccent: z.string().optional(),
 });
 
@@ -35,12 +39,9 @@ const ColorInput = ({ name, control, label }: { name: keyof ThemeFormValues, con
         render={({ field }) => (
             <FormItem>
                 <FormLabel>{label}</FormLabel>
-                <div className="flex items-center gap-2">
-                    <FormControl>
-                        <Input placeholder="#ffffff" {...field} />
-                    </FormControl>
-                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: field.value || 'transparent' }} />
-                </div>
+                <FormControl>
+                    <Input type="color" {...field} />
+                </FormControl>
                 <FormMessage />
             </FormItem>
         )}
@@ -74,7 +75,17 @@ function SettingsPage() {
   };
   
   const handleResetTheme = () => {
-    const defaultTheme = {}; // Or fetch from a default config
+    const defaultTheme = {
+        primary: '#0d6efd',
+        background: '#f8f9fa',
+        card: '#ffffff',
+        accent: '#ffc107',
+        foreground: '#212529',
+        cardForeground: '#212529',
+        sidebarBackground: '#0c0a09',
+        sidebarForeground: '#f8f9fa',
+        sidebarAccent: '#1f2937',
+    };
     form.reset(defaultTheme);
     updateCompany({ theme: defaultTheme });
     toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });
@@ -109,23 +120,55 @@ function SettingsPage() {
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Paintbrush className="h-4 w-4" />
-                    Color Scheme
+                    Company Theme Colors
                   </h3>
+                   <p className="text-sm text-muted-foreground">
+                    Set your organization's brand colors. These are applied on top of the base theme.
+                  </p>
                    <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleThemeSubmit)} className="space-y-4">
-                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                           <ColorInput name="primary" control={form.control} label="Primary" />
-                           <ColorInput name="background" control={form.control} label="Background" />
-                           <ColorInput name="accent" control={form.control} label="Accent" />
-                           <ColorInput name="sidebarBackground" control={form.control} label="Sidebar" />
-                           <ColorInput name="sidebarAccent" control={form.control} label="Sidebar Accent" />
+                       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                            <Card>
+                                <CardHeader className="p-4"><CardTitle className="text-base">Main Backgrounds</CardTitle></CardHeader>
+                                <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                    <ColorInput name="background" control={form.control} label="Background" />
+                                    <ColorInput name="card" control={form.control} label="Card" />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="p-4"><CardTitle className="text-base">Main Text</CardTitle></CardHeader>
+                                <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                   <ColorInput name="foreground" control={form.control} label="Foreground" />
+                                   <ColorInput name="cardForeground" control={form.control} label="Card Text" />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="p-4"><CardTitle className="text-base">Accents</CardTitle></CardHeader>
+                                <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                    <ColorInput name="primary" control={form.control} label="Primary" />
+                                    <ColorInput name="accent" control={form.control} label="Accent" />
+                                </CardContent>
+                            </Card>
+                             <Card>
+                                <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Background</CardTitle></CardHeader>
+                                <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                    <ColorInput name="sidebarBackground" control={form.control} label="Sidebar" />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Text</CardTitle></CardHeader>
+                                <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                   <ColorInput name="sidebarForeground" control={form.control} label="Foreground" />
+                                   <ColorInput name="sidebarAccent" control={form.control} label="Accent" />
+                                </CardContent>
+                            </Card>
                        </div>
                         <div className="flex justify-end gap-2">
                              <Button type="button" variant="ghost" onClick={handleResetTheme}>
                                 <Eraser className="mr-2 h-4 w-4" />
-                                Reset to Default
+                                Reset Theme
                             </Button>
-                            <Button type="submit">Apply Theme</Button>
+                            <Button type="submit">Save Theme</Button>
                         </div>
                     </form>
                    </Form>
