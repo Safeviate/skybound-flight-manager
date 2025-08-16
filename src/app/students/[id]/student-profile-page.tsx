@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking } from '@/lib/types';
+import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
@@ -131,14 +132,45 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!company || !student) return;
 
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
-        
-        // Recalculate total hours from scratch to ensure accuracy
         const currentLogs = student?.trainingLogs || [];
         const newTotalHours = [...currentLogs, entryWithId].reduce((total, log) => total + (log.flightDuration || 0), 0);
+
+        const milestones = [10, 20, 30];
+        const notificationsSent = student.milestoneNotificationsSent || [];
+        const newNotifications: number[] = [];
+
+        for (const milestone of milestones) {
+            const threshold = milestone - 1;
+            if (newTotalHours >= threshold && !notificationsSent.includes(milestone)) {
+                const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
+                const hotSnapshot = await getDocs(headOfTrainingQuery);
+                const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as StudentUser;
+                const instructor = (await getDocs(query(collection(db, `companies/${company.id}/users`), where('name', '==', student.instructor)))).docs[0]?.data() as StudentUser;
+
+                const targetUserIds = [hot?.id, instructor?.id].filter(Boolean) as string[];
+
+                for (const targetId of targetUserIds) {
+                     const newAlert: Omit<Alert, 'id'|'number'> = {
+                        companyId: company.id,
+                        type: 'Task',
+                        title: `Milestone Alert: ${student.name}`,
+                        description: `${student.name} is approaching the ${milestone}-hour milestone with ${newTotalHours.toFixed(1)} total hours. Please schedule a progress check.`,
+                        author: 'System',
+                        date: new Date().toISOString(),
+                        readBy: [],
+                        targetUserId: targetId,
+                        relatedLink: `/students/${student.id}`,
+                    };
+                    await addDoc(collection(db, `companies/${company.id}/alerts`), newAlert);
+                }
+                newNotifications.push(milestone);
+            }
+        }
         
         const updateData: Partial<StudentUser> = {
             trainingLogs: arrayUnion(entryWithId),
             flightHours: newTotalHours,
+            milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
 
         if (fromBookingId) {

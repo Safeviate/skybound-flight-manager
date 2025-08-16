@@ -208,6 +208,7 @@ export type User = {
     trainingLogs?: TrainingLogEntry[];
     licenseType?: 'SPL' | 'PPL';
     pendingBookingIds?: string[];
+    milestoneNotificationsSent?: number[];
     // Personnel-specific
     department?: Department;
     medicalExpiry?: string | null;
@@ -609,6 +610,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 
