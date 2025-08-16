@@ -63,8 +63,7 @@ export function AddEndorsementForm({ studentId, onSubmit }: AddEndorsementFormPr
   useEffect(() => {
     const fetchInstructors = async () => {
         if (!company) return;
-        const instructorRoles: Role[] = ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'];
-        const q = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
+        const q = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
         const snapshot = await getDocs(q);
         setInstructors(snapshot.docs.map(doc => doc.data() as User));
     }

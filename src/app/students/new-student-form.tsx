@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -87,8 +86,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   useEffect(() => {
       const fetchInstructors = async () => {
           if (!company) return;
-          const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-          const q = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
+          const q = query(collection(db, `companies/${company.id}/users`), where('role', '!=', 'Student'));
           const snapshot = await getDocs(q);
           setInstructors(snapshot.docs.map(doc => doc.data() as User));
       }
