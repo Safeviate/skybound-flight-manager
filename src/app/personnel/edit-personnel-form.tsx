@@ -116,8 +116,6 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     },
   });
   
-  const selectedRole = form.watch('role');
-
   useEffect(() => {
     const existingDocs = personnel.documents || [];
     const formDocs = documents.map(docType => {
@@ -139,18 +137,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       permissions: personnel.permissions || [],
       visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
     })
-  }, [personnel, form]);
-
-  useEffect(() => {
-    if (form.formState.isDirty && form.formState.dirtyFields.role) {
-      const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
-      form.setValue('permissions', defaultPermissions, { shouldDirty: true });
-       toast({
-          title: "Permissions Updated",
-          description: `Default permissions for the "${selectedRole}" role have been applied.`,
-      });
-    }
-  }, [selectedRole, form, toast]);
+  }, [personnel]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
