@@ -56,7 +56,7 @@ const personnelFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
-  email: z.string().email(),
+  email: z.string().email().optional().or(z.literal('')),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
   role: z.custom<Role>((val) => typeof val === 'string' && val !== 'Student', {
       message: 'A valid role must be selected.'
