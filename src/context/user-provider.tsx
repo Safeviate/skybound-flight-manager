@@ -40,7 +40,7 @@ const fallbackCompany: Company = {
     }
 };
 
-const hexToHSL = (hex: string): string | null => {
+const hexToHSL = (hex: string): { h: number, s: number, l: number, hslString: string } | null => {
     if (!hex) return null;
     let r = 0, g = 0, b = 0;
     if (hex.length === 4) {
@@ -76,8 +76,9 @@ const hexToHSL = (hex: string): string | null => {
     s = Math.round(s * 100);
     l = Math.round(l * 100);
 
-    return `${h} ${s}% ${l}%`;
+    return { h, s, l, hslString: `${h} ${s}% ${l}%` };
 };
+
 
 const defaultSettings = {
     expiryWarningOrangeDays: 30,
@@ -110,11 +111,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const primary = theme.primary ? hexToHSL(theme.primary) : null;
-        const background = theme.background ? hexToHSL(theme.background) : null;
-        const accent = theme.accent ? hexToHSL(theme.accent) : null;
-        const sidebarBackground = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground) : null;
-        const sidebarAccent = theme.sidebarAccent ? hexToHSL(theme.sidebarAccent) : null;
+        const primary = theme.primary ? hexToHSL(theme.primary)?.hslString : null;
+        const background = theme.background ? hexToHSL(theme.background)?.hslString : null;
+        const accent = theme.accent ? hexToHSL(theme.accent)?.hslString : null;
+        
+        const sidebarBackgroundResult = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground) : null;
+        const sidebarBackground = sidebarBackgroundResult?.hslString;
+
+        // Determine foreground color based on background lightness
+        const sidebarLightness = sidebarBackgroundResult?.l ?? 0; // Default to dark
+        const sidebarForeground = sidebarLightness > 50 ? '222.2 84% 4.9%' : '210 40% 98%'; // Black or White
+
+        const sidebarAccent = theme.sidebarAccent ? hexToHSL(theme.sidebarAccent)?.hslString : null;
 
         const css = `
         :root {
@@ -122,6 +130,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           ${background ? `--background: ${background};` : ''}
           ${accent ? `--accent: ${accent};` : ''}
           ${sidebarBackground ? `--sidebar-background: ${sidebarBackground};` : ''}
+          ${sidebarForeground ? `--sidebar-foreground: ${sidebarForeground};` : ''}
           ${sidebarAccent ? `--sidebar-accent: ${sidebarAccent};` : ''}
         }
       `;
