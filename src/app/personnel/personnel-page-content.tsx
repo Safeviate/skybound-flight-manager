@@ -160,7 +160,10 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                              <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle>{person.name}</CardTitle>
-                                    <CardDescription>{person.role}</CardDescription>
+                                    <CardDescription>
+                                        {person.role}
+                                        {person.instructorGrade && ` (${person.instructorGrade})`}
+                                    </CardDescription>
                                 </div>
                                 {canEdit && (
                                     <DropdownMenu>
