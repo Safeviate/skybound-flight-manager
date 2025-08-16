@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
@@ -316,339 +317,350 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
-        <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-1 space-y-8">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
-                            <div className="p-4 rounded-full bg-muted">
-                                <UserIcon className="h-12 w-12 text-muted-foreground" />
-                            </div>
-                            <div>
-                                <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
-                                <CardDescription className="mt-1 text-center sm:text-left">
-                                   <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
-                                </CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4 border-t pb-6">
-                        <div className="flex items-center space-x-3">
-                            <UserCheck className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Instructor: {student.instructor}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
-                        </div>
-                        
-                        {(student.documents || []).map(doc => (
-                             <div key={doc.id} className="flex items-center space-x-3">
-                                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-
-                {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
-
-                 <Card>
-                    <CardHeader>
-                        <div className="flex flex-row items-center justify-between">
-                            <div className="space-y-1">
-                                <CardTitle>Endorsements</CardTitle>
-                                <CardDescription>Qualifications and completed milestones.</CardDescription>
-                            </div>
-                            {canEdit && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button size="sm">
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Add New Endorsement</DialogTitle>
-                                            <DialogDescription>
-                                                Fill out the form to add a new endorsement for {student.name}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                <TableHead>Endorsement</TableHead>
-                                <TableHead>Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
-                                <TableRow key={endorsement.id}>
-                                    <TableCell className="font-medium flex items-center gap-2">
-                                        <Award className="h-4 w-4 text-accent"/>
-                                        {endorsement.name}
-                                    </TableCell>
-                                    <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
-                                </TableRow>
-                                )) : (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                        No endorsements found.
-                                    </TableCell>
-                                </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                {canEdit && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Admin Actions</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" className="w-full">
-                                        <Archive className="mr-2 h-4 w-4" /> Archive Student
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-            <div className="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <div className="space-y-1">
-                            <CardTitle>Training Logbook</CardTitle>
-                            <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button asChild variant="link" className="p-0 h-auto">
-                                        <Link href="#">
-                                            <BookOpen className="mr-2 h-4 w-4" />
-                                            View Full Logbook
-                                        </Link>
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl">
-                                    <DialogHeader>
-                                        <DialogTitle>Full Training Logbook: {student.name}</DialogTitle>
-                                    </DialogHeader>
-                                    <ScrollArea className="h-[70vh]">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Date</TableHead>
-                                                    <TableHead>Aircraft</TableHead>
-                                                    <TableHead>Duration</TableHead>
-                                                    <TableHead>Instructor</TableHead>
-                                                    <TableHead>Exercises</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                            {filteredLogs.map((log) => (
-                                                <TableRow key={log.id}>
-                                                    <TableCell>{format(parseISO(log.date), 'dd MMM yy')}</TableCell>
-                                                    <TableCell>{log.aircraft}</TableCell>
-                                                    <TableCell>{log.flightDuration.toFixed(1)}</TableCell>
-                                                    <TableCell>{log.instructorName}</TableCell>
-                                                    <TableCell>
-                                                        {log.trainingExercises.map(e => e.exercise).join(', ')}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                            </TableBody>
-                                        </Table>
-                                    </ScrollArea>
-                                </DialogContent>
-                            </Dialog>
-                            <div className="relative w-full sm:w-auto">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                    placeholder="Search log entries..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                         {paginatedLogs.length > 0 ? (
-                            paginatedLogs.map((log) => (
-                                <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
-                                        <Badge variant="outline">{log.instructorName}</Badge>
+        <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="logbook">Logbook</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" className="mt-6">
+                <div className="grid gap-8 lg:grid-cols-3">
+                    <div className="lg:col-span-1 space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
+                                    <div className="p-4 rounded-full bg-muted">
+                                        <UserIcon className="h-12 w-12 text-muted-foreground" />
                                     </div>
-                                    <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
-                                        <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
-                                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
-                                        <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
-                                        {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
-                                    </div>
-                                    <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
-                                        {log.trainingExercises.map((ex, index) => (
-                                            <div key={index}>
-                                                <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
-                                                {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 pt-2">
-                                        {log.instructorSignature && (
-                                            <div>
-                                                <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
-                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                    <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {log.studentSignature && (
-                                            <div>
-                                                <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
-                                                <div className="mt-1 p-2 border rounded-md bg-background inline-block">
-                                                    <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
-                                                </div>
-                                            </div>
-                                        )}
+                                    <div>
+                                        <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
+                                        <CardDescription className="mt-1 text-center sm:text-left">
+                                           <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
+                                        </CardDescription>
                                     </div>
                                 </div>
-                            ))
-                        ) : (
-                             <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">No training logs found.</p>
-                             </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-4 border-t pb-6">
+                                <div className="flex items-center space-x-3">
+                                    <UserCheck className="h-5 w-5 text-muted-foreground" />
+                                    <span className="font-medium">Instructor: {student.instructor}</span>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <BookUser className="h-5 w-5 text-muted-foreground" />
+                                    <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
+                                </div>
+                                
+                                {(student.documents || []).map(doc => (
+                                     <div key={doc.id} className="flex items-center space-x-3">
+                                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                        <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
+
+                         <Card>
+                            <CardHeader>
+                                <div className="flex flex-row items-center justify-between">
+                                    <div className="space-y-1">
+                                        <CardTitle>Endorsements</CardTitle>
+                                        <CardDescription>Qualifications and completed milestones.</CardDescription>
+                                    </div>
+                                    {canEdit && (
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button size="sm">
+                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                    Add
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Add New Endorsement</DialogTitle>
+                                                    <DialogDescription>
+                                                        Fill out the form to add a new endorsement for {student.name}.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
+                                            </DialogContent>
+                                        </Dialog>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                        <TableHead>Endorsement</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
+                                        <TableRow key={endorsement.id}>
+                                            <TableCell className="font-medium flex items-center gap-2">
+                                                <Award className="h-4 w-4 text-accent"/>
+                                                {endorsement.name}
+                                            </TableCell>
+                                            <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
+                                        </TableRow>
+                                        )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                                No endorsements found.
+                                            </TableCell>
+                                        </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                        {canEdit && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Admin Actions</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" className="w-full">
+                                                <Archive className="mr-2 h-4 w-4" /> Archive Student
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </CardContent>
+                            </Card>
                         )}
-                         {totalPages > 1 && (
-                            <div className="flex items-center justify-center space-x-2 pt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlePrevPage}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                    Previous
-                                </Button>
-                                <span className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleNextPage}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                            <div className="space-y-1">
-                                <CardTitle>Student Debrief</CardTitle>
-                                <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
-                            </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download PDF
-                                </Button>
-                                {canEdit && (
+                    </div>
+                    <div className="lg:col-span-2 space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <div className="space-y-1">
+                                    <CardTitle>Training Logbook</CardTitle>
+                                    <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <Button className="w-full sm:w-auto">
-                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                Add Log Entry
+                                            <Button asChild variant="link" className="p-0 h-auto">
+                                                <Link href="#">
+                                                    <BookOpen className="mr-2 h-4 w-4" />
+                                                    View Full Logbook
+                                                </Link>
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
                                             <DialogHeader>
-                                                <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                                <DialogTitle>Full Training Logbook: {student.name}</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-[70vh]">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Date</TableHead>
+                                                            <TableHead>Aircraft</TableHead>
+                                                            <TableHead>Duration</TableHead>
+                                                            <TableHead>Instructor</TableHead>
+                                                            <TableHead>Exercises</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                    {filteredLogs.map((log) => (
+                                                        <TableRow key={log.id}>
+                                                            <TableCell>{format(parseISO(log.date), 'dd MMM yy')}</TableCell>
+                                                            <TableCell>{log.aircraft}</TableCell>
+                                                            <TableCell>{log.flightDuration.toFixed(1)}</TableCell>
+                                                            <TableCell>{log.instructorName}</TableCell>
+                                                            <TableCell>
+                                                                {log.trainingExercises.map(e => e.exercise).join(', ')}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
+                                    <div className="relative w-full sm:w-auto">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            placeholder="Search log entries..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                 {paginatedLogs.length > 0 ? (
+                                    paginatedLogs.map((log) => (
+                                        <div key={log.id} className="grid gap-2 border-b py-4 last:border-b-0">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="font-semibold">{format(parseISO(log.date), 'MMMM d, yyyy')}</h4>
+                                                <Badge variant="outline">{log.instructorName}</Badge>
+                                            </div>
+                                            <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-4 gap-y-1">
+                                                <span className="flex items-center gap-1.5"><Plane className="h-4 w-4" /> {log.aircraft}</span>
+                                                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {log.flightDuration.toFixed(1)} hrs</span>
+                                                <span className="font-mono text-xs"> (H: {log.startHobbs.toFixed(1)} - {log.endHobbs.toFixed(1)})</span>
+                                                {log.weatherConditions && <span className="flex items-center gap-1.5"><Wind className="h-4 w-4" /> {log.weatherConditions}</span>}
+                                            </div>
+                                            <div className="space-y-2 border-l-2 pl-4 py-2 bg-muted/50 rounded-r-lg">
+                                                {log.trainingExercises.map((ex, index) => (
+                                                    <div key={index}>
+                                                        <p className="font-semibold text-sm flex items-center gap-2"><Award className="h-4 w-4 text-accent" /> {ex.exercise}</p>
+                                                        {ex.comment && <p className="text-sm text-muted-foreground italic pl-6">"{ex.comment}"</p>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                {log.instructorSignature && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-muted-foreground">Instructor Signature:</p>
+                                                        <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                            <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {log.studentSignature && (
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-muted-foreground">Student Signature:</p>
+                                                        <div className="mt-1 p-2 border rounded-md bg-background inline-block">
+                                                            <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                     <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                                        <p className="text-muted-foreground">No training logs found.</p>
+                                     </div>
+                                )}
+                                 {totalPages > 1 && (
+                                    <div className="flex items-center justify-center space-x-2 pt-4">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handlePrevPage}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                            Previous
+                                        </Button>
+                                        <span className="text-sm text-muted-foreground">
+                                            Page {currentPage} of {totalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleNextPage}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                    <div className="space-y-1">
+                                        <CardTitle>Student Debrief</CardTitle>
+                                        <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download PDF
+                                        </Button>
+                                        {canEdit && (
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button className="w-full sm:w-auto">
+                                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                                        Add Log Entry
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-4xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                                        <DialogDescription>
+                                                            Record details of the training session for {student.name}.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="pt-4">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href="/students">
+                                            <UsersIcon className="mr-2 h-4 w-4" />
+                                            View All Student Debriefs
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                            {pendingBookings.length > 0 ? (
+                                pendingBookings.map(booking => (
+                                    <Dialog key={booking.id}>
+                                        <DialogTrigger asChild>
+                                            <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                                <div className="space-y-1">
+                                                    <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                    <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                                </div>
+                                                <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Add Training Log Entry</DialogTitle>
                                                 <DialogDescription>
                                                     Record details of the training session for {student.name}.
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                            <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
                                         </DialogContent>
                                     </Dialog>
-                                )}
-                            </div>
-                        </div>
-                        <div className="pt-4">
-                            <Button asChild variant="outline" size="sm">
-                                <Link href="/students">
-                                    <UsersIcon className="mr-2 h-4 w-4" />
-                                    View All Student Debriefs
-                                </Link>
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                    {pendingBookings.length > 0 ? (
-                        pendingBookings.map(booking => (
-                            <Dialog key={booking.id}>
-                                <DialogTrigger asChild>
-                                    <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
-                                        <div className="space-y-1">
-                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                        </div>
-                                        <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl">
-                                    <DialogHeader>
-                                        <DialogTitle>Add Training Log Entry</DialogTitle>
-                                        <DialogDescription>
-                                            Record details of the training session for {student.name}.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
-                                </DialogContent>
-                            </Dialog>
-                        ))
-                    ) : (
-                        <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">
-                                No flights awaiting debrief.
-                            </p>
-                        </div>
-                    )}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+                                ))
+                            ) : (
+                                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">
+                                        No flights awaiting debrief.
+                                    </p>
+                                </div>
+                            )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </TabsContent>
+            <TabsContent value="logbook" className="mt-6">
+                {/* This tab is intentionally left empty as per the user's request. */}
+            </TabsContent>
+        </Tabs>
       </main>
   );
 }
