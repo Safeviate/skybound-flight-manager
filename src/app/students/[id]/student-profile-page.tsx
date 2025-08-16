@@ -77,6 +77,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const sortedLogs = useMemo(() => {
         return student?.trainingLogs?.sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime()) || [];
     }, [student?.trainingLogs]);
+    
+    const totalFlightHours = useMemo(() => {
+        return student?.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
+    }, [student?.trainingLogs]);
+
 
     const filteredLogs = useMemo(() => {
         if (!searchTerm) return sortedLogs;
@@ -126,7 +131,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!company || !student) return;
 
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
-        const newTotalHours = (student?.flightHours || 0) + newLogEntry.flightDuration;
+        
+        // Recalculate total hours from scratch to ensure accuracy
+        const currentLogs = student?.trainingLogs || [];
+        const newTotalHours = [...currentLogs, entryWithId].reduce((total, log) => total + (log.flightDuration || 0), 0);
         
         const updateData: Partial<StudentUser> = {
             trainingLogs: arrayUnion(entryWithId),
@@ -164,7 +172,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         doc.setFontSize(12);
         doc.text(`Student: ${student.name}`, 14, 32);
         doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
-        doc.text(`Total Flight Hours: ${student.flightHours?.toFixed(1) || 0}`, 14, 44);
+        doc.text(`Total Flight Hours: ${totalFlightHours.toFixed(1)}`, 14, 44);
     
         if (student.endorsements && student.endorsements.length > 0) {
             autoTable(doc, {
@@ -300,7 +308,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                         <div className="flex items-center space-x-3">
                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(student.flightHours)}</span>
+                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
                         </div>
                         {student.medicalExpiry && (
                             <div className="flex items-center space-x-3">
@@ -329,7 +337,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardContent>
                 </Card>
 
-                <MilestoneProgress currentHours={student.flightHours || 0} />
+                <MilestoneProgress currentHours={totalFlightHours} />
 
                  <Card>
                     <CardHeader>
@@ -421,7 +429,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <CardHeader>
                         <div className="space-y-1">
                             <CardTitle>Training Logbook</CardTitle>
-                            <CardDescription>Total Flight Hours: {formatDecimalTime(student.flightHours)} hrs</CardDescription>
+                            <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
                             <Dialog>
