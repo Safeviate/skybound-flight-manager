@@ -99,7 +99,7 @@ export const ALL_DOCUMENTS = [
   "Pilot License",
   "Medical Certificate",
   "Logbook",
-  "Airport Access",
+  "Airport Permit",
 ] as const;
 
 export type UserDocument = {
@@ -610,6 +610,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 

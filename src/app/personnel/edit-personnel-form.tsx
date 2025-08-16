@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,17 +35,7 @@ import { useUser } from '@/context/user-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
 import { useToast } from '@/hooks/use-toast';
-
-const documents = [
-  "Passport",
-  "Visa",
-  "Identification",
-  "Drivers License",
-  "Pilot License",
-  "Medical Certificate",
-  "Logbook",
-  "Airport Access",
-] as const;
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -106,7 +97,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   
   // Prepare default values once
   const existingDocs = personnel.documents || [];
-  const formDocs = documents.map(docType => {
+  const formDocs = ALL_DOCUMENTS.map(docType => {
       const existing = existingDocs.find(d => d.type === docType);
       return {
           type: docType,
@@ -134,7 +125,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
         .filter(doc => doc.expiryDate) 
         .map(doc => ({
             id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-            type: doc.type,
+            type: doc.type as typeof ALL_DOCUMENTS[number],
             expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
         }));
 
@@ -322,7 +313,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                             </FormDescription>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                            {documents.map((docType, index) => (
+                            {ALL_DOCUMENTS.map((docType, index) => (
                                 <FormField
                                     key={docType}
                                     control={form.control}
