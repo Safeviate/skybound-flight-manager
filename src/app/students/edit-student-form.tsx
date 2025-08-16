@@ -94,7 +94,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
         });
     }
-  }, [student, form]);
+  }, [student]);
   
   useEffect(() => {
       const fetchInstructors = async () => {
