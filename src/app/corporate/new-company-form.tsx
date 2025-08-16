@@ -57,9 +57,6 @@ const allFeatures = featureGroups.flatMap(g => g.features);
 
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
-  primaryColor: z.string().optional(),
-  backgroundColor: z.string().optional(),
-  accentColor: z.string().optional(),
   logo: z.any().optional(),
   enabledFeatures: z.array(z.string()).default([]),
   adminName: z.string().min(2, 'Admin name is required.'),
@@ -78,9 +75,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
         companyName: '',
-        primaryColor: '#2563eb',
-        backgroundColor: '#f4f4f5',
-        accentColor: '#f59e0b',
         enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
     }
   });
@@ -88,11 +82,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   function handleFormSubmit(data: CompanyFormValues) {
     const newCompany: Omit<Company, 'id' | 'trademark'> = {
         name: data.companyName,
-        theme: {
-            primary: data.primaryColor,
-            background: data.backgroundColor,
-            accent: data.accentColor,
-        },
+        theme: {},
         enabledFeatures: data.enabledFeatures as Feature[],
     };
     const newAdmin: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'> = {
@@ -159,48 +149,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             <Separator />
             
             <div className="space-y-4">
-                <FormLabel className="flex items-center gap-2">
-                    <Paintbrush className="h-4 w-4" />
-                    Theme Colors & Logo (Optional)
-                </FormLabel>
-                <div className="grid grid-cols-3 gap-2">
-                    <FormField
-                        control={form.control}
-                        name="primaryColor"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-xs">Primary</FormLabel>
-                                <FormControl>
-                                    <Input type="color" {...field} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="backgroundColor"
-                        render={({ field }) => (
-                            <FormItem>
-                                 <FormLabel className="text-xs">Background</FormLabel>
-                                <FormControl>
-                                    <Input type="color" {...field} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="accentColor"
-                        render={({ field }) => (
-                            <FormItem>
-                                 <FormLabel className="text-xs">Accent</FormLabel>
-                                <FormControl>
-                                    <Input type="color" {...field} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                </div>
                  <FormField
                     control={form.control}
                     name="logo"

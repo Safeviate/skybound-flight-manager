@@ -17,116 +17,17 @@ import { Separator } from "@/components/ui/separator"
 import { useScale } from "@/context/scale-provider"
 import { Slider } from "@/components/ui/slider"
 
-const hexColorRegex = /^#([0-9a-f]{3}){1,2}$/i;
-
-const themeFormSchema = z.object({
-  primary: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  background: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  accent: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  foreground: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  card: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  cardForeground: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  sidebarBackground: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  sidebarForeground: z.string().regex(hexColorRegex, 'Invalid hex color'),
-  sidebarAccent: z.string().regex(hexColorRegex, 'Invalid hex color'),
-})
-
-type ThemeFormValues = z.infer<typeof themeFormSchema>
-
-const defaultTheme = {
-  primary: '#2563eb',
-  background: '#f4f4f5',
-  accent: '#f59e0b',
-  foreground: '#0c0a09',
-  card: '#ffffff',
-  cardForeground: '#0c0a09',
-  sidebarBackground: '#0c0a09',
-  sidebarForeground: '#fafafa',
-  sidebarAccent: '#1f2937'
-};
-
 function SettingsPage() {
-  const { user, company, updateCompany, loading } = useUser();
+  const { user, loading } = useUser();
   const router = useRouter();
-  const { toast } = useToast()
   const { scale, setScale } = useScale();
 
-  const form = useForm<ThemeFormValues>({
-    resolver: zodResolver(themeFormSchema),
-    defaultValues: {
-      primary: company?.theme?.primary || defaultTheme.primary,
-      background: company?.theme?.background || defaultTheme.background,
-      accent: company?.theme?.accent || defaultTheme.accent,
-      foreground: company?.theme?.foreground || defaultTheme.foreground,
-      card: company?.theme?.card || defaultTheme.card,
-      cardForeground: company?.theme?.cardForeground || defaultTheme.cardForeground,
-      sidebarBackground: company?.theme?.sidebarBackground || defaultTheme.sidebarBackground,
-      sidebarForeground: company?.theme?.sidebarForeground || defaultTheme.sidebarForeground,
-      sidebarAccent: company?.theme?.sidebarAccent || defaultTheme.sidebarAccent,
-    },
-  });
-  
-  React.useEffect(() => {
-    if (company?.theme) {
-      form.reset({
-        primary: company.theme.primary || defaultTheme.primary,
-        background: company.theme.background || defaultTheme.background,
-        accent: company.theme.accent || defaultTheme.accent,
-        foreground: company.theme.foreground || defaultTheme.foreground,
-        card: company.theme.card || defaultTheme.card,
-        cardForeground: company.theme.cardForeground || defaultTheme.cardForeground,
-        sidebarBackground: company.theme.sidebarBackground || defaultTheme.sidebarBackground,
-        sidebarForeground: company.theme.sidebarForeground || defaultTheme.sidebarForeground,
-        sidebarAccent: company.theme.sidebarAccent || defaultTheme.sidebarAccent,
-      });
-    }
-  }, [company, form]);
-  
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-  
-  const handleThemeSubmit = async (data: ThemeFormValues) => {
-    if (!company) return;
 
-    const newThemeSettings = { ...data };
-    
-    const success = await updateCompany({ theme: newThemeSettings });
-    
-    if (success) {
-      toast({
-        title: 'Theme Updated',
-        description: 'Your new theme colors have been saved.',
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not save your theme. Please try again.',
-      });
-    }
-  };
-
-  const handleResetTheme = async () => {
-    if (!company) return;
-    const success = await updateCompany({ theme: defaultTheme });
-
-    if (success) {
-        form.reset(defaultTheme);
-        toast({
-            title: 'Theme Reset',
-            description: 'The theme has been reset to its default colors.',
-        });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Reset Failed',
-            description: 'Could not reset the theme. Please try again.',
-        });
-    }
-  };
 
   if (loading || !user) {
     return (
@@ -168,65 +69,6 @@ function SettingsPage() {
                     />
                   </div>
                 </div>
-
-                <Separator />
-
-                <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleThemeSubmit)} className="space-y-6">
-                    <div className="space-y-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                        <Paintbrush className="h-4 w-4" />
-                        Company Theme Colors
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                        Set your organization's brand colors. These are applied on top of the base theme.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-2 p-4 border rounded-md">
-                            <h4 className="font-medium text-sm">Main Backgrounds</h4>
-                             <div className="grid grid-cols-2 gap-2 pt-2">
-                                <FormField control={form.control} name="background" render={({ field }) => (<FormItem><FormLabel>Background</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="card" render={({ field }) => (<FormItem><FormLabel>Card</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                        <div className="space-y-2 p-4 border rounded-md">
-                            <h4 className="font-medium text-sm">Main Text</h4>
-                             <div className="grid grid-cols-2 gap-2 pt-2">
-                                <FormField control={form.control} name="foreground" render={({ field }) => (<FormItem><FormLabel>Foreground</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="cardForeground" render={({ field }) => (<FormItem><FormLabel>Card Text</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                         <div className="space-y-2 p-4 border rounded-md">
-                            <h4 className="font-medium text-sm">Accents</h4>
-                             <div className="grid grid-cols-2 gap-2 pt-2">
-                                <FormField control={form.control} name="primary" render={({ field }) => (<FormItem><FormLabel>Primary</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="accent" render={({ field }) => (<FormItem><FormLabel>Accent</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                         <div className="space-y-2 p-4 border rounded-md">
-                            <h4 className="font-medium text-sm">Sidebar Background</h4>
-                             <div className="grid grid-cols-2 gap-2 pt-2">
-                                <FormField control={form.control} name="sidebarBackground" render={({ field }) => (<FormItem><FormLabel>Background</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="sidebarAccent" render={({ field }) => (<FormItem><FormLabel>Highlight</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                         <div className="space-y-2 p-4 border rounded-md">
-                            <h4 className="font-medium text-sm">Sidebar Text</h4>
-                             <div className="grid grid-cols-1 gap-2 pt-2">
-                                <FormField control={form.control} name="sidebarForeground" render={({ field }) => (<FormItem><FormLabel>Foreground</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                        </div>
-                    </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={handleResetTheme}>
-                            <Eraser className="mr-2 h-4 w-4" />
-                            Reset Theme
-                        </Button>
-                        <Button type="submit">Save Theme</Button>
-                    </div>
-                </form>
-                </Form>
             </CardContent>
             </Card>
         </div>
