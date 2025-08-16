@@ -452,58 +452,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     <CardTitle>Training Logbook</CardTitle>
                                     <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
                                 </div>
-                                <div className="flex items-center gap-2 w-full sm:w-auto pt-2">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button asChild variant="link" className="p-0 h-auto">
-                                                <Link href="#">
-                                                    <BookOpen className="mr-2 h-4 w-4" />
-                                                    View Full Logbook
-                                                </Link>
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Full Training Logbook: {student.name}</DialogTitle>
-                                            </DialogHeader>
-                                            <ScrollArea className="h-[70vh]">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Date</TableHead>
-                                                            <TableHead>Aircraft</TableHead>
-                                                            <TableHead>Duration</TableHead>
-                                                            <TableHead>Instructor</TableHead>
-                                                            <TableHead>Exercises</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                    {filteredLogs.map((log) => (
-                                                        <TableRow key={log.id}>
-                                                            <TableCell>{format(parseISO(log.date), 'dd MMM yy')}</TableCell>
-                                                            <TableCell>{log.aircraft}</TableCell>
-                                                            <TableCell>{log.flightDuration.toFixed(1)}</TableCell>
-                                                            <TableCell>{log.instructorName}</TableCell>
-                                                            <TableCell>
-                                                                {log.trainingExercises.map(e => e.exercise).join(', ')}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </ScrollArea>
-                                        </DialogContent>
-                                    </Dialog>
-                                    <div className="relative w-full sm:w-auto">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input 
-                                            placeholder="Search log entries..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-10"
-                                        />
-                                    </div>
-                                </div>
                             </CardHeader>
                             <CardContent>
                                  {paginatedLogs.length > 0 ? (
