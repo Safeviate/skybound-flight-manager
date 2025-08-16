@@ -106,7 +106,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                     <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
+                     <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
                         Forgot password?
                     </Button>
                   </div>
