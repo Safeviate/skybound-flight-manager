@@ -114,14 +114,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const primary = theme.primary ? hexToHSL(theme.primary)?.hslString : null;
         const background = theme.background ? hexToHSL(theme.background)?.hslString : null;
         const accent = theme.accent ? hexToHSL(theme.accent)?.hslString : null;
+        const foreground = theme.foreground ? hexToHSL(theme.foreground)?.hslString : null;
+        const card = theme.card ? hexToHSL(theme.card)?.hslString : null;
+        const cardForeground = theme.cardForeground ? hexToHSL(theme.cardForeground)?.hslString : null;
         
-        const sidebarBackgroundResult = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground) : null;
-        const sidebarBackground = sidebarBackgroundResult?.hslString;
-
-        // Determine foreground color based on background lightness
-        const sidebarLightness = sidebarBackgroundResult?.l ?? 0; // Default to dark
-        const sidebarForeground = sidebarLightness > 50 ? '222.2 84% 4.9%' : '210 40% 98%'; // Black or White
-
+        const sidebarBackground = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground)?.hslString : null;
+        const sidebarForeground = theme.sidebarForeground ? hexToHSL(theme.sidebarForeground)?.hslString : null;
         const sidebarAccent = theme.sidebarAccent ? hexToHSL(theme.sidebarAccent)?.hslString : null;
 
         const css = `
@@ -129,6 +127,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           ${primary ? `--primary: ${primary};` : ''}
           ${background ? `--background: ${background};` : ''}
           ${accent ? `--accent: ${accent};` : ''}
+          ${foreground ? `--foreground: ${foreground};` : ''}
+          ${card ? `--card: ${card};` : ''}
+          ${cardForeground ? `--card-foreground: ${cardForeground};` : ''}
           ${sidebarBackground ? `--sidebar-background: ${sidebarBackground};` : ''}
           ${sidebarForeground ? `--sidebar-foreground: ${sidebarForeground};` : ''}
           ${sidebarAccent ? `--sidebar-accent: ${sidebarAccent};` : ''}
