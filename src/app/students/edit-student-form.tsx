@@ -84,17 +84,17 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
         });
 
         form.reset({
-            name: student.name,
+            name: student.name || '',
             studentCode: student.studentCode || '',
             email: student.email || '',
-            phone: student.phone,
-            instructor: student.instructor,
+            phone: student.phone || '',
+            instructor: student.instructor || '',
             licenseType: student.licenseType || '',
             documents: formDocs,
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
         });
     }
-  }, [student]);
+  }, [student, form]);
   
   useEffect(() => {
       const fetchInstructors = async () => {
