@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert } from '@/lib/types';
+import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert, TrainingLogEntry, User } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { cn, getExpiryBadge } from '@/lib/utils';
@@ -29,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy, arrayUnion } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -194,35 +194,55 @@ export function AircraftPageContent({
 
         const batch = writeBatch(db);
 
-        const historyDoc: Omit<CompletedChecklist, 'id'> = {
-            aircraftId: selectedAircraftForChecklist.id,
-            aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
-            userId: user.id,
-            userName: user.name,
-            dateCompleted: new Date().toISOString(),
-            type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
-            results: data,
-            bookingNumber: bookingNumber,
-        };
-
         try {
             // Update aircraft status
             const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
             const aircraftUpdate: Partial<Aircraft> = { checklistStatus: newStatus };
-            // If it's a post-flight, clear the active booking
             if (!isPreFlight) {
                 aircraftUpdate.activeBookingId = null;
             }
             batch.update(aircraftRef, aircraftUpdate);
 
             // Add to checklist history
+            const historyDoc: Omit<CompletedChecklist, 'id'> = {
+                aircraftId: selectedAircraftForChecklist.id,
+                aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
+                userId: user.id,
+                userName: user.name,
+                dateCompleted: new Date().toISOString(),
+                type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
+                results: data,
+                bookingNumber: bookingNumber,
+            };
             const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             batch.set(doc(historyCollectionRef), historyDoc);
 
-            // If post-flight, complete the associated booking
+            // If post-flight, handle booking completion and auto-logbook entry
             if (!isPreFlight && bookingForChecklist) {
                 const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                batch.update(bookingRef, { status: 'Completed' });
+                const flightDuration = parseFloat(((data as PostFlightChecklistFormValues).hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1));
+                batch.update(bookingRef, { status: 'Completed', flightDuration });
+
+                // If it's a training flight, create the logbook entry for the student
+                if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
+                    const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
+                    
+                    const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+                        date: bookingForChecklist.date,
+                        aircraft: bookingForChecklist.aircraft,
+                        startHobbs: bookingForChecklist.startHobbs || 0,
+                        endHobbs: (data as PostFlightChecklistFormValues).hobbs,
+                        flightDuration: flightDuration,
+                        instructorName: bookingForChecklist.instructor || 'Unknown',
+                        trainingExercises: [], // Left blank for instructor to fill during debrief
+                    };
+
+                    batch.update(studentRef, { 
+                        trainingLogs: arrayUnion(newLogEntry),
+                        pendingBookingIds: (await getDoc(studentRef)).data()?.pendingBookingIds?.filter((id: string) => id !== bookingForChecklist.id),
+                        flightHours: (await getDoc(studentRef)).data()?.flightHours + flightDuration
+                    });
+                }
             }
 
             await batch.commit();
