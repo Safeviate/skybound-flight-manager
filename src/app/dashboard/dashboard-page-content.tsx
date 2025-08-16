@@ -201,39 +201,6 @@ export function DashboardPageContent({
         <main className="flex-1 p-4 md:p-8 space-y-6">
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                     <div className="grid gap-6 sm:grid-cols-3">
-                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Active Aircraft</CardTitle>
-                                <Plane className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stats.activeAircraft} / {stats.totalAircraft}</div>
-                                <p className="text-xs text-muted-foreground">Aircraft available for booking</p>
-                            </CardContent>
-                        </Card>
-                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Open Safety Reports</CardTitle>
-                                <Shield className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stats.openSafetyReports}</div>
-                                <p className="text-xs text-muted-foreground">Reports requiring investigation</p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Open Quality Audits</CardTitle>
-                                <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stats.openQualityAudits}</div>
-                                <p className="text-xs text-muted-foreground">Audits currently in progress</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
                     <Card>
                         <CardHeader>
                             <CardTitle>Live Flight Status</CardTitle>
