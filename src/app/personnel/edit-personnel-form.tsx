@@ -91,7 +91,9 @@ const personnelRoles: Role[] = [
     'Front Office',
     'Head Of Training',
     'HR Manager',
-    'Instructor',
+    'Instructor Grade 1',
+    'Instructor Grade 2',
+    'Instructor Grade 3',
     'Maintenance',
     'Operations Manager',
     'Quality Manager',
@@ -407,3 +409,5 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     </Form>
   );
 }
+
+    

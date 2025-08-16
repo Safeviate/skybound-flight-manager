@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -170,7 +169,9 @@ export type Role =
   | 'Front Office'
   | 'Head Of Training'
   | 'HR Manager'
-  | 'Instructor'
+  | 'Instructor Grade 1'
+  | 'Instructor Grade 2'
+  | 'Instructor Grade 3'
   | 'Maintenance'
   | 'Operations Manager'
   | 'Quality Manager'
@@ -583,7 +584,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
   'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Instructor Grade 1': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Instructor Grade 2': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Instructor Grade 3': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
   'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
   'Auditee': ['Quality:View'],
   'Driver': [],
@@ -610,6 +613,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Post-impact'
 ];
 
-
-
-
+    

@@ -91,7 +91,9 @@ const personnelRoles: Role[] = [
     'Front Office',
     'Head Of Training',
     'HR Manager',
-    'Instructor',
+    'Instructor Grade 1',
+    'Instructor Grade 2',
+    'Instructor Grade 3',
     'Maintenance',
     'Operations Manager',
     'Quality Manager',
@@ -312,7 +314,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                 <FormField
                     control={form.control}
                     name="permissions"
-                    render={({ field }) => (
+                    render={() => (
                         <FormItem>
                             <div className="mb-4">
                                 <FormLabel className="text-base">Permissions</FormLabel>
@@ -427,3 +429,5 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     </Form>
   );
 }
+
+    
