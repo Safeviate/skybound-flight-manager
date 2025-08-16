@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUser } from '@/context/user-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
+import { useToast } from '@/hooks/use-toast';
 
 const documents = [
   "Passport",
@@ -101,6 +102,7 @@ const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissio
     .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data' && item.label !== 'Manage Companies' && item.label !== 'System Health');
 
 export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProps) {
+  const { toast } = useToast();
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -140,11 +142,17 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   }, [personnel, form]);
 
   useEffect(() => {
+    // This effect now correctly depends only on `selectedRole`.
+    // It will only run when the value of the 'role' field changes.
     if (form.formState.isDirty && form.formState.dirtyFields.role) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldDirty: true });
+       toast({
+          title: "Permissions Updated",
+          description: `Default permissions for the "${selectedRole}" role have been applied.`,
+      });
     }
-  }, [selectedRole, form.formState.isDirty, form.formState.dirtyFields.role, form.setValue]);
+  }, [selectedRole, form, toast]);
 
 
   function handleFormSubmit(data: PersonnelFormValues) {
