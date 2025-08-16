@@ -341,30 +341,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <BookUser className="h-5 w-5 text-muted-foreground" />
                             <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
                         </div>
-                        {student.medicalExpiry && (
-                            <div className="flex items-center space-x-3">
+                        
+                        {(student.documents || []).map(doc => (
+                             <div key={doc.id} className="flex items-center space-x-3">
                                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                <span>Medical Exp: {getExpiryBadge(student.medicalExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
                             </div>
-                        )}
-                        {student.licenseExpiry && (
-                        <div className="flex items-center space-x-3">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <span>License Exp: {getExpiryBadge(student.licenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
-                        </div>
-                        )}
-                         {student.passportExpiry && (
-                        <div className="flex items-center space-x-3">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <span>Passport Exp: {getExpiryBadge(student.passportExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
-                        </div>
-                        )}
-                         {student.visaExpiry && (
-                        <div className="flex items-center space-x-3">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <span>Visa Exp: {getExpiryBadge(student.visaExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
-                        </div>
-                        )}
+                        ))}
                     </CardContent>
                 </Card>
 
