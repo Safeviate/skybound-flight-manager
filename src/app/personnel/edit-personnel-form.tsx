@@ -104,29 +104,19 @@ const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissio
 export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProps) {
   const { toast } = useToast();
   
+  // Prepare default values once
+  const existingDocs = personnel.documents || [];
+  const formDocs = documents.map(docType => {
+      const existing = existingDocs.find(d => d.type === docType);
+      return {
+          type: docType,
+          expiryDate: existing?.expiryDate ? parseISO(existing.expiryDate) : null,
+      }
+  });
+
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      permissions: [],
-      documents: documents.map(docType => ({ type: docType, expiryDate: null })),
-      visibleMenuItems: [],
-    },
-  });
-  
-  useEffect(() => {
-    const existingDocs = personnel.documents || [];
-    const formDocs = documents.map(docType => {
-        const existing = existingDocs.find(d => d.type === docType);
-        return {
-            type: docType,
-            expiryDate: existing?.expiryDate ? parseISO(existing.expiryDate) : null,
-        }
-    });
-
-    form.reset({
       name: personnel.name || '',
       email: personnel.email || '',
       role: personnel.role,
@@ -136,9 +126,8 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       documents: formDocs,
       permissions: personnel.permissions || [],
       visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
-    })
-  }, [personnel]);
-
+    },
+  });
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
