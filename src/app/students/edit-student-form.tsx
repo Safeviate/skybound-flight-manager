@@ -108,7 +108,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
   useEffect(() => {
       const fetchInstructors = async () => {
           if (!company) return;
-          const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+          const instructorRoles: Role[] = ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'];
           const q = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
           const snapshot = await getDocs(q);
           setInstructors(snapshot.docs.map(doc => doc.data() as User));
