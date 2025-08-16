@@ -20,6 +20,22 @@ export type ThemeColors = {
   primary?: string;
   background?: string;
   accent?: string;
+  sidebarBackground?: string;
+  sidebarAccent?: string;
+  foreground?: string;
+  card?: string;
+  cardForeground?: string;
+  popover?: string;
+  popoverForeground?: string;
+  secondary?: string;
+  secondaryForeground?: string;
+  muted?: string;
+  mutedForeground?: string;
+  destructive?: string;
+  destructiveForeground?: string;
+  border?: string;
+  input?: string;
+  ring?: string;
 };
 
 export type Feature = 
@@ -98,7 +114,7 @@ export const ALL_DOCUMENTS = [
   "Pilot License",
   "Medical Certificate",
   "Logbook",
-  "Airport Access",
+  "Airport Permit",
 ] as const;
 
 export type UserDocument = {
@@ -209,8 +225,10 @@ export type User = {
     trainingLogs?: TrainingLogEntry[];
     licenseType?: 'SPL' | 'PPL';
     pendingBookingIds?: string[];
+    milestoneNotificationsSent?: number[];
     // Personnel-specific
     department?: Department;
+    instructorGrade?: 'Grade 1' | 'Grade 2' | 'Grade 3' | null;
     medicalExpiry?: string | null;
     licenseExpiry?: string | null;
     passportExpiry?: string | null;
@@ -612,5 +630,8 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+<<<<<<< HEAD
 
     
+=======
+>>>>>>> 84cb2aa3d9ed4ffa23493eede181ee3725bf0cf9

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,17 +35,7 @@ import { useUser } from '@/context/user-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
 import { useToast } from '@/hooks/use-toast';
-
-const documents = [
-  "Passport",
-  "Visa",
-  "Identification",
-  "Drivers License",
-  "Pilot License",
-  "Medical Certificate",
-  "Logbook",
-  "Airport Access",
-] as const;
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -62,6 +53,7 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
+  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -108,7 +100,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   
   // Prepare default values once
   const existingDocs = personnel.documents || [];
-  const formDocs = documents.map(docType => {
+  const formDocs = ALL_DOCUMENTS.map(docType => {
       const existing = existingDocs.find(d => d.type === docType);
       return {
           type: docType,
@@ -124,6 +116,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
       role: personnel.role,
       department: personnel.department,
       phone: personnel.phone || '',
+      instructorGrade: personnel.instructorGrade,
       consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
       documents: formDocs,
       permissions: personnel.permissions || [],
@@ -131,18 +124,22 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     },
   });
 
+  const selectedRole = form.watch('role');
+  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
+
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
         .filter(doc => doc.expiryDate) 
         .map(doc => ({
             id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-            type: doc.type,
+            type: doc.type as typeof ALL_DOCUMENTS[number],
             expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
         }));
 
     const updatedPersonnel: User = {
         ...personnel,
         ...data,
+        instructorGrade: isInstructorRole ? data.instructorGrade : null,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         permissions: data.permissions as Permission[],
         documents: documentsToSave,
@@ -246,6 +243,30 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         </FormItem>
                     )}
                     />
+                    {isInstructorRole && (
+                        <FormField
+                        control={form.control}
+                        name="instructorGrade"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Instructor Grade</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select instructor grade" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Grade 1">Grade 1</SelectItem>
+                                    <SelectItem value="Grade 2">Grade 2</SelectItem>
+                                    <SelectItem value="Grade 3">Grade 3</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
                 </div>
                 
                 <Separator />
@@ -324,7 +345,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                             </FormDescription>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                            {documents.map((docType, index) => (
+                            {ALL_DOCUMENTS.map((docType, index) => (
                                 <FormField
                                     key={docType}
                                     control={form.control}

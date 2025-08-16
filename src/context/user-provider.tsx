@@ -35,10 +35,12 @@ const fallbackCompany: Company = {
         primary: '#2563eb', // Default Blue
         background: '#f4f4f5', // Light Gray
         accent: '#f59e0b', // Amber
+        sidebarBackground: '#0c0a09', // Dark Gray for sidebar
+        sidebarAccent: '#1f2937' // Slightly lighter gray for highlight
     }
 };
 
-const hexToHSL = (hex: string): string | null => {
+const hexToHSL = (hex: string): { h: number, s: number, l: number, hslString: string } | null => {
     if (!hex) return null;
     let r = 0, g = 0, b = 0;
     if (hex.length === 4) {
@@ -74,8 +76,9 @@ const hexToHSL = (hex: string): string | null => {
     s = Math.round(s * 100);
     l = Math.round(l * 100);
 
-    return `${h} ${s}% ${l}%`;
+    return { h, s, l, hslString: `${h} ${s}% ${l}%` };
 };
+
 
 const defaultSettings = {
     expiryWarningOrangeDays: 30,
@@ -108,15 +111,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const primary = theme.primary ? hexToHSL(theme.primary) : null;
-        const background = theme.background ? hexToHSL(theme.background) : null;
-        const accent = theme.accent ? hexToHSL(theme.accent) : null;
+        const primary = theme.primary ? hexToHSL(theme.primary)?.hslString : null;
+        const background = theme.background ? hexToHSL(theme.background)?.hslString : null;
+        const accent = theme.accent ? hexToHSL(theme.accent)?.hslString : null;
+        const foreground = theme.foreground ? hexToHSL(theme.foreground)?.hslString : null;
+        const card = theme.card ? hexToHSL(theme.card)?.hslString : null;
+        const cardForeground = theme.cardForeground ? hexToHSL(theme.cardForeground)?.hslString : null;
+        
+        const sidebarBackground = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground)?.hslString : null;
+        const sidebarForeground = theme.sidebarForeground ? hexToHSL(theme.sidebarForeground)?.hslString : null;
+        const sidebarAccent = theme.sidebarAccent ? hexToHSL(theme.sidebarAccent)?.hslString : null;
 
         const css = `
         :root {
           ${primary ? `--primary: ${primary};` : ''}
           ${background ? `--background: ${background};` : ''}
           ${accent ? `--accent: ${accent};` : ''}
+          ${foreground ? `--foreground: ${foreground};` : ''}
+          ${card ? `--card: ${card};` : ''}
+          ${cardForeground ? `--card-foreground: ${cardForeground};` : ''}
+          ${sidebarBackground ? `--sidebar-background: ${sidebarBackground};` : ''}
+          ${sidebarForeground ? `--sidebar-foreground: ${sidebarForeground};` : ''}
+          ${sidebarAccent ? `--sidebar-accent: ${sidebarAccent};` : ''}
         }
       `;
       styleElement.innerHTML = css;

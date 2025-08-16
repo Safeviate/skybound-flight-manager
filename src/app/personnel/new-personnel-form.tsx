@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,18 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
-
-
-const documents = [
-  "Passport",
-  "Visa",
-  "Identification",
-  "Drivers License",
-  "Pilot License",
-  "Medical Certificate",
-  "Logbook",
-  "Airport Access",
-] as const;
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -63,6 +53,7 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
+  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -113,8 +104,9 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
       name: '',
       email: '',
       phone: '',
+      department: undefined,
       consentDisplayContact: 'Not Consented',
-      documents: documents.map(type => ({ type, expiryDate: null })),
+      documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
       permissions: [],
       visibleMenuItems: availableNavItems.map(item => item.label),
     }
@@ -129,6 +121,8 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     }
   }, [selectedRole, form]);
 
+  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
+
 
   async function handleFormSubmit(data: PersonnelFormValues) {
     if (!company) {
@@ -140,12 +134,13 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         .filter(doc => doc.expiryDate) // Only save documents that have an expiry date set
         .map(doc => ({
             id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-            type: doc.type,
+            type: doc.type as typeof ALL_DOCUMENTS[number],
             expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
         }));
 
     const dataToSubmit = {
         ...data,
+        instructorGrade: isInstructorRole ? data.instructorGrade : null,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>
@@ -265,6 +260,30 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                         </FormItem>
                     )}
                     />
+                    {isInstructorRole && (
+                        <FormField
+                        control={form.control}
+                        name="instructorGrade"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Instructor Grade</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select instructor grade" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Grade 1">Grade 1</SelectItem>
+                                    <SelectItem value="Grade 2">Grade 2</SelectItem>
+                                    <SelectItem value="Grade 3">Grade 3</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
                 </div>
                 
                 <Separator />
@@ -343,7 +362,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             </FormDescription>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                            {documents.map((docType, index) => (
+                            {ALL_DOCUMENTS.map((docType, index) => (
                                 <FormField
                                     key={docType}
                                     control={form.control}
@@ -421,7 +440,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                 />
             </div>
         </ScrollArea>
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={form.formState.isSubmitting}>
              {form.formState.isSubmitting ? 'Adding...' : 'Add Personnel'}
           </Button>

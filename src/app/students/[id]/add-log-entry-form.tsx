@@ -120,6 +120,10 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     return 0;
   }, [startHobbs, endHobbs]);
   
+  const totalFlightHours = useMemo(() => {
+      return student?.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
+  }, [student?.trainingLogs]);
+  
   useEffect(() => {
     const fetchData = async () => {
         if (!company) return;
@@ -240,7 +244,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                     <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                         <div>
                             <p className="text-sm text-muted-foreground">Hours to Date</p>
-                            <p className="text-2xl font-bold font-mono">{(student?.flightHours || 0).toFixed(1)}</p>
+                            <p className="text-2xl font-bold font-mono">{(totalFlightHours || 0).toFixed(1)}</p>
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">This Lesson</p>
@@ -248,7 +252,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                         </div>
                          <div>
                             <p className="text-sm text-muted-foreground">New Total Hours</p>
-                            <p className="text-2xl font-bold font-mono">{((student?.flightHours || 0) + lessonDuration).toFixed(1)}</p>
+                            <p className="text-2xl font-bold font-mono">{((totalFlightHours || 0) + lessonDuration).toFixed(1)}</p>
                         </div>
                     </CardContent>
                 </Card>

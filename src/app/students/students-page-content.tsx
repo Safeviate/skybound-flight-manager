@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -146,7 +147,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle>{student.name}</CardTitle>
-                            <CardDescription>Instructor: {student.instructor}</CardDescription>
+                            <CardDescription>
+                                Instructor: {student.instructor}
+                                {student.licenseType && ` | ${student.licenseType}`}
+                            </CardDescription>
                         </div>
                          {canEdit && (
                             <DropdownMenu>

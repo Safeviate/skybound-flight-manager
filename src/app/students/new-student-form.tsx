@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,15 +22,17 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import type { Role, User } from '@/lib/types';
+import type { Role, User, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, writeBatch } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createUserAndSendWelcomeEmail } from '../actions';
 import { useSettings } from '@/context/settings-provider';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ALL_DOCUMENTS } from '@/lib/types';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -46,10 +49,11 @@ const studentFormSchema = z.object({
     required_error: 'Please select an instructor.',
   }),
   licenseType: z.string().optional(),
-  medicalExpiry: z.date().optional().nullable(),
-  licenseExpiry: z.date().optional().nullable(),
-  passportExpiry: z.date().optional().nullable(),
-  visaExpiry: z.date().optional().nullable(),
+  flightHours: z.coerce.number().optional(),
+  documents: z.array(z.object({
+      type: z.string(),
+      expiryDate: z.date().nullable(),
+  })).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -62,7 +66,7 @@ interface NewStudentFormProps {
 }
 
 export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
-  const { company } = useUser();
+  const { user: currentUser, company } = useUser();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   
@@ -73,8 +77,10 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       studentCode: '',
       email: '',
       phone: '',
+      flightHours: 0,
       instructor: '',
       consentDisplayContact: 'Not Consented',
+      documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
     }
   });
   
@@ -90,24 +96,63 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   }, [company]);
   
   async function handleFormSubmit(data: StudentFormValues) {
-    if (!company) {
+    if (!company || !currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
         return;
     }
     
+    const documentsToSave = (data.documents || [])
+        .filter(doc => doc.expiryDate)
+        .map(doc => ({
+            id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
+            type: doc.type,
+            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+        }));
+
     const studentData = {
         ...data,
         role: 'Student',
         status: 'Active',
-        medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
-        licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
-        passportExpiry: data.passportExpiry ? format(data.passportExpiry, 'yyyy-MM-dd') : null,
-        visaExpiry: data.visaExpiry ? format(data.visaExpiry, 'yyyy-MM-dd') : null,
+        flightHours: data.flightHours || 0,
+        documents: documentsToSave,
     } as unknown as Omit<User, 'id'>;
 
     const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
 
     if (result.success) {
+        if (data.licenseType === 'SPL' && data.flightHours && data.flightHours > 0) {
+            const milestones = [10, 20, 30];
+            const batch = writeBatch(db);
+            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+            const instructorUser = instructors.find(i => i.name === data.instructor);
+            const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
+            const hotSnapshot = await getDocs(headOfTrainingQuery);
+            const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as User;
+
+            const targetUserIds = [instructorUser?.id, hot?.id].filter(Boolean) as string[];
+
+            for (const milestone of milestones) {
+                if (data.flightHours >= milestone) {
+                     for (const targetId of targetUserIds) {
+                        const newAlertRef = doc(alertsCollection);
+                        const newAlert: Omit<Alert, 'id' | 'number'> = {
+                            companyId: company.id,
+                            type: 'Task',
+                            title: `Logbook Check Required: ${data.name}`,
+                            description: `${data.name} was added with ${data.flightHours.toFixed(1)} hours. Please verify the ${milestone}-hour progress check is logged.`,
+                            author: currentUser.name,
+                            date: new Date().toISOString(),
+                            readBy: [],
+                            targetUserId: targetId,
+                            relatedLink: `/students/${result.message.split(' ')[0]}`,
+                        };
+                        batch.set(newAlertRef, newAlert);
+                     }
+                }
+            }
+            await batch.commit();
+        }
+
         toast({
             title: 'Student Added',
             description: result.message,
@@ -125,302 +170,93 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
-            <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-              control={form.control}
-              name="studentCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Student Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., S12345" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                    <Input type="email" placeholder="student@email.com" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                    <Input type="tel" placeholder="+27 12 345 6789" {...field} />
-                </FormControl>
-                 <FormDescription>
-                  Include country code.
-                </FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="instructor"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Instructor</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select an instructor" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {instructors.map((instructor) => (
-                        <SelectItem key={instructor.id} value={instructor.name}>
-                        {instructor.name}
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+        <ScrollArea className="h-[70vh] pr-4">
+            <div className="space-y-8 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                    <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="studentCode" render={({ field }) => (<FormItem><FormLabel>Student Code</FormLabel><FormControl><Input placeholder="e.g., S12345" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="student@email.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="flightHours" render={({ field }) => (<FormItem><FormLabel>Initial Flight Hours</FormLabel><FormControl><Input type="number" step="0.1" placeholder="e.g., 25.5" {...field} /></FormControl><FormDescription>Enter existing hours if student is transferring.</FormDescription><FormMessage /></FormItem>)} />
+                </div>
+
+                 <div>
+                    <FormLabel className="text-base font-semibold">Document Expiry Dates</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
+                         {(form.getValues('documents') || []).map((docItem, index) => (
+                            <FormField
+                                key={docItem.type}
+                                control={form.control}
+                                name={`documents.${index}.expiryDate`}
+                                render={({ field }) => {
+                                  const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
+                                  return (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>{docItem.type}</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                        {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                <FormField
                 control={form.control}
-                name="licenseType"
+                name="consentDisplayContact"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>License Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a license type" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="SPL">SPL</SelectItem>
-                            <SelectItem value="PPL">PPL</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <FormItem className="space-y-3 rounded-md border p-4">
+                    <FormLabel>Privacy Consent</FormLabel>
+                    <FormDescription>
+                        Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.
+                    </FormDescription>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                        >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Consented" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                            I consent
+                            </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="Not Consented" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                            I do not consent
+                            </FormLabel>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
-            />
-            <FormField
-                control={form.control}
-                name="medicalExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Medical Certificate Expiry</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick expiry date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value ?? undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="licenseExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>License/Endorsement Expiry</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick expiry date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value ?? undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="passportExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Passport Expiry</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick expiry date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value ?? undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="visaExpiry"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Visa Expiry</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick expiry date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value ?? undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="consentDisplayContact"
-          render={({ field }) => (
-            <FormItem className="space-y-3 rounded-md border p-4">
-              <FormLabel>Privacy Consent</FormLabel>
-              <FormDescription>
-                Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.
-              </FormDescription>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="Consented" />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      I consent
-                    </FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="Not Consented" />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      I do not consent
-                    </FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-
-        <div className="flex justify-end">
+                />
+            </div>
+        </ScrollArea>
+        <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Adding Student...' : 'Add Student'}
           </Button>
