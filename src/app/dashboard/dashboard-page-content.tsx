@@ -260,6 +260,8 @@ export function DashboardPageContent({
                                         if (item.daysUntil < 0) {
                                             itemClass = 'bg-destructive/10 text-foreground border-destructive';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-orange/10 text-foreground border-orange';
+                                        } else if (item.daysUntil <= settings.expiryWarningYellowDays) {
                                             itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
                                         }
                                         return (
@@ -297,6 +299,8 @@ export function DashboardPageContent({
                                         if (item.daysUntil < 0) {
                                             itemClass = 'bg-destructive/10 text-foreground border-destructive';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-orange/10 text-foreground border-orange';
+                                        } else if (item.daysUntil <= settings.expiryWarningYellowDays) {
                                             itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
                                         }
                                         return (
@@ -334,6 +338,8 @@ export function DashboardPageContent({
                                         if (item.daysUntil < 0) {
                                             itemClass = 'bg-destructive/10 text-foreground border-destructive';
                                         } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-orange/10 text-foreground border-orange';
+                                        } else if (item.daysUntil <= settings.expiryWarningYellowDays) {
                                             itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
                                         }
                                         return (
