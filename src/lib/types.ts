@@ -227,7 +227,7 @@ export type User = {
     milestoneNotificationsSent?: number[];
     // Personnel-specific
     department?: Department;
-    instructorGrade?: 'Grade 1' | 'Grade 2' | 'Grade 3';
+    instructorGrade?: 'Grade 1' | 'Grade 2' | 'Grade 3' | null;
     medicalExpiry?: string | null;
     licenseExpiry?: string | null;
     passportExpiry?: string | null;
@@ -627,12 +627,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
-
-
-
-
-
-
-
-

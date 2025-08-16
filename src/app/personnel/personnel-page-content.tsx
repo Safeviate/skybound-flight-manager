@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,7 +65,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 ...updatedData,
                 department: updatedData.department || null,
             };
-            await updateDoc(userRef, dataToSave);
+            await updateDoc(userRef, JSON.parse(JSON.stringify(dataToSave)));
             await fetchPersonnel();
             setEditingPersonnel(null);
             toast({ title: 'Personnel Updated', description: `${updatedData.name}'s details have been saved.` });

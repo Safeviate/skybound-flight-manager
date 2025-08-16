@@ -138,7 +138,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
 
     const dataToSubmit = {
         ...data,
-        instructorGrade: isInstructorRole ? data.instructorGrade : undefined,
+        instructorGrade: isInstructorRole ? data.instructorGrade : null,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>
@@ -437,7 +437,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                 />
             </div>
         </ScrollArea>
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={form.formState.isSubmitting}>
              {form.formState.isSubmitting ? 'Adding...' : 'Add Personnel'}
           </Button>

@@ -137,7 +137,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     const updatedPersonnel: User = {
         ...personnel,
         ...data,
-        instructorGrade: isInstructorRole ? data.instructorGrade : undefined,
+        instructorGrade: isInstructorRole ? data.instructorGrade : null,
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         permissions: data.permissions as Permission[],
         documents: documentsToSave,
