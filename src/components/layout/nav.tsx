@@ -42,6 +42,7 @@ import {
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Image from 'next/image';
 
 
 export const navItems: {
@@ -131,7 +132,11 @@ export default function Nav() {
     <>
       <SidebarHeader>
         <div className="flex items-center gap-3 p-2">
-            <Rocket className="h-8 w-8 text-primary flex-shrink-0" />
+            {company?.logoUrl ? (
+                <Image src={company.logoUrl} alt={`${company.name} Logo`} width={32} height={32} className="h-8 w-8 rounded-md object-contain" />
+            ) : (
+                <Rocket className="h-8 w-8 text-primary flex-shrink-0" />
+            )}
             <div>
                 <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
                 <p className="text-xs text-sidebar-foreground/70">Flight Manager</p>
