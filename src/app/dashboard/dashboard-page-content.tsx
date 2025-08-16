@@ -65,12 +65,14 @@ interface DashboardPageContentProps {
     initialAircraft: Aircraft[];
     initialBookings: Booking[];
     initialUsers: User[];
+    initialStudents: User[];
 }
 
 export function DashboardPageContent({
     initialAircraft,
     initialBookings,
-    initialUsers
+    initialUsers,
+    initialStudents
 }: DashboardPageContentProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
     const { settings } = useSettings();
@@ -125,8 +127,23 @@ export function DashboardPageContent({
                 }
             });
         });
+        
+        const expiringStudentDocs: { user: User, doc: UserDocument, daysUntil: number }[] = [];
+        initialStudents.forEach(student => {
+            if (student.status === 'Archived') return;
+            
+            (student.documents || []).forEach(doc => {
+                if (!doc.expiryDate) return;
+                const expiry = startOfDay(parseISO(doc.expiryDate));
+                const daysUntil = differenceInDays(expiry, today);
+                if (daysUntil <= settings.expiryWarningYellowDays) {
+                    expiringStudentDocs.push({ user: student, doc, daysUntil });
+                }
+            });
+        });
 
         expiringUserDocs.sort((a, b) => a.daysUntil - b.daysUntil);
+        expiringStudentDocs.sort((a, b) => a.daysUntil - b.daysUntil);
         
         type ExpiringAircraftDoc = { aircraft: Aircraft; type: string; expiryDate: string; daysUntil: number };
         const expiringAircraftDocs: ExpiringAircraftDoc[] = [];
@@ -158,9 +175,10 @@ export function DashboardPageContent({
             activeAircraft,
             totalAircraft,
             expiringUserDocs,
+            expiringStudentDocs,
             expiringAircraftDocs,
         }
-    }, [initialAircraft, initialUsers, settings]);
+    }, [initialAircraft, initialUsers, initialStudents, settings]);
 
 
     return (
@@ -230,12 +248,49 @@ export function DashboardPageContent({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <AlertTriangle />
+                                Expiring Student Docs ({stats.expiringStudentDocs.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.expiringStudentDocs.length > 0 ? (
+                                <ScrollArea className="h-40 pr-4">
+                                    <div className="space-y-4">
+                                    {stats.expiringStudentDocs.map((item, index) => {
+                                        let itemClass = '';
+                                        if (item.daysUntil < 0) {
+                                            itemClass = 'bg-destructive/10 text-foreground border-destructive';
+                                        } else if (item.daysUntil <= settings.expiryWarningOrangeDays) {
+                                            itemClass = 'bg-yellow-400/20 text-foreground border-yellow-500';
+                                        }
+                                        return (
+                                        <div key={index} className={cn("p-3 border rounded-lg", itemClass)}>
+                                            <p className="font-semibold text-sm">{item.doc.type}</p>
+                                            <p className="text-sm">{item.user.name}</p>
+                                            <p className={cn("text-xs font-medium mt-1")}>
+                                                 {item.daysUntil < 0 
+                                                    ? `Has expired`
+                                                    : `Expires in ${item.daysUntil} days on ${format(parseISO(item.doc.expiryDate!), 'MMM d, yyyy')}`
+                                                }
+                                            </p>
+                                        </div>
+                                    )})}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground flex items-center justify-center h-24">No student documents are expiring soon.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle />
                                 Expiring Personnel Docs ({stats.expiringUserDocs.length})
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {stats.expiringUserDocs.length > 0 ? (
-                                <ScrollArea className="h-64 pr-4">
+                                <ScrollArea className="h-40 pr-4">
                                     <div className="space-y-4">
                                     {stats.expiringUserDocs.map((item, index) => {
                                         let itemClass = '';
@@ -259,7 +314,7 @@ export function DashboardPageContent({
                                     </div>
                                 </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground flex items-center justify-center">No personnel documents are expiring soon.</p>
+                                <p className="text-sm text-muted-foreground flex items-center justify-center h-24">No personnel documents are expiring soon.</p>
                             )}
                         </CardContent>
                     </Card>
@@ -272,7 +327,7 @@ export function DashboardPageContent({
                         </CardHeader>
                         <CardContent>
                             {stats.expiringAircraftDocs.length > 0 ? (
-                                <ScrollArea className="h-64 pr-4">
+                                <ScrollArea className="h-40 pr-4">
                                     <div className="space-y-4">
                                     {stats.expiringAircraftDocs.map((item, index) => {
                                         let itemClass = '';
@@ -296,7 +351,7 @@ export function DashboardPageContent({
                                     </div>
                                 </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground flex items-center justify-center">No aircraft documents are expiring soon.</p>
+                                <p className="text-sm text-muted-foreground flex items-center justify-center h-24">No aircraft documents are expiring soon.</p>
                             )}
                         </CardContent>
                     </Card>
