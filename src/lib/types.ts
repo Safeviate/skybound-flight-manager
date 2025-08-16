@@ -630,8 +630,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-<<<<<<< HEAD
-
-    
-=======
->>>>>>> 84cb2aa3d9ed4ffa23493eede181ee3725bf0cf9
