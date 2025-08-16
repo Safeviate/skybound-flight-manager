@@ -67,6 +67,15 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
   
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      name: student.name || '',
+      studentCode: student.studentCode || '',
+      email: student.email || '',
+      phone: student.phone || '',
+      instructor: student.instructor || '',
+      licenseType: student.licenseType || '',
+      consentDisplayContact: student.consentDisplayContact || 'Not Consented',
+    },
   });
 
   useEffect(() => {
@@ -129,7 +138,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="studentCode" render={({ field }) => (<FormItem><FormLabel>Student Code</FormLabel><FormControl><Input placeholder="e.g., S12345" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="studentCode" render={({ field }) => (<FormItem><FormLabel>Student Code</FormLabel><FormControl><Input placeholder="e.g., S12345" {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="student@email.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -139,7 +148,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
         <div>
             <FormLabel className="text-base font-semibold">Document Expiry Dates</FormLabel>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
-                {(form.getValues('documents') || []).map((docItem, index) => (
+                {(form.watch('documents') || []).map((docItem, index) => (
                     <FormField
                         key={docItem.type}
                         control={form.control}
