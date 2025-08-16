@@ -16,11 +16,69 @@ import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
 import { useScale } from "@/context/scale-provider"
 import { Slider } from "@/components/ui/slider"
+import type { ThemeColors } from "@/lib/types"
+
+const themeFormSchema = z.object({
+  primary: z.string().optional(),
+  background: z.string().optional(),
+  accent: z.string().optional(),
+  sidebarBackground: z.string().optional(),
+  sidebarAccent: z.string().optional(),
+});
+
+type ThemeFormValues = z.infer<typeof themeFormSchema>;
+
+const ColorInput = ({ name, control, label }: { name: keyof ThemeFormValues, control: any, label: string }) => (
+    <FormField
+        control={control}
+        name={name}
+        render={({ field }) => (
+            <FormItem>
+                <FormLabel>{label}</FormLabel>
+                <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input placeholder="#ffffff" {...field} />
+                    </FormControl>
+                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: field.value || 'transparent' }} />
+                </div>
+                <FormMessage />
+            </FormItem>
+        )}
+    />
+);
 
 function SettingsPage() {
-  const { user, loading } = useUser();
+  const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
   const { scale, setScale } = useScale();
+
+  const form = useForm<ThemeFormValues>({
+    resolver: zodResolver(themeFormSchema),
+    defaultValues: company?.theme || {},
+  });
+  
+  React.useEffect(() => {
+    if (company?.theme) {
+      form.reset(company.theme);
+    }
+  }, [company, form]);
+
+  const handleThemeSubmit = async (data: ThemeFormValues) => {
+    const success = await updateCompany({ theme: data as ThemeColors });
+    if (success) {
+      toast({ title: 'Theme Updated', description: 'Your new theme has been applied.' });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update theme.' });
+    }
+  };
+  
+  const handleResetTheme = () => {
+    const defaultTheme = {}; // Or fetch from a default config
+    form.reset(defaultTheme);
+    updateCompany({ theme: defaultTheme });
+    toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });
+  }
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -42,12 +100,39 @@ function SettingsPage() {
         <div className="space-y-6 max-w-4xl mx-auto">
             <Card>
             <CardHeader>
-                <CardTitle>Appearance</CardTitle>
+                <CardTitle>Appearance Settings</CardTitle>
                 <CardDescription>
                 Customize the look and feel of the application.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Paintbrush className="h-4 w-4" />
+                    Color Scheme
+                  </h3>
+                   <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleThemeSubmit)} className="space-y-4">
+                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                           <ColorInput name="primary" control={form.control} label="Primary" />
+                           <ColorInput name="background" control={form.control} label="Background" />
+                           <ColorInput name="accent" control={form.control} label="Accent" />
+                           <ColorInput name="sidebarBackground" control={form.control} label="Sidebar" />
+                           <ColorInput name="sidebarAccent" control={form.control} label="Sidebar Accent" />
+                       </div>
+                        <div className="flex justify-end gap-2">
+                             <Button type="button" variant="ghost" onClick={handleResetTheme}>
+                                <Eraser className="mr-2 h-4 w-4" />
+                                Reset to Default
+                            </Button>
+                            <Button type="submit">Apply Theme</Button>
+                        </div>
+                    </form>
+                   </Form>
+                </div>
+
+                <Separator />
+
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <ZoomIn className="h-4 w-4" />

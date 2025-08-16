@@ -61,6 +61,13 @@ const companyFormSchema = z.object({
   enabledFeatures: z.array(z.string()).default([]),
   adminName: z.string().min(2, 'Admin name is required.'),
   adminEmail: z.string().email('Please enter a valid email address.'),
+  theme: z.object({
+    primary: z.string().optional(),
+    background: z.string().optional(),
+    accent: z.string().optional(),
+    sidebarBackground: z.string().optional(),
+    sidebarAccent: z.string().optional(),
+  }).optional(),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -69,6 +76,25 @@ interface NewCompanyFormProps {
   onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
 }
 
+const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
+    <FormField
+        control={control}
+        name={name}
+        render={({ field }) => (
+            <FormItem>
+                <FormLabel>{label}</FormLabel>
+                <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input placeholder="#ffffff" {...field} />
+                    </FormControl>
+                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: field.value || 'transparent' }} />
+                </div>
+                <FormMessage />
+            </FormItem>
+        )}
+    />
+);
+
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
   const form = useForm<CompanyFormValues>({
@@ -76,13 +102,20 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     defaultValues: {
         companyName: '',
         enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
+        theme: {
+            primary: '#2563eb',
+            background: '#f4f4f5',
+            accent: '#f59e0b',
+            sidebarBackground: '#0c0a09',
+            sidebarAccent: '#1f2937',
+        }
     }
   });
 
   function handleFormSubmit(data: CompanyFormValues) {
     const newCompany: Omit<Company, 'id' | 'trademark'> = {
         name: data.companyName,
-        theme: {},
+        theme: data.theme,
         enabledFeatures: data.enabledFeatures as Feature[],
     };
     const newAdmin: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'> = {
@@ -162,6 +195,16 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         </FormItem>
                     )}
                 />
+                 <div className="space-y-2">
+                    <h4 className="font-semibold flex items-center gap-2"><Paintbrush className="h-4 w-4"/>App Theming (Optional)</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <ColorInput name="theme.primary" control={form.control} label="Primary" />
+                        <ColorInput name="theme.background" control={form.control} label="Background" />
+                        <ColorInput name="theme.accent" control={form.control} label="Accent" />
+                        <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
+                        <ColorInput name="theme.sidebarAccent" control={form.control} label="Sidebar Accent" />
+                    </div>
+                </div>
             </div>
 
             <FormField

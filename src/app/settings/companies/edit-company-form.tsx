@@ -20,6 +20,7 @@ import { Paintbrush } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const features: { id: Feature, label: string, description: string }[] = [
     { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
@@ -40,6 +41,13 @@ const companyFormSchema = z.object({
   }),
   logo: z.any().optional(),
   enabledFeatures: z.array(z.string()).default([]),
+  theme: z.object({
+    primary: z.string().optional(),
+    background: z.string().optional(),
+    accent: z.string().optional(),
+    sidebarBackground: z.string().optional(),
+    sidebarAccent: z.string().optional(),
+  }).optional(),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -48,6 +56,25 @@ interface EditCompanyFormProps {
     company: Company;
     onSubmit: (updatedData: Partial<Company>, logoFile?: File) => void;
 }
+
+const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
+    <FormField
+        control={control}
+        name={name}
+        render={({ field }) => (
+            <FormItem>
+                <FormLabel>{label}</FormLabel>
+                <div className="flex items-center gap-2">
+                    <FormControl>
+                        <Input placeholder="#ffffff" {...field} />
+                    </FormControl>
+                    <div className="w-8 h-8 rounded-md border" style={{ backgroundColor: field.value || 'transparent' }} />
+                </div>
+                <FormMessage />
+            </FormItem>
+        )}
+    />
+);
 
 export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
   const form = useForm<CompanyFormValues>({
@@ -59,6 +86,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         name: company.name,
         trademark: company.trademark || '',
         enabledFeatures: company.enabledFeatures || [],
+        theme: company.theme || {},
     })
   }, [company, form]);
 
@@ -67,6 +95,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         name: data.name,
         trademark: data.trademark,
         enabledFeatures: data.enabledFeatures as Feature[],
+        theme: data.theme,
     };
     const logoFile = data.logo?.[0];
     
@@ -122,6 +151,19 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         </FormItem>
                     )}
                 />
+            </div>
+            
+            <Separator />
+            
+             <div className="space-y-2">
+                <h4 className="font-semibold flex items-center gap-2"><Paintbrush className="h-4 w-4"/>App Theming</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <ColorInput name="theme.primary" control={form.control} label="Primary" />
+                    <ColorInput name="theme.background" control={form.control} label="Background" />
+                    <ColorInput name="theme.accent" control={form.control} label="Accent" />
+                    <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
+                    <ColorInput name="theme.sidebarAccent" control={form.control} label="Sidebar Accent" />
+                </div>
             </div>
 
             <FormField
