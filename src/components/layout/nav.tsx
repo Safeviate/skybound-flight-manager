@@ -89,9 +89,7 @@ export default function Nav() {
   const { user, company, logout } = useUser();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const userPermissions = user?.permissions || [];
-  const companyFeatures = company?.enabledFeatures || [];
-
+  
   const handleLogout = () => {
     logout();
     router.push('/login');
@@ -100,49 +98,15 @@ export default function Nav() {
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
-
-  const hasPermission = (requiredPermissions?: Permission[]) => {
-    if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true; // Public link
-    }
-    if (userPermissions.includes('Super User')) {
-      return true; // Super User sees everything
-    }
-    return requiredPermissions.some(p => userPermissions.includes(p));
-  };
   
-  const hasFeature = (requiredFeature?: Feature) => {
-    if (user?.permissions.includes('Super User')) {
-        return true; // Super User bypasses feature flags
+  const isMenuItemVisible = (item: { requiredPermissions?: Permission[] }) => {
+    // This function now only checks for Super User permission for admin items.
+    // Regular items will not have this check applied in the main menu rendering.
+    if (item.requiredPermissions?.includes('Super User')) {
+        return user?.permissions.includes('Super User');
     }
-    if (!requiredFeature) {
-        return true; // No specific feature required
-    }
-    return companyFeatures.includes(requiredFeature);
-  };
-  
-  const isMenuItemVisible = (item: typeof navItems[0]) => {
-      // Special case for 'Manage Companies'
-      if (item.label === 'Manage Companies') {
-          return user?.email === 'barry@safeviate.com';
-      }
-
-      // Always show for super users
-    if (user?.permissions?.includes('Super User')) {
-        return true;
-    }
-    // Check feature flag first
-    if (item.requiredFeature && !companyFeatures.includes(item.requiredFeature)) {
-        return false;
-    }
-    // If visibleMenuItems is defined, use it as the source of truth
-    if (user?.visibleMenuItems) {
-        return user.visibleMenuItems.includes(item.label);
-    }
-    // Fallback to permission-based logic if visibleMenuItems is not set
-    return hasPermission(item.requiredPermissions);
+    return true; // All other items are visible by default now.
   }
-
 
   const getIsActive = (href: string) => {
     if (href === '/' || href === '/settings') {
@@ -156,11 +120,12 @@ export default function Nav() {
     return null; // Don't render nav if not logged in
   }
 
-  const itemsToDisplay = navItems;
-
-  const visibleNavItems = itemsToDisplay.filter(isMenuItemVisible);
-  const visibleAdminItems = adminNavItems.filter(isMenuItemVisible);
-  const visibleSettingsItems = settingsNavItems.filter(isMenuItemVisible);
+  // Filter admin items based on Super User role
+  const visibleAdminItems = adminNavItems.filter(item => 
+      item.requiredPermissions?.includes('Super User') 
+          ? user?.permissions.includes('Super User')
+          : true
+  );
 
   return (
     <>
@@ -175,7 +140,7 @@ export default function Nav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {visibleNavItems.map((item) => (
+          {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
@@ -213,7 +178,7 @@ export default function Nav() {
       </SidebarContent>
       <SidebarFooter>
          <SidebarMenu>
-            {!isMobile && visibleSettingsItems.map((item) => (
+            {settingsNavItems.map((item) => (
                  <SidebarMenuItem key={item.href}>
                     <Link href={item.href} passHref>
                         <SidebarMenuButton tooltip={{ children: item.label }} isActive={getIsActive(item.href)} onClick={handleLinkClick}>
