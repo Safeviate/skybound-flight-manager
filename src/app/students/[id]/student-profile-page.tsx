@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -369,7 +368,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     </CardContent>
                 </Card>
 
-                <MilestoneProgress currentHours={totalFlightHours} />
+                {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
 
                  <Card>
                     <CardHeader>

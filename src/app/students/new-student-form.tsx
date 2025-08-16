@@ -21,10 +21,10 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import type { Role, User } from '@/lib/types';
+import type { Role, User, Alert } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, writeBatch } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -46,6 +46,7 @@ const studentFormSchema = z.object({
     required_error: 'Please select an instructor.',
   }),
   licenseType: z.string().optional(),
+  flightHours: z.coerce.number().optional(),
   medicalExpiry: z.date().optional().nullable(),
   licenseExpiry: z.date().optional().nullable(),
   passportExpiry: z.date().optional().nullable(),
@@ -62,7 +63,7 @@ interface NewStudentFormProps {
 }
 
 export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
-  const { company } = useUser();
+  const { user: currentUser, company } = useUser();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   
@@ -73,6 +74,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       studentCode: '',
       email: '',
       phone: '',
+      flightHours: 0,
       instructor: '',
       consentDisplayContact: 'Not Consented',
     }
@@ -90,7 +92,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   }, [company]);
   
   async function handleFormSubmit(data: StudentFormValues) {
-    if (!company) {
+    if (!company || !currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
         return;
     }
@@ -99,6 +101,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         ...data,
         role: 'Student',
         status: 'Active',
+        flightHours: data.flightHours || 0,
         medicalExpiry: data.medicalExpiry ? format(data.medicalExpiry, 'yyyy-MM-dd') : null,
         licenseExpiry: data.licenseExpiry ? format(data.licenseExpiry, 'yyyy-MM-dd') : null,
         passportExpiry: data.passportExpiry ? format(data.passportExpiry, 'yyyy-MM-dd') : null,
@@ -108,6 +111,40 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
 
     if (result.success) {
+        // Now perform the retroactive milestone check if the user was successfully created
+        if (data.licenseType === 'SPL' && data.flightHours && data.flightHours > 0) {
+            const milestones = [10, 20, 30];
+            const batch = writeBatch(db);
+            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
+            const instructorUser = instructors.find(i => i.name === data.instructor);
+            const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
+            const hotSnapshot = await getDocs(headOfTrainingQuery);
+            const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as User;
+
+            const targetUserIds = [instructorUser?.id, hot?.id].filter(Boolean) as string[];
+
+            for (const milestone of milestones) {
+                if (data.flightHours >= milestone) {
+                     for (const targetId of targetUserIds) {
+                        const newAlertRef = doc(alertsCollection);
+                        const newAlert: Omit<Alert, 'id' | 'number'> = {
+                            companyId: company.id,
+                            type: 'Task',
+                            title: `Logbook Check Required: ${data.name}`,
+                            description: `${data.name} was added with ${data.flightHours.toFixed(1)} hours. Please verify the ${milestone}-hour progress check is logged.`,
+                            author: currentUser.name,
+                            date: new Date().toISOString(),
+                            readBy: [],
+                            targetUserId: targetId,
+                            relatedLink: `/students/${result.message.split(' ')[0]}`, // A bit fragile, assumes id is first part of success message
+                        };
+                        batch.set(newAlertRef, newAlert);
+                     }
+                }
+            }
+            await batch.commit();
+        }
+
         toast({
             title: 'Student Added',
             description: result.message,
@@ -224,6 +261,20 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                         </SelectContent>
                     </Select>
                     <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="flightHours"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Initial Flight Hours</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.1" placeholder="e.g., 25.5" {...field} />
+                        </FormControl>
+                        <FormDescription>Enter existing hours if student is transferring.</FormDescription>
+                        <FormMessage />
                     </FormItem>
                 )}
             />
