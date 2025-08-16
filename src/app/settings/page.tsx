@@ -23,6 +23,8 @@ const themeFormSchema = z.object({
   primary: z.string().regex(hexColorRegex, 'Invalid hex color'),
   background: z.string().regex(hexColorRegex, 'Invalid hex color'),
   accent: z.string().regex(hexColorRegex, 'Invalid hex color'),
+  sidebarBackground: z.string().regex(hexColorRegex, 'Invalid hex color'),
+  sidebarAccent: z.string().regex(hexColorRegex, 'Invalid hex color'),
 })
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>
@@ -31,6 +33,8 @@ const defaultTheme = {
   primary: '#2563eb',
   background: '#f4f4f5',
   accent: '#f59e0b',
+  sidebarBackground: '#0c0a09',
+  sidebarAccent: '#1f2937'
 };
 
 function SettingsPage() {
@@ -45,6 +49,8 @@ function SettingsPage() {
       primary: company?.theme?.primary || defaultTheme.primary,
       background: company?.theme?.background || defaultTheme.background,
       accent: company?.theme?.accent || defaultTheme.accent,
+      sidebarBackground: company?.theme?.sidebarBackground || defaultTheme.sidebarBackground,
+      sidebarAccent: company?.theme?.sidebarAccent || defaultTheme.sidebarAccent,
     },
   });
   
@@ -54,6 +60,8 @@ function SettingsPage() {
         primary: company.theme.primary || defaultTheme.primary,
         background: company.theme.background || defaultTheme.background,
         accent: company.theme.accent || defaultTheme.accent,
+        sidebarBackground: company.theme.sidebarBackground || defaultTheme.sidebarBackground,
+        sidebarAccent: company.theme.sidebarAccent || defaultTheme.sidebarAccent,
       });
     }
   }, [company, form]);
@@ -71,6 +79,8 @@ function SettingsPage() {
       primary: data.primary,
       background: data.background,
       accent: data.accent,
+      sidebarBackground: data.sidebarBackground,
+      sidebarAccent: data.sidebarAccent,
     };
     
     const success = await updateCompany({ theme: newThemeSettings });
@@ -161,46 +171,22 @@ function SettingsPage() {
                     <p className="text-sm text-muted-foreground">
                         Set your organization's brand colors. These are applied on top of the base theme.
                     </p>
-                    <div className="grid grid-cols-3 gap-4">
-                        <FormField
-                        control={form.control}
-                        name="primary"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Primary</FormLabel>
-                            <FormControl>
-                                <Input type="color" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="background"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Background</FormLabel>
-                            <FormControl>
-                                <Input type="color" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="accent"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Accent</FormLabel>
-                            <FormControl>
-                                <Input type="color" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2 p-4 border rounded-md">
+                            <h4 className="font-medium text-sm">Main UI Colors</h4>
+                             <div className="grid grid-cols-3 gap-2 pt-2">
+                                <FormField control={form.control} name="primary" render={({ field }) => (<FormItem><FormLabel>Primary</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="background" render={({ field }) => (<FormItem><FormLabel>Background</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="accent" render={({ field }) => (<FormItem><FormLabel>Accent</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
+                         <div className="space-y-2 p-4 border rounded-md">
+                            <h4 className="font-medium text-sm">Sidebar Menu Colors</h4>
+                             <div className="grid grid-cols-2 gap-2 pt-2">
+                                <FormField control={form.control} name="sidebarBackground" render={({ field }) => (<FormItem><FormLabel>Menu Background</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="sidebarAccent" render={({ field }) => (<FormItem><FormLabel>Menu Highlight</FormLabel><FormControl><Input type="color" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            </div>
+                        </div>
                     </div>
                     </div>
                     <div className="flex justify-end gap-2">

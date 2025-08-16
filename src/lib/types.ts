@@ -21,6 +21,22 @@ export type ThemeColors = {
   primary?: string;
   background?: string;
   accent?: string;
+  sidebarBackground?: string;
+  sidebarAccent?: string;
+  foreground?: string;
+  card?: string;
+  cardForeground?: string;
+  popover?: string;
+  popoverForeground?: string;
+  secondary?: string;
+  secondaryForeground?: string;
+  muted?: string;
+  mutedForeground?: string;
+  destructive?: string;
+  destructiveForeground?: string;
+  border?: string;
+  input?: string;
+  ring?: string;
 };
 
 export type Feature = 
@@ -611,6 +627,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 

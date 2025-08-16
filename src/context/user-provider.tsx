@@ -35,6 +35,8 @@ const fallbackCompany: Company = {
         primary: '#2563eb', // Default Blue
         background: '#f4f4f5', // Light Gray
         accent: '#f59e0b', // Amber
+        sidebarBackground: '#0c0a09', // Dark Gray for sidebar
+        sidebarAccent: '#1f2937' // Slightly lighter gray for highlight
     }
 };
 
@@ -111,12 +113,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const primary = theme.primary ? hexToHSL(theme.primary) : null;
         const background = theme.background ? hexToHSL(theme.background) : null;
         const accent = theme.accent ? hexToHSL(theme.accent) : null;
+        const sidebarBackground = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground) : null;
+        const sidebarAccent = theme.sidebarAccent ? hexToHSL(theme.sidebarAccent) : null;
 
         const css = `
         :root {
           ${primary ? `--primary: ${primary};` : ''}
           ${background ? `--background: ${background};` : ''}
           ${accent ? `--accent: ${accent};` : ''}
+          ${sidebarBackground ? `--sidebar-background: ${sidebarBackground};` : ''}
+          ${sidebarAccent ? `--sidebar-accent: ${sidebarAccent};` : ''}
         }
       `;
       styleElement.innerHTML = css;
