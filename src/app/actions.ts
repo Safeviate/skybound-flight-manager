@@ -4,9 +4,10 @@
 import { db, auth } from '@/lib/firebase';
 import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import type { User, Company } from '@/lib/types';
+import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
+import { format } from 'date-fns';
 
 export async function createUserAndSendWelcomeEmail(
   userData: Omit<User, 'id'>, 
@@ -39,6 +40,22 @@ export async function createUserAndSendWelcomeEmail(
         newUserId = doc(collection(db, 'temp')).id;
     }
 
+    const trainingLogs: TrainingLogEntry[] = [];
+    if (userData.role === 'Student' && userData.flightHours && userData.flightHours > 0) {
+        const initialLogEntry: TrainingLogEntry = {
+            id: `log-${Date.now()}`,
+            date: format(new Date(), 'yyyy-MM-dd'),
+            aircraft: 'Previous Experience',
+            startHobbs: 0,
+            endHobbs: userData.flightHours,
+            flightDuration: userData.flightHours,
+            instructorName: 'Previous Instructor',
+            trainingExercises: [{ exercise: 'Consolidated Previous Experience', rating: 4 }],
+        };
+        trainingLogs.push(initialLogEntry);
+    }
+
+
     // Prepare user document for Firestore
     const userToAdd: User = {
         ...userData,
@@ -50,10 +67,10 @@ export async function createUserAndSendWelcomeEmail(
     } as User;
 
     if (userData.role === 'Student') {
-        userToAdd.flightHours = 0;
+        userToAdd.flightHours = userData.flightHours || 0;
         userToAdd.progress = 0;
         userToAdd.endorsements = [];
-        userToAdd.trainingLogs = [];
+        userToAdd.trainingLogs = trainingLogs;
     }
 
     delete (userToAdd as any).password;
