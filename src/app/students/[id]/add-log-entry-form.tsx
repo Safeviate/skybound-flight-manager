@@ -47,6 +47,8 @@ const logEntryFormSchema = z.object({
   aircraft: z.string({
     required_error: 'Please select an aircraft.',
   }),
+  departure: z.string().optional(),
+  arrival: z.string().optional(),
   startHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
@@ -87,6 +89,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
       startHobbs: booking?.startHobbs || 0,
       endHobbs: booking?.endHobbs || 0,
       instructorName: booking?.instructor,
+      departure: booking?.departure,
+      arrival: booking?.arrival,
       trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
     },
   });
@@ -104,6 +108,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             startHobbs: booking.startHobbs || 0,
             endHobbs: booking.endHobbs || 0,
             instructorName: booking.instructor || '',
+            departure: booking.departure || '',
+            arrival: booking.arrival || '',
             trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
         });
     }
@@ -226,6 +232,34 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <FormField
+                                control={form.control}
+                                name="departure"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Departure</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., KPAO" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="arrival"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Arrival</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., KSQL" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
