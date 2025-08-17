@@ -335,51 +335,45 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="container mx-auto p-4 md:p-8 relative border-4 border-purple-500">
+      <div className="max-w-7xl mx-auto p-4 md:p-8 relative border-4 border-purple-500">
         <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-purple-500">Main Container</span>
         <div id="ganttView">
-             <div className="mb-12 flex flex-col items-start gap-4">
-                <div className="relative p-2 border-2 border-red-500">
-                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Header Container</span>
-                    <div className="flex flex-col items-start gap-2">
-                        <div className="relative p-2 border-2 border-blue-500">
-                            <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Title & Date Picker Group</span>
-                            <div className="flex flex-col items-start gap-2">
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !selectedDate && "text-muted-foreground"
-                                        )}
-                                        data-nosnippet
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={selectedDate}
-                                        onSelect={(date) => setSelectedDate(date || new Date())}
-                                        initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
-                            </div>
-                        </div>
-                        <div className="relative p-2 border-2 border-green-500">
-                                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Color Legend Group</span>
-                            <div className="color-legend">
-                                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
-                                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
-                                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
-                                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
-                            </div>
-                        </div>
+            <div className="mb-12 relative p-2 border-2 border-red-500 flex flex-col items-start gap-4">
+                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Header Container</span>
+                <div className="relative p-2 border-2 border-blue-500 flex flex-col items-start gap-2">
+                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Title & Date Picker Group</span>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            data-nosnippet
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => setSelectedDate(date || new Date())}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                </div>
+                <div className="relative p-2 border-2 border-green-500">
+                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Color Legend Group</span>
+                    <div className="color-legend">
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
                     </div>
                 </div>
             </div>
