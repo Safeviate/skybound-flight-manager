@@ -379,8 +379,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             </div>
              <div className="gantt-container mt-12 relative border-4 border-yellow-500">
                 <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-yellow-500">Gantt Container (Scrolling)</span>
+                <span className="absolute -top-3 left-28 bg-background px-1 text-xs text-pink-500">Gantt Table</span>
                 <table className="gantt-table relative border-2 border-pink-500">
-                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-pink-500">Gantt Table</span>
                     <thead>
                         <tr>
                             <th>Aircraft</th>
