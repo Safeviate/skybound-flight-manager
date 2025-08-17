@@ -38,6 +38,7 @@ import {
   Contact,
   BookOpen,
   FlaskConical,
+  BarChart,
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -72,6 +73,7 @@ export const adminNavItems = [
     { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
     { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
     { href: '/functions', label: 'Functions', icon: FlaskConical, requiredPermissions: ['Super User'] },
+    { href: '/gantt-chart', label: 'Gantt Chart', icon: BarChart, requiredPermissions: ['Super User'] },
 ]
 
 const settingsNavItems: {
