@@ -232,7 +232,8 @@ export function AircraftPageContent({
                     const studentData = studentDoc.data() as User | undefined;
                     
                     if (studentData) {
-                        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+                        const newLogEntry: TrainingLogEntry = {
+                            id: `log-${Date.now()}`,
                             date: bookingForChecklist.date,
                             aircraft: bookingForChecklist.aircraft,
                             startHobbs: bookingForChecklist.startHobbs || 0,
