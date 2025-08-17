@@ -340,7 +340,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             <div className="flex flex-col gap-4 mb-4">
                 <div className="relative p-2 border-2 border-red-500">
                     <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Flex Container</span>
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col items-start gap-4">
                         <div className="relative p-2 border-2 border-blue-500">
                             <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Left-Side Group</span>
                             <div className="flex items-center gap-4">
@@ -371,7 +371,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="relative p-2 border-2 border-green-500">
-                             <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Right-Side Group</span>
+                                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Right-Side Group</span>
                             <div className="color-legend">
                                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
