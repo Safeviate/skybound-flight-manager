@@ -335,10 +335,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="max-w-7xl mx-auto p-4 md:p-8 relative border-4 border-purple-500">
+      <div className="w-[1200px] mx-auto p-4 md:p-8 relative border-4 border-purple-500">
         <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-purple-500">Main Container</span>
         <div id="ganttView">
-            <div className="mb-12 relative p-2 border-2 border-red-500 flex flex-col items-start gap-4">
+            <div className="mb-6 relative p-2 border-2 border-red-500 flex flex-col items-start gap-4">
                 <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Header Container</span>
                 <div className="relative p-2 border-2 border-blue-500 flex flex-col items-start gap-2">
                     <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Title & Date Picker Group</span>
