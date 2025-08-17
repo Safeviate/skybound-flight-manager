@@ -34,6 +34,7 @@ const bookingFormSchema = z.object({
   bookingNumber: z.string().optional(),
   fuelUplift: z.coerce.number().optional(),
   oilUplift: z.coerce.number().optional(),
+  trainingExercise: z.string().optional(),
 }).refine(data => {
     if (data.purpose === 'Training') {
         return !!data.student && !!data.instructor;
@@ -118,6 +119,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       oilUplift: existingBooking?.oilUplift,
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',
+      trainingExercise: existingBooking?.trainingExercise || '',
     });
   }, [existingBooking, aircraft, startTime, form, selectedDate]);
   
@@ -148,6 +150,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         student: data.purpose === 'Training' || data.purpose === 'Private' ? data.student : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
+        trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
         fuelUplift: data.fuelUplift ?? null,
         oilUplift: data.oilUplift ?? null,
     };
@@ -221,34 +224,49 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
           </div>
 
         {purpose === 'Training' && (
-          <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+          <div className="space-y-4 p-4 border rounded-lg">
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="student"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Student</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
+                        <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="instructor"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Instructor</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
+                        <SelectContent>{instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             <FormField
-              control={form.control}
-              name="student"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Student</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger></FormControl>
-                    <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="instructor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instructor</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select instructor" /></SelectTrigger></FormControl>
-                    <SelectContent>{instructors.map(i => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+                control={form.control}
+                name="trainingExercise"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Training Exercise</FormLabel>
+                        <FormControl>
+                            <Textarea placeholder="e.g., Stalls and spins, short field landings..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
           </div>
         )}
@@ -379,5 +397,3 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     </Form>
   );
 }
-
-    
