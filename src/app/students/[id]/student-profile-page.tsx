@@ -598,7 +598,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <Card>
                     <CardHeader>
                         <CardTitle>Detailed Logbook for {student.name}</CardTitle>
-                        <CardDescription>A comprehensive log of all flight activities.</CardDescription>
+                        <CardDescription>
+                            License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="w-full whitespace-nowrap">
