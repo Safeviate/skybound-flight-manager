@@ -504,25 +504,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
                                 </CardDescription>
                             </div>
-                            {canEdit && (
-                                <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button>
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add Manual Entry
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Add Manual Training Log Entry</DialogTitle>
-                                            <DialogDescription>
-                                                Record details of a training session for {student.name}.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                    </DialogContent>
-                                </Dialog>
-                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -583,4 +564,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
