@@ -101,6 +101,8 @@ function GanttChartPage() {
                     overflow-x: auto; /* Enables horizontal scrolling */
                     border: 1px solid #dee2e6;
                     border-radius: 5px;
+                    width: 100%;
+                    box-sizing: border-box;
                 }
                 .gantt-table {
                     width: 1800px; /* A wide table to demonstrate scrolling */
