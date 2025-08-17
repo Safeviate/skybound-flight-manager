@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
@@ -337,37 +337,39 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       `}</style>
       <div className="container mx-auto p-4 md:p-8">
         <div id="ganttView">
-             <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
-                 <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-[280px] justify-start text-left font-normal",
-                            !selectedDate && "text-muted-foreground"
-                        )}
-                        data-nosnippet
-                        >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => setSelectedDate(date || new Date())}
-                        initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
-             </div>
-             <div className="color-legend">
-                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
-                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
-                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
-                <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
+            <div className="flex justify-between items-center mb-4">
+                 <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-[280px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                            data-nosnippet
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => setSelectedDate(date || new Date())}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                 </div>
+                 <div className="color-legend">
+                    <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
+                    <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
+                    <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
+                    <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
+                </div>
             </div>
              <div className="gantt-container">
                 <table className="gantt-table">
