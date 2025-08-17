@@ -337,7 +337,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       `}</style>
       <div className="container mx-auto p-4 md:p-8">
         <div id="ganttView">
-            <div className="flex flex-col gap-4 mb-4">
+             <div className="mb-4">
                 <div className="relative p-2 border-2 border-red-500">
                     <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Flex Container</span>
                     <div className="flex flex-col items-start gap-4">
