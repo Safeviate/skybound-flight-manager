@@ -497,10 +497,33 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             <TabsContent value="logbook" className="mt-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Detailed Logbook for {student.name}</CardTitle>
-                        <CardDescription>
-                            License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Detailed Logbook for {student.name}</CardTitle>
+                                <CardDescription>
+                                    License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
+                                </CardDescription>
+                            </div>
+                            {canEdit && (
+                                <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add Manual Entry
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl">
+                                        <DialogHeader>
+                                            <DialogTitle>Add Manual Training Log Entry</DialogTitle>
+                                            <DialogDescription>
+                                                Record details of a training session for {student.name}.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="w-full whitespace-nowrap">
