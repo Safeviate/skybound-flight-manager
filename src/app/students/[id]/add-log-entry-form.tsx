@@ -72,7 +72,7 @@ type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
 
 interface AddLogEntryFormProps {
     student: User;
-    onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => void;
+    onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => void;
     booking?: Booking;
 }
 
@@ -82,12 +82,10 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   const [instructors, setInstructors] = useState<User[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
 
-  // Find the log entry that matches the booking's pendingLogEntryId
   const logEntryForBooking = useMemo(() => {
     if (!booking || !booking.pendingLogEntryId || !student.trainingLogs) return null;
     return student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
   }, [booking, student.trainingLogs]);
-
 
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
@@ -103,9 +101,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   });
   
   useEffect(() => {
-    // If there's a booking, pre-fill the form with its data.
     if (booking) {
-        form.reset({
+        const resetValues: Partial<LogEntryFormValues> = {
             date: parseISO(booking.date),
             aircraft: booking.aircraft,
             startHobbs: booking.startHobbs || 0,
@@ -113,11 +110,18 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             instructorName: booking.instructor || '',
             departure: booking.departure || '',
             arrival: booking.arrival || '',
-            // If we found a matching log entry, use its exercises, otherwise start fresh.
-            trainingExercises: logEntryForBooking?.trainingExercises || [{ exercise: '', rating: 0, comment: '' }],
-        });
+        };
+        
+        // If we found a matching log entry, use its exercises, otherwise start fresh.
+        if (logEntryForBooking) {
+            resetValues.trainingExercises = logEntryForBooking.trainingExercises.length > 0 ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }];
+        } else {
+            resetValues.trainingExercises = [{ exercise: '', rating: 0, comment: '' }];
+        }
+        form.reset(resetValues);
     }
   }, [booking, logEntryForBooking, form]);
+
 
   const { watch, setValue } = form;
   const startHobbs = watch('startHobbs');
@@ -131,8 +135,15 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   }, [startHobbs, endHobbs]);
   
   const totalFlightHours = useMemo(() => {
-      return student?.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
-  }, [student?.trainingLogs]);
+      const existingHours = student?.trainingLogs?.reduce((total, log) => {
+          // If we are updating an existing log, exclude its old duration from the total
+          if (logEntryForBooking && log.id === logEntryForBooking.id) {
+              return total;
+          }
+          return total + (log.flightDuration || 0);
+      }, 0) || 0;
+      return existingHours;
+  }, [student?.trainingLogs, logEntryForBooking]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -158,7 +169,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
       date: format(data.date, 'yyyy-MM-dd'),
     };
     
-    onSubmit(newEntry, booking?.id);
+    onSubmit(newEntry, booking?.id, logEntryForBooking?.id);
     
     form.reset();
   }
