@@ -48,7 +48,6 @@ const studentFormSchema = z.object({
     required_error: 'Please select an instructor.',
   }),
   licenseType: z.string().optional(),
-  flightHours: z.coerce.number().optional(),
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
@@ -76,7 +75,6 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       studentCode: '',
       email: '',
       phone: '',
-      flightHours: 0,
       instructor: '',
       consentDisplayContact: 'Not Consented',
       documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
@@ -111,46 +109,12 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         ...data,
         role: 'Student',
         status: 'Active',
-        flightHours: data.flightHours || 0,
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>;
 
     const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
 
     if (result.success) {
-        if (data.licenseType === 'SPL' && data.flightHours && data.flightHours > 0) {
-            const milestones = [10, 20, 30];
-            const batch = writeBatch(db);
-            const alertsCollection = collection(db, 'companies', company.id, 'alerts');
-            const instructorUser = instructors.find(i => i.name === data.instructor);
-            const headOfTrainingQuery = query(collection(db, `companies/${company.id}/users`), where('role', '==', 'Head Of Training'));
-            const hotSnapshot = await getDocs(headOfTrainingQuery);
-            const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as User;
-
-            const targetUserIds = [instructorUser?.id, hot?.id].filter(Boolean) as string[];
-
-            for (const milestone of milestones) {
-                if (data.flightHours >= milestone) {
-                     for (const targetId of targetUserIds) {
-                        const newAlertRef = doc(alertsCollection);
-                        const newAlert: Omit<Alert, 'id' | 'number'> = {
-                            companyId: company.id,
-                            type: 'Task',
-                            title: `Logbook Check Required: ${data.name}`,
-                            description: `${data.name} was added with ${data.flightHours.toFixed(1)} hours. Please verify the ${milestone}-hour progress check is logged.`,
-                            author: currentUser.name,
-                            date: new Date().toISOString(),
-                            readBy: [],
-                            targetUserId: targetId,
-                            relatedLink: `/students/${result.message.split(' ')[0]}`,
-                        };
-                        batch.set(newAlertRef, newAlert);
-                     }
-                }
-            }
-            await batch.commit();
-        }
-
         toast({
             title: 'Student Added',
             description: result.message,
@@ -178,7 +142,6 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="flightHours" render={({ field }) => (<FormItem><FormLabel>Initial Flight Hours</FormLabel><FormControl><Input type="number" step="0.1" placeholder="e.g., 25.5" {...field} /></FormControl><FormDescription>Enter existing hours if student is transferring.</FormDescription><FormMessage /></FormItem>)} />
                 </div>
 
                  <div>
@@ -263,3 +226,5 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     </Form>
   );
 }
+
+    
