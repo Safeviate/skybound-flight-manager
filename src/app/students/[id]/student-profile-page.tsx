@@ -533,7 +533,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead colSpan={2} className="text-center border">Departure</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
-                                        <TableHead colSpan={3} className="text-center border">Pilot Time</TableHead>
+                                        <TableHead colSpan={4} className="text-center border">Pilot Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Landings</TableHead>
@@ -545,9 +545,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead className="text-center border">Time</TableHead>
                                         <TableHead className="text-center border">Make/Model</TableHead>
                                         <TableHead className="text-center border">Registration</TableHead>
-                                        <TableHead className="text-center border">Single-Engine</TableHead>
-                                        <TableHead className="text-center border">Multi-Engine</TableHead>
+                                        <TableHead className="text-center border">SE</TableHead>
+                                        <TableHead className="text-center border">ME</TableHead>
                                         <TableHead className="text-center border">Dual</TableHead>
+                                        <TableHead className="text-center border">Single</TableHead>
                                         <TableHead className="text-center border">Day</TableHead>
                                         <TableHead className="text-center border">Night</TableHead>
                                     </TableRow>
@@ -563,6 +564,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableCell className="border">N/A</TableCell>
                                             <TableCell className="border">{log.aircraft}</TableCell>
                                             <TableCell className="border">&#10003;</TableCell>
+                                            <TableCell className="border"></TableCell>
                                             <TableCell className="border"></TableCell>
                                             <TableCell className="border"></TableCell>
                                             <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
@@ -582,3 +584,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
