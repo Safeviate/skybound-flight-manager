@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -45,6 +45,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
+    const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
 
     useEffect(() => {
         setStudent(initialStudent);
@@ -301,6 +302,43 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         )
     };
 
+    const handleAddNewLog = () => {
+        setNewLog({
+            id: 'new',
+            date: format(new Date(), 'yyyy-MM-dd'),
+            aircraft: '',
+            instructorName: '',
+            startHobbs: 0,
+            endHobbs: 0,
+            flightDuration: 0,
+            trainingExercises: []
+        });
+    };
+
+    const handleSaveNewLog = () => {
+        if (!newLog || !newLog.date || !newLog.aircraft || !newLog.instructorName) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all required fields.' });
+            return;
+        }
+
+        const duration = (newLog.endHobbs || 0) - (newLog.startHobbs || 0);
+        if (duration <= 0) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Flight duration must be positive.' });
+            return;
+        }
+
+        const entry: Omit<TrainingLogEntry, 'id'> = {
+            ...newLog,
+            flightDuration: duration,
+        } as Omit<TrainingLogEntry, 'id'>;
+
+        handleAddLogEntry(entry);
+        setNewLog(null);
+    };
+    
+    const handleNewLogChange = (field: keyof TrainingLogEntry, value: any) => {
+        setNewLog(prev => prev ? { ...prev, [field]: value } : null);
+    };
 
     if (userLoading) {
         return (
@@ -521,7 +559,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
                                 </CardDescription>
                             </div>
-                            <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                             <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                <Button onClick={handleAddNewLog}><PlusCircle className="mr-2 h-4 w-4" />Add Entry</Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -554,6 +595,26 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
+                                    {newLog && (
+                                        <TableRow>
+                                            <TableCell className="border p-1"><Input type="date" value={newLog.date} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Departure" value={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="time" /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Arrival" value={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="time" /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Make/Model" /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Reg" value={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" /></TableCell>
+                                            <TableCell className="border p-1"><Button size="sm" onClick={handleSaveNewLog}><Save className="h-4 w-4" /></Button></TableCell>
+                                        </TableRow>
+                                    )}
                                     {sortedLogs.map(log => (
                                         <TableRow key={log.id}>
                                             <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
@@ -584,4 +645,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
