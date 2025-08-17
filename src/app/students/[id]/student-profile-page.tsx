@@ -566,78 +566,80 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="w-full whitespace-nowrap">
-                            <Table style={{ minWidth: '1400px' }}>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead rowSpan={2} className="text-center border">Date</TableHead>
-                                        <TableHead colSpan={2} className="text-center border">Departure</TableHead>
-                                        <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
-                                        <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
-                                        <TableHead colSpan={4} className="text-center border">Pilot Time</TableHead>
-                                        <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
-                                        <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
-                                        <TableHead colSpan={2} className="text-center border">Landings</TableHead>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableHead className="text-center border">Place</TableHead>
-                                        <TableHead className="text-center border">Time</TableHead>
-                                        <TableHead className="text-center border">Place</TableHead>
-                                        <TableHead className="text-center border">Time</TableHead>
-                                        <TableHead className="text-center border">Make/Model</TableHead>
-                                        <TableHead className="text-center border">Registration</TableHead>
-                                        <TableHead className="text-center border">SE</TableHead>
-                                        <TableHead className="text-center border">ME</TableHead>
-                                        <TableHead className="text-center border">Dual</TableHead>
-                                        <TableHead className="text-center border">Single</TableHead>
-                                        <TableHead className="text-center border">Day</TableHead>
-                                        <TableHead className="text-center border">Night</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {newLog && (
+                        <div className="max-w-[1200px]">
+                            <ScrollArea className="w-full whitespace-nowrap">
+                                <Table style={{ minWidth: '1400px' }}>
+                                    <TableHeader>
                                         <TableRow>
-                                            <TableCell className="border p-1"><Input type="date" value={newLog.date || ''} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Departure" value={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Arrival" value={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Make/Model" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Reg" value={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
-                                            <TableCell className="border p-1"><Button size="sm" onClick={handleSaveNewLog}><Save className="h-4 w-4" /></Button></TableCell>
+                                            <TableHead rowSpan={2} className="text-center border">Date</TableHead>
+                                            <TableHead colSpan={2} className="text-center border">Departure</TableHead>
+                                            <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
+                                            <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
+                                            <TableHead colSpan={4} className="text-center border">Pilot Time</TableHead>
+                                            <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
+                                            <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
+                                            <TableHead colSpan={2} className="text-center border">Landings</TableHead>
                                         </TableRow>
-                                    )}
-                                    {sortedLogs.map(log => (
-                                        <TableRow key={log.id}>
-                                            <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                            <TableCell className="border">{log.departure || 'N/A'}</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">{log.arrival || 'N/A'}</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">{log.aircraft}</TableCell>
-                                            <TableCell className="border">&#10003;</TableCell>
-                                            <TableCell className="border"></TableCell>
-                                            <TableCell className="border"></TableCell>
-                                            <TableCell className="border"></TableCell>
-                                            <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                            <TableCell className="border">{log.instructorName}</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
+                                        <TableRow>
+                                            <TableHead className="text-center border">Place</TableHead>
+                                            <TableHead className="text-center border">Time</TableHead>
+                                            <TableHead className="text-center border">Place</TableHead>
+                                            <TableHead className="text-center border">Time</TableHead>
+                                            <TableHead className="text-center border">Make/Model</TableHead>
+                                            <TableHead className="text-center border">Registration</TableHead>
+                                            <TableHead className="text-center border">SE</TableHead>
+                                            <TableHead className="text-center border">ME</TableHead>
+                                            <TableHead className="text-center border">Dual</TableHead>
+                                            <TableHead className="text-center border">Single</TableHead>
+                                            <TableHead className="text-center border">Day</TableHead>
+                                            <TableHead className="text-center border">Night</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                            <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {newLog && (
+                                            <TableRow>
+                                                <TableCell className="border p-1"><Input type="date" value={newLog.date || ''} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
+                                                <TableCell className="border p-1"><Input placeholder="Departure" value={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input placeholder="Arrival" value={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input placeholder="Make/Model" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input placeholder="Reg" value={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Button size="sm" onClick={handleSaveNewLog}><Save className="h-4 w-4" /></Button></TableCell>
+                                            </TableRow>
+                                        )}
+                                        {sortedLogs.map(log => (
+                                            <TableRow key={log.id}>
+                                                <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                <TableCell className="border">{log.departure || 'N/A'}</TableCell>
+                                                <TableCell className="border">N/A</TableCell>
+                                                <TableCell className="border">{log.arrival || 'N/A'}</TableCell>
+                                                <TableCell className="border">N/A</TableCell>
+                                                <TableCell className="border">N/A</TableCell>
+                                                <TableCell className="border">{log.aircraft}</TableCell>
+                                                <TableCell className="border">&#10003;</TableCell>
+                                                <TableCell className="border"></TableCell>
+                                                <TableCell className="border"></TableCell>
+                                                <TableCell className="border"></TableCell>
+                                                <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                <TableCell className="border">{log.instructorName}</TableCell>
+                                                <TableCell className="border">N/A</TableCell>
+                                                <TableCell className="border">N/A</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
+                        </div>
                     </CardContent>
                 </Card>
             </TabsContent>
