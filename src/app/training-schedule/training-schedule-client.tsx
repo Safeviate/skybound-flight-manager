@@ -310,7 +310,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             width: 100%;
             box-sizing: border-box;
         }
-        .gantt-table { min-width: 2000px; }
+        .gantt-table { min-width: 2310px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
@@ -335,12 +335,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="w-[1200px] mx-auto p-4 md:p-8 relative border-4 border-purple-500">
+      <div className="w-[1200px] mx-auto p-4 md:p-8 relative">
         <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-purple-500">Main Container</span>
         <div id="ganttView">
-            <div className="w-full relative p-2 border-2 border-red-500 flex flex-col items-start gap-4">
+            <div className="w-full relative flex flex-col items-start gap-4">
                 <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Header Container (Flex Group)</span>
-                <div className="w-full relative p-2 border-2 border-blue-500 flex flex-col items-start gap-2">
+                <div className="w-full relative">
                     <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Left-Side Group</span>
                     <Popover>
                         <PopoverTrigger asChild>
@@ -380,7 +380,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
              <div className="gantt-container mt-12 relative border-4 border-yellow-500">
                 <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-yellow-500">Gantt Container (Scrolling)</span>
                 <span className="absolute -top-3 left-28 bg-background px-1 text-xs text-pink-500">Gantt Table</span>
-                <table className="gantt-table relative border-2 border-pink-500">
+                <table className="gantt-table">
                     <thead>
                         <tr>
                             <th>Aircraft</th>
