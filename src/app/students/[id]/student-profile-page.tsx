@@ -583,3 +583,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
