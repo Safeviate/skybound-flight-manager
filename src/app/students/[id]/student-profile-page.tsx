@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -615,18 +616,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div className="space-y-4 py-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="hours-total">Total Previous Hours</Label>
-                                                <Input 
-                                                    id="hours-total" 
-                                                    type="number" 
-                                                    step="0.1" 
-                                                    placeholder="e.g., 25.5" 
-                                                    value={hoursForward.total || ''}
-                                                    onChange={(e) => handleHoursForwardChange('total', e.target.value)}
-                                                />
-                                            </div>
                                             <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-total">Total Previous Hours</Label>
+                                                    <Input 
+                                                        id="hours-total" 
+                                                        type="number" 
+                                                        step="0.1" 
+                                                        placeholder="e.g., 25.5" 
+                                                        value={hoursForward.total || ''}
+                                                        onChange={(e) => handleHoursForwardChange('total', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-night">Night Time</Label>
+                                                    <Input id="hours-night" type="number" step="0.1" value={hoursForward.night || ''} onChange={(e) => handleHoursForwardChange('night', e.target.value)} />
+                                                </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="hours-se">Single-Engine</Label>
                                                     <Input id="hours-se" type="number" step="0.1" value={hoursForward.se || ''} onChange={(e) => handleHoursForwardChange('se', e.target.value)} />
@@ -642,10 +647,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <div className="space-y-2">
                                                     <Label htmlFor="hours-single">Single Time</Label>
                                                     <Input id="hours-single" type="number" step="0.1" value={hoursForward.single || ''} onChange={(e) => handleHoursForwardChange('single', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-night">Night Time</Label>
-                                                    <Input id="hours-night" type="number" step="0.1" value={hoursForward.night || ''} onChange={(e) => handleHoursForwardChange('night', e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -742,3 +743,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 }
 
     
+
