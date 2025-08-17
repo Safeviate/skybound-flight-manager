@@ -264,6 +264,8 @@ export type Booking = {
   endHobbs?: number;
   fuelUplift?: number;
   oilUplift?: number;
+  departure?: string;
+  arrival?: string;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
@@ -630,3 +632,5 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
+    

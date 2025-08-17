@@ -24,6 +24,8 @@ const bookingFormSchema = z.object({
   date: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
+  departure: z.string().optional(),
+  arrival: z.string().optional(),
   // Conditional fields
   student: z.string().optional(),
   studentId: z.string().optional(),
@@ -114,6 +116,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       bookingNumber: existingBooking?.bookingNumber,
       fuelUplift: existingBooking?.fuelUplift,
       oilUplift: existingBooking?.oilUplift,
+      departure: existingBooking?.departure || '',
+      arrival: existingBooking?.arrival || '',
     });
   }, [existingBooking, aircraft, startTime, form, selectedDate]);
   
@@ -186,6 +190,35 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
             </FormItem>
           )}
         />
+        
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="departure"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Departure</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., KPAO" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="arrival"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Arrival</FormLabel>
+                   <FormControl>
+                    <Input placeholder="e.g., KSQL" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
         {purpose === 'Training' && (
           <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
@@ -346,3 +379,5 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     </Form>
   );
 }
+
+    
