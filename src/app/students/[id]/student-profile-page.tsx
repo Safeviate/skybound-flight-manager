@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -45,6 +44,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
+    const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
 
     useEffect(() => {
         setStudent(initialStudent);
@@ -186,6 +186,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             const bookingRef = doc(db, `companies/${company.id}/bookings`, fromBookingId);
             await updateDoc(bookingRef, { status: 'Completed', flightDuration: newLogEntry.flightDuration });
         }
+        
+        setIsAddLogEntryOpen(false);
 
         toast({
             title: 'Training Log Added',
@@ -456,7 +458,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     </div>
                                     <div className="flex items-center gap-2 w-full sm:w-auto">
                                         {canEdit && (
-                                            <Dialog>
+                                            <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
                                                 <DialogTrigger asChild>
                                                     <Button className="w-full sm:w-auto">
                                                         <PlusCircle className="mr-2 h-4 w-4" />
