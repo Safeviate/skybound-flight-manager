@@ -10,14 +10,16 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, writeBatch, arrayUnion, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 
 interface TrainingSchedulePageContentProps {
@@ -294,16 +296,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style jsx>{`
-        .container {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: hsl(var(--background));
-            color: hsl(var(--foreground));
-        }
-        .view-switcher { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid hsl(var(--primary)); background-color: hsl(var(--background)); color: hsl(var(--primary)); border-radius: var(--radius); margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
-        .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
         table { width: 100%; border-collapse: collapse; background-color: hsl(var(--card)); table-layout: fixed; }
         th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 50px; }
         th { background-color: hsl(var(--muted)); text-align: center; padding: 12px 0; }
@@ -343,9 +335,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="container">
+      <div className="container p-4 md:p-8">
         <div id="ganttView">
-             <h2>Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+             <div className="flex justify-between items-center mb-4">
+                 <h2>Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+             </div>
              <div className="color-legend">
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
