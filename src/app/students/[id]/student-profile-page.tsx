@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -535,10 +536,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
                                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                                        <Button onClick={handleDownloadLogbook} variant="outline" className="w-full sm:w-auto">
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Download PDF
-                                        </Button>
                                         {canEdit && (
                                             <Dialog>
                                                 <DialogTrigger asChild>
@@ -559,14 +556,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </Dialog>
                                         )}
                                     </div>
-                                </div>
-                                <div className="pt-4">
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href="/students">
-                                            <UsersIcon className="mr-2 h-4 w-4" />
-                                            View All Student Debriefs
-                                        </Link>
-                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
@@ -616,46 +605,46 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead rowSpan={2} className="text-center">Date</TableHead>
-                                        <TableHead colSpan={2} className="text-center">Departure</TableHead>
-                                        <TableHead colSpan={2} className="text-center">Arrival</TableHead>
-                                        <TableHead colSpan={2} className="text-center">Aircraft</TableHead>
-                                        <TableHead colSpan={3} className="text-center">Pilot Time</TableHead>
-                                        <TableHead rowSpan={2} className="text-center">Total Time</TableHead>
-                                        <TableHead rowSpan={2} className="text-center">PIC Name</TableHead>
-                                        <TableHead colSpan={2} className="text-center">Landings</TableHead>
+                                        <TableHead rowSpan={2} className="text-center border">Date</TableHead>
+                                        <TableHead colSpan={2} className="text-center border">Departure</TableHead>
+                                        <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
+                                        <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
+                                        <TableHead colSpan={3} className="text-center border">Pilot Time</TableHead>
+                                        <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
+                                        <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
+                                        <TableHead colSpan={2} className="text-center border">Landings</TableHead>
                                     </TableRow>
                                     <TableRow>
-                                        <TableHead className="text-center">Place</TableHead>
-                                        <TableHead className="text-center">Time</TableHead>
-                                        <TableHead className="text-center">Place</TableHead>
-                                        <TableHead className="text-center">Time</TableHead>
-                                        <TableHead className="text-center">Make/Model</TableHead>
-                                        <TableHead className="text-center">Registration</TableHead>
-                                        <TableHead className="text-center">SE</TableHead>
-                                        <TableHead className="text-center">ME</TableHead>
-                                        <TableHead className="text-center">Multi-Pilot</TableHead>
-                                        <TableHead className="text-center">Day</TableHead>
-                                        <TableHead className="text-center">Night</TableHead>
+                                        <TableHead className="text-center border">Place</TableHead>
+                                        <TableHead className="text-center border">Time</TableHead>
+                                        <TableHead className="text-center border">Place</TableHead>
+                                        <TableHead className="text-center border">Time</TableHead>
+                                        <TableHead className="text-center border">Make/Model</TableHead>
+                                        <TableHead className="text-center border">Registration</TableHead>
+                                        <TableHead className="text-center border">SE</TableHead>
+                                        <TableHead className="text-center border">ME</TableHead>
+                                        <TableHead className="text-center border">Multi-Pilot</TableHead>
+                                        <TableHead className="text-center border">Day</TableHead>
+                                        <TableHead className="text-center border">Night</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {sortedLogs.map(log => (
                                         <TableRow key={log.id}>
-                                            <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>{log.aircraft}</TableCell>
-                                            <TableCell>&#10003;</TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell>{log.flightDuration.toFixed(2).replace('.', ':')}</TableCell>
-                                            <TableCell>{log.instructorName}</TableCell>
-                                            <TableCell>N/A</TableCell>
-                                            <TableCell>N/A</TableCell>
+                                            <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">{log.aircraft}</TableCell>
+                                            <TableCell className="border">&#10003;</TableCell>
+                                            <TableCell className="border"></TableCell>
+                                            <TableCell className="border"></TableCell>
+                                            <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                            <TableCell className="border">{log.instructorName}</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">N/A</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
