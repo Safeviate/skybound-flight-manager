@@ -207,6 +207,56 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             description: 'A new entry has been added to the student logbook.',
         });
     };
+    
+    // This function will create a log entry if it doesn't exist for a debrief item.
+    const handleDebriefClick = async (booking: Booking) => {
+        if (!student || !company) return;
+
+        // Check if a log entry for this booking already exists
+        const logExists = student.trainingLogs?.some(log => 
+            log.date === booking.date && 
+            log.aircraft === booking.aircraft && 
+            log.instructorName === booking.instructor &&
+            log.startHobbs === booking.startHobbs
+        );
+
+        if (logExists || booking.pendingLogEntryId) {
+            // Log entry likely exists, just open the form to complete it
+            return;
+        }
+
+        // If no log entry exists, create it now (retroactively)
+        const partialLogEntry: TrainingLogEntry = {
+            id: `log-${Date.now()}`,
+            date: booking.date,
+            aircraft: booking.aircraft,
+            departure: booking.departure || '',
+            arrival: booking.arrival || '',
+            startHobbs: booking.startHobbs || 0,
+            endHobbs: 0,
+            flightDuration: 0,
+            instructorName: booking.instructor || 'Unknown',
+            trainingExercises: [],
+        };
+        
+        const batch = writeBatch(db);
+        const studentRef = doc(db, `companies/${company.id}/students`, student.id);
+        batch.update(studentRef, { trainingLogs: arrayUnion(partialLogEntry) });
+
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, booking.id);
+        batch.update(bookingRef, { pendingLogEntryId: partialLogEntry.id });
+
+        await batch.commit();
+
+        // Refresh student data to include the new log entry before opening the form
+        const updatedStudentSnap = await getDoc(studentRef);
+        setStudent(updatedStudentSnap.data() as StudentUser);
+
+        toast({
+            title: "Log Entry Created",
+            description: "A draft logbook entry has been created. Please complete the details.",
+        });
+    };
 
     const handleDownloadLogbook = () => {
         if (!student) return;
@@ -561,13 +611,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 pendingBookings.map(booking => (
                                     <Dialog key={booking.id}>
                                         <DialogTrigger asChild>
-                                            <div className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                                            <button 
+                                                className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
+                                                onClick={() => handleDebriefClick(booking)}
+                                            >
                                                 <div className="space-y-1">
                                                     <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                     <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                                 </div>
                                                 <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
-                                            </div>
+                                            </button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
                                             <DialogHeader>
@@ -741,7 +794,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
-    
-
-

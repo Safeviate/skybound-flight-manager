@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -81,6 +82,13 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   const [instructors, setInstructors] = useState<User[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
 
+  // Find the log entry that matches the booking's pendingLogEntryId
+  const logEntryForBooking = useMemo(() => {
+    if (!booking || !booking.pendingLogEntryId || !student.trainingLogs) return null;
+    return student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
+  }, [booking, student.trainingLogs]);
+
+
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
     defaultValues: {
@@ -95,6 +103,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   });
   
   useEffect(() => {
+    // If there's a booking, pre-fill the form with its data.
     if (booking) {
         form.reset({
             date: parseISO(booking.date),
@@ -104,10 +113,11 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             instructorName: booking.instructor || '',
             departure: booking.departure || '',
             arrival: booking.arrival || '',
-            trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
+            // If we found a matching log entry, use its exercises, otherwise start fresh.
+            trainingExercises: logEntryForBooking?.trainingExercises || [{ exercise: '', rating: 0, comment: '' }],
         });
     }
-  }, [booking, form]);
+  }, [booking, logEntryForBooking, form]);
 
   const { watch, setValue } = form;
   const startHobbs = watch('startHobbs');

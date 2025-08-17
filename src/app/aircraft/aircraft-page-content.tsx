@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -190,6 +191,8 @@ export function AircraftPageContent({
         const isPreFlight = 'registration' in data;
         const batch = writeBatch(db);
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
+        
+        // Find the active booking for this aircraft.
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
 
         try {
@@ -213,7 +216,7 @@ export function AircraftPageContent({
 
                 if (bookingForChecklist && bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                     const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
-                    const newLogEntryId = doc(collection(db, 'temp')).id; // Generate a unique ID for the log entry
+                    const newLogEntryId = doc(collection(db, 'temp')).id;
                     
                     const partialLogEntry: TrainingLogEntry = {
                         id: newLogEntryId,
@@ -222,15 +225,14 @@ export function AircraftPageContent({
                         departure: bookingForChecklist.departure || '',
                         arrival: bookingForChecklist.arrival || '',
                         startHobbs: data.hobbs,
-                        endHobbs: 0, // Will be updated on post-flight
-                        flightDuration: 0, // Will be updated on post-flight
+                        endHobbs: 0,
+                        flightDuration: 0,
                         instructorName: bookingForChecklist.instructor || 'Unknown',
                         trainingExercises: [],
                     };
                     
                     batch.update(studentRef, { trainingLogs: arrayUnion(partialLogEntry) });
 
-                    // Store the log entry ID in the booking document to find it later
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
                     batch.update(bookingRef, { pendingLogEntryId: newLogEntryId });
                 }
