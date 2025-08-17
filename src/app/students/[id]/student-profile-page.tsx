@@ -10,7 +10,7 @@ import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Bo
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
@@ -658,7 +658,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
                                                 <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
                                                 <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                                <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
                                                 <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
                                                 <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
                                                 <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
@@ -697,3 +697,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
   );
 }
 
+
+
+    
