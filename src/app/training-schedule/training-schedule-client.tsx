@@ -337,8 +337,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       `}</style>
       <div className="container mx-auto p-4 md:p-8">
         <div id="ganttView">
-             <div className="flex justify-between items-center mb-4">
-                 <h2>Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+             <div className="flex justify-start items-center mb-4">
                  <Popover>
                     <PopoverTrigger asChild>
                         <Button
