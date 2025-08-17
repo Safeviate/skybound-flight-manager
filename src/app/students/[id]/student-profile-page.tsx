@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -10,7 +9,7 @@ import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Bo
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
@@ -48,7 +47,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
     const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
     const [isHoursForwardOpen, setIsHoursForwardOpen] = useState(false);
-    const [hoursForward, setHoursForward] = useState<number>(0);
+    
+    const [hoursForward, setHoursForward] = useState({
+        total: 0,
+        se: 0,
+        me: 0,
+        dual: 0,
+        single: 0,
+        night: 0,
+    });
+
 
     useEffect(() => {
         setStudent(initialStudent);
@@ -343,23 +351,35 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setNewLog(prev => prev ? { ...prev, [field]: value } : null);
     };
 
+    const handleHoursForwardChange = (field: keyof typeof hoursForward, value: string) => {
+        setHoursForward(prev => ({
+            ...prev,
+            [field]: parseFloat(value) || 0
+        }));
+    };
+
     const handleHoursForwardSubmit = () => {
-        if (hoursForward <= 0) {
-            toast({ variant: 'destructive', title: 'Invalid Hours', description: 'Please enter a positive number of hours.' });
+        if (hoursForward.total <= 0) {
+            toast({ variant: 'destructive', title: 'Invalid Hours', description: 'Please enter a positive number for total hours.' });
             return;
         }
         const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
             date: format(new Date(), 'yyyy-MM-dd'),
             aircraft: 'Previous Experience',
             startHobbs: 0,
-            endHobbs: hoursForward,
-            flightDuration: hoursForward,
+            endHobbs: hoursForward.total,
+            flightDuration: hoursForward.total,
+            singleEngineTime: hoursForward.se,
+            multiEngineTime: hoursForward.me,
+            dualTime: hoursForward.dual,
+            singleTime: hoursForward.single,
+            nightTime: hoursForward.night,
             instructorName: 'Previous Instructor',
-            trainingExercises: [{ exercise: 'Consolidated Previous Experience', rating: 4, comment: `${hoursForward} hours brought forward.` }],
+            trainingExercises: [{ exercise: 'Consolidated Previous Experience', rating: 4, comment: `${hoursForward.total} hours brought forward.` }],
         };
         handleAddLogEntry(newLogEntry);
         setIsHoursForwardOpen(false);
-        setHoursForward(0);
+        setHoursForward({ total: 0, se: 0, me: 0, dual: 0, single: 0, night: 0 });
     };
 
     if (userLoading) {
@@ -594,16 +614,40 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 Enter the total flight hours this student has accumulated from previous training.
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <div className="space-y-2 py-4">
-                                            <Label htmlFor="hours-forward">Total Previous Hours</Label>
-                                            <Input 
-                                                id="hours-forward" 
-                                                type="number" 
-                                                step="0.1" 
-                                                placeholder="e.g., 25.5" 
-                                                value={hoursForward}
-                                                onChange={(e) => setHoursForward(parseFloat(e.target.value) || 0)}
-                                            />
+                                        <div className="space-y-4 py-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="hours-total">Total Previous Hours</Label>
+                                                <Input 
+                                                    id="hours-total" 
+                                                    type="number" 
+                                                    step="0.1" 
+                                                    placeholder="e.g., 25.5" 
+                                                    value={hoursForward.total || ''}
+                                                    onChange={(e) => handleHoursForwardChange('total', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-se">Single-Engine</Label>
+                                                    <Input id="hours-se" type="number" step="0.1" value={hoursForward.se || ''} onChange={(e) => handleHoursForwardChange('se', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-me">Multi-Engine</Label>
+                                                    <Input id="hours-me" type="number" step="0.1" value={hoursForward.me || ''} onChange={(e) => handleHoursForwardChange('me', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-dual">Dual Time</Label>
+                                                    <Input id="hours-dual" type="number" step="0.1" value={hoursForward.dual || ''} onChange={(e) => handleHoursForwardChange('dual', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-single">Single Time</Label>
+                                                    <Input id="hours-single" type="number" step="0.1" value={hoursForward.single || ''} onChange={(e) => handleHoursForwardChange('single', e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="hours-night">Night Time</Label>
+                                                    <Input id="hours-night" type="number" step="0.1" value={hoursForward.night || ''} onChange={(e) => handleHoursForwardChange('night', e.target.value)} />
+                                                </div>
+                                            </div>
                                         </div>
                                         <DialogFooter>
                                             <Button onClick={handleHoursForwardSubmit}>Add Hours to Logbook</Button>
@@ -674,14 +718,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">{log.aircraft}</TableCell>
-                                                <TableCell className="border">&#10003;</TableCell>
-                                                <TableCell className="border"></TableCell>
-                                                <TableCell className="border"></TableCell>
-                                                <TableCell className="border"></TableCell>
+                                                <TableCell className="border">{log.singleEngineTime ? formatDecimalTime(log.singleEngineTime) : log.aircraft.startsWith('C1') || log.aircraft.startsWith('PA') ? formatDecimalTime(log.flightDuration) : ''}</TableCell>
+                                                <TableCell className="border">{log.multiEngineTime ? formatDecimalTime(log.multiEngineTime) : ''}</TableCell>
+                                                <TableCell className="border">{log.dualTime ? formatDecimalTime(log.dualTime) : formatDecimalTime(log.flightDuration)}</TableCell>
+                                                <TableCell className="border">{log.singleTime ? formatDecimalTime(log.singleTime) : ''}</TableCell>
                                                 <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                 <TableCell className="border">{log.instructorName}</TableCell>
                                                 <TableCell className="border">N/A</TableCell>
-                                                <TableCell className="border">N/A</TableCell>
+                                                <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -696,7 +740,5 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
-
 
     

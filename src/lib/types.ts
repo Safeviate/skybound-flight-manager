@@ -101,6 +101,11 @@ export type TrainingLogEntry = {
   startHobbs: number;
   endHobbs: number;
   flightDuration: number;
+  singleEngineTime?: number;
+  multiEngineTime?: number;
+  dualTime?: number;
+  singleTime?: number;
+  nightTime?: number;
   instructorName: string;
   instructorSignature?: string;
   studentSignature?: string;
@@ -635,3 +640,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Post-impact'
 ];
 
+    
