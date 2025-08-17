@@ -679,8 +679,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableHead className="text-center border">Time</TableHead>
                                             <TableHead className="text-center border">Place</TableHead>
                                             <TableHead className="text-center border">Time</TableHead>
-                                            <TableHead className="text-center border">Make/Model</TableHead>
-                                            <TableHead className="text-center border">Registration</TableHead>
+                                            <TableHead className="text-center border w-[150px]">Make/Model</TableHead>
+                                            <TableHead className="text-center border w-[120px]">Registration</TableHead>
                                             <TableHead className="text-center border">SE</TableHead>
                                             <TableHead className="text-center border">ME</TableHead>
                                             <TableHead className="text-center border">Dual</TableHead>
@@ -743,4 +743,5 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 }
 
     
+
 
