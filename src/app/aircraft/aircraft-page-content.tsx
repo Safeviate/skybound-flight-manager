@@ -192,11 +192,9 @@ export function AircraftPageContent({
         const batch = writeBatch(db);
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
         
-        // Find the active booking for this aircraft.
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
 
         try {
-            // Shared logic for both pre-flight and post-flight
             const historyDoc: Omit<CompletedChecklist, 'id'> = {
                 aircraftId: selectedAircraftForChecklist.id,
                 aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
@@ -211,19 +209,18 @@ export function AircraftPageContent({
             batch.set(doc(historyCollectionRef), historyDoc);
 
             if (isPreFlight) {
-                // Pre-Flight Logic
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
 
-                if (bookingForChecklist && bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
+                if (bookingForChecklist?.purpose === 'Training' && bookingForChecklist.studentId) {
                     const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
                     const newLogEntryId = doc(collection(db, 'temp')).id;
                     
-                    const partialLogEntry: TrainingLogEntry = {
+                    const partialLogEntry: Partial<TrainingLogEntry> = {
                         id: newLogEntryId,
                         date: bookingForChecklist.date,
                         aircraft: bookingForChecklist.aircraft,
-                        departure: bookingForChecklist.departure || '',
-                        arrival: bookingForChecklist.arrival || '',
+                        departure: bookingForChecklist.departure,
+                        arrival: bookingForChecklist.arrival,
                         startHobbs: data.hobbs,
                         endHobbs: 0,
                         flightDuration: 0,
@@ -239,14 +236,13 @@ export function AircraftPageContent({
 
                 toast({ title: 'Pre-Flight Checklist Submitted' });
 
-            } else {
-                // Post-Flight Logic
+            } else { // POST-FLIGHT LOGIC
                 batch.update(aircraftRef, { checklistStatus: 'ready', activeBookingId: null });
                 
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
                     const flightDuration = parseFloat((data.hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1));
-                    batch.update(bookingRef, { status: 'Completed', flightDuration, pendingLogEntryId: null });
+                    batch.update(bookingRef, { status: 'Completed', flightDuration, endHobbs: data.hobbs });
 
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId && bookingForChecklist.pendingLogEntryId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
