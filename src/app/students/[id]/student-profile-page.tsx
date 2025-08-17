@@ -457,22 +457,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
                                     <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline">
-                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                    Add Log Entry
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-4xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Add Manual Training Log Entry</DialogTitle>
-                                                    <DialogDescription>
-                                                        Record details of a training session for {student.name}.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                            </DialogContent>
-                                        </Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline">
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Add Log Entry
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Add Manual Training Log Entry</DialogTitle>
+                                                <DialogDescription>
+                                                    Record details of a training session for {student.name}.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
@@ -521,6 +521,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
                                 </CardDescription>
                             </div>
+                            <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -532,7 +533,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead colSpan={2} className="text-center border">Departure</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
-                                        <TableHead colSpan={2} className="text-center border">Pilot Time</TableHead>
+                                        <TableHead colSpan={3} className="text-center border">Pilot Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Landings</TableHead>
@@ -544,7 +545,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead className="text-center border">Time</TableHead>
                                         <TableHead className="text-center border">Make/Model</TableHead>
                                         <TableHead className="text-center border">Registration</TableHead>
-                                        <TableHead className="text-center border">Single</TableHead>
+                                        <TableHead className="text-center border">Single-Engine</TableHead>
+                                        <TableHead className="text-center border">Multi-Engine</TableHead>
                                         <TableHead className="text-center border">Dual</TableHead>
                                         <TableHead className="text-center border">Day</TableHead>
                                         <TableHead className="text-center border">Night</TableHead>
@@ -561,6 +563,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableCell className="border">N/A</TableCell>
                                             <TableCell className="border">{log.aircraft}</TableCell>
                                             <TableCell className="border">&#10003;</TableCell>
+                                            <TableCell className="border"></TableCell>
                                             <TableCell className="border"></TableCell>
                                             <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
                                             <TableCell className="border">{log.instructorName}</TableCell>
