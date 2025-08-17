@@ -273,6 +273,7 @@ export type Booking = {
   oilUplift?: number;
   departure?: string;
   arrival?: string;
+  pendingLogEntryId?: string | null;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
