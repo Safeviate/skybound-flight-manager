@@ -346,18 +346,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="container">
-        <div className="flex justify-between items-center mb-4">
-            <div className="view-switcher">
-                <button id="showGanttBtn" className="active">Gantt Chart View</button>
-                <Link href="/reports" className={cn(buttonVariants({variant: 'outline'}))}>
-                    <AreaChart size={18} />
-                    Statistics
-                </Link>
-            </div>
-        </div>
-
         <div id="ganttView">
-             <h2>Daily Schedule</h2>
+             <h2>Daily Schedule for {format(selectedDate, 'PPP')}</h2>
              <div className="color-legend">
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
