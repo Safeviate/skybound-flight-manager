@@ -597,21 +597,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 <TableBody>
                                     {newLog && (
                                         <TableRow>
-                                            <TableCell className="border p-1"><Input type="date" value={newLog.date} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Departure" value={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="time" /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Arrival" value={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="time" /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Make/Model" /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="Reg" value={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                            <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" /></TableCell>
-                                            <TableCell className="border p-1"><Input type="number" /></TableCell>
+                                            <TableCell className="border p-1"><Input type="date" defaultValue={newLog.date} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Departure" defaultValue={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Arrival" defaultValue={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Make/Model" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="Reg" defaultValue={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input placeholder="PIC" defaultValue={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
+                                            <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
                                             <TableCell className="border p-1"><Button size="sm" onClick={handleSaveNewLog}><Save className="h-4 w-4" /></Button></TableCell>
                                         </TableRow>
                                     )}
