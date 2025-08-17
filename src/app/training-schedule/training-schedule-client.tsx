@@ -343,8 +343,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     <div className="flex flex-col items-start gap-4">
                         <div className="relative p-2 border-2 border-blue-500">
                             <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Left-Side Group</span>
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                            <div className="flex flex-col items-start gap-2">
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -368,6 +367,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         />
                                     </PopoverContent>
                                 </Popover>
+                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
                             </div>
                         </div>
                         <div className="relative p-2 border-2 border-green-500">
