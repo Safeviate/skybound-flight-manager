@@ -331,14 +331,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             justify-content: center; 
             cursor: pointer; 
         }
-        .color-legend { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; font-size: 12px; align-items: center;}
+        .color-legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; align-items: center;}
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="container mx-auto p-4 md:p-8">
         <div id="ganttView">
-            <div className="flex justify-between items-center mb-4">
-                 <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 mb-4">
+                <div className="flex items-center gap-4">
                     <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
                     <Popover>
                         <PopoverTrigger asChild>
@@ -363,7 +363,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             />
                         </PopoverContent>
                     </Popover>
-                 </div>
+                </div>
                  <div className="color-legend">
                     <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                     <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
