@@ -236,6 +236,8 @@ export function AircraftPageContent({
                             id: `log-${Date.now()}`,
                             date: bookingForChecklist.date,
                             aircraft: bookingForChecklist.aircraft,
+                            departure: bookingForChecklist.departure,
+                            arrival: bookingForChecklist.arrival,
                             startHobbs: bookingForChecklist.startHobbs || 0,
                             endHobbs: (data as PostFlightChecklistFormValues).hobbs,
                             flightDuration: flightDuration,

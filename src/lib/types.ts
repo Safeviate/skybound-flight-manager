@@ -96,6 +96,8 @@ export type TrainingLogEntry = {
   id:string;
   date: string;
   aircraft: string;
+  departure?: string;
+  arrival?: string;
   startHobbs: number;
   endHobbs: number;
   flightDuration: number;
@@ -632,3 +634,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+

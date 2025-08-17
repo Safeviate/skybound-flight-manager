@@ -534,9 +534,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     {sortedLogs.map(log => (
                                         <TableRow key={log.id}>
                                             <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                            <TableCell className="border">{log.departure || 'N/A'}</TableCell>
                                             <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
-                                            <TableCell className="border">N/A</TableCell>
+                                            <TableCell className="border">{log.arrival || 'N/A'}</TableCell>
                                             <TableCell className="border">N/A</TableCell>
                                             <TableCell className="border">N/A</TableCell>
                                             <TableCell className="border">{log.aircraft}</TableCell>
