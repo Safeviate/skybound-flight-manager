@@ -337,7 +337,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       `}</style>
       <div className="container mx-auto p-4 md:p-8">
         <div id="ganttView">
-            <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col items-start gap-4 mb-4">
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
                     <Popover>
@@ -364,7 +364,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                         </PopoverContent>
                     </Popover>
                 </div>
-                 <div className="color-legend">
+                <div className="color-legend">
                     <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                     <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
                     <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
