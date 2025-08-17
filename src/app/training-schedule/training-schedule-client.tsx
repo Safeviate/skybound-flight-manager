@@ -335,14 +335,15 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="container mx-auto p-4 md:p-8">
+      <div className="container mx-auto p-4 md:p-8 relative border-4 border-purple-500">
+        <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-purple-500">Main Container</span>
         <div id="ganttView">
-             <div className="mb-4">
+             <div className="mb-12 flex flex-col items-start gap-4">
                 <div className="relative p-2 border-2 border-red-500">
-                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Flex Container</span>
-                    <div className="flex flex-col items-start gap-4">
+                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-red-500">Header Container</span>
+                    <div className="flex flex-col items-start gap-2">
                         <div className="relative p-2 border-2 border-blue-500">
-                            <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Left-Side Group</span>
+                            <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-blue-500">Title & Date Picker Group</span>
                             <div className="flex flex-col items-start gap-2">
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -371,7 +372,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="relative p-2 border-2 border-green-500">
-                                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Right-Side Group</span>
+                                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-green-500">Color Legend Group</span>
                             <div className="color-legend">
                                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
                                 <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
@@ -382,8 +383,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     </div>
                 </div>
             </div>
-             <div className="gantt-container mt-12">
-                <table className="gantt-table">
+             <div className="gantt-container mt-12 relative border-4 border-yellow-500">
+                <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-yellow-500">Gantt Container (Scrolling)</span>
+                <table className="gantt-table relative border-2 border-pink-500">
+                    <span className="absolute -top-3 left-2 bg-background px-1 text-xs text-pink-500">Gantt Table</span>
                     <thead>
                         <tr>
                             <th>Aircraft</th>
