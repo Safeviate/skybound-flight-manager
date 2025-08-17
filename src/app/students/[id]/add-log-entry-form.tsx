@@ -84,13 +84,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
     defaultValues: {
-      date: booking ? parseISO(booking.date) : new Date(),
-      aircraft: booking?.aircraft,
-      startHobbs: booking?.startHobbs || 0,
-      endHobbs: booking?.endHobbs || 0,
-      instructorName: booking?.instructor,
-      departure: booking?.departure,
-      arrival: booking?.arrival,
+      date: new Date(),
       trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
     },
   });
