@@ -301,22 +301,28 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
         }
         .view-switcher { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid #0d6efd; background-color: #ffffff; color: #0d6efd; border-radius: 5px; margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
-        .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: #0d6efd; color: #ffffff; }
-        table { width: 100%; border-collapse: collapse; background-color: #ffffff; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; padding: 0; text-align: left; height: 50px; }
-        th { background-color: #e9ecef; text-align: center; padding: 12px 0; }
+        .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid hsl(var(--primary)); background-color: hsl(var(--background)); color: hsl(var(--primary)); border-radius: var(--radius); margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .view-switcher button.active, .view-switcher button:hover, .view-switcher a:hover { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+        table { width: 100%; border-collapse: collapse; background-color: hsl(var(--card)); table-layout: fixed; }
+        th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 50px; }
+        th { background-color: hsl(var(--muted)); text-align: center; padding: 12px 0; }
         td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
-        td.empty-slot:hover { background-color: #e9ecef; }
+        td.empty-slot:hover { background-color: hsl(var(--muted)); }
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
-        .gantt-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 5px; }
+        .gantt-container { 
+            overflow-x: auto; 
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            width: 100%;
+            box-sizing: border-box;
+        }
         .gantt-table { min-width: 2000px; }
-        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #f1f3f5; width: 150px; min-width: 150px; }
+        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
             color: white; 
@@ -513,3 +519,4 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
+```
