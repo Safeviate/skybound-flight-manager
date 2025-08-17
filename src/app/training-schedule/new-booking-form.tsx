@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import type { Aircraft, User, Booking, Role } from '@/lib/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,11 +51,6 @@ const bookingFormSchema = z.object({
 }, {
     message: "Maintenance Type is required for Maintenance bookings.",
     path: ["maintenanceType"],
-}).refine(data => {
-    return data.endTime > data.startTime;
-}, {
-    message: "End time must be after start time.",
-    path: ["endTime"],
 });
 
 
@@ -97,7 +92,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const timeSlots = useMemo(() => {
     return Array.from({ length: 24 * 4 }, (_, i) => {
-        const hour = (Math.floor(i / 4) + 6) % 24;
+        const hour = (Math.floor(i / 4)) % 24;
         const minute = (i % 4) * 15;
         return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     });
@@ -144,6 +139,11 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         }
     }
 
+    const bookingStartDate = new Date(data.date);
+    let bookingEndDate = bookingStartDate;
+    if (data.endTime < data.startTime) {
+        bookingEndDate = addDays(bookingStartDate, 1);
+    }
 
     const cleanData = {
         ...data,
@@ -153,6 +153,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
         fuelUplift: data.fuelUplift ?? null,
         oilUplift: data.oilUplift ?? null,
+        endDate: format(bookingEndDate, 'yyyy-MM-dd'),
     };
 
     if (existingBooking) {
@@ -397,3 +398,4 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     </Form>
   );
 }
+
