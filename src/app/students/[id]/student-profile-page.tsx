@@ -449,9 +449,32 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
-                                <div className="space-y-1">
-                                    <CardTitle>Training Logbook</CardTitle>
-                                    <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                    <div className="space-y-1">
+                                        <CardTitle>Training Logbook</CardTitle>
+                                        <CardDescription>Total Flight Hours: {formatDecimalTime(totalFlightHours)} hrs</CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        {canEdit && (
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button className="w-full sm:w-auto">
+                                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                                        Add Manual Log Entry
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-4xl">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Add New Training Log Entry</DialogTitle>
+                                                        <DialogDescription>
+                                                            Record details of the training session for {student.name}.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                                </DialogContent>
+                                            </Dialog>
+                                        )}
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -534,27 +557,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     <div className="space-y-1">
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
-                                    </div>
-                                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                                        {canEdit && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button className="w-full sm:w-auto">
-                                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                                        Add Log Entry
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-4xl">
-                                                    <DialogHeader>
-                                                        <DialogTitle>Add New Training Log Entry</DialogTitle>
-                                                        <DialogDescription>
-                                                            Record details of the training session for {student.name}.
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-                                                    <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                                </DialogContent>
-                                            </Dialog>
-                                        )}
                                     </div>
                                 </div>
                             </CardHeader>
