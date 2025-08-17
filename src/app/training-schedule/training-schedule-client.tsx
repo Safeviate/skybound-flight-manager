@@ -75,12 +75,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 
 
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
-      const hour = Math.floor(i / 4);
+      const hour = (Math.floor(i / 4) + 6) % 24;
       const minute = (i % 4) * 15;
       return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
   
-  const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${(i).toString().padStart(2, '0')}:00`);
+  const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${((i + 6) % 24).toString().padStart(2, '0')}:00`);
 
 
   const timeToMinutes = (time: string) => {
