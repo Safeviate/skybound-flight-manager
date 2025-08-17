@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -46,6 +47,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const itemsPerPage = 5;
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
     const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
+    const [isHoursForwardOpen, setIsHoursForwardOpen] = useState(false);
+    const [hoursForward, setHoursForward] = useState<number>(0);
 
     useEffect(() => {
         setStudent(initialStudent);
@@ -340,6 +343,25 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setNewLog(prev => prev ? { ...prev, [field]: value } : null);
     };
 
+    const handleHoursForwardSubmit = () => {
+        if (hoursForward <= 0) {
+            toast({ variant: 'destructive', title: 'Invalid Hours', description: 'Please enter a positive number of hours.' });
+            return;
+        }
+        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+            date: format(new Date(), 'yyyy-MM-dd'),
+            aircraft: 'Previous Experience',
+            startHobbs: 0,
+            endHobbs: hoursForward,
+            flightDuration: hoursForward,
+            instructorName: 'Previous Instructor',
+            trainingExercises: [{ exercise: 'Consolidated Previous Experience', rating: 4, comment: `${hoursForward} hours brought forward.` }],
+        };
+        handleAddLogEntry(newLogEntry);
+        setIsHoursForwardOpen(false);
+        setHoursForward(0);
+    };
+
     if (userLoading) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -561,6 +583,33 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             </div>
                              <div className="flex gap-2">
                                 <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                <Dialog open={isHoursForwardOpen} onOpenChange={setIsHoursForwardOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline">Hours Brought Forward</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Hours Brought Forward</DialogTitle>
+                                            <DialogDescription>
+                                                Enter the total flight hours this student has accumulated from previous training.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-2 py-4">
+                                            <Label htmlFor="hours-forward">Total Previous Hours</Label>
+                                            <Input 
+                                                id="hours-forward" 
+                                                type="number" 
+                                                step="0.1" 
+                                                placeholder="e.g., 25.5" 
+                                                value={hoursForward}
+                                                onChange={(e) => setHoursForward(parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button onClick={handleHoursForwardSubmit}>Add Hours to Logbook</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                                 <Button onClick={handleAddNewLog}><PlusCircle className="mr-2 h-4 w-4" />Add Entry</Button>
                             </div>
                         </div>
@@ -647,3 +696,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
