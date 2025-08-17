@@ -74,13 +74,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }, [bookings, selectedDate]);
 
 
-  const timeSlots = Array.from({ length: 18 * 4 }, (_, i) => {
-      const hour = Math.floor(i / 4) + 6;
+  const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
+      const hour = Math.floor(i / 4);
       const minute = (i % 4) * 15;
       return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
   
-  const hourlyTimeSlots = Array.from({ length: 18 }, (_, i) => `${(i + 6).toString().padStart(2, '0')}:00`);
+  const hourlyTimeSlots = Array.from({ length: 24 }, (_, i) => `${(i).toString().padStart(2, '0')}:00`);
 
 
   const timeToMinutes = (time: string) => {
@@ -310,7 +310,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             width: 100%;
             box-sizing: border-box;
         }
-        .gantt-table { min-width: 2310px; }
+        .gantt-table { min-width: 3030px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
