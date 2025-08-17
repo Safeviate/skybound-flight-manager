@@ -29,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy, arrayUnion } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy, arrayUnion, getDoc } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -227,21 +227,30 @@ export function AircraftPageContent({
                 if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                     const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
                     
-                    const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
-                        date: bookingForChecklist.date,
-                        aircraft: bookingForChecklist.aircraft,
-                        startHobbs: bookingForChecklist.startHobbs || 0,
-                        endHobbs: (data as PostFlightChecklistFormValues).hobbs,
-                        flightDuration: flightDuration,
-                        instructorName: bookingForChecklist.instructor || 'Unknown',
-                        trainingExercises: [], // Left blank for instructor to fill during debrief
-                    };
+                    // IMPORTANT: Read data BEFORE batch writes
+                    const studentDoc = await getDoc(studentRef);
+                    const studentData = studentDoc.data() as User | undefined;
+                    
+                    if (studentData) {
+                        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+                            date: bookingForChecklist.date,
+                            aircraft: bookingForChecklist.aircraft,
+                            startHobbs: bookingForChecklist.startHobbs || 0,
+                            endHobbs: (data as PostFlightChecklistFormValues).hobbs,
+                            flightDuration: flightDuration,
+                            instructorName: bookingForChecklist.instructor || 'Unknown',
+                            trainingExercises: [], // Left blank for instructor to fill during debrief
+                        };
 
-                    batch.update(studentRef, { 
-                        trainingLogs: arrayUnion(newLogEntry),
-                        pendingBookingIds: (await getDoc(studentRef)).data()?.pendingBookingIds?.filter((id: string) => id !== bookingForChecklist.id),
-                        flightHours: (await getDoc(studentRef)).data()?.flightHours + flightDuration
-                    });
+                        const updatedPendingIds = studentData.pendingBookingIds?.filter((id: string) => id !== bookingForChecklist.id) || [];
+                        const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+
+                        batch.update(studentRef, { 
+                            trainingLogs: arrayUnion(newLogEntry),
+                            pendingBookingIds: updatedPendingIds,
+                            flightHours: newTotalHours
+                        });
+                    }
                 }
             }
 
