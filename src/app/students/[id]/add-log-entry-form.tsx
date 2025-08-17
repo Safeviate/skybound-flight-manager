@@ -92,6 +92,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
     defaultValues: {
       date: new Date(),
       trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
+      startHobbs: 0,
+      endHobbs: 0,
     },
   });
 
