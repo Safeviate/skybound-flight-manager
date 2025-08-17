@@ -597,7 +597,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             <TabsContent value="logbook" className="mt-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Detailed Logbook</CardTitle>
+                        <CardTitle>Detailed Logbook for {student.name}</CardTitle>
                         <CardDescription>A comprehensive log of all flight activities.</CardDescription>
                     </CardHeader>
                     <CardContent>
