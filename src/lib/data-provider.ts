@@ -8,6 +8,54 @@ import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Airport, S
 export const airportData: Airport[] = [];
 export const aircraftData: Aircraft[] = [];
 export let userData: Omit<User, 'id'>[] = [];
+export const studentData: User[] = [
+    {
+        id: 'stu-dent-01',
+        companyId: 'skybound-aero',
+        name: 'Stu Dent',
+        role: 'Student',
+        email: 'student@skybound.com',
+        phone: '+1 555-123-4567',
+        status: 'Active',
+        instructor: 'John Doe',
+        flightHours: 12.5,
+        progress: 83,
+        licenseType: 'SPL',
+        permissions: ['Students:View', 'Bookings:View'],
+        trainingLogs: [
+            {
+                id: 'log-1',
+                date: '2024-07-15',
+                aircraft: 'N12345',
+                startHobbs: 100.0,
+                endHobbs: 101.2,
+                flightDuration: 1.2,
+                instructorName: 'John Doe',
+                trainingExercises: [{ exercise: 'Pre-flight Inspection', rating: 4 }, { exercise: 'Turns, Climbs, and Descents', rating: 3 }]
+            },
+            {
+                id: 'log-2',
+                date: '2024-07-17',
+                aircraft: 'N12345',
+                startHobbs: 101.2,
+                endHobbs: 102.5,
+                flightDuration: 1.3,
+                instructorName: 'John Doe',
+                trainingExercises: [{ exercise: 'Slow Flight and Stalls', rating: 3 }]
+            },
+            {
+                id: 'log-3',
+                date: '2024-07-20',
+                aircraft: 'N54321',
+                startHobbs: 50.0,
+                endHobbs: 51.5,
+                flightDuration: 1.5,
+                instructorName: 'Jane Smith',
+                trainingExercises: [{ exercise: 'Takeoffs and Landings', rating: 4 }]
+            }
+        ]
+    }
+];
 export let bookingData: Booking[] = [];
 export const trainingExercisesData: string[] = [
     'Pre-Solo Written Exam',
