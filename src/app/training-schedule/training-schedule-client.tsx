@@ -302,6 +302,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             padding: 20px;
             background-color: hsl(var(--background));
             color: hsl(var(--foreground));
+            box-sizing: border-box;
         }
         .view-switcher { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .view-switcher button, .view-switcher a { padding: 10px 15px; font-size: 16px; cursor: pointer; border: 1px solid hsl(var(--primary)); background-color: hsl(var(--background)); color: hsl(var(--primary)); border-radius: var(--radius); margin-right: 10px; transition: background-color 0.2s, color 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
