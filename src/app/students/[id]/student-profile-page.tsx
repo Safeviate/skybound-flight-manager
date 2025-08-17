@@ -456,8 +456,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    {canEdit && (
-                                        <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+                                    <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
                                             <DialogTrigger asChild>
                                                 <Button variant="outline">
                                                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -474,7 +473,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
                                             </DialogContent>
                                         </Dialog>
-                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
@@ -534,7 +532,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead colSpan={2} className="text-center border">Departure</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
-                                        <TableHead colSpan={3} className="text-center border">Pilot Time</TableHead>
+                                        <TableHead colSpan={2} className="text-center border">Pilot Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
                                         <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
                                         <TableHead colSpan={2} className="text-center border">Landings</TableHead>
@@ -546,9 +544,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHead className="text-center border">Time</TableHead>
                                         <TableHead className="text-center border">Make/Model</TableHead>
                                         <TableHead className="text-center border">Registration</TableHead>
-                                        <TableHead className="text-center border">SE</TableHead>
-                                        <TableHead className="text-center border">ME</TableHead>
-                                        <TableHead className="text-center border">Multi-Pilot</TableHead>
+                                        <TableHead className="text-center border">Single</TableHead>
+                                        <TableHead className="text-center border">Dual</TableHead>
                                         <TableHead className="text-center border">Day</TableHead>
                                         <TableHead className="text-center border">Night</TableHead>
                                     </TableRow>
@@ -564,7 +561,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableCell className="border">N/A</TableCell>
                                             <TableCell className="border">{log.aircraft}</TableCell>
                                             <TableCell className="border">&#10003;</TableCell>
-                                            <TableCell className="border"></TableCell>
                                             <TableCell className="border"></TableCell>
                                             <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
                                             <TableCell className="border">{log.instructorName}</TableCell>
