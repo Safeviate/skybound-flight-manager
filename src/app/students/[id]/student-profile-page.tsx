@@ -606,7 +606,64 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </div>
             </TabsContent>
             <TabsContent value="logbook" className="mt-6">
-                {/* This tab is intentionally left empty as per the user's request. */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Detailed Logbook</CardTitle>
+                        <CardDescription>A comprehensive log of all flight activities.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="w-full whitespace-nowrap">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead rowSpan={2} className="text-center">Date</TableHead>
+                                        <TableHead colSpan={2} className="text-center">Departure</TableHead>
+                                        <TableHead colSpan={2} className="text-center">Arrival</TableHead>
+                                        <TableHead colSpan={2} className="text-center">Aircraft</TableHead>
+                                        <TableHead colSpan={3} className="text-center">Pilot Time</TableHead>
+                                        <TableHead rowSpan={2} className="text-center">Total Time</TableHead>
+                                        <TableHead rowSpan={2} className="text-center">PIC Name</TableHead>
+                                        <TableHead colSpan={2} className="text-center">Landings</TableHead>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableHead className="text-center">Place</TableHead>
+                                        <TableHead className="text-center">Time</TableHead>
+                                        <TableHead className="text-center">Place</TableHead>
+                                        <TableHead className="text-center">Time</TableHead>
+                                        <TableHead className="text-center">Make/Model</TableHead>
+                                        <TableHead className="text-center">Registration</TableHead>
+                                        <TableHead className="text-center">SE</TableHead>
+                                        <TableHead className="text-center">ME</TableHead>
+                                        <TableHead className="text-center">Multi-Pilot</TableHead>
+                                        <TableHead className="text-center">Day</TableHead>
+                                        <TableHead className="text-center">Night</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedLogs.map(log => (
+                                        <TableRow key={log.id}>
+                                            <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>{log.aircraft}</TableCell>
+                                            <TableCell>&#10003;</TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell>{log.flightDuration.toFixed(2).replace('.', ':')}</TableCell>
+                                            <TableCell>{log.instructorName}</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                            <TableCell>N/A</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
             </TabsContent>
         </Tabs>
       </main>
