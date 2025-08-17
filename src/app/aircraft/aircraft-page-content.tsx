@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -232,6 +233,7 @@ export function AircraftPageContent({
                     const studentData = studentDoc.data() as User | undefined;
                     
                     if (studentData) {
+                        const postFlightData = data as PostFlightChecklistFormValues;
                         const newLogEntry: TrainingLogEntry = {
                             id: `log-${Date.now()}`,
                             date: bookingForChecklist.date,
@@ -239,7 +241,7 @@ export function AircraftPageContent({
                             departure: bookingForChecklist.departure,
                             arrival: bookingForChecklist.arrival,
                             startHobbs: bookingForChecklist.startHobbs || 0,
-                            endHobbs: (data as PostFlightChecklistFormValues).hobbs,
+                            endHobbs: postFlightData.hobbs,
                             flightDuration: flightDuration,
                             instructorName: bookingForChecklist.instructor || 'Unknown',
                             trainingExercises: [], // Left blank for instructor to fill during debrief
