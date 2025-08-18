@@ -247,38 +247,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             // Log entry likely exists, just open the form to complete it
             return;
         }
-
-        // If no log entry exists, create it now (retroactively)
-        const partialLogEntry: TrainingLogEntry = {
-            id: `log-${Date.now()}`,
-            date: booking.date,
-            aircraft: booking.aircraft,
-            departure: booking.departure || '',
-            arrival: booking.arrival || '',
-            startHobbs: booking.startHobbs || 0,
-            endHobbs: 0,
-            flightDuration: 0,
-            instructorName: booking.instructor || 'Unknown',
-            trainingExercises: [],
-        };
-        
-        const batch = writeBatch(db);
-        const studentRef = doc(db, `companies/${company.id}/students`, student.id);
-        batch.update(studentRef, { trainingLogs: arrayUnion(partialLogEntry) });
-
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, booking.id);
-        batch.update(bookingRef, { pendingLogEntryId: partialLogEntry.id });
-
-        await batch.commit();
-
-        // Refresh student data to include the new log entry before opening the form
-        const updatedStudentSnap = await getDoc(studentRef);
-        setStudent(updatedStudentSnap.data() as StudentUser);
-
-        toast({
-            title: "Log Entry Created",
-            description: "A draft logbook entry has been created. Please complete the details.",
-        });
     };
 
     const handleDownloadLogbook = () => {
@@ -618,7 +586,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <DialogTrigger asChild>
                                             <button 
                                                 className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
-                                                onClick={() => handleDebriefClick(booking)}
                                             >
                                                 <div className="space-y-1">
                                                     <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
