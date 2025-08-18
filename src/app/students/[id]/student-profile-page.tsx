@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
