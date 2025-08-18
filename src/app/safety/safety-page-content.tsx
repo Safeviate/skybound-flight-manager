@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -652,12 +653,13 @@ export function SafetyPageContent({
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
+              <TabsTrigger value="moc">Management of Change</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -701,6 +703,19 @@ export function SafetyPageContent({
                 onConfigChange={setSpiConfigs} 
                 monthlyFlightHours={monthlyFlightHours}
             />
+          </TabsContent>
+          <TabsContent value="moc">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Management of Change</CardTitle>
+                    <CardDescription>
+                        This section will contain the Management of Change process and records.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Content for Management of Change goes here.</p>
+                </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
