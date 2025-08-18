@@ -594,16 +594,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    <Dialog>
+                                    <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
                                         <DialogTrigger asChild>
-                                             <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Add Log Entry</Button>
+                                            <Button variant="outline" onClick={handleAddNewLog}>
+                                                <PlusCircle className="mr-2 h-4 w-4" />
+                                                Add Log Entry
+                                            </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
                                             <DialogHeader>
                                                 <DialogTitle>Add Training Log Entry</DialogTitle>
-                                                <DialogDescription>
-                                                    Record details of a training session for {student.name}.
-                                                </DialogDescription>
+                                                <DialogDescription>Record details of a training session for {student.name}.</DialogDescription>
                                             </DialogHeader>
                                             <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
                                         </DialogContent>
@@ -712,7 +713,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
-                                <Button onClick={handleAddNewLog}><PlusCircle className="mr-2 h-4 w-4" />Add Entry</Button>
                             </div>
                         </div>
                     </CardHeader>
