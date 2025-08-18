@@ -656,7 +656,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </div>
             </TabsContent>
             <TabsContent value="logbook" className="mt-6">
-                <Card>
+                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
@@ -665,7 +665,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
                                 </CardDescription>
                             </div>
-                             <div className="flex gap-2">
+                            <div className="flex gap-2">
                                 <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                                 <Dialog open={isHoursForwardOpen} onOpenChange={setIsHoursForwardOpen}>
                                     <DialogTrigger asChild>
@@ -720,67 +720,74 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 </Dialog>
                             </div>
                         </div>
+                         <div className="flex justify-end pt-4">
+                            <Button variant="outline" onClick={handleAddNewLog}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Add Manual Log Entry
+                            </Button>
+                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="max-w-[1200px]">
-                            <ScrollArea className="w-full whitespace-nowrap">
-                                <Table style={{ minWidth: '1400px' }}>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead rowSpan={2} className="text-center border">Date</TableHead>
-                                            <TableHead colSpan={2} className="text-center border">Departure</TableHead>
-                                            <TableHead colSpan={2} className="text-center border">Arrival</TableHead>
-                                            <TableHead colSpan={2} className="text-center border">Aircraft</TableHead>
-                                            <TableHead colSpan={4} className="text-center border">Pilot Time</TableHead>
-                                            <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
-                                            <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
-                                            <TableHead colSpan={2} className="text-center border">Landings</TableHead>
-                                             <TableHead rowSpan={2} className="text-center border">Actions</TableHead>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableHead className="text-center border">Place</TableHead>
-                                            <TableHead className="text-center border">Time</TableHead>
-                                            <TableHead className="text-center border">Place</TableHead>
-                                            <TableHead className="text-center border">Time</TableHead>
-                                            <TableHead className="text-center border w-[150px]">Make/Model</TableHead>
-                                            <TableHead className="text-center border w-[120px]">Registration</TableHead>
-                                            <TableHead className="text-center border">SE</TableHead>
-                                            <TableHead className="text-center border">ME</TableHead>
-                                            <TableHead className="text-center border">Dual</TableHead>
-                                            <TableHead className="text-center border">Single</TableHead>
-                                            <TableHead className="text-center border">Day</TableHead>
-                                            <TableHead className="text-center border">Night</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {sortedLogs.map(log => (
-                                            <TableRow key={log.id}>
-                                                <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                <TableCell className="border">{log.departure || 'N/A'}</TableCell>
-                                                <TableCell className="border">N/A</TableCell>
-                                                <TableCell className="border">{log.arrival || 'N/A'}</TableCell>
-                                                <TableCell className="border">N/A</TableCell>
-                                                <TableCell className="border">N/A</TableCell>
-                                                <TableCell className="border">{log.aircraft}</TableCell>
-                                                <TableCell className="border">{log.singleEngineTime ? formatDecimalTime(log.singleEngineTime) : log.aircraft.startsWith('C1') || log.aircraft.startsWith('PA') ? formatDecimalTime(log.flightDuration) : ''}</TableCell>
-                                                <TableCell className="border">{log.multiEngineTime ? formatDecimalTime(log.multiEngineTime) : ''}</TableCell>
-                                                <TableCell className="border">{log.dualTime ? formatDecimalTime(log.dualTime) : formatDecimalTime(log.flightDuration)}</TableCell>
-                                                <TableCell className="border">{log.singleTime ? formatDecimalTime(log.singleTime) : ''}</TableCell>
-                                                <TableCell className="border">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                <TableCell className="border">{log.instructorName}</TableCell>
-                                                <TableCell className="border">N/A</TableCell>
-                                                <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
-                                                <TableCell className="border text-center">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                                <ScrollBar orientation="horizontal" />
-                            </ScrollArea>
+                        <div className="grid grid-cols-1 gap-4">
+                            {sortedLogs.map((log) => (
+                                <Card key={log.id}>
+                                    <CardHeader className="flex flex-row justify-between items-start pb-2">
+                                        <div>
+                                            <CardTitle className="text-lg">{format(parseISO(log.date), 'EEEE, MMMM d, yyyy')}</CardTitle>
+                                            <CardDescription>
+                                                Aircraft: {log.aircraft} | Instructor: {log.instructorName}
+                                            </CardDescription>
+                                        </div>
+                                         <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-4 gap-4 text-center py-2">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground">Hobbs Start</p>
+                                                <p className="font-mono">{log.startHobbs.toFixed(1)}</p>
+                                            </div>
+                                             <div>
+                                                <p className="text-xs text-muted-foreground">Hobbs End</p>
+                                                <p className="font-mono">{log.endHobbs.toFixed(1)}</p>
+                                            </div>
+                                             <div>
+                                                <p className="text-xs text-muted-foreground">Duration</p>
+                                                <p className="font-mono">{log.flightDuration.toFixed(1)}</p>
+                                            </div>
+                                             <div>
+                                                <p className="text-xs text-muted-foreground">Night Time</p>
+                                                <p className="font-mono">{formatDecimalTime(log.nightTime)}</p>
+                                            </div>
+                                        </div>
+                                        <Separator className="my-2" />
+                                        <div className="space-y-2">
+                                            {log.trainingExercises.map((ex, i) => (
+                                                <div key={i}>
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="font-semibold text-sm">{ex.exercise}</p>
+                                                        <Badge variant="outline">Rating: {ex.rating}/4</Badge>
+                                                    </div>
+                                                    {ex.comment && <p className="text-xs text-muted-foreground pl-2 border-l-2 ml-1">{ex.comment}</p>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                    {log.instructorSignature && log.studentSignature && (
+                                        <CardFooter className="flex justify-between gap-4 pt-4 border-t">
+                                            <div className="text-center">
+                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="mx-auto" />
+                                                <p className="text-xs text-muted-foreground mt-1">Instructor Signature</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="mx-auto" />
+                                                <p className="text-xs text-muted-foreground mt-1">Student Signature</p>
+                                            </div>
+                                        </CardFooter>
+                                    )}
+                                </Card>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
