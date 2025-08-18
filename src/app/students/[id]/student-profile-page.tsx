@@ -121,18 +121,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
     
-    const handleUpdate = async (updateData: Partial<StudentUser>, localUpdate?: Partial<StudentUser>) => {
+    const handleUpdate = async (updateData: Partial<StudentUser>) => {
         if (!student || !company) return;
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         try {
             await updateDoc(studentRef, updateData);
-            // Use the localUpdate object for optimistic update if provided, otherwise use updateData
-            setStudent(prev => prev ? { ...prev, ...(localUpdate || updateData) } : null);
+            // After successful DB update, refetch the student data to ensure local state is consistent
+            const updatedStudentSnap = await getDoc(studentRef);
+            if (updatedStudentSnap.exists()) {
+                setStudent(updatedStudentSnap.data() as StudentUser);
+            }
         } catch (error) {
             console.error("Failed to update student:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes.' });
         }
     }
+
 
     const handleProgressSave = () => {
         handleUpdate({ progress });
@@ -144,23 +148,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleAddEndorsement = (newEndorsement: Omit<Endorsement, 'id'>) => {
         const endorsementWithId: Endorsement = { ...newEndorsement, id: `endorsement-${Date.now()}` };
-        
-        // Prepare local state update
-        const updatedEndorsements = [...(student?.endorsements || []), endorsementWithId];
-        
-        // Prepare Firestore update
-        const firestoreUpdate = { endorsements: arrayUnion(endorsementWithId) };
-
-        handleUpdate(firestoreUpdate, { endorsements: updatedEndorsements });
+        handleUpdate({ endorsements: arrayUnion(endorsementWithId) });
     };
 
     const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
         if (!company || !student) return;
 
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
-        const currentLogs = student?.trainingLogs || [];
-        const newTotalHours = [...currentLogs, entryWithId].reduce((total, log) => total + (log.flightDuration || 0), 0);
+        
+        let updatedLogs = student?.trainingLogs ? [...student.trainingLogs] : [];
 
+        if (logIdToUpdate) {
+            // Find and update the existing log entry
+            const logIndex = updatedLogs.findIndex(log => log.id === logIdToUpdate);
+            if (logIndex > -1) {
+                updatedLogs[logIndex] = { ...updatedLogs[logIndex], ...newLogEntry };
+            } else {
+                updatedLogs.push({ ...entryWithId, id: logIdToUpdate }); // If not found, add it
+            }
+        } else {
+            updatedLogs.push(entryWithId);
+        }
+
+        const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
+        
         const milestones = [10, 20, 30];
         const notificationsSent = student.milestoneNotificationsSent || [];
         const newNotifications: number[] = [];
@@ -193,27 +204,19 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             }
         }
         
-        const localLogs = [...(student.trainingLogs || []), entryWithId];
-        const localUpdate: Partial<StudentUser> = {
-            trainingLogs: localLogs,
-            flightHours: newTotalHours,
-            milestoneNotificationsSent: [...(student.milestoneNotificationsSent || []), ...newNotifications]
-        };
-        
         const firestoreUpdate: Partial<StudentUser> = {
-            trainingLogs: arrayUnion(entryWithId),
+            trainingLogs: updatedLogs,
             flightHours: newTotalHours,
             milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
 
 
         if (fromBookingId) {
-            localUpdate.pendingBookingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
-            firestoreUpdate.pendingBookingIds = localUpdate.pendingBookingIds;
+            firestoreUpdate.pendingBookingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
             setPendingBookings(prev => prev.filter(b => b.id !== fromBookingId));
         }
 
-        await handleUpdate(firestoreUpdate, localUpdate);
+        await handleUpdate(firestoreUpdate);
 
         if (fromBookingId) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, fromBookingId);
@@ -344,11 +347,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     
     const formatDecimalTime = (decimalHours: number | undefined) => {
         if (typeof decimalHours !== 'number' || isNaN(decimalHours)) {
-            return '00:00';
+            return '0.0';
         }
-        const hours = Math.floor(decimalHours);
-        const minutes = Math.round((decimalHours - hours) * 60);
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        return decimalHours.toFixed(1);
     };
 
     const MilestoneProgress = ({ currentHours }: { currentHours: number }) => {
