@@ -81,6 +81,7 @@ interface AddLogEntryFormProps {
     student: User;
     onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => void;
     booking?: Booking;
+    logToEdit?: TrainingLogEntry | null;
 }
 
 const defaultFormValues: Partial<LogEntryFormValues> = {
@@ -104,15 +105,16 @@ const defaultFormValues: Partial<LogEntryFormValues> = {
     nightTime: 0,
 };
 
-export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormProps) {
+export function AddLogEntryForm({ student, onSubmit, booking, logToEdit }: AddLogEntryFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
 
   const logEntryForBooking = useMemo(() => {
+    if (logToEdit) return logToEdit;
     if (!booking || !booking.pendingLogEntryId || !student.trainingLogs) return null;
     return student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
-  }, [booking, student.trainingLogs]);
+  }, [booking, student.trainingLogs, logToEdit]);
 
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
@@ -125,27 +127,32 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   });
   
   useEffect(() => {
-    if (booking) {
-        const resetValues: Partial<LogEntryFormValues> = {
-            date: parseISO(booking.date),
-            aircraft: booking.aircraft,
-            startHobbs: booking.startHobbs || 0,
-            endHobbs: booking.endHobbs || 0,
-            instructorName: booking.instructor || '',
-            departure: booking.departure || '',
-            arrival: booking.arrival || '',
-            departureTime: booking.startTime,
-            arrivalTime: booking.endTime,
-        };
-        
-        if (logEntryForBooking) {
-            resetValues.trainingExercises = logEntryForBooking.trainingExercises.length > 0 ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }];
-        } else {
-            resetValues.trainingExercises = [{ exercise: '', rating: 0, comment: '' }];
-        }
-        form.reset(resetValues);
-    }
-  }, [booking, logEntryForBooking, form]);
+      const getInitialValues = () => {
+          if (logToEdit) {
+              return {
+                  ...logToEdit,
+                  date: parseISO(logToEdit.date),
+              };
+          }
+          if (booking) {
+              return {
+                  date: parseISO(booking.date),
+                  aircraft: booking.aircraft,
+                  startHobbs: booking.startHobbs || 0,
+                  endHobbs: booking.endHobbs || 0,
+                  instructorName: booking.instructor || '',
+                  departure: booking.departure || '',
+                  arrival: booking.arrival || '',
+                  departureTime: booking.startTime,
+                  arrivalTime: booking.endTime,
+                  trainingExercises: logEntryForBooking?.trainingExercises.length ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
+              };
+          }
+          return defaultFormValues;
+      };
+
+      form.reset(getInitialValues() as LogEntryFormValues);
+  }, [booking, logToEdit, logEntryForBooking, form]);
 
 
   const { watch, setValue } = form;
@@ -188,7 +195,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
       date: format(data.date, 'yyyy-MM-dd'),
     };
     
-    onSubmit(newEntry, booking?.id, logEntryForBooking?.id);
+    onSubmit(newEntry, booking?.id, logToEdit?.id);
     
     form.reset();
   }
