@@ -365,30 +365,33 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         ];
     
         return (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Milestone Progress</CardTitle>
-                    <CardDescription>Progress towards key flight hour milestones.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {milestones.map(milestone => {
-                        const prevMilestone = milestone.target - 10;
-                        const hoursInBlock = Math.max(0, currentHours - prevMilestone);
-                        const progress = Math.min((hoursInBlock / 10) * 100, 100);
-                        const hoursRemaining = Math.max(milestone.target - currentHours, 0);
-    
-                        return (
-                            <div key={milestone.name}>
-                                <div className="flex justify-between mb-1 text-sm">
-                                    <span className="font-medium">{milestone.name}</span>
-                                    <span className="text-muted-foreground">{hoursRemaining.toFixed(1)} hrs remaining</span>
+            <div className="border-4 border-yellow-300 p-4 bg-yellow-50 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-300 px-3 py-0.5 text-sm font-semibold rounded-full text-yellow-800">Milestone Progress</div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Milestone Progress</CardTitle>
+                        <CardDescription>Progress towards key flight hour milestones.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {milestones.map(milestone => {
+                            const prevMilestone = milestone.target - 10;
+                            const hoursInBlock = Math.max(0, currentHours - prevMilestone);
+                            const progress = Math.min((hoursInBlock / 10) * 100, 100);
+                            const hoursRemaining = Math.max(milestone.target - currentHours, 0);
+        
+                            return (
+                                <div key={milestone.name}>
+                                    <div className="flex justify-between mb-1 text-sm">
+                                        <span className="font-medium">{milestone.name}</span>
+                                        <span className="text-muted-foreground">{hoursRemaining.toFixed(1)} hrs remaining</span>
+                                    </div>
+                                    <Progress value={progress} />
                                 </div>
-                                <Progress value={progress} />
-                            </div>
-                        )
-                    })}
-                </CardContent>
-            </Card>
+                            )
+                        })}
+                    </CardContent>
+                </Card>
+            </div>
         )
     };
 
@@ -416,292 +419,313 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
-            <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                    <DialogTitle>
-                        {logToEdit ? 'Edit Logbook Entry' : 'Instructor Debrief Entry'}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {logToEdit ? `Editing a logbook entry for ${student.name}.` : `Record details of a training session for ${student.name}.`}
-                    </DialogDescription>
-                </DialogHeader>
-                <AddLogEntryForm 
-                    student={student} 
-                    onSubmit={handleAddLogEntry} 
-                    booking={bookingForDebrief || undefined} 
-                    logToEdit={logToEdit}
-                />
-            </DialogContent>
-        </Dialog>
+        <div className="border-4 border-gray-500 p-4 bg-gray-100 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Main Page Container</div>
+            
+            <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {logToEdit ? 'Edit Logbook Entry' : 'Instructor Debrief Entry'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {logToEdit ? `Editing a logbook entry for ${student.name}.` : `Record details of a training session for ${student.name}.`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AddLogEntryForm 
+                        student={student} 
+                        onSubmit={handleAddLogEntry} 
+                        booking={bookingForDebrief || undefined} 
+                        logToEdit={logToEdit}
+                    />
+                </DialogContent>
+            </Dialog>
 
-        <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="logbook">Logbook</TabsTrigger>
-            </TabsList>
-            <TabsContent value="profile" className="mt-6">
-                <div className="grid gap-8 lg:grid-cols-3">
-                    <div className="lg:col-span-1 space-y-8">
+            <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="logbook">Logbook</TabsTrigger>
+                </TabsList>
+                <TabsContent value="profile" className="mt-6">
+                     <div className="border-4 border-blue-500 p-4 bg-blue-50 relative">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Profile Tab</div>
+                        <div className="grid gap-8 lg:grid-cols-3">
+                            <div className="lg:col-span-1 space-y-8">
+                                <div className="border-4 border-green-500 p-4 bg-green-50 relative">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Left Column</div>
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
+                                                <div className="p-4 rounded-full bg-muted">
+                                                    <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
+                                                    <CardDescription className="mt-1 text-center sm:text-left">
+                                                       <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
+                                                    </CardDescription>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4 pt-4 border-t pb-6">
+                                            <div className="flex items-center space-x-3">
+                                                <UserCheck className="h-5 w-5 text-muted-foreground" />
+                                                <span className="font-medium">Instructor: {student.instructor}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <BookUser className="h-5 w-5 text-muted-foreground" />
+                                                <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
+                                            </div>
+                                            
+                                            {(student.documents || []).map(doc => (
+                                                 <div key={doc.id} className="flex items-center space-x-3">
+                                                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                                    <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                                </div>
+                                            ))}
+                                        </CardContent>
+                                    </Card>
+
+                                    {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
+
+                                     <div className="border-4 border-purple-500 p-4 bg-purple-50 relative">
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Endorsements Card</div>
+                                        <Card>
+                                            <CardHeader>
+                                                <div className="flex flex-row items-center justify-between">
+                                                    <div className="space-y-1">
+                                                        <CardTitle>Endorsements</CardTitle>
+                                                        <CardDescription>Qualifications and completed milestones.</CardDescription>
+                                                    </div>
+                                                    {canEdit && (
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <Button size="sm">
+                                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                                    Add
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent>
+                                                                <DialogHeader>
+                                                                    <DialogTitle>Add New Endorsement</DialogTitle>
+                                                                    <DialogDescription>
+                                                                        Fill out the form to add a new endorsement for {student.name}.
+                                                                    </DialogDescription>
+                                                                </DialogHeader>
+                                                                <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    )}
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                        <TableHead>Endorsement</TableHead>
+                                                        <TableHead>Date</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
+                                                        <TableRow key={endorsement.id}>
+                                                            <TableCell className="font-medium flex items-center gap-2">
+                                                                <Award className="h-4 w-4 text-accent"/>
+                                                                {endorsement.name}
+                                                            </TableCell>
+                                                            <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
+                                                        </TableRow>
+                                                        )) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                                                No endorsements found.
+                                                            </TableCell>
+                                                        </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </CardContent>
+                                        </Card>
+                                     </div>
+
+                                    {canEdit && (
+                                        <div className="border-4 border-red-500 p-4 bg-red-50 relative">
+                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Admin Actions Card</div>
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle>Admin Actions</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="outline" className="w-full">
+                                                                <Archive className="mr-2 h-4 w-4" /> Archive Student
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="border-4 border-orange-500 p-4 bg-orange-50 relative">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Right Column</div>
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                                <div className="space-y-1">
+                                                    <CardTitle>Pending Instructor Debriefs</CardTitle>
+                                                    <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="space-y-2">
+                                        {pendingBookings.length > 0 ? (
+                                            pendingBookings.map(booking => (
+                                                <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                                    <button onClick={() => handleDebriefClick(booking)} className="flex-1 text-left">
+                                                        <div className="space-y-1">
+                                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                                        </div>
+                                                    </button>
+                                                     <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="shrink-0">
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will remove the pending debrief and its draft log entry. This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                                                <p className="text-muted-foreground">
+                                                    No flights awaiting debrief.
+                                                </p>
+                                            </div>
+                                        )}
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="logbook" className="mt-6">
+                    <div className="border-4 border-indigo-500 p-4 bg-indigo-50 relative">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Logbook Tab</div>
                         <Card>
                             <CardHeader>
-                                <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
-                                    <div className="p-4 rounded-full bg-muted">
-                                        <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                    </div>
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
-                                        <CardDescription className="mt-1 text-center sm:text-left">
-                                           <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
+                                        <CardTitle>Detailed Logbook for {student.name}</CardTitle>
+                                        <CardDescription>
+                                            A comprehensive log of all flight activities.
                                         </CardDescription>
                                     </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4 pt-4 border-t pb-6">
-                                <div className="flex items-center space-x-3">
-                                    <UserCheck className="h-5 w-5 text-muted-foreground" />
-                                    <span className="font-medium">Instructor: {student.instructor}</span>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <BookUser className="h-5 w-5 text-muted-foreground" />
-                                    <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
-                                </div>
-                                
-                                {(student.documents || []).map(doc => (
-                                     <div key={doc.id} className="flex items-center space-x-3">
-                                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                        <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" onClick={handleAddNewLog}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
+                                        </Button>
+                                        <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                                     </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-
-                        {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
-
-                         <Card>
-                            <CardHeader>
-                                <div className="flex flex-row items-center justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle>Endorsements</CardTitle>
-                                        <CardDescription>Qualifications and completed milestones.</CardDescription>
-                                    </div>
-                                    {canEdit && (
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button size="sm">
-                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                    Add
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Add New Endorsement</DialogTitle>
-                                                    <DialogDescription>
-                                                        Fill out the form to add a new endorsement for {student.name}.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
-                                            </DialogContent>
-                                        </Dialog>
-                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                        <TableHead>Endorsement</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
-                                        <TableRow key={endorsement.id}>
-                                            <TableCell className="font-medium flex items-center gap-2">
-                                                <Award className="h-4 w-4 text-accent"/>
-                                                {endorsement.name}
-                                            </TableCell>
-                                            <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
-                                        </TableRow>
-                                        )) : (
-                                        <TableRow>
-                                            <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                                No endorsements found.
-                                            </TableCell>
-                                        </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                        {canEdit && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Admin Actions</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="outline" className="w-full">
-                                                <Archive className="mr-2 h-4 w-4" /> Archive Student
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                                    <div className="space-y-1">
-                                        <CardTitle>Pending Instructor Debriefs</CardTitle>
-                                        <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                            {pendingBookings.length > 0 ? (
-                                pendingBookings.map(booking => (
-                                    <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
-                                        <button onClick={() => handleDebriefClick(booking)} className="flex-1 text-left">
-                                            <div className="space-y-1">
-                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                            </div>
-                                        </button>
-                                         <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="shrink-0">
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This will remove the pending debrief and its draft log entry. This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                                    <p className="text-muted-foreground">
-                                        No flights awaiting debrief.
-                                    </p>
-                                </div>
-                            )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </TabsContent>
-            <TabsContent value="logbook" className="mt-6">
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Detailed Logbook for {student.name}</CardTitle>
-                                <CardDescription>
-                                    A comprehensive log of all flight activities.
-                                </CardDescription>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={handleAddNewLog}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
-                                </Button>
-                                <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                       <div className="border rounded-md overflow-x-auto">
-                            <Table className="whitespace-nowrap">
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
-                                        <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
-                                        <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
-                                        <TableHead className="p-1 border-r text-center" colSpan={2}>4<br/>AIRCRAFT</TableHead>
-                                        <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
-                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
-                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
-                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
-                                        <TableHead className="p-1 text-center" colSpan={2}>8<br/>LANDINGS</TableHead>
-                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>Actions</TableHead>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableHead className="p-1 border-r text-center">PLACE</TableHead>
-                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
-                                        <TableHead className="p-1 border-r text-center">PLACE</TableHead>
-                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
-                                        <TableHead className="p-1 border-r text-center">MAKE, MODEL, VARIANT</TableHead>
-                                        <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
-                                        <TableHead className="p-1 border-r text-center">SE</TableHead>
-                                        <TableHead className="p-1 border-r text-center">ME</TableHead>
-                                        <TableHead className="p-1 border-r text-center">DAY</TableHead>
-                                        <TableHead className="p-1 text-center">NIGHT</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sortedLogs.length > 0 ? (
-                                        sortedLogs.map(log => (
-                                            <TableRow key={log.id}>
-                                                <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
-                                                <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
-                                                <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
-                                                <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
-                                                <TableCell className="border-r">{log.aircraft}</TableCell>
-                                                <TableCell className="border-r">{log.aircraft}</TableCell>
-                                                <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                <TableCell className="border-r">{log.instructorName}</TableCell>
-                                                <TableCell className="border-r">1</TableCell>
-                                                <TableCell>0</TableCell>
-                                                <TableCell className="border-r">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
+                               <div className="border rounded-md overflow-x-auto">
+                                    <Table className="whitespace-nowrap">
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>4<br/>AIRCRAFT</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
+                                                <TableHead className="p-1 text-center" colSpan={2}>8<br/>LANDINGS</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>Actions</TableHead>
                                             </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={15} className="h-24 text-center">No logbook entries found.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                       </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
+                                            <TableRow>
+                                                <TableHead className="p-1 border-r text-center">PLACE</TableHead>
+                                                <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">PLACE</TableHead>
+                                                <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">MAKE, MODEL, VARIANT</TableHead>
+                                                <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
+                                                <TableHead className="p-1 border-r text-center">SE</TableHead>
+                                                <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">DAY</TableHead>
+                                                <TableHead className="p-1 text-center">NIGHT</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sortedLogs.length > 0 ? (
+                                                sortedLogs.map(log => (
+                                                    <TableRow key={log.id}>
+                                                        <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                        <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
+                                                        <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
+                                                        <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
+                                                        <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
+                                                        <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                        <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                        <TableCell className="border-r">{log.instructorName}</TableCell>
+                                                        <TableCell className="border-r">1</TableCell>
+                                                        <TableCell>0</TableCell>
+                                                        <TableCell className="border-r">
+                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={15} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                               </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
       </main>
   );
 }
-
-    
