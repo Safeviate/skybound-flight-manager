@@ -21,7 +21,7 @@ import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, getDoc, collection, query, where, writeBatch, getDocs, addDoc, deleteDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { useSettings } from '@/context/settings-provider';
@@ -258,6 +258,38 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             });
         }
     };
+    
+    const handleDeleteDebrief = async (booking: Booking) => {
+        if (!company || !student || !booking.pendingLogEntryId) return;
+
+        const batch = writeBatch(db);
+
+        // 1. Remove the pending booking ID from the student
+        const studentRef = doc(db, `companies/${company.id}/students`, student.id);
+        batch.update(studentRef, { pendingBookingIds: arrayRemove(booking.id) });
+
+        // 2. Remove the associated log entry
+        const updatedLogs = student.trainingLogs?.filter(log => log.id !== booking.pendingLogEntryId);
+        batch.update(studentRef, { trainingLogs: updatedLogs });
+
+        try {
+            await batch.commit();
+            setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
+            setStudent(prev => prev ? ({ ...prev, trainingLogs: updatedLogs }) : null);
+            toast({
+                title: "Debrief Cleared",
+                description: `The pending debrief for booking ${booking.bookingNumber} has been removed.`,
+            });
+        } catch (error) {
+            console.error("Error clearing debrief:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not clear the pending debrief.",
+            });
+        }
+    };
+
 
     const handleDownloadLogbook = () => {
         if (!student) return;
@@ -583,17 +615,33 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <CardContent className="space-y-2">
                             {pendingBookings.length > 0 ? (
                                 pendingBookings.map(booking => (
-                                    <button 
-                                        key={booking.id}
-                                        className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
-                                        onClick={() => handleDebriefClick(booking)}
-                                    >
-                                        <div className="space-y-1">
-                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                        </div>
-                                        <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Instructor Debrief</span>
-                                    </button>
+                                    <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                        <button onClick={() => handleDebriefClick(booking)} className="flex-1 text-left">
+                                            <div className="space-y-1">
+                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                            </div>
+                                        </button>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="shrink-0">
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will remove the pending debrief and its draft log entry. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 ))
                             ) : (
                                 <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
