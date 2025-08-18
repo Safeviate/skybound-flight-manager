@@ -173,11 +173,14 @@ export function DashboardPageContent({
             .map(s => {
                 const hours = s.flightHours || 0;
                 const nextMilestone = [10, 20, 30].find(m => hours < m);
+                const prevMilestone = nextMilestone ? nextMilestone - 10 : Math.floor(hours / 10) * 10;
+                const progressInBlock = nextMilestone ? ((hours - prevMilestone) / 10) * 100 : 100;
+                
                 return {
                     student: s,
                     currentHours: hours,
                     nextMilestone: nextMilestone,
-                    progress: nextMilestone ? (hours / nextMilestone) * 100 : 100,
+                    progress: progressInBlock,
                 };
             })
             .filter(s => s.nextMilestone) // Only include students with an upcoming milestone
