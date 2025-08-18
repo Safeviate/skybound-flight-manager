@@ -766,9 +766,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
                                                 <TableCell className="border text-center">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
+                                                    
                                                 </TableCell>
                                             </TableRow>
                                         ))}
