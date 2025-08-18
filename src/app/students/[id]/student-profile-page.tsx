@@ -46,6 +46,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
+    const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
     const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
     const [isHoursForwardOpen, setIsHoursForwardOpen] = useState(false);
     
@@ -154,20 +155,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
         if (!company || !student) return;
 
-        const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
-        
-        let updatedLogs = student?.trainingLogs ? [...student.trainingLogs] : [];
+        let updatedLogs = [...(student.trainingLogs || [])];
+        const logId = logIdToUpdate || `log-${Date.now()}`;
 
         if (logIdToUpdate) {
-            // Find and update the existing log entry
-            const logIndex = updatedLogs.findIndex(log => log.id === logIdToUpdate);
-            if (logIndex > -1) {
-                updatedLogs[logIndex] = { ...updatedLogs[logIndex], ...newLogEntry };
+            const index = updatedLogs.findIndex(log => log.id === logIdToUpdate);
+            if (index !== -1) {
+                updatedLogs[index] = { ...updatedLogs[index], ...newLogEntry, id: logId };
             } else {
-                updatedLogs.push({ ...entryWithId, id: logIdToUpdate }); // If not found, add it
+                 updatedLogs.push({ ...newLogEntry, id: logId });
             }
         } else {
-            updatedLogs.push(entryWithId);
+             updatedLogs.push({ ...newLogEntry, id: logId });
         }
 
         const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
@@ -224,10 +223,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
         
         setIsAddLogEntryOpen(false);
+        setLogToEdit(null);
 
         toast({
-            title: 'Training Log Added',
-            description: 'A new entry has been added to the student logbook.',
+            title: logIdToUpdate ? 'Training Log Updated' : 'Training Log Added',
+            description: 'The logbook entry has been saved.',
         });
     };
     
@@ -388,41 +388,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
 
     const handleAddNewLog = () => {
-        setNewLog({
-            id: 'new',
-            date: format(new Date(), 'yyyy-MM-dd'),
-            aircraft: '',
-            instructorName: '',
-            startHobbs: 0,
-            endHobbs: 0,
-            flightDuration: 0,
-            trainingExercises: []
-        });
+        setLogToEdit(null);
+        setIsAddLogEntryOpen(true);
     };
 
-    const handleSaveNewLog = () => {
-        if (!newLog || !newLog.date || !newLog.aircraft || !newLog.instructorName) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Please fill out all required fields.' });
-            return;
-        }
-
-        const duration = (newLog.endHobbs || 0) - (newLog.startHobbs || 0);
-        if (duration <= 0) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Flight duration must be positive.' });
-            return;
-        }
-
-        const entry: Omit<TrainingLogEntry, 'id'> = {
-            ...newLog,
-            flightDuration: duration,
-        } as Omit<TrainingLogEntry, 'id'>;
-
-        handleAddLogEntry(entry);
-        setNewLog(null);
-    };
-    
-    const handleNewLogChange = (field: keyof TrainingLogEntry, value: any) => {
-        setNewLog(prev => prev ? { ...prev, [field]: value } : null);
+    const handleEditLog = (log: TrainingLogEntry) => {
+        setLogToEdit(log);
+        setIsAddLogEntryOpen(true);
     };
 
     const handleHoursForwardChange = (field: keyof typeof hoursForward, value: string) => {
@@ -474,6 +446,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
+        <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>{logToEdit ? 'Edit' : 'Add'} Training Log Entry</DialogTitle>
+                    <DialogDescription>
+                        Record details of a training session for {student.name}.
+                    </DialogDescription>
+                </DialogHeader>
+                <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+            </DialogContent>
+        </Dialog>
+
         <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -610,7 +594,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+                                    <Dialog open={isAddLogEntryOpen} onOpenChange={(isOpen) => { setIsAddLogEntryOpen(isOpen); if (!isOpen) setLogToEdit(null); }}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline">
                                                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -749,6 +733,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
                                             <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
                                             <TableHead colSpan={2} className="text-center border">Landings</TableHead>
+                                            <TableHead rowSpan={2} className="text-center border">Actions</TableHead>
                                         </TableRow>
                                         <TableRow>
                                             <TableHead className="text-center border">Place</TableHead>
@@ -766,26 +751,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {newLog && (
-                                            <TableRow>
-                                                <TableCell className="border p-1"><Input type="date" value={newLog.date || ''} onChange={e => handleNewLogChange('date', e.target.value)} /></TableCell>
-                                                <TableCell className="border p-1"><Input placeholder="Departure" value={newLog.departure || ''} onChange={e => handleNewLogChange('departure', e.target.value)} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input placeholder="Arrival" value={newLog.arrival || ''} onChange={e => handleNewLogChange('arrival', e.target.value)} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="time" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input placeholder="Make/Model" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input placeholder="Reg" value={newLog.aircraft} onChange={e => handleNewLogChange('aircraft', e.target.value)} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" step="0.1" /></TableCell>
-                                                <TableCell className="border p-1"><Input placeholder="PIC" value={newLog.instructorName} onChange={e => handleNewLogChange('instructorName', e.target.value)} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Input type="number" onChange={() => {}} /></TableCell>
-                                                <TableCell className="border p-1"><Button size="sm" onClick={handleSaveNewLog}><Save className="h-4 w-4" /></Button></TableCell>
-                                            </TableRow>
-                                        )}
                                         {sortedLogs.map(log => (
                                             <TableRow key={log.id}>
                                                 <TableCell className="border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
@@ -803,6 +768,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border">{log.instructorName}</TableCell>
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
+                                                <TableCell className="border text-center">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -817,4 +787,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
