@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -232,20 +233,24 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
     
     // This function will create a log entry if it doesn't exist for a debrief item.
-    const handleDebriefClick = async (booking: Booking) => {
-        if (!student || !company) return;
-
-        // Check if a log entry for this booking already exists
-        const logExists = student.trainingLogs?.some(log => 
-            log.date === booking.date && 
-            log.aircraft === booking.aircraft && 
+    const handleDebriefClick = (booking: Booking) => {
+        // Find the log entry that was created when the post-flight was submitted
+        const logToUpdate = student?.trainingLogs?.find(log => 
+            log.date === booking.date &&
+            log.aircraft === booking.aircraft &&
             log.instructorName === booking.instructor &&
             log.startHobbs === booking.startHobbs
         );
 
-        if (logExists || booking.pendingLogEntryId) {
-            // Log entry likely exists, just open the form to complete it
-            return;
+        if (logToUpdate) {
+            setLogToEdit(logToUpdate);
+            setIsAddLogEntryOpen(true);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Log Entry Not Found',
+                description: 'Could not find the corresponding log entry for this debrief. Please add it manually.',
+            });
         }
     };
 
@@ -559,19 +564,19 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <CardHeader>
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                                     <div className="space-y-1">
-                                        <CardTitle>Student Debrief</CardTitle>
+                                        <CardTitle>Instructor Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
                                     <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
                                         <DialogTrigger asChild>
-                                            <Button variant="outline" onClick={handleAddNewLog}>
+                                             <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" />
                                                 Add Debrief
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
                                             <DialogHeader>
-                                                <DialogTitle>Add Training Log Entry</DialogTitle>
+                                                <DialogTitle>Instructor Debrief</DialogTitle>
                                                 <DialogDescription>Record details of a training session for {student.name}.</DialogDescription>
                                             </DialogHeader>
                                             <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
@@ -586,6 +591,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <DialogTrigger asChild>
                                             <button 
                                                 className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
+                                                onClick={() => handleDebriefClick(booking)}
                                             >
                                                 <div className="space-y-1">
                                                     <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
@@ -697,6 +703,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableHead rowSpan={2} className="text-center border">Total Time</TableHead>
                                             <TableHead rowSpan={2} className="text-center border">PIC Name</TableHead>
                                             <TableHead colSpan={2} className="text-center border">Landings</TableHead>
+                                             <TableHead rowSpan={2} className="text-center border">Actions</TableHead>
                                         </TableRow>
                                         <TableRow>
                                             <TableHead className="text-center border">Place</TableHead>
@@ -731,6 +738,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border">{log.instructorName}</TableCell>
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
+                                                <TableCell className="border text-center">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
