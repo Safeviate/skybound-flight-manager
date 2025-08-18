@@ -56,6 +56,11 @@ const logEntryFormSchema = z.object({
   endHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
+  singleEngineTime: z.coerce.number().optional(),
+  multiEngineTime: z.coerce.number().optional(),
+  dualTime: z.coerce.number().optional(),
+  singleTime: z.coerce.number().optional(),
+  nightTime: z.coerce.number().optional(),
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
@@ -88,6 +93,11 @@ const defaultFormValues: Partial<LogEntryFormValues> = {
     weatherConditions: '',
     instructorSignature: '',
     studentSignature: '',
+    singleEngineTime: 0,
+    multiEngineTime: 0,
+    dualTime: 0,
+    singleTime: 0,
+    nightTime: 0,
 };
 
 export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormProps) {
@@ -122,7 +132,6 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             arrival: booking.arrival || '',
         };
         
-        // If we found a matching log entry, use its exercises, otherwise start fresh.
         if (logEntryForBooking) {
             resetValues.trainingExercises = logEntryForBooking.trainingExercises.length > 0 ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }];
         } else {
@@ -146,7 +155,6 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   
   const totalFlightHours = useMemo(() => {
       const existingHours = student?.trainingLogs?.reduce((total, log) => {
-          // If we are updating an existing log, exclude its old duration from the total
           if (logEntryForBooking && log.id === logEntryForBooking.id) {
               return total;
           }
@@ -295,18 +303,28 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5"/>Flight Duration</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Hours to Date</p>
-                            <p className="text-2xl font-bold font-mono">{(totalFlightHours || 0).toFixed(1)}</p>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <FormField control={form.control} name="singleEngineTime" render={({ field }) => (<FormItem><FormLabel>SE Time</FormLabel><FormControl><Input type="number" step="0.1" placeholder="0.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="multiEngineTime" render={({ field }) => (<FormItem><FormLabel>ME Time</FormLabel><FormControl><Input type="number" step="0.1" placeholder="0.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                             <FormField control={form.control} name="singleTime" render={({ field }) => (<FormItem><FormLabel>PIC Time</FormLabel><FormControl><Input type="number" step="0.1" placeholder="0.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="dualTime" render={({ field }) => (<FormItem><FormLabel>Dual Time</FormLabel><FormControl><Input type="number" step="0.1" placeholder="0.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="nightTime" render={({ field }) => (<FormItem><FormLabel>Night Time</FormLabel><FormControl><Input type="number" step="0.1" placeholder="0.0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">This Lesson</p>
-                            <p className="text-2xl font-bold font-mono">{lessonDuration.toFixed(1)}</p>
-                        </div>
-                         <div>
-                            <p className="text-sm text-muted-foreground">New Total Hours</p>
-                            <p className="text-2xl font-bold font-mono">{((totalFlightHours || 0) + lessonDuration).toFixed(1)}</p>
+                        <Separator />
+                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Hours to Date</p>
+                                <p className="text-2xl font-bold font-mono">{(totalFlightHours || 0).toFixed(1)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">This Lesson</p>
+                                <p className="text-2xl font-bold font-mono">{lessonDuration.toFixed(1)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">New Total Hours</p>
+                                <p className="text-2xl font-bold font-mono">{((totalFlightHours || 0) + lessonDuration).toFixed(1)}</p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -48,8 +47,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
     const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
-    const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
-    const [isHoursForwardOpen, setIsHoursForwardOpen] = useState(false);
     
     const [hoursForward, setHoursForward] = useState({
         total: 0,
@@ -95,7 +92,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!student?.trainingLogs || !Array.isArray(student.trainingLogs)) {
             return [];
         }
-        // Create a new array before sorting to avoid mutating the state directly
         return [...student.trainingLogs].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
     }, [student?.trainingLogs]);
     
@@ -128,7 +124,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         try {
             await updateDoc(studentRef, updateData);
-            // After successful DB update, refetch the student data to ensure local state is consistent
             const updatedStudentSnap = await getDoc(studentRef);
             if (updatedStudentSnap.exists()) {
                 setStudent(updatedStudentSnap.data() as StudentUser);
@@ -233,7 +228,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
     
-    // This function will find the log entry to update and open the form.
     const handleDebriefClick = (booking: Booking) => {
         if (!booking.pendingLogEntryId || !student?.trainingLogs) {
              toast({
@@ -248,7 +242,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
-            setBookingForDebrief(booking); // Also set the booking context
+            setBookingForDebrief(booking);
             setIsAddLogEntryOpen(true);
         } else {
             toast({
@@ -264,11 +258,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
         const batch = writeBatch(db);
 
-        // 1. Remove the pending booking ID from the student
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         batch.update(studentRef, { pendingBookingIds: arrayRemove(booking.id) });
 
-        // 2. Remove the associated log entry
         const updatedLogs = student.trainingLogs?.filter(log => log.id !== booking.pendingLogEntryId);
         batch.update(studentRef, { trainingLogs: updatedLogs });
 
@@ -401,43 +393,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setLogToEdit(null);
         setBookingForDebrief(null);
         setIsAddLogEntryOpen(true);
-    };
-
-    const handleEditLog = (log: TrainingLogEntry) => {
-        setLogToEdit(log);
-        setBookingForDebrief(null);
-        setIsAddLogEntryOpen(true);
-    };
-
-    const handleHoursForwardChange = (field: keyof typeof hoursForward, value: string) => {
-        setHoursForward(prev => ({
-            ...prev,
-            [field]: parseFloat(value) || 0
-        }));
-    };
-
-    const handleHoursForwardSubmit = () => {
-        if (hoursForward.total <= 0) {
-            toast({ variant: 'destructive', title: 'Invalid Hours', description: 'Please enter a positive number for total hours.' });
-            return;
-        }
-        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
-            date: format(new Date(), 'yyyy-MM-dd'),
-            aircraft: 'Previous Experience',
-            startHobbs: 0,
-            endHobbs: hoursForward.total,
-            flightDuration: hoursForward.total,
-            singleEngineTime: hoursForward.se,
-            multiEngineTime: hoursForward.me,
-            dualTime: hoursForward.dual,
-            singleTime: hoursForward.single,
-            nightTime: hoursForward.night,
-            instructorName: 'Previous Instructor',
-            trainingExercises: [{ exercise: 'Consolidated Previous Experience', rating: 4, comment: `${hoursForward.total} hours brought forward.` }],
-        };
-        handleAddLogEntry(newLogEntry);
-        setIsHoursForwardOpen(false);
-        setHoursForward({ total: 0, se: 0, me: 0, dual: 0, single: 0, night: 0 });
     };
 
     if (userLoading) {
@@ -658,124 +613,55 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <div>
                                 <CardTitle>Detailed Logbook for {student.name}</CardTitle>
                                 <CardDescription>
-                                    License Number: {student.studentCode || 'N/A'} | A comprehensive log of all flight activities.
+                                    A comprehensive log of all flight activities.
                                 </CardDescription>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
-                                <Dialog open={isHoursForwardOpen} onOpenChange={setIsHoursForwardOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline">Hours Brought Forward</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Hours Brought Forward</DialogTitle>
-                                            <DialogDescription>
-                                                Enter the total flight hours this student has accumulated from previous training.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="space-y-4 py-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-total">Total Previous Hours</Label>
-                                                    <Input 
-                                                        id="hours-total" 
-                                                        type="number" 
-                                                        step="0.1" 
-                                                        placeholder="e.g., 25.5" 
-                                                        value={hoursForward.total || ''}
-                                                        onChange={(e) => handleHoursForwardChange('total', e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-night">Night Time</Label>
-                                                    <Input id="hours-night" type="number" step="0.1" value={hoursForward.night || ''} onChange={(e) => handleHoursForwardChange('night', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-se">Single-Engine</Label>
-                                                    <Input id="hours-se" type="number" step="0.1" value={hoursForward.se || ''} onChange={(e) => handleHoursForwardChange('se', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-me">Multi-Engine</Label>
-                                                    <Input id="hours-me" type="number" step="0.1" value={hoursForward.me || ''} onChange={(e) => handleHoursForwardChange('me', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-dual">Dual Time</Label>
-                                                    <Input id="hours-dual" type="number" step="0.1" value={hoursForward.dual || ''} onChange={(e) => handleHoursForwardChange('dual', e.target.value)} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="hours-single">Single Time</Label>
-                                                    <Input id="hours-single" type="number" step="0.1" value={hoursForward.single || ''} onChange={(e) => handleHoursForwardChange('single', e.target.value)} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button onClick={handleHoursForwardSubmit}>Add Hours to Logbook</Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 gap-4">
-                            {sortedLogs.map((log) => (
-                                <Card key={log.id}>
-                                    <CardHeader className="flex flex-row justify-between items-start pb-2">
-                                        <div>
-                                            <CardTitle className="text-lg">{format(parseISO(log.date), 'EEEE, MMMM d, yyyy')}</CardTitle>
-                                            <CardDescription>
-                                                Aircraft: {log.aircraft} | Instructor: {log.instructorName}
-                                            </CardDescription>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-4 gap-4 text-center py-2">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground">Hobbs Start</p>
-                                                <p className="font-mono">{log.startHobbs.toFixed(1)}</p>
-                                            </div>
-                                             <div>
-                                                <p className="text-xs text-muted-foreground">Hobbs End</p>
-                                                <p className="font-mono">{log.endHobbs.toFixed(1)}</p>
-                                            </div>
-                                             <div>
-                                                <p className="text-xs text-muted-foreground">Duration</p>
-                                                <p className="font-mono">{log.flightDuration.toFixed(1)}</p>
-                                            </div>
-                                             <div>
-                                                <p className="text-xs text-muted-foreground">Night Time</p>
-                                                <p className="font-mono">{formatDecimalTime(log.nightTime)}</p>
-                                            </div>
-                                        </div>
-                                        <Separator className="my-2" />
-                                        <div className="space-y-2">
-                                            {log.trainingExercises.map((ex, i) => (
-                                                <div key={i}>
-                                                    <div className="flex justify-between items-center">
-                                                        <p className="font-semibold text-sm">{ex.exercise}</p>
-                                                        <Badge variant="outline">Rating: {ex.rating}/4</Badge>
-                                                    </div>
-                                                    {ex.comment && <p className="text-xs text-muted-foreground pl-2 border-l-2 ml-1">{ex.comment}</p>}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                    {log.instructorSignature && log.studentSignature && (
-                                        <CardFooter className="flex justify-between gap-4 pt-4 border-t">
-                                            <div className="text-center">
-                                                <Image src={log.instructorSignature} alt="Instructor Signature" width={150} height={75} className="mx-auto" />
-                                                <p className="text-xs text-muted-foreground mt-1">Instructor Signature</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <Image src={log.studentSignature} alt="Student Signature" width={150} height={75} className="mx-auto" />
-                                                <p className="text-xs text-muted-foreground mt-1">Student Signature</p>
-                                            </div>
-                                        </CardFooter>
+                       <div className="border rounded-md overflow-hidden">
+                            <Table className="whitespace-nowrap">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[10%]">Date</TableHead>
+                                        <TableHead className="w-[15%]">Aircraft</TableHead>
+                                        <TableHead className="w-[10%]">Departure</TableHead>
+                                        <TableHead className="w-[10%]">Arrival</TableHead>
+                                        <TableHead className="w-[10%]">SE Time</TableHead>
+                                        <TableHead className="w-[10%]">ME Time</TableHead>
+                                        <TableHead className="w-[10%]">Dual Time</TableHead>
+                                        <TableHead className="w-[10%]">PIC Time</TableHead>
+                                        <TableHead className="w-[10%]">Night Time</TableHead>
+                                        <TableHead className="w-[15%]">Instructor</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedLogs.length > 0 ? (
+                                        sortedLogs.map(log => (
+                                            <TableRow key={log.id}>
+                                                <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                <TableCell>{log.aircraft}</TableCell>
+                                                <TableCell>{log.departure}</TableCell>
+                                                <TableCell>{log.arrival}</TableCell>
+                                                <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
+                                                <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
+                                                <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
+                                                <TableCell>{log.instructorName}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={10} className="h-24 text-center">No logbook entries found.</TableCell>
+                                        </TableRow>
                                     )}
-                                </Card>
-                            ))}
-                        </div>
+                                </TableBody>
+                            </Table>
+                       </div>
                     </CardContent>
                 </Card>
             </TabsContent>
