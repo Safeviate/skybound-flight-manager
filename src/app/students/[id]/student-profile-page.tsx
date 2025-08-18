@@ -358,7 +358,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             { name: '20 Hour Check', target: 20 },
             { name: '30 Hour Check', target: 30 },
         ];
-
+    
         return (
             <Card>
                 <CardHeader>
@@ -367,9 +367,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {milestones.map(milestone => {
-                        const progress = Math.min((currentHours / milestone.target) * 100, 100);
+                        const prevMilestone = milestone.target - 10;
+                        const hoursInBlock = Math.max(0, currentHours - prevMilestone);
+                        const progress = Math.min((hoursInBlock / 10) * 100, 100);
                         const hoursRemaining = Math.max(milestone.target - currentHours, 0);
-
+    
                         return (
                             <div key={milestone.name}>
                                 <div className="flex justify-between mb-1 text-sm">
@@ -815,3 +817,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
