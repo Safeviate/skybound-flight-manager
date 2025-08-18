@@ -598,7 +598,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <DialogTrigger asChild>
                                             <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                                Add Log Entry
+                                                Add Debrief
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
@@ -766,7 +766,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border">N/A</TableCell>
                                                 <TableCell className="border">{log.nightTime ? formatDecimalTime(log.nightTime) : ''}</TableCell>
                                                 <TableCell className="border text-center">
-                                                    
+                                                    {/* Edit button was here */}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
