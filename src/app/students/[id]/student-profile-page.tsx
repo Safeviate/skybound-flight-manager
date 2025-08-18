@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -627,15 +628,15 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-[10%]">Date</TableHead>
-                                        <TableHead className="w-[15%]">Aircraft</TableHead>
-                                        <TableHead className="w-[10%]">Departure</TableHead>
-                                        <TableHead className="w-[10%]">Arrival</TableHead>
-                                        <TableHead className="w-[10%]">SE Time</TableHead>
-                                        <TableHead className="w-[10%]">ME Time</TableHead>
-                                        <TableHead className="w-[10%]">Dual Time</TableHead>
-                                        <TableHead className="w-[10%]">PIC Time</TableHead>
-                                        <TableHead className="w-[10%]">Night Time</TableHead>
-                                        <TableHead className="w-[15%]">Instructor</TableHead>
+                                        <TableHead>Aircraft</TableHead>
+                                        <TableHead>Departure</TableHead>
+                                        <TableHead>Arrival</TableHead>
+                                        <TableHead>SE Time</TableHead>
+                                        <TableHead>ME Time</TableHead>
+                                        <TableHead>Dual Time</TableHead>
+                                        <TableHead>PIC Time</TableHead>
+                                        <TableHead>Night Time</TableHead>
+                                        <TableHead>Instructor</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -644,8 +645,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableRow key={log.id}>
                                                 <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                 <TableCell>{log.aircraft}</TableCell>
-                                                <TableCell>{log.departure}</TableCell>
-                                                <TableCell>{log.arrival}</TableCell>
+                                                <TableCell>{log.departure || 'N/A'}</TableCell>
+                                                <TableCell>{log.arrival || 'N/A'}</TableCell>
                                                 <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                 <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                 <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>

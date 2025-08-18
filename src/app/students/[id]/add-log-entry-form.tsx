@@ -50,6 +50,8 @@ const logEntryFormSchema = z.object({
   }),
   departure: z.string().optional(),
   arrival: z.string().optional(),
+  departureTime: z.string().optional(),
+  arrivalTime: z.string().optional(),
   startHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
@@ -86,6 +88,8 @@ const defaultFormValues: Partial<LogEntryFormValues> = {
     aircraft: '',
     departure: '',
     arrival: '',
+    departureTime: '',
+    arrivalTime: '',
     startHobbs: 0,
     endHobbs: 0,
     instructorName: '',
@@ -130,6 +134,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             instructorName: booking.instructor || '',
             departure: booking.departure || '',
             arrival: booking.arrival || '',
+            departureTime: booking.startTime,
+            arrivalTime: booking.endTime,
         };
         
         if (logEntryForBooking) {
@@ -264,7 +270,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                 )}
                             />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                              <FormField
                                 control={form.control}
                                 name="departure"
@@ -278,6 +284,19 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                     </FormItem>
                                 )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="departureTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Departure Time</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} value={field.value ?? ''}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="arrival"
@@ -286,6 +305,19 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                                         <FormLabel>Arrival</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., KSQL" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="arrivalTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Arrival Time</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} value={field.value ?? ''}/>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
