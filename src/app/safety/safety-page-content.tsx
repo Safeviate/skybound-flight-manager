@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department, Booking } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department, Booking, ManagementOfChange } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
@@ -33,10 +33,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
+import { NewMocForm } from './new-moc-form';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -377,14 +378,80 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     );
 };
 
+const MocContent = ({ mocs, onUpdate }: { mocs: ManagementOfChange[], onUpdate: () => void }) => {
+    const [isNewMocOpen, setIsNewMocOpen] = useState(false);
+    
+    return (
+        <Card>
+            <CardHeader className="flex-row justify-between items-start">
+                <div>
+                    <CardTitle>Management of Change (MOC)</CardTitle>
+                    <CardDescription>A log of all proposed and implemented changes to operations.</CardDescription>
+                </div>
+                <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Propose Change
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Propose a New Change</DialogTitle>
+                            <DialogDescription>
+                                Complete this form to formally propose a change to operations, procedures, or personnel.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <NewMocForm onUpdate={onUpdate} onClose={() => setIsNewMocOpen(false)} />
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>MOC #</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Proposed By</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {mocs.length > 0 ? mocs.map(moc => (
+                            <TableRow key={moc.id}>
+                                <TableCell>{moc.mocNumber}</TableCell>
+                                <TableCell className="font-medium">{moc.title}</TableCell>
+                                <TableCell>{moc.proposedBy}</TableCell>
+                                <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
+                                <TableCell>
+                                    <Badge>{moc.status}</Badge>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    No MOC records found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+};
+
+
 export function SafetyPageContent({
     initialReports,
     initialRisks,
-    initialBookings
+    initialBookings,
+    initialMoc,
 }: {
     initialReports: SafetyReport[],
     initialRisks: Risk[],
-    initialBookings: Booking[]
+    initialBookings: Booking[],
+    initialMoc: ManagementOfChange[],
 }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -392,6 +459,7 @@ export function SafetyPageContent({
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [mocList, setMocList] = useState<ManagementOfChange[]>(initialMoc);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
@@ -400,10 +468,11 @@ export function SafetyPageContent({
   
   const fetchData = async () => {
     if (!company) return;
-    const { reportsList, risksList, bookingsList } = await getSafetyPageData(company.id);
+    const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
+    setMocList(mocList);
   };
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
@@ -709,17 +778,7 @@ export function SafetyPageContent({
             />
           </TabsContent>
           <TabsContent value="moc">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Management of Change</CardTitle>
-                    <CardDescription>
-                        This section will contain the Management of Change process and records.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p>Content for Management of Change goes here.</p>
-                </CardContent>
-            </Card>
+            <MocContent mocs={mocList} onUpdate={fetchData} />
           </TabsContent>
         </Tabs>
       </main>
