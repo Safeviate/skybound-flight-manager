@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -149,7 +148,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleAddEndorsement = (newEndorsement: Omit<Endorsement, 'id'>) => {
         const endorsementWithId: Endorsement = { ...newEndorsement, id: `endorsement-${Date.now()}` };
-        handleUpdate({ endorsements: arrayUnion(endorsementWithId) });
+        const updatedEndorsements = [...(student?.endorsements || []), endorsementWithId];
+        handleUpdate({ endorsements: updatedEndorsements });
     };
 
     const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
@@ -594,6 +594,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                             <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Add Log Entry</Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Add Training Log Entry</DialogTitle>
+                                                <DialogDescription>
+                                                    Record details of a training session for {student.name}.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
