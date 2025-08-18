@@ -679,6 +679,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
                                                 <TableHead className="p-1 text-center" colSpan={2}>8<br/>LANDINGS</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>ACTIONS</TableHead>
                                             </TableRow>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center">PLACE</TableHead>
@@ -710,12 +711,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                         <TableCell className="border-r">{log.instructorName}</TableCell>
                                                         <TableCell className="border-r">1</TableCell>
-                                                        <TableCell>0</TableCell>
+                                                        <TableCell className="border-r">0</TableCell>
+                                                        <TableCell>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={14} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={15} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
