@@ -594,23 +594,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Student Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    <Dialog open={isAddLogEntryOpen} onOpenChange={(isOpen) => { setIsAddLogEntryOpen(isOpen); if (!isOpen) setLogToEdit(null); }}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline">
-                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                Add Log Entry
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Add Manual Training Log Entry</DialogTitle>
-                                                <DialogDescription>
-                                                    Record details of a training session for {student.name}.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                        </DialogContent>
-                                    </Dialog>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
