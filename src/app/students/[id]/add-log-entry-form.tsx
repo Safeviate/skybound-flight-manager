@@ -57,7 +57,7 @@ const logEntryFormSchema = z.object({
       message: 'Hobbs hours must be a positive number.'
   }),
   instructorName: z.string({
-    required_error: 'Please select the instructor.',
+    required_error: 'Please enter the instructor\'s name.',
   }),
   trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   weatherConditions: z.string().optional(),
@@ -79,7 +79,6 @@ interface AddLogEntryFormProps {
 export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
-  const [instructors, setInstructors] = useState<User[]>([]);
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
 
   const logEntryForBooking = useMemo(() => {
@@ -150,13 +149,8 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
   useEffect(() => {
     const fetchData = async () => {
         if (!company) return;
-        const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'];
-        const instQuery = query(collection(db, `companies/${company.id}/users`), where('role', 'in', instructorRoles));
         const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
-        
-        const [instSnapshot, acSnapshot] = await Promise.all([getDocs(instQuery), getDocs(acQuery)]);
-        
-        setInstructors(instSnapshot.docs.map(doc => doc.data() as User));
+        const acSnapshot = await getDocs(acQuery);
         setAircraftList(acSnapshot.docs.map(doc => doc.data() as Aircraft));
     };
     fetchData();
@@ -314,30 +308,19 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="instructorName"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Instructor</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                        <FormLabel>Instructor Name</FormLabel>
                                         <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select an instructor" />
-                                        </SelectTrigger>
+                                            <Input placeholder="e.g., John Doe" {...field} />
                                         </FormControl>
-                                        <SelectContent>
-                                        {instructors.map((instructor) => (
-                                            <SelectItem key={instructor.id} value={instructor.name}>
-                                            {instructor.name}
-                                            </SelectItem>
-                                        ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
+                                        <FormMessage />
                                     </FormItem>
                                 )}
-                                />
+                            />
                              <FormField
                                 control={form.control}
                                 name="weatherConditions"
@@ -457,7 +440,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
             </div>
         </ScrollArea>
         <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg">Add Log Entry</Button>
+          <Button type="submit" size="lg">Save Debrief</Button>
         </div>
       </form>
     </Form>

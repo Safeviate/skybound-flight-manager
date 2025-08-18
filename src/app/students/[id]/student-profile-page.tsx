@@ -462,9 +462,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>{logToEdit ? 'Edit' : 'Add'} Training Log Entry</DialogTitle>
+                    <DialogTitle>Instructor Debrief Entry</DialogTitle>
                     <DialogDescription>
-                        Record details of a training session for {student.name}.
+                        Record details of a training session for {student.name}. This is not for general logbook editing.
                     </DialogDescription>
                 </DialogHeader>
                 <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} booking={bookingForDebrief || undefined} />
@@ -607,10 +607,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Instructor Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    <Button variant="outline" onClick={handleAddNewLog}>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Debrief
-                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
@@ -721,12 +717,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 </Dialog>
                             </div>
                         </div>
-                         <div className="flex justify-end pt-4">
-                            <Button variant="outline" onClick={handleAddNewLog}>
-                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                Add Manual Log Entry
-                            </Button>
-                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 gap-4">
