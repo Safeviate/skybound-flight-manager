@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -215,18 +214,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
 
         await handleUpdate(firestoreUpdate);
-
-        if (fromBookingId) {
-            const bookingRef = doc(db, `companies/${company.id}/bookings`, fromBookingId);
-            await updateDoc(bookingRef, { status: 'Completed', flightDuration: newLogEntry.flightDuration });
-        }
         
         setIsAddLogEntryOpen(false);
         setLogToEdit(null);
+        setBookingForDebrief(null);
 
         toast({
-            title: logIdToUpdate ? 'Training Log Updated' : 'Instructor Debrief Submitted',
-            description: 'The logbook entry has been saved.',
+            title: logIdToUpdate ? 'Logbook Updated' : 'Instructor Debrief Submitted',
+            description: 'The training record has been successfully saved.',
         });
     };
     
@@ -253,6 +248,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
             });
         }
+    };
+
+    const handleEditLogEntry = (log: TrainingLogEntry) => {
+        setLogToEdit(log);
+        setBookingForDebrief(null);
+        setIsAddLogEntryOpen(true);
     };
     
     const handleDeleteDebrief = async (booking: Booking) => {
@@ -312,12 +313,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (student.trainingLogs && student.trainingLogs.length > 0) {
              autoTable(doc, {
                 startY: startY,
-                head: [['Date', 'Aircraft', 'Hobbs Start', 'Hobbs End', 'Duration', 'Instructor', 'Notes']],
+                head: [['Date', 'Aircraft', 'Departure', 'Arrival', 'Duration', 'Instructor', 'Notes']],
                 body: student.trainingLogs.map(log => [
                     log.date,
                     log.aircraft,
-                    log.startHobbs.toFixed(1),
-                    log.endHobbs.toFixed(1),
+                    log.departure || 'N/A',
+                    log.arrival || 'N/A',
                     log.flightDuration.toFixed(1),
                     log.instructorName,
                     log.trainingExercises.map(e => `${e.exercise}: ${e.comment || ''}`).join('\n'),
@@ -418,9 +419,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
             <DialogContent className="max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>Instructor Debrief Entry</DialogTitle>
+                    <DialogTitle>
+                        {logToEdit ? 'Edit Logbook Entry' : 'Instructor Debrief Entry'}
+                    </DialogTitle>
                     <DialogDescription>
-                        Record details of a training session for {student.name}.
+                        {logToEdit ? `Editing a logbook entry for ${student.name}.` : `Record details of a training session for ${student.name}.`}
                     </DialogDescription>
                 </DialogHeader>
                 <AddLogEntryForm 
@@ -565,8 +568,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             <CardHeader>
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                                     <div className="space-y-1">
-                                        <CardTitle>Instructor Debrief</CardTitle>
-                                        <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
+                                        <CardTitle>Pending Instructor Debriefs</CardTitle>
+                                        <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
@@ -624,6 +627,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 </CardDescription>
                             </div>
                             <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleAddNewLog}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
+                                </Button>
                                 <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                             </div>
                         </div>
@@ -676,7 +682,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableCell className="border-r">1</TableCell>
                                                 <TableCell>0</TableCell>
                                                 <TableCell className="border-r">
-                                                    <Button variant="ghost" size="icon" onClick={() => { setLogToEdit(log); setBookingForDebrief(null); setIsAddLogEntryOpen(true); }}>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                 </TableCell>
@@ -697,3 +703,5 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+    
