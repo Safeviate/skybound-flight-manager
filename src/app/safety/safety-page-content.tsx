@@ -419,7 +419,11 @@ const MocContent = ({ mocs, onUpdate }: { mocs: ManagementOfChange[], onUpdate: 
                     <TableBody>
                         {mocs.length > 0 ? mocs.map(moc => (
                             <TableRow key={moc.id}>
-                                <TableCell>{moc.mocNumber}</TableCell>
+                                <TableCell>
+                                    <Link href={`/safety/moc/${moc.id}`} className="hover:underline text-primary font-medium">
+                                        {moc.mocNumber}
+                                    </Link>
+                                </TableCell>
                                 <TableCell className="font-medium">{moc.title}</TableCell>
                                 <TableCell>{moc.proposedBy}</TableCell>
                                 <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
