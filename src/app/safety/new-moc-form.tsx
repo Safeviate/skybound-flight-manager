@@ -34,6 +34,12 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
   const { toast } = useToast();
   const form = useForm<MocFormValues>({
     resolver: zodResolver(mocFormSchema),
+    defaultValues: {
+        title: '',
+        description: '',
+        reason: '',
+        scope: '',
+    }
   });
 
   async function handleFormSubmit(data: MocFormValues) {
