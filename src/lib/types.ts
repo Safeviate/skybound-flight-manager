@@ -576,6 +576,17 @@ export type ComplianceItem = {
     findings?: string;
 };
 
+export type MocStep = {
+    id: string;
+    description: string;
+    hazards?: {
+        id: string;
+        description: string;
+        riskAnalysis: string;
+        mitigation: string;
+    }[];
+};
+
 export type ManagementOfChange = {
     id: string;
     companyId: string;
@@ -587,6 +598,7 @@ export type ManagementOfChange = {
     reason: string;
     scope: string;
     status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
+    steps?: MocStep[];
     // Risk Assessment
     identifiedHazards?: { id: string; description: string }[];
     riskAssessmentNotes?: string;
@@ -672,5 +684,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
-    
