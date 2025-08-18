@@ -219,30 +219,33 @@ export function AircraftPageContent({
 
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                    batch.update(bookingRef, { status: 'Completed', flightDuration: parseFloat((data.hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1)), endHobbs: data.hobbs });
+                    const flightDuration = parseFloat((data.hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1));
                     
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
-                        const studentDoc = await getDoc(studentRef);
+                        const newLogEntryId = `log-${Date.now()}`;
+                        const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
+                            date: bookingForChecklist.date,
+                            aircraft: selectedAircraftForChecklist.model,
+                            departure: bookingForChecklist.departure,
+                            arrival: bookingForChecklist.arrival,
+                            startHobbs: bookingForChecklist.startHobbs || 0,
+                            endHobbs: data.hobbs,
+                            flightDuration: flightDuration,
+                            instructorName: bookingForChecklist.instructor || 'Unknown',
+                            trainingExercises: [], // Initially empty, to be filled during debrief
+                        };
                         
-                        if (studentDoc.exists()) {
-                            const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
-                                date: bookingForChecklist.date,
-                                aircraft: bookingForChecklist.aircraft,
-                                departure: bookingForChecklist.departure,
-                                arrival: bookingForChecklist.arrival,
-                                startHobbs: bookingForChecklist.startHobbs || 0,
-                                endHobbs: data.hobbs,
-                                flightDuration: parseFloat((data.hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1)),
-                                instructorName: bookingForChecklist.instructor || 'Unknown',
-                                trainingExercises: [], // Initially empty, to be filled during debrief
-                            };
-                            
-                            batch.update(studentRef, { 
-                                trainingLogs: arrayUnion({ ...newLogEntry, id: `log-${Date.now()}` }),
-                                pendingBookingIds: arrayUnion(bookingForChecklist.id)
-                            });
-                        }
+                        batch.update(studentRef, { 
+                            trainingLogs: arrayUnion({ ...newLogEntry, id: newLogEntryId }),
+                            pendingBookingIds: arrayUnion(bookingForChecklist.id)
+                        });
+                        
+                        // Link the log entry ID back to the booking
+                        batch.update(bookingRef, { status: 'Completed', flightDuration: flightDuration, endHobbs: data.hobbs, pendingLogEntryId: newLogEntryId });
+
+                    } else {
+                         batch.update(bookingRef, { status: 'Completed', flightDuration: flightDuration, endHobbs: data.hobbs });
                     }
                 }
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created. Ready for debrief.' });

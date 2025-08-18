@@ -46,6 +46,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
+    const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
     const [newLog, setNewLog] = useState<Partial<TrainingLogEntry> | null>(null);
     const [isHoursForwardOpen, setIsHoursForwardOpen] = useState(false);
@@ -232,24 +233,28 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
     
-    // This function will create a log entry if it doesn't exist for a debrief item.
+    // This function will find the log entry to update and open the form.
     const handleDebriefClick = (booking: Booking) => {
-        // Find the log entry that was created when the post-flight was submitted
-        const logToUpdate = student?.trainingLogs?.find(log => 
-            log.date === booking.date &&
-            log.aircraft === booking.aircraft &&
-            log.instructorName === booking.instructor &&
-            log.startHobbs === booking.startHobbs
-        );
+        if (!booking.pendingLogEntryId || !student?.trainingLogs) {
+             toast({
+                variant: 'destructive',
+                title: 'Log Entry Not Found',
+                description: 'Could not find the corresponding log entry for this debrief. Please add it manually.',
+            });
+            return;
+        }
+
+        const logToUpdate = student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
 
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
+            setBookingForDebrief(booking); // Also set the booking context
             setIsAddLogEntryOpen(true);
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Log Entry Not Found',
-                description: 'Could not find the corresponding log entry for this debrief. Please add it manually.',
+                description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
             });
         }
     };
@@ -362,11 +367,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleAddNewLog = () => {
         setLogToEdit(null);
+        setBookingForDebrief(null);
         setIsAddLogEntryOpen(true);
     };
 
     const handleEditLog = (log: TrainingLogEntry) => {
         setLogToEdit(log);
+        setBookingForDebrief(null);
         setIsAddLogEntryOpen(true);
     };
 
@@ -427,7 +434,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         Record details of a training session for {student.name}.
                     </DialogDescription>
                 </DialogHeader>
-                <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
+                <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} booking={bookingForDebrief || undefined} />
             </DialogContent>
         </Dialog>
 
@@ -567,49 +574,26 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <CardTitle>Instructor Debrief</CardTitle>
                                         <CardDescription>These flights are complete and require a logbook entry from the instructor.</CardDescription>
                                     </div>
-                                    <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
-                                        <DialogTrigger asChild>
-                                             <Button variant="outline" onClick={handleAddNewLog}>
-                                                <PlusCircle className="mr-2 h-4 w-4" />
-                                                Add Debrief
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Instructor Debrief</DialogTitle>
-                                                <DialogDescription>Record details of a training session for {student.name}.</DialogDescription>
-                                            </DialogHeader>
-                                            <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} />
-                                        </DialogContent>
-                                    </Dialog>
+                                    <Button variant="outline" onClick={handleAddNewLog}>
+                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                        Add Debrief
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-2">
                             {pendingBookings.length > 0 ? (
                                 pendingBookings.map(booking => (
-                                    <Dialog key={booking.id}>
-                                        <DialogTrigger asChild>
-                                            <button 
-                                                className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
-                                                onClick={() => handleDebriefClick(booking)}
-                                            >
-                                                <div className="space-y-1">
-                                                    <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                    <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                                </div>
-                                                <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Instructor Debrief</span>
-                                            </button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Add Training Log Entry</DialogTitle>
-                                                <DialogDescription>
-                                                    Record details of the training session for {student.name}.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <AddLogEntryForm student={student} onSubmit={(data) => handleAddLogEntry(data, booking.id)} booking={booking}/>
-                                        </DialogContent>
-                                    </Dialog>
+                                    <button 
+                                        key={booking.id}
+                                        className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer"
+                                        onClick={() => handleDebriefClick(booking)}
+                                    >
+                                        <div className="space-y-1">
+                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                        </div>
+                                        <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Instructor Debrief</span>
+                                    </button>
                                 ))
                             ) : (
                                 <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
