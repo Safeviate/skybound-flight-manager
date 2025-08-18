@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -229,7 +228,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setLogToEdit(null);
 
         toast({
-            title: logIdToUpdate ? 'Training Log Updated' : 'Training Log Added',
+            title: logIdToUpdate ? 'Training Log Updated' : 'Instructor Debrief Submitted',
             description: 'The logbook entry has been saved.',
         });
     };
@@ -464,7 +463,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <DialogHeader>
                     <DialogTitle>Instructor Debrief Entry</DialogTitle>
                     <DialogDescription>
-                        Record details of a training session for {student.name}. This is not for general logbook editing.
+                        Record details of a training session for {student.name}.
                     </DialogDescription>
                 </DialogHeader>
                 <AddLogEntryForm student={student} onSubmit={handleAddLogEntry} booking={bookingForDebrief || undefined} />
