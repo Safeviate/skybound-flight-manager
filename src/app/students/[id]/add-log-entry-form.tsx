@@ -76,6 +76,20 @@ interface AddLogEntryFormProps {
     booking?: Booking;
 }
 
+const defaultFormValues: Partial<LogEntryFormValues> = {
+    date: new Date(),
+    aircraft: '',
+    departure: '',
+    arrival: '',
+    startHobbs: 0,
+    endHobbs: 0,
+    instructorName: '',
+    trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
+    weatherConditions: '',
+    instructorSignature: '',
+    studentSignature: '',
+};
+
 export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormProps) {
   const { toast } = useToast();
   const { company } = useUser();
@@ -88,12 +102,7 @@ export function AddLogEntryForm({ student, onSubmit, booking }: AddLogEntryFormP
 
   const form = useForm<LogEntryFormValues>({
     resolver: zodResolver(logEntryFormSchema),
-    defaultValues: {
-      date: new Date(),
-      trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
-      startHobbs: 0,
-      endHobbs: 0,
-    },
+    defaultValues: defaultFormValues as LogEntryFormValues,
   });
 
   const { fields, append, remove } = useFieldArray({
