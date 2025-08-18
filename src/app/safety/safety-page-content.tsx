@@ -484,7 +484,11 @@ export function SafetyPageContent({
         toast({ title: 'Report Reactivated', description: 'The safety report has been moved back to active reports.' });
     } catch (error) {
         console.error("Error reactivating report:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not reactivate the report.' });
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'Could not reactivate the report.'
+        });
     }
   };
 
@@ -659,7 +663,7 @@ export function SafetyPageContent({
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="moc">Management of Change</TabsTrigger>
+              <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
