@@ -90,7 +90,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const canEdit = currentUser?.permissions.includes('Super User') || currentUser?.permissions.includes('Students:Edit');
     
     const sortedLogs = useMemo(() => {
-        return student?.trainingLogs?.sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime()) || [];
+        if (!student?.trainingLogs || !Array.isArray(student.trainingLogs)) {
+            return [];
+        }
+        // Create a new array before sorting to avoid mutating the state directly
+        return [...student.trainingLogs].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
     }, [student?.trainingLogs]);
     
     const totalFlightHours = useMemo(() => {
@@ -117,12 +121,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
     
-    const handleUpdate = async (updateData: Partial<StudentUser>) => {
+    const handleUpdate = async (updateData: Partial<StudentUser>, localUpdate?: Partial<StudentUser>) => {
         if (!student || !company) return;
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
         try {
             await updateDoc(studentRef, updateData);
-            setStudent(prev => prev ? { ...prev, ...updateData } : null);
+            // Use the localUpdate object for optimistic update if provided, otherwise use updateData
+            setStudent(prev => prev ? { ...prev, ...(localUpdate || updateData) } : null);
         } catch (error) {
             console.error("Failed to update student:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes.' });
@@ -139,10 +144,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleAddEndorsement = (newEndorsement: Omit<Endorsement, 'id'>) => {
         const endorsementWithId: Endorsement = { ...newEndorsement, id: `endorsement-${Date.now()}` };
-        handleUpdate({ endorsements: arrayUnion(endorsementWithId) });
+        
+        // Prepare local state update
+        const updatedEndorsements = [...(student?.endorsements || []), endorsementWithId];
+        
+        // Prepare Firestore update
+        const firestoreUpdate = { endorsements: arrayUnion(endorsementWithId) };
+
+        handleUpdate(firestoreUpdate, { endorsements: updatedEndorsements });
     };
 
-    const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string) => {
+    const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
         if (!company || !student) return;
 
         const entryWithId: TrainingLogEntry = { ...newLogEntry, id: `log-${Date.now()}` };
@@ -181,19 +193,27 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             }
         }
         
-        const updateData: Partial<StudentUser> = {
+        const localLogs = [...(student.trainingLogs || []), entryWithId];
+        const localUpdate: Partial<StudentUser> = {
+            trainingLogs: localLogs,
+            flightHours: newTotalHours,
+            milestoneNotificationsSent: [...(student.milestoneNotificationsSent || []), ...newNotifications]
+        };
+        
+        const firestoreUpdate: Partial<StudentUser> = {
             trainingLogs: arrayUnion(entryWithId),
             flightHours: newTotalHours,
             milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
 
+
         if (fromBookingId) {
-            const updatedPendingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
-            updateData.pendingBookingIds = updatedPendingIds;
+            localUpdate.pendingBookingIds = student?.pendingBookingIds?.filter(id => id !== fromBookingId) || [];
+            firestoreUpdate.pendingBookingIds = localUpdate.pendingBookingIds;
             setPendingBookings(prev => prev.filter(b => b.id !== fromBookingId));
         }
 
-        await handleUpdate(updateData);
+        await handleUpdate(firestoreUpdate, localUpdate);
 
         if (fromBookingId) {
             const bookingRef = doc(db, `companies/${company.id}/bookings`, fromBookingId);
