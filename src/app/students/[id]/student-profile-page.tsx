@@ -598,7 +598,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <DialogTrigger asChild>
                                             <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                                Lesson/Flight Debrief
+                                                Add Debrief
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
@@ -624,7 +624,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
                                                     <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
                                                 </div>
-                                                <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Log Flight</span>
+                                                <span className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}>Instructor Debrief</span>
                                             </button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl">
