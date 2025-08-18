@@ -729,9 +729,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 Aircraft: {log.aircraft} | Instructor: {log.instructorName}
                                             </CardDescription>
                                         </div>
-                                         <Button variant="ghost" size="icon" onClick={() => handleEditLog(log)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid grid-cols-4 gap-4 text-center py-2">
