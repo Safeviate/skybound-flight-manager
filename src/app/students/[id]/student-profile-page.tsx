@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -623,41 +624,56 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                     </CardHeader>
                     <CardContent>
-                       <div className="border rounded-md overflow-hidden">
+                       <div className="border rounded-md overflow-x-auto">
                             <Table className="whitespace-nowrap">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[10%]">Date</TableHead>
-                                        <TableHead>Aircraft</TableHead>
-                                        <TableHead>Departure</TableHead>
-                                        <TableHead>Arrival</TableHead>
-                                        <TableHead>SE Time</TableHead>
-                                        <TableHead>ME Time</TableHead>
-                                        <TableHead>Dual Time</TableHead>
-                                        <TableHead>PIC Time</TableHead>
-                                        <TableHead>Night Time</TableHead>
-                                        <TableHead>Instructor</TableHead>
+                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
+                                        <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
+                                        <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
+                                        <TableHead className="p-1 border-r text-center" colSpan={2}>4<br/>AIRCRAFT</TableHead>
+                                        <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
+                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
+                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
+                                        <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
+                                        <TableHead className="p-1 text-center" colSpan={2}>8<br/>LANDINGS</TableHead>
+                                    </TableRow>
+                                    <TableRow>
+                                        <TableHead className="p-1 border-r text-center">PLACE</TableHead>
+                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                        <TableHead className="p-1 border-r text-center">PLACE</TableHead>
+                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                        <TableHead className="p-1 border-r text-center">MAKE, MODEL, VARIANT</TableHead>
+                                        <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
+                                        <TableHead className="p-1 border-r text-center">SE</TableHead>
+                                        <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                        <TableHead className="p-1 border-r text-center">DAY</TableHead>
+                                        <TableHead className="p-1 text-center">NIGHT</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {sortedLogs.length > 0 ? (
                                         sortedLogs.map(log => (
                                             <TableRow key={log.id}>
-                                                <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                <TableCell>{log.aircraft}</TableCell>
-                                                <TableCell>{log.departure || 'N/A'}</TableCell>
-                                                <TableCell>{log.arrival || 'N/A'}</TableCell>
-                                                <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
-                                                <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
-                                                <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
-                                                <TableCell>{log.instructorName}</TableCell>
+                                                <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
+                                                <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
+                                                <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
+                                                <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
+                                                <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                <TableCell className="border-r">{log.instructorName}</TableCell>
+                                                <TableCell className="border-r">1</TableCell>
+                                                <TableCell>0</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="h-24 text-center">No logbook entries found.</TableCell>
+                                            <TableCell colSpan={14} className="h-24 text-center">No logbook entries found.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
