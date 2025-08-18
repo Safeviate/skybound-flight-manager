@@ -157,7 +157,8 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                                             type="number" 
                                             step="0.1" 
                                             placeholder="Enter closing Tacho" 
-                                            {...field} 
+                                            {...field}
+                                            value={field.value ?? ''}
                                             onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                             className="flex-1" 
                                         />
@@ -220,7 +221,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Fuel Uplift (Litres)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <Input type="number" step="0.1" placeholder="e.g., 50.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -231,7 +232,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Oil Uplift (Quarts)</FormLabel>
-                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
+                                <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} />
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -312,3 +313,5 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     </Form>
   )
 }
+
+    
