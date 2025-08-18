@@ -41,33 +41,23 @@ const exerciseLogSchema = z.object({
   comment: z.string().optional(),
 });
 
-const logEntryFormSchema = z.object({
+const debriefFormSchema = z.object({
   date: z.date({
     required_error: 'A date is required.',
   }),
   aircraft: z.string({
     required_error: 'Please select an aircraft.',
   }),
-  departure: z.string().optional(),
-  arrival: z.string().optional(),
-  departureTime: z.string().optional(),
-  arrivalTime: z.string().optional(),
   startHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
   endHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
   }),
-  singleEngineTime: z.coerce.number().optional(),
-  multiEngineTime: z.coerce.number().optional(),
-  dualTime: z.coerce.number().optional(),
-  singleTime: z.coerce.number().optional(),
-  nightTime: z.coerce.number().optional(),
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
   trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
-  weatherConditions: z.string().optional(),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
   studentSignature: z.string().min(1, 'Student signature is required.'),
 }).refine(data => data.endHobbs > data.startHobbs, {
@@ -75,50 +65,38 @@ const logEntryFormSchema = z.object({
     path: ['endHobbs'],
 });
 
-type LogEntryFormValues = z.infer<typeof logEntryFormSchema>;
+type DebriefFormValues = z.infer<typeof debriefFormSchema>;
 
-interface AddLogEntryFormProps {
+interface AddDebriefFormProps {
     student: User;
     onSubmit: (data: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => void;
     booking?: Booking;
     logToEdit?: TrainingLogEntry | null;
 }
 
-const defaultFormValues: Partial<LogEntryFormValues> = {
+const defaultFormValues: Partial<DebriefFormValues> = {
     date: new Date(),
     aircraft: '',
-    departure: '',
-    arrival: '',
-    departureTime: '',
-    arrivalTime: '',
     startHobbs: 0,
     endHobbs: 0,
     instructorName: '',
     trainingExercises: [{ exercise: '', rating: 0, comment: '' }],
-    weatherConditions: '',
     instructorSignature: '',
     studentSignature: '',
-    singleEngineTime: 0,
-    multiEngineTime: 0,
-    dualTime: 0,
-    singleTime: 0,
-    nightTime: 0,
 };
 
-export function AddLogEntryForm({ student, onSubmit, booking, logToEdit }: AddLogEntryFormProps) {
+export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDebriefFormProps) {
   const { toast } = useToast();
-  const { company } = useUser();
-  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
-
+  
   const logEntryForBooking = useMemo(() => {
     if (logToEdit) return logToEdit;
     if (!booking || !booking.pendingLogEntryId || !student.trainingLogs) return null;
     return student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
   }, [booking, student.trainingLogs, logToEdit]);
 
-  const form = useForm<LogEntryFormValues>({
-    resolver: zodResolver(logEntryFormSchema),
-    defaultValues: defaultFormValues as LogEntryFormValues,
+  const form = useForm<DebriefFormValues>({
+    resolver: zodResolver(debriefFormSchema),
+    defaultValues: defaultFormValues as DebriefFormValues,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -141,52 +119,17 @@ export function AddLogEntryForm({ student, onSubmit, booking, logToEdit }: AddLo
                   startHobbs: booking.startHobbs || 0,
                   endHobbs: booking.endHobbs || 0,
                   instructorName: booking.instructor || '',
-                  departure: booking.departure || '',
-                  arrival: booking.arrival || '',
-                  departureTime: booking.startTime,
-                  arrivalTime: booking.endTime,
                   trainingExercises: logEntryForBooking?.trainingExercises.length ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
               };
           }
           return defaultFormValues;
       };
 
-      form.reset(getInitialValues() as LogEntryFormValues);
+      form.reset(getInitialValues() as DebriefFormValues);
   }, [booking, logToEdit, logEntryForBooking, form]);
 
 
-  const { watch, setValue } = form;
-  const startHobbs = watch('startHobbs');
-  const endHobbs = watch('endHobbs');
-
-  const lessonDuration = useMemo(() => {
-    if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
-        return endHobbs - startHobbs;
-    }
-    return 0;
-  }, [startHobbs, endHobbs]);
-  
-  const totalFlightHours = useMemo(() => {
-      const existingHours = student?.trainingLogs?.reduce((total, log) => {
-          if (logEntryForBooking && log.id === logEntryForBooking.id) {
-              return total;
-          }
-          return total + (log.flightDuration || 0);
-      }, 0) || 0;
-      return existingHours;
-  }, [student?.trainingLogs, logEntryForBooking]);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-        if (!company) return;
-        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
-        const acSnapshot = await getDocs(acQuery);
-        setAircraftList(acSnapshot.docs.map(doc => doc.data() as Aircraft));
-    };
-    fetchData();
-  }, [company]);
-
-  function handleFormSubmit(data: LogEntryFormValues) {
+  function handleFormSubmit(data: DebriefFormValues) {
     const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
     
     const newEntry = {
@@ -205,117 +148,11 @@ export function AddLogEntryForm({ student, onSubmit, booking, logToEdit }: AddLo
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ScrollArea className="h-[70vh] pr-4">
             <div className="space-y-6">
-                {!booking && (
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Flight Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="date"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Date</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                    >
-                                                    {field.value ? (
-                                                        format(field.value, "PPP")
-                                                    ) : (
-                                                        <span>Pick a date</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={(date) =>
-                                                        date > new Date() || date < new Date("1900-01-01")
-                                                    }
-                                                    initialFocus
-                                                />
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="aircraft"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Aircraft</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Select aircraft..." /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {aircraftList.map(ac => <SelectItem key={ac.id} value={ac.tailNumber}>{ac.tailNumber} ({ac.model})</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="departure" render={({ field }) => (<FormItem><FormLabel>Departure</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="arrival" render={({ field }) => (<FormItem><FormLabel>Arrival</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                             <div className="grid grid-cols-2 gap-4">
-                                <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                            <p className="text-right text-sm font-semibold">Flight Duration: {lessonDuration.toFixed(1)} hrs</p>
-                        </CardContent>
-                    </Card>
-                )}
                 <Card>
                     <CardHeader>
                         <CardTitle>Training Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <FormField
-                                control={form.control}
-                                name="instructorName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Instructor Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g., John Doe" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="weatherConditions"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Weather Conditions</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., VMC, Wind 270/10kts" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <Separator />
                         <div className="space-y-4">
                             <FormLabel>Exercises Covered</FormLabel>
                             {fields.map((field, index) => (

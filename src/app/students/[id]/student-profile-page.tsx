@@ -16,7 +16,8 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { AddEndorsementForm } from './add-endorsement-form';
 import { getExpiryBadge } from '@/lib/utils.tsx';
-import { AddLogEntryForm } from './add-log-entry-form';
+import { AddDebriefForm } from './add-debrief-entry-form';
+import { AddLogbookEntryForm } from './add-logbook-entry-form';
 import { useUser } from '@/context/user-provider';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -46,7 +47,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-    const [isAddLogEntryOpen, setIsAddLogEntryOpen] = useState(false);
+    const [isDebriefOpen, setIsDebriefOpen] = useState(false);
+    const [isLogbookEditOpen, setIsLogbookEditOpen] = useState(false);
     const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
     
@@ -151,7 +153,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         handleUpdate({ endorsements: updatedEndorsements });
     };
 
-    const handleAddLogEntry = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
+    const handleDebriefSubmit = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
         if (!company || !student) return;
 
         let updatedLogs = [...(student.trainingLogs || [])];
@@ -216,16 +218,48 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
         await handleUpdate(firestoreUpdate);
         
-        setIsAddLogEntryOpen(false);
+        setIsDebriefOpen(false);
         setLogToEdit(null);
         setBookingForDebrief(null);
 
         toast({
-            title: logIdToUpdate ? 'Logbook Updated' : 'Instructor Debrief Submitted',
+            title: logIdToUpdate ? 'Debrief Updated' : 'Instructor Debrief Submitted',
             description: 'The training record has been successfully saved.',
         });
     };
     
+    const handleLogbookUpdate = (newLogEntry: Omit<TrainingLogEntry, 'id' | 'trainingExercises'>, logIdToUpdate?: string) => {
+        if (!student) return;
+        
+        let updatedLogs = [...(student.trainingLogs || [])];
+        const logId = logIdToUpdate || `log-${Date.now()}`;
+
+        if (logIdToUpdate) {
+            const index = updatedLogs.findIndex(log => log.id === logIdToUpdate);
+            if (index !== -1) {
+                // Keep the existing exercises, just update the flight details
+                const exercises = updatedLogs[index].trainingExercises;
+                updatedLogs[index] = { ...newLogEntry, id: logId, trainingExercises: exercises };
+            }
+        } else {
+             updatedLogs.push({ ...newLogEntry, id: logId, trainingExercises: [] });
+        }
+        
+        const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
+
+        handleUpdate({
+            trainingLogs: updatedLogs,
+            flightHours: newTotalHours,
+        });
+
+        setIsLogbookEditOpen(false);
+        setLogToEdit(null);
+        toast({
+            title: 'Logbook Updated',
+            description: 'The logbook entry has been successfully updated.',
+        });
+    };
+
     const handleDebriefClick = (booking: Booking) => {
         if (!booking.pendingLogEntryId || !student?.trainingLogs) {
              toast({
@@ -241,7 +275,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
             setBookingForDebrief(booking);
-            setIsAddLogEntryOpen(true);
+            setIsDebriefOpen(true);
         } else {
             toast({
                 variant: 'destructive',
@@ -253,8 +287,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const handleEditLogEntry = (log: TrainingLogEntry) => {
         setLogToEdit(log);
-        setBookingForDebrief(null);
-        setIsAddLogEntryOpen(true);
+        setIsLogbookEditOpen(true);
     };
     
     const handleDeleteDebrief = async (booking: Booking) => {
@@ -399,7 +432,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleAddNewLog = () => {
         setLogToEdit(null);
         setBookingForDebrief(null);
-        setIsAddLogEntryOpen(true);
+        setIsLogbookEditOpen(true);
     };
 
     if (userLoading) {
@@ -420,27 +453,34 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
   return (
       <main className="flex-1 p-4 md:p-8 space-y-8">
-        <div className="border-4 border-gray-500 p-4 bg-gray-100 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Main Page Container</div>
-            
-            <Dialog open={isAddLogEntryOpen} onOpenChange={setIsAddLogEntryOpen}>
+            <Dialog open={isDebriefOpen} onOpenChange={setIsDebriefOpen}>
                 <DialogContent className="max-w-4xl">
                     <DialogHeader>
-                        <DialogTitle>
-                           {bookingForDebrief ? 'Instructor Debrief' : 'Logbook Edit'}
-                        </DialogTitle>
+                        <DialogTitle>Instructor Debrief</DialogTitle>
                         <DialogDescription>
-                            {bookingForDebrief 
-                                ? `Record details of a training session for ${student.name}.`
-                                : `Editing a logbook entry for ${student.name}.`
-                            }
+                            Record details of the training session for {student.name}.
                         </DialogDescription>
                     </DialogHeader>
-                    <AddLogEntryForm 
+                    <AddDebriefForm 
                         student={student} 
-                        onSubmit={handleAddLogEntry} 
+                        onSubmit={handleDebriefSubmit} 
                         booking={bookingForDebrief || undefined} 
                         logToEdit={logToEdit}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isLogbookEditOpen} onOpenChange={setIsLogbookEditOpen}>
+                 <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Logbook Edit</DialogTitle>
+                        <DialogDescription>
+                            Correcting a historical logbook entry for {student.name}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AddLogbookEntryForm
+                         onSubmit={handleLogbookUpdate}
+                         logToEdit={logToEdit}
                     />
                 </DialogContent>
             </Dialog>
@@ -451,12 +491,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <TabsTrigger value="logbook">Logbook</TabsTrigger>
                 </TabsList>
                 <TabsContent value="profile" className="mt-6">
-                     <div className="border-4 border-blue-500 p-4 bg-blue-50 relative">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Profile Tab</div>
                         <div className="grid gap-8 lg:grid-cols-3">
                             <div className="lg:col-span-1 space-y-8">
-                                <div className="border-4 border-green-500 p-4 bg-green-50 relative">
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Left Column</div>
                                     <Card>
                                         <CardHeader>
                                             <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
@@ -492,8 +528,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
                                     {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
 
-                                     <div className="border-4 border-purple-500 p-4 bg-purple-50 relative">
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Endorsements Card</div>
                                         <Card>
                                             <CardHeader>
                                                 <div className="flex flex-row items-center justify-between">
@@ -550,11 +584,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 </Table>
                                             </CardContent>
                                         </Card>
-                                     </div>
 
                                     {canEdit && (
-                                        <div className="border-4 border-red-500 p-4 bg-red-50 relative">
-                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Admin Actions Card</div>
                                             <Card>
                                                 <CardHeader>
                                                     <CardTitle>Admin Actions</CardTitle>
@@ -581,13 +612,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     </AlertDialog>
                                                 </CardContent>
                                             </Card>
-                                        </div>
                                     )}
                                 </div>
-                            </div>
                             <div className="lg:col-span-2 space-y-6">
-                                <div className="border-4 border-orange-500 p-4 bg-orange-50 relative">
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Right Column</div>
                                     <Card>
                                         <CardHeader>
                                             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
@@ -640,14 +667,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         )}
                                         </CardContent>
                                     </Card>
-                                </div>
                             </div>
                         </div>
-                    </div>
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
-                    <div className="border-4 border-indigo-500 p-4 bg-indigo-50 relative">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 px-3 py-0.5 text-sm font-semibold rounded-full text-white">Logbook Tab</div>
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
@@ -729,10 +752,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                </div>
                             </CardContent>
                         </Card>
-                    </div>
                 </TabsContent>
             </Tabs>
-        </div>
       </main>
   );
 }

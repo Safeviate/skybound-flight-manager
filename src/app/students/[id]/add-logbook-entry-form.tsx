@@ -1,0 +1,212 @@
+
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils.tsx';
+import { format, parseISO } from 'date-fns';
+import type { Aircraft, TrainingLogEntry, User } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const logbookFormSchema = z.object({
+  date: z.date({
+    required_error: 'A date is required.',
+  }),
+  aircraft: z.string({
+    required_error: 'Please select an aircraft.',
+  }),
+  departure: z.string().optional(),
+  arrival: z.string().optional(),
+  departureTime: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  startHobbs: z.coerce.number().min(0),
+  endHobbs: z.coerce.number().min(0),
+  singleEngineTime: z.coerce.number().optional(),
+  multiEngineTime: z.coerce.number().optional(),
+  dualTime: z.coerce.number().optional(),
+  singleTime: z.coerce.number().optional(),
+  nightTime: z.coerce.number().optional(),
+  instructorName: z.string({
+    required_error: 'Please enter the instructor\'s name.',
+  }),
+}).refine(data => data.endHobbs > data.startHobbs, {
+    message: 'End Hobbs must be greater than Start Hobbs.',
+    path: ['endHobbs'],
+});
+
+type LogbookFormValues = z.infer<typeof logbookFormSchema>;
+
+interface AddLogbookEntryFormProps {
+    onSubmit: (data: Omit<TrainingLogEntry, 'id' | 'trainingExercises'>, logIdToUpdate?: string) => void;
+    logToEdit?: TrainingLogEntry | null;
+}
+
+const defaultFormValues: Partial<LogbookFormValues> = {
+    date: new Date(),
+    aircraft: '',
+    departure: '',
+    arrival: '',
+    departureTime: '',
+    arrivalTime: '',
+    startHobbs: 0,
+    endHobbs: 0,
+    instructorName: '',
+    singleEngineTime: 0,
+    multiEngineTime: 0,
+    dualTime: 0,
+    singleTime: 0,
+    nightTime: 0,
+};
+
+export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryFormProps) {
+  const { company } = useUser();
+  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+
+  const form = useForm<LogbookFormValues>({
+    resolver: zodResolver(logbookFormSchema),
+    defaultValues: defaultFormValues as LogbookFormValues,
+  });
+
+  useEffect(() => {
+    if (logToEdit) {
+      form.reset({
+        ...logToEdit,
+        date: parseISO(logToEdit.date),
+      });
+    } else {
+        form.reset(defaultFormValues as LogbookFormValues);
+    }
+  }, [logToEdit, form]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!company) return;
+        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
+        const acSnapshot = await getDocs(acQuery);
+        setAircraftList(acSnapshot.docs.map(doc => doc.data() as Aircraft));
+    };
+    fetchData();
+  }, [company]);
+
+  function handleFormSubmit(data: LogbookFormValues) {
+    const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const newEntry = {
+      ...data,
+      flightDuration: duration,
+      date: format(data.date, 'yyyy-MM-dd'),
+    };
+    onSubmit(newEntry, logToEdit?.id);
+    form.reset();
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <ScrollArea className="h-[70vh] pr-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Date</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                                    >
+                                    {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date > new Date()}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="aircraft"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Aircraft</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select aircraft..." /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {aircraftList.map(ac => <SelectItem key={ac.id} value={ac.tailNumber}>{ac.tailNumber} ({ac.model})</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="departure" render={({ field }) => (<FormItem><FormLabel>Departure</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="arrival" render={({ field }) => (<FormItem><FormLabel>Arrival</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+                 <FormField control={form.control} name="singleEngineTime" render={({ field }) => (<FormItem><FormLabel>SE Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="multiEngineTime" render={({ field }) => (<FormItem><FormLabel>ME Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="dualTime" render={({ field }) => (<FormItem><FormLabel>Dual Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="singleTime" render={({ field }) => (<FormItem><FormLabel>Solo Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="nightTime" render={({ field }) => (<FormItem><FormLabel>Night Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+             <FormField
+                control={form.control}
+                name="instructorName"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Instructor Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+          </div>
+        </ScrollArea>
+        <div className="flex justify-end pt-4">
+          <Button type="submit">Save Log Entry</Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
