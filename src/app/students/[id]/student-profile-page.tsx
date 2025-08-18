@@ -427,7 +427,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <DialogContent className="max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {logToEdit ? 'Edit Logbook Entry' : 'Instructor Debrief Entry'}
+                           {logToEdit ? 'Logbook Edit' : 'Instructor Debrief'}
                         </DialogTitle>
                         <DialogDescription>
                             {logToEdit ? `Editing a logbook entry for ${student.name}.` : `Record details of a training session for ${student.name}.`}
