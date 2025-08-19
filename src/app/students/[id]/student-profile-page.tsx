@@ -694,10 +694,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>AIRCRAFT</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>DEPARTURE</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>4<br/>ARRIVAL</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>REMARKS</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>AIRCRAFT</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '300px'}}>REMARKS</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
@@ -723,7 +723,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 sortedLogs.map(log => (
                                                     <TableRow key={log.id}>
                                                         <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                        <TableCell className="border-r">{log.aircraft}</TableCell>
                                                         <TableCell className="border-r">{log.aircraft}</TableCell>
                                                         <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
