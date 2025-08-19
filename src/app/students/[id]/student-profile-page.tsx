@@ -695,14 +695,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center">DATE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
                                                 <TableHead className="p-1 border-r text-center">REMARKS</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Navaids</TableHead>
                                                 <TableHead className="p-1 border-r text-center">SE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">ME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">FTSD</TableHead>
+                                                <TableHead className="p-1 border-r text-center">FSTD</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Solo</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Dual</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Night</TableHead>
@@ -729,7 +728,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -745,10 +743,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.instructorName}</TableCell>
                                                         <TableCell className="border-r">{log.remarks}</TableCell>
-                                                        <TableCell className="border-r"></TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.ftsdTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
