@@ -615,63 +615,66 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
-                                    <Card className="border-green-500 border-2">
-                                        <CardHeader>
-                                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                                                <div className="space-y-1">
-                                                    <CardTitle>Pending Instructor Debriefs</CardTitle>
-                                                    <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
+                                    <div className="border-4 border-green-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pending Instructor Debriefs</div>
+                                        <Card>
+                                            <CardHeader>
+                                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                                    <div className="space-y-1">
+                                                        <CardTitle>Pending Instructor Debriefs</CardTitle>
+                                                        <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="space-y-2">
-                                        {pendingBookings.length > 0 ? (
-                                            pendingBookings.map(booking => (
-                                                <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
-                                                    <div className="flex-1 text-left">
-                                                        <div className="space-y-1">
-                                                            <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                            <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                            </CardHeader>
+                                            <CardContent className="space-y-2">
+                                            {pendingBookings.length > 0 ? (
+                                                pendingBookings.map(booking => (
+                                                    <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                                        <div className="flex-1 text-left">
+                                                            <div className="space-y-1">
+                                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief Edit</Button>
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="shrink-0">
+                                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                                    </Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            This will remove the pending debrief and its draft log entry. This action cannot be undone.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief Edit</Button>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="shrink-0">
-                                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        This will remove the pending debrief and its draft log entry. This action cannot be undone.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                                                    <p className="text-muted-foreground">
+                                                        No flights awaiting debrief.
+                                                    </p>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                                                <p className="text-muted-foreground">
-                                                    No flights awaiting debrief.
-                                                </p>
-                                            </div>
-                                        )}
-                                        </CardContent>
-                                    </Card>
+                                            )}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                             </div>
                         </div>
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
-                     <div className="border-4 border-blue-500 p-4 rounded-lg">
+                     <div className="border-4 border-blue-500 p-4 rounded-lg max-w-[1200px] mx-auto">
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
