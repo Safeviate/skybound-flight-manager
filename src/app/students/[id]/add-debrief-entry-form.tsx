@@ -60,6 +60,8 @@ const debriefFormSchema = z.object({
   trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
   studentSignature: z.string().min(1, 'Student signature is required.'),
+  departure: z.string().optional(),
+  arrival: z.string().optional(),
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
@@ -120,6 +122,8 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                   endHobbs: booking.endHobbs || 0,
                   instructorName: booking.instructor || '',
                   trainingExercises: logEntryForBooking?.trainingExercises.length ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
+                  departure: logEntryForBooking?.departure,
+                  arrival: logEntryForBooking?.arrival,
               };
           }
           return defaultFormValues;

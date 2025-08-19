@@ -226,9 +226,11 @@ export function AircraftPageContent({
                         const newLogEntryId = `log-${Date.now()}`;
                         const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
                             date: bookingForChecklist.date,
-                            aircraft: selectedAircraftForChecklist.model,
+                            aircraft: `${selectedAircraftForChecklist.make} ${selectedAircraftForChecklist.model}`,
                             departure: bookingForChecklist.departure,
                             arrival: bookingForChecklist.arrival,
+                            departureTime: bookingForChecklist.startTime,
+                            arrivalTime: bookingForChecklist.endTime,
                             startHobbs: bookingForChecklist.startHobbs || 0,
                             endHobbs: data.hobbs,
                             flightDuration: flightDuration,

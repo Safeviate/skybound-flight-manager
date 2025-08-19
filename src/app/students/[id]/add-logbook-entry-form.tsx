@@ -171,7 +171,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Select aircraft..." /></SelectTrigger></FormControl>
                                 <SelectContent>
-                                    {aircraftList.map(ac => <SelectItem key={ac.id} value={ac.tailNumber}>{ac.tailNumber} ({ac.model})</SelectItem>)}
+                                    {aircraftList.map(ac => <SelectItem key={ac.id} value={`${ac.make} ${ac.model}`}>{ac.tailNumber} ({ac.make} {ac.model})</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <FormMessage />
