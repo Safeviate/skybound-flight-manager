@@ -706,7 +706,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>ACTIONS</TableHead>
                                             </TableRow>
                                             <TableRow>
-                                                <TableHead className="p-1 border-r text-center">MAKE, MODEL, VARIANT</TableHead>
+                                                <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
                                                 <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
                                                 <TableHead className="p-1 border-r text-center">PLACE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
@@ -729,7 +729,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
-                                                        <TableCell className="border-r">{log.trainingExercises.map(ex => ex.exercise).join(', ')}</TableCell>
+                                                        <TableCell className="border-r">{log.remarks}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
@@ -746,7 +746,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={17} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
