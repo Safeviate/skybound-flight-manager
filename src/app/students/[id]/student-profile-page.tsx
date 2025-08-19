@@ -712,7 +712,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableHead className="border-r border-green-500" style={{ width: '80px' }}>DEPARTURE</TableHead>
                                                         <TableHead className="border-r border-green-500" style={{ width: '80px' }}>ARRIVAL</TableHead>
                                                         <TableHead className="border-r border-green-500" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
-                                                        <TableHead className="border-r border-green-500" style={{ width: '600px' }}>REMARKS</TableHead>
+                                                        <TableHead className="border-r border-green-500" style={{ width: '400px' }}>REMARKS</TableHead>
                                                         <TableHead className="border-r border-green-500" style={{ width: '60px' }}>SE</TableHead>
                                                         <TableHead className="border-r border-green-500" style={{ width: '60px' }}>ME</TableHead>
                                                         <TableHead className="border-r border-green-500" style={{ width: '60px' }}>FSTD</TableHead>
