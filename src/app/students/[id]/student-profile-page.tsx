@@ -693,13 +693,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>DATE<br/>(dd/mm/yy)</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>NAME(S)<br/>PIC</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '450px'}}>REMARKS</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>SINGLE PILOT TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
                                             </TableRow>
