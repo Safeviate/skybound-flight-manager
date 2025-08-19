@@ -728,22 +728,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
                                                             <TableRow key={log.id}>
-                                                                <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                                <TableCell className="border-r">{log.aircraft?.split(' ')[1]}</TableCell>
-                                                                <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
-                                                                <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r text-center">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell className="border-r text-center">{log.aircraft?.split(' ')[0]}</TableCell>
+                                                                <TableCell className="border-r text-center">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                <TableCell className="border-r text-center">{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r text-center">{log.arrival || 'N/A'}</TableCell>
                                                                 <TableCell className="border-r">{log.instructorName}</TableCell>
                                                                 <TableCell className="whitespace-pre-wrap border-r">{log.remarks}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
-                                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                <TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                <TableCell className="border-r text-center">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell className="text-center">
                                                                     <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
                                                                         <Edit className="h-4 w-4" />
                                                                     </Button>
