@@ -694,7 +694,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>AIRCRAFT</TableHead>
+                                                <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '450px'}}>REMARKS</TableHead>
@@ -702,8 +702,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
-                                                <TableHead className="p-1 text-center" colSpan={1}>8<br/>LANDINGS</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>ACTIONS</TableHead>
                                             </TableRow>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
@@ -714,7 +712,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center">SE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">ME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">DAY/NIGHT</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -722,7 +719,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 sortedLogs.map(log => (
                                                     <TableRow key={log.id}>
                                                         <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                        <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                        <TableCell className="border-r" colSpan={2}>{log.aircraft}</TableCell>
                                                         <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
@@ -733,17 +730,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                         <TableCell className="border-r">{log.instructorName}</TableCell>
-                                                        <TableCell className="border-r">1</TableCell>
-                                                        <TableCell>
-                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                        </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={17} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={13} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
