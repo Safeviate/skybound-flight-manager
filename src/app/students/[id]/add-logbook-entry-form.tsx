@@ -187,11 +187,11 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                 <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="endHobbs" render={({ field }) => (<FormItem><FormLabel>End Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                 <FormField control={form.control} name="singleTime" render={({ field }) => (<FormItem><FormLabel>Solo Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="dualTime" render={({ field }) => (<FormItem><FormLabel>Dual Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="singleEngineTime" render={({ field }) => (<FormItem><FormLabel>SE Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="multiEngineTime" render={({ field }) => (<FormItem><FormLabel>ME Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="dualTime" render={({ field }) => (<FormItem><FormLabel>Dual Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="singleTime" render={({ field }) => (<FormItem><FormLabel>Solo Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="nightTime" render={({ field }) => (<FormItem><FormLabel>Night Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
              <FormField

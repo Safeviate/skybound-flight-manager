@@ -693,26 +693,35 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>DATE</TableHead>
+                                                <TableHead className="p-1 border-r text-center">DATE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>NAME(S) PIC</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '600px'}}>REMARKS</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>NAVAIDS</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>SINGLE PILOT TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
+                                                <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
+                                                <TableHead className="p-1 border-r text-center" style={{width: '600px'}}>REMARKS</TableHead>
+                                                <TableHead className="p-1 border-r text-center">NAVAIDS</TableHead>
+                                                <TableHead className="p-1 border-r text-center">SE</TableHead>
+                                                <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">Solo</TableHead>
+                                                <TableHead className="p-1 border-r text-center">Dual</TableHead>
+                                                <TableHead className="p-1 border-r text-center">TOTAL TIME</TableHead>
                                             </TableRow>
                                             <TableRow>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
                                                 <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
                                                 <TableHead className="p-1 border-l border-r text-center">PLACE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center">PLACE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">SE</TableHead>
-                                                <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -731,13 +740,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r"></TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={14} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={15} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
