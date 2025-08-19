@@ -29,11 +29,13 @@ import { useState, useEffect } from 'react';
 import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
   model: z.string().min(1, 'Aircraft model is required.'),
   tailNumber: z.string().min(1, 'Aircraft registration is required.'),
+  aircraftType: z.enum(['SE', 'ME', 'FSTD']).optional(),
   hours: z.coerce.number().min(0, 'Hobbs hours must be a positive number.'),
   airworthinessExpiry: z.date().optional(),
   insuranceExpiry: z.date().optional(),
@@ -276,6 +278,28 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                 <FormMessage />
                 </FormItem>
             )}
+            />
+             <FormField
+                control={form.control}
+                name="aircraftType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Aircraft Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select aircraft type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="SE">SE</SelectItem>
+                            <SelectItem value="ME">ME</SelectItem>
+                            <SelectItem value="FSTD">FSTD</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
              <FormField
             control={form.control}

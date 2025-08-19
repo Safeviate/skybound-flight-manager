@@ -63,6 +63,7 @@ export type Aircraft = {
   tailNumber: string;
   make: string;
   model: string;
+  aircraftType?: 'SE' | 'ME' | 'FSTD';
   status: 'Available' | 'In Maintenance' | 'Booked' | 'Archived';
   hours: number;
   airworthinessExpiry: string;
