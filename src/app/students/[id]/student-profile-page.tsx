@@ -699,13 +699,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>NAME(S) PIC</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '600px'}}>REMARKS</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>NAVAIDS</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>SINGLE PILOT TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
                                             </TableRow>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
-                                                <TableHead className="p-1 text-center">REGISTRATION</TableHead>
+                                                <TableHead className="p-1 border-r text-center">REGISTRATION</TableHead>
                                                 <TableHead className="p-1 border-l border-r text-center">PLACE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center">PLACE</TableHead>
@@ -720,13 +721,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     <TableRow key={log.id}>
                                                         <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                         <TableCell className="border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                        <TableCell>{log.aircraft?.split(' ')[1]}</TableCell>
+                                                        <TableCell className="border-r">{log.aircraft?.split(' ')[1]}</TableCell>
                                                         <TableCell className="border-l border-r">{log.departure || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.instructorName}</TableCell>
                                                         <TableCell className="border-r">{log.remarks}</TableCell>
+                                                        <TableCell className="border-r"></TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
@@ -735,7 +737,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={13} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={14} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
