@@ -719,7 +719,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 sortedLogs.map(log => (
                                                     <TableRow key={log.id}>
                                                         <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                        <TableCell className="border-r" colSpan={2}>{log.aircraft}</TableCell>
+                                                        <TableCell>{log.aircraft?.split(' ')[0]}</TableCell>
+                                                        <TableCell className="border-l">{log.aircraft?.split(' ')[1]}</TableCell>
                                                         <TableCell className="border-r">{log.departure || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
