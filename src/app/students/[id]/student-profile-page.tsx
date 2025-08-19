@@ -698,7 +698,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
                                                 <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
-                                                <TableHead className="p-1 border-r text-center" style={{width: '600px'}}>REMARKS</TableHead>
+                                                <TableHead className="p-1 border-r text-center">REMARKS</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Navaids</TableHead>
                                                 <TableHead className="p-1 border-r text-center">SE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">ME</TableHead>
@@ -707,6 +707,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center">Night</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Day</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TOTAL TIME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">Actions</TableHead>
                                             </TableRow>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
@@ -717,7 +718,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center">PLACE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
+                                                <TableHead className="p-1 border-r text-center" style={{width: '600px'}}></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
@@ -750,11 +751,16 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                        <TableCell className="border-r">
+                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={17} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={18} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
@@ -768,4 +774,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
