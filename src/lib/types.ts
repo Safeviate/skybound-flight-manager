@@ -114,6 +114,7 @@ export type TrainingLogEntry = {
   studentSignature?: string;
   trainingExercises: ExerciseLog[];
   weatherConditions?: string;
+  remarks?: string;
 };
 
 export const ALL_DOCUMENTS = [

@@ -697,6 +697,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>4<br/>AIRCRAFT</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>REMARKS</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
@@ -728,6 +729,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.aircraft}</TableCell>
                                                         <TableCell className="border-r">{log.aircraft}</TableCell>
+                                                        <TableCell className="border-r">{log.trainingExercises.map(ex => ex.exercise).join(', ')}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>

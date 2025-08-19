@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +27,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 const logbookFormSchema = z.object({
   date: z.date({
@@ -48,6 +50,7 @@ const logbookFormSchema = z.object({
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
+  remarks: z.string().optional(),
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
@@ -75,6 +78,7 @@ const defaultFormValues: Partial<LogbookFormValues> = {
     dualTime: 0,
     singleTime: 0,
     nightTime: 0,
+    remarks: '',
 };
 
 export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryFormProps) {
@@ -198,6 +202,19 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                         <FormLabel>Instructor Name</FormLabel>
                         <FormControl>
                             <Input placeholder="e.g., John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="remarks"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Remarks</FormLabel>
+                        <FormControl>
+                            <Textarea placeholder="Add any remarks for this flight..." {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
