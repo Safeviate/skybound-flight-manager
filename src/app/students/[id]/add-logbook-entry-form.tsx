@@ -36,8 +36,8 @@ const logbookFormSchema = z.object({
   }),
   departure: z.string().optional(),
   arrival: z.string().optional(),
-  departureTime: z.string().optional(),
-  arrivalTime: z.string().optional(),
+  departureTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
+  arrivalTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
   startHobbs: z.coerce.number().min(0),
   endHobbs: z.coerce.number().min(0),
   singleEngineTime: z.coerce.number().optional(),
@@ -173,9 +173,11 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                     )}
                 />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="departure" render={({ field }) => (<FormItem><FormLabel>Departure</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="arrival" render={({ field }) => (<FormItem><FormLabel>Arrival</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="departure" render={({ field }) => (<FormItem><FormLabel>Departure Place</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="arrival" render={({ field }) => (<FormItem><FormLabel>Arrival Place</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="departureTime" render={({ field }) => (<FormItem><FormLabel>Departure Time</FormLabel><FormControl><Input placeholder="HH:mm" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="arrivalTime" render={({ field }) => (<FormItem><FormLabel>Arrival Time</FormLabel><FormControl><Input placeholder="HH:mm" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="startHobbs" render={({ field }) => (<FormItem><FormLabel>Start Hobbs</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
