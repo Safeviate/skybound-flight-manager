@@ -671,6 +671,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
+                     <div className="border-4 border-blue-500 p-4 rounded-lg">
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
@@ -689,86 +690,119 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 </div>
                             </CardHeader>
                             <CardContent>
-                               <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="p-1 border-r text-center">DATE</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
-                                                <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
-                                                <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
-                                                <TableHead className="p-1 border-r text-center" style={{width: '300px'}}>REMARKS</TableHead>
-                                                <TableHead className="p-1 border-r text-center">SE</TableHead>
-                                                <TableHead className="p-1 border-r text-center">ME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">FSTD</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Solo</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Dual</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Night</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Day</TableHead>
-                                                <TableHead className="p-1 border-r text-center">TOTAL TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">Actions</TableHead>
-                                            </TableRow>
-                                            <TableRow>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
-                                                <TableHead className="p-1 border-l border-r text-center">REGISTRATION</TableHead>
-                                                <TableHead className="p-1 border-l border-r text-center">PLACE</TableHead>
-                                                <TableHead className="p-1 border-r text-center">TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center">PLACE</TableHead>
-                                                <TableHead className="p-1 border-r text-center">TIME</TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                                <TableHead className="p-1 border-r text-center"></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {sortedLogs.length > 0 ? (
-                                                sortedLogs.map(log => (
-                                                    <TableRow key={log.id}>
-                                                        <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                        <TableCell className="border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                        <TableCell className="border-r">{log.aircraft?.split(' ')[1]}</TableCell>
-                                                        <TableCell className="border-l border-r">{log.departure || 'N/A'}</TableCell>
-                                                        <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
-                                                        <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
-                                                        <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
-                                                        <TableCell className="border-r">{log.instructorName}</TableCell>
-                                                        <TableCell className="border-r">{log.remarks}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
-                                                        <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                        <TableCell className="border-r">
-                                                            <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                        </TableCell>
+                                <div className="space-y-4">
+                                    <div className="border-4 border-red-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-red-500 font-semibold text-sm">Search Component</div>
+                                        <div className="flex justify-between items-center">
+                                            <Input
+                                                placeholder="Search logs by aircraft, instructor, or comments..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="max-w-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="border-4 border-purple-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-purple-500 font-semibold text-sm">Logbook Table</div>
+                                        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="p-1 border-r text-center">DATE</TableHead>
+                                                        <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
+                                                        <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
+                                                        <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
+                                                        <TableHead className="p-1 border-r text-center" style={{width: '300px'}}>REMARKS</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">SE</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">FSTD</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">Solo</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">Dual</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">Night</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">Day</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">TOTAL TIME</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">Actions</TableHead>
                                                     </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={19} className="h-24 text-center">No logbook entries found.</TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                    <ScrollBar orientation="horizontal" />
-                               </ScrollArea>
+                                                    <TableRow>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
+                                                        <TableHead className="p-1 border-l border-r text-center">REGISTRATION</TableHead>
+                                                        <TableHead className="p-1 border-l border-r text-center">PLACE</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">PLACE</TableHead>
+                                                        <TableHead className="p-1 border-r text-center">TIME</TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                        <TableHead className="p-1 border-r text-center"></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {paginatedLogs.length > 0 ? (
+                                                        paginatedLogs.map(log => (
+                                                            <TableRow key={log.id}>
+                                                                <TableCell className="border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell className="border-r">{log.aircraft?.split(' ')[0]}</TableCell>
+                                                                <TableCell className="border-r">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                <TableCell className="border-l border-r">{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r">{log.instructorName}</TableCell>
+                                                                <TableCell className="border-r">{log.remarks}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell className="border-r">
+                                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                        <Edit className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={19} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                            <ScrollBar orientation="horizontal" />
+                                        </ScrollArea>
+                                    </div>
+                                    <div className="border-4 border-green-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pagination Controls</div>
+                                        <div className="flex items-center justify-center space-x-2">
+                                            <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
+                                                <ChevronLeft className="h-4 w-4" />
+                                                Previous
+                                            </Button>
+                                            <span className="text-sm">
+                                                Page {currentPage} of {totalPages}
+                                            </span>
+                                            <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+                                                Next
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
+                     </div>
                 </TabsContent>
             </Tabs>
       </main>
