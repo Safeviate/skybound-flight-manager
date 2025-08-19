@@ -615,7 +615,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
-                                    <Card>
+                                    <Card className="border-green-500 border-2">
                                         <CardHeader>
                                             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                                                 <div className="space-y-1">
