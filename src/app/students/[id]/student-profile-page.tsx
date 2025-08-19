@@ -706,21 +706,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <Table className="border-2 border-purple-500">
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead style={{ width: '80px' }}>DATE</TableHead>
-                                                        <TableHead style={{ width: '120px' }}>MAKE, MODEL</TableHead>
-                                                        <TableHead style={{ width: '100px' }}>REGISTRATION</TableHead>
-                                                        <TableHead style={{ width: '80px' }}>DEPARTURE</TableHead>
-                                                        <TableHead style={{ width: '80px' }}>ARRIVAL</TableHead>
-                                                        <TableHead style={{ width: '150px' }}>NAME(S) PIC</TableHead>
-                                                        <TableHead style={{ width: '600px' }}>REMARKS</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>SE</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>ME</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>FSTD</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>Solo</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>Dual</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>Night</TableHead>
-                                                        <TableHead style={{ width: '60px' }}>Day</TableHead>
-                                                        <TableHead style={{ width: '80px' }}>TOTAL TIME</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '80px' }}>DATE</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '100px' }}>REGISTRATION</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '80px' }}>DEPARTURE</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '80px' }}>ARRIVAL</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '600px' }}>REMARKS</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>SE</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>ME</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>FSTD</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>Solo</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>Dual</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>Night</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '60px' }}>Day</TableHead>
+                                                        <TableHead className="border-r border-border" style={{ width: '80px' }}>TOTAL TIME</TableHead>
                                                         <TableHead style={{ width: '80px' }}>Actions</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -728,21 +728,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
                                                             <TableRow key={log.id}>
-                                                                <TableCell>{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell>{log.aircraft?.split(' ')[0]}</TableCell>
-                                                                <TableCell>{log.aircraft?.split(' ')[1]}</TableCell>
-                                                                <TableCell>{log.departure || 'N/A'}</TableCell>
-                                                                <TableCell>{log.arrival || 'N/A'}</TableCell>
-                                                                <TableCell>{log.instructorName}</TableCell>
-                                                                <TableCell className="whitespace-pre-wrap">{log.remarks}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
-                                                                <TableCell>{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell className="border-r border-border">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell className="border-r border-border">{log.aircraft?.split(' ')[0]}</TableCell>
+                                                                <TableCell className="border-r border-border">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                <TableCell className="border-r border-border">{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r border-border">{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell className="border-r border-border">{log.instructorName}</TableCell>
+                                                                <TableCell className="whitespace-pre-wrap border-r border-border">{log.remarks}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                <TableCell className="border-r border-border">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                                 <TableCell>
                                                                     <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
                                                                         <Edit className="h-4 w-4" />
