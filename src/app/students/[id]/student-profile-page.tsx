@@ -675,7 +675,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto">
-                        <Card>
+                        <Card className="border-4 border-blue-500 p-2">
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -694,7 +694,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-center border-2 border-red-500 p-2">
                                             <Input
                                                 placeholder="Search logs by aircraft, instructor, or comments..."
                                                 value={searchTerm}
@@ -703,7 +703,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             />
                                         </div>
                                         <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                                            <Table>
+                                            <Table className="border-2 border-purple-500">
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead style={{ width: '80px' }}>DATE</TableHead>
@@ -759,7 +759,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </Table>
                                             <ScrollBar orientation="horizontal" />
                                         </ScrollArea>
-                                        <div className="flex items-center justify-center space-x-2">
+                                        <div className="flex items-center justify-center space-x-2 border-2 border-green-500 p-2">
                                             <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
                                                 <ChevronLeft className="h-4 w-4" />
                                                 Previous
