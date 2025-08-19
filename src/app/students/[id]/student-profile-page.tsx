@@ -689,8 +689,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                 </div>
                             </CardHeader>
                             <CardContent>
-                               <div className="border rounded-md overflow-x-auto">
-                                    <Table className="whitespace-nowrap">
+                               <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                                    <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>1<br/>DATE<br/>(dd/mm/yy)</TableHead>
@@ -750,7 +750,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             )}
                                         </TableBody>
                                     </Table>
-                               </div>
+                                    <ScrollBar orientation="horizontal" />
+                               </ScrollArea>
                             </CardContent>
                         </Card>
                 </TabsContent>
