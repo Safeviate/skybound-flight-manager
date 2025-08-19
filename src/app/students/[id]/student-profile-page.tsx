@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -715,12 +716,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>SE</TableHead>
                                                         <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>ME</TableHead>
                                                         <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>FSTD</TableHead>
-                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>Solo</TableHead>
-                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>Dual</TableHead>
-                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>Night</TableHead>
-                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>Day</TableHead>
-                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '80px' }}>TOTAL TIME</TableHead>
-                                                        <TableHead style={{ width: '80px' }} className="text-center align-middle">Actions</TableHead>
+                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>SOLO</TableHead>
+                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>DUAL</TableHead>
+                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>NIGHT</TableHead>
+                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '60px' }}>DAY</TableHead>
+                                                        <TableHead className="text-center break-words align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
+                                                        <TableHead style={{ width: '80px' }} className="text-center align-middle">ACTIONS</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
