@@ -716,7 +716,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableHead className="p-1 border-r text-center" colSpan={2}>ARRIVAL</TableHead>
                                                         <TableHead className="p-1 border-r text-center" colSpan={2}>DEPARTURE</TableHead>
                                                         <TableHead className="p-1 border-r text-center">NAME(S) PIC</TableHead>
-                                                        <TableHead className="p-1 border-r text-center" style={{width: '300px'}}>REMARKS</TableHead>
+                                                        <TableHead className="p-1 border-r text-center" style={{width: '600px'}}>REMARKS</TableHead>
                                                         <TableHead className="p-1 border-r text-center">SE</TableHead>
                                                         <TableHead className="p-1 border-r text-center">ME</TableHead>
                                                         <TableHead className="p-1 border-r text-center">FSTD</TableHead>
