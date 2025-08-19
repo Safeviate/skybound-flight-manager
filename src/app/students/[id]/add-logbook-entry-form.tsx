@@ -160,7 +160,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                     control={form.control}
                     name="aircraft"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                             <FormLabel>Aircraft</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Select aircraft..." /></SelectTrigger></FormControl>
