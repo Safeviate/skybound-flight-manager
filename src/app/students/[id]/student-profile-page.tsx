@@ -347,7 +347,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (student.trainingLogs && student.trainingLogs.length > 0) {
              autoTable(doc, {
                 startY: startY,
-                head: [['Date', 'Aircraft', 'Departure', 'Arrival', 'Duration', 'Instructor', 'Notes']],
+                head: [['Date', 'Aircraft', 'DEPART', 'ARRIVE', 'Duration', 'Instructor', 'Notes']],
                 body: student.trainingLogs.map(log => [
                     log.date,
                     log.aircraft,
@@ -706,22 +706,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <Table style={{ tableLayout: 'fixed' }}>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead className="text-center align-middle" style={{ width: '80px' }}>DATE</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '100px' }}>REG</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '80px' }}>DEPART</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '80px' }}>ARRIVE</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '400px' }}>REMARKS</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>SE</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>ME</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>FSTD</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>SOLO</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>DUAL</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>NIGHT</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '60px' }}>DAY</TableHead>
-                                                        <TableHead className="text-center align-middle border-l" style={{ width: '80px' }}>TIME</TableHead>
-                                                        <TableHead style={{ width: '80px' }} className="text-center align-middle">ACTIONS</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '100px' }}>REG</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
+                                                        <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
