@@ -106,6 +106,7 @@ export type TrainingLogEntry = {
   flightDuration: number;
   singleEngineTime?: number;
   multiEngineTime?: number;
+  ftsdTime?: number;
   dualTime?: number;
   singleTime?: number;
   nightTime?: number;

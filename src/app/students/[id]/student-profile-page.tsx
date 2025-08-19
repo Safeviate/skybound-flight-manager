@@ -702,6 +702,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center">Navaids</TableHead>
                                                 <TableHead className="p-1 border-r text-center">SE</TableHead>
                                                 <TableHead className="p-1 border-r text-center">ME</TableHead>
+                                                <TableHead className="p-1 border-r text-center">FTSD</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Solo</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Dual</TableHead>
                                                 <TableHead className="p-1 border-r text-center">Night</TableHead>
@@ -719,6 +720,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center">TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center" style={{width: '600px'}}></TableHead>
+                                                <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
                                                 <TableHead className="p-1 border-r text-center"></TableHead>
@@ -746,6 +748,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r"></TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                        <TableCell className="border-r">{formatDecimalTime(log.ftsdTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.nightTime)}</TableCell>
@@ -760,7 +763,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={18} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                    <TableCell colSpan={19} className="h-24 text-center">No logbook entries found.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>

@@ -44,6 +44,7 @@ const logbookFormSchema = z.object({
   endHobbs: z.coerce.number().min(0),
   singleEngineTime: z.coerce.number().optional(),
   multiEngineTime: z.coerce.number().optional(),
+  ftsdTime: z.coerce.number().optional(),
   dualTime: z.coerce.number().optional(),
   singleTime: z.coerce.number().optional(),
   nightTime: z.coerce.number().optional(),
@@ -75,6 +76,7 @@ const defaultFormValues: Partial<LogbookFormValues> = {
     instructorName: '',
     singleEngineTime: 0,
     multiEngineTime: 0,
+    ftsdTime: 0,
     dualTime: 0,
     singleTime: 0,
     nightTime: 0,
@@ -192,6 +194,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                  <FormField control={form.control} name="dualTime" render={({ field }) => (<FormItem><FormLabel>Dual Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="singleEngineTime" render={({ field }) => (<FormItem><FormLabel>SE Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="multiEngineTime" render={({ field }) => (<FormItem><FormLabel>ME Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="ftsdTime" render={({ field }) => (<FormItem><FormLabel>FTSD Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="nightTime" render={({ field }) => (<FormItem><FormLabel>Night Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
              <FormField
