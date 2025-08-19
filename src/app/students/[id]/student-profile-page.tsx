@@ -697,11 +697,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>AIRCRAFT</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>2<br/>DEPARTURE</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>3<br/>ARRIVAL</TableHead>
+                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2} style={{width: '450px'}}>REMARKS</TableHead>
                                                 <TableHead className="p-1 border-r text-center" colSpan={2}>5<br/>SINGLE PILOT TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>MULTI-PILOT<br/>TIME</TableHead>
                                                 <TableHead className="p-1 border-r text-center" rowSpan={2}>TOTAL<br/>TIME OF<br/>FLIGHT</TableHead>
-                                                <TableHead className="p-1 border-r text-center" rowSpan={2}>7<br/>NAME(S)<br/>PIC</TableHead>
                                             </TableRow>
                                             <TableRow>
                                                 <TableHead className="p-1 border-r text-center">MAKE, MODEL</TableHead>
@@ -724,12 +724,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <TableCell className="border-r">{log.departureTime || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrival || 'N/A'}</TableCell>
                                                         <TableCell className="border-r">{log.arrivalTime || 'N/A'}</TableCell>
+                                                        <TableCell className="border-r">{log.instructorName}</TableCell>
                                                         <TableCell className="border-r">{log.remarks}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                         <TableCell className="border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                        <TableCell className="border-r">{log.instructorName}</TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
