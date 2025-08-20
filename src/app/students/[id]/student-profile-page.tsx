@@ -824,6 +824,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     className="max-w-sm"
                                                 />
                                             </div>
+                                             {broughtForwardLog && (
+                                                <div className="p-4 border bg-muted/50 rounded-lg">
+                                                    <h4 className="font-semibold text-sm mb-2">Brought Forward Summary</h4>
+                                                     <div className="grid grid-cols-4 gap-4 text-center">
+                                                        <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</p></div>
+                                                        <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p></div>
+                                                    </div>
+                                                </div>
+                                             )}
                                             <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                                                 <Table style={{ tableLayout: 'fixed' }}>
                                                     <TableHeader>
@@ -847,20 +862,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {broughtForwardLog && (
-                                                            <TableRow className="bg-muted hover:bg-muted">
-                                                                <TableCell colSpan={7} className="border-r font-semibold text-muted-foreground p-2 text-center align-middle">HOURS BROUGHT FORWARD</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</TableCell>
-                                                                <TableCell className="text-center align-middle"></TableCell>
-                                                            </TableRow>
-                                                        )}
                                                         {paginatedLogs.length > 0 ? (
                                                             paginatedLogs.map(log => (
                                                                 <TableRow key={log.id}>
@@ -918,6 +919,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
 
 
 
