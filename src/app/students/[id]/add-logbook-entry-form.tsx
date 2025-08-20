@@ -55,6 +55,12 @@ const logbookFormSchema = z.object({
 }).refine(data => data.endHobbs > data.startHobbs, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
+}).refine(data => !(data.singleEngineTime && data.multiEngineTime), {
+    message: 'Cannot have both Single-Engine and Multi-Engine time.',
+    path: ['multiEngineTime'],
+}).refine(data => !(data.singleTime && data.dualTime), {
+    message: 'Cannot have both Solo and Dual time.',
+    path: ['dualTime'],
 });
 
 type LogbookFormValues = z.infer<typeof logbookFormSchema>;
@@ -91,6 +97,9 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
     resolver: zodResolver(logbookFormSchema),
     defaultValues: defaultFormValues as LogbookFormValues,
   });
+  
+  const { setValue, watch } = form;
+  const watchedFields = watch();
 
   useEffect(() => {
     if (logToEdit) {
@@ -112,6 +121,31 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
     };
     fetchData();
   }, [company]);
+  
+   useEffect(() => {
+    if (watchedFields.singleEngineTime && watchedFields.singleEngineTime > 0) {
+      setValue('multiEngineTime', 0);
+    }
+  }, [watchedFields.singleEngineTime, setValue]);
+
+  useEffect(() => {
+    if (watchedFields.multiEngineTime && watchedFields.multiEngineTime > 0) {
+      setValue('singleEngineTime', 0);
+    }
+  }, [watchedFields.multiEngineTime, setValue]);
+
+  useEffect(() => {
+    if (watchedFields.singleTime && watchedFields.singleTime > 0) {
+      setValue('dualTime', 0);
+    }
+  }, [watchedFields.singleTime, setValue]);
+
+  useEffect(() => {
+    if (watchedFields.dualTime && watchedFields.dualTime > 0) {
+      setValue('singleTime', 0);
+    }
+  }, [watchedFields.dualTime, setValue]);
+
 
   function handleFormSubmit(data: LogbookFormValues) {
     const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
