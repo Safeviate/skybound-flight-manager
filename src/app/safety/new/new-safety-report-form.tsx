@@ -69,11 +69,11 @@ const reportFormSchema = z.object({
   raFollowed: z.enum(['Yes', 'No']).optional(),
 }).refine(data => {
     if (data.onBehalfOf) {
-        return !!data.onBehalfOfUser;
+        return !!data.onBehalfOfUser && data.onBehalfOfUser.length > 0;
     }
     return true;
 }, {
-    message: "You must select a user when filing on their behalf.",
+    message: "You must enter a user's name when filing on their behalf.",
     path: ['onBehalfOfUser'],
 }).refine(data => {
     if (data.reportType === 'Aircraft Defect Report') {
@@ -152,8 +152,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
     function handleFormSubmit(data: ReportFormValues) {
         let submittedBy = data.isAnonymous ? 'Anonymous' : user?.name || 'Anonymous';
         if (data.onBehalfOf && data.onBehalfOfUser) {
-            const selectedUser = personnel.find(p => p.id === data.onBehalfOfUser);
-            submittedBy = selectedUser?.name || user?.name || 'Error';
+            submittedBy = data.onBehalfOfUser;
         }
 
         const picName = personnel.find(p => p.id === data.pilotInCommand)?.name;
@@ -692,20 +691,9 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Person Reporting</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a person" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {personnel.map((p) => (
-                                        <SelectItem key={p.id} value={p.id}>
-                                            {p.name} ({p.department || p.role})
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
+                                <FormControl>
+                                    <Input placeholder="Enter the full name of the person reporting" {...field} />
+                                </FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
