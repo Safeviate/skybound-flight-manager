@@ -722,54 +722,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
-                                     <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between">
-                                            <div>
-                                                <CardTitle>Brought Forward Hours</CardTitle>
-                                                <CardDescription>Flight hours from a previous logbook.</CardDescription>
-                                            </div>
-                                             <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                {broughtForwardLog ? 'Edit' : 'Add'} Hours
-                                            </Button>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {broughtForwardLog ? (
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">SE</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p>
-                                                    </div>
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">ME</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p>
-                                                    </div>
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">FSTD</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p>
-                                                    </div>
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">Solo</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p>
-                                                    </div>
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">Dual</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p>
-                                                    </div>
-                                                    <div className="text-center p-2 rounded-md bg-muted">
-                                                        <p className="text-xs font-semibold text-muted-foreground">Night</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p>
-                                                    </div>
-                                                     <div className="text-center p-2 rounded-md bg-primary text-primary-foreground col-span-2">
-                                                        <p className="text-xs font-semibold">Total</p>
-                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-4 text-sm text-muted-foreground">No brought forward hours have been added.</div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
                                     <div className="border-4 border-green-500 p-4 rounded-lg relative">
                                         <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pending Instructor Debriefs</div>
                                         <Card>
@@ -829,7 +781,55 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                         </div>
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
-                     <div className="max-w-[1200px] mx-auto">
+                     <div className="max-w-[1200px] mx-auto space-y-6">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Brought Forward Hours</CardTitle>
+                                    <CardDescription>Flight hours from a previous logbook.</CardDescription>
+                                </div>
+                                    <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    {broughtForwardLog ? 'Edit' : 'Add'} Hours
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                {broughtForwardLog ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">SE</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p>
+                                        </div>
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">ME</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p>
+                                        </div>
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">FSTD</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p>
+                                        </div>
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">Solo</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p>
+                                        </div>
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">Dual</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p>
+                                        </div>
+                                        <div className="text-center p-2 rounded-md bg-muted">
+                                            <p className="text-xs font-semibold text-muted-foreground">Night</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p>
+                                        </div>
+                                            <div className="text-center p-2 rounded-md bg-primary text-primary-foreground col-span-2">
+                                            <p className="text-xs font-semibold">Total</p>
+                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 text-sm text-muted-foreground">No brought forward hours have been added.</div>
+                                )}
+                            </CardContent>
+                        </Card>
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
@@ -883,22 +883,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
                                                             <TableRow key={log.id}>
-                                                                <TableCell className="text-center border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="text-center border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                                <TableCell className="text-center border-r">{log.aircraft?.split(' ')[1]}</TableCell>
-                                                                <TableCell className="text-center border-r">{log.departure || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center border-r">{log.arrival || 'N/A'}</TableCell>
-                                                                <TableCell className="border-r">{log.instructorName}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[0]}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
                                                                 <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
-                                                                <TableCell className="text-center border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                <TableCell className="text-center">
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell className="text-center align-middle">
                                                                     <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
                                                                         <Edit className="h-4 w-4" />
                                                                     </Button>
@@ -936,3 +936,4 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
