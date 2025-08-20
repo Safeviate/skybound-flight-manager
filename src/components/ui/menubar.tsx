@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -62,6 +63,7 @@ const MenubarTrigger = React.forwardRef<
       className
     )}
     {...props}
+    data-nosnippet
   />
 ))
 MenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName
