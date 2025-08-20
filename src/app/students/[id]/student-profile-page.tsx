@@ -35,9 +35,15 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 
-const BroughtForwardHoursForm = ({ onSave }: { onSave: (hours: any) => void }) => {
+const BroughtForwardHoursForm = ({ onSave, initialHours }: { onSave: (hours: any) => void, initialHours?: TrainingLogEntry | null }) => {
     const [hours, setHours] = useState({
-        total: '0', se: '0', me: '0', fstd: '0', solo: '0', dual: '0', night: '0'
+        se: initialHours?.singleEngineTime?.toString() || '0',
+        me: initialHours?.multiEngineTime?.toString() || '0',
+        fstd: initialHours?.fstdTime?.toString() || '0',
+        solo: initialHours?.singleTime?.toString() || '0',
+        dual: initialHours?.dualTime?.toString() || '0',
+        night: initialHours?.nightTime?.toString() || '0',
+        total: initialHours?.flightDuration?.toString() || '0',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +70,7 @@ const BroughtForwardHoursForm = ({ onSave }: { onSave: (hours: any) => void }) =
                 <div className="space-y-2"><Label htmlFor="total">Total</Label><Input id="total" name="total" type="number" step="0.1" value={hours.total} onChange={handleChange} /></div>
             </div>
             <DialogFooter>
-                <Button onClick={handleSave}>Add Brought Forward Entry</Button>
+                <Button onClick={handleSave}>{initialHours ? 'Save Changes' : 'Add Brought Forward Entry'}</Button>
             </DialogFooter>
         </div>
     );
@@ -132,7 +138,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         if (!student?.trainingLogs || !Array.isArray(student.trainingLogs)) {
             return [];
         }
-        return [...student.trainingLogs].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+        // Filter out brought forward logs for the main table
+        return [...student.trainingLogs]
+            .filter(log => log.aircraft !== 'Previous Experience')
+            .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+    }, [student?.trainingLogs]);
+
+    const broughtForwardLog = useMemo(() => {
+        return student?.trainingLogs?.find(log => log.aircraft === 'Previous Experience');
     }, [student?.trainingLogs]);
     
     const totalFlightHours = useMemo(() => {
@@ -491,7 +504,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             nightTime: hours.night,
         };
 
-        const updatedLogs = [...(student.trainingLogs || []), { ...newEntry, id: `bf-${Date.now()}` }];
+        const existingBfIndex = student.trainingLogs?.findIndex(log => log.aircraft === 'Previous Experience');
+        let updatedLogs = [...(student.trainingLogs || [])];
+        
+        if (existingBfIndex !== undefined && existingBfIndex > -1) {
+            // Update existing entry
+            const logId = updatedLogs[existingBfIndex].id;
+            updatedLogs[existingBfIndex] = { ...newEntry, id: logId };
+        } else {
+            // Add new entry
+            updatedLogs.push({ ...newEntry, id: `bf-${Date.now()}` });
+        }
+        
         const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
         
         handleUpdate({
@@ -501,8 +525,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         
         setIsBroughtForwardOpen(false);
         toast({
-            title: 'Brought Forward Hours Added',
-            description: 'The previous flight hours have been added to the logbook.'
+            title: 'Brought Forward Hours Saved',
+            description: 'The previous flight hours have been saved.'
         });
     };
 
@@ -559,12 +583,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
              <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add Brought Forward Hours</DialogTitle>
+                        <DialogTitle>Add/Edit Brought Forward Hours</DialogTitle>
                         <DialogDescription>
-                            Enter the total hours from a previous logbook. This will create a single entry.
+                            Enter the total hours from a previous logbook. This will create or update a single summary entry.
                         </DialogDescription>
                     </DialogHeader>
-                    <BroughtForwardHoursForm onSave={handleBroughtForwardSave} />
+                    <BroughtForwardHoursForm onSave={handleBroughtForwardSave} initialHours={broughtForwardLog} />
                 </DialogContent>
             </Dialog>
 
@@ -698,6 +722,54 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
+                                     <Card>
+                                        <CardHeader className="flex flex-row items-center justify-between">
+                                            <div>
+                                                <CardTitle>Brought Forward Hours</CardTitle>
+                                                <CardDescription>Flight hours from a previous logbook.</CardDescription>
+                                            </div>
+                                             <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                {broughtForwardLog ? 'Edit' : 'Add'} Hours
+                                            </Button>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {broughtForwardLog ? (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">SE</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p>
+                                                    </div>
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">ME</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p>
+                                                    </div>
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">FSTD</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p>
+                                                    </div>
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">Solo</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p>
+                                                    </div>
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">Dual</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p>
+                                                    </div>
+                                                    <div className="text-center p-2 rounded-md bg-muted">
+                                                        <p className="text-xs font-semibold text-muted-foreground">Night</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p>
+                                                    </div>
+                                                     <div className="text-center p-2 rounded-md bg-primary text-primary-foreground col-span-2">
+                                                        <p className="text-xs font-semibold">Total</p>
+                                                        <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-4 text-sm text-muted-foreground">No brought forward hours have been added.</div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
                                     <div className="border-4 border-green-500 p-4 rounded-lg relative">
                                         <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pending Instructor Debriefs</div>
                                         <Card>
@@ -768,9 +840,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </CardDescription>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button variant="outline" onClick={() => setIsBroughtForwardOpen(true)}>
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Brought Forward Hours
-                                        </Button>
                                         <Button variant="outline" onClick={handleAddNewLog}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
                                         </Button>
