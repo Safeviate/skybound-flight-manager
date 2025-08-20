@@ -35,6 +35,41 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 
+const BroughtForwardHoursForm = ({ onSave }: { onSave: (hours: any) => void }) => {
+    const [hours, setHours] = useState({
+        total: '0', se: '0', me: '0', fstd: '0', solo: '0', dual: '0', night: '0'
+    });
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setHours(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSave = () => {
+        const numericHours = Object.fromEntries(
+            Object.entries(hours).map(([key, value]) => [key, parseFloat(value) || 0])
+        );
+        onSave(numericHours);
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2"><Label htmlFor="se">SE</Label><Input id="se" name="se" type="number" step="0.1" value={hours.se} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="me">ME</Label><Input id="me" name="me" type="number" step="0.1" value={hours.me} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="fstd">FSTD</Label><Input id="fstd" name="fstd" type="number" step="0.1" value={hours.fstd} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="solo">Solo</Label><Input id="solo" name="solo" type="number" step="0.1" value={hours.solo} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="dual">Dual</Label><Input id="dual" name="dual" type="number" step="0.1" value={hours.dual} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="night">Night</Label><Input id="night" name="night" type="number" step="0.1" value={hours.night} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="total">Total</Label><Input id="total" name="total" type="number" step="0.1" value={hours.total} onChange={handleChange} /></div>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleSave}>Add Brought Forward Entry</Button>
+            </DialogFooter>
+        </div>
+    );
+};
+
 export function StudentProfilePage({ initialStudent }: { initialStudent: StudentUser | null }) {
     const { user: currentUser, company, loading: userLoading } = useUser();
     const { settings } = useSettings();
@@ -51,6 +86,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [isLogbookEditOpen, setIsLogbookEditOpen] = useState(false);
     const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
+    const [isBroughtForwardOpen, setIsBroughtForwardOpen] = useState(false);
     
     const [hoursForward, setHoursForward] = useState({
         total: 0,
@@ -435,6 +471,41 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setIsLogbookEditOpen(true);
     };
 
+    const handleBroughtForwardSave = (hours: { total: number; se: number; me: number; fstd: number; solo: number; dual: number; night: number; }) => {
+        if (!student) return;
+
+        const newEntry: Omit<TrainingLogEntry, 'id'> = {
+            date: format(new Date(), 'yyyy-MM-dd'),
+            aircraft: 'Previous Experience',
+            startHobbs: 0,
+            endHobbs: hours.total,
+            flightDuration: hours.total,
+            instructorName: 'Brought Forward',
+            trainingExercises: [],
+            remarks: 'Hours brought forward from previous logbook.',
+            singleEngineTime: hours.se,
+            multiEngineTime: hours.me,
+            fstdTime: hours.fstd,
+            singleTime: hours.solo,
+            dualTime: hours.dual,
+            nightTime: hours.night,
+        };
+
+        const updatedLogs = [...(student.trainingLogs || []), { ...newEntry, id: `bf-${Date.now()}` }];
+        const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
+        
+        handleUpdate({
+            trainingLogs: updatedLogs,
+            flightHours: newTotalHours
+        });
+        
+        setIsBroughtForwardOpen(false);
+        toast({
+            title: 'Brought Forward Hours Added',
+            description: 'The previous flight hours have been added to the logbook.'
+        });
+    };
+
     if (userLoading) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -482,6 +553,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                          onSubmit={handleLogbookUpdate}
                          logToEdit={logToEdit}
                     />
+                </DialogContent>
+            </Dialog>
+
+             <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Brought Forward Hours</DialogTitle>
+                        <DialogDescription>
+                            Enter the total hours from a previous logbook. This will create a single entry.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <BroughtForwardHoursForm onSave={handleBroughtForwardSave} />
                 </DialogContent>
             </Dialog>
 
@@ -685,6 +768,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </CardDescription>
                                     </div>
                                     <div className="flex gap-2">
+                                        <Button variant="outline" onClick={() => setIsBroughtForwardOpen(true)}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Brought Forward Hours
+                                        </Button>
                                         <Button variant="outline" onClick={handleAddNewLog}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
                                         </Button>
