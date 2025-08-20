@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -635,6 +636,12 @@ function SafetyReportInvestigationPage() {
       handleReportUpdate({ tasks: updatedTasks || [] }, true);
       toast({ variant: 'destructive', title: 'Extension Rejected', description: `The deadline extension request was rejected.`});
   };
+  
+  const handlePrintInitialReport = () => {
+    document.body.classList.add('print-initial-report-only');
+    window.print();
+    document.body.classList.remove('print-initial-report-only');
+  };
 
   if (userLoading || dataLoading) {
     return (
@@ -671,9 +678,13 @@ function SafetyReportInvestigationPage() {
                               Back to Reports
                           </Link>
                       </Button>
+                      <Button variant="outline" onClick={handlePrintInitialReport} className="no-print">
+                          <Printer className="mr-2 h-4 w-4" />
+                          Print Initial Report
+                      </Button>
                       <Button variant="outline" onClick={() => window.print()} className="no-print">
                           <Printer className="mr-2 h-4 w-4" />
-                          Print Report
+                          Print Full Report
                       </Button>
                   </div>
               </div>
@@ -688,7 +699,7 @@ function SafetyReportInvestigationPage() {
                   <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="triage" className="mt-6 space-y-6">
+              <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                   <Card>
                       <CardHeader>
                           <CardTitle>Initial Report Details</CardTitle>
@@ -801,7 +812,7 @@ function SafetyReportInvestigationPage() {
                   <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
               </TabsContent>
               
-               <TabsContent value="investigation" className="mt-6 space-y-6">
+               <TabsContent value="investigation" id="investigation-tab-content" className="mt-6 space-y-6">
                   <Card>
                       <CardHeader>
                           <CardTitle>Investigation Team</CardTitle>
@@ -986,7 +997,7 @@ function SafetyReportInvestigationPage() {
 
               </TabsContent>
 
-              <TabsContent value="mitigation" className="mt-6 space-y-6">
+              <TabsContent value="mitigation" id="mitigation-tab-content" className="mt-6 space-y-6">
                   <CorrectiveActionPlanGenerator 
                       report={report} 
                       personnel={investigationTeamMembers}
@@ -1002,7 +1013,7 @@ function SafetyReportInvestigationPage() {
                       </CardContent>
                    </Card>
               </TabsContent>
-              <TabsContent value="review" className="mt-6">
+              <TabsContent value="review" id="review-tab-content" className="mt-6">
                   <FinalReview report={report} onUpdate={handleReportUpdate} />
               </TabsContent>
           </Tabs>

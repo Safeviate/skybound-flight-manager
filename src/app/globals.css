@@ -145,4 +145,14 @@
   .max-h-96 {
     max-height: none !important;
   }
+
+  body.print-initial-report-only #triage-tab-content > .card:not(:first-of-type) {
+    display: none !important;
+  }
+
+  body.print-initial-report-only #investigation-tab-content,
+  body.print-initial-report-only #mitigation-tab-content,
+  body.print-initial-report-only #review-tab-content {
+      display: none !important;
+  }
 }
