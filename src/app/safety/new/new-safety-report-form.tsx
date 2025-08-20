@@ -155,12 +155,9 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
             submittedBy = data.onBehalfOfUser;
         }
 
-        const picName = personnel.find(p => p.id === data.pilotInCommand)?.name;
-
         onSubmit({
             ...data,
-            submittedBy, // Pass the correct name
-            pilotInCommand: picName || null,
+            submittedBy,
         } as Omit<SafetyReport, 'id' | 'status' | 'filedDate' | 'reportNumber' | 'companyId'>);
     }
     
@@ -270,7 +267,7 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                 <FormItem>
                                 <FormLabel>Aircraft Involved (Optional)</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g., N12345" {...field} />
+                                    <Input placeholder="e.g., ZS-ABC" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -417,26 +414,15 @@ export function NewSafetyReportForm({ onSubmit }: NewSafetyReportFormProps) {
                                     )}
                                 />
                                 <div className="grid grid-cols-2 gap-4">
-                                     <FormField
+                                    <FormField
                                         control={form.control}
                                         name="pilotInCommand"
                                         render={({ field }) => (
                                             <FormItem>
                                             <FormLabel>Pilot in Command (PIC)</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select the PIC" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {personnel.filter(p => p.role !== 'Student').map((p) => (
-                                                        <SelectItem key={p.id} value={p.id}>
-                                                            {p.name} ({p.department || p.role})
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <FormControl>
+                                                <Input placeholder="Enter PIC's full name" {...field} />
+                                            </FormControl>
                                             <FormMessage />
                                             </FormItem>
                                         )}
