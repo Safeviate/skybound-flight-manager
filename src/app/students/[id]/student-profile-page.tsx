@@ -448,8 +448,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         ];
     
         return (
-            <div className="border-4 border-yellow-300 p-4 bg-yellow-50 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-300 px-3 py-0.5 text-sm font-semibold rounded-full text-yellow-800">Milestone Progress</div>
+            <div className="border-4 border-yellow-300 p-4 rounded-lg relative">
+                <div className="absolute -top-3 left-4 bg-background px-2 text-yellow-800 font-semibold text-sm">Milestone Progress</div>
                 <Card>
                     <CardHeader>
                         <CardTitle>Milestone Progress</CardTitle>
@@ -600,41 +600,46 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="profile" className="mt-6">
                         <div className="grid gap-8 lg:grid-cols-3">
                             <div className="lg:col-span-1 space-y-8">
-                                    <Card>
-                                        <CardHeader>
-                                            <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
-                                                <div className="p-4 rounded-full bg-muted">
-                                                    <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                    <div className="border-2 border-blue-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-blue-500 font-semibold text-sm">Student Details</div>
+                                        <Card>
+                                            <CardHeader>
+                                                <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
+                                                    <div className="p-4 rounded-full bg-muted">
+                                                        <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                                    </div>
+                                                    <div>
+                                                        <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
+                                                        <CardDescription className="mt-1 text-center sm:text-left">
+                                                        <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
+                                                        </CardDescription>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
-                                                    <CardDescription className="mt-1 text-center sm:text-left">
-                                                       <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
-                                                    </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="space-y-4 pt-4 border-t pb-6">
+                                                <div className="flex items-center space-x-3">
+                                                    <UserCheck className="h-5 w-5 text-muted-foreground" />
+                                                    <span className="font-medium">Instructor: {student.instructor}</span>
                                                 </div>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4 pt-4 border-t pb-6">
-                                            <div className="flex items-center space-x-3">
-                                                <UserCheck className="h-5 w-5 text-muted-foreground" />
-                                                <span className="font-medium">Instructor: {student.instructor}</span>
-                                            </div>
-                                            <div className="flex items-center space-x-3">
-                                                <BookUser className="h-5 w-5 text-muted-foreground" />
-                                                <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
-                                            </div>
-                                            
-                                            {(student.documents || []).map(doc => (
-                                                 <div key={doc.id} className="flex items-center space-x-3">
-                                                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                                    <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                                <div className="flex items-center space-x-3">
+                                                    <BookUser className="h-5 w-5 text-muted-foreground" />
+                                                    <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
                                                 </div>
-                                            ))}
-                                        </CardContent>
-                                    </Card>
+                                                
+                                                {(student.documents || []).map(doc => (
+                                                    <div key={doc.id} className="flex items-center space-x-3">
+                                                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                                        <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
 
                                     {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
 
+                                    <div className="border-2 border-purple-500 p-4 rounded-lg relative">
+                                        <div className="absolute -top-3 left-4 bg-background px-2 text-purple-500 font-semibold text-sm">Endorsements</div>
                                         <Card>
                                             <CardHeader>
                                                 <div className="flex flex-row items-center justify-between">
@@ -691,38 +696,42 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 </Table>
                                             </CardContent>
                                         </Card>
+                                    </div>
 
                                     {canEdit && (
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle>Admin Actions</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="outline" className="w-full">
-                                                                <Archive className="mr-2 h-4 w-4" /> Archive Student
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                </CardContent>
-                                            </Card>
+                                            <div className="border-2 border-red-500 p-4 rounded-lg relative">
+                                                <div className="absolute -top-3 left-4 bg-background px-2 text-red-500 font-semibold text-sm">Admin Actions</div>
+                                                <Card>
+                                                    <CardHeader>
+                                                        <CardTitle>Admin Actions</CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="outline" className="w-full">
+                                                                    <Archive className="mr-2 h-4 w-4" /> Archive Student
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </CardContent>
+                                                </Card>
+                                            </div>
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
-                                    <div className="border-4 border-green-500 p-4 rounded-lg relative">
+                                    <div className="border-2 border-green-500 p-4 rounded-lg relative">
                                         <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pending Instructor Debriefs</div>
                                         <Card>
                                             <CardHeader>
@@ -782,130 +791,134 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle>Detailed Logbook for {student.name}</CardTitle>
-                                        <CardDescription>
-                                            A comprehensive log of all flight activities.
-                                        </CardDescription>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            {broughtForwardLog ? 'Edit Brought Forward' : 'Add Brought Forward'}
-                                        </Button>
-                                        <Button variant="outline" onClick={handleAddNewLog}>
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
-                                        </Button>
-                                        <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                        <div className="flex justify-between items-center p-2">
-                                            <Input
-                                                placeholder="Search logs by aircraft, instructor, or comments..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="max-w-sm"
-                                            />
+                        <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
+                             <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Detailed Logbook for {student.name}</CardTitle>
+                                            <CardDescription>
+                                                A comprehensive log of all flight activities.
+                                            </CardDescription>
                                         </div>
-                                        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                                            <Table style={{ tableLayout: 'fixed' }}>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '100px' }}>REG</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
-                                                        <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                     {broughtForwardLog && (
-                                                        <TableRow className="bg-muted hover:bg-muted">
-                                                            <TableCell colSpan={7} className="border-r font-semibold text-muted-foreground p-2">HOURS BROUGHT FORWARD</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</TableCell>
-                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</TableCell>
-                                                            <TableCell className="text-center align-middle"></TableCell>
-                                                        </TableRow>
-                                                     )}
-                                                    {paginatedLogs.length > 0 ? (
-                                                        paginatedLogs.map(log => (
-                                                            <TableRow key={log.id}>
-                                                                <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[1]}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
-                                                                <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                <TableCell className="text-center align-middle">
-                                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))
-                                                    ) : (
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                {broughtForwardLog ? 'Edit Brought Forward' : 'Add Brought Forward'}
+                                            </Button>
+                                            <Button variant="outline" onClick={handleAddNewLog}>
+                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
+                                            </Button>
+                                            <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                            <div className="flex justify-between items-center p-2">
+                                                <Input
+                                                    placeholder="Search logs by aircraft, instructor, or comments..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    className="max-w-sm"
+                                                />
+                                            </div>
+                                            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                                                <Table style={{ tableLayout: 'fixed' }}>
+                                                    <TableHeader>
                                                         <TableRow>
-                                                            <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '100px' }}>REG</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
+                                                            <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
                                                         </TableRow>
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-                                            <ScrollBar orientation="horizontal" />
-                                        </ScrollArea>
-                                        <div className="flex items-center justify-center space-x-2 p-2">
-                                            <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
-                                                <ChevronLeft className="h-4 w-4" />
-                                                Previous
-                                            </Button>
-                                            <span className="text-sm">
-                                                Page {currentPage} of {totalPages}
-                                            </span>
-                                            <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
-                                                Next
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {broughtForwardLog && (
+                                                            <TableRow className="bg-muted hover:bg-muted">
+                                                                <TableCell colSpan={7} className="border-r font-semibold text-muted-foreground p-2 text-center align-middle">HOURS BROUGHT FORWARD</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</TableCell>
+                                                                <TableCell className="text-center align-middle"></TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                        {paginatedLogs.length > 0 ? (
+                                                            paginatedLogs.map(log => (
+                                                                <TableRow key={log.id}>
+                                                                    <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[0]}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
+                                                                    <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                    <TableCell className="text-center align-middle">
+                                                                        <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))
+                                                        ) : (
+                                                            <TableRow>
+                                                                <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                                <ScrollBar orientation="horizontal" />
+                                            </ScrollArea>
+                                            <div className="flex items-center justify-center space-x-2 p-2">
+                                                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                    Previous
+                                                </Button>
+                                                <span className="text-sm">
+                                                    Page {currentPage} of {totalPages}
+                                                </span>
+                                                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+                                                    Next
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                      </div>
                 </TabsContent>
             </Tabs>
       </main>
   );
 }
+
 
 
 
