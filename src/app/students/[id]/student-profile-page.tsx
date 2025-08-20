@@ -783,54 +783,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Brought Forward Hours</CardTitle>
-                                    <CardDescription>Flight hours from a previous logbook.</CardDescription>
-                                </div>
-                                    <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    {broughtForwardLog ? 'Edit' : 'Add'} Hours
-                                </Button>
-                            </CardHeader>
-                            <CardContent>
-                                {broughtForwardLog ? (
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">SE</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p>
-                                        </div>
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">ME</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p>
-                                        </div>
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">FSTD</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p>
-                                        </div>
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">Solo</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p>
-                                        </div>
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">Dual</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p>
-                                        </div>
-                                        <div className="text-center p-2 rounded-md bg-muted">
-                                            <p className="text-xs font-semibold text-muted-foreground">Night</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p>
-                                        </div>
-                                            <div className="text-center p-2 rounded-md bg-primary text-primary-foreground col-span-2">
-                                            <p className="text-xs font-semibold">Total</p>
-                                            <p className="text-lg font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-4 text-sm text-muted-foreground">No brought forward hours have been added.</div>
-                                )}
-                            </CardContent>
-                        </Card>
-                        <Card>
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -840,6 +792,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </CardDescription>
                                     </div>
                                     <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            {broughtForwardLog ? 'Edit Brought Forward' : 'Add Brought Forward'}
+                                        </Button>
                                         <Button variant="outline" onClick={handleAddNewLog}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
                                         </Button>
@@ -880,6 +836,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
+                                                     {broughtForwardLog && (
+                                                        <TableRow className="bg-muted hover:bg-muted">
+                                                            <TableCell colSpan={7} className="border-r font-semibold text-muted-foreground p-2">HOURS BROUGHT FORWARD</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</TableCell>
+                                                            <TableCell className="text-center align-middle border-r font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</TableCell>
+                                                            <TableCell className="text-center align-middle"></TableCell>
+                                                        </TableRow>
+                                                     )}
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => (
                                                             <TableRow key={log.id}>
@@ -936,4 +906,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+
 
