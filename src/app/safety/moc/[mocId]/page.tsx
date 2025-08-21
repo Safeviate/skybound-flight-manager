@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -78,8 +79,6 @@ const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', '
 
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
-    const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
-    const [currentHazardId, setCurrentHazardId] = useState<string | null>(null);
 
     const handleAddHazard = () => {
         const newHazard: MocHazard = {
@@ -93,18 +92,14 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-     const handleAddRiskClick = (hazardId: string) => {
-        setCurrentHazardId(hazardId);
-        setIsAddRiskOpen(true);
-    };
-
-    const handleAddRisk = (hazardId: string, riskDescription: string) => {
+    const handleAddRisk = (hazardId: string) => {
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
-            description: riskDescription,
+            description: '',
             likelihood: 'Improbable',
             severity: 'Minor',
             riskScore: 4,
+            mitigations: [],
         };
         setLocalStep(prev => ({
             ...prev,
@@ -114,7 +109,27 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                 : h
             )
         }));
-        setIsAddRiskOpen(false);
+    };
+    
+    const handleAddMitigation = (hazardId: string, riskId: string) => {
+        const newMitigation: MocMitigation = {
+            id: `mit-${Date.now()}`,
+            description: '',
+            residualLikelihood: 'Improbable',
+            residualSeverity: 'Negligible',
+            residualRiskScore: 2,
+        };
+         setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => ({
+                ...h,
+                risks: h.risks?.map(r => 
+                    r.id === riskId 
+                    ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] }
+                    : r
+                )
+            }))
+        }));
     };
     
     const handleHazardChange = (hazardId: string, value: string) => {
@@ -145,6 +160,34 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             })
         }));
     };
+
+    const handleMitigationChange = (hazardId: string, riskId: string, mitigationId: string, field: keyof MocMitigation, value: any) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => ({
+                ...h,
+                risks: h.risks?.map(r => {
+                    if (r.id === riskId) {
+                        return {
+                            ...r,
+                            mitigations: r.mitigations?.map(m => {
+                                if (m.id === mitigationId) {
+                                    const updatedMitigation = { ...m, [field]: value };
+                                    if (field === 'residualLikelihood' || field === 'residualSeverity') {
+                                        updatedMitigation.residualRiskScore = getRiskScore(updatedMitigation.residualLikelihood, updatedMitigation.residualSeverity);
+                                    }
+                                    return updatedMitigation;
+                                }
+                                return m;
+                            })
+                        };
+                    }
+                    return r;
+                })
+            }))
+        }));
+    };
+
     
     const handleDeleteHazard = (hazardId: string) => {
         setLocalStep(prev => ({
@@ -164,32 +207,23 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     }
 
+    const handleDeleteMitigation = (hazardId: string, riskId: string, mitigationId: string) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => ({
+                ...h,
+                risks: h.risks?.map(r =>
+                    r.id === riskId
+                    ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== mitigationId) }
+                    : r
+                )
+            }))
+        }));
+    }
+
     const handleSave = () => {
         onUpdate(localStep);
         onClose();
-    };
-
-    const AddRiskDialog = () => {
-        const [description, setDescription] = useState('');
-        return (
-            <Dialog open={isAddRiskOpen} onOpenChange={setIsAddRiskOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Risk</DialogTitle>
-                        <DialogDescription>Describe the risk associated with the hazard.</DialogDescription>
-                    </DialogHeader>
-                    <Textarea 
-                        placeholder="Describe the potential risk..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddRiskOpen(false)}>Cancel</Button>
-                        <Button disabled={!description.trim()} onClick={() => currentHazardId && handleAddRisk(currentHazardId, description)}>Add Risk</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )
     };
 
     return (
@@ -209,7 +243,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <div className="flex items-center justify-between">
                              <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
                               <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleAddRiskClick(hazard.id)}>
+                                <Button variant="outline" size="sm" onClick={() => handleAddRisk(hazard.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
                                 </Button>
                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
@@ -224,18 +258,23 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                             onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                         />
                          {hazard.risks?.map((risk, riskIndex) => (
-                            <div key={risk.id} className="pl-6 space-y-2 border-l-2 ml-2">
+                            <div key={risk.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
                                  <div className="flex items-center justify-between">
                                     <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground">Risk for Hazard #{index + 1}</Label>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(hazard.id, risk.id)}>
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => handleAddMitigation(hazard.id, risk.id)}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(hazard.id, risk.id)}>
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
                                 </div>
                                 <Textarea
                                     id={`risk-desc-${riskIndex}`}
                                     placeholder="Describe the associated risk..."
                                     value={risk.description}
-                                    readOnly // Risk is entered via dialog
+                                    onChange={(e) => handleRiskChange(hazard.id, risk.id, 'description', e.target.value)}
                                 />
                                 <div className="flex items-end gap-4">
                                      <div className="flex-1 space-y-1">
@@ -269,6 +308,55 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                         </div>
                                     </div>
                                 </div>
+                                
+                                {risk.mitigations?.map((mitigation, mitIndex) => (
+                                    <div key={mitigation.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-muted-foreground">Mitigation for Risk</Label>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteMitigation(hazard.id, risk.id, mitigation.id)}>
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                        <Textarea
+                                            placeholder="Describe the mitigation control..."
+                                            value={mitigation.description}
+                                            onChange={(e) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'description', e.target.value)}
+                                        />
+                                        <div className="flex items-end gap-4">
+                                            <div className="flex-1 space-y-1">
+                                                <Label className="text-xs">Residual Probability</Label>
+                                                <Select value={mitigation.residualLikelihood} onValueChange={(v: RiskLikelihood) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'residualLikelihood', v)}>
+                                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                                    <SelectContent>{probabilityOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex-1 space-y-1">
+                                                <Label className="text-xs">Residual Severity</Label>
+                                                <Select value={mitigation.residualSeverity} onValueChange={(v: RiskSeverity) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'residualSeverity', v)}>
+                                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                                    <SelectContent>{severityOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="text-center space-y-1">
+                                                <Label className="text-xs">Residual Score</Label>
+                                                <div className="h-10 w-24 flex items-center justify-center">
+                                                    <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.residualRiskScore), color: 'white' }} className="text-lg px-3 py-1">
+                                                        {mitigation.residualRiskScore}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                            <div className="text-center space-y-1">
+                                                <Label className="text-xs">Residual Level</Label>
+                                                <div className="h-10 w-24 flex items-center justify-center">
+                                                    <Badge variant="outline" className="text-sm">
+                                                        {getRiskLevel(mitigation.residualRiskScore)}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
                             </div>
                         ))}
                     </div>
@@ -281,7 +369,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                 <Button onClick={onClose} variant="outline">Cancel</Button>
                 <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
-            <AddRiskDialog />
         </DialogContent>
     );
 };

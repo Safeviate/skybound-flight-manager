@@ -579,14 +579,6 @@ export type ComplianceItem = {
     findings?: string;
 };
 
-export type MocRisk = {
-  id: string;
-  description: string;
-  likelihood: RiskLikelihood;
-  severity: RiskSeverity;
-  riskScore: number;
-};
-
 export type MocMitigation = {
   id: string;
   description: string;
@@ -597,11 +589,19 @@ export type MocMitigation = {
   residualRiskScore: number;
 };
 
+export type MocRisk = {
+  id: string;
+  description: string;
+  likelihood: RiskLikelihood;
+  severity: RiskSeverity;
+  riskScore: number;
+  mitigations?: MocMitigation[];
+};
+
 export type MocHazard = {
   id: string;
   description: string;
   risks?: MocRisk[];
-  mitigations?: MocMitigation[];
 };
 
 export type MocStep = {
