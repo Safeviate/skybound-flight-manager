@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -438,14 +437,64 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         doc.text("Student Training Logbook", 14, 15);
         doc.setFontSize(10);
         doc.text(`Student: ${student.name}`, 14, 22);
-        doc.text(`Total Flight Hours: ${totalFlightHours.toFixed(1)}`, 14, 28);
     
-        const tableBody = (student.trainingLogs || [])
-        .filter(log => log.aircraft !== 'Previous Experience')
-        .map(log => {
+        let yPos = 28;
+    
+        const summaryHeaders = ['SE', 'ME', 'FSTD', 'SOLO', 'DUAL', 'NIGHT', 'DAY', 'TIME'];
+    
+        if (broughtForwardLog) {
+            doc.setFontSize(12);
+            doc.text("Hours Brought Forward", 14, yPos);
+            yPos += 5;
+            const bfData = [[
+                formatDecimalTime(broughtForwardLog.singleEngineTime),
+                formatDecimalTime(broughtForwardLog.multiEngineTime),
+                formatDecimalTime(broughtForwardLog.fstdTime),
+                formatDecimalTime(broughtForwardLog.singleTime),
+                formatDecimalTime(broughtForwardLog.dualTime),
+                formatDecimalTime(broughtForwardLog.nightTime),
+                formatDecimalTime(broughtForwardLog.dayTime),
+                formatDecimalTime(broughtForwardLog.flightDuration),
+            ]];
+            autoTable(doc, {
+                startY: yPos,
+                head: [summaryHeaders],
+                body: bfData,
+                theme: 'grid',
+            });
+            yPos = (doc as any).lastAutoTable.finalY + 10;
+        }
+    
+        if (totalHoursLog) {
+            doc.setFontSize(12);
+            doc.text("Total Hours Logged", 14, yPos);
+            yPos += 5;
+            const totalData = [[
+                formatDecimalTime(totalHoursLog.singleEngineTime),
+                formatDecimalTime(totalHoursLog.multiEngineTime),
+                formatDecimalTime(totalHoursLog.fstdTime),
+                formatDecimalTime(totalHoursLog.singleTime),
+                formatDecimalTime(totalHoursLog.dualTime),
+                formatDecimalTime(totalHoursLog.nightTime),
+                formatDecimalTime(totalHoursLog.dayTime),
+                formatDecimalTime(totalHoursLog.flightDuration),
+            ]];
+            autoTable(doc, {
+                startY: yPos,
+                head: [summaryHeaders],
+                body: totalData,
+                theme: 'grid',
+            });
+            yPos = (doc as any).lastAutoTable.finalY + 10;
+        }
+    
+        doc.setFontSize(12);
+        doc.text("Logbook Entries", 14, yPos);
+        yPos += 5;
+    
+        const tableBody = sortedLogs.map(log => {
             const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
             const model = modelParts.join(' ');
-            
             return [
                 format(parseISO(log.date), 'dd/MM/yy'),
                 make,
@@ -464,14 +513,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 formatDecimalTime(log.flightDuration),
             ];
         });
-
+    
         const tableHeaders = [
             'DATE', 'MAKE', 'MODEL/REG', 'DEPART', 'ARRIVE', 'PIC/INSTR', 'REMARKS',
-            'SE', 'ME', 'FSTD', 'SOLO', 'DUAL', 'NIGHT', 'DAY', 'TIME'
+            ...summaryHeaders
         ];
-
+    
         autoTable(doc, {
-            startY: 35,
+            startY: yPos,
             head: [tableHeaders],
             body: tableBody,
             theme: 'grid',
@@ -480,14 +529,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 0: { cellWidth: 16 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
                 3: { cellWidth: 15 }, 4: { cellWidth: 15 }, 5: { cellWidth: 25 },
                 6: { cellWidth: 40 },
-                // Time columns
                 7: { cellWidth: 10, halign: 'center' }, 8: { cellWidth: 10, halign: 'center' },
                 9: { cellWidth: 12, halign: 'center' }, 10: { cellWidth: 12, halign: 'center' },
                 11: { cellWidth: 12, halign: 'center' }, 12: { cellWidth: 12, halign: 'center' },
                 13: { cellWidth: 12, halign: 'center' }, 14: { cellWidth: 12, halign: 'center' },
             },
             didParseCell: function(data) {
-                // For wrapping text in remarks
                 if (data.column.index === 6) {
                     data.cell.styles.cellWidth = 'wrap';
                 }
