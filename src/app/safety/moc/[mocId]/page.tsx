@@ -1,17 +1,18 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Edit, Trash2, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -20,6 +21,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
+import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
 
 const stepFormSchema = z.object({
   description: z.string().min(10, "Step description must be at least 10 characters."),
@@ -28,31 +33,51 @@ type StepFormValues = z.infer<typeof stepFormSchema>;
 
 const hazardFormSchema = z.object({
   description: z.string().min(10, "Hazard description is required."),
-  riskAnalysis: z.string().min(10, "Risk analysis is required."),
   mitigation: z.string().min(10, "Mitigation plan is required."),
+  likelihood: z.custom<RiskLikelihood>().optional(),
+  severity: z.custom<RiskSeverity>().optional(),
+  residualLikelihood: z.custom<RiskLikelihood>().optional(),
+  residualSeverity: z.custom<RiskSeverity>().optional(),
 });
 type HazardFormValues = z.infer<typeof hazardFormSchema>;
 
 
 const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (updatedHazards: MocStep['hazards']) => void, onCancel: () => void }) => {
     const [hazards, setHazards] = useState(step.hazards || []);
-    const [editingHazard, setEditingHazard] = useState<typeof hazards[0] | null>(null);
-    const form = useForm<HazardFormValues>();
+    const [editingHazard, setEditingHazard] = useState<MocHazard | null>(null);
+    const form = useForm<HazardFormValues>({
+        resolver: zodResolver(hazardFormSchema),
+    });
 
     useEffect(() => {
         if (editingHazard) {
             form.reset(editingHazard);
         } else {
-            form.reset({ description: '', riskAnalysis: '', mitigation: '' });
+            form.reset({ description: '', mitigation: '' });
         }
     }, [editingHazard, form]);
+    
+    const handleInitialAssessment = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+        form.setValue('likelihood', likelihood, { shouldValidate: true });
+        form.setValue('severity', severity, { shouldValidate: true });
+    };
+
+    const handleResidualAssessment = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
+        form.setValue('residualLikelihood', likelihood, { shouldValidate: true });
+        form.setValue('residualSeverity', severity, { shouldValidate: true });
+    };
 
     const handleAddOrUpdate = (data: HazardFormValues) => {
+        const riskScore = data.likelihood && data.severity ? getRiskScore(data.likelihood, data.severity) : undefined;
+        const residualRiskScore = data.residualLikelihood && data.residualSeverity ? getRiskScore(data.residualLikelihood, data.residualSeverity) : undefined;
+
+        const hazardData = { ...data, riskScore, residualRiskScore };
+
         let updatedHazards;
         if (editingHazard) {
-            updatedHazards = hazards.map(h => h.id === editingHazard.id ? { ...h, ...data } : h);
+            updatedHazards = hazards.map(h => h.id === editingHazard.id ? { ...h, ...hazardData } : h);
         } else {
-            updatedHazards = [...hazards, { ...data, id: `haz-${Date.now()}` }];
+            updatedHazards = [...hazards, { ...hazardData, id: `haz-${Date.now()}` }];
         }
         setHazards(updatedHazards);
         setEditingHazard(null);
@@ -63,39 +88,60 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
     };
 
     return (
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
                 <DialogTitle>Hazard Analysis for Step: "{step.description}"</DialogTitle>
                 <DialogDescription>Identify and mitigate hazards for this specific step of the change.</DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[70vh]">
                 <div className="space-y-4">
                     <h4 className="font-semibold text-sm">Identified Hazards</h4>
-                    <div className="space-y-2">
-                        {hazards.map(h => (
-                            <div key={h.id} className="p-2 border rounded-md flex justify-between items-center">
-                                <p className="text-sm">{h.description}</p>
-                                <div className="flex gap-1">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingHazard(h)}><Edit className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(h.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <ScrollArea className="h-full">
+                        <div className="space-y-2 pr-4">
+                            {hazards.map(h => (
+                                <div key={h.id} className="p-2 border rounded-md flex justify-between items-center">
+                                    <p className="text-sm">{h.description}</p>
+                                    <div className="flex gap-1">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingHazard(h)}><Edit className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(h.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                         {hazards.length === 0 && <p className="text-xs text-muted-foreground">No hazards identified yet.</p>}
-                    </div>
+                            ))}
+                            {hazards.length === 0 && <p className="text-xs text-muted-foreground">No hazards identified yet.</p>}
+                        </div>
+                    </ScrollArea>
                 </div>
+                <ScrollArea className="h-full">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4 p-4 border rounded-lg">
                         <h4 className="font-semibold text-sm">{editingHazard ? 'Edit' : 'Add'} Hazard</h4>
                         <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Incorrect fuel calculation" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField name="riskAnalysis" control={form.control} render={({ field }) => (<FormItem><FormLabel>Risk Analysis</FormLabel><FormControl><Textarea placeholder="e.g., Risk of fuel starvation..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        
+                        <div>
+                          <Label>Initial Risk Assessment</Label>
+                          <RiskAssessmentTool 
+                            onCellClick={handleInitialAssessment}
+                            selectedCode={form.watch('likelihood') && form.watch('severity') ? getRiskScore(form.watch('likelihood')!, form.watch('severity')!).toString() : null}
+                          />
+                        </div>
+
                         <FormField name="mitigation" control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation</FormLabel><FormControl><Textarea placeholder="e.g., Mandatory cross-check by second crew member..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+
+                        <div>
+                          <Label>Residual Risk Assessment</Label>
+                          <RiskAssessmentTool 
+                            onCellClick={handleResidualAssessment}
+                            selectedCode={form.watch('residualLikelihood') && form.watch('residualSeverity') ? getRiskScore(form.watch('residualLikelihood')!, form.watch('residualSeverity')!).toString() : null}
+                          />
+                        </div>
+                        
                         <div className="flex justify-end gap-2">
                             {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
                             <Button type="submit">{editingHazard ? 'Save Changes' : 'Add Hazard'}</Button>
                         </div>
                     </form>
                 </Form>
+                </ScrollArea>
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={onCancel}>Cancel</Button>
@@ -288,8 +334,27 @@ export default function MocDetailPage() {
                                     {step.hazards?.map(hazard => (
                                         <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
                                             <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
-                                            <p className="text-xs mt-1"><span className="font-semibold">Risk:</span> {hazard.riskAnalysis}</p>
-                                            <p className="text-xs mt-1"><span className="font-semibold">Mitigation:</span> {hazard.mitigation}</p>
+                                            <div className="grid grid-cols-2 gap-2 text-xs mt-1">
+                                                <div>
+                                                    <p className="font-semibold">Risk Analysis:</p>
+                                                    <p>{hazard.riskAnalysis}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold">Mitigation:</p>
+                                                    <p>{hazard.mitigation}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t">
+                                                <span>Risk Score:</span>
+                                                <Badge style={{ backgroundColor: getRiskScoreColor(hazard.riskScore), color: 'white' }}>
+                                                    {hazard.riskScore || 'N/A'}
+                                                </Badge>
+                                                <ArrowRight className="h-3 w-3" />
+                                                <Badge style={{ backgroundColor: getRiskScoreColor(hazard.residualRiskScore), color: 'white' }}>
+                                                    {hazard.residualRiskScore !== undefined ? hazard.residualRiskScore : 'N/A'}
+                                                </Badge>
+                                                <span className="font-semibold pl-2">{getRiskLevel(hazard.residualRiskScore ?? hazard.riskScore)}</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
