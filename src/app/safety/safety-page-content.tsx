@@ -385,7 +385,6 @@ export function SafetyPageContent({
     initialReports: SafetyReport[],
     initialRisks: Risk[],
     initialBookings: Booking[],
-    initialMoc: any[],
 }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -526,38 +525,41 @@ export function SafetyPageContent({
   }
 
   const renderActionButton = () => {
+    if (activeTab === 'reports') {
+      return (
+        <Button asChild>
+          <Link href="/safety/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            File New Report
+          </Link>
+        </Button>
+      );
+    }
     if (activeTab === 'spis') {
       return (
         <Dialog open={isNewTargetDialogOpen} onOpenChange={setIsNewTargetDialogOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Target
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New SPI Target</DialogTitle>
-                    <DialogDescription>
-                        Define a new Safety Performance Indicator and its alert levels.
-                    </DialogDescription>
-                </DialogHeader>
-                <EditSpiForm 
-                    spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }} 
-                    onUpdate={handleNewSpiSubmit} 
-                />
-            </DialogContent>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Target
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New SPI Target</DialogTitle>
+              <DialogDescription>
+                Define a new Safety Performance Indicator and its alert levels.
+              </DialogDescription>
+            </DialogHeader>
+            <EditSpiForm
+              spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
+              onUpdate={handleNewSpiSubmit}
+            />
+          </DialogContent>
         </Dialog>
       );
     }
-    return (
-        <Button asChild>
-            <Link href="/safety/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                File New Report
-            </Link>
-        </Button>
-    );
+    return null; // Return null for other tabs
   };
 
   const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
@@ -664,7 +666,6 @@ export function SafetyPageContent({
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
