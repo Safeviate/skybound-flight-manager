@@ -5,18 +5,20 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -25,7 +27,7 @@ const DetailSection = ({ title, children }: { title: string, children: React.Rea
     </div>
 );
 
-const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title: string) => void }) => {
+const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title:string) => void }) => {
     const [title, setTitle] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
@@ -69,6 +71,96 @@ const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title: string) => void })
     );
 };
 
+const LIKELIHOOD_OPTIONS: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const SEVERITY_OPTIONS: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
+
+const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
+    const [localStep, setLocalStep] = useState<MocStep>(step);
+
+    const handleAddHazard = () => {
+        const newHazard: MocHazard = {
+            id: `hazard-${Date.now()}`,
+            description: '',
+            risks: [],
+            mitigations: [],
+        };
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: [...(prev.hazards || []), newHazard]
+        }));
+    };
+    
+    const handleHazardChange = (hazardId: string, description: string) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => h.id === hazardId ? { ...h, description } : h)
+        }));
+    };
+
+    const handleSave = () => {
+        onUpdate(localStep);
+        onClose();
+    };
+
+    return (
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Hazard Analysis for: {step.description}</DialogTitle>
+            </DialogHeader>
+            <Card>
+                <CardHeader>
+                    <Button className="w-fit" onClick={handleAddHazard}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Hazard
+                    </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {localStep.hazards?.map((hazard, index) => (
+                        <div key={hazard.id} className="p-4 border rounded-md space-y-4">
+                            <Label htmlFor={`hazard-desc-${index}`}>Hazard #{index + 1}</Label>
+                            <Textarea 
+                                id={`hazard-desc-${index}`}
+                                placeholder="Describe the potential hazard..."
+                                value={hazard.description}
+                                onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
+                            />
+                            <div className="flex items-end gap-2 pt-2 border-t">
+                                <Button variant="outline" size="sm">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
+                                </Button>
+                                 <div className="flex-1">
+                                    <Label className="text-xs">Probability</Label>
+                                    <Select>
+                                        <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
+                                        <SelectContent>
+                                            {LIKELIHOOD_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                 </div>
+                                 <div className="flex-1">
+                                    <Label className="text-xs">Severity</Label>
+                                     <Select>
+                                        <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
+                                        <SelectContent>
+                                            {SEVERITY_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                 </div>
+                            </div>
+                        </div>
+                    ))}
+                    {(!localStep.hazards || localStep.hazards.length === 0) && (
+                        <div className="text-sm text-center text-muted-foreground py-8">No hazards added yet.</div>
+                    )}
+                </CardContent>
+            </Card>
+            <DialogFooter>
+                <Button onClick={handleSave}>Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+};
 
 export default function MocDetailPage() {
   const params = useParams();
@@ -78,6 +170,7 @@ export default function MocDetailPage() {
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [selectedPhase, setSelectedPhase] = useState<MocStep | null>(null);
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
 
@@ -154,6 +247,12 @@ export default function MocDetailPage() {
     toast({ title: 'Phase Deleted', description: 'The implementation phase has been removed.' });
   }
 
+  const handleUpdatePhase = (updatedStep: MocStep) => {
+      if (!moc) return;
+      const updatedSteps = moc.steps?.map(s => s.id === updatedStep.id ? updatedStep : s);
+      handleUpdate({ steps: updatedSteps });
+  };
+
   if (loading || userLoading) {
     return (
       <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -225,27 +324,10 @@ export default function MocDetailPage() {
                          <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
                             <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
                              <div className="flex items-center gap-2">
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm">
-                                            <Wind className="mr-2 h-4 w-4" />
-                                            Hazards
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl">
-                                        <DialogHeader>
-                                            <DialogTitle>Hazard Analysis for: {step.description}</DialogTitle>
-                                        </DialogHeader>
-                                        <Card>
-                                            <CardHeader>
-                                                <Button className="w-fit">
-                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                    Add Hazard
-                                                </Button>
-                                            </CardHeader>
-                                        </Card>
-                                    </DialogContent>
-                                </Dialog>
+                                <Button variant="outline" size="sm" onClick={() => setSelectedPhase(step)}>
+                                    <Wind className="mr-2 h-4 w-4" />
+                                    Hazards
+                                </Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(step.id) }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
@@ -260,6 +342,15 @@ export default function MocDetailPage() {
             </CardContent>
         </Card>
       </div>
+      {selectedPhase && (
+        <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
+            <HazardAnalysisDialog 
+                step={selectedPhase} 
+                onUpdate={handleUpdatePhase}
+                onClose={() => setSelectedPhase(null)}
+            />
+        </Dialog>
+      )}
     </main>
   );
 }
