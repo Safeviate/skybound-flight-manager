@@ -369,7 +369,7 @@ export default function MocDetailPage() {
         
         <div className="border-4 border-purple-600 p-4 rounded-lg relative">
             <div className="absolute -top-3 left-4 bg-background px-2 text-purple-600 font-semibold text-sm">Step 2: Implementation Plan & Hazard Analysis</div>
-            <Card>
+             <Card>
                 <CardHeader className="flex-row justify-between items-start">
                     <div>
                         <CardTitle>Change Implementation Plan</CardTitle>
@@ -398,63 +398,16 @@ export default function MocDetailPage() {
                   <div className="space-y-4">
                       {moc.steps && moc.steps.length > 0 ? (
                           moc.steps.map((step, index) => (
-                              <Card key={step.id} className="bg-muted/30">
-                                  <CardHeader>
-                                      <div className="flex justify-between items-center">
-                                          <CardTitle className="text-base font-semibold">Phase {index+1}: {step.description}</CardTitle>
-                                           {canEdit && (
-                                              <div className="flex gap-1">
-                                                  <Button variant="outline" size="sm" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
-                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                              </div>
-                                           )}
-                                      </div>
-                                  </CardHeader>
-                                  {step.hazards && step.hazards.length > 0 && (
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="w-1/3">Potential Hazard</TableHead>
-                                                    <TableHead className="w-1/3">Risk/s</TableHead>
-                                                    <TableHead className="w-1/3">Mitigation</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {step.hazards.map((hazard, hIndex) => (
-                                                    <TableRow key={hazard.id}>
-                                                        <TableCell className="align-top font-semibold">
-                                                            H{hIndex+1}: {hazard.description}
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            {hazard.risks?.map((risk, rIndex) => (
-                                                                <div key={risk.id} className={cn("p-2", rIndex > 0 && "mt-2 border-t")}>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <p className="font-semibold">R{rIndex+1}: {risk.description}</p>
-                                                                        <Badge style={{backgroundColor: getRiskScoreColor(risk.initialRiskScore), color: 'white'}}>{getRiskLevel(risk.initialRiskScore)}</Badge>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                             {hazard.mitigations?.map((mitigation, mIndex) => (
-                                                                <div key={mitigation.id} className={cn("p-2", mIndex > 0 && "mt-2 border-t")}>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <p className="font-semibold">M{mIndex+1}: {mitigation.description}</p>
-                                                                         <Badge style={{backgroundColor: getRiskScoreColor(mitigation.residualRiskScore), color: 'white'}}>{getRiskLevel(mitigation.residualRiskScore)}</Badge>
-                                                                    </div>
-                                                                    <p className="text-xs text-muted-foreground">Owner: {mitigation.responsiblePerson} | Due: {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'dd-MM-yy') : 'N/A'}</p>
-                                                                </div>
-                                                            ))}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                  )}
-                              </Card>
+                              <div key={step.id} className="border p-4 rounded-lg flex justify-between items-center bg-muted/30">
+                                <p className="font-semibold">Phase {index+1}: {step.description}</p>
+                                {canEdit && (
+                                    <div className="flex items-center gap-1">
+                                        <Button variant="outline" size="sm" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
+                                )}
+                              </div>
                           ))
                       ) : (
                           <p className="text-sm text-muted-foreground">No implementation steps added yet.</p>
