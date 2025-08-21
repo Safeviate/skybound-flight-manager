@@ -25,6 +25,11 @@ import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
+const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
+
 
 const stepFormSchema = z.object({
   description: z.string().min(10, "Step description must be at least 10 characters."),
@@ -34,10 +39,10 @@ type StepFormValues = z.infer<typeof stepFormSchema>;
 const hazardFormSchema = z.object({
   description: z.string().min(10, "Hazard description is required."),
   mitigation: z.string().min(10, "Mitigation plan is required."),
-  likelihood: z.custom<RiskLikelihood>().optional(),
-  severity: z.custom<RiskSeverity>().optional(),
-  residualLikelihood: z.custom<RiskLikelihood>().optional(),
-  residualSeverity: z.custom<RiskSeverity>().optional(),
+  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
+  severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
+  residualLikelihood: z.enum(likelihoodValues, { required_error: 'Residual Likelihood is required.' }),
+  residualSeverity: z.enum(severityValues, { required_error: 'Residual Severity is required.' }),
 });
 type HazardFormValues = z.infer<typeof hazardFormSchema>;
 
@@ -57,15 +62,13 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
         }
     }, [editingHazard, form]);
     
-    const handleInitialAssessment = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
-        form.setValue('likelihood', likelihood, { shouldValidate: true });
-        form.setValue('severity', severity, { shouldValidate: true });
-    };
+    const watchedLikelihood = form.watch('likelihood');
+    const watchedSeverity = form.watch('severity');
+    const watchedResidualLikelihood = form.watch('residualLikelihood');
+    const watchedResidualSeverity = form.watch('residualSeverity');
 
-    const handleResidualAssessment = (likelihood: RiskLikelihood, severity: RiskSeverity) => {
-        form.setValue('residualLikelihood', likelihood, { shouldValidate: true });
-        form.setValue('residualSeverity', severity, { shouldValidate: true });
-    };
+    const initialRiskScore = watchedLikelihood && watchedSeverity ? getRiskScore(watchedLikelihood, watchedSeverity) : null;
+    const residualRiskScore = watchedResidualLikelihood && watchedResidualSeverity ? getRiskScore(watchedResidualLikelihood, watchedResidualSeverity) : null;
 
     const handleAddOrUpdate = (data: HazardFormValues) => {
         const riskScore = data.likelihood && data.severity ? getRiskScore(data.likelihood, data.severity) : undefined;
@@ -117,22 +120,44 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                         <h4 className="font-semibold text-sm">{editingHazard ? 'Edit' : 'Add'} Hazard</h4>
                         <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Incorrect fuel calculation" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         
-                        <div>
-                          <Label>Initial Risk Assessment</Label>
-                          <RiskAssessmentTool 
-                            onCellClick={handleInitialAssessment}
-                            selectedCode={form.watch('likelihood') && form.watch('severity') ? getRiskScore(form.watch('likelihood')!, form.watch('severity')!).toString() : null}
-                          />
+                        <div className="p-3 border rounded-md space-y-3">
+                            <h5 className="text-sm font-semibold">Initial Risk Assessment</h5>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField name="likelihood" control={form.control} render={({ field }) => (
+                                    <FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                                <FormField name="severity" control={form.control} render={({ field }) => (
+                                    <FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                            </div>
+                             {initialRiskScore !== null && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span>Calculated Risk:</span>
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(initialRiskScore), color: 'white' }}>{initialRiskScore}</Badge>
+                                    <Badge variant="outline">{getRiskLevel(initialRiskScore)}</Badge>
+                                </div>
+                            )}
                         </div>
 
                         <FormField name="mitigation" control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation</FormLabel><FormControl><Textarea placeholder="e.g., Mandatory cross-check by second crew member..." {...field} /></FormControl><FormMessage /></FormItem>)} />
-
-                        <div>
-                          <Label>Residual Risk Assessment</Label>
-                          <RiskAssessmentTool 
-                            onCellClick={handleResidualAssessment}
-                            selectedCode={form.watch('residualLikelihood') && form.watch('residualSeverity') ? getRiskScore(form.watch('residualLikelihood')!, form.watch('residualSeverity')!).toString() : null}
-                          />
+                        
+                        <div className="p-3 border rounded-md space-y-3">
+                            <h5 className="text-sm font-semibold">Residual Risk Assessment</h5>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField name="residualLikelihood" control={form.control} render={({ field }) => (
+                                    <FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                                <FormField name="residualSeverity" control={form.control} render={({ field }) => (
+                                    <FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                                )}/>
+                            </div>
+                            {residualRiskScore !== null && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span>Calculated Risk:</span>
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(residualRiskScore), color: 'white' }}>{residualRiskScore}</Badge>
+                                    <Badge variant="outline">{getRiskLevel(residualRiskScore)}</Badge>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="flex justify-end gap-2">
@@ -335,10 +360,6 @@ export default function MocDetailPage() {
                                         <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
                                             <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
                                             <div className="grid grid-cols-2 gap-2 text-xs mt-1">
-                                                <div>
-                                                    <p className="font-semibold">Risk Analysis:</p>
-                                                    <p>{hazard.riskAnalysis}</p>
-                                                </div>
                                                 <div>
                                                     <p className="font-semibold">Mitigation:</p>
                                                     <p>{hazard.mitigation}</p>
