@@ -585,7 +585,7 @@ export type ComplianceItem = {
 export type MocHazard = {
     id: string;
     description: string;
-    riskAnalysis: string;
+    risk?: string;
     mitigation: string;
     likelihood?: RiskLikelihood;
     severity?: RiskSeverity;
@@ -698,5 +698,6 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -15,7 +16,7 @@ import { ArrowLeft, PlusCircle, Edit, Trash2, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -42,6 +43,7 @@ type StepFormValues = z.infer<typeof stepFormSchema>;
 
 const hazardFormSchema = z.object({
   description: z.string().min(10, "Hazard description is required."),
+  risk: z.string().min(10, "Risk description is required."),
   mitigation: z.string().min(10, "Mitigation plan is required."),
   likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
   severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
@@ -67,7 +69,7 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                 completionDate: editingHazard.completionDate ? parseISO(editingHazard.completionDate) : null,
             });
         } else {
-            form.reset({ description: '', mitigation: '' });
+            form.reset({ description: '', risk: '', mitigation: '' });
         }
     }, [editingHazard, form]);
     
@@ -133,6 +135,7 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                     <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4 p-4 border rounded-lg">
                         <h4 className="font-semibold text-sm">{editingHazard ? 'Edit' : 'Add'} Hazard</h4>
                         <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Incorrect fuel calculation" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField name="risk" control={form.control} render={({ field }) => (<FormItem><FormLabel>Risk</FormLabel><FormControl><Textarea placeholder="e.g., Engine failure due to fuel exhaustion." {...field} /></FormControl><FormMessage /></FormItem>)} />
                         
                         <div className="p-3 border rounded-md space-y-3">
                             <h5 className="text-sm font-semibold">Initial Risk Assessment</h5>
@@ -173,11 +176,13 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                                 </div>
                             )}
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                           <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                           <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                        <div className="p-3 border rounded-md space-y-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                          </div>
                         </div>
+
                         
                         <div className="flex justify-end gap-2">
                             {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
@@ -378,6 +383,7 @@ export default function MocDetailPage() {
                                     {step.hazards?.map(hazard => (
                                         <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
                                             <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Risk: {hazard.risk}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-1">
                                                 <div>
                                                     <p className="font-semibold">Mitigation:</p>
