@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -95,6 +93,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const [bookingForDebrief, setBookingForDebrief] = useState<Booking | null>(null);
     const [logToEdit, setLogToEdit] = useState<TrainingLogEntry | null>(null);
     const [isBroughtForwardOpen, setIsBroughtForwardOpen] = useState(false);
+    const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
     
     const [hoursForward, setHoursForward] = useState({
         total: 0,
@@ -142,10 +141,20 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             return [];
         }
         // Filter out brought forward logs for the main table
-        return [...student.trainingLogs]
-            .filter(log => log.aircraft !== 'Previous Experience')
-            .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
-    }, [student?.trainingLogs]);
+        const sortableLogs = [...student.trainingLogs]
+            .filter(log => log.aircraft !== 'Previous Experience');
+
+        sortableLogs.sort((a, b) => {
+            const dateA = parseISO(a.date).getTime();
+            const dateB = parseISO(b.date).getTime();
+            if (sortOrder === 'newest') {
+                return dateB - dateA;
+            } else {
+                return dateA - dateB;
+            }
+        });
+        return sortableLogs;
+    }, [student?.trainingLogs, sortOrder]);
 
     const broughtForwardLog = useMemo(() => {
         return student?.trainingLogs?.find(log => log.aircraft === 'Previous Experience');
@@ -671,7 +680,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
              <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add/Edit Hours Brought Forward</DialogTitle>
+                        <DialogTitle>Edit Hours Brought Forward</DialogTitle>
                         <DialogDescription>
                             Enter the total hours from a previous logbook. This will create or update a single summary entry.
                         </DialogDescription>
@@ -971,18 +980,32 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 </Table>
                                                 <ScrollBar orientation="horizontal" />
                                             </ScrollArea>
-                                            <div className="flex items-center justify-center space-x-2 p-2">
-                                                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
-                                                    <ChevronLeft className="h-4 w-4" />
-                                                    Previous
-                                                </Button>
-                                                <span className="text-sm">
-                                                    Page {currentPage} of {totalPages}
-                                                </span>
-                                                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
-                                                    Next
-                                                    <ChevronRight className="h-4 w-4" />
-                                                </Button>
+                                            <div className="flex items-center justify-between p-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Label htmlFor="sort-order" className="text-sm">Sort by:</Label>
+                                                    <Select value={sortOrder} onValueChange={(value: 'newest' | 'oldest') => setSortOrder(value)}>
+                                                        <SelectTrigger className="w-[180px]">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="newest">Newest to Oldest</SelectItem>
+                                                            <SelectItem value="oldest">Oldest to Newest</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="flex items-center justify-center space-x-2">
+                                                    <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
+                                                        <ChevronLeft className="h-4 w-4" />
+                                                        Previous
+                                                    </Button>
+                                                    <span className="text-sm">
+                                                        Page {currentPage} of {totalPages}
+                                                    </span>
+                                                    <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+                                                        Next
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                     </div>
                                 </CardContent>
