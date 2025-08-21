@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard, MocRisk, MocMitigation, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,14 +14,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LIKELIHOOD_MAP, SEVERITY_MAP, getRiskScore, getRiskScoreColor } from '@/lib/utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -76,195 +70,6 @@ const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title: string) => void })
 };
 
 
-const HazardAnalysis = ({ phase, onUpdateHazards, onDeleteHazard }: { phase: MocStep; onUpdateHazards: (hazards: MocHazard[]) => void; onDeleteHazard: (hazardId: string) => void; }) => {
-    const [hazards, setHazards] = useState<MocHazard[]>(phase.hazards || []);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        setHazards(phase.hazards || []);
-    }, [phase.hazards]);
-
-    const addHazard = () => {
-        const newHazard: MocHazard = {
-            id: `hazard-${Date.now()}`,
-            description: '',
-            risks: [],
-            mitigations: [],
-        };
-        const updatedHazards = [...hazards, newHazard];
-        setHazards(updatedHazards);
-        onUpdateHazards(updatedHazards);
-    };
-
-    const updateHazard = (hazardId: string, description: string) => {
-        const updated = hazards.map(h => h.id === hazardId ? { ...h, description } : h);
-        setHazards(updated);
-        onUpdateHazards(updated);
-    };
-
-    const addRisk = (hazardId: string) => {
-        const newRisk: MocRisk = { id: `risk-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible', initialRiskScore: 0 };
-        const updated = hazards.map(h => h.id === hazardId ? { ...h, risks: [...(h.risks || []), newRisk] } : h);
-        setHazards(updated);
-        onUpdateHazards(updated);
-    };
-
-    const updateRisk = (hazardId: string, riskId: string, field: keyof MocRisk, value: string) => {
-        const updated = hazards.map(h => {
-            if (h.id === hazardId) {
-                const updatedRisks = (h.risks || []).map(r => {
-                    if (r.id === riskId) {
-                        const newRisk = { ...r, [field]: value };
-                        newRisk.initialRiskScore = getRiskScore(newRisk.likelihood, newRisk.severity);
-                        return newRisk;
-                    }
-                    return r;
-                });
-                return { ...h, risks: updatedRisks };
-            }
-            return h;
-        });
-        setHazards(updated);
-        onUpdateHazards(updated);
-    };
-    
-    const addMitigation = (hazardId: string) => {
-        const newMitigation: MocMitigation = { id: `mitigation-${Date.now()}`, description: '', residualLikelihood: 'Improbable', residualSeverity: 'Negligible', residualRiskScore: 0 };
-        const updated = hazards.map(h => h.id === hazardId ? { ...h, mitigations: [...(h.mitigations || []), newMitigation] } : h);
-        setHazards(updated);
-        onUpdateHazards(updated);
-    }
-    
-    const updateMitigation = (hazardId: string, mitigationId: string, field: keyof MocMitigation, value: string) => {
-         const updated = hazards.map(h => {
-            if (h.id === hazardId) {
-                const updatedMitigations = (h.mitigations || []).map(m => {
-                    if (m.id === mitigationId) {
-                        const newMitigation = { ...m, [field]: value };
-                        newMitigation.residualRiskScore = getRiskScore(newMitigation.residualLikelihood, newMitigation.residualSeverity);
-                        return newMitigation;
-                    }
-                    return m;
-                });
-                return { ...h, mitigations: updatedMitigations };
-            }
-            return h;
-        });
-        setHazards(updated);
-        onUpdateHazards(updated);
-    }
-
-    return (
-        <div className="space-y-4">
-            <Button onClick={addHazard} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Hazard</Button>
-            {hazards.map((hazard, hIndex) => (
-                <div key={hazard.id} className="border p-4 rounded-lg space-y-4">
-                    
-                    <div className="flex justify-between items-center">
-                        <Label htmlFor={`hazard-desc-${hIndex}`} className="font-semibold text-lg">Hazard {hIndex + 1}</Label>
-                         <Button variant="ghost" size="icon" onClick={() => onDeleteHazard(hazard.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </div>
-
-                    <Textarea 
-                        id={`hazard-desc-${hIndex}`} 
-                        value={hazard.description} 
-                        onChange={(e) => updateHazard(hazard.id, e.target.value)} 
-                        placeholder="Describe the potential hazard..." 
-                    />
-                    
-                    {/* Risks Section */}
-                    <div className="space-y-2">
-                        <Label className="font-semibold">Risk/s</Label>
-                        <Table>
-                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[60%]">Risk Description</TableHead>
-                                    <TableHead>P</TableHead>
-                                    <TableHead>S</TableHead>
-                                    <TableHead>PxS</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                 {(hazard.risks || []).map((risk, rIndex) => {
-                                    const score = getRiskScore(risk.likelihood, risk.severity);
-                                    return (
-                                        <TableRow key={risk.id}>
-                                            <TableCell>
-                                                <Textarea value={risk.description} onChange={(e) => updateRisk(hazard.id, risk.id, 'description', e.target.value)} placeholder="Describe the associated risk..." />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Select value={risk.likelihood} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'likelihood', val as RiskLikelihood)}>
-                                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                                    <SelectContent>{Object.entries(LIKELIHOOD_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Select value={risk.severity} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'severity', val as RiskSeverity)}>
-                                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                                    <SelectContent>{Object.entries(SEVERITY_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[risk.likelihood]}{SEVERITY_MAP[risk.severity]}</Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                        <Button onClick={() => addRisk(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Risk</Button>
-                    </div>
-
-                    {/* Mitigations Section */}
-                    <div className="space-y-2">
-                        <Label className="font-semibold">Mitigation/s</Label>
-                        <Table>
-                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[60%]">Mitigation Action</TableHead>
-                                    <TableHead>P</TableHead>
-                                    <TableHead>S</TableHead>
-                                    <TableHead>PxS</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {(hazard.mitigations || []).map((mitigation, mIndex) => {
-                                    const score = getRiskScore(mitigation.residualLikelihood, mitigation.residualSeverity);
-                                    return (
-                                    <TableRow key={mitigation.id}>
-                                        <TableCell>
-                                            <Textarea value={mitigation.description} onChange={(e) => updateMitigation(hazard.id, mitigation.id, 'description', e.target.value)} placeholder="Describe the mitigation action..." />
-                                        </TableCell>
-                                        <TableCell>
-                                             <Select value={mitigation.residualLikelihood} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'residualLikelihood', val as RiskLikelihood)}>
-                                                <SelectTrigger><SelectValue/></SelectTrigger>
-                                                <SelectContent>{Object.entries(LIKELIHOOD_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Select value={mitigation.residualSeverity} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'residualSeverity', val as RiskSeverity)}>
-                                                <SelectTrigger><SelectValue/></SelectTrigger>
-                                                <SelectContent>{Object.entries(SEVERITY_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[mitigation.residualLikelihood]}{SEVERITY_MAP[mitigation.residualSeverity]}</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                )})}
-                            </TableBody>
-                        </Table>
-                        <Button onClick={() => addMitigation(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation</Button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-
 export default function MocDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -272,7 +77,6 @@ export default function MocDetailPage() {
   const mocId = params.mocId as string;
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPhase, setSelectedPhase] = useState<MocStep | null>(null);
   const { toast } = useToast();
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
@@ -343,32 +147,12 @@ export default function MocDetailPage() {
     toast({ title: 'Phase Added', description: `Phase ${updatedSteps.length}: ${title} has been added.` });
   };
   
-  const handleUpdatePhase = (phaseId: string, newHazards: MocHazard[]) => {
-    if (!moc) return;
-    const updatedSteps = moc.steps?.map(s => s.id === phaseId ? { ...s, hazards: newHazards } : s);
-    handleUpdate({ steps: updatedSteps }, false); // Save silently in the background
-  };
-
   const handleDeletePhase = (phaseId: string) => {
     if (!moc) return;
     const updatedSteps = moc.steps?.filter(s => s.id !== phaseId);
     handleUpdate({ steps: updatedSteps });
     toast({ title: 'Phase Deleted', description: 'The implementation phase has been removed.' });
   }
-
-  const handleDeleteHazard = (phaseId: string, hazardId: string) => {
-    if (!moc) return;
-    const updatedSteps = moc.steps?.map(s => {
-        if (s.id === phaseId) {
-            const updatedHazards = s.hazards?.filter(h => h.id !== hazardId);
-            return { ...s, hazards: updatedHazards };
-        }
-        return s;
-    });
-    handleUpdate({ steps: updatedSteps }, false);
-    toast({ title: 'Hazard Deleted', description: 'The hazard has been removed.' });
-  }
-
 
   if (loading || userLoading) {
     return (
@@ -438,7 +222,7 @@ export default function MocDetailPage() {
             {moc.steps && moc.steps.length > 0 ? (
                 <div className="space-y-2">
                     {moc.steps.map((step, index) => (
-                        <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer" onClick={() => setSelectedPhase(step)}>
+                        <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
                             <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
@@ -454,31 +238,7 @@ export default function MocDetailPage() {
             )}
             </CardContent>
         </Card>
-
       </div>
-
-      <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
-        <DialogContent className="max-w-5xl">
-            <DialogHeader>
-                <DialogTitle>Hazard Analysis: {selectedPhase?.description}</DialogTitle>
-                <DialogDescription>
-                    Identify potential hazards associated with this implementation phase and assess their risks.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              {selectedPhase && (
-                 <HazardAnalysis 
-                    phase={selectedPhase} 
-                    onUpdateHazards={(hazards) => handleUpdatePhase(selectedPhase.id, hazards)}
-                    onDeleteHazard={(hazardId) => handleDeleteHazard(selectedPhase.id, hazardId)}
-                />
-              )}
-            </div>
-             <DialogFooter>
-                <Button onClick={() => setSelectedPhase(null)}>Close</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }
