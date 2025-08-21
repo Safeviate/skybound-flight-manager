@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield, FileText } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield, FileText, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -33,11 +33,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { EditSpiForm, type SpiConfig } from './edit-spi-form';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
 import { NewMocForm } from './new-moc-form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -642,7 +643,7 @@ export function SafetyPageContent({
     );
   };
   
-  const MocTable = ({ mocs }: { mocs: ManagementOfChange[] }) => {
+  const MocTable = ({ mocs, canEdit, onDelete }: { mocs: ManagementOfChange[], canEdit: boolean, onDelete: (id: string) => void }) => {
     return (
         <Table>
             <TableHeader>
@@ -664,13 +665,36 @@ export function SafetyPageContent({
                             <TableCell>{moc.proposedBy}</TableCell>
                             <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
                             <TableCell><Badge>{moc.status}</Badge></TableCell>
-                             <TableCell className="text-right">
+                             <TableCell className="text-right space-x-2">
                                 <Button asChild variant="outline" size="sm">
                                     <Link href={`/safety/moc/${moc.id}`}>
                                         <FileText className="mr-2 h-4 w-4" />
                                         View
                                     </Link>
                                 </Button>
+                                {canEdit && (
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                             <Button variant="destructive" size="icon">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the MOC record "{moc.title}". This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => onDelete(moc.id)}>
+                                                    Yes, Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))
@@ -686,6 +710,21 @@ export function SafetyPageContent({
     )
   }
 
+  const handleDeleteMoc = async (mocId: string) => {
+    if (!company) return;
+    try {
+        const docRef = doc(db, `companies/${company.id}/management-of-change`, mocId);
+        await deleteDoc(docRef);
+        fetchData();
+        toast({ title: 'MOC Deleted', description: 'The MOC record has been removed.'});
+    } catch (error) {
+        console.error("Error deleting MOC:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete MOC record.' });
+    }
+  };
+
+  const canEditMoc = user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User');
+
   return (
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -697,6 +736,14 @@ export function SafetyPageContent({
               <TabsTrigger value="spis">SPIs</TabsTrigger>
               <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
+            {activeTab === 'reports' && (
+                <Button asChild>
+                    <Link href="/safety/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        File New Report
+                    </Link>
+                </Button>
+            )}
           </div>
           <TabsContent value="dashboard">
             <SafetyDashboard reports={safetyReports} risks={risks} />
@@ -704,17 +751,9 @@ export function SafetyPageContent({
 
           <TabsContent value="reports">
             <Card>
-              <CardHeader className="flex-row justify-between items-start">
-                  <div>
-                    <CardTitle>Filed Safety Reports</CardTitle>
-                    <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
-                  </div>
-                   <Button asChild>
-                      <Link href="/safety/new">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        File New Report
-                      </Link>
-                    </Button>
+              <CardHeader>
+                <CardTitle>Filed Safety Reports</CardTitle>
+                <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="active">
@@ -777,7 +816,7 @@ export function SafetyPageContent({
                     </Dialog>
                   </CardHeader>
                   <CardContent>
-                    <MocTable mocs={mocs} />
+                    <MocTable mocs={mocs} canEdit={canEditMoc} onDelete={handleDeleteMoc} />
                   </CardContent>
                 </Card>
               </div>
