@@ -65,19 +65,47 @@ interface SafetyPerformanceIndicatorsProps {
 
 const SafetyPerformanceIndicators = ({ reports, spiConfigs, onConfigChange, monthlyFlightHours }: SafetyPerformanceIndicatorsProps) => {
     const [editingSpi, setEditingSpi] = useState<SpiConfig | null>(null);
+    const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
 
     const handleSpiUpdate = (updatedSpi: SpiConfig) => {
         onConfigChange(spiConfigs.map(spi => spi.id === updatedSpi.id ? updatedSpi : spi));
         setEditingSpi(null);
     };
 
+    const handleNewSpiSubmit = (newSpi: SpiConfig) => {
+        onConfigChange([...spiConfigs, { ...newSpi, filter: () => true }]); // Generic filter for new SPI
+        setIsNewTargetDialogOpen(false);
+    }
+
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Safety Performance Indicators (SPIs)</CardTitle>
-                <CardDescription>
-                    Monitoring key indicators to proactively manage safety, based on ICAO and SACAA principles.
-                </CardDescription>
+            <CardHeader className="flex-row justify-between items-start">
+                <div>
+                    <CardTitle>Safety Performance Indicators (SPIs)</CardTitle>
+                    <CardDescription>
+                        Monitoring key indicators to proactively manage safety, based on ICAO and SACAA principles.
+                    </CardDescription>
+                </div>
+                 <Dialog open={isNewTargetDialogOpen} onOpenChange={setIsNewTargetDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add New Target
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Add New SPI Target</DialogTitle>
+                        <DialogDescription>
+                            Define a new Safety Performance Indicator and its alert levels.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <EditSpiForm
+                        spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
+                        onUpdate={handleNewSpiSubmit}
+                        />
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
                 {spiConfigs.map(config => {
@@ -399,7 +427,6 @@ export function SafetyPageContent({
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
-  const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
   const [isNewMocOpen, setIsNewMocOpen] = useState(false);
   const router = useRouter();
   
@@ -521,74 +548,6 @@ export function SafetyPageContent({
     );
   };
   
-  const handleNewSpiSubmit = (newSpi: SpiConfig) => {
-    setSpiConfigs(prev => [...prev, { ...newSpi, filter: () => true }]); // Generic filter for new SPI
-    setIsNewTargetDialogOpen(false);
-     toast({
-        title: "SPI Target Added",
-        description: `A new target for "${newSpi.name}" has been added.`
-    });
-  }
-
-  const renderActionButton = () => {
-    if (activeTab === 'reports') {
-      return (
-        <Button asChild>
-          <Link href="/safety/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            File New Report
-          </Link>
-        </Button>
-      );
-    }
-    if (activeTab === 'spis') {
-      return (
-        <Dialog open={isNewTargetDialogOpen} onOpenChange={setIsNewTargetDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Target
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New SPI Target</DialogTitle>
-              <DialogDescription>
-                Define a new Safety Performance Indicator and its alert levels.
-              </DialogDescription>
-            </DialogHeader>
-            <EditSpiForm
-              spi={{ id: `spi-${Date.now()}`, name: 'Runway Excursions', type: 'Lagging Indicator', calculation: 'count', targetDirection: '<=', filter: (r) => r.subCategory === 'Runway Excursion', target: 0, alert2: 1, alert3: 2, alert4: 3 }}
-              onUpdate={handleNewSpiSubmit}
-            />
-          </DialogContent>
-        </Dialog>
-      );
-    }
-    if (activeTab === 'moc') {
-        return (
-             <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Propose Change
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Management of Change Proposal</DialogTitle>
-                         <DialogDescription>
-                            Submit a new proposal for a significant change to operations.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
-                </DialogContent>
-            </Dialog>
-        );
-    }
-    return null; // Return null for other tabs
-  };
-
   const ReportTable = ({ reports }: { reports: SafetyReport[] }) => {
     const controls = reports.some(r => r.status === 'Archived') ? archivedReportsControls : reportsControls;
 
@@ -738,11 +697,6 @@ export function SafetyPageContent({
               <TabsTrigger value="spis">SPIs</TabsTrigger>
               <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
-            {activeTab !== 'dashboard' && activeTab !== 'register' && (
-                <div className="ml-4">
-                     {renderActionButton()}
-                </div>
-            )}
           </div>
           <TabsContent value="dashboard">
             <SafetyDashboard reports={safetyReports} risks={risks} />
@@ -750,9 +704,17 @@ export function SafetyPageContent({
 
           <TabsContent value="reports">
             <Card>
-              <CardHeader>
-                <CardTitle>Filed Safety Reports</CardTitle>
-                <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
+              <CardHeader className="flex-row justify-between items-start">
+                  <div>
+                    <CardTitle>Filed Safety Reports</CardTitle>
+                    <CardDescription>Incidents and hazards reported by personnel.</CardDescription>
+                  </div>
+                   <Button asChild>
+                      <Link href="/safety/new">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        File New Report
+                      </Link>
+                    </Button>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="active">
@@ -774,9 +736,6 @@ export function SafetyPageContent({
           <TabsContent value="register">
              <RiskRegister risks={risks} onUpdate={fetchData} />
           </TabsContent>
-          <TabsContent value="matrix">
-             <RiskAssessmentTool />
-          </TabsContent>
           <TabsContent value="spis">
             <div className="border-4 border-teal-500 p-4 rounded-lg relative mt-6">
               <div className="absolute -top-3 left-4 bg-background px-2 text-teal-500 font-semibold text-sm">Safety Performance</div>
@@ -792,11 +751,30 @@ export function SafetyPageContent({
               <div className="border-4 border-cyan-500 p-4 rounded-lg relative mt-6">
                 <div className="absolute -top-3 left-4 bg-background px-2 text-cyan-500 font-semibold text-sm">Management of Change</div>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Management of Change (MOC)</CardTitle>
-                    <CardDescription>
-                      Track and manage significant changes to operations, procedures, and systems.
-                    </CardDescription>
+                  <CardHeader className="flex-row justify-between items-start">
+                    <div>
+                        <CardTitle>Management of Change (MOC)</CardTitle>
+                        <CardDescription>
+                        Track and manage significant changes to operations, procedures, and systems.
+                        </CardDescription>
+                    </div>
+                     <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Propose Change
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Management of Change Proposal</DialogTitle>
+                                <DialogDescription>
+                                    Submit a new proposal for a significant change to operations.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
+                        </DialogContent>
+                    </Dialog>
                   </CardHeader>
                   <CardContent>
                     <MocTable mocs={mocs} />
