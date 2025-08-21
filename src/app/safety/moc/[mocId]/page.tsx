@@ -3,9 +3,9 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange } from '@/lib/types';
+import type { ManagementOfChange, MocStep } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -21,6 +24,50 @@ const DetailSection = ({ title, children }: { title: string, children: React.Rea
         <div className="p-3 bg-muted/50 rounded-md text-sm">{children}</div>
     </div>
 );
+
+const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title: string) => void }) => {
+    const [title, setTitle] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleSubmit = () => {
+        if (title.trim()) {
+            onAddPhase(title.trim());
+            setTitle('');
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Phase
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Implementation Phase</DialogTitle>
+                    <DialogDescription>
+                        Enter a title for this phase of the change implementation.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-2">
+                    <Label htmlFor="phase-title">Phase Title</Label>
+                    <Input 
+                        id="phase-title" 
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g., Initial Training & Documentation"
+                    />
+                </div>
+                <div className="flex justify-end">
+                    <Button onClick={handleSubmit} disabled={!title.trim()}>Confirm</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 
 export default function MocDetailPage() {
@@ -66,6 +113,36 @@ export default function MocDetailPage() {
     }
     fetchMoc();
   }, [mocId, user, userLoading, router, fetchMoc]);
+
+  const handleUpdate = async (updatedData: Partial<ManagementOfChange>) => {
+    if (!moc) return;
+    setLoading(true);
+    const mocRef = doc(db, `companies/${company.id}/management-of-change`, moc.id);
+    try {
+      await updateDoc(mocRef, updatedData);
+      const updatedMoc = { ...moc, ...updatedData };
+      setMoc(updatedMoc);
+    } catch (error) {
+      console.error("Error updating MOC:", error);
+      toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to MOC.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddPhase = (title: string) => {
+    if (!moc) return;
+
+    const newStep: MocStep = {
+      id: `step-${Date.now()}`,
+      description: title,
+    };
+
+    const updatedSteps = [...(moc.steps || []), newStep];
+    handleUpdate({ steps: updatedSteps });
+    toast({ title: 'Phase Added', description: `Phase ${updatedSteps.length}: ${title} has been added.` });
+  };
+
 
   if (loading || userLoading) {
     return (
@@ -132,16 +209,23 @@ export default function MocDetailPage() {
                             Outline the steps required to implement the change.
                         </CardDescription>
                     </div>
-                    {canEdit && (
-                        <Button variant="outline">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Phase
-                        </Button>
-                    )}
+                    {canEdit && <AddPhaseDialog onAddPhase={handleAddPhase} />}
                 </div>
             </CardHeader>
             <CardContent>
-              {/* Content for implementation phases will go here */}
+              {moc.steps && moc.steps.length > 0 ? (
+                <div className="space-y-2">
+                    {moc.steps.map((step, index) => (
+                        <button key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors">
+                            <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
+                        </button>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No implementation phases have been added yet.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
