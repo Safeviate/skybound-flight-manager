@@ -104,12 +104,6 @@ export default function MocDetailPage() {
                             Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
                         </CardDescription>
                     </div>
-                    {canEdit && (
-                        <Button variant="outline">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Phase
-                        </Button>
-                    )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -126,6 +120,32 @@ export default function MocDetailPage() {
               </CardContent>
             </Card>
         </div>
+
+        <div className="border-4 border-orange-500 p-4 rounded-lg relative">
+          <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">Step 2: Implementation Plan & Hazard Analysis</div>
+          <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Implementation Phases</CardTitle>
+                        <CardDescription>
+                            Outline the steps required to implement the change.
+                        </CardDescription>
+                    </div>
+                    {canEdit && (
+                        <Button variant="outline">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Phase
+                        </Button>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent>
+              {/* Content for implementation phases will go here */}
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
     </main>
   );
