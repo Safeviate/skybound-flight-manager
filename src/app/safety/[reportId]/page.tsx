@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Risk, SafetyReport, User, InvestigationTask, TaskComment, CorrectiveAction, InvestigationTeamMember } from '@/lib/types';
-import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Printer, Info, Wind, Bird, Bot, Loader2, BookOpen, Send, PlusCircle, ListTodo, MessageSquare, ChevronDown, User as UserIcon, CheckCircle, XCircle, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -376,6 +376,8 @@ function SafetyReportInvestigationPage() {
 
   const [isDiscussionDialogOpen, setIsDiscussionDialogOpen] = React.useState(false);
   const [personnel, setPersonnel] = React.useState<User[]>([]);
+  const [isEditingReport, setIsEditingReport] = useState(false);
+  const [reportDetails, setReportDetails] = useState('');
 
   const discussionForm = useForm<DiscussionFormValues>({
     resolver: zodResolver(discussionFormSchema),
@@ -400,6 +402,7 @@ function SafetyReportInvestigationPage() {
             if (reportSnap.exists()) {
                 const reportData = reportSnap.data() as SafetyReport;
                 setReport(reportData);
+                setReportDetails(reportData.details);
             } else {
                 console.error("No such document!");
                 setReport(null);
@@ -643,6 +646,11 @@ function SafetyReportInvestigationPage() {
     document.body.classList.remove('print-initial-report-only');
   };
 
+  const handleSaveReportDetails = () => {
+    handleReportUpdate({ details: reportDetails }, true);
+    setIsEditingReport(false);
+  }
+
   if (userLoading || dataLoading) {
     return (
         <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -701,14 +709,33 @@ function SafetyReportInvestigationPage() {
 
               <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                   <Card>
-                      <CardHeader>
-                          <CardTitle>Initial Report Details</CardTitle>
-                          <CardDescription>This is the original report as submitted.</CardDescription>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                          <div>
+                            <CardTitle>Initial Report Details</CardTitle>
+                            <CardDescription>This is the original report as submitted.</CardDescription>
+                          </div>
+                          {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
+                            <div className="flex items-center gap-2">
+                                {isEditingReport ? (
+                                    <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
+                                ) : (
+                                    <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                                )}
+                            </div>
+                          )}
                       </CardHeader>
                       <CardContent>
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
-                              {report.details}
-                          </p>
+                          {isEditingReport ? (
+                              <Textarea 
+                                  value={reportDetails}
+                                  onChange={(e) => setReportDetails(e.target.value)}
+                                  className="min-h-[250px] whitespace-pre-wrap"
+                              />
+                          ) : (
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                                  {report.details}
+                              </p>
+                          )}
                       </CardContent>
                   </Card>
 
