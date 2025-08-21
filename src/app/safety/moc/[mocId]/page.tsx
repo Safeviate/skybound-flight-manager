@@ -98,7 +98,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
     const handleAddRisk = (hazardId?: string) => {
         const targetHazardId = hazardId || localStep.hazards?.[localStep.hazards.length - 1]?.id;
         if (!targetHazardId) {
-            // If no hazard exists, create one first then add risk to it.
             const newHazardId = `hazard-${Date.now()}`;
             const newRisk: MocRisk = {
                 id: `risk-${Date.now()}`,
@@ -267,10 +266,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Hazard
                     </Button>
-                    <Button className="w-fit" variant="outline" onClick={() => handleAddRisk()}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Risk
-                    </Button>
                 </div>
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
@@ -279,6 +274,9 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <div className="flex items-center justify-between">
                              <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
                               <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleAddRisk(hazard.id)}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
+                                </Button>
                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -629,11 +627,11 @@ export default function MocDetailPage() {
                         <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
                             <h4 className="font-semibold">Hazard #{index + 1}.{hIndex + 1}: {hazard.description}</h4>
                             {hazard.risks?.map((risk, rIndex) => (
-                                <div key={`print-risk-${risk.id}`} className="pl-4 space-y-2">
+                                <div key={`print-risk-${risk.id}`} className="p-4 ml-4 space-y-2 border-l-4 border-yellow-400">
                                     <p className="text-sm font-medium">Risk #{index + 1}.{hIndex + 1}.{rIndex + 1}: {risk.description}</p>
                                     <p className="text-xs">Initial Risk: {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
                                     {risk.mitigations?.map((mitigation, mIndex) => (
-                                        <div key={`print-mitigation-${mitigation.id}`} className="pl-4 space-y-1">
+                                        <div key={`print-mitigation-${mitigation.id}`} className="p-4 ml-4 space-y-1 border-l-4 border-green-400">
                                             <p className="text-sm font-medium text-green-700">Mitigation #{mIndex + 1}: {mitigation.description}</p>
                                             <p className="text-xs">Responsible: {mitigation.responsiblePerson || 'N/A'} | Due: {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'}</p>
                                             <p className="text-xs">Residual Risk: {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
