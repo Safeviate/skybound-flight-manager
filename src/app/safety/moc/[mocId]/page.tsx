@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Edit, Trash2, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -394,7 +394,81 @@ export default function MocDetailPage() {
                     )}
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">Add steps to the implementation plan using the button above.</p>
+                  <div className="space-y-4">
+                      {moc.steps && moc.steps.length > 0 ? (
+                          moc.steps.map((step, index) => (
+                              <Card key={step.id} className="bg-muted/30">
+                                  <CardHeader>
+                                      <div className="flex justify-between items-center">
+                                          <CardTitle className="text-base font-semibold">Step {index+1}: {step.description}</CardTitle>
+                                           {canEdit && (
+                                              <div className="flex gap-1">
+                                                  <Button variant="outline" size="sm" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                              </div>
+                                           )}
+                                      </div>
+                                  </CardHeader>
+                                  {step.hazards && step.hazards.length > 0 && (
+                                    <CardContent>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Hazard</TableHead>
+                                                    <TableHead>Risk</TableHead>
+                                                    <TableHead>Initial</TableHead>
+                                                    <TableHead>Mitigation</TableHead>
+                                                    <TableHead>Residual</TableHead>
+                                                    <TableHead>Responsible</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {step.hazards.map(hazard => (
+                                                    <React.Fragment key={hazard.id}>
+                                                        <TableRow>
+                                                            <TableCell rowSpan={Math.max(hazard.risks?.length || 1, hazard.mitigations?.length || 1)} className="font-semibold align-top">{hazard.description}</TableCell>
+                                                             <TableCell className="align-top">{hazard.risks?.[0]?.description}</TableCell>
+                                                            <TableCell className="align-top">
+                                                                {hazard.risks?.[0]?.initialRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(hazard.risks[0].initialRiskScore)}}>{getRiskLevel(hazard.risks[0].initialRiskScore)}</Badge>}
+                                                            </TableCell>
+                                                            <TableCell className="align-top">{hazard.mitigations?.[0]?.description}</TableCell>
+                                                            <TableCell className="align-top">
+                                                                {hazard.mitigations?.[0]?.residualRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(hazard.mitigations[0].residualRiskScore)}}>{getRiskLevel(hazard.mitigations[0].residualRiskScore)}</Badge>}
+                                                            </TableCell>
+                                                            <TableCell className="align-top">{hazard.mitigations?.[0]?.responsiblePerson}<br/>{hazard.mitigations?.[0]?.completionDate && <span className="text-xs text-muted-foreground">{format(parseISO(hazard.mitigations[0].completionDate), 'dd-MM-yy')}</span>}</TableCell>
+                                                        </TableRow>
+                                                        {Array.from({ length: Math.max(hazard.risks?.length || 0, hazard.mitigations?.length || 0) - 1 }).map((_, i) => {
+                                                            const risk = hazard.risks?.[i + 1];
+                                                            const mitigation = hazard.mitigations?.[i + 1];
+                                                            return (
+                                                                <TableRow key={`${hazard.id}-extra-${i}`}>
+                                                                    {risk && <>
+                                                                        <TableCell className="align-top">{risk.description}</TableCell>
+                                                                        <TableCell className="align-top">{risk.initialRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(risk.initialRiskScore)}}>{getRiskLevel(risk.initialRiskScore)}</Badge>}</TableCell>
+                                                                    </>}
+                                                                    {!risk && <><TableCell></TableCell><TableCell></TableCell></>}
+                                                                    {mitigation && <>
+                                                                        <TableCell className="align-top">{mitigation.description}</TableCell>
+                                                                        <TableCell className="align-top">{mitigation.residualRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(mitigation.residualRiskScore)}}>{getRiskLevel(mitigation.residualRiskScore)}</Badge>}</TableCell>
+                                                                        <TableCell className="align-top">{mitigation.responsiblePerson}<br/>{mitigation.completionDate && <span className="text-xs text-muted-foreground">{format(parseISO(mitigation.completionDate), 'dd-MM-yy')}</span>}</TableCell>
+                                                                    </>}
+                                                                    {!mitigation && <><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></>}
+                                                                </TableRow>
+                                                            );
+                                                        })}
+                                                    </React.Fragment>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                  )}
+                              </Card>
+                          ))
+                      ) : (
+                          <p className="text-sm text-muted-foreground">No implementation steps added yet.</p>
+                      )}
+                  </div>
                 </CardContent>
             </Card>
         </div>
@@ -415,7 +489,7 @@ export default function MocDetailPage() {
             <Dialog open={isHazardDialogOpen} onOpenChange={setIsHazardDialogOpen}>
                 <HazardDialog
                     step={stepForHazardAnalysis}
-                    onSave={(updatedHazards) => handleSaveHazards(stepForHazardAnalysis.id, updatedHazards)}
+                    onSave={(updatedHazards) => handleSaveHazards(stepForHazardAnalysis!.id, updatedHazards)}
                     onCancel={() => setIsHazardDialogOpen(false)}
                 />
             </Dialog>
@@ -426,5 +500,3 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
-
-    
