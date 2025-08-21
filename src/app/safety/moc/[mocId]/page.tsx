@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Edit, Trash2, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,11 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+const stepFormSchema = z.object({
+  description: z.string().min(10, "Step description is required."),
+});
+type StepFormValues = z.infer<typeof stepFormSchema>;
+
 
 const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -41,6 +46,7 @@ const riskSchema = z.object({
     description: z.string().min(1, 'Description cannot be empty.'),
     likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
     severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
+    initialRiskScore: z.number().optional(),
 });
 
 const mitigationSchema = z.object({
@@ -48,6 +54,9 @@ const mitigationSchema = z.object({
     description: z.string().min(1, 'Description cannot be empty.'),
     responsiblePerson: z.string().optional(),
     completionDate: z.date().optional().nullable(),
+    residualLikelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
+    residualSeverity: z.enum(severityValues, { required_error: 'Severity is required.' }),
+    residualRiskScore: z.number().optional(),
 });
 
 const hazardFormSchema = z.object({
@@ -97,12 +106,13 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
             risks: (data.risks || []).map(r => ({
                 ...r,
                 id: r.id || `risk-${Date.now()}`,
-                riskScore: getRiskScore(r.likelihood, r.severity),
+                initialRiskScore: getRiskScore(r.likelihood, r.severity),
             })),
             mitigations: (data.mitigations || []).map(m => ({
                 ...m,
                 id: m.id || `mit-${Date.now()}`,
                 completionDate: m.completionDate ? format(m.completionDate, 'yyyy-MM-dd') : undefined,
+                residualRiskScore: getRiskScore(m.residualLikelihood, m.residualSeverity),
             })),
         };
 
@@ -170,13 +180,21 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                              <div key={field.id} className="p-3 border rounded-md space-y-2 relative">
                                 <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeMitigation(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 <FormField name={`mitigations.${index}.description`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation Description</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                
+                                <div className="p-3 border rounded-md bg-muted/50">
+                                    <Label className="text-xs font-semibold">Residual Risk Assessment</Label>
+                                    <div className="grid grid-cols-2 gap-4 mt-2">
+                                        <FormField name={`mitigations.${index}.residualLikelihood`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
+                                        <FormField name={`mitigations.${index}.residualSeverity`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
+                                    </div>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <FormField name={`mitigations.${index}.responsiblePerson`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField name={`mitigations.${index}.completionDate`} control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Due Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                    <FormField name={`mitigations.${index}.responsiblePerson`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField name={`mitigations.${index}.completionDate`} control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                                  </div>
                              </div>
                          ))}
-                         <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: ''})}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: '', residualLikelihood: 'Improbable', residualSeverity: 'Negligible' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
                         
                         <div className="flex justify-end gap-2 pt-4">
                             {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
@@ -194,10 +212,7 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
     );
 };
 
-const stepFormSchema = z.object({
-  description: z.string().min(10, "Step description is required."),
-});
-type StepFormValues = z.infer<typeof stepFormSchema>;
+
 
 
 export default function MocDetailPage() {
@@ -378,68 +393,8 @@ export default function MocDetailPage() {
                     </Dialog>
                     )}
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {moc.steps?.map((step, index) => (
-                        <Card key={step.id}>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-base">Step {index + 1}: {step.description}</CardTitle>
-                                {canEdit && (
-                                <div className="flex gap-1">
-                                    <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
-                                    <Button size="sm" variant="ghost" onClick={() => { setEditingStep(step); stepForm.reset({ description: step.description }); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4"/></Button>
-                                    <Button size="sm" variant="ghost" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                </div>
-                                )}
-                            </CardHeader>
-                           {step.hazards && step.hazards.length > 0 && (
-                                <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="w-1/4">Potential Hazard</TableHead>
-                                                <TableHead className="w-1/4">Risks</TableHead>
-                                                <TableHead className="w-1/4">Mitigations</TableHead>
-                                                <TableHead className="w-1/4">Action & Due Date</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                        {step.hazards.map((hazard, hIndex) => (
-                                            <TableRow key={hazard.id} className="align-top">
-                                                <TableCell className="font-semibold text-sm">H{hIndex+1}: {hazard.description}</TableCell>
-                                                <TableCell>
-                                                    {hazard.risks?.map((risk, rIndex) => (
-                                                        <div key={risk.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
-                                                            <p><b>R{rIndex+1}:</b> {risk.description}</p>
-                                                            <div className="flex items-center gap-1 mt-1">
-                                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {hazard.mitigations?.map((mitigation, mIndex) => (
-                                                        <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
-                                                            <p><b>M{mIndex+1}:</b> {mitigation.description}</p>
-                                                        </div>
-                                                    ))}
-                                                </TableCell>
-                                                 <TableCell>
-                                                    {hazard.mitigations?.map((mitigation, mIndex) => (
-                                                        <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
-                                                            <p><b>By:</b> {mitigation.responsiblePerson || 'N/A'}</p>
-                                                            <p><b>Due:</b> {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'}</p>
-                                                        </div>
-                                                    ))}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            )}
-                        </Card>
-                    ))}
-                    {(!moc.steps || moc.steps.length === 0) && <p className="text-sm text-center text-muted-foreground py-4">No implementation steps have been added yet.</p>}
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">Add steps to the implementation plan using the button above.</p>
                 </CardContent>
             </Card>
         </div>
@@ -471,3 +426,5 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
+    
