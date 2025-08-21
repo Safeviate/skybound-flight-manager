@@ -284,7 +284,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 </Button>
                               </div>
                         </div>
-                        <Input 
+                        <Input
                             id={`hazard-desc-${index}`}
                             placeholder="Describe the potential hazard..."
                             value={hazard.description}
@@ -546,7 +546,7 @@ export default function MocDetailPage() {
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between">
-            <Button variant="outline" onClick={() => router.push('/safety?tab=moc')}>
+            <Button variant="outline" onClick={() => router.push('/safety?tab=moc')} className="no-print">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to MOC List
             </Button>
@@ -598,7 +598,7 @@ export default function MocDetailPage() {
             {moc.steps && moc.steps.length > 0 ? (
                 <div className="space-y-2">
                     {moc.steps.map((step, index) => (
-                         <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                         <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center no-print">
                             <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedPhase(step)}>
@@ -612,12 +612,40 @@ export default function MocDetailPage() {
                     ))}
                 </div>
             ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg no-print">
                     <p className="text-muted-foreground">No implementation phases have been added yet.</p>
                 </div>
             )}
             </CardContent>
         </Card>
+
+        {/* Print-only section */}
+        <div className="hidden print:block space-y-6">
+            <h2 className="text-xl font-bold border-b pb-2">Implementation Phases & Hazard Analysis</h2>
+            {moc.steps?.map((step, index) => (
+                <div key={`print-step-${step.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
+                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {index + 1}: {step.description}</h3>
+                    {step.hazards?.map((hazard, hIndex) => (
+                        <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
+                            <h4 className="font-semibold">Hazard #{index + 1}.{hIndex + 1}: {hazard.description}</h4>
+                            {hazard.risks?.map((risk, rIndex) => (
+                                <div key={`print-risk-${risk.id}`} className="pl-4 space-y-2">
+                                    <p className="text-sm font-medium">Risk #{index + 1}.{hIndex + 1}.{rIndex + 1}: {risk.description}</p>
+                                    <p className="text-xs">Initial Risk: {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
+                                    {risk.mitigations?.map((mitigation, mIndex) => (
+                                        <div key={`print-mitigation-${mitigation.id}`} className="pl-4 space-y-1">
+                                            <p className="text-sm font-medium text-green-700">Mitigation #{mIndex + 1}: {mitigation.description}</p>
+                                            <p className="text-xs">Responsible: {mitigation.responsiblePerson || 'N/A'} | Due: {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'}</p>
+                                            <p className="text-xs">Residual Risk: {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            ))}
+        </div>
       </div>
       {selectedPhase && (
         <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
