@@ -9,18 +9,18 @@ import { db } from '@/lib/firebase';
 import type { ManagementOfChange, MocStep, MocHazard, MocRisk, MocMitigation, RiskLikelihood, RiskSeverity } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LIKELIHOOD_MAP, SEVERITY_MAP, getRiskScore, getRiskScoreColor, REVERSE_SEVERITY_MAP, REVERSE_LIKELIHOOD_MAP } from '@/lib/utils';
+import { LIKELIHOOD_MAP, SEVERITY_MAP, getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
@@ -98,7 +98,7 @@ const HazardAnalysis = ({ phase, onUpdateHazards, mocId }: { phase: MocStep; onU
     };
 
     const addRisk = (hazardId: string) => {
-        const newRisk: MocRisk = { id: `risk-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible' };
+        const newRisk: MocRisk = { id: `risk-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible', initialRiskScore: 0 };
         const updated = hazards.map(h => h.id === hazardId ? { ...h, risks: [...(h.risks || []), newRisk] } : h);
         setHazards(updated);
         onUpdateHazards(updated);
@@ -117,7 +117,7 @@ const HazardAnalysis = ({ phase, onUpdateHazards, mocId }: { phase: MocStep; onU
     };
     
     const addMitigation = (hazardId: string) => {
-        const newMitigation: MocMitigation = { id: `mitigation-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible' };
+        const newMitigation: MocMitigation = { id: `mitigation-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible', residualRiskScore: 0 };
         const updated = hazards.map(h => h.id === hazardId ? { ...h, mitigations: [...(h.mitigations || []), newMitigation] } : h);
         setHazards(updated);
         onUpdateHazards(updated);
@@ -290,7 +290,7 @@ export default function MocDetailPage() {
   }, [mocId, user, userLoading, router, fetchMoc]);
 
   const handleUpdate = async (updatedData: Partial<ManagementOfChange>, showToast = true) => {
-    if (!moc) return;
+    if (!moc || !company) return;
     setLoading(true);
     const mocRef = doc(db, `companies/${company.id}/management-of-change`, moc.id);
     try {
