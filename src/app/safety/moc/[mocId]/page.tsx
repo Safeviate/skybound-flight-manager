@@ -397,13 +397,13 @@ export default function MocDetailPage() {
             {moc.steps && moc.steps.length > 0 ? (
                 <div className="space-y-2">
                     {moc.steps.map((step, index) => (
-                        <button key={step.id} onClick={() => setSelectedPhase(step)} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                        <div key={step.id} onClick={() => setSelectedPhase(step)} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
                             <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* delete logic */}}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
-                        </button>
+                        </div>
                     ))}
                 </div>
             ) : (
