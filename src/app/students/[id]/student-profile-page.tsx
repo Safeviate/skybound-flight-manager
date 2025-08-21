@@ -608,7 +608,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                          <CardFooter>
                             <Button variant="outline" size="sm" onClick={onEdit}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                {log ? 'Edit Total Time' : 'Add Total Time'}
+                                {log ? `Edit ${title}` : `Add ${title}`}
                             </Button>
                         </CardFooter>
                     )}
@@ -671,7 +671,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
              <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add/Edit Total Time</DialogTitle>
+                        <DialogTitle>Add/Edit Hours Brought Forward</DialogTitle>
                         <DialogDescription>
                             Enter the total hours from a previous logbook. This will create or update a single summary entry.
                         </DialogDescription>
@@ -879,7 +879,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
-                        <TotalTimeCard title="Total Time" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
+                        <TotalTimeCard title="Hours Brought Forward" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
                         <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => setIsBroughtForwardOpen(true)} />
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
@@ -895,7 +895,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         <div className="flex gap-2">
                                              <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
                                                 <Edit className="mr-2 h-4 w-4" />
-                                                {broughtForwardLog ? 'Edit Total Time' : 'Add Total Time'}
+                                                {broughtForwardLog ? 'Edit Hours Brought Forward' : 'Add Hours Brought Forward'}
                                             </Button>
                                             <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
