@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -150,10 +151,15 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             </DialogHeader>
             <Card>
                 <CardHeader>
-                    <Button className="w-fit" onClick={handleAddHazard}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Hazard
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button className="w-fit" onClick={handleAddHazard}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Hazard
+                        </Button>
+                         <Button variant="outline" className="w-fit" onClick={() => openRiskDialog(localStep.hazards?.[0]?.id || '')}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {localStep.hazards?.map((hazard, index) => (
@@ -171,9 +177,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                             />
                             <div className="flex items-end gap-2 pt-2 border-t">
-                                 <Button variant="outline" size="sm" onClick={() => openRiskDialog(hazard.id)}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
-                                </Button>
                                  <div className="flex-1">
                                     <Label className="text-xs">Probability</Label>
                                     <Select>
