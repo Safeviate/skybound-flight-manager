@@ -584,7 +584,7 @@ export type MocRisk = {
   description: string;
   likelihood: RiskLikelihood;
   severity: RiskSeverity;
-  initialRiskScore: number;
+  riskScore: number;
 };
 
 export type MocMitigation = {

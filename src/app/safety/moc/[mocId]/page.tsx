@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -15,11 +14,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -75,6 +75,7 @@ const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title:string) => void }) 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
+
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
     
@@ -90,21 +91,22 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-    const handleAddRisk = () => {
-        if (!localStep.hazards || localStep.hazards.length === 0) {
-            // If no hazards exist, add one first then add the risk.
-            const newHazard: MocHazard = {
-                id: `hazard-${Date.now()}`,
-                description: '',
-                risks: [{ id: `risk-${Date.now()}`, description: '' }]
-            };
-             setLocalStep(prev => ({ ...prev, hazards: [...(prev.hazards || []), newHazard] }));
-        } else {
-            const updatedHazards = [...localStep.hazards];
-            const lastHazard = updatedHazards[updatedHazards.length - 1];
-            lastHazard.risks = [...(lastHazard.risks || []), { id: `risk-${Date.now()}`, description: '' }];
-            setLocalStep(prev => ({ ...prev, hazards: updatedHazards }));
-        }
+    const handleAddRisk = (hazardId: string) => {
+        const newRisk: MocRisk = {
+            id: `risk-${Date.now()}`,
+            description: '',
+            likelihood: 'Improbable',
+            severity: 'Minor',
+            riskScore: 4,
+        };
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => 
+                h.id === hazardId 
+                ? { ...h, risks: [...(h.risks || []), newRisk] }
+                : h
+            )
+        }));
     };
     
     const handleHazardChange = (hazardId: string, value: string) => {
@@ -114,14 +116,25 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-    const handleRiskChange = (hazardId: string, riskId: string, value: string) => {
+    const handleRiskChange = (hazardId: string, riskId: string, field: keyof MocRisk, value: any) => {
         setLocalStep(prev => ({
             ...prev,
-            hazards: prev.hazards?.map(h => 
-                h.id === hazardId 
-                ? { ...h, risks: h.risks?.map(r => r.id === riskId ? { ...r, description: value } : r) }
-                : h
-            )
+            hazards: prev.hazards?.map(h => {
+                if (h.id === hazardId) {
+                    const updatedRisks = h.risks?.map(r => {
+                        if (r.id === riskId) {
+                            const updatedRisk = { ...r, [field]: value };
+                            if (field === 'likelihood' || field === 'severity') {
+                                updatedRisk.riskScore = getRiskScore(updatedRisk.likelihood, updatedRisk.severity);
+                            }
+                            return updatedRisk;
+                        }
+                        return r;
+                    });
+                    return { ...h, risks: updatedRisks };
+                }
+                return h;
+            })
         }));
     };
     
@@ -131,6 +144,17 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             hazards: prev.hazards?.filter(h => h.id !== hazardId)
         }));
     };
+
+    const handleDeleteRisk = (hazardId: string, riskId: string) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => 
+                h.id === hazardId
+                ? { ...h, risks: h.risks?.filter(r => r.id !== riskId) }
+                : h
+            )
+        }));
+    }
 
     const handleSave = () => {
         onUpdate(localStep);
@@ -146,10 +170,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Hazard
                     </Button>
-                    <Button className="w-fit" variant="outline" onClick={handleAddRisk}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Risk
-                    </Button>
                 </div>
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
@@ -157,9 +177,14 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                     <div key={hazard.id} className="p-4 border rounded-md space-y-4">
                         <div className="flex items-center justify-between">
                              <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleAddRisk(hazard.id)}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                         </div>
                         <Textarea 
                             id={`hazard-desc-${index}`}
@@ -168,14 +193,51 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                             onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                         />
                          {hazard.risks?.map((risk, riskIndex) => (
-                            <div key={risk.id} className="pl-6 space-y-2">
-                                 <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground">Risk for Hazard #{index + 1}</Label>
+                            <div key={risk.id} className="pl-6 space-y-2 border-l-2 ml-2">
+                                 <div className="flex items-center justify-between">
+                                    <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground">Risk for Hazard #{index + 1}</Label>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(hazard.id, risk.id)}>
+                                        <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                </div>
                                  <Textarea
                                     id={`risk-desc-${riskIndex}`}
                                     placeholder="Describe the associated risk..."
                                     value={risk.description}
-                                    onChange={(e) => handleRiskChange(hazard.id, risk.id, e.target.value)}
+                                    onChange={(e) => handleRiskChange(hazard.id, risk.id, 'description', e.target.value)}
                                 />
+                                <div className="flex items-end gap-4">
+                                     <div className="flex-1 space-y-1">
+                                        <Label className="text-xs">Probability</Label>
+                                        <Select value={risk.likelihood} onValueChange={(v: RiskLikelihood) => handleRiskChange(hazard.id, risk.id, 'likelihood', v)}>
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent>{probabilityOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <Label className="text-xs">Severity</Label>
+                                        <Select value={risk.severity} onValueChange={(v: RiskSeverity) => handleRiskChange(hazard.id, risk.id, 'severity', v)}>
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent>{severityOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="text-center space-y-1">
+                                        <Label className="text-xs">Risk Score</Label>
+                                        <div className="h-10 w-24 flex items-center justify-center">
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }} className="text-lg px-3 py-1">
+                                                {risk.riskScore}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <div className="text-center space-y-1">
+                                        <Label className="text-xs">Risk Level</Label>
+                                        <div className="h-10 w-24 flex items-center justify-center">
+                                            <Badge variant="outline" className="text-sm">
+                                                {getRiskLevel(risk.riskScore)}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -356,7 +418,7 @@ export default function MocDetailPage() {
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedPhase(step)}>
                                     <Wind className="mr-2 h-4 w-4" />
-                                    Hazards
+                                    Hazards ({step.hazards?.length || 0})
                                 </Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(step.id) }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
