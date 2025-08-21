@@ -735,11 +735,14 @@ export function SafetyPageContent({
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
-              <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
               <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
-            {renderActionButton()}
+            {activeTab !== 'dashboard' && activeTab !== 'register' && (
+                <div className="ml-4">
+                     {renderActionButton()}
+                </div>
+            )}
           </div>
           <TabsContent value="dashboard">
             <SafetyDashboard reports={safetyReports} risks={risks} />
@@ -775,25 +778,31 @@ export function SafetyPageContent({
              <RiskAssessmentTool />
           </TabsContent>
           <TabsContent value="spis">
-            <SafetyPerformanceIndicators 
-                reports={safetyReports} 
-                spiConfigs={spiConfigs} 
-                onConfigChange={setSpiConfigs} 
-                monthlyFlightHours={monthlyFlightHours}
-            />
+            <div className="border-4 border-teal-500 p-4 rounded-lg relative mt-6">
+              <div className="absolute -top-3 left-4 bg-background px-2 text-teal-500 font-semibold text-sm">Safety Performance</div>
+              <SafetyPerformanceIndicators 
+                  reports={safetyReports} 
+                  spiConfigs={spiConfigs} 
+                  onConfigChange={setSpiConfigs} 
+                  monthlyFlightHours={monthlyFlightHours}
+              />
+            </div>
           </TabsContent>
            <TabsContent value="moc">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Management of Change (MOC)</CardTitle>
-                  <CardDescription>
-                    Track and manage significant changes to operations, procedures, and systems.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MocTable mocs={mocs} />
-                </CardContent>
-              </Card>
+              <div className="border-4 border-cyan-500 p-4 rounded-lg relative mt-6">
+                <div className="absolute -top-3 left-4 bg-background px-2 text-cyan-500 font-semibold text-sm">Management of Change</div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Management of Change (MOC)</CardTitle>
+                    <CardDescription>
+                      Track and manage significant changes to operations, procedures, and systems.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MocTable mocs={mocs} />
+                  </CardContent>
+                </Card>
+              </div>
           </TabsContent>
         </Tabs>
       </main>

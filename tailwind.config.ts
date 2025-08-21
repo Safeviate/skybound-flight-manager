@@ -52,6 +52,12 @@ export default {
         purple: {
             '600': '#7C3AED',
         },
+        teal: {
+          '500': '#14B8A6',
+        },
+        cyan: {
+          '500': '#06B6D4',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
