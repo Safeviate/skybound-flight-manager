@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -14,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -77,16 +76,12 @@ const SEVERITY_OPTIONS: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 
 
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
-    const [isRiskDialogOpen, setIsRiskDialogOpen] = useState(false);
-    const [currentHazardId, setCurrentHazardId] = useState<string | null>(null);
-    const [riskDescription, setRiskDescription] = useState('');
 
     const handleAddHazard = () => {
         const newHazard: MocHazard = {
             id: `hazard-${Date.now()}`,
             description: '',
             risks: [],
-            mitigations: [],
         };
         setLocalStep(prev => ({
             ...prev,
@@ -94,10 +89,44 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
+    const handleAddRisk = (hazardId: string) => {
+        const newRisk: MocRisk = {
+            id: `risk-${Date.now()}`,
+            description: '',
+            likelihood: 'Improbable',
+            severity: 'Minor',
+        };
+
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => {
+                if (h.id === hazardId) {
+                    return { ...h, risks: [...(h.risks || []), newRisk] };
+                }
+                return h;
+            })
+        }));
+    };
+
     const handleHazardChange = (hazardId: string, description: string) => {
         setLocalStep(prev => ({
             ...prev,
             hazards: prev.hazards?.map(h => h.id === hazardId ? { ...h, description } : h)
+        }));
+    };
+    
+    const handleRiskChange = (hazardId: string, riskId: string, description: string) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => {
+                if (h.id === hazardId) {
+                    return {
+                        ...h,
+                        risks: h.risks?.map(r => r.id === riskId ? { ...r, description } : r)
+                    };
+                }
+                return h;
+            })
         }));
     };
 
@@ -106,37 +135,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             ...prev,
             hazards: prev.hazards?.filter(h => h.id !== hazardId)
         }));
-    };
-    
-    const openRiskDialog = (hazardId: string) => {
-        setCurrentHazardId(hazardId);
-        setRiskDescription('');
-        setIsRiskDialogOpen(true);
-    };
-
-    const handleAddRisk = () => {
-        if (!currentHazardId || !riskDescription.trim()) return;
-
-        const newRisk: MocRisk = {
-            id: `risk-${Date.now()}`,
-            description: riskDescription,
-            likelihood: 'Improbable', // Default value
-            severity: 'Minor',       // Default value
-            initialRiskScore: 0      // Will be calculated
-        };
-
-        setLocalStep(prev => ({
-            ...prev,
-            hazards: prev.hazards?.map(h => {
-                if (h.id === currentHazardId) {
-                    return { ...h, risks: [...(h.risks || []), newRisk] };
-                }
-                return h;
-            })
-        }));
-
-        setIsRiskDialogOpen(false);
-        setCurrentHazardId(null);
     };
 
     const handleSave = () => {
@@ -156,9 +154,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Hazard
                         </Button>
-                         <Button variant="outline" className="w-fit" onClick={() => openRiskDialog(localStep.hazards?.[0]?.id || '')}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
-                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -176,6 +171,19 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 value={hazard.description}
                                 onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                             />
+
+                            {hazard.risks?.map((risk, riskIndex) => (
+                                <div key={risk.id} className="pl-6 space-y-2">
+                                     <Label htmlFor={`risk-desc-${riskIndex}`}>Risk for Hazard #{index + 1}</Label>
+                                    <Textarea
+                                        id={`risk-desc-${riskIndex}`}
+                                        placeholder="Describe the associated risk..."
+                                        value={risk.description}
+                                        onChange={(e) => handleRiskChange(hazard.id, risk.id, e.target.value)}
+                                    />
+                                </div>
+                            ))}
+
                             <div className="flex items-end gap-2 pt-2 border-t">
                                  <div className="flex-1">
                                     <Label className="text-xs">Probability</Label>
@@ -195,6 +203,9 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                         </SelectContent>
                                     </Select>
                                  </div>
+                                  <Button variant="outline" className="w-fit" onClick={() => handleAddRisk(hazard.id)}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -206,30 +217,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             <DialogFooter>
                 <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
-
-            {/* Risk Dialog */}
-            <Dialog open={isRiskDialogOpen} onOpenChange={setIsRiskDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add Risk</DialogTitle>
-                        <DialogDescription>
-                            Describe the risk associated with the selected hazard.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-2">
-                        <Label htmlFor="risk-description">Risk Description</Label>
-                        <Textarea 
-                            id="risk-description"
-                            value={riskDescription}
-                            onChange={(e) => setRiskDescription(e.target.value)}
-                            placeholder="e.g., Mid-air collision, loss of control..."
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleAddRisk} disabled={!riskDescription.trim()}>Add Risk</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </DialogContent>
     );
 };
