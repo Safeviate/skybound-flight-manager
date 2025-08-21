@@ -154,6 +154,31 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const totalFlightHours = useMemo(() => {
         return student?.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
     }, [student?.trainingLogs]);
+    
+    const totalHoursLog = useMemo(() => {
+        if (!student?.trainingLogs) return null;
+        
+        return student.trainingLogs.reduce((acc, log) => {
+            acc.singleEngineTime += log.singleEngineTime || 0;
+            acc.multiEngineTime += log.multiEngineTime || 0;
+            acc.fstdTime += log.fstdTime || 0;
+            acc.singleTime += log.singleTime || 0;
+            acc.dualTime += log.dualTime || 0;
+            acc.nightTime += log.nightTime || 0;
+            acc.dayTime += log.dayTime || 0;
+            acc.flightDuration += log.flightDuration || 0;
+            return acc;
+        }, {
+            singleEngineTime: 0,
+            multiEngineTime: 0,
+            fstdTime: 0,
+            singleTime: 0,
+            dualTime: 0,
+            nightTime: 0,
+            dayTime: 0,
+            flightDuration: 0,
+        } as Omit<TrainingLogEntry, 'id' | 'date' | 'aircraft' | 'startHobbs' | 'endHobbs' | 'instructorName' | 'trainingExercises'>);
+    }, [student?.trainingLogs]);
 
 
     const filteredLogs = useMemo(() => {
@@ -552,7 +577,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
 
-    const TotalTimeCard = ({ title, log, onEdit }: { title: string, log?: TrainingLogEntry, onEdit: () => void }) => {
+    const TotalTimeCard = ({ title, log, onEdit }: { title: string, log?: Partial<TrainingLogEntry> | null, onEdit: () => void }) => {
         return (
             <div className="border-2 border-orange-500 p-4 rounded-lg relative">
                 <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">{title}</div>
@@ -854,12 +879,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
-                        {broughtForwardLog && (
-                            <TotalTimeCard title="Total Time" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
-                        )}
-                        {broughtForwardLog && (
-                           <TotalTimeCard title="Total Hours" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
-                        )}
+                        <TotalTimeCard title="Total Time" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
+                        <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => setIsBroughtForwardOpen(true)} />
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
                             <Card>
