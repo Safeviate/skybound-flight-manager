@@ -117,7 +117,7 @@ const HazardAnalysis = ({ phase, onUpdateHazards, mocId }: { phase: MocStep; onU
     };
     
     const addMitigation = (hazardId: string) => {
-        const newMitigation: MocMitigation = { id: `mitigation-${Date.now()}`, description: '', likelihood: 'Improbable', severity: 'Negligible', residualRiskScore: 0 };
+        const newMitigation: MocMitigation = { id: `mitigation-${Date.now()}`, description: '', residualLikelihood: 'Improbable', residualSeverity: 'Negligible', residualRiskScore: 0 };
         const updated = hazards.map(h => h.id === hazardId ? { ...h, mitigations: [...(h.mitigations || []), newMitigation] } : h);
         setHazards(updated);
         onUpdateHazards(updated);
@@ -140,103 +140,102 @@ const HazardAnalysis = ({ phase, onUpdateHazards, mocId }: { phase: MocStep; onU
             <Button onClick={addHazard} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Hazard</Button>
             {hazards.map((hazard, hIndex) => (
                 <div key={hazard.id} className="border p-4 rounded-lg space-y-4">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-24">ID</TableHead>
-                                <TableHead>Potential Hazard</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                             <TableRow>
-                                <TableCell className="font-semibold">H{hIndex + 1}</TableCell>
-                                <TableCell>
-                                    <Textarea value={hazard.description} onChange={(e) => updateHazard(hazard.id, e.target.value)} placeholder="Describe the potential hazard..." />
-                                </TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
                     
-                    <Table>
-                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-24">ID</TableHead>
-                                <TableHead>Risk/s</TableHead>
-                                <TableHead className="w-24">P</TableHead>
-                                <TableHead className="w-24">S</TableHead>
-                                <TableHead className="w-24">PxS</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                             {(hazard.risks || []).map((risk, rIndex) => {
-                                const score = getRiskScore(risk.likelihood, risk.severity);
-                                return (
-                                    <TableRow key={risk.id}>
-                                        <TableCell className="font-semibold">R{rIndex + 1}</TableCell>
+                    {/* Hazard Description */}
+                    <div className="grid grid-cols-[auto,1fr] items-start gap-4">
+                        <Label htmlFor={`hazard-desc-${hIndex}`} className="font-semibold pt-2">Hazard {hIndex + 1}</Label>
+                        <Textarea 
+                            id={`hazard-desc-${hIndex}`} 
+                            value={hazard.description} 
+                            onChange={(e) => updateHazard(hazard.id, e.target.value)} 
+                            placeholder="Describe the potential hazard..." 
+                        />
+                    </div>
+                    
+                    {/* Risks Section */}
+                    <div className="space-y-2">
+                        <Label className="font-semibold">Risk/s</Label>
+                        <Table>
+                             <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[60%]">Risk Description</TableHead>
+                                    <TableHead>P</TableHead>
+                                    <TableHead>S</TableHead>
+                                    <TableHead>PxS</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                 {(hazard.risks || []).map((risk, rIndex) => {
+                                    const score = getRiskScore(risk.likelihood, risk.severity);
+                                    return (
+                                        <TableRow key={risk.id}>
+                                            <TableCell>
+                                                <Textarea value={risk.description} onChange={(e) => updateRisk(hazard.id, risk.id, 'description', e.target.value)} placeholder="Describe the associated risk..." />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select value={risk.likelihood} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'likelihood', val)}>
+                                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                                    <SelectContent>{Object.entries(LIKELIHOOD_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select value={risk.severity} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'severity', val)}>
+                                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                                    <SelectContent>{Object.entries(SEVERITY_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[risk.likelihood]}{SEVERITY_MAP[risk.severity]}</Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                        <Button onClick={() => addRisk(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Risk</Button>
+                    </div>
+
+                    {/* Mitigations Section */}
+                    <div className="space-y-2">
+                        <Label className="font-semibold">Mitigation/s</Label>
+                        <Table>
+                             <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[60%]">Mitigation Action</TableHead>
+                                    <TableHead>P</TableHead>
+                                    <TableHead>S</TableHead>
+                                    <TableHead>PxS</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(hazard.mitigations || []).map((mitigation, mIndex) => {
+                                    const score = getRiskScore(mitigation.residualLikelihood, mitigation.residualSeverity);
+                                    return (
+                                    <TableRow key={mitigation.id}>
                                         <TableCell>
-                                            <Textarea value={risk.description} onChange={(e) => updateRisk(hazard.id, risk.id, 'description', e.target.value)} placeholder="Describe the associated risk..." />
+                                            <Textarea value={mitigation.description} onChange={(e) => updateMitigation(hazard.id, mitigation.id, 'description', e.target.value)} placeholder="Describe the mitigation action..." />
                                         </TableCell>
                                         <TableCell>
-                                            <Select value={risk.likelihood} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'likelihood', val)}>
+                                             <Select value={mitigation.residualLikelihood} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'residualLikelihood', val)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent>{Object.entries(LIKELIHOOD_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
                                             </Select>
                                         </TableCell>
                                         <TableCell>
-                                            <Select value={risk.severity} onValueChange={(val) => updateRisk(hazard.id, risk.id, 'severity', val)}>
+                                            <Select value={mitigation.residualSeverity} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'residualSeverity', val)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent>{Object.entries(SEVERITY_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
                                             </Select>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[risk.likelihood]}{SEVERITY_MAP[risk.severity]}</Badge>
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[mitigation.residualLikelihood]}{SEVERITY_MAP[mitigation.residualSeverity]}</Badge>
                                         </TableCell>
                                     </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                    <Button onClick={() => addRisk(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Risk</Button>
-                    
-                     <Table>
-                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-24">ID</TableHead>
-                                <TableHead>Mitigation</TableHead>
-                                <TableHead className="w-24">P</TableHead>
-                                <TableHead className="w-24">S</TableHead>
-                                <TableHead className="w-24">PxS</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {(hazard.mitigations || []).map((mitigation, mIndex) => {
-                                const score = getRiskScore(mitigation.likelihood, mitigation.severity);
-                                return (
-                                <TableRow key={mitigation.id}>
-                                    <TableCell className="font-semibold">M{mIndex + 1}</TableCell>
-                                    <TableCell>
-                                        <Textarea value={mitigation.description} onChange={(e) => updateMitigation(hazard.id, mitigation.id, 'description', e.target.value)} placeholder="Describe the mitigation action..." />
-                                    </TableCell>
-                                    <TableCell>
-                                         <Select value={mitigation.likelihood} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'likelihood', val)}>
-                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                            <SelectContent>{Object.entries(LIKELIHOOD_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Select value={mitigation.severity} onValueChange={(val) => updateMitigation(hazard.id, mitigation.id, 'severity', val)}>
-                                            <SelectTrigger><SelectValue/></SelectTrigger>
-                                            <SelectContent>{Object.entries(SEVERITY_MAP).map(([key, val]) => <SelectItem key={key} value={key}>{val}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge style={{ backgroundColor: getRiskScoreColor(score) }} className="text-white w-full flex justify-center">{LIKELIHOOD_MAP[mitigation.likelihood]}{SEVERITY_MAP[mitigation.severity]}</Badge>
-                                    </TableCell>
-                                </TableRow>
-                            )})}
-                        </TableBody>
-                    </Table>
-                    <Button onClick={() => addMitigation(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation</Button>
+                                )})}
+                            </TableBody>
+                        </Table>
+                        <Button onClick={() => addMitigation(hazard.id)} variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation</Button>
+                    </div>
                 </div>
             ))}
         </div>
@@ -397,7 +396,7 @@ export default function MocDetailPage() {
             {moc.steps && moc.steps.length > 0 ? (
                 <div className="space-y-2">
                     {moc.steps.map((step, index) => (
-                        <div key={step.id} onClick={() => setSelectedPhase(step)} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer">
+                        <div key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center cursor-pointer" onClick={() => setSelectedPhase(step)}>
                             <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
