@@ -791,6 +791,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 </TabsContent>
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
+                        {broughtForwardLog && (
+                            <div className="border-2 border-orange-500 p-4 rounded-lg relative">
+                                <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">Brought Forward Summary</div>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Brought Forward Summary</CardTitle>
+                                        <CardDescription>
+                                            A summary of hours carried over from a previous logbook.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 text-center">
+                                            <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p></div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
                             <Card>
@@ -824,21 +848,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     className="max-w-sm"
                                                 />
                                             </div>
-                                             {broughtForwardLog && (
-                                                <div className="p-4 border bg-muted/50 rounded-lg">
-                                                    <h4 className="font-semibold text-sm mb-2">Brought Forward Summary</h4>
-                                                     <div className="grid grid-cols-4 gap-4 text-center">
-                                                        <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration - (broughtForwardLog.nightTime || 0))}</p></div>
-                                                        <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p></div>
-                                                    </div>
-                                                </div>
-                                             )}
                                             <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                                                 <Table style={{ tableLayout: 'fixed' }}>
                                                     <TableHeader>
@@ -919,6 +928,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
 
 
 
