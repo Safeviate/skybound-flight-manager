@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -262,7 +261,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                             onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                         />
                          {hazard.risks?.map((risk, riskIndex) => (
-                            <div key={risk.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
+                            <div key={risk.id} className="ml-2 pt-4 space-y-4 border-2 border-yellow-400 rounded-lg p-4">
                                  <div className="flex items-center justify-between">
                                     <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground font-semibold">Risk #{index + 1}.{riskIndex + 1}</Label>
                                     <div className="flex items-center gap-2">
@@ -314,7 +313,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 </div>
                                 
                                 {risk.mitigations?.map((mitigation, mitIndex) => (
-                                    <div key={mitigation.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
+                                    <div key={mitigation.id} className="pl-6 ml-2 pt-4 space-y-4 border-2 border-green-400 rounded-lg p-4">
                                         <div className="flex items-center justify-between">
                                             <Label className="text-muted-foreground">Mitigation for Risk #{index + 1}.{riskIndex + 1}</Label>
                                             <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteMitigation(hazard.id, risk.id, mitigation.id)}>
