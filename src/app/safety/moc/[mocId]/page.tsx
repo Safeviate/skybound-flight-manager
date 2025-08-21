@@ -379,14 +379,15 @@ export default function MocDetailPage() {
                               <Card key={step.id}>
                                   <CardHeader>
                                       <div className="flex justify-between items-center">
-                                          <CardTitle className="text-lg">Phase {index+1}: {step.description}</CardTitle>
-                                          {canEdit && (
-                                              <div className="flex items-center gap-1">
-                                                  <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
-                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                              </div>
-                                          )}
+                                        <button className="text-left flex-1 group" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>
+                                            <CardTitle className="text-lg group-hover:text-primary transition-colors">Phase {index+1}: {step.description}</CardTitle>
+                                        </button>
+                                        {canEdit && (
+                                            <div className="flex items-center gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                            </div>
+                                        )}
                                       </div>
                                   </CardHeader>
                               </Card>
