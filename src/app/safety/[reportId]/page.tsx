@@ -218,6 +218,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                                             <Button
                                                                 variant={"outline"}
                                                                 className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                                                data-nosnippet
                                                             >
                                                                 {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                                                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -340,7 +341,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                                 </DialogHeader>
                                                 <Form {...extensionForm}>
                                                     <form onSubmit={extensionForm.handleSubmit(handleExtensionSubmit)} className="space-y-4">
-                                                        <FormField control={extensionForm.control} name="requestedDeadline" render={({ field }) => (<FormItem><FormLabel>New Deadline</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : <span>Pick date</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                                        <FormField control={extensionForm.control} name="requestedDeadline" render={({ field }) => (<FormItem><FormLabel>New Deadline</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} data-nosnippet><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP") : <span>Pick date</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                                                         <FormField control={extensionForm.control} name="extensionRequestReason" render={({ field }) => (<FormItem><FormLabel>Reason for Request</FormLabel><FormControl><Textarea placeholder="Explain why an extension is needed..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                                                         <div className="flex justify-end"><Button type="submit">Submit Request</Button></div>
                                                     </form>
@@ -739,7 +740,7 @@ function SafetyReportInvestigationPage() {
                       </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card id="classification-card">
                       <CardHeader>
                            <CardTitle>Classification & Categorization</CardTitle>
                            <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
@@ -748,19 +749,22 @@ function SafetyReportInvestigationPage() {
                           <div className="flex flex-wrap items-end gap-4">
                               <div className="space-y-2 flex-1 min-w-[200px]">
                                   <label className="text-sm font-medium">Report Status</label>
-                                  <Select 
-                                      value={report.status} 
-                                      onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ status: value }, true)}
-                                  >
-                                      <SelectTrigger className="w-full">
-                                          <SelectValue placeholder="Set status" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                          <SelectItem value="Open">Open</SelectItem>
-                                          <SelectItem value="Under Review">Under Review</SelectItem>
-                                          <SelectItem value="Closed">Closed</SelectItem>
-                                      </SelectContent>
-                                  </Select>
+                                  <div className="no-print">
+                                    <Select 
+                                        value={report.status} 
+                                        onValueChange={(value: SafetyReport['status']) => handleReportUpdate({ status: value }, true)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Set status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Open">Open</SelectItem>
+                                            <SelectItem value="Under Review">Under Review</SelectItem>
+                                            <SelectItem value="Closed">Closed</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="hidden print:block p-2 border rounded-md h-10">{report.status}</div>
                               </div>
                               <div className="space-y-2 flex-1 min-w-[240px]">
                                   <label className="text-sm font-medium flex items-center gap-1">
@@ -800,6 +804,7 @@ function SafetyReportInvestigationPage() {
                                       </Dialog>
                                   </label>
                                   <div className="flex gap-2">
+                                    <div className="no-print w-full">
                                       <Combobox
                                           options={ICAO_OPTIONS}
                                           value={report.occurrenceCategory || ''}
@@ -808,7 +813,9 @@ function SafetyReportInvestigationPage() {
                                           searchPlaceholder="Search categories..."
                                           noResultsText="No category found."
                                       />
-                                      <form action={icaoFormAction}>
+                                    </div>
+                                    <div className="hidden print:block p-2 border rounded-md h-10 w-full">{report.occurrenceCategory || 'N/A'}</div>
+                                      <form action={icaoFormAction} className="no-print">
                                           <input type="hidden" name="reportText" value={report.details} />
                                           <Button type="submit" variant="outline" size="icon" disabled={isIcaoLoading} onClick={() => setIsIcaoLoading(true)}>
                                               {isIcaoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
@@ -818,19 +825,22 @@ function SafetyReportInvestigationPage() {
                               </div>
                                   <div className="space-y-2 flex-1 min-w-[200px]">
                                   <label className="text-sm font-medium">Classification</label>
-                                  <Select 
-                                      value={report.classification || ''}
-                                      onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ classification: value }, true)}
-                                  >
-                                      <SelectTrigger className="w-full">
-                                          <SelectValue placeholder="Classify event" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                          {CLASSIFICATION_OPTIONS.map(opt => (
-                                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                          ))}
-                                      </SelectContent>
-                                  </Select>
+                                  <div className="no-print">
+                                    <Select 
+                                        value={report.classification || ''}
+                                        onValueChange={(value: SafetyReport['classification']) => handleReportUpdate({ classification: value }, true)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Classify event" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {CLASSIFICATION_OPTIONS.map(opt => (
+                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="hidden print:block p-2 border rounded-md h-10">{report.classification || 'N/A'}</div>
                               </div>
                           </div>
                       </CardContent>
@@ -962,6 +972,7 @@ function SafetyReportInvestigationPage() {
                                                                   "w-full pl-3 text-left font-normal",
                                                                   !field.value && "text-muted-foreground"
                                                               )}
+                                                              data-nosnippet
                                                               >
                                                               {field.value ? (
                                                                   format(field.value, "PPP")
@@ -1052,3 +1063,4 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+

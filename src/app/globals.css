@@ -156,8 +156,10 @@
   body.print-initial-report-only #triage-tab-content {
       display: block !important;
   }
-  body.print-initial-report-only #triage-tab-content > div:not(:nth-child(-n+2)) {
-      display: none !important;
+  
+  body.print-initial-report-only #classification-card {
+      display: block !important;
   }
 }
+
 
