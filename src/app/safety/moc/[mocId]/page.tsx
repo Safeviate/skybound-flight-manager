@@ -77,6 +77,7 @@ export default function MocDetailPage() {
   const mocId = params.mocId as string;
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPhase, setSelectedPhase] = useState<MocStep | null>(null);
   const { toast } = useToast();
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
@@ -199,38 +200,55 @@ export default function MocDetailPage() {
         </div>
 
         <div className="border-4 border-orange-500 p-4 rounded-lg relative">
-          <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">Step 2: Implementation Plan & Hazard Analysis</div>
-          <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle>Implementation Phases</CardTitle>
-                        <CardDescription>
-                            Outline the steps required to implement the change.
-                        </CardDescription>
+            <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">Step 2: Implementation Plan &amp; Hazard Analysis</div>
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>Implementation Phases</CardTitle>
+                            <CardDescription>
+                                Outline the steps required to implement the change.
+                            </CardDescription>
+                        </div>
+                        {canEdit && <AddPhaseDialog onAddPhase={handleAddPhase} />}
                     </div>
-                    {canEdit && <AddPhaseDialog onAddPhase={handleAddPhase} />}
-                </div>
-            </CardHeader>
-            <CardContent>
-              {moc.steps && moc.steps.length > 0 ? (
-                <div className="space-y-2">
-                    {moc.steps.map((step, index) => (
-                        <button key={step.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors">
-                            <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
-                        </button>
-                    ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No implementation phases have been added yet.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent>
+                {moc.steps && moc.steps.length > 0 ? (
+                    <div className="space-y-2">
+                        {moc.steps.map((step, index) => (
+                            <button key={step.id} onClick={() => setSelectedPhase(step)} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors">
+                                <h4 className="font-semibold">Phase {index + 1}: {step.description}</h4>
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">No implementation phases have been added yet.</p>
+                    </div>
+                )}
+                </CardContent>
+            </Card>
         </div>
 
       </div>
+
+      <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
+        <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Hazard Analysis: {selectedPhase?.description}</DialogTitle>
+                <DialogDescription>
+                    Identify potential hazards associated with this implementation phase and assess their risks.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Hazard
+                </Button>
+            </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
