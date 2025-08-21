@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -98,7 +98,25 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
     const handleAddRisk = (hazardId?: string) => {
         const targetHazardId = hazardId || localStep.hazards?.[localStep.hazards.length - 1]?.id;
         if (!targetHazardId) {
-            handleAddHazard();
+            // If no hazard exists, create one first then add risk to it.
+            const newHazardId = `hazard-${Date.now()}`;
+            const newRisk: MocRisk = {
+                id: `risk-${Date.now()}`,
+                description: '',
+                likelihood: 'Improbable',
+                severity: 'Minor',
+                riskScore: 4,
+                mitigations: [],
+            };
+            const newHazard: MocHazard = {
+                id: newHazardId,
+                description: '',
+                risks: [newRisk],
+            };
+            setLocalStep(prev => ({
+                ...prev,
+                hazards: [...(prev.hazards || []), newHazard]
+            }));
             return;
         }
 
@@ -124,11 +142,11 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         const newMitigation: MocMitigation = {
             id: `mit-${Date.now()}`,
             description: '',
+            responsiblePerson: '',
+            completionDate: '',
             residualLikelihood: 'Improbable',
             residualSeverity: 'Negligible',
             residualRiskScore: 2,
-            responsiblePerson: '',
-            completionDate: ''
         };
          setLocalStep(prev => ({
             ...prev,
@@ -527,10 +545,14 @@ export default function MocDetailPage() {
   return (
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-start">
+        <div className="flex justify-between">
             <Button variant="outline" onClick={() => router.push('/safety?tab=moc')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to MOC List
+            </Button>
+            <Button variant="outline" className="no-print" onClick={() => window.print()}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print
             </Button>
         </div>
         
