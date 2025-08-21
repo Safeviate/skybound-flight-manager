@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -156,11 +154,6 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
 
                         <FormField name="mitigation" control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation</FormLabel><FormControl><Textarea placeholder="e.g., Mandatory cross-check by second crew member..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                         
-                        <div className="grid grid-cols-2 gap-4">
-                           <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                           <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                        </div>
-                        
                         <div className="p-3 border rounded-md space-y-3">
                             <h5 className="text-sm font-semibold">Residual Risk Assessment</h5>
                             <div className="grid grid-cols-2 gap-4">
@@ -178,6 +171,11 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                                     <Badge variant="outline">{getRiskLevel(residualRiskScore)}</Badge>
                                 </div>
                             )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                           <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                         </div>
                         
                         <div className="flex justify-end gap-2">
@@ -433,3 +431,4 @@ export default function MocDetailPage() {
     </main>
   );
 }
+
