@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,7 +77,7 @@ const SEVERITY_OPTIONS: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 
 
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
-
+    
     const handleAddHazard = () => {
         const newHazard: MocHazard = {
             id: `hazard-${Date.now()}`,
@@ -93,8 +94,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
             description: '',
-            likelihood: 'Improbable',
-            severity: 'Minor',
         };
 
         setLocalStep(prev => ({
