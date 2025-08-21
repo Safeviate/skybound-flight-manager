@@ -159,6 +159,7 @@ export type Permission =
   | 'Settings:Edit'
   | 'Bookings:View'
   | 'Bookings:Edit'
+  | 'MOC:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -184,6 +185,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Settings:Edit',
     'Bookings:View',
     'Bookings:Edit',
+    'MOC:Edit',
     'Super User',
 ];
 
@@ -577,6 +579,52 @@ export type ComplianceItem = {
     findings?: string;
 };
 
+export type MocRisk = {
+  id: string;
+  description: string;
+  likelihood: RiskLikelihood;
+  severity: RiskSeverity;
+  initialRiskScore: number;
+};
+
+export type MocMitigation = {
+  id: string;
+  description: string;
+  responsiblePerson?: string;
+  completionDate?: string;
+  residualLikelihood: RiskLikelihood;
+  residualSeverity: RiskSeverity;
+  residualRiskScore: number;
+};
+
+export type MocHazard = {
+  id: string;
+  description: string;
+  risks?: MocRisk[];
+  mitigations?: MocMitigation[];
+};
+
+export type MocStep = {
+    id: string;
+    description: string;
+    hazards?: MocHazard[];
+};
+
+export type ManagementOfChange = {
+  id: string;
+  companyId: string;
+  mocNumber: string;
+  title: string;
+  description: string;
+  reason: string;
+  scope: string;
+  proposedBy: string;
+  proposalDate: string;
+  status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
+  steps?: MocStep[];
+};
+
+
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
     'Flight Operations Report': 'Flight Operations',
     'Ground Operations Report': 'Ground Operation',
@@ -644,14 +692,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
-
-
-
-
-
-
-
-
-
-

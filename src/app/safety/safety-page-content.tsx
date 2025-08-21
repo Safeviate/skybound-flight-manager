@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, MapPin, Edit, Printer, ArrowUpDown, Search, TrendingUp, AlertTriangle, CheckCircle, Clock, Archive, RotateCw, Shield, FileText } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department, Booking } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department, Booking, ManagementOfChange } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
@@ -37,6 +37,7 @@ import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch 
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
+import { NewMocForm } from './new-moc-form';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -381,10 +382,12 @@ export function SafetyPageContent({
     initialReports,
     initialRisks,
     initialBookings,
+    initialMoc,
 }: {
     initialReports: SafetyReport[],
     initialRisks: Risk[],
     initialBookings: Booking[],
+    initialMoc: ManagementOfChange[],
 }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -392,18 +395,21 @@ export function SafetyPageContent({
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [mocs, setMocs] = useState<ManagementOfChange[]>(initialMoc);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
   const [isNewTargetDialogOpen, setIsNewTargetDialogOpen] = useState(false);
+  const [isNewMocOpen, setIsNewMocOpen] = useState(false);
   const router = useRouter();
   
   const fetchData = async () => {
     if (!company) return;
-    const { reportsList, risksList, bookingsList } = await getSafetyPageData(company.id);
+    const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
+    setMocs(mocList);
   };
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
@@ -559,6 +565,27 @@ export function SafetyPageContent({
         </Dialog>
       );
     }
+    if (activeTab === 'moc') {
+        return (
+             <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Propose Change
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Management of Change Proposal</DialogTitle>
+                         <DialogDescription>
+                            Submit a new proposal for a significant change to operations.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
+                </DialogContent>
+            </Dialog>
+        );
+    }
     return null; // Return null for other tabs
   };
 
@@ -655,6 +682,50 @@ export function SafetyPageContent({
       </>
     );
   };
+  
+  const MocTable = ({ mocs }: { mocs: ManagementOfChange[] }) => {
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>MOC #</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Proposed By</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {mocs.length > 0 ? (
+                    mocs.map(moc => (
+                        <TableRow key={moc.id}>
+                            <TableCell>{moc.mocNumber}</TableCell>
+                            <TableCell>{moc.title}</TableCell>
+                            <TableCell>{moc.proposedBy}</TableCell>
+                            <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
+                            <TableCell><Badge>{moc.status}</Badge></TableCell>
+                             <TableCell className="text-right">
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/safety/moc/${moc.id}`}>
+                                        <FileText className="mr-2 h-4 w-4" />
+                                        View
+                                    </Link>
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                            No Management of Change records found.
+                        </TableCell>
+                    </TableRow>
+                )}
+            </TableBody>
+        </Table>
+    )
+  }
 
   return (
       <main className="flex-1 p-4 md:p-8">
@@ -666,6 +737,7 @@ export function SafetyPageContent({
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
+              <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -715,13 +787,11 @@ export function SafetyPageContent({
                 <CardHeader>
                   <CardTitle>Management of Change (MOC)</CardTitle>
                   <CardDescription>
-                    This feature is under construction.
+                    Track and manage significant changes to operations, procedures, and systems.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">Check back later for updates.</p>
-                  </div>
+                  <MocTable mocs={mocs} />
                 </CardContent>
               </Card>
           </TabsContent>
