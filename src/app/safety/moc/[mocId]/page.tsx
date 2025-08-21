@@ -1,36 +1,19 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation } from '@/lib/types';
+import type { ManagementOfChange } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Edit, Trash2, ArrowRight } from 'lucide-react';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -83,19 +66,6 @@ export default function MocDetailPage() {
     }
     fetchMoc();
   }, [mocId, user, userLoading, router, fetchMoc]);
-  
-  const handleUpdate = async (updatedData: Partial<ManagementOfChange>) => {
-      if (!moc) return;
-      const mocRef = doc(db, `companies/${company?.id}/management-of-change`, moc.id);
-      try {
-          await updateDoc(mocRef, updatedData);
-          setMoc(prev => prev ? { ...prev, ...updatedData } : null);
-          toast({ title: 'MOC Updated', description: 'Your changes have been saved.'});
-      } catch (error) {
-          console.error("Failed to update MOC:", error);
-          toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes.' });
-      }
-  };
 
   if (loading || userLoading) {
     return (
@@ -134,6 +104,12 @@ export default function MocDetailPage() {
                             Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
                         </CardDescription>
                     </div>
+                    {canEdit && (
+                        <Button variant="outline">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Phase
+                        </Button>
+                    )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
