@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk, MocMitigation } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 
 const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -40,16 +42,26 @@ const stepFormSchema = z.object({
 });
 type StepFormValues = z.infer<typeof stepFormSchema>;
 
+const riskSchema = z.object({
+    id: z.string().optional(),
+    description: z.string().min(1, 'Description cannot be empty.'),
+    likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
+    severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
+});
+
+const mitigationSchema = z.object({
+    id: z.string().optional(),
+    description: z.string().min(1, 'Description cannot be empty.'),
+    likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
+    severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
+    responsiblePerson: z.string().optional(),
+    completionDate: z.date().optional().nullable(),
+});
+
 const hazardFormSchema = z.object({
   description: z.string().min(10, "Hazard description is required."),
-  risk: z.string().min(10, "Risk description is required."),
-  mitigation: z.string().min(10, "Mitigation plan is required."),
-  likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
-  severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
-  residualLikelihood: z.enum(likelihoodValues, { required_error: 'Residual Likelihood is required.' }),
-  residualSeverity: z.enum(severityValues, { required_error: 'Residual Severity is required.' }),
-  responsiblePerson: z.string().optional(),
-  completionDate: z.date().optional().nullable(),
+  risks: z.array(riskSchema).optional(),
+  mitigations: z.array(mitigationSchema).optional(),
 });
 type HazardFormValues = z.infer<typeof hazardFormSchema>;
 
@@ -57,45 +69,57 @@ type HazardFormValues = z.infer<typeof hazardFormSchema>;
 const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (updatedHazards: MocStep['hazards']) => void, onCancel: () => void }) => {
     const [hazards, setHazards] = useState(step.hazards || []);
     const [editingHazard, setEditingHazard] = useState<MocHazard | null>(null);
+
     const form = useForm<HazardFormValues>({
         resolver: zodResolver(hazardFormSchema),
+    });
+
+     const { fields: riskFields, append: appendRisk, remove: removeRisk } = useFieldArray({
+        control: form.control,
+        name: 'risks'
+    });
+    const { fields: mitigationFields, append: appendMitigation, remove: removeMitigation } = useFieldArray({
+        control: form.control,
+        name: 'mitigations'
     });
 
     useEffect(() => {
         if (editingHazard) {
             form.reset({
-                ...editingHazard,
-                completionDate: editingHazard.completionDate ? parseISO(editingHazard.completionDate) : null,
+                description: editingHazard.description,
+                risks: editingHazard.risks || [],
+                mitigations: editingHazard.mitigations?.map(m => ({
+                    ...m,
+                    completionDate: m.completionDate ? parseISO(m.completionDate) : null,
+                })) || []
             });
         } else {
-            form.reset({ description: '', risk: '', mitigation: '' });
+            form.reset({ description: '', risks: [], mitigations: [] });
         }
     }, [editingHazard, form]);
-    
-    const watchedLikelihood = form.watch('likelihood');
-    const watchedSeverity = form.watch('severity');
-    const watchedResidualLikelihood = form.watch('residualLikelihood');
-    const watchedResidualSeverity = form.watch('residualSeverity');
-
-    const initialRiskScore = watchedLikelihood && watchedSeverity ? getRiskScore(watchedLikelihood, watchedSeverity) : null;
-    const residualRiskScore = watchedResidualLikelihood && watchedResidualSeverity ? getRiskScore(watchedResidualLikelihood, watchedResidualSeverity) : null;
 
     const handleAddOrUpdate = (data: HazardFormValues) => {
-        const riskScore = data.likelihood && data.severity ? getRiskScore(data.likelihood, data.severity) : undefined;
-        const residualRiskScore = data.residualLikelihood && data.residualSeverity ? getRiskScore(data.residualLikelihood, data.residualSeverity) : undefined;
-
-        const hazardData = { 
-            ...data, 
-            completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined,
-            riskScore, 
-            residualRiskScore 
+        const hazardData: MocHazard = {
+            id: editingHazard?.id || `haz-${Date.now()}`,
+            description: data.description,
+            risks: (data.risks || []).map(r => ({
+                ...r,
+                id: r.id || `risk-${Date.now()}`,
+                riskScore: getRiskScore(r.likelihood, r.severity),
+            })),
+            mitigations: (data.mitigations || []).map(m => ({
+                ...m,
+                id: m.id || `mit-${Date.now()}`,
+                riskScore: getRiskScore(m.likelihood, m.severity),
+                completionDate: m.completionDate ? format(m.completionDate, 'yyyy-MM-dd') : undefined,
+            })),
         };
 
         let updatedHazards;
         if (editingHazard) {
-            updatedHazards = hazards.map(h => h.id === editingHazard.id ? { ...h, ...hazardData } : h);
+            updatedHazards = hazards.map(h => h.id === editingHazard.id ? hazardData : h);
         } else {
-            updatedHazards = [...hazards, { ...hazardData, id: `haz-${Date.now()}` }];
+            updatedHazards = [...hazards, hazardData];
         }
         setHazards(updatedHazards);
         setEditingHazard(null);
@@ -116,9 +140,9 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                     <h4 className="font-semibold text-sm">Identified Hazards</h4>
                     <ScrollArea className="h-full">
                         <div className="space-y-2 pr-4">
-                            {hazards.map(h => (
+                            {hazards.map((h, index) => (
                                 <div key={h.id} className="p-2 border rounded-md flex justify-between items-center">
-                                    <p className="text-sm">{h.description}</p>
+                                    <p className="text-sm font-semibold">H{index+1}: {h.description}</p>
                                     <div className="flex gap-1">
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingHazard(h)}><Edit className="h-4 w-4" /></Button>
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(h.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -133,57 +157,41 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4 p-4 border rounded-lg">
                         <h4 className="font-semibold text-sm">{editingHazard ? 'Edit' : 'Add'} Hazard</h4>
-                        <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Incorrect fuel calculation" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField name="risk" control={form.control} render={({ field }) => (<FormItem><FormLabel>Risk</FormLabel><FormControl><Textarea placeholder="e.g., Engine failure due to fuel exhaustion." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Potential Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Loss of Institutional Knowledge" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         
-                        <div className="p-3 border rounded-md space-y-3">
-                            <h5 className="text-sm font-semibold">Initial Risk Assessment</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField name="likelihood" control={form.control} render={({ field }) => (
-                                    <FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField name="severity" control={form.control} render={({ field }) => (
-                                    <FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                            </div>
-                             {initialRiskScore !== null && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span>Calculated Risk:</span>
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(initialRiskScore), color: 'white' }}>{initialRiskScore}</Badge>
-                                    <Badge variant="outline">{getRiskLevel(initialRiskScore)}</Badge>
+                        <Separator />
+                        <h5 className="font-semibold text-sm">Associated Risks</h5>
+                         {riskFields.map((field, index) => (
+                             <div key={field.id} className="p-3 border rounded-md space-y-2 relative">
+                                <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeRisk(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                <FormField name={`risks.${index}.description`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Risk Description</FormLabel><FormControl><Textarea placeholder="Describe the risk..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid grid-cols-2 gap-4">
+                                     <FormField name={`risks.${index}.likelihood`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
+                                     <FormField name={`risks.${index}.severity`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
                                 </div>
-                            )}
-                        </div>
-
-                        <FormField name="mitigation" control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation</FormLabel><FormControl><Textarea placeholder="e.g., Mandatory cross-check by second crew member..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             </div>
+                         ))}
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendRisk({ description: '', likelihood: 'Remote', severity: 'Minor' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Risk</Button>
                         
-                        <div className="p-3 border rounded-md space-y-3">
-                            <h5 className="text-sm font-semibold">Residual Risk Assessment</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField name="residualLikelihood" control={form.control} render={({ field }) => (
-                                    <FormItem><FormLabel>Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField name="residualSeverity" control={form.control} render={({ field }) => (
-                                    <FormItem><FormLabel>Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                            </div>
-                            {residualRiskScore !== null && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span>Calculated Risk:</span>
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(residualRiskScore), color: 'white' }}>{residualRiskScore}</Badge>
-                                    <Badge variant="outline">{getRiskLevel(residualRiskScore)}</Badge>
+                        <Separator />
+                        <h5 className="font-semibold text-sm">Mitigation Actions</h5>
+                        {mitigationFields.map((field, index) => (
+                             <div key={field.id} className="p-3 border rounded-md space-y-2 relative">
+                                <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeMitigation(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                <FormField name={`mitigations.${index}.description`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation Description</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid grid-cols-2 gap-4">
+                                     <FormField name={`mitigations.${index}.likelihood`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
+                                     <FormField name={`mitigations.${index}.severity`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
                                 </div>
-                            )}
-                        </div>
-                        <div className="p-3 border rounded-md space-y-3">
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                          </div>
-                        </div>
-
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <FormField name={`mitigations.${index}.responsiblePerson`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField name={`mitigations.${index}.completionDate`} control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Due Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                 </div>
+                             </div>
+                         ))}
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: '', likelihood: 'Improbable', severity: 'Negligible' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
                         
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-4">
                             {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
                             <Button type="submit">{editingHazard ? 'Save Changes' : 'Add Hazard'}</Button>
                         </div>
@@ -314,7 +322,7 @@ export default function MocDetailPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-start">
             <Button variant="outline" onClick={() => router.push('/safety?tab=moc')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -350,7 +358,7 @@ export default function MocDetailPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-start">
                 <div>
-                    <CardTitle>Change Implementation Steps</CardTitle>
+                    <CardTitle>Change Implementation Plan</CardTitle>
                     <CardDescription>Break down the change into actionable steps and analyze hazards for each.</CardDescription>
                 </div>
                 {canEdit && (
@@ -374,9 +382,9 @@ export default function MocDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {moc.steps?.map((step, index) => (
-                    <div key={step.id} className="p-4 border rounded-md space-y-4">
-                        <div className="flex justify-between items-start">
-                            <h4 className="font-semibold flex-1">{index + 1}. {step.description}</h4>
+                    <Card key={step.id}>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="text-base">Step {index + 1}: {step.description}</CardTitle>
                             {canEdit && (
                             <div className="flex gap-1">
                                 <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
@@ -384,41 +392,48 @@ export default function MocDetailPage() {
                                 <Button size="sm" variant="ghost" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                             </div>
                             )}
-                        </div>
+                        </CardHeader>
                         {step.hazards && step.hazards.length > 0 && (
-                            <div className="space-y-2 pt-4 border-t">
-                                {step.hazards.map(hazard => (
-                                    <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
-                                        <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">Risk: {hazard.risk}</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-1">
-                                            <div>
-                                                <p className="font-semibold">Mitigation:</p>
-                                                <p>{hazard.mitigation}</p>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold">Responsible:</p>
-                                                <p>{hazard.responsiblePerson || 'N/A'}</p>
-                                                <p className="font-semibold mt-1">Due Date:</p>
-                                                <p>{hazard.completionDate ? format(parseISO(hazard.completionDate), 'PPP') : 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t">
-                                            <span>Risk Score:</span>
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(hazard.riskScore), color: 'white' }}>
-                                                {hazard.riskScore || 'N/A'}
-                                            </Badge>
-                                            <ArrowRight className="h-3 w-3" />
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(hazard.residualRiskScore), color: 'white' }}>
-                                                {hazard.residualRiskScore !== undefined ? hazard.residualRiskScore : 'N/A'}
-                                            </Badge>
-                                            <span className="font-semibold pl-2">{getRiskLevel(hazard.residualRiskScore ?? hazard.riskScore)}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-1/4">Potential Hazard</TableHead>
+                                            <TableHead className="w-1/4">Risks</TableHead>
+                                            <TableHead className="w-1/4">Mitigations</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {step.hazards.map((hazard, hIndex) => (
+                                        <TableRow key={hazard.id} className="align-top">
+                                            <TableCell className="font-semibold text-sm">H{hIndex+1}: {hazard.description}</TableCell>
+                                            <TableCell>
+                                                {hazard.risks?.map((risk, rIndex) => (
+                                                    <div key={risk.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
+                                                        <p><b>R{rIndex+1}:</b> {risk.description}</p>
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                            <TableCell>
+                                                {hazard.mitigations?.map((mitigation, mIndex) => (
+                                                    <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
+                                                        <p><b>M{mIndex+1}:</b> {mitigation.description}</p>
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.riskScore), color: 'white' }}>{mitigation.riskScore}</Badge>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
                         )}
-                    </div>
+                    </Card>
                 ))}
                 {(!moc.steps || moc.steps.length === 0) && <p className="text-sm text-center text-muted-foreground py-4">No implementation steps have been added yet.</p>}
             </CardContent>

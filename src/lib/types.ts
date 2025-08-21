@@ -582,19 +582,29 @@ export type ComplianceItem = {
     findings?: string;
 };
 
-export type MocHazard = {
+export type MocRisk = {
     id: string;
     description: string;
-    risk?: string;
-    mitigation: string;
     likelihood?: RiskLikelihood;
     severity?: RiskSeverity;
     riskScore?: number;
-    residualLikelihood?: RiskLikelihood;
-    residualSeverity?: RiskSeverity;
-    residualRiskScore?: number;
+};
+
+export type MocMitigation = {
+    id: string;
+    description: string;
+    likelihood?: RiskLikelihood;
+    severity?: RiskSeverity;
+    riskScore?: number;
     responsiblePerson?: string;
     completionDate?: string;
+};
+
+export type MocHazard = {
+    id: string;
+    description: string;
+    risks?: MocRisk[];
+    mitigations?: MocMitigation[];
 }
 
 export type MocStep = {
@@ -698,6 +708,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 
