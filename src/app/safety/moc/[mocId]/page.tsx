@@ -398,11 +398,10 @@ export default function MocDetailPage() {
                   <div className="space-y-4">
                       {moc.steps && moc.steps.length > 0 ? (
                           moc.steps.map((step, index) => (
-                              <div key={step.id} className="border p-4 rounded-lg flex justify-between items-center bg-muted/30">
+                              <div key={step.id} className="border p-4 rounded-lg flex justify-between items-center bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>
                                 <p className="font-semibold">Phase {index+1}: {step.description}</p>
                                 {canEdit && (
-                                    <div className="flex items-center gap-1">
-                                        <Button variant="outline" size="sm" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
+                                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                     </div>
