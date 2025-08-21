@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -429,47 +430,70 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleDownloadLogbook = () => {
         if (!student) return;
     
-        const doc = new jsPDF();
-        let startY = 54;
+        const doc = new jsPDF({
+            orientation: 'landscape',
+        });
     
-        doc.setFontSize(20);
-        doc.text("Student Training Log", 14, 22);
+        doc.setFontSize(16);
+        doc.text("Student Training Logbook", 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Student: ${student.name}`, 14, 22);
+        doc.text(`Total Flight Hours: ${totalFlightHours.toFixed(1)}`, 14, 28);
     
-        doc.setFontSize(12);
-        doc.text(`Student: ${student.name}`, 14, 32);
-        doc.text(`Instructor: ${student.instructor || 'N/A'}`, 14, 38);
-        doc.text(`Total Flight Hours: ${totalFlightHours.toFixed(1)}`, 14, 44);
-    
-        if (student.endorsements && student.endorsements.length > 0) {
-            autoTable(doc, {
-                startY: startY,
-                head: [['Endorsement', 'Date Awarded', 'Awarded By']],
-                body: student.endorsements.map(e => [e.name, e.dateAwarded, e.awardedBy]),
-                headStyles: { fillColor: [34, 197, 94] },
-            });
-            startY = (doc as any).lastAutoTable.finalY + 10;
-        }
-    
-        if (student.trainingLogs && student.trainingLogs.length > 0) {
-             autoTable(doc, {
-                startY: startY,
-                head: [['Date', 'Aircraft', 'DEPART', 'ARRIVE', 'Duration', 'Instructor', 'Notes']],
-                body: student.trainingLogs.map(log => [
-                    log.date,
-                    log.aircraft,
-                    log.departure || 'N/A',
-                    log.arrival || 'N/A',
-                    log.flightDuration.toFixed(1),
-                    log.instructorName,
-                    log.trainingExercises.map(e => `${e.exercise}: ${e.comment || ''}`).join('\n'),
-                ]),
-                headStyles: { fillColor: [34, 197, 94] },
-                columnStyles: {
-                    6: { cellWidth: 'auto' },
+        const tableBody = (student.trainingLogs || [])
+        .filter(log => log.aircraft !== 'Previous Experience')
+        .map(log => {
+            const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
+            const model = modelParts.join(' ');
+            
+            return [
+                format(parseISO(log.date), 'dd/MM/yy'),
+                make,
+                model,
+                log.departure || 'N/A',
+                log.arrival || 'N/A',
+                log.instructorName || '',
+                log.remarks || '',
+                formatDecimalTime(log.singleEngineTime),
+                formatDecimalTime(log.multiEngineTime),
+                formatDecimalTime(log.fstdTime),
+                formatDecimalTime(log.singleTime),
+                formatDecimalTime(log.dualTime),
+                formatDecimalTime(log.nightTime),
+                formatDecimalTime(log.dayTime),
+                formatDecimalTime(log.flightDuration),
+            ];
+        });
+
+        const tableHeaders = [
+            'DATE', 'MAKE', 'MODEL/REG', 'DEPART', 'ARRIVE', 'PIC/INSTR', 'REMARKS',
+            'SE', 'ME', 'FSTD', 'SOLO', 'DUAL', 'NIGHT', 'DAY', 'TIME'
+        ];
+
+        autoTable(doc, {
+            startY: 35,
+            head: [tableHeaders],
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [22, 163, 74] },
+            columnStyles: {
+                0: { cellWidth: 16 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
+                3: { cellWidth: 15 }, 4: { cellWidth: 15 }, 5: { cellWidth: 25 },
+                6: { cellWidth: 40 },
+                // Time columns
+                7: { cellWidth: 10, halign: 'center' }, 8: { cellWidth: 10, halign: 'center' },
+                9: { cellWidth: 12, halign: 'center' }, 10: { cellWidth: 12, halign: 'center' },
+                11: { cellWidth: 12, halign: 'center' }, 12: { cellWidth: 12, halign: 'center' },
+                13: { cellWidth: 12, halign: 'center' }, 14: { cellWidth: 12, halign: 'center' },
+            },
+            didParseCell: function(data) {
+                // For wrapping text in remarks
+                if (data.column.index === 6) {
+                    data.cell.styles.cellWidth = 'wrap';
                 }
-            });
-        }
-        
+            }
+        });
+    
         const fileName = `${student.name.replace(/\s+/g, '_').toLowerCase()}_logbook.pdf`;
         doc.save(fileName);
     };
@@ -588,7 +612,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
 
-    const TotalTimeCard = ({ title, log, onEdit }: { title: string, log?: Partial<TrainingLogEntry> | null, onEdit: () => void }) => {
+    const TotalTimeCard = ({ title, log, onEdit, isTotal }: { title: string, log?: Partial<TrainingLogEntry> | null, onEdit: () => void, isTotal?: boolean }) => {
         return (
             <div className="border-2 border-orange-500 p-4 rounded-lg relative">
                 <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">{title}</div>
@@ -596,7 +620,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <CardHeader>
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>
-                            A summary of hours, including those carried over from a previous logbook.
+                             {isTotal 
+                                ? "A live summary of all hours recorded in this logbook." 
+                                : "A summary of hours carried over from a previous logbook."
+                            }
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -615,7 +642,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                              <p className="text-sm text-muted-foreground text-center py-4">No summary data available.</p>
                         )}
                     </CardContent>
-                    {canEdit && (
+                    {canEdit && !isTotal && (
                          <CardFooter>
                             <Button variant="outline" size="sm" onClick={onEdit}>
                                 <Edit className="mr-2 h-4 w-4" />
@@ -891,7 +918,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
                         <TotalTimeCard title="Hours Brought Forward" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
-                        <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => {}} />
+                        <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => {}} isTotal={true} />
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
                             <Card>
@@ -930,11 +957,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     <TableHeader>
                                                         <TableRow>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE, MODEL</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '100px' }}>REG</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MODEL/REG</TableHead>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC</TableHead>
+                                                            <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC/INSTR</TableHead>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
                                                             <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
@@ -949,11 +976,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     </TableHeader>
                                                     <TableBody>
                                                         {paginatedLogs.length > 0 ? (
-                                                            paginatedLogs.map(log => (
+                                                            paginatedLogs.map(log => {
+                                                                const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
+                                                                const model = modelParts.join(' ');
+                                                                return (
                                                                 <TableRow key={log.id}>
                                                                     <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[0]}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{log.aircraft?.split(' ')[1]}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{make}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{model}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
@@ -972,7 +1002,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                         </Button>
                                                                     </TableCell>
                                                                 </TableRow>
-                                                            ))
+                                                            )})
                                                         ) : (
                                                             <TableRow>
                                                                 <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
