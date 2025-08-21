@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, PlusCircle, Trash2, Edit, Wind } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,7 +78,9 @@ const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', '
 
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
-    
+    const [isAddRiskOpen, setIsAddRiskOpen] = useState(false);
+    const [currentHazardId, setCurrentHazardId] = useState<string | null>(null);
+
     const handleAddHazard = () => {
         const newHazard: MocHazard = {
             id: `hazard-${Date.now()}`,
@@ -91,10 +93,15 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-    const handleAddRisk = (hazardId: string) => {
+     const handleAddRiskClick = (hazardId: string) => {
+        setCurrentHazardId(hazardId);
+        setIsAddRiskOpen(true);
+    };
+
+    const handleAddRisk = (hazardId: string, riskDescription: string) => {
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
-            description: '',
+            description: riskDescription,
             likelihood: 'Improbable',
             severity: 'Minor',
             riskScore: 4,
@@ -107,6 +114,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                 : h
             )
         }));
+        setIsAddRiskOpen(false);
     };
     
     const handleHazardChange = (hazardId: string, value: string) => {
@@ -161,6 +169,29 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         onClose();
     };
 
+    const AddRiskDialog = () => {
+        const [description, setDescription] = useState('');
+        return (
+            <Dialog open={isAddRiskOpen} onOpenChange={setIsAddRiskOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Risk</DialogTitle>
+                        <DialogDescription>Describe the risk associated with the hazard.</DialogDescription>
+                    </DialogHeader>
+                    <Textarea 
+                        placeholder="Describe the potential risk..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddRiskOpen(false)}>Cancel</Button>
+                        <Button disabled={!description.trim()} onClick={() => currentHazardId && handleAddRisk(currentHazardId, description)}>Add Risk</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    };
+
     return (
         <DialogContent className="max-w-4xl">
             <DialogHeader>
@@ -178,7 +209,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <div className="flex items-center justify-between">
                              <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
                               <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleAddRisk(hazard.id)}>
+                                <Button variant="outline" size="sm" onClick={() => handleAddRiskClick(hazard.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
                                 </Button>
                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
@@ -200,11 +231,11 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                         <Trash2 className="h-3 w-3" />
                                     </Button>
                                 </div>
-                                 <Textarea
+                                <Textarea
                                     id={`risk-desc-${riskIndex}`}
                                     placeholder="Describe the associated risk..."
                                     value={risk.description}
-                                    onChange={(e) => handleRiskChange(hazard.id, risk.id, 'description', e.target.value)}
+                                    readOnly // Risk is entered via dialog
                                 />
                                 <div className="flex items-end gap-4">
                                      <div className="flex-1 space-y-1">
@@ -250,6 +281,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                 <Button onClick={onClose} variant="outline">Cancel</Button>
                 <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
+            <AddRiskDialog />
         </DialogContent>
     );
 };
