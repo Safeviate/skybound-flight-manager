@@ -316,7 +316,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 {risk.mitigations?.map((mitigation, mitIndex) => (
                                     <div key={mitigation.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
                                         <div className="flex items-center justify-between">
-                                            <Label className="text-muted-foreground">Mitigation for Risk</Label>
+                                            <Label className="text-muted-foreground">Mitigation for Risk #{index + 1}.{riskIndex + 1}</Label>
                                             <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteMitigation(hazard.id, risk.id, mitigation.id)}>
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
