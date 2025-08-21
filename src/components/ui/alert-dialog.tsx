@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -8,7 +9,14 @@ import { buttonVariants } from "@/components/ui/button"
 
 const AlertDialog = AlertDialogPrimitive.Root
 
-const AlertDialogTrigger = AlertDialogPrimitive.Trigger
+const AlertDialogTrigger = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>
+>(({ ...props }, ref) => (
+  <AlertDialogPrimitive.Trigger ref={ref} {...props} data-nosnippet />
+));
+AlertDialogTrigger.displayName = AlertDialogPrimitive.Trigger.displayName
+
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal
 
