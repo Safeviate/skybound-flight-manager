@@ -20,6 +20,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -93,7 +97,10 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
     
     const handleAddRisk = (hazardId?: string) => {
         const targetHazardId = hazardId || localStep.hazards?.[localStep.hazards.length - 1]?.id;
-        if (!targetHazardId) return;
+        if (!targetHazardId) {
+            handleAddHazard();
+            return;
+        }
 
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
@@ -120,6 +127,8 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             residualLikelihood: 'Improbable',
             residualSeverity: 'Negligible',
             residualRiskScore: 2,
+            responsiblePerson: '',
+            completionDate: ''
         };
          setLocalStep(prev => ({
             ...prev,
@@ -174,9 +183,12 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                             ...r,
                             mitigations: r.mitigations?.map(m => {
                                 if (m.id === mitigationId) {
-                                    const updatedMitigation = { ...m, [field]: value };
+                                    let updatedMitigation = { ...m, [field]: value };
                                     if (field === 'residualLikelihood' || field === 'residualSeverity') {
                                         updatedMitigation.residualRiskScore = getRiskScore(updatedMitigation.residualLikelihood, updatedMitigation.residualSeverity);
+                                    }
+                                    if (field === 'completionDate' && value instanceof Date) {
+                                        updatedMitigation = { ...updatedMitigation, completionDate: format(value, 'yyyy-MM-dd') };
                                     }
                                     return updatedMitigation;
                                 }
@@ -325,6 +337,35 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                             value={mitigation.description}
                                             onChange={(e) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'description', e.target.value)}
                                         />
+                                         <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Responsible Person</Label>
+                                                <Input 
+                                                    placeholder="Enter name" 
+                                                    value={mitigation.responsiblePerson}
+                                                    onChange={(e) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'responsiblePerson', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Due By Date</Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !mitigation.completionDate && "text-muted-foreground")}>
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {mitigation.completionDate ? format(parseISO(mitigation.completionDate), "PPP") : <span>Pick a date</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined}
+                                                            onSelect={(date) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'completionDate', date)}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                        </div>
                                         <div className="flex items-end gap-4">
                                             <div className="flex-1 space-y-1">
                                                 <Label className="text-xs">Residual Probability</Label>
