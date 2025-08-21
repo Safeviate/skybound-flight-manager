@@ -664,6 +664,7 @@ export function SafetyPageContent({
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
+              <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -707,6 +708,21 @@ export function SafetyPageContent({
                 onConfigChange={setSpiConfigs} 
                 monthlyFlightHours={monthlyFlightHours}
             />
+          </TabsContent>
+           <TabsContent value="moc">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Management of Change (MOC)</CardTitle>
+                  <CardDescription>
+                    This feature is under construction.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">Check back later for updates.</p>
+                  </div>
+                </CardContent>
+              </Card>
           </TabsContent>
         </Tabs>
       </main>
