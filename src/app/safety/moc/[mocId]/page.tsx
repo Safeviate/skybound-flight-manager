@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -71,10 +72,6 @@ const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title:string) => void }) 
     );
 };
 
-const LIKELIHOOD_OPTIONS: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
-const SEVERITY_OPTIONS: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
-
-
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
     
@@ -90,20 +87,25 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-    const handleAddRisk = (hazardId: string) => {
+    const handleAddRisk = () => {
+        if (!localStep.hazards || localStep.hazards.length === 0) {
+            // If no hazards exist, add one first.
+            handleAddHazard();
+            return;
+        }
+
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
             description: '',
         };
 
+        const updatedHazards = [...localStep.hazards];
+        const lastHazard = updatedHazards[updatedHazards.length - 1];
+        lastHazard.risks = [...(lastHazard.risks || []), newRisk];
+
         setLocalStep(prev => ({
             ...prev,
-            hazards: prev.hazards?.map(h => {
-                if (h.id === hazardId) {
-                    return { ...h, risks: [...(h.risks || []), newRisk] };
-                }
-                return h;
-            })
+            hazards: updatedHazards
         }));
     };
 
@@ -145,75 +147,52 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         <DialogContent className="max-w-4xl">
             <DialogHeader>
                 <DialogTitle>Hazard Analysis for: {step.description}</DialogTitle>
+                <div className="flex items-center gap-2 pt-2">
+                    <Button className="w-fit" onClick={handleAddHazard}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Hazard
+                    </Button>
+                    <Button className="w-fit" variant="outline" onClick={handleAddRisk}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Risk
+                    </Button>
+                </div>
             </DialogHeader>
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Button className="w-fit" onClick={handleAddHazard}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Hazard
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {localStep.hazards?.map((hazard, index) => (
-                        <div key={hazard.id} className="p-4 border rounded-md space-y-4">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor={`hazard-desc-${index}`}>Hazard #{index + 1}</Label>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            <Textarea 
-                                id={`hazard-desc-${index}`}
-                                placeholder="Describe the potential hazard..."
-                                value={hazard.description}
-                                onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
-                            />
-
-                            {hazard.risks?.map((risk, riskIndex) => (
-                                <div key={risk.id} className="pl-6 space-y-2">
-                                     <Label htmlFor={`risk-desc-${riskIndex}`}>Risk for Hazard #{index + 1}</Label>
-                                    <Textarea
-                                        id={`risk-desc-${riskIndex}`}
-                                        placeholder="Describe the associated risk..."
-                                        value={risk.description}
-                                        onChange={(e) => handleRiskChange(hazard.id, risk.id, e.target.value)}
-                                    />
-                                </div>
-                            ))}
-
-                            <div className="flex items-end gap-2 pt-2 border-t">
-                                 <div className="flex-1">
-                                    <Label className="text-xs">Probability</Label>
-                                    <Select>
-                                        <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
-                                        <SelectContent>
-                                            {LIKELIHOOD_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                 </div>
-                                 <div className="flex-1">
-                                    <Label className="text-xs">Severity</Label>
-                                     <Select>
-                                        <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
-                                        <SelectContent>
-                                            {SEVERITY_OPTIONS.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                 </div>
-                                  <Button variant="outline" className="w-fit" onClick={() => handleAddRisk(hazard.id)}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
-                                </Button>
-                            </div>
+            <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                {localStep.hazards?.map((hazard, index) => (
+                    <div key={hazard.id} className="p-4 border rounded-md space-y-4">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
                         </div>
-                    ))}
-                    {(!localStep.hazards || localStep.hazards.length === 0) && (
-                        <div className="text-sm text-center text-muted-foreground py-8">No hazards added yet.</div>
-                    )}
-                </CardContent>
-            </Card>
+                        <Textarea 
+                            id={`hazard-desc-${index}`}
+                            placeholder="Describe the potential hazard..."
+                            value={hazard.description}
+                            onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
+                        />
+
+                        {hazard.risks?.map((risk, riskIndex) => (
+                            <div key={risk.id} className="pl-6 space-y-2">
+                                <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground">Risk for Hazard #{index + 1}</Label>
+                                <Textarea
+                                    id={`risk-desc-${riskIndex}`}
+                                    placeholder="Describe the associated risk..."
+                                    value={risk.description}
+                                    onChange={(e) => handleRiskChange(hazard.id, risk.id, e.target.value)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ))}
+                {(!localStep.hazards || localStep.hazards.length === 0) && (
+                    <div className="text-sm text-center text-muted-foreground py-8">No hazards added yet.</div>
+                )}
+            </CardContent>
             <DialogFooter>
+                <Button onClick={onClose} variant="outline">Cancel</Button>
                 <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
         </DialogContent>
