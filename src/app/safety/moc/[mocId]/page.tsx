@@ -26,6 +26,11 @@ import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -43,6 +48,8 @@ const hazardFormSchema = z.object({
   severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
   residualLikelihood: z.enum(likelihoodValues, { required_error: 'Residual Likelihood is required.' }),
   residualSeverity: z.enum(severityValues, { required_error: 'Residual Severity is required.' }),
+  responsiblePerson: z.string().optional(),
+  completionDate: z.date().optional().nullable(),
 });
 type HazardFormValues = z.infer<typeof hazardFormSchema>;
 
@@ -56,7 +63,10 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
 
     useEffect(() => {
         if (editingHazard) {
-            form.reset(editingHazard);
+            form.reset({
+                ...editingHazard,
+                completionDate: editingHazard.completionDate ? parseISO(editingHazard.completionDate) : null,
+            });
         } else {
             form.reset({ description: '', mitigation: '' });
         }
@@ -74,7 +84,12 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
         const riskScore = data.likelihood && data.severity ? getRiskScore(data.likelihood, data.severity) : undefined;
         const residualRiskScore = data.residualLikelihood && data.residualSeverity ? getRiskScore(data.residualLikelihood, data.residualSeverity) : undefined;
 
-        const hazardData = { ...data, riskScore, residualRiskScore };
+        const hazardData = { 
+            ...data, 
+            completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined,
+            riskScore, 
+            residualRiskScore 
+        };
 
         let updatedHazards;
         if (editingHazard) {
@@ -140,6 +155,11 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                         </div>
 
                         <FormField name="mitigation" control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation</FormLabel><FormControl><Textarea placeholder="e.g., Mandatory cross-check by second crew member..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                           <FormField name="responsiblePerson" control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           <FormField name="completionDate" control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                        </div>
                         
                         <div className="p-3 border rounded-md space-y-3">
                             <h5 className="text-sm font-semibold">Residual Risk Assessment</h5>
@@ -359,10 +379,16 @@ export default function MocDetailPage() {
                                     {step.hazards?.map(hazard => (
                                         <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
                                             <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
-                                            <div className="grid grid-cols-2 gap-2 text-xs mt-1">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-1">
                                                 <div>
                                                     <p className="font-semibold">Mitigation:</p>
                                                     <p>{hazard.mitigation}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold">Responsible:</p>
+                                                    <p>{hazard.responsiblePerson || 'N/A'}</p>
+                                                    <p className="font-semibold mt-1">Due Date:</p>
+                                                    <p>{hazard.completionDate ? format(parseISO(hazard.completionDate), 'PPP') : 'N/A'}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t">

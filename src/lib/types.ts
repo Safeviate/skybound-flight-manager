@@ -593,6 +593,8 @@ export type MocHazard = {
     residualLikelihood?: RiskLikelihood;
     residualSeverity?: RiskSeverity;
     residualRiskScore?: number;
+    responsiblePerson?: string;
+    completionDate?: string;
 }
 
 export type MocStep = {
@@ -696,4 +698,5 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
