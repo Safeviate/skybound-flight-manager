@@ -45,8 +45,7 @@ export type Feature =
     | 'Students' 
     | 'Personnel'
     | 'Bookings'
-    | 'AdvancedAnalytics'
-    | 'MOC';
+    | 'AdvancedAnalytics';
 
 export type Company = {
   id: string;
@@ -160,8 +159,6 @@ export type Permission =
   | 'Settings:Edit'
   | 'Bookings:View'
   | 'Bookings:Edit'
-  | 'MOC:View'
-  | 'MOC:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -187,8 +184,6 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Settings:Edit',
     'Bookings:View',
     'Bookings:Edit',
-    'MOC:View',
-    'MOC:Edit',
     'Super User',
 ];
 
@@ -582,65 +577,6 @@ export type ComplianceItem = {
     findings?: string;
 };
 
-export type MocRisk = {
-    id: string;
-    description: string;
-    likelihood?: RiskLikelihood;
-    severity?: RiskSeverity;
-    riskScore?: number;
-};
-
-export type MocMitigation = {
-    id: string;
-    description: string;
-    likelihood?: RiskLikelihood;
-    severity?: RiskSeverity;
-    riskScore?: number;
-    responsiblePerson?: string;
-    completionDate?: string;
-};
-
-export type MocHazard = {
-    id: string;
-    description: string;
-    risks?: MocRisk[];
-    mitigations?: MocMitigation[];
-}
-
-export type MocStep = {
-    id: string;
-    description: string;
-    hazards?: MocHazard[];
-};
-
-export type ManagementOfChange = {
-    id: string;
-    companyId: string;
-    mocNumber: string;
-    title: string;
-    proposedBy: string;
-    proposalDate: string;
-    description: string;
-    reason: string;
-    scope: string;
-    status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
-    steps?: MocStep[];
-    // Risk Assessment
-    identifiedHazards?: { id: string; description: string }[];
-    riskAssessmentNotes?: string;
-    // Approval
-    approvedBy?: string;
-    approvalDate?: string;
-    approvalNotes?: string;
-    // Implementation
-    implementationPlan?: string;
-    trainingRequired?: string;
-    documentationUpdates?: string;
-    // Monitoring
-    postImplementationReviewNotes?: string;
-    monitoringEndDate?: string;
-};
-
 export const REPORT_TYPE_DEPARTMENT_MAPPING: Record<SafetyReportType, Department> = {
     'Flight Operations Report': 'Flight Operations',
     'Ground Operations Report': 'Ground Operation',
@@ -676,7 +612,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Admin': ['Super User'],
   'Operations Manager': ['Super User'],
   'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'MOC:View', 'MOC:Edit'],
+  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
   'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
   'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
   'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
@@ -708,6 +644,13 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
+
+
+
+
+
+
 
 
 

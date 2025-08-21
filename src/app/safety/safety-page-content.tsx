@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { SafetyReport, Risk, GroupedRisk, Department, Booking, ManagementOfChange } from '@/lib/types';
+import type { SafetyReport, Risk, GroupedRisk, Department, Booking } from '@/lib/types';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
 import { useUser } from '@/context/user-provider';
 import { format, parseISO, startOfMonth, differenceInDays } from 'date-fns';
@@ -37,7 +37,6 @@ import { collection, query, getDocs, addDoc, setDoc, doc, updateDoc, writeBatch 
 import { RiskRegister } from './risk-register';
 import { RiskAssessmentTool } from './[reportId]/risk-assessment-tool';
 import { getSafetyPageData } from './data';
-import { NewMocForm } from './new-moc-form';
 
 
 function groupRisksByArea(risks: Risk[]): GroupedRisk[] {
@@ -378,84 +377,15 @@ const SafetyDashboard = ({ reports, risks }: { reports: SafetyReport[], risks: R
     );
 };
 
-const MocContent = ({ mocs, onUpdate }: { mocs: ManagementOfChange[], onUpdate: () => void }) => {
-    const [isNewMocOpen, setIsNewMocOpen] = useState(false);
-    
-    return (
-        <Card>
-            <CardHeader className="flex-row justify-between items-start">
-                <div>
-                    <CardTitle>Management of Change (MOC)</CardTitle>
-                    <CardDescription>A log of all proposed and implemented changes to operations.</CardDescription>
-                </div>
-                <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Propose Change
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Propose a New Change</DialogTitle>
-                            <DialogDescription>
-                                Complete this form to formally propose a change to operations, procedures, or personnel.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <NewMocForm onUpdate={onUpdate} onClose={() => setIsNewMocOpen(false)} />
-                    </DialogContent>
-                </Dialog>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>MOC #</TableHead>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Proposed By</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {mocs.length > 0 ? mocs.map(moc => (
-                            <TableRow key={moc.id}>
-                                <TableCell>
-                                    <Link href={`/safety/moc/${moc.id}`} className="hover:underline text-primary font-medium">
-                                        {moc.mocNumber}
-                                    </Link>
-                                </TableCell>
-                                <TableCell className="font-medium">{moc.title}</TableCell>
-                                <TableCell>{moc.proposedBy}</TableCell>
-                                <TableCell>{format(parseISO(moc.proposalDate), 'MMM d, yyyy')}</TableCell>
-                                <TableCell>
-                                    <Badge>{moc.status}</Badge>
-                                </TableCell>
-                            </TableRow>
-                        )) : (
-                            <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
-                                    No MOC records found.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
-};
-
-
 export function SafetyPageContent({
     initialReports,
     initialRisks,
     initialBookings,
-    initialMoc,
 }: {
     initialReports: SafetyReport[],
     initialRisks: Risk[],
     initialBookings: Booking[],
-    initialMoc: ManagementOfChange[],
+    initialMoc: any[],
 }) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -463,7 +393,6 @@ export function SafetyPageContent({
   const [safetyReports, setSafetyReports] = useState<SafetyReport[]>(initialReports);
   const [risks, setRisks] = useState<Risk[]>(initialRisks);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-  const [mocList, setMocList] = useState<ManagementOfChange[]>(initialMoc);
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
   const { user, company, loading } = useUser();
   const { toast } = useToast();
@@ -472,11 +401,10 @@ export function SafetyPageContent({
   
   const fetchData = async () => {
     if (!company) return;
-    const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(company.id);
+    const { reportsList, risksList, bookingsList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
-    setMocList(mocList);
   };
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
@@ -730,13 +658,12 @@ export function SafetyPageContent({
       <main className="flex-1 p-4 md:p-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between mb-4 no-print">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="reports">Safety Reports</TabsTrigger>
               <TabsTrigger value="register">Risk Register</TabsTrigger>
               <TabsTrigger value="matrix">Risk Matrix</TabsTrigger>
               <TabsTrigger value="spis">SPIs</TabsTrigger>
-              <TabsTrigger value="moc">MOC</TabsTrigger>
             </TabsList>
             {renderActionButton()}
           </div>
@@ -780,9 +707,6 @@ export function SafetyPageContent({
                 onConfigChange={setSpiConfigs} 
                 monthlyFlightHours={monthlyFlightHours}
             />
-          </TabsContent>
-          <TabsContent value="moc">
-            <MocContent mocs={mocList} onUpdate={fetchData} />
           </TabsContent>
         </Tabs>
       </main>
