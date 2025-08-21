@@ -266,7 +266,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 </Button>
                               </div>
                         </div>
-                        <Textarea 
+                        <Input 
                             id={`hazard-desc-${index}`}
                             placeholder="Describe the potential hazard..."
                             value={hazard.description}
@@ -285,7 +285,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                         </Button>
                                     </div>
                                 </div>
-                                <Textarea
+                                <Input
                                     id={`risk-desc-${riskIndex}`}
                                     placeholder="Describe the associated risk..."
                                     value={risk.description}
@@ -332,7 +332,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
                                         </div>
-                                        <Textarea
+                                        <Input
                                             placeholder="Describe the mitigation control..."
                                             value={mitigation.description}
                                             onChange={(e) => handleMitigationChange(hazard.id, risk.id, mitigation.id, 'description', e.target.value)}
