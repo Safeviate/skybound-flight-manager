@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -32,6 +33,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const BroughtForwardHoursForm = ({ onSave, initialHours }: { onSave: (hours: any) => void, initialHours?: TrainingLogEntry | null }) => {
     const [hours, setHours] = useState({
@@ -889,7 +891,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
                         <TotalTimeCard title="Hours Brought Forward" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
-                        <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => setIsBroughtForwardOpen(true)} />
+                        <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => {}} />
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
                             <Card>
