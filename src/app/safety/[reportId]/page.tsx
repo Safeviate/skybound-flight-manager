@@ -626,7 +626,7 @@ function SafetyReportInvestigationPage() {
       if (!taskToUpdate || !taskToUpdate.requestedDeadline) return;
       
       const updatedTasks = report?.tasks?.map(t =>
-          t.id === taskId ? { ...t, dueDate: t.requestedDeadline!, extensionStatus: 'Approved' } : t
+          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : t
       );
       handleReportUpdate({ tasks: updatedTasks || [] }, true);
       toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
@@ -836,7 +836,9 @@ function SafetyReportInvestigationPage() {
                       </CardContent>
                   </Card>
 
-                  <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+                  <div id="initial-risk-assessment-card">
+                    <InitialRiskAssessment report={report} onUpdate={handleReportUpdate} onPromoteRisk={handlePromoteRisk}/>
+                  </div>
               </TabsContent>
               
                <TabsContent value="investigation" id="investigation-tab-content" className="mt-6 space-y-6">

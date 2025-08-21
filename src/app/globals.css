@@ -146,10 +146,7 @@
     max-height: none !important;
   }
 
-  body.print-initial-report-only #triage-tab-content > .card:nth-of-type(n+3) {
-    display: none !important;
-  }
-
+  body.print-initial-report-only #initial-risk-assessment-card,
   body.print-initial-report-only #investigation-tab-content,
   body.print-initial-report-only #mitigation-tab-content,
   body.print-initial-report-only #review-tab-content {
