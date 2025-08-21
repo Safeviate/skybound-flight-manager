@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -192,6 +193,12 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
         </DialogContent>
     );
 };
+
+const stepFormSchema = z.object({
+  description: z.string().min(10, "Step description is required."),
+});
+type StepFormValues = z.infer<typeof stepFormSchema>;
+
 
 export default function MocDetailPage() {
   const params = useParams();
@@ -462,3 +469,5 @@ export default function MocDetailPage() {
     </main>
   );
 }
+
+MocDetailPage.title = "Management of Change";
