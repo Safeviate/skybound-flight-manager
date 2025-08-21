@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity } from '@/lib/types';
+import type { ManagementOfChange, MocStep, MocHazard, RiskLikelihood, RiskSeverity, MocRisk } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -63,9 +64,9 @@ const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title:string) => void }) 
                         placeholder="e.g., Initial Training & Documentation"
                     />
                 </div>
-                <div className="flex justify-end">
+                <DialogFooter>
                     <Button onClick={handleSubmit} disabled={!title.trim()}>Confirm</Button>
-                </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
@@ -77,6 +78,9 @@ const SEVERITY_OPTIONS: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 
 
 const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUpdate: (updatedStep: MocStep) => void, onClose: () => void }) => {
     const [localStep, setLocalStep] = useState<MocStep>(step);
+    const [isRiskDialogOpen, setIsRiskDialogOpen] = useState(false);
+    const [currentHazardId, setCurrentHazardId] = useState<string | null>(null);
+    const [riskDescription, setRiskDescription] = useState('');
 
     const handleAddHazard = () => {
         const newHazard: MocHazard = {
@@ -96,6 +100,44 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             ...prev,
             hazards: prev.hazards?.map(h => h.id === hazardId ? { ...h, description } : h)
         }));
+    };
+
+    const handleDeleteHazard = (hazardId: string) => {
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.filter(h => h.id !== hazardId)
+        }));
+    };
+    
+    const openRiskDialog = (hazardId: string) => {
+        setCurrentHazardId(hazardId);
+        setRiskDescription('');
+        setIsRiskDialogOpen(true);
+    };
+
+    const handleAddRisk = () => {
+        if (!currentHazardId || !riskDescription.trim()) return;
+
+        const newRisk: MocRisk = {
+            id: `risk-${Date.now()}`,
+            description: riskDescription,
+            likelihood: 'Improbable', // Default value
+            severity: 'Minor',       // Default value
+            initialRiskScore: 0      // Will be calculated
+        };
+
+        setLocalStep(prev => ({
+            ...prev,
+            hazards: prev.hazards?.map(h => {
+                if (h.id === currentHazardId) {
+                    return { ...h, risks: [...(h.risks || []), newRisk] };
+                }
+                return h;
+            })
+        }));
+
+        setIsRiskDialogOpen(false);
+        setCurrentHazardId(null);
     };
 
     const handleSave = () => {
@@ -118,7 +160,12 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                 <CardContent className="space-y-4">
                     {localStep.hazards?.map((hazard, index) => (
                         <div key={hazard.id} className="p-4 border rounded-md space-y-4">
-                            <Label htmlFor={`hazard-desc-${index}`}>Hazard #{index + 1}</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor={`hazard-desc-${index}`}>Hazard #{index + 1}</Label>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                             <Textarea 
                                 id={`hazard-desc-${index}`}
                                 placeholder="Describe the potential hazard..."
@@ -126,7 +173,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                             />
                             <div className="flex items-end gap-2 pt-2 border-t">
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" onClick={() => openRiskDialog(hazard.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
                                 </Button>
                                  <div className="flex-1">
@@ -158,6 +205,30 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
             <DialogFooter>
                 <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
+
+            {/* Risk Dialog */}
+            <Dialog open={isRiskDialogOpen} onOpenChange={setIsRiskDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Risk</DialogTitle>
+                        <DialogDescription>
+                            Describe the risk associated with the selected hazard.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label htmlFor="risk-description">Risk Description</Label>
+                        <Textarea 
+                            id="risk-description"
+                            value={riskDescription}
+                            onChange={(e) => setRiskDescription(e.target.value)}
+                            placeholder="e.g., Mid-air collision, loss of control..."
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleAddRisk} disabled={!riskDescription.trim()}>Add Risk</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DialogContent>
     );
 };
@@ -356,3 +427,4 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
