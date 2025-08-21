@@ -146,7 +146,7 @@
     max-height: none !important;
   }
 
-  body.print-initial-report-only #triage-tab-content > .card:not(:first-of-type) {
+  body.print-initial-report-only #triage-tab-content > .card:nth-of-type(n+3) {
     display: none !important;
   }
 
