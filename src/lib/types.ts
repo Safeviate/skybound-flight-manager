@@ -670,7 +670,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
   'Auditee': ['Quality:View'],
   'Driver': [],
-  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
+  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View'],
+  'Chief Flight Instructor': [],
+  'Head Of Training': [],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [

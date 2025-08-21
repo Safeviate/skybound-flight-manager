@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -400,7 +401,7 @@ export default function MocDetailPage() {
                               <Card key={step.id} className="bg-muted/30">
                                   <CardHeader>
                                       <div className="flex justify-between items-center">
-                                          <CardTitle className="text-base font-semibold">Step {index+1}: {step.description}</CardTitle>
+                                          <CardTitle className="text-base font-semibold">Phase {index+1}: {step.description}</CardTitle>
                                            {canEdit && (
                                               <div className="flex gap-1">
                                                   <Button variant="outline" size="sm" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
@@ -415,49 +416,39 @@ export default function MocDetailPage() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Hazard</TableHead>
-                                                    <TableHead>Risk</TableHead>
-                                                    <TableHead>Initial</TableHead>
-                                                    <TableHead>Mitigation</TableHead>
-                                                    <TableHead>Residual</TableHead>
-                                                    <TableHead>Responsible</TableHead>
+                                                    <TableHead className="w-1/3">Potential Hazard</TableHead>
+                                                    <TableHead className="w-1/3">Risk/s</TableHead>
+                                                    <TableHead className="w-1/3">Mitigation</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {step.hazards.map(hazard => (
-                                                    <React.Fragment key={hazard.id}>
-                                                        <TableRow>
-                                                            <TableCell rowSpan={Math.max(hazard.risks?.length || 1, hazard.mitigations?.length || 1)} className="font-semibold align-top">{hazard.description}</TableCell>
-                                                             <TableCell className="align-top">{hazard.risks?.[0]?.description}</TableCell>
-                                                            <TableCell className="align-top">
-                                                                {hazard.risks?.[0]?.initialRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(hazard.risks[0].initialRiskScore)}}>{getRiskLevel(hazard.risks[0].initialRiskScore)}</Badge>}
-                                                            </TableCell>
-                                                            <TableCell className="align-top">{hazard.mitigations?.[0]?.description}</TableCell>
-                                                            <TableCell className="align-top">
-                                                                {hazard.mitigations?.[0]?.residualRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(hazard.mitigations[0].residualRiskScore)}}>{getRiskLevel(hazard.mitigations[0].residualRiskScore)}</Badge>}
-                                                            </TableCell>
-                                                            <TableCell className="align-top">{hazard.mitigations?.[0]?.responsiblePerson}<br/>{hazard.mitigations?.[0]?.completionDate && <span className="text-xs text-muted-foreground">{format(parseISO(hazard.mitigations[0].completionDate), 'dd-MM-yy')}</span>}</TableCell>
-                                                        </TableRow>
-                                                        {Array.from({ length: Math.max(hazard.risks?.length || 0, hazard.mitigations?.length || 0) - 1 }).map((_, i) => {
-                                                            const risk = hazard.risks?.[i + 1];
-                                                            const mitigation = hazard.mitigations?.[i + 1];
-                                                            return (
-                                                                <TableRow key={`${hazard.id}-extra-${i}`}>
-                                                                    {risk && <>
-                                                                        <TableCell className="align-top">{risk.description}</TableCell>
-                                                                        <TableCell className="align-top">{risk.initialRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(risk.initialRiskScore)}}>{getRiskLevel(risk.initialRiskScore)}</Badge>}</TableCell>
-                                                                    </>}
-                                                                    {!risk && <><TableCell></TableCell><TableCell></TableCell></>}
-                                                                    {mitigation && <>
-                                                                        <TableCell className="align-top">{mitigation.description}</TableCell>
-                                                                        <TableCell className="align-top">{mitigation.residualRiskScore && <Badge style={{backgroundColor: getRiskScoreColor(mitigation.residualRiskScore)}}>{getRiskLevel(mitigation.residualRiskScore)}</Badge>}</TableCell>
-                                                                        <TableCell className="align-top">{mitigation.responsiblePerson}<br/>{mitigation.completionDate && <span className="text-xs text-muted-foreground">{format(parseISO(mitigation.completionDate), 'dd-MM-yy')}</span>}</TableCell>
-                                                                    </>}
-                                                                    {!mitigation && <><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></>}
-                                                                </TableRow>
-                                                            );
-                                                        })}
-                                                    </React.Fragment>
+                                                {step.hazards.map((hazard, hIndex) => (
+                                                    <TableRow key={hazard.id}>
+                                                        <TableCell className="align-top font-semibold">
+                                                            H{hIndex+1}: {hazard.description}
+                                                        </TableCell>
+                                                        <TableCell className="align-top">
+                                                            {hazard.risks?.map((risk, rIndex) => (
+                                                                <div key={risk.id} className={cn("p-2", rIndex > 0 && "mt-2 border-t")}>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <p className="font-semibold">R{rIndex+1}: {risk.description}</p>
+                                                                        <Badge style={{backgroundColor: getRiskScoreColor(risk.initialRiskScore), color: 'white'}}>{getRiskLevel(risk.initialRiskScore)}</Badge>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </TableCell>
+                                                        <TableCell className="align-top">
+                                                             {hazard.mitigations?.map((mitigation, mIndex) => (
+                                                                <div key={mitigation.id} className={cn("p-2", mIndex > 0 && "mt-2 border-t")}>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <p className="font-semibold">M{mIndex+1}: {mitigation.description}</p>
+                                                                         <Badge style={{backgroundColor: getRiskScoreColor(mitigation.residualRiskScore), color: 'white'}}>{getRiskLevel(mitigation.residualRiskScore)}</Badge>
+                                                                    </div>
+                                                                    <p className="text-xs text-muted-foreground">Owner: {mitigation.responsiblePerson} | Due: {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'dd-MM-yy') : 'N/A'}</p>
+                                                                </div>
+                                                            ))}
+                                                        </TableCell>
+                                                    </TableRow>
                                                 ))}
                                             </TableBody>
                                         </Table>
