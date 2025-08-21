@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -37,11 +35,6 @@ const likelihoodValues: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 
 const severityValues: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
 
-const stepFormSchema = z.object({
-  description: z.string().min(10, "Step description must be at least 10 characters."),
-});
-type StepFormValues = z.infer<typeof stepFormSchema>;
-
 const riskSchema = z.object({
     id: z.string().optional(),
     description: z.string().min(1, 'Description cannot be empty.'),
@@ -52,8 +45,6 @@ const riskSchema = z.object({
 const mitigationSchema = z.object({
     id: z.string().optional(),
     description: z.string().min(1, 'Description cannot be empty.'),
-    likelihood: z.enum(likelihoodValues, { required_error: 'Likelihood is required.' }),
-    severity: z.enum(severityValues, { required_error: 'Severity is required.' }),
     responsiblePerson: z.string().optional(),
     completionDate: z.date().optional().nullable(),
 });
@@ -110,7 +101,6 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
             mitigations: (data.mitigations || []).map(m => ({
                 ...m,
                 id: m.id || `mit-${Date.now()}`,
-                riskScore: getRiskScore(m.likelihood, m.severity),
                 completionDate: m.completionDate ? format(m.completionDate, 'yyyy-MM-dd') : undefined,
             })),
         };
@@ -180,16 +170,12 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                                 <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeMitigation(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 <FormField name={`mitigations.${index}.description`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Mitigation Description</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-2 gap-4">
-                                     <FormField name={`mitigations.${index}.likelihood`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{likelihoodValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
-                                     <FormField name={`mitigations.${index}.severity`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{severityValues.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)} />
-                                </div>
-                                 <div className="grid grid-cols-2 gap-4">
                                     <FormField name={`mitigations.${index}.responsiblePerson`} control={form.control} render={({ field }) => (<FormItem><FormLabel>Responsible</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormField name={`mitigations.${index}.completionDate`} control={form.control} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Due Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >{field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                                  </div>
                              </div>
                          ))}
-                         <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: '', likelihood: 'Improbable', severity: 'Negligible' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
+                         <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: ''})}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
                         
                         <div className="flex justify-end gap-2 pt-4">
                             {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
@@ -329,115 +315,139 @@ export default function MocDetailPage() {
                 Back to MOC List
             </Button>
         </div>
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
-                    <Badge>{moc.status}</Badge>
-                    <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
-                    <CardDescription>
-                        Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
-                    </CardDescription>
+        <div className="border-4 border-blue-500 p-4 rounded-lg relative">
+            <div className="absolute -top-3 left-4 bg-background px-2 text-blue-500 font-semibold text-sm">Step 1: Change Proposal</div>
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <Badge>{moc.status}</Badge>
+                        <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
+                        <CardDescription>
+                            Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
+                        </CardDescription>
+                    </div>
                 </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Separator />
-             <DetailSection title="Description of Change">
-                <p className="whitespace-pre-wrap">{moc.description}</p>
-             </DetailSection>
-             <DetailSection title="Reason for Change">
-                <p className="whitespace-pre-wrap">{moc.reason}</p>
-             </DetailSection>
-             <DetailSection title="Scope of Change">
-                <p className="whitespace-pre-wrap">{moc.scope}</p>
-             </DetailSection>
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Separator />
+                 <DetailSection title="Description of Change">
+                    <p className="whitespace-pre-wrap">{moc.description}</p>
+                 </DetailSection>
+                 <DetailSection title="Reason for Change">
+                    <p className="whitespace-pre-wrap">{moc.reason}</p>
+                 </DetailSection>
+                 <DetailSection title="Scope of Change">
+                    <p className="whitespace-pre-wrap">{moc.scope}</p>
+                 </DetailSection>
+              </CardContent>
+            </Card>
+        </div>
         
-        <Card>
-            <CardHeader className="flex-row justify-between items-start">
-                <div>
-                    <CardTitle>Change Implementation Plan</CardTitle>
-                    <CardDescription>Break down the change into actionable steps and analyze hazards for each.</CardDescription>
-                </div>
-                {canEdit && (
-                <Dialog open={isStepDialogOpen} onOpenChange={setIsStepDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={() => setEditingStep(null)}><PlusCircle className="mr-2 h-4 w-4"/> Add Step</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{editingStep ? 'Edit' : 'Add'} Step</DialogTitle>
-                        </DialogHeader>
-                         <Form {...stepForm}>
-                            <form onSubmit={stepForm.handleSubmit(handleStepSubmit)} className="space-y-4">
-                                <FormField name="description" control={stepForm.control} render={({ field }) => (<FormItem><FormLabel>Step Description</FormLabel><FormControl><Textarea placeholder="e.g., Procure and install new GPS units..." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <DialogFooter><Button type="submit">Save Step</Button></DialogFooter>
-                            </form>
-                        </Form>
-                    </DialogContent>
-                </Dialog>
-                )}
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {moc.steps?.map((step, index) => (
-                    <Card key={step.id}>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-base">Step {index + 1}: {step.description}</CardTitle>
-                            {canEdit && (
-                            <div className="flex gap-1">
-                                <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
-                                <Button size="sm" variant="ghost" onClick={() => { setEditingStep(step); stepForm.reset({ description: step.description }); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4"/></Button>
-                                <Button size="sm" variant="ghost" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                            </div>
+        <div className="border-4 border-purple-600 p-4 rounded-lg relative">
+            <div className="absolute -top-3 left-4 bg-background px-2 text-purple-600 font-semibold text-sm">Step 2: Implementation Plan & Hazard Analysis</div>
+            <Card>
+                <CardHeader className="flex-row justify-between items-start">
+                    <div>
+                        <CardTitle>Change Implementation Plan</CardTitle>
+                        <CardDescription>Break down the change into actionable steps and analyze hazards for each.</CardDescription>
+                    </div>
+                    {canEdit && (
+                    <Dialog open={isStepDialogOpen} onOpenChange={setIsStepDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={() => setEditingStep(null)}><PlusCircle className="mr-2 h-4 w-4"/> Add Step</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{editingStep ? 'Edit' : 'Add'} Step</DialogTitle>
+                            </DialogHeader>
+                            <Form {...stepForm}>
+                                <form onSubmit={stepForm.handleSubmit(handleStepSubmit)} className="space-y-4">
+                                    <FormField name="description" control={stepForm.control} render={({ field }) => (<FormItem><FormLabel>Step Description</FormLabel><FormControl><Textarea placeholder="e.g., Procure and install new GPS units..." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <DialogFooter><Button type="submit">Save Step</Button></DialogFooter>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                    )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {moc.steps?.map((step, index) => (
+                        <Card key={step.id}>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-base">Step {index + 1}: {step.description}</CardTitle>
+                                {canEdit && (
+                                <div className="flex gap-1">
+                                    <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => { setEditingStep(step); stepForm.reset({ description: step.description }); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4"/></Button>
+                                    <Button size="sm" variant="ghost" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                </div>
+                                )}
+                            </CardHeader>
+                           {step.hazards && step.hazards.length > 0 && (
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-1/4">Potential Hazard</TableHead>
+                                                <TableHead className="w-1/4">Risks</TableHead>
+                                                <TableHead className="w-1/4">Mitigations</TableHead>
+                                                <TableHead className="w-1/4">Action & Due Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                        {step.hazards.map((hazard, hIndex) => (
+                                            <TableRow key={hazard.id} className="align-top">
+                                                <TableCell className="font-semibold text-sm">H{hIndex+1}: {hazard.description}</TableCell>
+                                                <TableCell>
+                                                    {hazard.risks?.map((risk, rIndex) => (
+                                                        <div key={risk.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
+                                                            <p><b>R{rIndex+1}:</b> {risk.description}</p>
+                                                            <div className="flex items-center gap-1 mt-1">
+                                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {hazard.mitigations?.map((mitigation, mIndex) => (
+                                                        <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
+                                                            <p><b>M{mIndex+1}:</b> {mitigation.description}</p>
+                                                        </div>
+                                                    ))}
+                                                </TableCell>
+                                                 <TableCell>
+                                                    {hazard.mitigations?.map((mitigation, mIndex) => (
+                                                        <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
+                                                            <p><b>By:</b> {mitigation.responsiblePerson || 'N/A'}</p>
+                                                            <p><b>Due:</b> {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'}</p>
+                                                        </div>
+                                                    ))}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
                             )}
-                        </CardHeader>
-                        {step.hazards && step.hazards.length > 0 && (
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-1/4">Potential Hazard</TableHead>
-                                            <TableHead className="w-1/4">Risks</TableHead>
-                                            <TableHead className="w-1/4">Mitigations</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {step.hazards.map((hazard, hIndex) => (
-                                        <TableRow key={hazard.id} className="align-top">
-                                            <TableCell className="font-semibold text-sm">H{hIndex+1}: {hazard.description}</TableCell>
-                                            <TableCell>
-                                                {hazard.risks?.map((risk, rIndex) => (
-                                                    <div key={risk.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
-                                                        <p><b>R{rIndex+1}:</b> {risk.description}</p>
-                                                        <div className="flex items-center gap-1 mt-1">
-                                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </TableCell>
-                                            <TableCell>
-                                                {hazard.mitigations?.map((mitigation, mIndex) => (
-                                                    <div key={mitigation.id} className="text-xs pb-2 mb-2 border-b last:border-b-0 last:pb-0 last:mb-0">
-                                                        <p><b>M{mIndex+1}:</b> {mitigation.description}</p>
-                                                        <div className="flex items-center gap-1 mt-1">
-                                                            <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.riskScore), color: 'white' }}>{mitigation.riskScore}</Badge>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        )}
-                    </Card>
-                ))}
-                {(!moc.steps || moc.steps.length === 0) && <p className="text-sm text-center text-muted-foreground py-4">No implementation steps have been added yet.</p>}
-            </CardContent>
-        </Card>
+                        </Card>
+                    ))}
+                    {(!moc.steps || moc.steps.length === 0) && <p className="text-sm text-center text-muted-foreground py-4">No implementation steps have been added yet.</p>}
+                </CardContent>
+            </Card>
+        </div>
+
+        <div className="border-4 border-green-600 p-4 rounded-lg relative">
+             <div className="absolute -top-3 left-4 bg-background px-2 text-green-600 font-semibold text-sm">Step 3: Final Review & Approval</div>
+             <Card>
+                 <CardHeader>
+                     <CardTitle>Review & Sign-off</CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-muted-foreground">This section will contain fields for final review, approval, and sign-off by relevant managers once the implementation plan is complete.</p>
+                 </CardContent>
+             </Card>
+        </div>
         
         {stepForHazardAnalysis && (
             <Dialog open={isHazardDialogOpen} onOpenChange={setIsHazardDialogOpen}>
