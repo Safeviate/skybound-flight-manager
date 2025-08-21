@@ -72,25 +72,49 @@ export function getDistance(
 }
 
 // Risk Matrix Logic
-const likelihoodMap: Record<RiskLikelihood, number> = {
-  'Extremely Improbable': 1,
-  'Improbable': 2,
-  'Remote': 3,
-  'Occasional': 4,
+export const LIKELIHOOD_MAP: Record<RiskLikelihood, number> = {
   'Frequent': 5,
+  'Occasional': 4,
+  'Remote': 3,
+  'Improbable': 2,
+  'Extremely Improbable': 1,
 };
 
-const severityMap: Record<RiskSeverity, number> = {
-  'Negligible': 1,
-  'Minor': 2,
-  'Major': 3,
-  'Hazardous': 4,
-  'Catastrophic': 5,
+export const SEVERITY_MAP: Record<RiskSeverity, string> = {
+  'Catastrophic': 'A',
+  'Hazardous': 'B',
+  'Major': 'C',
+  'Minor': 'D',
+  'Negligible': 'E',
 };
+
+export const REVERSE_SEVERITY_MAP: Record<string, RiskSeverity> = {
+  'A': 'Catastrophic',
+  'B': 'Hazardous',
+  'C': 'Major',
+  'D': 'Minor',
+  'E': 'Negligible',
+};
+
+export const REVERSE_LIKELIHOOD_MAP: Record<number, RiskLikelihood> = {
+  5: 'Frequent',
+  4: 'Occasional',
+  3: 'Remote',
+  2: 'Improbable',
+  1: 'Extremely Improbable',
+};
+
 
 export const getRiskScore = (likelihood: RiskLikelihood, severity: RiskSeverity): number => {
     if (!likelihood || !severity) return 0;
-    return likelihoodMap[likelihood] * severityMap[severity];
+    const severityValues: Record<RiskSeverity, number> = {
+        'Negligible': 1,
+        'Minor': 2,
+        'Major': 3,
+        'Hazardous': 4,
+        'Catastrophic': 5,
+    };
+    return LIKELIHOOD_MAP[likelihood] * severityValues[severity];
 }
 
 export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium' | 'High' | 'Extreme' | 'N/A' => {
