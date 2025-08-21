@@ -92,7 +92,10 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         }));
     };
     
-    const handleAddRisk = (hazardId: string) => {
+    const handleAddRisk = (hazardId?: string) => {
+        const targetHazardId = hazardId || localStep.hazards?.[localStep.hazards.length - 1]?.id;
+        if (!targetHazardId) return;
+
         const newRisk: MocRisk = {
             id: `risk-${Date.now()}`,
             description: '',
@@ -104,7 +107,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
         setLocalStep(prev => ({
             ...prev,
             hazards: prev.hazards?.map(h => 
-                h.id === hazardId 
+                h.id === targetHazardId
                 ? { ...h, risks: [...(h.risks || []), newRisk] }
                 : h
             )
@@ -235,6 +238,10 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Hazard
                     </Button>
+                    <Button className="w-fit" variant="outline" onClick={() => handleAddRisk()}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Risk
+                    </Button>
                 </div>
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
@@ -243,9 +250,6 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                         <div className="flex items-center justify-between">
                              <Label htmlFor={`hazard-desc-${index}`} className="font-semibold">Hazard #{index + 1}</Label>
                               <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleAddRisk(hazard.id)}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
-                                </Button>
                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(hazard.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -260,7 +264,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                          {hazard.risks?.map((risk, riskIndex) => (
                             <div key={risk.id} className="pl-6 space-y-2 border-l-2 ml-2 pt-4">
                                  <div className="flex items-center justify-between">
-                                    <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground">Risk for Hazard #{index + 1}</Label>
+                                    <Label htmlFor={`risk-desc-${riskIndex}`} className="text-muted-foreground font-semibold">Risk #{index + 1}.{riskIndex + 1}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddMitigation(hazard.id, risk.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
