@@ -43,6 +43,7 @@ const BroughtForwardHoursForm = ({ onSave, initialHours }: { onSave: (hours: any
         solo: initialHours?.singleTime?.toString() || '0',
         dual: initialHours?.dualTime?.toString() || '0',
         night: initialHours?.nightTime?.toString() || '0',
+        day: initialHours?.dayTime?.toString() || '0',
         total: initialHours?.flightDuration?.toString() || '0',
     });
 
@@ -67,6 +68,7 @@ const BroughtForwardHoursForm = ({ onSave, initialHours }: { onSave: (hours: any
                 <div className="space-y-2"><Label htmlFor="solo">Solo</Label><Input id="solo" name="solo" type="number" step="0.1" value={hours.solo} onChange={handleChange} /></div>
                 <div className="space-y-2"><Label htmlFor="dual">Dual</Label><Input id="dual" name="dual" type="number" step="0.1" value={hours.dual} onChange={handleChange} /></div>
                 <div className="space-y-2"><Label htmlFor="night">Night</Label><Input id="night" name="night" type="number" step="0.1" value={hours.night} onChange={handleChange} /></div>
+                <div className="space-y-2"><Label htmlFor="day">Day</Label><Input id="day" name="day" type="number" step="0.1" value={hours.day} onChange={handleChange} /></div>
                 <div className="space-y-2"><Label htmlFor="total">Total</Label><Input id="total" name="total" type="number" step="0.1" value={hours.total} onChange={handleChange} /></div>
             </div>
             <DialogFooter>
@@ -101,6 +103,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         dual: 0,
         single: 0,
         night: 0,
+        day: 0,
     });
 
 
@@ -484,7 +487,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setIsLogbookEditOpen(true);
     };
 
-    const handleBroughtForwardSave = (hours: { total: number; se: number; me: number; fstd: number; solo: number; dual: number; night: number; }) => {
+    const handleBroughtForwardSave = (hours: { total: number; se: number; me: number; fstd: number; solo: number; dual: number; night: number; day: number; }) => {
         if (!student) return;
 
         const newEntry: Omit<TrainingLogEntry, 'id'> = {
@@ -502,6 +505,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             singleTime: hours.solo,
             dualTime: hours.dual,
             nightTime: hours.night,
+            dayTime: hours.day,
         };
 
         const existingBfIndex = student.trainingLogs?.findIndex(log => log.aircraft === 'Previous Experience');
@@ -802,13 +806,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 text-center">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
                                             <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p></div>
+                                            <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dayTime)}</p></div>
                                             <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p></div>
                                         </div>
                                     </CardContent>
@@ -887,7 +892,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration - (log.nightTime || 0))}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime((log.flightDuration || 0) - (log.nightTime || 0))}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                                     <TableCell className="text-center align-middle">
                                                                         <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
@@ -928,10 +933,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
-
-
-
-
-
-

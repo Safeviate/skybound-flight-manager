@@ -48,6 +48,7 @@ const logbookFormSchema = z.object({
   dualTime: z.coerce.number().optional(),
   singleTime: z.coerce.number().optional(),
   nightTime: z.coerce.number().optional(),
+  dayTime: z.coerce.number().optional(),
   instructorName: z.string({
     required_error: 'Please enter the instructor\'s name.',
   }),
@@ -86,6 +87,7 @@ const defaultFormValues: Partial<LogbookFormValues> = {
     dualTime: 0,
     singleTime: 0,
     nightTime: 0,
+    dayTime: 0,
     remarks: '',
 };
 
@@ -149,9 +151,11 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
 
   function handleFormSubmit(data: LogbookFormValues) {
     const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const dayTime = duration - (data.nightTime || 0);
     const newEntry = {
       ...data,
       flightDuration: duration,
+      dayTime: dayTime,
       date: format(data.date, 'yyyy-MM-dd'),
     };
     onSubmit(newEntry, logToEdit?.id);
@@ -230,6 +234,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
                  <FormField control={form.control} name="multiEngineTime" render={({ field }) => (<FormItem><FormLabel>ME Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="fstdTime" render={({ field }) => (<FormItem><FormLabel>FSTD Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="nightTime" render={({ field }) => (<FormItem><FormLabel>Night Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="dayTime" render={({ field }) => (<FormItem><FormLabel>Day Time</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
              <FormField
                 control={form.control}

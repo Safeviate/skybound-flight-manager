@@ -111,6 +111,7 @@ export type TrainingLogEntry = {
   dualTime?: number;
   singleTime?: number;
   nightTime?: number;
+  dayTime?: number;
   instructorName: string;
   instructorSignature?: string;
   studentSignature?: string;
@@ -659,8 +660,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
   'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
   'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
-  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Instructor Grade 1': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
   'Instructor Grade 2': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
   'Instructor Grade 3': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
