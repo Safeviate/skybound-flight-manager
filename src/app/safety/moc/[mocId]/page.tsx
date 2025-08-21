@@ -127,38 +127,17 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
         setEditingHazard(null);
     };
     
-    const handleDelete = (hazardId: string) => {
-        setHazards(hazards.filter(h => h.id !== hazardId));
-    };
-
     return (
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-xl">
             <DialogHeader>
                 <DialogTitle>Hazard Analysis for Step: "{step.description}"</DialogTitle>
                 <DialogDescription>Identify and mitigate hazards for this specific step of the change.</DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[70vh]">
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-sm">Identified Hazards</h4>
-                    <ScrollArea className="h-full">
-                        <div className="space-y-2 pr-4">
-                            {hazards.map((h, index) => (
-                                <div key={h.id} className="p-2 border rounded-md flex justify-between items-center">
-                                    <p className="text-sm font-semibold">H{index+1}: {h.description}</p>
-                                    <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingHazard(h)}><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(h.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    </div>
-                                </div>
-                            ))}
-                            {hazards.length === 0 && <p className="text-xs text-muted-foreground">No hazards identified yet.</p>}
-                        </div>
-                    </ScrollArea>
-                </div>
+            <div className="py-4 max-h-[70vh]">
                 <ScrollArea className="h-full">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4 p-4 border rounded-lg">
-                        <h4 className="font-semibold text-sm">{editingHazard ? 'Edit' : 'Add'} Hazard</h4>
+                    <form onSubmit={form.handleSubmit(handleAddOrUpdate)} className="space-y-4 p-1">
+                        <h4 className="font-semibold text-sm">Add Hazard</h4>
                         <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Potential Hazard</FormLabel><FormControl><Textarea placeholder="e.g., Loss of Institutional Knowledge" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         
                         <Separator />
@@ -198,8 +177,7 @@ const HazardDialog = ({ step, onSave, onCancel }: { step: MocStep, onSave: (upda
                          <Button type="button" variant="outline" size="sm" onClick={() => appendMitigation({ description: '', residualLikelihood: 'Improbable', residualSeverity: 'Negligible' })}><PlusCircle className="mr-2 h-4 w-4"/>Add Mitigation</Button>
                         
                         <div className="flex justify-end gap-2 pt-4">
-                            {editingHazard && <Button type="button" variant="ghost" onClick={() => setEditingHazard(null)}>Cancel Edit</Button>}
-                            <Button type="submit">{editingHazard ? 'Save Changes' : 'Add Hazard'}</Button>
+                            <Button type="submit">Add Hazard</Button>
                         </div>
                     </form>
                 </Form>
@@ -398,15 +376,20 @@ export default function MocDetailPage() {
                   <div className="space-y-4">
                       {moc.steps && moc.steps.length > 0 ? (
                           moc.steps.map((step, index) => (
-                              <div key={step.id} className="border p-4 rounded-lg flex justify-between items-center bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>
-                                <p className="font-semibold">Phase {index+1}: {step.description}</p>
-                                {canEdit && (
-                                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    </div>
-                                )}
-                              </div>
+                              <Card key={step.id}>
+                                  <CardHeader>
+                                      <div className="flex justify-between items-center">
+                                          <CardTitle className="text-lg">Phase {index+1}: {step.description}</CardTitle>
+                                          {canEdit && (
+                                              <div className="flex items-center gap-1">
+                                                  <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingStep(step); setIsStepDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteStep(step.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                              </div>
+                                          )}
+                                      </div>
+                                  </CardHeader>
+                              </Card>
                           ))
                       ) : (
                           <p className="text-sm text-muted-foreground">No implementation steps added yet.</p>
