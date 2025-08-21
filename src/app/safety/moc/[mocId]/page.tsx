@@ -22,7 +22,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
-import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -375,42 +374,9 @@ export default function MocDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {moc.steps?.map((step, index) => (
-                    <div key={step.id} className="p-4 border rounded-md">
+                    <div key={step.id} className="p-4 border rounded-md space-y-4">
                         <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <h4 className="font-semibold">{index + 1}. {step.description}</h4>
-                                <div className="mt-2 space-y-2">
-                                    {step.hazards?.map(hazard => (
-                                        <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
-                                            <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">Risk: {hazard.risk}</p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-1">
-                                                <div>
-                                                    <p className="font-semibold">Mitigation:</p>
-                                                    <p>{hazard.mitigation}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold">Responsible:</p>
-                                                    <p>{hazard.responsiblePerson || 'N/A'}</p>
-                                                    <p className="font-semibold mt-1">Due Date:</p>
-                                                    <p>{hazard.completionDate ? format(parseISO(hazard.completionDate), 'PPP') : 'N/A'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t">
-                                                <span>Risk Score:</span>
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(hazard.riskScore), color: 'white' }}>
-                                                    {hazard.riskScore || 'N/A'}
-                                                </Badge>
-                                                <ArrowRight className="h-3 w-3" />
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(hazard.residualRiskScore), color: 'white' }}>
-                                                    {hazard.residualRiskScore !== undefined ? hazard.residualRiskScore : 'N/A'}
-                                                </Badge>
-                                                <span className="font-semibold pl-2">{getRiskLevel(hazard.residualRiskScore ?? hazard.riskScore)}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <h4 className="font-semibold flex-1">{index + 1}. {step.description}</h4>
                             {canEdit && (
                             <div className="flex gap-1">
                                 <Button size="sm" variant="outline" onClick={() => { setStepForHazardAnalysis(step); setIsHazardDialogOpen(true); }}>Analyze Hazards</Button>
@@ -419,6 +385,39 @@ export default function MocDetailPage() {
                             </div>
                             )}
                         </div>
+                        {step.hazards && step.hazards.length > 0 && (
+                            <div className="space-y-2 pt-4 border-t">
+                                {step.hazards.map(hazard => (
+                                    <div key={hazard.id} className="p-2 bg-muted/50 rounded-md">
+                                        <p className="font-semibold text-xs text-destructive">Hazard: {hazard.description}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Risk: {hazard.risk}</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs mt-1">
+                                            <div>
+                                                <p className="font-semibold">Mitigation:</p>
+                                                <p>{hazard.mitigation}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold">Responsible:</p>
+                                                <p>{hazard.responsiblePerson || 'N/A'}</p>
+                                                <p className="font-semibold mt-1">Due Date:</p>
+                                                <p>{hazard.completionDate ? format(parseISO(hazard.completionDate), 'PPP') : 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t">
+                                            <span>Risk Score:</span>
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(hazard.riskScore), color: 'white' }}>
+                                                {hazard.riskScore || 'N/A'}
+                                            </Badge>
+                                            <ArrowRight className="h-3 w-3" />
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(hazard.residualRiskScore), color: 'white' }}>
+                                                {hazard.residualRiskScore !== undefined ? hazard.residualRiskScore : 'N/A'}
+                                            </Badge>
+                                            <span className="font-semibold pl-2">{getRiskLevel(hazard.residualRiskScore ?? hazard.riskScore)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ))}
                 {(!moc.steps || moc.steps.length === 0) && <p className="text-sm text-center text-muted-foreground py-4">No implementation steps have been added yet.</p>}
