@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -173,7 +171,7 @@ const HazardAnalysisDialog = ({ step, onUpdate, onClose }: { step: MocStep, onUp
                                 onChange={(e) => handleHazardChange(hazard.id, e.target.value)}
                             />
                             <div className="flex items-end gap-2 pt-2 border-t">
-                                <Button variant="outline" size="sm" onClick={() => openRiskDialog(hazard.id)}>
+                                 <Button variant="outline" size="sm" onClick={() => openRiskDialog(hazard.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
                                 </Button>
                                  <div className="flex-1">
@@ -427,4 +425,3 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
-
