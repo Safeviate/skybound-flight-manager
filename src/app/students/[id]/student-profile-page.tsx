@@ -534,6 +534,46 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
 
+    const TotalTimeCard = ({ title, log, onEdit }: { title: string, log?: TrainingLogEntry, onEdit: () => void }) => {
+        return (
+            <div className="border-2 border-orange-500 p-4 rounded-lg relative">
+                <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">{title}</div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{title}</CardTitle>
+                        <CardDescription>
+                            A summary of hours, including those carried over from a previous logbook.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {log ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
+                                <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(log.singleEngineTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(log.multiEngineTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(log.fstdTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(log.singleTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(log.dualTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(log.nightTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(log.dayTime)}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(log.flightDuration)}</p></div>
+                            </div>
+                        ) : (
+                             <p className="text-sm text-muted-foreground text-center py-4">No summary data available.</p>
+                        )}
+                    </CardContent>
+                    {canEdit && (
+                         <CardFooter>
+                            <Button variant="outline" size="sm" onClick={onEdit}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                {log ? 'Edit Total Time' : 'Add Total Time'}
+                            </Button>
+                        </CardFooter>
+                    )}
+                </Card>
+            </div>
+        );
+    };
+
     if (userLoading) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
@@ -587,7 +627,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
              <Dialog open={isBroughtForwardOpen} onOpenChange={setIsBroughtForwardOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add/Edit Brought Forward Hours</DialogTitle>
+                        <DialogTitle>Add/Edit Total Time</DialogTitle>
                         <DialogDescription>
                             Enter the total hours from a previous logbook. This will create or update a single summary entry.
                         </DialogDescription>
@@ -796,29 +836,10 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="logbook" className="mt-6">
                      <div className="max-w-[1200px] mx-auto space-y-6">
                         {broughtForwardLog && (
-                            <div className="border-2 border-orange-500 p-4 rounded-lg relative">
-                                <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">Brought Forward Summary</div>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Brought Forward Summary</CardTitle>
-                                        <CardDescription>
-                                            A summary of hours carried over from a previous logbook.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
-                                            <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleEngineTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.multiEngineTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.fstdTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.singleTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dualTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.nightTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.dayTime)}</p></div>
-                                            <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(broughtForwardLog.flightDuration)}</p></div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                            <TotalTimeCard title="Total Time" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
+                        )}
+                        {broughtForwardLog && (
+                           <TotalTimeCard title="Total Hours" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
                         )}
                         <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
                              <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
@@ -832,14 +853,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             </CardDescription>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                             <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
                                                 <Edit className="mr-2 h-4 w-4" />
-                                                {broughtForwardLog ? 'Edit Brought Forward' : 'Add Brought Forward'}
+                                                {broughtForwardLog ? 'Edit Total Time' : 'Add Total Time'}
                                             </Button>
                                             <Button variant="outline" onClick={handleAddNewLog}>
                                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
                                             </Button>
-                                            <Button variant="outline" onClick={handleDownloadLogbook}><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                            <Button variant="outline" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -892,7 +913,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime((log.flightDuration || 0) - (log.nightTime || 0))}</TableCell>
+                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dayTime)}</TableCell>
                                                                     <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                                     <TableCell className="text-center align-middle">
                                                                         <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
