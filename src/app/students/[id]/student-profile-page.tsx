@@ -341,6 +341,24 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setLogToEdit(log);
         setIsLogbookEditOpen(true);
     };
+
+    const handleDeleteLogEntry = (logIdToDelete: string) => {
+        if (!student) return;
+        const updatedLogs = student.trainingLogs?.filter(log => log.id !== logIdToDelete);
+        const newTotalHours = updatedLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
+        
+        handleUpdate({
+            trainingLogs: updatedLogs,
+            flightHours: newTotalHours
+        });
+        
+        setIsLogbookEditOpen(false);
+        setLogToEdit(null);
+        toast({
+            title: 'Log Entry Deleted',
+            description: 'The logbook entry has been successfully removed.',
+        });
+    };
     
     const handleDeleteDebrief = async (booking: Booking) => {
         if (!company || !student || !booking.pendingLogEntryId) return;
@@ -620,6 +638,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                     <AddLogbookEntryForm
                          onSubmit={handleLogbookUpdate}
                          logToEdit={logToEdit}
+                         onDelete={handleDeleteLogEntry}
                     />
                 </DialogContent>
             </Dialog>

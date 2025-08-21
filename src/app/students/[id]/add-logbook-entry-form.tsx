@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
@@ -28,6 +28,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 const logbookFormSchema = z.object({
   date: z.date({
@@ -69,6 +71,7 @@ type LogbookFormValues = z.infer<typeof logbookFormSchema>;
 interface AddLogbookEntryFormProps {
     onSubmit: (data: Omit<TrainingLogEntry, 'id' | 'trainingExercises'>, logIdToUpdate?: string) => void;
     logToEdit?: TrainingLogEntry | null;
+    onDelete?: (logId: string) => void;
 }
 
 const defaultFormValues: Partial<LogbookFormValues> = {
@@ -91,7 +94,7 @@ const defaultFormValues: Partial<LogbookFormValues> = {
     remarks: '',
 };
 
-export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryFormProps) {
+export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogbookEntryFormProps) {
   const { company } = useUser();
   const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
 
@@ -264,8 +267,32 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit }: AddLogbookEntryForm
             />
           </div>
         </ScrollArea>
-        <div className="flex justify-end pt-4">
-          <Button type="submit">Save Log Entry</Button>
+        <div className="flex justify-between pt-4">
+            {logToEdit && onDelete && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button type="button" variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete Entry
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this logbook entry.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(logToEdit.id)}>
+                                Yes, Delete Entry
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+          <Button type="submit" className={cn(!logToEdit && "w-full")}>Save Log Entry</Button>
         </div>
       </form>
     </Form>
