@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -583,33 +582,30 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         ];
     
         return (
-            <div className="border-4 border-yellow-300 p-4 rounded-lg relative">
-                <div className="absolute -top-3 left-4 bg-background px-2 text-yellow-800 font-semibold text-sm">Milestone Progress</div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Milestone Progress</CardTitle>
-                        <CardDescription>Progress towards key flight hour milestones.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {milestones.map(milestone => {
-                            const prevMilestone = milestone.target - 10;
-                            const hoursInBlock = Math.max(0, currentHours - prevMilestone);
-                            const progress = Math.min((hoursInBlock / 10) * 100, 100);
-                            const hoursRemaining = Math.max(milestone.target - currentHours, 0);
-        
-                            return (
-                                <div key={milestone.name}>
-                                    <div className="flex justify-between mb-1 text-sm">
-                                        <span className="font-medium">{milestone.name}</span>
-                                        <span className="text-muted-foreground">{hoursRemaining.toFixed(1)} hrs remaining</span>
-                                    </div>
-                                    <Progress value={progress} />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Milestone Progress</CardTitle>
+                    <CardDescription>Progress towards key flight hour milestones.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {milestones.map(milestone => {
+                        const prevMilestone = milestone.target - 10;
+                        const hoursInBlock = Math.max(0, currentHours - prevMilestone);
+                        const progress = Math.min((hoursInBlock / 10) * 100, 100);
+                        const hoursRemaining = Math.max(milestone.target - currentHours, 0);
+    
+                        return (
+                            <div key={milestone.name}>
+                                <div className="flex justify-between mb-1 text-sm">
+                                    <span className="font-medium">{milestone.name}</span>
+                                    <span className="text-muted-foreground">{hoursRemaining.toFixed(1)} hrs remaining</span>
                                 </div>
-                            )
-                        })}
-                    </CardContent>
-                </Card>
-            </div>
+                                <Progress value={progress} />
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
         )
     };
 
@@ -668,44 +664,41 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const TotalTimeCard = ({ title, log, onEdit, isTotal }: { title: string, log?: Partial<TrainingLogEntry> | null, onEdit: () => void, isTotal?: boolean }) => {
         return (
-            <div className="border-2 border-orange-500 p-4 rounded-lg relative">
-                <div className="absolute -top-3 left-4 bg-background px-2 text-orange-500 font-semibold text-sm">{title}</div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>
-                             {isTotal 
-                                ? "A live summary of all hours recorded in this logbook." 
-                                : "A summary of hours carried over from a previous logbook."
-                            }
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {log ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
-                                <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(log.singleEngineTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(log.multiEngineTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(log.fstdTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(log.singleTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(log.dualTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(log.nightTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(log.dayTime)}</p></div>
-                                <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(log.flightDuration)}</p></div>
-                            </div>
-                        ) : (
-                             <p className="text-sm text-muted-foreground text-center py-4">No summary data available.</p>
-                        )}
-                    </CardContent>
-                    {canEdit && !isTotal && (
-                         <CardFooter>
-                            <Button variant="outline" size="sm" onClick={onEdit}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                {log ? `Edit ${title}` : `Add ${title}`}
-                            </Button>
-                        </CardFooter>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>
+                         {isTotal 
+                            ? "A live summary of all hours recorded in this logbook." 
+                            : "A summary of hours carried over from a previous logbook."
+                        }
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {log ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
+                            <div><p className="text-xs text-muted-foreground">SE</p><p className="font-bold">{formatDecimalTime(log.singleEngineTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">ME</p><p className="font-bold">{formatDecimalTime(log.multiEngineTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">FSTD</p><p className="font-bold">{formatDecimalTime(log.fstdTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">Solo</p><p className="font-bold">{formatDecimalTime(log.singleTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">Dual</p><p className="font-bold">{formatDecimalTime(log.dualTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">Night</p><p className="font-bold">{formatDecimalTime(log.nightTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">Day</p><p className="font-bold">{formatDecimalTime(log.dayTime)}</p></div>
+                            <div><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{formatDecimalTime(log.flightDuration)}</p></div>
+                        </div>
+                    ) : (
+                         <p className="text-sm text-muted-foreground text-center py-4">No summary data available.</p>
                     )}
-                </Card>
-            </div>
+                </CardContent>
+                {canEdit && !isTotal && (
+                     <CardFooter>
+                        <Button variant="outline" size="sm" onClick={onEdit}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            {log ? `Edit ${title}` : `Add ${title}`}
+                        </Button>
+                    </CardFooter>
+                )}
+            </Card>
         );
     };
 
@@ -780,198 +773,186 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 <TabsContent value="profile" className="mt-6">
                         <div className="grid gap-8 lg:grid-cols-3">
                             <div className="lg:col-span-1 space-y-8">
-                                    <div className="border-2 border-blue-500 p-4 rounded-lg relative">
-                                        <div className="absolute -top-3 left-4 bg-background px-2 text-blue-500 font-semibold text-sm">Student Details</div>
-                                        <Card>
-                                            <CardHeader>
-                                                <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
-                                                    <div className="p-4 rounded-full bg-muted">
-                                                        <UserIcon className="h-12 w-12 text-muted-foreground" />
-                                                    </div>
-                                                    <div>
-                                                        <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
-                                                        <CardDescription className="mt-1 text-center sm:text-left">
-                                                        <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
-                                                        </CardDescription>
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="space-y-4 pt-4 border-t pb-6">
-                                                <div className="flex items-center space-x-3">
-                                                    <UserCheck className="h-5 w-5 text-muted-foreground" />
-                                                    <span className="font-medium">Instructor: {student.instructor}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-3">
-                                                    <BookUser className="h-5 w-5 text-muted-foreground" />
-                                                    <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
-                                                </div>
-                                                
-                                                {(student.documents || []).map(doc => (
-                                                    <div key={doc.id} className="flex items-center space-x-3">
-                                                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                                        <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
-                                                    </div>
-                                                ))}
-                                            </CardContent>
-                                        </Card>
-                                    </div>
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 space-y-4 sm:space-y-0">
+                                            <div className="p-4 rounded-full bg-muted">
+                                                <UserIcon className="h-12 w-12 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-3xl text-center sm:text-left">{student.name}</CardTitle>
+                                                <CardDescription className="mt-1 text-center sm:text-left">
+                                                <Badge variant={student.status === 'Active' ? 'success' : 'secondary'}>{student.status} Student</Badge>
+                                                </CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4 pt-4 border-t pb-6">
+                                        <div className="flex items-center space-x-3">
+                                            <UserCheck className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium">Instructor: {student.instructor}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <BookUser className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
+                                        </div>
+                                        
+                                        {(student.documents || []).map(doc => (
+                                            <div key={doc.id} className="flex items-center space-x-3">
+                                                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                                <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
 
                                     {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
 
-                                    <div className="border-2 border-purple-500 p-4 rounded-lg relative">
-                                        <div className="absolute -top-3 left-4 bg-background px-2 text-purple-500 font-semibold text-sm">Endorsements</div>
-                                        <Card>
-                                            <CardHeader>
-                                                <div className="flex flex-row items-center justify-between">
-                                                    <div className="space-y-1">
-                                                        <CardTitle>Endorsements</CardTitle>
-                                                        <CardDescription>Qualifications and completed milestones.</CardDescription>
-                                                    </div>
-                                                    {canEdit && (
-                                                        <Dialog>
-                                                            <DialogTrigger asChild>
-                                                                <Button size="sm">
-                                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                                    Add
-                                                                </Button>
-                                                            </DialogTrigger>
-                                                            <DialogContent>
-                                                                <DialogHeader>
-                                                                    <DialogTitle>Add New Endorsement</DialogTitle>
-                                                                    <DialogDescription>
-                                                                        Fill out the form to add a new endorsement for {student.name}.
-                                                                    </DialogDescription>
-                                                                </DialogHeader>
-                                                                <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
-                                                            </DialogContent>
-                                                        </Dialog>
-                                                    )}
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                        <TableHead>Endorsement</TableHead>
-                                                        <TableHead>Date</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
-                                                        <TableRow key={endorsement.id}>
-                                                            <TableCell className="font-medium flex items-center gap-2">
-                                                                <Award className="h-4 w-4 text-accent"/>
-                                                                {endorsement.name}
-                                                            </TableCell>
-                                                            <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
-                                                        </TableRow>
-                                                        )) : (
-                                                        <TableRow>
-                                                            <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                                                No endorsements found.
-                                                            </TableCell>
-                                                        </TableRow>
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex flex-row items-center justify-between">
+                                            <div className="space-y-1">
+                                                <CardTitle>Endorsements</CardTitle>
+                                                <CardDescription>Qualifications and completed milestones.</CardDescription>
+                                            </div>
+                                            {canEdit && (
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button size="sm">
+                                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                                            Add
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Add New Endorsement</DialogTitle>
+                                                            <DialogDescription>
+                                                                Fill out the form to add a new endorsement for {student.name}.
+                                                            </DialogDescription>
+                                                        </DialogHeader>
+                                                        <AddEndorsementForm studentId={student.id} onSubmit={handleAddEndorsement}/>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            )}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                <TableHead>Endorsement</TableHead>
+                                                <TableHead>Date</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {student.endorsements && student.endorsements.length > 0 ? student.endorsements.map((endorsement) => (
+                                                <TableRow key={endorsement.id}>
+                                                    <TableCell className="font-medium flex items-center gap-2">
+                                                        <Award className="h-4 w-4 text-accent"/>
+                                                        {endorsement.name}
+                                                    </TableCell>
+                                                    <TableCell>{format(parseISO(endorsement.dateAwarded), 'MMM d, yyyy')}</TableCell>
+                                                </TableRow>
+                                                )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                                        No endorsements found.
+                                                    </TableCell>
+                                                </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                </Card>
 
                                     {canEdit && (
-                                            <div className="border-2 border-red-500 p-4 rounded-lg relative">
-                                                <div className="absolute -top-3 left-4 bg-background px-2 text-red-500 font-semibold text-sm">Admin Actions</div>
-                                                <Card>
-                                                    <CardHeader>
-                                                        <CardTitle>Admin Actions</CardTitle>
-                                                    </CardHeader>
-                                                    <CardContent>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="outline" className="w-full">
-                                                                    <Archive className="mr-2 h-4 w-4" /> Archive Student
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </CardContent>
-                                                </Card>
-                                            </div>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Admin Actions</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" className="w-full">
+                                                        <Archive className="mr-2 h-4 w-4" /> Archive Student
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This will archive {student.name}'s profile. They will no longer appear in active lists but their data will be retained.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={handleArchive}>Yes, Archive Student</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </CardContent>
+                                    </Card>
                                     )}
                                 </div>
                             <div className="lg:col-span-2 space-y-6">
-                                    <div className="border-2 border-green-500 p-4 rounded-lg relative">
-                                        <div className="absolute -top-3 left-4 bg-background px-2 text-green-500 font-semibold text-sm">Pending Instructor Debriefs</div>
-                                        <Card>
-                                            <CardHeader>
-                                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                                                    <div className="space-y-1">
-                                                        <CardTitle>Pending Instructor Debriefs</CardTitle>
-                                                        <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
-                                                    </div>
-                                                     {canEdit && (
-                                                        <Button variant="outline" size="sm" onClick={handleManualDebriefClick}>
-                                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                                            Manual Debrief
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="space-y-2">
-                                            {pendingBookings.length > 0 ? (
-                                                pendingBookings.map(booking => (
-                                                    <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
-                                                        <div className="flex-1 text-left">
-                                                            <div className="space-y-1">
-                                                                <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
-                                                                <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief Edit</Button>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="shrink-0">
-                                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                                    </Button>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>
-                                                                            This will remove the pending debrief and its draft log entry. This action cannot be undone.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
-                                                    <p className="text-muted-foreground">
-                                                        No flights awaiting debrief.
-                                                    </p>
-                                                </div>
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                            <div className="space-y-1">
+                                                <CardTitle>Pending Instructor Debriefs</CardTitle>
+                                                <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
+                                            </div>
+                                             {canEdit && (
+                                                <Button variant="outline" size="sm" onClick={handleManualDebriefClick}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                    Manual Debrief
+                                                </Button>
                                             )}
-                                            </CardContent>
-                                        </Card>
-                                    </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                    {pendingBookings.length > 0 ? (
+                                        pendingBookings.map(booking => (
+                                            <div key={booking.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center">
+                                                <div className="flex-1 text-left">
+                                                    <div className="space-y-1">
+                                                        <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                        <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief Edit</Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="shrink-0">
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will remove the pending debrief and its draft log entry. This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteDebrief(booking)}>Yes, Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                                            <p className="text-muted-foreground">
+                                                No flights awaiting debrief.
+                                            </p>
+                                        </div>
+                                    )}
+                                    </CardContent>
+                                </Card>
                             </div>
                         </div>
                 </TabsContent>
@@ -979,131 +960,128 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                      <div className="max-w-[1200px] mx-auto space-y-6">
                         <TotalTimeCard title="Hours Brought Forward" log={broughtForwardLog} onEdit={() => setIsBroughtForwardOpen(true)} />
                         <TotalTimeCard title="Total Hours" log={totalHoursLog} onEdit={() => {}} isTotal={true} />
-                        <div className="border-2 border-indigo-500 p-4 rounded-lg relative">
-                             <div className="absolute -top-3 left-4 bg-background px-2 text-indigo-500 font-semibold text-sm">Logbook</div>
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle>Detailed Logbook for {student.name}</CardTitle>
-                                            <CardDescription>
-                                                A comprehensive log of all flight activities.
-                                            </CardDescription>
-                                        </div>
-                                        <div className="flex gap-2">
-                                             <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                {broughtForwardLog ? 'Edit Hours Brought Forward' : 'Add Hours Brought Forward'}
-                                            </Button>
-                                            <Button variant="outline" onClick={handleAddNewLog}>
-                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
-                                            </Button>
-                                            <Button variant="outline" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
-                                        </div>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Detailed Logbook for {student.name}</CardTitle>
+                                        <CardDescription>
+                                            A comprehensive log of all flight activities.
+                                        </CardDescription>
                                     </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                            <div className="flex justify-between items-center p-2">
-                                                <Input
-                                                    placeholder="Search logs by aircraft, instructor, or comments..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    className="max-w-sm"
-                                                />
-                                            </div>
-                                            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                                                <Table style={{ tableLayout: 'fixed' }}>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MODEL/REG</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC/INSTR</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
-                                                            <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
-                                                            <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {paginatedLogs.length > 0 ? (
-                                                            paginatedLogs.map(log => {
-                                                                const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
-                                                                const model = modelParts.join(' ');
-                                                                return (
-                                                                <TableRow key={log.id}>
-                                                                    <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{make}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{model}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
-                                                                    <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dayTime)}</TableCell>
-                                                                    <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
-                                                                    <TableCell className="text-center align-middle">
-                                                                        <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            )})
-                                                        ) : (
-                                                            <TableRow>
-                                                                <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                    <div className="flex gap-2">
+                                         <Button variant="outline" size="sm" onClick={() => setIsBroughtForwardOpen(true)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            {broughtForwardLog ? 'Edit Hours Brought Forward' : 'Add Hours Brought Forward'}
+                                        </Button>
+                                        <Button variant="outline" onClick={handleAddNewLog}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Manual Entry
+                                        </Button>
+                                        <Button variant="outline" onClick={handleDownloadLogbook} data-nosnippet><Download className="mr-2 h-4 w-4"/>Download PDF</Button>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                        <div className="flex justify-between items-center p-2">
+                                            <Input
+                                                placeholder="Search logs by aircraft, instructor, or comments..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="max-w-sm"
+                                            />
+                                        </div>
+                                        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                                            <Table style={{ tableLayout: 'fixed' }}>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MODEL/REG</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC/INSTR</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '400px' }}>REMARKS</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SE</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ME</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>FSTD</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>SOLO</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DUAL</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>NIGHT</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DAY</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>TIME</TableHead>
+                                                        <TableHead style={{ width: '100px' }} className="text-center align-middle">ACTIONS</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {paginatedLogs.length > 0 ? (
+                                                        paginatedLogs.map(log => {
+                                                            const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
+                                                            const model = modelParts.join(' ');
+                                                            return (
+                                                            <TableRow key={log.id}>
+                                                                <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{make}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{model}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
+                                                                <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dualTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.nightTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dayTime)}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
+                                                                <TableCell className="text-center align-middle">
+                                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                        <Edit className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TableCell>
                                                             </TableRow>
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
-                                                <ScrollBar orientation="horizontal" />
-                                            </ScrollArea>
-                                            <div className="flex items-center justify-between p-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Label htmlFor="sort-order" className="text-sm">Sort by:</Label>
-                                                    <Select value={sortOrder} onValueChange={(value: 'newest' | 'oldest') => setSortOrder(value)}>
-                                                        <SelectTrigger className="w-[180px]">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="newest">Newest to Oldest</SelectItem>
-                                                            <SelectItem value="oldest">Oldest to Newest</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="flex items-center justify-center space-x-2">
-                                                    <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
-                                                        <ChevronLeft className="h-4 w-4" />
-                                                        Previous
-                                                    </Button>
-                                                    <span className="text-sm">
-                                                        Page {currentPage} of {totalPages}
-                                                    </span>
-                                                    <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
-                                                        Next
-                                                        <ChevronRight className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                        )})
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                            <ScrollBar orientation="horizontal" />
+                                        </ScrollArea>
+                                        <div className="flex items-center justify-between p-2">
+                                            <div className="flex items-center gap-2">
+                                                <Label htmlFor="sort-order" className="text-sm">Sort by:</Label>
+                                                <Select value={sortOrder} onValueChange={(value: 'newest' | 'oldest') => setSortOrder(value)}>
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="newest">Newest to Oldest</SelectItem>
+                                                        <SelectItem value="oldest">Oldest to Newest</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                     </div>
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <Button onClick={handlePrevPage} disabled={currentPage === 1} variant="outline" size="sm">
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                    Previous
+                                                </Button>
+                                                <span className="text-sm">
+                                                    Page {currentPage} of {totalPages}
+                                                </span>
+                                                <Button onClick={handleNextPage} disabled={currentPage === totalPages} variant="outline" size="sm">
+                                                    Next
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
       </main>
