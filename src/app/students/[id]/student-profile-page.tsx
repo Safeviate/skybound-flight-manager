@@ -417,7 +417,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         try {
             await batch.commit();
             setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
-            setStudent(prev => prev ? ({ ...prev, trainingLogs: updatedLogs }) : null);
+            setStudent(prev => prev ? ({ ...prev, trainingLogs: updatedLogs, pendingBookingIds: prev.pendingBookingIds?.filter(id => id !== booking.id) }) : null);
             toast({
                 title: "Debrief Cleared",
                 description: `The pending debrief for booking ${booking.bookingNumber} has been removed.`,
