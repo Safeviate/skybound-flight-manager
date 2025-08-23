@@ -307,6 +307,51 @@ const AircraftStats = ({ bookings, aircraftData }: { bookings: Booking[], aircra
 };
 
 
+const IndividualAircraftStats = ({ bookings, aircraftData }: { bookings: Booking[], aircraftData: Aircraft[] }) => {
+    return (
+        <div>
+            <h2 className="text-2xl font-bold tracking-tight my-4">Individual Aircraft Statistics</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {aircraftData.filter(ac => ac.status !== 'Archived').map(aircraft => {
+                    const aircraftBookings = bookings.filter(b => b.aircraft === aircraft.tailNumber);
+                    const totalHours = aircraftBookings.reduce((sum, b) => sum + (b.flightDuration || 0), 0);
+                    const totalBookings = aircraftBookings.length;
+                    const totalFuel = aircraftBookings.reduce((sum, b) => sum + (b.fuelUplift || 0), 0);
+                    const totalOil = aircraftBookings.reduce((sum, b) => sum + (b.oilUplift || 0), 0);
+                    
+                    return (
+                        <Card key={aircraft.id}>
+                            <CardHeader>
+                                <CardTitle>{aircraft.tailNumber}</CardTitle>
+                                <CardDescription>{aircraft.make} {aircraft.model}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Total Hours Flown</span>
+                                    <span>{totalHours.toFixed(1)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Total Bookings</span>
+                                    <span>{totalBookings}</span>
+                                </div>
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Total Fuel Uplift</span>
+                                    <span>{totalFuel.toFixed(1)} L</span>
+                                </div>
+                                 <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Total Oil Uplift</span>
+                                    <span>{totalOil.toFixed(1)} qts</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+
 interface ReportsPageContentProps {
   initialBookings: Booking[];
   initialAircraft: Aircraft[];
@@ -393,6 +438,7 @@ export function ReportsPageContent({
             <TabsContent value="overview" className="mt-4 space-y-8">
                  <KeyMetrics bookings={bookingData} />
                  <AircraftStats bookings={bookingData} aircraftData={aircraftData} />
+                 <IndividualAircraftStats bookings={bookingData} aircraftData={aircraftData} />
                  <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card>
                         <CardHeader>
