@@ -35,9 +35,7 @@ const logbookFormSchema = z.object({
   date: z.date({
     required_error: 'A date is required.',
   }),
-  aircraft: z.string({
-    required_error: 'Please select an aircraft.',
-  }),
+  aircraft: z.string().min(1, { message: 'Aircraft details are required.' }),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   departureTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
@@ -96,8 +94,7 @@ const defaultFormValues: Partial<LogbookFormValues> = {
 
 export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogbookEntryFormProps) {
   const { company } = useUser();
-  const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
-
+  
   const form = useForm<LogbookFormValues>({
     resolver: zodResolver(logbookFormSchema),
     defaultValues: defaultFormValues as LogbookFormValues,
@@ -116,16 +113,6 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
         form.reset(defaultFormValues as LogbookFormValues);
     }
   }, [logToEdit, form]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-        if (!company) return;
-        const acQuery = query(collection(db, `companies/${company.id}/aircraft`), where('status', '!=', 'Archived'));
-        const acSnapshot = await getDocs(acQuery);
-        setAircraftList(acSnapshot.docs.map(doc => doc.data() as Aircraft));
-    };
-    fetchData();
-  }, [company]);
   
    useEffect(() => {
     if (watchedFields.singleEngineTime && watchedFields.singleEngineTime > 0) {
@@ -209,12 +196,9 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Aircraft</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Select aircraft..." /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {aircraftList.map(ac => <SelectItem key={ac.id} value={`${ac.make} ${ac.model}`}>{ac.tailNumber} ({ac.make} {ac.model})</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                             <FormControl>
+                                <Input placeholder="e.g., Cessna 172 ZS-ABC" {...field} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}

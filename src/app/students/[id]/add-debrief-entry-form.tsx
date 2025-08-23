@@ -47,7 +47,7 @@ const debriefFormSchema = z.object({
     required_error: 'A date is required.',
   }),
   aircraft: z.string({
-    required_error: 'Please select an aircraft.',
+    required_error: 'Please enter an aircraft.',
   }),
   startHobbs: z.coerce.number().min(0, {
       message: 'Hobbs hours must be a positive number.'
@@ -156,6 +156,100 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ScrollArea className="h-[70vh] pr-4">
             <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Logbook Details</CardTitle>
+                    </CardHeader>
+                     <CardContent className="space-y-4">
+                         <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                variant={"outline"}
+                                                className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                                                >
+                                                {field.value ? (format(field.value, "PPP")) : (<span>Pick a date</span>)}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                disabled={(date) => date > new Date()}
+                                                initialFocus
+                                            />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="aircraft"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Aircraft</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Cessna 172 ZS-ABC" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="startHobbs"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Start Hobbs</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.1" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="endHobbs"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>End Hobbs</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.1" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="instructorName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Instructor Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter instructor's name" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Training Details</CardTitle>
