@@ -265,10 +265,9 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="sr-only">Exercise</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select exercise..." /></SelectTrigger></FormControl>
-                                                    <SelectContent>{trainingExercisesData.map(ex => <SelectItem key={ex} value={ex}>{ex}</SelectItem>)}</SelectContent>
-                                                </Select>
+                                                <FormControl>
+                                                    <Textarea placeholder="Describe the exercise (e.g., Short field landings)" {...field} />
+                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
