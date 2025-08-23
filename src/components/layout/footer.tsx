@@ -5,7 +5,7 @@ import { useUser } from '@/context/user-provider';
 export default function Footer() {
   const { company } = useUser();
   const trademark = company?.trademark || 'SkyBound Flight Manager';
-  const companyName = company?.name || 'SkyBound';
+  const companyName = company?.name || 'SkyBound Flight Manager';
   const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
   return (

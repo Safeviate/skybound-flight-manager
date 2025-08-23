@@ -99,7 +99,7 @@ export default function CorporatePage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
         <div className="absolute top-8 left-8 flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
-            <span className="text-xl font-semibold">Safeviate</span>
+            <span className="text-xl font-semibold">SkyBound Flight Manager</span>
         </div>
         <div className="absolute top-8 right-8">
             <Button asChild variant="outline">
@@ -114,7 +114,7 @@ export default function CorporatePage() {
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
-                    Welcome to Safeviate, the all-in-one platform for flight school operations, safety, and compliance. Register your administrator account or log in to continue.
+                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your administrator account or log in to continue.
                 </p>
             </div>
             <Card>

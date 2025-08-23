@@ -1,21 +1,8 @@
 
-import { CompaniesPageContent } from './companies-page-content';
-import { getCompaniesPageData } from './data';
-import type { Company } from '@/lib/types';
+'use client';
 
-async function getInitialData(): Promise<Company[]> {
-    try {
-        return await getCompaniesPageData();
-    } catch (error) {
-        console.error("Failed to fetch initial data for companies page:", error);
-        return [];
-    }
+// This page has been deprecated and its content removed.
+
+export default function DeprecatedCompaniesPage() {
+  return null;
 }
-
-export default async function CompaniesPageContainer() {
-    const initialCompanies = await getInitialData();
-    
-    return <CompaniesPageContent initialCompanies={initialCompanies} />;
-}
-
-CompaniesPageContainer.title = "Manage Companies";
