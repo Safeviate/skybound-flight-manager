@@ -113,6 +113,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         setStudent(initialStudent);
         setProgress(initialStudent?.progress || 0);
     }, [initialStudent]);
+    
+    useEffect(() => {
+        if (!userLoading && !currentUser) {
+            router.push('/login');
+        }
+    }, [userLoading, currentUser, router]);
 
      useEffect(() => {
         const fetchPendingBookings = async () => {
@@ -413,7 +419,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         const updatedLogs = student.trainingLogs?.filter(log => log.id !== booking.pendingLogEntryId);
     
         batch.update(studentRef, {
-            pendingBookingIds: updatedPendingBookingIds || [],
+            pendingBookingIds: arrayRemove(booking.id),
             trainingLogs: updatedLogs || [],
         });
     
@@ -724,7 +730,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         )
     }
 
-    if (!student) {
+    if (!student || !currentUser) {
         return (
             <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
                 <p>Student not found.</p>
