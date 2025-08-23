@@ -13,9 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { doc, writeBatch } from 'firebase/firestore';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -356,13 +360,15 @@ export function ReportsPageContent({
     initialAircraft,
     initialUsers
 }: ReportsPageContentProps) {
-  const { user, loading } = useUser();
+  const { user, company, loading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
   const [bookingData, setBookingData] = useState<Booking[]>(initialBookings);
   const [aircraftData, setAircraftData] = useState<Aircraft[]>(initialAircraft);
   const [userData, setUserData] = useState<User[]>(initialUsers);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
 
   useEffect(() => {
     setBookingData(initialBookings);
@@ -376,14 +382,19 @@ export function ReportsPageContent({
       router.push('/login');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    // Clear selections when the search term changes
+    setSelectedBookings([]);
+  }, [searchTerm]);
 
   const recentBookings = useMemo(() => {
     return bookingData
-      .filter(b => b.bookingNumber)
+      .filter(b => b.bookingNumber && b.status !== 'Archived') // Filter out archived bookings
       .sort((a, b) => {
         const numA = parseInt(a.bookingNumber!.split('-')[1]);
         const numB = parseInt(b.bookingNumber!.split('-')[1]);
-        return numA - numB;
+        return numB - numA; // Sort descending
       });
   }, [bookingData]);
 
@@ -407,9 +418,49 @@ export function ReportsPageContent({
       case 'Approved': return 'warning';
       case 'Completed': return 'success';
       case 'Cancelled': return 'destructive';
+      case 'Archived': return 'secondary';
       default: return 'outline';
     }
   }
+  
+  const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+          setSelectedBookings(filteredBookings.map(b => b.id));
+      } else {
+          setSelectedBookings([]);
+      }
+  }
+
+  const handleSelectOne = (bookingId: string, checked: boolean) => {
+      if (checked) {
+          setSelectedBookings(prev => [...prev, bookingId]);
+      } else {
+          setSelectedBookings(prev => prev.filter(id => id !== bookingId));
+      }
+  }
+
+  const handleArchiveSelected = async () => {
+    if (!company || selectedBookings.length === 0) return;
+
+    const batch = writeBatch(db);
+    selectedBookings.forEach(bookingId => {
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        batch.update(bookingRef, { status: 'Archived' });
+    });
+
+    try {
+        await batch.commit();
+        setBookingData(prev => prev.map(b => selectedBookings.includes(b.id) ? { ...b, status: 'Archived' } : b));
+        setSelectedBookings([]);
+        toast({
+            title: 'Bookings Archived',
+            description: `${selectedBookings.length} booking(s) have been successfully archived.`
+        });
+    } catch (error) {
+        console.error("Error archiving bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive selected bookings.' });
+    }
+  };
 
 
   if (loading || dataLoading || !user) {
@@ -487,7 +538,7 @@ export function ReportsPageContent({
                         <CardDescription>A log of all flights in the system.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center py-4">
+                        <div className="flex items-center justify-between py-4">
                           <div className="relative w-full max-w-sm">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
@@ -497,11 +548,24 @@ export function ReportsPageContent({
                               className="pl-10"
                               />
                           </div>
+                          {selectedBookings.length > 0 && (
+                            <Button variant="outline" onClick={handleArchiveSelected}>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive Selected ({selectedBookings.length})
+                            </Button>
+                          )}
                         </div>
                         <ScrollArea className="h-[70vh]">
                         <Table>
                             <TableHeader>
                             <TableRow>
+                                <TableHead className="w-12">
+                                     <Checkbox 
+                                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                                        checked={selectedBookings.length > 0 && selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
+                                        aria-label="Select all"
+                                    />
+                                </TableHead>
                                 <TableHead>Booking #</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Aircraft</TableHead>
@@ -518,6 +582,13 @@ export function ReportsPageContent({
                             {filteredBookings.length > 0 ? (
                                 filteredBookings.map((booking) => (
                                 <TableRow key={booking.id}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedBookings.includes(booking.id)}
+                                            onCheckedChange={(checked) => handleSelectOne(booking.id, !!checked)}
+                                            aria-label="Select row"
+                                        />
+                                    </TableCell>
                                     <TableCell>{booking.bookingNumber}</TableCell>
                                     <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
                                     <TableCell>{booking.aircraft}</TableCell>
@@ -538,7 +609,7 @@ export function ReportsPageContent({
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={10} className="text-center h-24">No recent bookings found.</TableCell>
+                                <TableCell colSpan={11} className="text-center h-24">No recent bookings found.</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
