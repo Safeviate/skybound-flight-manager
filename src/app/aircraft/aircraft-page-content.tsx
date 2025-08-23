@@ -139,6 +139,21 @@ export function AircraftPageContent({
             description: `${aircraft.tailNumber} has been moved to the archives.`,
         });
     };
+
+    const handleDelete = async (aircraftId: string) => {
+        if (!company) return;
+        try {
+            await deleteDoc(doc(db, `companies/${company.id}/aircraft`, aircraftId));
+            toast({
+                title: 'Aircraft Deleted',
+                description: 'The aircraft has been permanently removed from the fleet.',
+            });
+            // The onSnapshot listener will update the UI automatically
+        } catch (error) {
+            console.error("Error deleting aircraft:", error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the aircraft.' });
+        }
+    };
     
     const handleRestore = async (aircraft: Aircraft) => {
         if (!company) return;
@@ -341,9 +356,31 @@ export function AircraftPageContent({
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                         {isArchived ? (
-                                            <DropdownMenuItem onClick={() => handleRestore(ac)}>
-                                                <RotateCw className="mr-2 h-4 w-4" /> Restore
-                                            </DropdownMenuItem>
+                                            <>
+                                                <DropdownMenuItem onClick={() => handleRestore(ac)}>
+                                                    <RotateCw className="mr-2 h-4 w-4" /> Restore
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete the aircraft "{ac.tailNumber}" and all its associated data.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(ac.id)}>Yes, delete aircraft</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </>
                                         ) : (
                                             <>
                                                 {ac.status === 'In Maintenance' && (
