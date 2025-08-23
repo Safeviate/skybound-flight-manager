@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -266,7 +265,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                             <FormItem>
                                                 <FormLabel className="sr-only">Exercise</FormLabel>
                                                 <FormControl>
-                                                    <Textarea placeholder="Describe the exercise (e.g., Short field landings)" {...field} />
+                                                    <Input placeholder="Describe the exercise (e.g., Short field landings)" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -367,3 +366,5 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     </Form>
   );
 }
+
+    
