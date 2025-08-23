@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2 } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -257,6 +257,56 @@ const KeyMetrics = ({ bookings }: { bookings: Booking[] }) => {
     )
 }
 
+const AircraftStats = ({ bookings, aircraftData }: { bookings: Booking[], aircraftData: Aircraft[] }) => {
+  const stats = useMemo(() => {
+    const totalFlightHours = aircraftData.reduce((sum, ac) => sum + ac.hours, 0);
+    const totalBookings = bookings.length;
+    const totalFuelUplift = bookings.reduce((sum, b) => sum + (b.fuelUplift || 0), 0);
+    const totalOilUplift = bookings.reduce((sum, b) => sum + (b.oilUplift || 0), 0);
+    
+    return {
+      totalFlightHours: totalFlightHours.toFixed(1),
+      totalBookings,
+      totalFuelUplift: totalFuelUplift.toFixed(1),
+      totalOilUplift: totalOilUplift.toFixed(1),
+    }
+  }, [bookings, aircraftData]);
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Hours Flown</CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent><div className="text-2xl font-bold">{stats.totalFlightHours}</div></CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent><div className="text-2xl font-bold">{stats.totalBookings}</div></CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Fuel Uplift</CardTitle>
+          <Fuel className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent><div className="text-2xl font-bold">{stats.totalFuelUplift} L</div></CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Oil Uplift</CardTitle>
+          <Droplets className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent><div className="text-2xl font-bold">{stats.totalOilUplift} qts</div></CardContent>
+      </Card>
+    </div>
+  );
+};
+
+
 interface ReportsPageContentProps {
   initialBookings: Booking[];
   initialAircraft: Aircraft[];
@@ -342,6 +392,7 @@ export function ReportsPageContent({
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-8">
                  <KeyMetrics bookings={bookingData} />
+                 <AircraftStats bookings={bookingData} aircraftData={aircraftData} />
                  <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card>
                         <CardHeader>

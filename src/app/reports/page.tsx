@@ -23,4 +23,4 @@ export default async function ReportsPage() {
     />;
 }
 
-ReportsPage.title = 'Flight Statistics';
+ReportsPage.title = 'Advanced Analytics';
