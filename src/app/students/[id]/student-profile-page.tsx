@@ -405,19 +405,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     
     const handleDeleteDebrief = async (booking: Booking) => {
         if (!company || !student || !booking.pendingLogEntryId) return;
-
+    
         const batch = writeBatch(db);
-
         const studentRef = doc(db, `companies/${company.id}/students`, student.id);
-        batch.update(studentRef, { pendingBookingIds: arrayRemove(booking.id) });
-
+    
+        const updatedPendingBookingIds = student.pendingBookingIds?.filter(id => id !== booking.id);
         const updatedLogs = student.trainingLogs?.filter(log => log.id !== booking.pendingLogEntryId);
-        batch.update(studentRef, { trainingLogs: updatedLogs });
-
+    
+        batch.update(studentRef, {
+            pendingBookingIds: updatedPendingBookingIds,
+            trainingLogs: updatedLogs,
+        });
+    
         try {
             await batch.commit();
             setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
-            setStudent(prev => prev ? ({ ...prev, trainingLogs: updatedLogs, pendingBookingIds: prev.pendingBookingIds?.filter(id => id !== booking.id) }) : null);
+            setStudent(prev => prev ? ({ ...prev, trainingLogs: updatedLogs, pendingBookingIds: updatedPendingBookingIds }) : null);
             toast({
                 title: "Debrief Cleared",
                 description: `The pending debrief for booking ${booking.bookingNumber} has been removed.`,
