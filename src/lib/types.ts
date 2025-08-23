@@ -671,8 +671,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Auditee': ['Quality:View'],
   'Driver': [],
   'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View'],
-  'Chief Flight Instructor': [],
-  'Head Of Training': [],
+  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
@@ -694,3 +694,14 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
+
+
+
+
+
+
+
+
+
+
