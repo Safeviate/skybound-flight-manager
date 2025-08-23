@@ -89,6 +89,7 @@ const defaultFormValues: Partial<DebriefFormValues> = {
 
 export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDebriefFormProps) {
   const { toast } = useToast();
+  const { user: currentUser } = useUser();
   
   const logEntryForBooking = useMemo(() => {
     if (logToEdit) return logToEdit;
@@ -146,6 +147,8 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     
     form.reset();
   }
+
+  const isCurrentUserStudent = currentUser?.id === student.id;
 
   return (
     <Form {...form}>
@@ -249,8 +252,11 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
                                     <FormItem>
                                         <FormLabel>Student Signature</FormLabel>
                                         <FormControl>
-                                            <SignaturePad onSubmit={field.onChange} />
+                                            <div className={cn(!isCurrentUserStudent && "opacity-50 pointer-events-none")}>
+                                                <SignaturePad onSubmit={field.onChange} />
+                                            </div>
                                         </FormControl>
+                                        {!isCurrentUserStudent && <FormDescription className="text-destructive">Only the student can sign here.</FormDescription>}
                                         <FormMessage />
                                     </FormItem>
                                 )}
