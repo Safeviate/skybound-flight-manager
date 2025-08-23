@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive, RotateCw, ListChecks } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -369,6 +369,7 @@ export function ReportsPageContent({
   const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     setBookingData(initialBookings);
@@ -384,19 +385,24 @@ export function ReportsPageContent({
   }, [user, loading, router]);
   
   useEffect(() => {
-    // Clear selections when the search term changes
+    // Clear selections when the search term or archive view changes
     setSelectedBookings([]);
-  }, [searchTerm]);
+  }, [searchTerm, showArchived]);
 
+  const activeBookings = useMemo(() => bookingData.filter(b => b.status !== 'Archived'), [bookingData]);
+  const archivedBookings = useMemo(() => bookingData.filter(b => b.status === 'Archived'), [bookingData]);
+
+  const displayedBookings = useMemo(() => showArchived ? archivedBookings : activeBookings, [showArchived, activeBookings, archivedBookings]);
+  
   const recentBookings = useMemo(() => {
-    return bookingData
-      .filter(b => b.bookingNumber && b.status !== 'Archived') // Filter out archived bookings
+    return displayedBookings
+      .filter(b => b.bookingNumber) 
       .sort((a, b) => {
         const numA = parseInt(a.bookingNumber!.split('-')[1]);
         const numB = parseInt(b.bookingNumber!.split('-')[1]);
         return numB - numA; // Sort descending
       });
-  }, [bookingData]);
+  }, [displayedBookings]);
 
   const filteredBookings = useMemo(() => {
       if (!searchTerm) return recentBookings;
@@ -459,6 +465,31 @@ export function ReportsPageContent({
     } catch (error) {
         console.error("Error archiving bookings:", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive selected bookings.' });
+    }
+  };
+
+  const handleRestoreSelected = async () => {
+    if (!company || selectedBookings.length === 0) return;
+    
+    const batch = writeBatch(db);
+    selectedBookings.forEach(bookingId => {
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        // A simple restoration logic might be to set it back to 'Completed'.
+        // This may need to be more sophisticated based on business rules.
+        batch.update(bookingRef, { status: 'Completed' }); 
+    });
+
+    try {
+        await batch.commit();
+        setBookingData(prev => prev.map(b => selectedBookings.includes(b.id) ? { ...b, status: 'Completed' } : b));
+        setSelectedBookings([]);
+        toast({
+            title: 'Bookings Restored',
+            description: `${selectedBookings.length} booking(s) have been restored to a 'Completed' status.`
+        });
+    } catch (error) {
+        console.error("Error restoring bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to restore selected bookings.' });
     }
   };
 
@@ -548,12 +579,35 @@ export function ReportsPageContent({
                               className="pl-10"
                               />
                           </div>
-                          {selectedBookings.length > 0 && (
-                            <Button variant="outline" onClick={handleArchiveSelected}>
-                                <Archive className="mr-2 h-4 w-4" />
-                                Archive Selected ({selectedBookings.length})
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-2">
+                             {showArchived ? (
+                                <>
+                                    {selectedBookings.length > 0 && (
+                                        <Button variant="outline" onClick={handleRestoreSelected}>
+                                            <RotateCw className="mr-2 h-4 w-4" />
+                                            Restore Selected ({selectedBookings.length})
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" onClick={() => setShowArchived(false)}>
+                                        <ListChecks className="mr-2 h-4 w-4" />
+                                        Show Active Bookings
+                                    </Button>
+                                </>
+                             ) : (
+                                <>
+                                    {selectedBookings.length > 0 && (
+                                        <Button variant="outline" onClick={handleArchiveSelected}>
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Archive Selected ({selectedBookings.length})
+                                        </Button>
+                                    )}
+                                     <Button variant="outline" onClick={() => setShowArchived(true)}>
+                                        <Archive className="mr-2 h-4 w-4" />
+                                        Show Archived
+                                    </Button>
+                                </>
+                             )}
+                          </div>
                         </div>
                         <ScrollArea className="h-[70vh]">
                         <Table>
@@ -609,7 +663,7 @@ export function ReportsPageContent({
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={11} className="text-center h-24">No recent bookings found.</TableCell>
+                                <TableCell colSpan={11} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
