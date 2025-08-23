@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -1036,9 +1037,28 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.dayTime)}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.flightDuration)}</TableCell>
                                                                 <TableCell className="text-center align-middle">
-                                                                    <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </Button>
+                                                                    <div className="flex justify-center gap-1">
+                                                                        <Button variant="ghost" size="icon" onClick={() => handleEditLogEntry(log)}>
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <AlertDialog>
+                                                                            <AlertDialogTrigger asChild>
+                                                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </AlertDialogTrigger>
+                                                                            <AlertDialogContent>
+                                                                                <AlertDialogHeader>
+                                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                                    <AlertDialogDescription>This action cannot be undone. This will permanently delete this logbook entry.</AlertDialogDescription>
+                                                                                </AlertDialogHeader>
+                                                                                <AlertDialogFooter>
+                                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                    <AlertDialogAction onClick={() => handleDeleteLogEntry(log.id)}>Yes, Delete Entry</AlertDialogAction>
+                                                                                </AlertDialogFooter>
+                                                                            </AlertDialogContent>
+                                                                        </AlertDialog>
+                                                                    </div>
                                                                 </TableCell>
                                                             </TableRow>
                                                         )})
