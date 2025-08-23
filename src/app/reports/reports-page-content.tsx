@@ -13,13 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive, RotateCw, ListChecks } from 'lucide-react';
+import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive, RotateCw, ListChecks, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[], aircraft: Aircraft[] }) => {
@@ -493,6 +494,29 @@ export function ReportsPageContent({
     }
   };
 
+  const handleDeleteSelected = async () => {
+    if (!company || selectedBookings.length === 0) return;
+
+    const batch = writeBatch(db);
+    selectedBookings.forEach(bookingId => {
+      const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+      batch.delete(bookingRef);
+    });
+
+    try {
+      await batch.commit();
+      setBookingData(prev => prev.filter(b => !selectedBookings.includes(b.id)));
+      setSelectedBookings([]);
+      toast({
+        title: 'Bookings Deleted',
+        description: `${selectedBookings.length} booking(s) have been permanently deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting bookings:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to permanently delete selected bookings.' });
+    }
+  };
+
 
   if (loading || dataLoading || !user) {
     return (
@@ -583,10 +607,34 @@ export function ReportsPageContent({
                              {showArchived ? (
                                 <>
                                     {selectedBookings.length > 0 && (
-                                        <Button variant="outline" onClick={handleRestoreSelected}>
-                                            <RotateCw className="mr-2 h-4 w-4" />
-                                            Restore Selected ({selectedBookings.length})
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" onClick={handleRestoreSelected}>
+                                                <RotateCw className="mr-2 h-4 w-4" />
+                                                Restore ({selectedBookings.length})
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete ({selectedBookings.length})
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete the {selectedBookings.length} selected booking(s).
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={handleDeleteSelected}>
+                                                            Yes, delete bookings
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     )}
                                     <Button variant="outline" onClick={() => setShowArchived(false)}>
                                         <ListChecks className="mr-2 h-4 w-4" />
