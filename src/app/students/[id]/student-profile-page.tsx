@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -371,6 +372,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                 description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
             });
         }
+    };
+    
+    const handleManualDebriefClick = () => {
+        setLogToEdit(null);
+        setBookingForDebrief(null);
+        setIsDebriefOpen(true);
     };
 
     const handleEditLogEntry = (log: TrainingLogEntry) => {
@@ -913,6 +920,12 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         <CardTitle>Pending Instructor Debriefs</CardTitle>
                                                         <CardDescription>These flights require a logbook entry from the instructor.</CardDescription>
                                                     </div>
+                                                     {canEdit && (
+                                                        <Button variant="outline" size="sm" onClick={handleManualDebriefClick}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                                            Manual Debrief
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="space-y-2">
