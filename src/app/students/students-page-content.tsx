@@ -2,9 +2,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Table,
@@ -169,42 +169,45 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit
                                     </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     {isArchived ? (
-                                        <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Active')}>
-                                            <RotateCw className="mr-2 h-4 w-4" />
-                                            Reactivate
-                                        </DropdownMenuItem>
+                                        <>
+                                            <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Active')}>
+                                                <RotateCw className="mr-2 h-4 w-4" />
+                                                Reactivate
+                                            </DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem
+                                                    onSelect={(e) => e.preventDefault()}
+                                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                                    >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete Permanently
+                                                    </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the student record for {student.name}.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteStudent(student.id)}>
+                                                        Yes, delete student
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </>
                                     ) : (
                                          <DropdownMenuItem onClick={() => handleStatusChange(student.id, 'Archived')}>
                                             <Archive className="mr-2 h-4 w-4" />
                                             Archive
                                         </DropdownMenuItem>
                                     )}
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem
-                                            onSelect={(e) => e.preventDefault()}
-                                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                            >
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Delete
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the student record for {student.name}.
-                                            </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteStudent(student.id)}>
-                                                Yes, delete student
-                                            </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}

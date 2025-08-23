@@ -2,13 +2,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -27,6 +27,7 @@ import { getPersonnelPageData } from './data';
 import { Separator } from '@/components/ui/separator';
 import { ALL_DOCUMENTS } from '@/lib/types';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: PersonnelUser[] }) {
@@ -44,6 +45,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     useEffect(() => {
         setPersonnel(initialPersonnel);
     }, [initialPersonnel]);
+
+    const activePersonnel = useMemo(() => personnel.filter(p => p.status !== 'Archived'), [personnel]);
+    const archivedPersonnel = useMemo(() => personnel.filter(p => p.status === 'Archived'), [personnel]);
 
     const fetchPersonnel = async () => {
         if (!company) return;
@@ -72,6 +76,20 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         } catch (error) {
             console.error('Failed to update personnel:', error);
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update personnel details.' });
+        }
+    };
+
+    const handleStatusChange = async (personnelId: string, newStatus: 'Active' | 'Archived') => {
+        if (!company) return;
+        const userRef = doc(db, `companies/${company.id}/users`, personnelId);
+        try {
+            await updateDoc(userRef, { status: newStatus });
+            await fetchPersonnel();
+            toast({
+                title: `Personnel ${newStatus === 'Active' ? 'Reactivated' : 'Archived'}`,
+            });
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Update Failed' });
         }
     };
 
@@ -125,13 +143,107 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
         }
     };
 
+    const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {list.map(person => (
+                <Card key={person.id} className="flex flex-col">
+                    <CardHeader>
+                            <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle>{person.name}</CardTitle>
+                                <CardDescription>
+                                    {person.role}
+                                    {person.instructorGrade && ` (${person.instructorGrade})`}
+                                </CardDescription>
+                            </div>
+                            {canEdit && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
+                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                        </DropdownMenuItem>
+                                        {isArchived ? (
+                                            <>
+                                                <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Active')}>
+                                                    <RotateCw className="mr-2 h-4 w-4" /> Reactivate
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will permanently delete {person.name} from the system. This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>Yes, Delete Personnel</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
+                                                    <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
+                                                    <Archive className="mr-2 h-4 w-4" /> Archive
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm flex-grow">
+                            <div className="space-y-2 text-sm">
+                            <p className="text-muted-foreground">{person.department}</p>
+                            <Separator />
+                            <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <span>{person.email}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                    <span>{person.phone}</span>
+                                </div>
+                            </div>
+                    </CardContent>
+                    <CardFooter className="flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingDocumentsFor(person)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Documents
+                        </Button>
+                            {canEdit && (
+                            <Button variant="secondary" size="sm" className="w-full" onClick={() => setEditingPersonnel(person)}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Button>
+                            )}
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
       <Card>
           <CardHeader className="flex flex-row items-center justify-between">
               <div>
                   <CardTitle>Personnel Roster</CardTitle>
-                  <CardDescription>A list of all active staff members.</CardDescription>
+                  <CardDescription>A list of all active and archived staff members.</CardDescription>
               </div>
               {canEdit && (
                   <Dialog open={isNewPersonnelOpen} onOpenChange={setIsNewPersonnelOpen}>
@@ -154,88 +266,18 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
               )}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {personnel.map(person => (
-                    <Card key={person.id} className="flex flex-col">
-                        <CardHeader>
-                             <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle>{person.name}</CardTitle>
-                                    <CardDescription>
-                                        {person.role}
-                                        {person.instructorGrade && ` (${person.instructorGrade})`}
-                                    </CardDescription>
-                                </div>
-                                {canEdit && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                            <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                <Mail className="mr-2 h-4 w-4" />
-                                                Send Welcome Email
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setEditingPersonnel(person)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete {person.name} from the system.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeletePersonnel(person.id)}>
-                                                            Yes, Delete Personnel
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm flex-grow">
-                             <div className="space-y-2 text-sm">
-                                <p className="text-muted-foreground">{person.department}</p>
-                                <Separator />
-                                <div className="flex items-center gap-2">
-                                     <Mail className="h-4 w-4 text-muted-foreground" />
-                                     <span>{person.email}</span>
-                                 </div>
-                                 <div className="flex items-center gap-2">
-                                     <Phone className="h-4 w-4 text-muted-foreground" />
-                                     <span>{person.phone}</span>
-                                 </div>
-                             </div>
-                        </CardContent>
-                        <CardFooter className="flex gap-2">
-                            <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingDocumentsFor(person)}>
-                                <Eye className="mr-2 h-4 w-4" /> View Documents
-                            </Button>
-                             {canEdit && (
-                                <Button variant="secondary" size="sm" className="w-full" onClick={() => setEditingPersonnel(person)}>
-                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                </Button>
-                             )}
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
+            <Tabs defaultValue="active">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="active">Active Staff ({activePersonnel.length})</TabsTrigger>
+                    <TabsTrigger value="archived">Archived Staff ({archivedPersonnel.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="active" className="mt-4">
+                    <PersonnelCardList list={activePersonnel} />
+                </TabsContent>
+                <TabsContent value="archived" className="mt-4">
+                    <PersonnelCardList list={archivedPersonnel} isArchived />
+                </TabsContent>
+            </Tabs>
           </CardContent>
       </Card>
       {editingPersonnel && (
