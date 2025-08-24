@@ -451,6 +451,11 @@ export function AircraftPageContent({
                                     <span>{hoursUntil100 >= 0 ? `${hoursUntil100.toFixed(1)} hrs` : 'N/A'}</span>
                                 </div>
                             </CardContent>
+                             <CardFooter>
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingHistoryFor(ac)}>
+                                    <BookOpen className="mr-2 h-4 w-4" /> View Technical Log
+                                </Button>
+                            </CardFooter>
                         </Card>
                     )
                 })}
