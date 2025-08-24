@@ -41,6 +41,7 @@ const fallbackCompany: Company = {
         sidebarBackground: '#0c0a09',
         sidebarForeground: '#f8f9fa',
         sidebarAccent: '#1f2937',
+        font: 'var(--font-inter)',
     }
 };
 
@@ -110,11 +111,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             document.head.appendChild(styleElement);
         }
 
+        if (theme?.font) {
+            document.body.style.fontFamily = theme.font;
+        } else {
+            document.body.style.fontFamily = 'var(--font-inter)'; // fallback
+        }
+
         if (!theme) {
             styleElement.innerHTML = '';
             return;
         }
-
+        
         const primary = theme.primary ? hexToHSL(theme.primary)?.hslString : null;
         const background = theme.background ? hexToHSL(theme.background)?.hslString : null;
         const accent = theme.accent ? hexToHSL(theme.accent)?.hslString : null;

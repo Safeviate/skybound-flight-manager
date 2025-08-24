@@ -17,11 +17,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Company, User, Feature } from '@/lib/types';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush, Type } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
     {
@@ -55,6 +56,13 @@ const featureGroups: { title: string; features: { id: Feature, label: string, de
 
 const allFeatures = featureGroups.flatMap(g => g.features);
 
+const fonts = [
+    { label: 'Inter', value: 'var(--font-inter)' },
+    { label: 'Roboto', value: 'var(--font-roboto)' },
+    { label: 'Lato', value: 'var(--font-lato)' },
+    { label: 'Montserrat', value: 'var(--font-montserrat)' },
+];
+
 
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
@@ -72,6 +80,7 @@ const companyFormSchema = z.object({
     sidebarBackground: z.string().optional(),
     sidebarForeground: z.string().optional(),
     sidebarAccent: z.string().optional(),
+    font: z.string().optional(),
   }).optional(),
 });
 
@@ -114,6 +123,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             sidebarBackground: '#0c0a09',
             sidebarForeground: '#f8f9fa',
             sidebarAccent: '#1f2937',
+            font: 'var(--font-inter)',
         }
     }
   });
@@ -225,6 +235,26 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         </CardContent>
                     </Card>
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="theme.font"
+                    render={({ field }) => (
+                        <FormItem className="pt-4">
+                            <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a font" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {fonts.map(font => <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
 
             <FormField
