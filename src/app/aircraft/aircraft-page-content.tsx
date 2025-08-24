@@ -73,6 +73,7 @@ export function AircraftPageContent({
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
     const [viewingHistoryFor, setViewingHistoryFor] = useState<Aircraft | null>(null);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
+    const [editingReport, setEditingReport] = useState<TechnicalReport | null>(null);
     
     useEffect(() => {
         if (!company) return;
@@ -331,6 +332,33 @@ export function AircraftPageContent({
 
     const isSuperUser = user?.permissions.includes('Super User');
 
+    const handleRectificationSubmit = async (values: {
+        rectificationDetails: string;
+        componentsReplaced: string;
+        physicalLogEntry: string;
+    }) => {
+        if (!editingReport || !company || !user) return;
+        
+        const updatedReport: TechnicalReport = {
+            ...editingReport,
+            ...values,
+            status: 'Rectified',
+            rectifiedBy: user.name,
+            rectificationDate: new Date().toISOString(),
+        };
+
+        try {
+            const reportRef = doc(db, `companies/${company.id}/technical-reports`, editingReport.id);
+            await updateDoc(reportRef, updatedReport);
+            setTechnicalReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
+            setEditingReport(null);
+            toast({ title: 'Rectification Saved', description: `Report ${editingReport.reportNumber} has been updated.`});
+        } catch (error) {
+            console.error("Error saving rectification:", error);
+            toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the rectification details.'});
+        }
+    };
+
     const AircraftCardList = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
         if (isDataLoading) {
             return (
@@ -354,6 +382,7 @@ export function AircraftPageContent({
                 {aircraft.map((ac) => {
                     const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
                     const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
+                    const openTechReports = technicalReports.filter(r => r.aircraftRegistration === ac.tailNumber && r.status !== 'Rectified').length;
 
                     return (
                         <Card key={ac.id} className={cn("flex flex-col", isArchived && 'bg-muted/50')}>
@@ -463,6 +492,10 @@ export function AircraftPageContent({
                                  <div className="flex justify-between">
                                     <span className="text-muted-foreground">Next 100hr Insp.</span>
                                     <span>{hoursUntil100 >= 0 ? `${hoursUntil100.toFixed(1)} hrs` : 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Open Tech Logs</span>
+                                    <span>{openTechReports}</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -693,20 +726,26 @@ export function AircraftPageContent({
                                         <TableHead>Component</TableHead>
                                         <TableHead>Description</TableHead>
                                         <TableHead>Reported By</TableHead>
+                                        <TableHead>Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {aircraftReports.length > 0 ? aircraftReports.map(report => (
                                         <TableRow key={report.id}>
                                             <TableCell>{format(parseISO(report.dateReported), 'MMM d, yyyy')}</TableCell>
-                                            <TableCell>{report.reportNumber}</TableCell>
+                                            <TableCell>
+                                                <Button variant="link" className="p-0 h-auto" onClick={() => setEditingReport(report)}>
+                                                    {report.reportNumber}
+                                                </Button>
+                                            </TableCell>
                                             <TableCell>{report.component}</TableCell>
                                             <TableCell className="max-w-xs truncate">{report.description}</TableCell>
                                             <TableCell>{report.reportedBy}</TableCell>
+                                            <TableCell><Badge variant={report.status === 'Rectified' ? 'success' : 'destructive'}>{report.status || 'Open'}</Badge></TableCell>
                                         </TableRow>
                                     )) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                            <TableCell colSpan={6} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -883,6 +922,17 @@ export function AircraftPageContent({
             </Dialog>
         )}
 
+        {editingReport && (
+            <Dialog open={!!editingReport} onOpenChange={() => setEditingReport(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rectify Technical Report: {editingReport.reportNumber}</DialogTitle>
+                    </DialogHeader>
+                    <RectificationForm report={editingReport} onSubmit={handleRectificationSubmit} />
+                </DialogContent>
+            </Dialog>
+        )}
+
 
         {viewingChecklist && (
              <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>
@@ -1011,4 +1061,39 @@ export function AircraftPageContent({
         )}
     </main>
   );
+}
+
+const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSubmit: (values: any) => void; }) => {
+    const [rectificationDetails, setRectificationDetails] = useState(report.rectificationDetails || '');
+    const [componentsReplaced, setComponentsReplaced] = useState(report.componentsReplaced || '');
+    const [physicalLogEntry, setPhysicalLogEntry] = useState(report.physicalLogEntry || '');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSubmit({
+            rectificationDetails,
+            componentsReplaced,
+            physicalLogEntry,
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <div className="space-y-2">
+                <Label htmlFor="rectificationDetails">Rectification Details</Label>
+                <Textarea id="rectificationDetails" value={rectificationDetails} onChange={(e) => setRectificationDetails(e.target.value)} placeholder="Describe the work carried out..." required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="componentsReplaced">Components Replaced</Label>
+                <Input id="componentsReplaced" value={componentsReplaced} onChange={(e) => setComponentsReplaced(e.target.value)} placeholder="e.g., Brake pads, Tyre" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="physicalLogEntry">Physical Log Entry #</Label>
+                <Input id="physicalLogEntry" value={physicalLogEntry} onChange={(e) => setPhysicalLogEntry(e.target.value)} placeholder="Enter the aircraft's physical logbook entry number" required />
+            </div>
+            <DialogFooter>
+                <Button type="submit">Save Rectification</Button>
+            </DialogFooter>
+        </form>
+    )
 }

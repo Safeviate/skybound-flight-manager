@@ -635,6 +635,12 @@ export type TechnicalReport = {
   description: string;
   reportedBy: string;
   dateReported: string;
+  status?: 'Open' | 'Rectified';
+  rectificationDetails?: string;
+  componentsReplaced?: string;
+  physicalLogEntry?: string;
+  rectifiedBy?: string;
+  rectificationDate?: string;
 };
 
 
@@ -707,4 +713,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
