@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -166,7 +166,9 @@ export default function Header({ title, children }: { title: string, children?: 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
       <div className="md:hidden">
-        <SidebarTrigger />
+        <SidebarTrigger>
+            <PanelLeft />
+        </SidebarTrigger>
       </div>
       
       <div className="flex items-center gap-2">
