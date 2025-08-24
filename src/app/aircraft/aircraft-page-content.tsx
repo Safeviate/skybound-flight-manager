@@ -687,116 +687,114 @@ export function AircraftPageContent({
       </>
   );
   
-  const HistoryDialogContent = ({ aircraft }: { aircraft: Aircraft }) => {
-    const aircraftReports = useMemo(() => 
-        technicalReports.filter(report => report.aircraftRegistration === aircraft.tailNumber),
-        [aircraft, technicalReports]
-    );
+    const HistoryDialogContent = ({ aircraft }: { aircraft: Aircraft }) => {
+        const aircraftReports = useMemo(() => 
+            technicalReports.filter(report => report.aircraftRegistration === aircraft.tailNumber),
+            [aircraft, technicalReports]
+        );
 
-    const componentFrequency = useMemo(() => {
-        const counts = aircraftReports.reduce((acc, report) => {
-            const key = report.subcomponent || report.component;
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-        return Object.entries(counts).map(([name, count]) => ({ name, count }));
-    }, [aircraftReports]);
+        const componentFrequency = useMemo(() => {
+            const counts = aircraftReports.reduce((acc, report) => {
+                const key = report.subcomponent || report.component;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+            return Object.entries(counts).map(([name, count]) => ({ name, count }));
+        }, [aircraftReports]);
 
-    return (
-        <DialogContent className="max-w-4xl">
-            <DialogHeader>
-                <DialogTitle>Technical Report History for {aircraft.tailNumber}</DialogTitle>
-                <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 border-2 border-muted p-4 rounded-lg">
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">Component Report Frequency</h3>
-                    <div className="p-4 border rounded-lg h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 120 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" allowDecimals={false} />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    width={100} 
-                                    tick={{ fontSize: 12, textAnchor: 'end' }} 
-                                    interval={0}
-                                    style={{textAnchor: "end"}}
-                                />
-                                <Tooltip />
-                                <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">Detailed History</h3>
-                    <div className="border rounded-lg">
-                        <ScrollArea className="h-64">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Report #</TableHead>
-                                        <TableHead>System</TableHead>
-                                        <TableHead>Component</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Reported By</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {aircraftReports.length > 0 ? aircraftReports.map(report => (
-                                        <TableRow key={report.id}>
-                                            <TableCell>{format(parseISO(report.dateReported), 'MMM d, yyyy')}</TableCell>
-                                            <TableCell>
-                                                <Button variant="link" className="p-0 h-auto" onClick={() => setEditingReport(report)}>
-                                                    {report.reportNumber}
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>{report.component}</TableCell>
-                                            <TableCell>{report.subcomponent || 'N/A'}</TableCell>
-                                            <TableCell className="max-w-xs truncate">{report.description}</TableCell>
-                                            <TableCell>{report.reportedBy}</TableCell>
-                                            <TableCell><Badge variant={report.status === 'Rectified' ? 'success' : 'destructive'}>{report.status || 'Open'}</Badge></TableCell>
-                                            <TableCell className="text-right">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                This action cannot be undone. This will permanently delete the technical report {report.reportNumber}.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteTechReport(report.id)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </TableCell>
-                                        </TableRow>
-                                    )) : (
+        return (
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>Technical Report History: {aircraft.tailNumber}</DialogTitle>
+                    <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6">
+                    <Card className="border-primary/20">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Component Report Frequency</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px] w-full pr-6">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={componentFrequency} layout="vertical" margin={{ left: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis type="number" allowDecimals={false} />
+                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} interval={0} />
+                                    <Tooltip />
+                                    <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-primary/20">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Detailed History</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-64">
+                                <Table>
+                                    <TableHeader>
                                         <TableRow>
-                                            <TableCell colSpan={8} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Report #</TableHead>
+                                            <TableHead>System</TableHead>
+                                            <TableHead>Component</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Reported By</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
-                    </div>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {aircraftReports.length > 0 ? aircraftReports.map(report => (
+                                            <TableRow key={report.id}>
+                                                <TableCell>{format(parseISO(report.dateReported), 'MMM d, yyyy')}</TableCell>
+                                                <TableCell>
+                                                    <Button variant="link" className="p-0 h-auto" onClick={() => setEditingReport(report)}>
+                                                        {report.reportNumber}
+                                                    </Button>
+                                                </TableCell>
+                                                <TableCell>{report.component}</TableCell>
+                                                <TableCell>{report.subcomponent || 'N/A'}</TableCell>
+                                                <TableCell className="max-w-xs truncate">{report.description}</TableCell>
+                                                <TableCell>{report.reportedBy}</TableCell>
+                                                <TableCell><Badge variant={report.status === 'Rectified' ? 'success' : 'destructive'}>{report.status || 'Open'}</Badge></TableCell>
+                                                <TableCell className="text-right">
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon">
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This action cannot be undone. This will permanently delete the technical report {report.reportNumber}.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteTechReport(report.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell colSpan={8} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
                 </div>
-            </div>
-        </DialogContent>
-    )
-  };
+            </DialogContent>
+        )
+    };
+
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
