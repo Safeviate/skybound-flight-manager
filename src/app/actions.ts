@@ -31,7 +31,17 @@ export async function createUserAndSendWelcomeEmail(
             });
 
             if (welcomeEmailEnabled) {
-                await sendPasswordResetEmail(auth, userData.email);
+                const loginUrl = 'https://skybound-flight-manager.web.app/login';
+                await sendEmail({
+                    to: userData.email,
+                    subject: `Welcome to ${companyName}`,
+                    emailData: {
+                        userName: userData.name,
+                        companyName: companyName,
+                        userEmail: userData.email,
+                        loginUrl: loginUrl
+                    }
+                });
             }
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {

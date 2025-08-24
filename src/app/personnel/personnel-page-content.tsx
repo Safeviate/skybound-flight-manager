@@ -108,25 +108,34 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     };
     
     const handleSendWelcomeEmail = async (person: PersonnelUser) => {
-        if (!person.email) {
-          toast({ variant: 'destructive', title: 'Error', description: 'User email is missing.'});
+        if (!person.email || !company) {
+          toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
           return;
         }
 
         try {
-            await sendPasswordResetEmail(auth, person.email);
+            await sendEmail({
+                to: person.email,
+                subject: `Welcome to ${company.name}`,
+                emailData: {
+                    userName: person.name,
+                    companyName: company.name,
+                    userEmail: person.email,
+                    loginUrl: 'https://skybound-flight-manager.web.app/login'
+                }
+            });
             
             toast({
-                title: 'Password Reset Email Sent',
-                description: `A password reset link has been sent to ${person.name}.`,
+                title: 'Welcome Email Sent',
+                description: `A welcome email has been sent to ${person.name}.`,
             });
 
         } catch (error) {
-            console.error("Error sending password reset email:", error);
+            console.error("Error sending welcome email:", error);
             toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: 'Could not send the password reset email. Please try again.',
+                description: 'Could not send the welcome email. Please try again.',
             });
         }
     };
@@ -184,7 +193,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                         ) : (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                    <Mail className="mr-2 h-4 w-4" /> Send Password Reset
+                                                    <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
                                                     <Archive className="mr-2 h-4 w-4" /> Archive
