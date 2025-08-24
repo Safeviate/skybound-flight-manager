@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -20,7 +21,7 @@ import { format } from 'date-fns';
 
 const technicalReportSchema = z.object({
   aircraftRegistration: z.string().min(1, 'Please select an aircraft.'),
-  component: z.string().min(1, 'Please select a component.'),
+  component: z.string().min(1, 'Please select a system.'),
   subcomponent: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
 });
@@ -140,10 +141,10 @@ function QuickReportsPage() {
                     name="component"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Component</FormLabel>
+                        <FormLabel>System</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Select system..." /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
                             {componentOptions.map(comp => (
@@ -161,10 +162,10 @@ function QuickReportsPage() {
                         name="subcomponent"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Sub-component</FormLabel>
+                            <FormLabel>Component</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select sub-component..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                 {subcomponentOptions.map(subcomp => (
@@ -210,4 +211,5 @@ function QuickReportsPage() {
 QuickReportsPage.title = 'Quick Reports';
 
 export default QuickReportsPage;
+
 

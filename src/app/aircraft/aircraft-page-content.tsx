@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -735,6 +736,7 @@ export function AircraftPageContent({
                                     <TableRow>
                                         <TableHead>Date</TableHead>
                                         <TableHead>Report #</TableHead>
+                                        <TableHead>System</TableHead>
                                         <TableHead>Component</TableHead>
                                         <TableHead>Description</TableHead>
                                         <TableHead>Reported By</TableHead>
@@ -752,6 +754,7 @@ export function AircraftPageContent({
                                                 </Button>
                                             </TableCell>
                                             <TableCell>{report.component}</TableCell>
+                                            <TableCell>{report.subcomponent || 'N/A'}</TableCell>
                                             <TableCell className="max-w-xs truncate">{report.description}</TableCell>
                                             <TableCell>{report.reportedBy}</TableCell>
                                             <TableCell><Badge variant={report.status === 'Rectified' ? 'success' : 'destructive'}>{report.status || 'Open'}</Badge></TableCell>
@@ -779,7 +782,7 @@ export function AircraftPageContent({
                                         </TableRow>
                                     )) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                            <TableCell colSpan={8} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>

@@ -630,8 +630,8 @@ export type TechnicalReport = {
   companyId: string;
   reportNumber: string;
   aircraftRegistration: string;
-  component: string;
-  subcomponent?: string;
+  component: string; // This is now 'System'
+  subcomponent?: string; // This is now 'Component'
   description: string;
   reportedBy: string;
   dateReported: string;
@@ -713,3 +713,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
