@@ -108,47 +108,39 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     };
     
     const handleSendWelcomeEmail = async (person: PersonnelUser) => {
-        if (!person.email || !company) {
-          toast({ variant: 'destructive', title: 'Error', description: 'User email or company info is missing.'});
-          return;
+        if (!person.email) {
+            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have an email address on file.' });
+            return;
         }
 
         try {
-            await sendEmail({
-                to: person.email,
-                subject: `Welcome to ${company.name}`,
-                emailData: {
-                    userName: person.name,
-                    companyName: company.name,
-                    userEmail: person.email,
-                    loginUrl: 'https://skybound-flight-manager.web.app/login'
-                }
-            });
-            
+            await sendPasswordResetEmail(auth, person.email);
             toast({
-                title: 'Welcome Email Sent',
-                description: `A welcome email has been sent to ${person.name}.`,
+                title: 'Password Reset Email Sent',
+                description: `A password reset link has been sent to ${person.name}.`,
             });
-
         } catch (error) {
-            console.error("Error sending welcome email:", error);
+            console.error("Error sending password reset email:", error);
             toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: 'Could not send the welcome email. Please try again.',
+                description: 'Could not send the password reset email. Please check if the user exists in Firebase Authentication.',
             });
         }
     };
 
     const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {list.map(person => (
+            {list.map(person => {
+                const departmentOrRole = person.department || person.role;
+                return (
                 <Card key={person.id} className="flex flex-col">
                     <CardHeader>
                             <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle>{person.name}</CardTitle>
                                 <CardDescription>
+                                    {person.role}
                                     {person.instructorGrade && ` (${person.instructorGrade})`}
                                 </CardDescription>
                             </div>
@@ -192,7 +184,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                         ) : (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                    <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
+                                                    <Mail className="mr-2 h-4 w-4" /> Send Password Reset
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
                                                     <Archive className="mr-2 h-4 w-4" /> Archive
@@ -206,12 +198,11 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm flex-grow">
                         <div className="space-y-2 text-sm">
-                            <p className="font-semibold">{person.role}</p>
-                            <p className="text-muted-foreground">{person.department}</p>
+                            <p className="font-semibold">{departmentOrRole}</p>
                             <Separator />
                             <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 text-muted-foreground" />
-                                    <span>{person.email}</span>
+                                    <span>{person.email || 'No email on file'}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -225,7 +216,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         </Button>
                     </CardFooter>
                 </Card>
-            ))}
+            )})}
         </div>
     );
 
