@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -683,7 +682,9 @@ export function AircraftPageContent({
 
     const componentFrequency = useMemo(() => {
         const counts = aircraftReports.reduce((acc, report) => {
-            acc[report.component] = (acc[report.component] || 0) + 1;
+            // Prioritize subcomponent, fallback to component
+            const key = report.subcomponent || report.component;
+            acc[key] = (acc[key] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, count]) => ({ name, count }));
@@ -1097,3 +1098,5 @@ const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSu
         </form>
     )
 }
+
+    
