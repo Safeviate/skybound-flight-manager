@@ -117,7 +117,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             name: personnel.name || '',
             email: personnel.email || '',
             role: personnel.role,
-            department: personnel.department,
+            department: personnel.department || undefined,
             phone: personnel.phone || '',
             instructorGrade: personnel.instructorGrade || null,
             consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
@@ -186,7 +186,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                            <Input type="email" placeholder="staff@company.com" {...field} />
+                            <Input type="email" placeholder="staff@company.com" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>

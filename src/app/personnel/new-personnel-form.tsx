@@ -123,7 +123,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     }
   }, [selectedRole, form]);
 
-  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
+  const isInstructorRole = ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
 
 
   async function handleFormSubmit(data: PersonnelFormValues) {
