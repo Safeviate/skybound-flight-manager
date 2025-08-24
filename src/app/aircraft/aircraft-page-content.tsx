@@ -708,12 +708,10 @@ export function AircraftPageContent({
                 <DialogTitle>Technical Report History for {aircraft.tailNumber}</DialogTitle>
                 <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-6">
-                <Card className="border-l-4 border-primary">
-                    <CardHeader>
-                        <CardTitle className="text-base">Component Report Frequency</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
+            <div className="space-y-6 border-2 border-muted p-4 rounded-lg">
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Component Report Frequency</h3>
+                    <div className="p-4 border rounded-lg h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={componentFrequency} layout="vertical" margin={{ left: 120 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -730,13 +728,11 @@ export function AircraftPageContent({
                                 <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
                             </BarChart>
                         </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-                <Card className="border-l-4 border-orange">
-                    <CardHeader>
-                        <CardTitle className="text-base">Detailed History</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Detailed History</h3>
+                    <div className="border rounded-lg">
                         <ScrollArea className="h-64">
                             <Table>
                                 <TableHeader>
@@ -795,8 +791,8 @@ export function AircraftPageContent({
                                 </TableBody>
                             </Table>
                         </ScrollArea>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </DialogContent>
     )
@@ -1141,9 +1137,3 @@ const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSu
         </form>
     )
 }
-
-    
-
-    
-
-
