@@ -713,12 +713,18 @@ export function AircraftPageContent({
                     <CardHeader>
                         <CardTitle className="text-base">Component Report Frequency</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 20 }}>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 100 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" allowDecimals={false} />
-                                <YAxis dataKey="name" type="category" width={100} />
+                                <YAxis 
+                                    dataKey="name" 
+                                    type="category" 
+                                    width={80} 
+                                    tick={{ fontSize: 12 }} 
+                                    interval={0}
+                                />
                                 <Tooltip />
                                 <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
                             </BarChart>
@@ -1138,3 +1144,4 @@ const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSu
     
 
     
+
