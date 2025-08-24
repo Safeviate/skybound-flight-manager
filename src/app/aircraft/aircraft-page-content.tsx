@@ -46,6 +46,127 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
     return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
 }
 
+const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
+    const { company } = useUser();
+    const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
+    const [reports, setReports] = useState<TechnicalReport[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            if (!company || !selectedAircraftId) {
+                setReports([]);
+                return;
+            }
+            setIsLoading(true);
+            const selectedAircraft = aircraftList.find(a => a.id === selectedAircraftId);
+            if (selectedAircraft) {
+                const fetchedReports = await getTechnicalReportsForAircraft(company.id, selectedAircraft.tailNumber);
+                setReports(fetchedReports);
+            }
+            setIsLoading(false);
+        };
+        fetchReports();
+    }, [selectedAircraftId, company, aircraftList]);
+
+    const chartData = useMemo(() => {
+        const counts = reports.reduce((acc, report) => {
+            const component = report.component || 'Other';
+            acc[component] = (acc[component] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        return Object.entries(counts).map(([name, count]) => ({ name, count }));
+    }, [reports]);
+
+    return (
+        <div className="space-y-6">
+             <div className="max-w-xs">
+                <Label>Select an aircraft to view its technical log</Label>
+                <Select onValueChange={setSelectedAircraftId} value={selectedAircraftId || ''}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select aircraft..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {aircraftList.map(ac => (
+                             <SelectItem key={ac.id} value={ac.id}>{ac.tailNumber} ({ac.make} {ac.model})</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            {!selectedAircraftId ? (
+                <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">Please select an aircraft to view its history.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                    <Card className="border-l-4 border-blue-500">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Component Report Frequency</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[300px] w-full pr-6">
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>
+                            ) : chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" allowDecimals={false} />
+                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-muted-foreground">No chart data available.</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card className="border-l-4 border-green-500">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Detailed History</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-[300px]">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>System</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isLoading ? (
+                                            <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="animate-spin" /></TableCell></TableRow>
+                                        ) : reports.length > 0 ? (
+                                            reports.map(report => (
+                                                <TableRow key={report.id}>
+                                                    <TableCell>{format(parseISO(report.dateReported), 'PPP')}</TableCell>
+                                                    <TableCell>{report.component}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
+                                                            {report.status || 'Open'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="h-24 text-center">No technical reports found.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+        </div>
+    )
+}
+
 
 export function AircraftPageContent({ 
     initialAircraft,
@@ -69,7 +190,6 @@ export function AircraftPageContent({
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
-    const [viewingHistoryFor, setViewingHistoryFor] = useState<Aircraft | null>(null);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
@@ -452,11 +572,6 @@ export function AircraftPageContent({
                                     <span>{hoursUntil100 >= 0 ? `${hoursUntil100.toFixed(1)} hrs` : 'N/A'}</span>
                                 </div>
                             </CardContent>
-                             <CardFooter>
-                                <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingHistoryFor(ac)}>
-                                    <BookOpen className="mr-2 h-4 w-4" /> View Technical Log
-                                </Button>
-                            </CardFooter>
                         </Card>
                     )
                 })}
@@ -633,106 +748,6 @@ export function AircraftPageContent({
           )}
       </>
   );
-  
-    const HistoryDialogContent = ({ aircraft }: { aircraft: Aircraft }) => {
-        const { company } = useUser();
-        const [reports, setReports] = useState<TechnicalReport[]>([]);
-        const [isLoading, setIsLoading] = useState(true);
-
-        useEffect(() => {
-            const fetchReports = async () => {
-                if (!company) return;
-                setIsLoading(true);
-                const fetchedReports = await getTechnicalReportsForAircraft(company.id, aircraft.tailNumber);
-                setReports(fetchedReports);
-                setIsLoading(false);
-            };
-            fetchReports();
-        }, [aircraft.tailNumber, company]);
-
-        const chartData = useMemo(() => {
-            const counts = reports.reduce((acc, report) => {
-                const component = report.component || 'Other';
-                acc[component] = (acc[component] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-            
-            return Object.entries(counts).map(([name, count]) => ({ name, count }));
-        }, [reports]);
-
-        return (
-            <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">Technical Report History: {aircraft.tailNumber}</DialogTitle>
-                    <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
-                </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                    <Card className="border-l-4 border-blue-500">
-                        <CardHeader>
-                            <CardTitle className="text-lg">Component Report Frequency</CardTitle>
-                        </CardHeader>
-                        <CardContent className="h-[300px] w-full pr-6">
-                            {isLoading ? (
-                                <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>
-                            ) : chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis type="number" allowDecimals={false} />
-                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                                        <Tooltip />
-                                        <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="flex items-center justify-center h-full text-muted-foreground">No chart data available.</div>
-                            )}
-                        </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-green-500">
-                        <CardHeader>
-                            <CardTitle className="text-lg">Detailed History</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[300px]">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>System</TableHead>
-                                            <TableHead>Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {isLoading ? (
-                                            <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="animate-spin" /></TableCell></TableRow>
-                                        ) : reports.length > 0 ? (
-                                            reports.map(report => (
-                                                <TableRow key={report.id}>
-                                                    <TableCell>{format(parseISO(report.dateReported), 'PPP')}</TableCell>
-                                                    <TableCell>{report.component}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
-                                                            {report.status || 'Open'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={3} className="h-24 text-center">No technical reports found.</TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </ScrollArea>
-                        </CardContent>
-                    </Card>
-                </div>
-            </DialogContent>
-        )
-    };
-
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -749,15 +764,19 @@ export function AircraftPageContent({
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="active">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="active">Active Fleet ({activeAircraft.length})</TabsTrigger>
                     <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
+                    <TabsTrigger value="technical-log">Technical Log</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active" className="mt-4">
                     <AircraftCardList aircraft={activeAircraft} />
                 </TabsContent>
                 <TabsContent value="archived" className="mt-4">
                      <AircraftCardList aircraft={archivedAircraft} isArchived />
+                </TabsContent>
+                 <TabsContent value="technical-log" className="mt-4">
+                    <TechnicalLogView aircraftList={aircraftList} />
                 </TabsContent>
             </Tabs>
         </CardContent>
@@ -891,12 +910,6 @@ export function AircraftPageContent({
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-        
-        {viewingHistoryFor && (
-            <Dialog open={!!viewingHistoryFor} onOpenChange={(open) => !open && setViewingHistoryFor(null)}>
-                <HistoryDialogContent aircraft={viewingHistoryFor} />
-            </Dialog>
-        )}
 
         {viewingChecklist && (
              <Dialog open={!!viewingChecklist} onOpenChange={(open) => !open && setViewingChecklist(null)}>
