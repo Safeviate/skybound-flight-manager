@@ -3,7 +3,7 @@
 
 import { db, auth } from '@/lib/firebase';
 import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { sendEmail } from '@/ai/flows/send-email-flow';
@@ -29,6 +29,10 @@ export async function createUserAndSendWelcomeEmail(
             await updateProfile(userCredential.user, {
                 displayName: userData.name,
             });
+
+            if (welcomeEmailEnabled) {
+                await sendPasswordResetEmail(auth, userData.email);
+            }
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
                 return { success: false, message: "This email address is already in use by another account." };

@@ -112,33 +112,21 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
           toast({ variant: 'destructive', title: 'Error', description: 'User email is missing.'});
           return;
         }
-        const companyName = "Skybound Aero";
 
         try {
             await sendPasswordResetEmail(auth, person.email);
-
-            await sendEmail({
-                to: person.email,
-                subject: `Welcome to ${companyName}`,
-                emailData: {
-                    userName: person.name,
-                    companyName: companyName,
-                    userEmail: person.email,
-                    loginUrl: window.location.origin + '/login',
-                },
-            });
             
             toast({
-                title: 'Welcome Email Sent',
-                description: `A welcome email with a password reset link has been sent to ${person.name}.`,
+                title: 'Password Reset Email Sent',
+                description: `A password reset link has been sent to ${person.name}.`,
             });
 
         } catch (error) {
-            console.error("Error sending welcome email:", error);
+            console.error("Error sending password reset email:", error);
             toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: 'Could not send the welcome email. Please try again.',
+                description: 'Could not send the password reset email. Please try again.',
             });
         }
     };
@@ -196,7 +184,7 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                         ) : (
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
-                                                    <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
+                                                    <Mail className="mr-2 h-4 w-4" /> Send Password Reset
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
                                                     <Archive className="mr-2 h-4 w-4" /> Archive

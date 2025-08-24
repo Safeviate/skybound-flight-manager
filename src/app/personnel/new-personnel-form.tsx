@@ -36,6 +36,7 @@ import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
 import { ALL_DOCUMENTS } from '@/lib/types';
+import { useSettings } from '@/context/settings-provider';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -96,6 +97,7 @@ const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissio
 
 export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   const { company } = useUser();
+  const { settings } = useSettings();
   const { toast } = useToast();
   
   const form = useForm<PersonnelFormValues>({
@@ -145,7 +147,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>
 
-    const result = await createUserAndSendWelcomeEmail(dataToSubmit, company.id, company.name, false);
+    const result = await createUserAndSendWelcomeEmail(dataToSubmit, company.id, company.name, settings.welcomeEmailEnabled);
 
      if (result.success) {
         toast({

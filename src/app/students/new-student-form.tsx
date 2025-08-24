@@ -65,6 +65,7 @@ interface NewStudentFormProps {
 
 export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   const { user: currentUser, company } = useUser();
+  const { settings } = useSettings();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
   
@@ -112,7 +113,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         documents: documentsToSave,
     } as unknown as Omit<User, 'id'>;
 
-    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, false);
+    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, settings.welcomeEmailEnabled);
 
     if (result.success) {
         toast({
