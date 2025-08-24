@@ -17,6 +17,7 @@ import type { Company, Feature } from '@/lib/types';
 import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
   const { user, company: currentCompany, setCompany, userCompanies } = useUser();
