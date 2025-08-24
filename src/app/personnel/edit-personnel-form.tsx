@@ -98,42 +98,47 @@ const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissio
 export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProps) {
   const { toast } = useToast();
   
-  // Prepare default values once
-  const existingDocs = personnel.documents || [];
-  const formDocs = ALL_DOCUMENTS.map(docType => {
-      const existing = existingDocs.find(d => d.type === docType);
-      return {
-          type: docType,
-          expiryDate: existing?.expiryDate ? parseISO(existing.expiryDate) : null,
-      }
-  });
-
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
-    defaultValues: {
-      name: personnel.name || '',
-      email: personnel.email || '',
-      role: personnel.role,
-      department: personnel.department,
-      phone: personnel.phone || '',
-      instructorGrade: personnel.instructorGrade,
-      consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
-      documents: formDocs,
-      permissions: personnel.permissions || [],
-      visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
-    },
   });
+
+  useEffect(() => {
+    if (personnel) {
+        const existingDocs = personnel.documents || [];
+        const formDocs = ALL_DOCUMENTS.map(docType => {
+            const existing = existingDocs.find(d => d.type === docType);
+            return {
+                type: docType,
+                expiryDate: existing?.expiryDate ? parseISO(existing.expiryDate) : null,
+            }
+        });
+
+        form.reset({
+            name: personnel.name || '',
+            email: personnel.email || '',
+            role: personnel.role,
+            department: personnel.department,
+            phone: personnel.phone || '',
+            instructorGrade: personnel.instructorGrade || undefined,
+            consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
+            documents: formDocs,
+            permissions: personnel.permissions || [],
+            visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
+        });
+    }
+  }, [personnel, form]);
+
 
   const selectedRole = form.watch('role');
 
   useEffect(() => {
-    if (selectedRole) {
+    if (selectedRole && selectedRole !== form.getValues('role')) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
-      form.setValue('permissions', defaultPermissions);
+      form.setValue('permissions', defaultPermissions, { shouldValidate: true });
     }
   }, [selectedRole, form]);
 
-  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
+  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training', 'Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3'].includes(selectedRole);
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
@@ -258,7 +263,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Instructor Grade</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value || undefined}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select instructor grade" />
