@@ -21,25 +21,25 @@ import { format } from 'date-fns';
 const technicalReportSchema = z.object({
   aircraftRegistration: z.string().min(1, 'Please select an aircraft.'),
   component: z.string().min(1, 'Please select a component.'),
+  subcomponent: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
 });
 
 type TechnicalReportFormValues = z.infer<typeof technicalReportSchema>;
 
-const componentOptions = [
-    "Airframe",
-    "Powerplant",
-    "Propeller",
-    "Landing Gear",
-    "Avionics/Instruments",
-    "Flight Controls",
-    "Brakes/Wheels",
-    "Fuel System",
-    "Electrical System",
-    "Interior/Cabin",
-    "Other",
-];
+const componentHierarchy = {
+    "Airframe": ["Fuselage", "Wings", "Empennage", "Doors", "Windows"],
+    "Powerplant": ["Engine", "Propeller", "Exhaust System", "Ignition System", "Fuel System (Engine)"],
+    "Landing Gear": ["Main Gear", "Nose Gear", "Wheels", "Tires", "Brakes"],
+    "Avionics/Instruments": ["GPS/Navigation", "Com Radio", "Transponder", "Attitude Indicator", "Airspeed Indicator", "Altimeter", "Other Instrument"],
+    "Flight Controls": ["Ailerons", "Elevator/Stabilator", "Rudder", "Flaps", "Control Cables/Rods"],
+    "Fuel System": ["Tanks", "Lines & Hoses", "Pumps", "Gauges"],
+    "Electrical System": ["Battery", "Alternator/Generator", "Wiring", "Circuit Breakers", "Lighting"],
+    "Interior/Cabin": ["Seats", "Belts/Harnesses", "HVAC", "Panels/Trim"],
+    "Other": [],
+};
 
+const componentOptions = Object.keys(componentHierarchy);
 
 function QuickReportsPage() {
   const { user, company } = useUser();
@@ -51,9 +51,18 @@ function QuickReportsPage() {
     defaultValues: {
       aircraftRegistration: '',
       component: '',
+      subcomponent: '',
       description: '',
     },
   });
+
+  const selectedComponent = form.watch('component');
+  const subcomponentOptions = selectedComponent ? componentHierarchy[selectedComponent as keyof typeof componentHierarchy] : [];
+
+  React.useEffect(() => {
+    // Reset subcomponent when component changes
+    form.setValue('subcomponent', '');
+  }, [selectedComponent, form]);
 
   React.useEffect(() => {
     if (!company) return;
@@ -125,26 +134,50 @@ function QuickReportsPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="component"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Component</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {componentOptions.map(comp => (
-                            <SelectItem key={comp} value={comp}>{comp}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="component"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Component</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {componentOptions.map(comp => (
+                                <SelectItem key={comp} value={comp}>{comp}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    {subcomponentOptions && subcomponentOptions.length > 0 && (
+                        <FormField
+                        control={form.control}
+                        name="subcomponent"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Sub-component</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select sub-component..." /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {subcomponentOptions.map(subcomp => (
+                                    <SelectItem key={subcomp} value={subcomp}>{subcomp}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
+                 </div>
                 <FormField
                   control={form.control}
                   name="description"
@@ -177,3 +210,4 @@ function QuickReportsPage() {
 QuickReportsPage.title = 'Quick Reports';
 
 export default QuickReportsPage;
+

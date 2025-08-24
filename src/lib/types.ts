@@ -631,6 +631,7 @@ export type TechnicalReport = {
   reportNumber: string;
   aircraftRegistration: string;
   component: string;
+  subcomponent?: string;
   description: string;
   reportedBy: string;
   dateReported: string;
@@ -706,3 +707,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
