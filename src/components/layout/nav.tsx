@@ -103,13 +103,22 @@ export default function Nav() {
     setOpenMobile(false);
   };
   
-  const isMenuItemVisible = (item: { requiredPermissions?: Permission[] }) => {
-    // This function now only checks for Super User permission for admin items.
-    // Regular items will not have this check applied in the main menu rendering.
-    if (item.requiredPermissions?.includes('Super User')) {
-        return user?.permissions.includes('Super User');
+  const isMenuItemVisible = (item: { label: NavMenuItem, requiredPermissions?: Permission[] }) => {
+    if (!user) return false;
+    // Super users see everything
+    if (user.permissions.includes('Super User')) {
+        return true;
     }
-    return true; // All other items are visible by default now.
+    // Check against the user's specific visibleMenuItems array
+    if (user.visibleMenuItems && !user.visibleMenuItems.includes(item.label)) {
+        return false;
+    }
+    // If no specific permissions are required, show the item
+    if (!item.requiredPermissions || item.requiredPermissions.length === 0) {
+        return true;
+    }
+    // Check if user has at least one of the required permissions
+    return item.requiredPermissions.some(p => user.permissions.includes(p));
   }
 
   const getIsActive = (href: string) => {
@@ -124,12 +133,9 @@ export default function Nav() {
     return null; // Don't render nav if not logged in
   }
 
-  // Filter admin items based on Super User role
-  const visibleAdminItems = adminNavItems.filter(item => 
-      item.requiredPermissions?.includes('Super User') 
-          ? user?.permissions.includes('Super User')
-          : true
-  );
+  // Filter main and admin items based on visibility rules
+  const visibleNavItems = navItems.filter(isMenuItemVisible);
+  const visibleAdminItems = adminNavItems.filter(isMenuItemVisible);
 
   return (
     <>
@@ -148,7 +154,7 @@ export default function Nav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref>
                 <SidebarMenuButton
