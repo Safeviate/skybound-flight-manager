@@ -5,14 +5,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NewAircraftForm } from './new-aircraft-form';
-import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert, TrainingLogEntry, User } from '@/lib/types';
+import type { Aircraft, CompletedChecklist, ExternalContact, Booking, Alert, TrainingLogEntry, User, TechnicalReport } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { cn, getExpiryBadge } from '@/lib/utils';
@@ -33,6 +33,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, addDoc, deleteDoc, orderBy, arrayUnion, getDoc } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -48,15 +49,18 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
 export function AircraftPageContent({ 
     initialAircraft,
     initialBookings,
-    initialExternalContacts
+    initialExternalContacts,
+    initialTechnicalReports
 }: { 
     initialAircraft: Aircraft[],
     initialBookings: Booking[],
-    initialExternalContacts: ExternalContact[]
+    initialExternalContacts: ExternalContact[],
+    initialTechnicalReports: TechnicalReport[],
 }) {
     const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
     const [bookings, setBookings] = useState<Booking[]>(initialBookings);
     const [externalContacts, setExternalContacts] = useState<ExternalContact[]>(initialExternalContacts);
+    const [technicalReports, setTechnicalReports] = useState<TechnicalReport[]>(initialTechnicalReports);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
@@ -67,13 +71,14 @@ export function AircraftPageContent({
     const [selectedHistoryAircraftId, setSelectedHistoryAircraftId] = useState<string | null>(null);
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
+    const [viewingHistoryFor, setViewingHistoryFor] = useState<Aircraft | null>(null);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     
     useEffect(() => {
         if (!company) return;
 
-        const q = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
+        const unsubscribe = onSnapshot(aircraftQuery, (snapshot) => {
             const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
             setAircraftList(aircrafts);
         }, (error) => {
@@ -81,8 +86,17 @@ export function AircraftPageContent({
             toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
         });
 
+        const techReportsQuery = query(collection(db, `companies/${company.id}/technical-reports`));
+        const unsubscribeTechReports = onSnapshot(techReportsQuery, (snapshot) => {
+            const reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TechnicalReport));
+            setTechnicalReports(reports);
+        });
+
         // Cleanup subscription on component unmount
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            unsubscribeTechReports();
+        };
     }, [company, toast]);
     
     useEffect(() => {
@@ -90,7 +104,8 @@ export function AircraftPageContent({
         setAircraftList(initialAircraft);
         setBookings(initialBookings);
         setExternalContacts(initialExternalContacts);
-    }, [initialAircraft, initialBookings, initialExternalContacts]);
+        setTechnicalReports(initialTechnicalReports);
+    }, [initialAircraft, initialBookings, initialExternalContacts, initialTechnicalReports]);
     
     
     const fetchHistory = useCallback(async () => {
@@ -396,6 +411,9 @@ export function AircraftPageContent({
                                                 <DropdownMenuItem onSelect={() => handleEdit(ac)}>
                                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => setViewingHistoryFor(ac)}>
+                                                    <History className="mr-2 h-4 w-4" /> View History
+                                                </DropdownMenuItem>
                                                  <DropdownMenuItem onSelect={() => setViewingDocumentsForAircraft(ac)}>
                                                     <Eye className="mr-2 h-4 w-4" /> View Documents
                                                 </DropdownMenuItem>
@@ -623,6 +641,83 @@ export function AircraftPageContent({
           )}
       </>
   );
+  
+  const HistoryDialogContent = ({ aircraft }: { aircraft: Aircraft }) => {
+    const aircraftReports = useMemo(() => 
+        technicalReports.filter(report => report.aircraftRegistration === aircraft.tailNumber),
+        [aircraft, technicalReports]
+    );
+
+    const componentFrequency = useMemo(() => {
+        const counts = aircraftReports.reduce((acc, report) => {
+            acc[report.component] = (acc[report.component] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        return Object.entries(counts).map(([name, count]) => ({ name, count }));
+    }, [aircraftReports]);
+
+    return (
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Technical Report History for {aircraft.tailNumber}</DialogTitle>
+                <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Component Report Frequency</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 100 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" allowDecimals={false} />
+                                <YAxis dataKey="name" type="category" width={100} />
+                                <Tooltip />
+                                <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">Detailed History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-64">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Report #</TableHead>
+                                        <TableHead>Component</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Reported By</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {aircraftReports.length > 0 ? aircraftReports.map(report => (
+                                        <TableRow key={report.id}>
+                                            <TableCell>{format(parseISO(report.dateReported), 'MMM d, yyyy')}</TableCell>
+                                            <TableCell>{report.reportNumber}</TableCell>
+                                            <TableCell>{report.component}</TableCell>
+                                            <TableCell className="max-w-xs truncate">{report.description}</TableCell>
+                                            <TableCell>{report.reportedBy}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
+        </DialogContent>
+    )
+  };
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
@@ -781,6 +876,12 @@ export function AircraftPageContent({
                 </ScrollArea>
             </DialogContent>
         </Dialog>
+        
+        {viewingHistoryFor && (
+            <Dialog open={!!viewingHistoryFor} onOpenChange={(open) => !open && setViewingHistoryFor(null)}>
+                <HistoryDialogContent aircraft={viewingHistoryFor} />
+            </Dialog>
+        )}
 
 
         {viewingChecklist && (
