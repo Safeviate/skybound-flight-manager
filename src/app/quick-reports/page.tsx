@@ -33,6 +33,11 @@ function QuickReportsPage() {
 
   const form = useForm<TechnicalReportFormValues>({
     resolver: zodResolver(technicalReportSchema),
+    defaultValues: {
+      aircraftRegistration: '',
+      component: '',
+      description: '',
+    },
   });
 
   React.useEffect(() => {
