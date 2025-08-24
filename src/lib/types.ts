@@ -213,7 +213,7 @@ export type Role =
   | 'System Admin'
   | 'Super User';
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings';
 
 export type User = {
     id: string;
@@ -623,6 +623,17 @@ export type ManagementOfChange = {
   proposalDate: string;
   status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
   steps?: MocStep[];
+};
+
+export type TechnicalReport = {
+  id: string;
+  companyId: string;
+  reportNumber: string;
+  aircraftRegistration: string;
+  component: string;
+  description: string;
+  reportedBy: string;
+  dateReported: string;
 };
 
 
