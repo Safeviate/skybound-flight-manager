@@ -34,6 +34,7 @@ import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, add
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { getTechnicalReportsForAircraft } from './data';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -634,6 +635,30 @@ export function AircraftPageContent({
   );
   
     const HistoryDialogContent = ({ aircraft }: { aircraft: Aircraft }) => {
+        const { company } = useUser();
+        const [reports, setReports] = useState<TechnicalReport[]>([]);
+        const [isLoading, setIsLoading] = useState(true);
+
+        useEffect(() => {
+            const fetchReports = async () => {
+                if (!company) return;
+                setIsLoading(true);
+                const fetchedReports = await getTechnicalReportsForAircraft(company.id, aircraft.tailNumber);
+                setReports(fetchedReports);
+                setIsLoading(false);
+            };
+            fetchReports();
+        }, [aircraft.tailNumber, company]);
+
+        const chartData = useMemo(() => {
+            const counts = reports.reduce((acc, report) => {
+                const component = report.component || 'Other';
+                acc[component] = (acc[component] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+            
+            return Object.entries(counts).map(([name, count]) => ({ name, count }));
+        }, [reports]);
 
         return (
             <DialogContent className="max-w-4xl">
@@ -641,13 +666,27 @@ export function AircraftPageContent({
                     <DialogTitle className="text-2xl font-bold">Technical Report History: {aircraft.tailNumber}</DialogTitle>
                     <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
                 </DialogHeader>
-                 <div className="grid grid-cols-1 gap-6 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                     <Card className="border-l-4 border-blue-500">
                         <CardHeader>
                             <CardTitle className="text-lg">Component Report Frequency</CardTitle>
                         </CardHeader>
                         <CardContent className="h-[300px] w-full pr-6">
-                            {/* Chart content removed for brevity, will be re-added if needed */}
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>
+                            ) : chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" allowDecimals={false} />
+                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-muted-foreground">No chart data available.</div>
+                            )}
                         </CardContent>
                     </Card>
                     <Card className="border-l-4 border-green-500">
@@ -655,25 +694,35 @@ export function AircraftPageContent({
                             <CardTitle className="text-lg">Detailed History</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-64">
+                            <ScrollArea className="h-[300px]">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Date</TableHead>
-                                            <TableHead>Report #</TableHead>
                                             <TableHead>System</TableHead>
-                                            <TableHead>Component</TableHead>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead>Reported By</TableHead>
                                             <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {/* Table rows removed for brevity, will be re-added if needed */}
+                                        {isLoading ? (
+                                            <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="animate-spin" /></TableCell></TableRow>
+                                        ) : reports.length > 0 ? (
+                                            reports.map(report => (
+                                                <TableRow key={report.id}>
+                                                    <TableCell>{format(parseISO(report.dateReported), 'PPP')}</TableCell>
+                                                    <TableCell>{report.component}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
+                                                            {report.status || 'Open'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                                <TableCell colSpan={3} className="h-24 text-center">No technical reports found.</TableCell>
                                             </TableRow>
+                                        )}
                                     </TableBody>
                                 </Table>
                             </ScrollArea>

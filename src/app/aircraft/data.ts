@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
-import type { Aircraft, Booking, ExternalContact } from '@/lib/types';
+import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
+import type { Aircraft, Booking, ExternalContact, TechnicalReport } from '@/lib/types';
 
 export async function getAircraftPageData(companyId: string): Promise<{ aircraft: Aircraft[], bookings: Booking[], contacts: ExternalContact[] }> {
     if (!companyId) return { aircraft: [], bookings: [], contacts: [] };
@@ -26,4 +26,21 @@ export async function getAircraftPageData(companyId: string): Promise<{ aircraft
     const contacts = contactsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExternalContact));
 
     return { aircraft, bookings, contacts };
+}
+
+export async function getTechnicalReportsForAircraft(companyId: string, aircraftRegistration: string): Promise<TechnicalReport[]> {
+    if (!companyId || !aircraftRegistration) return [];
+    
+    const reportsQuery = query(
+        collection(db, `companies/${companyId}/technical-reports`),
+        where('aircraftRegistration', '==', aircraftRegistration),
+        orderBy('dateReported', 'desc')
+    );
+    
+    const snapshot = await getDocs(reportsQuery);
+    if (snapshot.empty) {
+        return [];
+    }
+    
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TechnicalReport));
 }
