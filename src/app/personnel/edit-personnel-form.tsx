@@ -214,7 +214,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a role" />
@@ -238,7 +238,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Department</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a department" />
@@ -263,7 +263,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Instructor Grade</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select instructor grade" />
