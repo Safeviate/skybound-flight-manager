@@ -89,7 +89,7 @@ const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyForm
             <FormItem>
                 <FormLabel>{label}</FormLabel>
                 <FormControl>
-                    <Input type="color" {...field} />
+                    <Input type="color" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
             </FormItem>

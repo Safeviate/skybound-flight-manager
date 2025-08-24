@@ -70,7 +70,7 @@ const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyForm
             <FormItem>
                 <FormLabel>{label}</FormLabel>
                 <FormControl>
-                    <Input type="color" {...field} />
+                    <Input type="color" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
             </FormItem>
@@ -88,7 +88,17 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         name: company.name,
         trademark: company.trademark || '',
         enabledFeatures: company.enabledFeatures || [],
-        theme: company.theme || {},
+        theme: company.theme || {
+            primary: '',
+            background: '',
+            card: '',
+            accent: '',
+            foreground: '',
+            cardForeground: '',
+            sidebarBackground: '',
+            sidebarForeground: '',
+            sidebarAccent: '',
+        },
     })
   }, [company, form]);
 
