@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -412,7 +412,7 @@ export function AircraftPageContent({
                                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onSelect={() => setViewingHistoryFor(ac)}>
-                                                    <History className="mr-2 h-4 w-4" /> View History
+                                                    <BookOpen className="mr-2 h-4 w-4" /> Technical Log
                                                 </DropdownMenuItem>
                                                  <DropdownMenuItem onSelect={() => setViewingDocumentsForAircraft(ac)}>
                                                     <Eye className="mr-2 h-4 w-4" /> View Documents
