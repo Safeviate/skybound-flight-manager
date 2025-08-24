@@ -53,7 +53,7 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
-  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
+  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional().nullable(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -119,7 +119,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             role: personnel.role,
             department: personnel.department,
             phone: personnel.phone || '',
-            instructorGrade: personnel.instructorGrade || undefined,
+            instructorGrade: personnel.instructorGrade || null,
             consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
             documents: formDocs,
             permissions: personnel.permissions || [],
@@ -138,7 +138,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     }
   }, [selectedRole, form]);
 
-  const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training', 'Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3'].includes(selectedRole);
+  const isInstructorRole = ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
@@ -263,7 +263,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Instructor Grade</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value || undefined}>
+                            <Select onValueChange={field.onChange} value={field.value || ''} defaultValue={field.value || ''}>
                                 <FormControl>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select instructor grade" />
