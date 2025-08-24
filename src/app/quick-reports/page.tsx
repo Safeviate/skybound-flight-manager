@@ -20,11 +20,26 @@ import { format } from 'date-fns';
 
 const technicalReportSchema = z.object({
   aircraftRegistration: z.string().min(1, 'Please select an aircraft.'),
-  component: z.string().min(3, 'Component description is required.'),
+  component: z.string().min(1, 'Please select a component.'),
   description: z.string().min(10, 'A detailed description is required.'),
 });
 
 type TechnicalReportFormValues = z.infer<typeof technicalReportSchema>;
+
+const componentOptions = [
+    "Airframe",
+    "Powerplant",
+    "Propeller",
+    "Landing Gear",
+    "Avionics/Instruments",
+    "Flight Controls",
+    "Brakes/Wheels",
+    "Fuel System",
+    "Electrical System",
+    "Interior/Cabin",
+    "Other",
+];
+
 
 function QuickReportsPage() {
   const { user, company } = useUser();
@@ -116,9 +131,16 @@ function QuickReportsPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Component</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Left Main Landing Gear Oleo" {...field} />
-                      </FormControl>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {componentOptions.map(comp => (
+                            <SelectItem key={comp} value={comp}>{comp}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
