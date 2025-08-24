@@ -117,7 +117,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             name: personnel.name || '',
             email: personnel.email || '',
             role: personnel.role,
-            department: personnel.department || undefined,
+            department: personnel.department || '',
             phone: personnel.phone || '',
             instructorGrade: personnel.instructorGrade || null,
             consentDisplayContact: personnel.consentDisplayContact || 'Not Consented',
@@ -132,7 +132,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   const selectedRole = form.watch('role');
 
   useEffect(() => {
-    if (selectedRole && selectedRole !== form.getValues('role')) {
+    if (selectedRole) {
       const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
       form.setValue('permissions', defaultPermissions, { shouldValidate: true });
     }
