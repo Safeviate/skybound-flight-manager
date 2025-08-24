@@ -348,13 +348,25 @@ export function AircraftPageContent({
 
         try {
             const reportRef = doc(db, `companies/${company.id}/technical-reports`, editingReport.id);
-            await updateDoc(reportRef, updatedReport);
+            await updateDoc(reportRef, updatedReport as any);
             setTechnicalReports(prev => prev.map(r => r.id === editingReport.id ? updatedReport : r));
             setEditingReport(null);
             toast({ title: 'Rectification Saved', description: `Report ${editingReport.reportNumber} has been updated.`});
         } catch (error) {
             console.error("Error saving rectification:", error);
             toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the rectification details.'});
+        }
+    };
+
+    const handleDeleteTechReport = async (reportId: string) => {
+        if (!company) return;
+        try {
+            await deleteDoc(doc(db, `companies/${company.id}/technical-reports`, reportId));
+            setTechnicalReports(prev => prev.filter(r => r.id !== reportId));
+            toast({ title: 'Technical Report Deleted' });
+        } catch (error) {
+            console.error("Error deleting tech report:", error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the technical report.' });
         }
     };
 
@@ -682,7 +694,6 @@ export function AircraftPageContent({
 
     const componentFrequency = useMemo(() => {
         const counts = aircraftReports.reduce((acc, report) => {
-            // Prioritize subcomponent, fallback to component
             const key = report.subcomponent || report.component;
             acc[key] = (acc[key] || 0) + 1;
             return acc;
@@ -728,6 +739,7 @@ export function AircraftPageContent({
                                         <TableHead>Description</TableHead>
                                         <TableHead>Reported By</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -743,10 +755,31 @@ export function AircraftPageContent({
                                             <TableCell className="max-w-xs truncate">{report.description}</TableCell>
                                             <TableCell>{report.reportedBy}</TableCell>
                                             <TableCell><Badge variant={report.status === 'Rectified' ? 'success' : 'destructive'}>{report.status || 'Open'}</Badge></TableCell>
+                                            <TableCell className="text-right">
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete the technical report {report.reportNumber}.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteTechReport(report.id)}>Delete</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
                                         </TableRow>
                                     )) : (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
+                                            <TableCell colSpan={7} className="h-24 text-center">No technical reports found for this aircraft.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -1098,5 +1131,7 @@ const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSu
         </form>
     )
 }
+
+    
 
     
