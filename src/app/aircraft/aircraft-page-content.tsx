@@ -709,21 +709,22 @@ export function AircraftPageContent({
                 <DialogDescription>A log of all technical issues reported for this aircraft.</DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-                <Card>
+                <Card className="border-l-4 border-primary">
                     <CardHeader>
                         <CardTitle className="text-base">Component Report Frequency</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 100 }}>
+                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 120 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" allowDecimals={false} />
                                 <YAxis 
                                     dataKey="name" 
                                     type="category" 
-                                    width={80} 
-                                    tick={{ fontSize: 12 }} 
+                                    width={100} 
+                                    tick={{ fontSize: 12, textAnchor: 'end' }} 
                                     interval={0}
+                                    style={{textAnchor: "end"}}
                                 />
                                 <Tooltip />
                                 <Bar dataKey="count" name="Reports" fill="hsl(var(--primary))" />
@@ -731,7 +732,7 @@ export function AircraftPageContent({
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-l-4 border-orange">
                     <CardHeader>
                         <CardTitle className="text-base">Detailed History</CardTitle>
                     </CardHeader>
@@ -1144,4 +1145,5 @@ const RectificationForm = ({ report, onSubmit }: { report: TechnicalReport; onSu
     
 
     
+
 
