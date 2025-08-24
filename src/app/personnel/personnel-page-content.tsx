@@ -149,7 +149,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                             <div>
                                 <CardTitle>{person.name}</CardTitle>
                                 <CardDescription>
-                                    {person.role}
                                     {person.instructorGrade && ` (${person.instructorGrade})`}
                                 </CardDescription>
                             </div>
@@ -206,7 +205,8 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm flex-grow">
-                            <div className="space-y-2 text-sm">
+                        <div className="space-y-2 text-sm">
+                            <p className="font-semibold">{person.role}</p>
                             <p className="text-muted-foreground">{person.department}</p>
                             <Separator />
                             <div className="flex items-center gap-2">
@@ -223,11 +223,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                         <Button variant="outline" size="sm" className="w-full" onClick={() => setViewingDocumentsFor(person)}>
                             <Eye className="mr-2 h-4 w-4" /> View Documents
                         </Button>
-                            {canEdit && (
-                            <Button variant="secondary" size="sm" className="w-full" onClick={() => setEditingPersonnel(person)}>
-                                <Edit className="mr-2 h-4 w-4" /> Edit
-                            </Button>
-                            )}
                     </CardFooter>
                 </Card>
             ))}
