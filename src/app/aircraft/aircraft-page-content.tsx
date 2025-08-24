@@ -715,7 +715,7 @@ export function AircraftPageContent({
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 100 }}>
+                            <BarChart data={componentFrequency} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" allowDecimals={false} />
                                 <YAxis dataKey="name" type="category" width={100} />
