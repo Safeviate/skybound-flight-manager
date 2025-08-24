@@ -125,6 +125,14 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   });
 
   const selectedRole = form.watch('role');
+
+  useEffect(() => {
+    if (selectedRole) {
+      const defaultPermissions = ROLE_PERMISSIONS[selectedRole] || [];
+      form.setValue('permissions', defaultPermissions);
+    }
+  }, [selectedRole, form]);
+
   const isInstructorRole = ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
 
   function handleFormSubmit(data: PersonnelFormValues) {
