@@ -144,9 +144,9 @@ export default function Nav() {
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center justify-center gap-3 p-4">
+        <div className="flex items-center justify-center p-4">
             {company?.logoUrl ? (
-                <Image src={company.logoUrl} alt={`${company.name} Logo`} width={80} height={80} className="h-20 w-20 rounded-md object-contain" />
+                <Image src={company.logoUrl} alt={`${company.name} Logo`} width={120} height={120} className="h-auto w-[120px] rounded-md object-contain" />
             ) : (
                 <Rocket className="h-20 w-20 text-primary flex-shrink-0" />
             )}
