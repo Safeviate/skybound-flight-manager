@@ -101,7 +101,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6 py-4">
-                    <Card className="border-l-4 border-blue-500">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">Component Report Frequency</CardTitle>
                         </CardHeader>
@@ -123,7 +123,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                             )}
                         </CardContent>
                     </Card>
-                    <Card className="border-l-4 border-green-500">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">Detailed History</CardTitle>
                         </CardHeader>
