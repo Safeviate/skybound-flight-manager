@@ -142,14 +142,24 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         sidebarAccent: '#1f2937',
         font: 'var(--font-inter)',
     };
+    
+    const companyTheme = company.theme || {};
 
     form.reset({
         name: company.name,
         trademark: company.trademark || '',
         enabledFeatures: company.enabledFeatures || [],
         theme: {
-          ...defaultTheme,
-          ...company.theme,
+          primary: companyTheme.primary || defaultTheme.primary,
+          background: companyTheme.background || defaultTheme.background,
+          card: companyTheme.card || defaultTheme.card,
+          accent: companyTheme.accent || defaultTheme.accent,
+          foreground: companyTheme.foreground || defaultTheme.foreground,
+          cardForeground: companyTheme.cardForeground || defaultTheme.cardForeground,
+          sidebarBackground: companyTheme.sidebarBackground || defaultTheme.sidebarBackground,
+          sidebarForeground: companyTheme.sidebarForeground || defaultTheme.sidebarForeground,
+          sidebarAccent: companyTheme.sidebarAccent || defaultTheme.sidebarAccent,
+          font: companyTheme.font || defaultTheme.font,
         },
     })
   }, [company, form]);
