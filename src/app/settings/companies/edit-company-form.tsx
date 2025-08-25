@@ -23,15 +23,39 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { navItems, adminNavItems } from '@/components/layout/nav';
 
-const features: { id: Feature, label: string, description: string }[] = [
-    { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
-    { id: 'Quality', label: 'Quality Assurance', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
-    { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
-    { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
-    { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
-    { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
-    { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+const allNavMenuItems = [...navItems, ...adminNavItems].map(item => item.label);
+
+
+const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
+    {
+        title: 'Core Operations',
+        features: [
+            { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
+            { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
+        ]
+    },
+    {
+        title: 'Personnel & Training',
+        features: [
+            { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
+            { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
+        ]
+    },
+    {
+        title: 'Safety & Quality',
+        features: [
+            { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
+            { id: 'Quality', label: 'Quality Management', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
+        ]
+    },
+    {
+        title: 'Data & Analytics',
+        features: [
+            { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+        ]
+    }
 ];
 
 const fonts = [
@@ -254,43 +278,50 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         </FormDescription>
                     </div>
                     <div className="space-y-4">
-                        {features.map((item) => (
-                        <FormField
-                            key={item.id}
-                            control={form.control}
-                            name="enabledFeatures"
-                            render={({ field }) => {
-                            return (
-                                <FormItem
-                                key={item.id}
-                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                >
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                        ? field.onChange([...(field.value || []), item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                                (value) => value !== item.id
-                                            )
-                                            )
-                                    }}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-normal">
-                                        {item.label}
-                                    </FormLabel>
-                                    <FormDescription>
-                                        {item.description}
-                                    </FormDescription>
-                                </div>
-                                </FormItem>
-                            )
-                            }}
-                        />
+                        {featureGroups.map((group) => (
+                          <div key={group.title}>
+                            <h4 className="font-semibold text-sm mb-3">{group.title}</h4>
+                            <div className="space-y-4">
+                              {group.features.map((item) => (
+                                  <FormField
+                                      key={item.id}
+                                      control={form.control}
+                                      name="enabledFeatures"
+                                      render={({ field }) => {
+                                      return (
+                                          <FormItem
+                                          key={item.id}
+                                          className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
+                                          >
+                                          <FormControl>
+                                              <Checkbox
+                                              checked={field.value?.includes(item.id)}
+                                              onCheckedChange={(checked) => {
+                                                  return checked
+                                                  ? field.onChange([...(field.value || []), item.id])
+                                                  : field.onChange(
+                                                      field.value?.filter(
+                                                          (value) => value !== item.id
+                                                      )
+                                                      )
+                                              }}
+                                              />
+                                          </FormControl>
+                                          <div className="space-y-1 leading-none">
+                                              <FormLabel className="font-normal">
+                                                  {item.label}
+                                              </FormLabel>
+                                              <FormDescription>
+                                                  {item.description}
+                                              </FormDescription>
+                                          </div>
+                                          </FormItem>
+                                      )
+                                      }}
+                                  />
+                              ))}
+                            </div>
+                          </div>
                         ))}
                     </div>
                     <FormMessage />
