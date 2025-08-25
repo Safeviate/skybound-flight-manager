@@ -210,9 +210,9 @@ function SettingsPage() {
                                     <FormLabel>Company Logo</FormLabel>
                                     <div className="flex items-center gap-4">
                                         {company?.logoUrl ? (
-                                            <Image src={company.logoUrl} alt="Current company logo" width={48} height={48} className="h-12 w-12 rounded-md object-contain bg-muted p-1" />
+                                            <Image src={company.logoUrl} alt="Current company logo" width={80} height={80} className="h-20 w-20 rounded-md object-contain bg-muted p-1" />
                                         ) : (
-                                            <div className="h-12 w-12 flex items-center justify-center bg-muted rounded-md"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>
+                                            <div className="h-20 w-20 flex items-center justify-center bg-muted rounded-md"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>
                                         )}
                                         <FormControl>
                                             <Input type="file" accept="image/*" {...form.register('logo')} className="flex-1"/>
