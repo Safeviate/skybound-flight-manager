@@ -27,6 +27,9 @@ import { navItems, adminNavItems } from '@/components/layout/nav';
 
 const allNavMenuItems = [...navItems, ...adminNavItems].map(item => item.label);
 
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
     {
         title: 'Core Operations',
@@ -69,7 +72,17 @@ const fonts = [
 
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
-  logo: z.any().optional(),
+  logo: z
+    .any()
+    .optional()
+    .refine(
+      (files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE,
+      `Max file size is 500KB.`
+    )
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
   enabledFeatures: z.array(z.string()).default([]),
   visibleMenuItems: z.array(z.string()).default(allNavMenuItems),
   theme: z.object({
@@ -203,6 +216,9 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormControl>
                             <Input type="file" accept="image/*" {...form.register('logo')} />
                         </FormControl>
+                         <FormDescription>
+                          Max file size: 500KB. Accepted types: JPG, PNG, WEBP.
+                        </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}

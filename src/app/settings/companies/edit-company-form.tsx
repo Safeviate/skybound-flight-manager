@@ -27,6 +27,9 @@ import { navItems, adminNavItems } from '@/components/layout/nav';
 
 const allNavMenuItems = [...navItems, ...adminNavItems].map(item => item.label);
 
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 
 const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
     {
@@ -72,7 +75,17 @@ const companyFormSchema = z.object({
   trademark: z.string().min(2, {
     message: 'Trademark must be at least 2 characters.',
   }),
-  logo: z.any().optional(),
+  logo: z
+    .any()
+    .optional()
+    .refine(
+      (files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE,
+      `Max file size is 500KB.`
+    )
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
   enabledFeatures: z.array(z.string()).default([]),
   theme: z.object({
     primary: z.string().optional(),
@@ -172,7 +185,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}
-                    />
+                />
                 <FormField
                     control={form.control}
                     name="trademark"
@@ -198,6 +211,9 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         <FormControl>
                             <Input type="file" accept="image/*" {...form.register('logo')} />
                         </FormControl>
+                        <FormDescription>
+                          Max file size: 500KB. Accepted types: JPG, PNG, WEBP.
+                        </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
