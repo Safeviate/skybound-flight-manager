@@ -144,16 +144,12 @@ export default function Nav() {
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center gap-3 p-2">
+        <div className="flex items-center justify-center gap-3 p-2">
             {company?.logoUrl ? (
-                <Image src={company.logoUrl} alt={`${company.name} Logo`} width={32} height={32} className="h-8 w-8 rounded-md object-contain" />
+                <Image src={company.logoUrl} alt={`${company.name} Logo`} width={40} height={40} className="h-10 w-10 rounded-md object-contain" />
             ) : (
-                <Rocket className="h-8 w-8 text-primary flex-shrink-0" />
+                <Rocket className="h-10 w-10 text-primary flex-shrink-0" />
             )}
-            <div>
-                <span className="text-lg font-semibold text-sidebar-foreground">{company?.name || 'SkyBound'}</span>
-                <p className="text-xs text-sidebar-foreground/70">Flight Manager</p>
-            </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
