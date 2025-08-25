@@ -5,25 +5,29 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Trash2, Repeat, Building } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Repeat, Building, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import type { Company, Feature } from '@/lib/types';
+import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection } from 'firebase/firestore';
+import type { Company, Feature, User } from '@/lib/types';
 import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
+import { NewCompanyForm } from '@/app/corporate/new-company-form';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
   const { user, company: currentCompany, setCompany, userCompanies } = useUser();
   const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isNewCompanyDialogOpen, setIsNewCompanyDialogOpen] = React.useState(false);
+  const [isEditCompanyDialogOpen, setIsEditCompanyDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const router = useRouter();
 
@@ -33,7 +37,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
     try {
       let logoUrl = editingCompany.logoUrl;
       if (logoFile) {
-        // This is a simplified Base64 conversion. A real app should upload to a service like Firebase Storage.
         logoUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(logoFile);
@@ -46,7 +49,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
       await updateDoc(companyRef, { ...updatedData, logoUrl });
 
       setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...updatedData, logoUrl } : c));
-      setIsDialogOpen(false);
+      setIsEditCompanyDialogOpen(false);
       setEditingCompany(null);
       toast({ title: 'Company Updated', description: 'The company details have been saved.' });
     } catch (error) {
@@ -54,6 +57,79 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update company.' });
     }
   };
+
+  const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+        
+        const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        
+        let logoUrl = '';
+        if (logoFile) {
+            const reader = new FileReader();
+            reader.readAsDataURL(logoFile);
+            await new Promise<void>((resolve, reject) => {
+                reader.onload = () => {
+                    logoUrl = reader.result as string;
+                    resolve();
+                };
+                reader.onerror = (error) => reject(error);
+            });
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
+            const newUserId = userCredential.user.uid;
+            
+            await updateProfile(userCredential.user, {
+                displayName: adminData.name,
+            });
+            
+            const batch = writeBatch(db);
+            const companyDocRef = doc(db, 'companies', companyId);
+            const finalCompanyData: Partial<Company> = {
+                id: companyId,
+                logoUrl: logoUrl,
+                trademark: `Your Trusted Partner in Aviation`,
+                ...companyData,
+            };
+            batch.set(companyDocRef, finalCompanyData, { merge: true });
+
+            const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
+            const finalUserData: User = {
+                ...adminData,
+                id: newUserId,
+                companyId: companyId,
+                role: 'Admin',
+                permissions: ROLE_PERMISSIONS['Admin'],
+                status: 'Active',
+            } as User;
+            batch.set(userInCompanyRef, finalUserData);
+
+            await batch.commit();
+
+            toast({
+                title: "New Company & Admin Created!",
+                description: `The company portal for ${companyData.name} is ready.`
+            });
+            
+            setCompanies(prev => [...prev, { ...finalCompanyData, id: companyId } as Company]);
+            setIsNewCompanyDialogOpen(false);
+
+        } catch (error: any) {
+            console.error("Error creating company:", error);
+            const errorCode = error.code;
+            let errorMessage = "An unknown error occurred.";
+            if (errorCode === 'auth/email-already-in-use') {
+                errorMessage = "This email address is already in use by another account.";
+            } else if (errorCode === 'auth/weak-password') {
+                errorMessage = "The password is too weak. Please use at least 8 characters.";
+            }
+            toast({
+                variant: 'destructive',
+                title: "Registration Failed",
+                description: errorMessage,
+            });
+        }
+    };
 
   const handleSwitchCompany = (companyToSwitch: Company) => {
     setCompany(companyToSwitch);
@@ -66,17 +142,35 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
 
   const openEditDialog = (company: Company) => {
     setEditingCompany(company);
-    setIsDialogOpen(true);
+    setIsEditCompanyDialogOpen(true);
   };
 
   return (
     <main className="flex-1 p-4 md:p-8">
       <Card>
-        <CardHeader>
-          <CardTitle>Manage Companies</CardTitle>
-          <CardDescription>
-            View and manage all companies registered in the system.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Manage Companies</CardTitle>
+              <CardDescription>
+                View and manage all companies registered in the system.
+              </CardDescription>
+            </div>
+            <Dialog open={isNewCompanyDialogOpen} onOpenChange={setIsNewCompanyDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" /> New Company
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl">
+                 <DialogHeader>
+                    <DialogTitle>Create New Company</DialogTitle>
+                    <DialogDescription>
+                        Set up a new company portal and its first administrator account.
+                    </DialogDescription>
+                </DialogHeader>
+                <NewCompanyForm onSubmit={handleNewCompany} />
+              </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
           <Table>
@@ -127,7 +221,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
       </Card>
       
       {editingCompany && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isEditCompanyDialogOpen} onOpenChange={setIsEditCompanyDialogOpen}>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Company: {editingCompany.name}</DialogTitle>
