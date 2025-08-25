@@ -99,6 +99,20 @@ function SettingsPage() {
     }
   }, [company, form]);
 
+  const defaultTheme = {
+    primary: '#0d6efd',
+    background: '#f8f9fa',
+    card: '#ffffff',
+    accent: '#ffc107',
+    foreground: '#212529',
+    headerForeground: '#212529',
+    cardForeground: '#212529',
+    sidebarBackground: '#0c0a09',
+    sidebarForeground: '#f8f9fa',
+    sidebarAccent: '#1f2937',
+    font: 'var(--font-inter)',
+  };
+
   const handleAppearanceSubmit = async (data: AppearanceFormValues) => {
     if (!company) return;
 
@@ -116,7 +130,8 @@ function SettingsPage() {
 
     const updatedData: Partial<Company> = {
         trademark: data.trademark,
-        theme: data.theme as ThemeColors,
+        // Merge with defaults to ensure no undefined values are sent to Firestore
+        theme: { ...defaultTheme, ...(data.theme || {}) },
         logoUrl: logoUrl,
     };
     
@@ -129,19 +144,6 @@ function SettingsPage() {
   };
   
   const handleResetTheme = () => {
-    const defaultTheme = {
-        primary: '#0d6efd',
-        background: '#f8f9fa',
-        card: '#ffffff',
-        accent: '#ffc107',
-        foreground: '#212529',
-        headerForeground: '#212529',
-        cardForeground: '#212529',
-        sidebarBackground: '#0c0a09',
-        sidebarForeground: '#f8f9fa',
-        sidebarAccent: '#1f2937',
-        font: 'var(--font-inter)',
-    };
     form.setValue('theme', defaultTheme);
     updateCompany(company!.id, { theme: defaultTheme });
     toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });

@@ -42,11 +42,30 @@ export default function CorporatePage() {
 
             // 2. Create Company Document with a predictable ID
             const companyDocRef = doc(db, 'companies', companyId);
+            
+            const defaultTheme = {
+                primary: '#0d6efd',
+                background: '#f8f9fa',
+                card: '#ffffff',
+                accent: '#ffc107',
+                foreground: '#212529',
+                headerForeground: '#212529', // Ensure this is present
+                cardForeground: '#212529',
+                sidebarBackground: '#0c0a09',
+                sidebarForeground: '#f8f9fa',
+                sidebarAccent: '#1f2937',
+                font: 'var(--font-inter)',
+            };
+
             const finalCompanyData: Company = {
                 id: companyId,
                 logoUrl: logoUrl,
                 trademark: `Your Trusted Partner in Aviation`,
                 ...companyData,
+                theme: {
+                    ...defaultTheme,
+                    ...companyData.theme, // Merge with any theme data from the form
+                }
             };
             batch.set(companyDocRef, finalCompanyData);
             
