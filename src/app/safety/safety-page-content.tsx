@@ -787,39 +787,36 @@ export function SafetyPageContent({
             </div>
           </TabsContent>
            <TabsContent value="moc">
-              <div className="border-4 border-cyan-500 p-4 rounded-lg relative mt-6">
-                <div className="absolute -top-3 left-4 bg-background px-2 text-cyan-500 font-semibold text-sm">Management of Change</div>
-                <Card>
-                  <CardHeader className="flex-row justify-between items-start">
-                    <div>
-                        <CardTitle>Management of Change (MOC)</CardTitle>
-                        <CardDescription>
-                        Track and manage significant changes to operations, procedures, and systems.
-                        </CardDescription>
-                    </div>
-                     <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Propose Change
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Management of Change Proposal</DialogTitle>
-                                <DialogDescription>
-                                    Submit a new proposal for a significant change to operations.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
-                        </DialogContent>
-                    </Dialog>
-                  </CardHeader>
-                  <CardContent>
-                    <MocTable mocs={mocs} canEdit={canEditMoc} onDelete={handleDeleteMoc} />
-                  </CardContent>
-                </Card>
-              </div>
+              <Card>
+                <CardHeader className="flex-row justify-between items-start">
+                  <div>
+                      <CardTitle>Management of Change (MOC)</CardTitle>
+                      <CardDescription>
+                      Track and manage significant changes to operations, procedures, and systems.
+                      </CardDescription>
+                  </div>
+                   <Dialog open={isNewMocOpen} onOpenChange={setIsNewMocOpen}>
+                      <DialogTrigger asChild>
+                          <Button>
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Propose Change
+                          </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                          <DialogHeader>
+                              <DialogTitle>Management of Change Proposal</DialogTitle>
+                              <DialogDescription>
+                                  Submit a new proposal for a significant change to operations.
+                              </DialogDescription>
+                          </DialogHeader>
+                          <NewMocForm onClose={() => setIsNewMocOpen(false)} onUpdate={fetchData} />
+                      </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent>
+                  <MocTable mocs={mocs} canEdit={canEditMoc} onDelete={handleDeleteMoc} />
+                </CardContent>
+              </Card>
           </TabsContent>
         </Tabs>
       </main>
