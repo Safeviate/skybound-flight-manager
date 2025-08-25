@@ -191,6 +191,19 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="logo"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Company Logo</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/*" {...form.register('logo')} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="adminName"
@@ -291,7 +304,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     render={({ field }) => (
                         <FormItem className="pt-4">
                             <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                 <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a font" />
