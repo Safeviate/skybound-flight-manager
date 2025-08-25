@@ -9,23 +9,24 @@ import type { QualityAudit, AuditScheduleItem, Alert, NonConformanceIssue, Corre
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCcw, FileText } from 'lucide-react';
+import { Bot, ChevronRight, ListChecks, Search, MoreHorizontal, Archive, Percent, RotateCw, FileText, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AuditSchedule } from './audit-schedule';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, doc, setDoc, updateDoc, writeBatch, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, updateDoc, writeBatch, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AuditChecklistsManager } from './audit-checklists-manager';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CapTracker } from './cap-tracker';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const ComplianceChart = ({ data }: { data: QualityAudit[] }) => {
@@ -279,6 +280,26 @@ export function QualityPageContent({
     }
   }
 
+  const handleDeleteAudit = async (auditId: string) => {
+    if (!company) return;
+    try {
+      const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
+      await deleteDoc(auditRef);
+      setAudits(prev => prev.filter(a => a.id !== auditId));
+      toast({
+        title: 'Audit Deleted',
+        description: 'The audit has been permanently deleted.',
+      });
+    } catch (error) {
+      console.error("Error deleting audit:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not permanently delete the audit.',
+      });
+    }
+  };
+
   const getComplianceColor = (score: number) => {
     if (score >= 95) return 'text-green-600';
     if (score >= 80) return 'text-yellow-600';
@@ -373,7 +394,7 @@ export function QualityPageContent({
                           <div className="flex items-center gap-2">
                               {showArchived && selectedAudits.length > 0 && (
                                    <Button variant="outline" onClick={handleBulkRestore}>
-                                      <RotateCcw className="mr-2 h-4 w-4" />
+                                      <RotateCw className="mr-2 h-4 w-4" />
                                       Restore Selected ({selectedAudits.length})
                                   </Button>
                               )}
@@ -452,10 +473,32 @@ export function QualityPageContent({
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent>
                                                   {showArchived ? (
-                                                      <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
-                                                          <RotateCcw className="mr-2 h-4 w-4" />
-                                                          Restore
-                                                      </DropdownMenuItem>
+                                                      <>
+                                                        <DropdownMenuItem onSelect={() => handleRestoreAudit(audit.id)}>
+                                                            <RotateCw className="mr-2 h-4 w-4" />
+                                                            Restore
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                                                                </DropdownMenuItem>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        This action cannot be undone. This will permanently delete the audit "{audit.title}" and all its associated data.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleDeleteAudit(audit.id)}>Yes, delete audit</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                      </>
                                                   ) : (
                                                       <DropdownMenuItem onSelect={() => handleArchiveAudit(audit.id)}>
                                                           <Archive className="mr-2 h-4 w-4" />
