@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useEffect } from 'react';
 
 const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
     {
@@ -271,7 +272,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     render={({ field }) => (
                         <FormItem className="pt-4">
                             <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a font" />

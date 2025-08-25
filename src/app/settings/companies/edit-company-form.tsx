@@ -16,12 +16,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import type { Company, Feature } from '@/lib/types';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush, Type } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const features: { id: Feature, label: string, description: string }[] = [
     { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
@@ -31,6 +32,13 @@ const features: { id: Feature, label: string, description: string }[] = [
     { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
     { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
     { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
+];
+
+const fonts = [
+    { label: 'Inter', value: 'var(--font-inter)' },
+    { label: 'Roboto', value: 'var(--font-roboto)' },
+    { label: 'Lato', value: 'var(--font-lato)' },
+    { label: 'Montserrat', value: 'var(--font-montserrat)' },
 ];
 
 const companyFormSchema = z.object({
@@ -52,6 +60,7 @@ const companyFormSchema = z.object({
     sidebarBackground: z.string().optional(),
     sidebarForeground: z.string().optional(),
     sidebarAccent: z.string().optional(),
+    font: z.string().optional(),
   }).optional(),
 });
 
@@ -98,6 +107,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
             sidebarBackground: '',
             sidebarForeground: '',
             sidebarAccent: '',
+            font: 'var(--font-inter)',
         },
     })
   }, [company, form]);
@@ -205,6 +215,26 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         </CardContent>
                     </Card>
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="theme.font"
+                    render={({ field }) => (
+                        <FormItem className="pt-4">
+                            <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a font" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {fonts.map(font => <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
 
             <FormField
