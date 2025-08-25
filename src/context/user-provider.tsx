@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, doc } from 'firebase/firestore';
+import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, doc, collectionGroup } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
@@ -14,6 +14,7 @@ interface UserContextType {
   company: Company | null;
   setCompany: (company: Company | null) => void;
   userCompanies: Company[];
+  setUserCompanies: React.Dispatch<React.SetStateAction<Company[]>>;
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
@@ -266,42 +267,57 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
   }, [logout, checkExpiringDocuments]);
   
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser && firebaseUser.email) {
-            const companyId = 'skybound-aero';
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                try {
+                    // Search across all companies for the user
+                    const usersQuery = query(collectionGroup(db, 'users'), where('id', '==', firebaseUser.uid));
+                    const studentsQuery = query(collectionGroup(db, 'students'), where('id', '==', firebaseUser.uid));
 
-            try {
-                // Try fetching from 'users' collection first
-                let userDocRef = doc(db, 'companies', companyId, 'users', firebaseUser.uid);
-                let userSnap = await getDoc(userDocRef);
+                    const [usersSnapshot, studentsSnapshot] = await Promise.all([
+                        getDocs(usersQuery),
+                        getDocs(studentsQuery),
+                    ]);
+                    
+                    let userDocSnap, collectionType;
+                    if (!usersSnapshot.empty) {
+                        userDocSnap = usersSnapshot.docs[0];
+                        collectionType = 'users';
+                    } else if (!studentsSnapshot.empty) {
+                        userDocSnap = studentsSnapshot.docs[0];
+                        collectionType = 'students';
+                    }
 
-                // If not found in 'users', try 'students' collection
-                if (!userSnap.exists()) {
-                    userDocRef = doc(db, 'companies', companyId, 'students', firebaseUser.uid);
-                    userSnap = await getDoc(userDocRef);
-                }
+                    if (userDocSnap && collectionType) {
+                        const userData = userDocSnap.data() as User;
+                        const companyId = userData.companyId;
+                        const userDocRef = doc(db, 'companies', companyId, collectionType, firebaseUser.uid);
+                        setupListeners(userDocRef, companyId, firebaseUser.uid);
 
-                if (userSnap.exists()) {
-                    setupListeners(userDocRef, companyId, firebaseUser.uid);
-                } else {
-                    console.error(`User document for email "${firebaseUser.email}" not found in company "${companyId}" in users or students. Logging out.`);
+                        if (userData.permissions.includes('Super User')) {
+                            const companiesQuery = query(collection(db, 'companies'));
+                            const companiesSnapshot = await getDocs(companiesQuery);
+                            setUserCompanies(companiesSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()} as Company)));
+                        }
+
+                    } else {
+                        console.error(`User document for UID "${firebaseUser.uid}" not found in any company. Logging out.`);
+                        logout();
+                    }
+                } catch (error) {
+                    console.error("Error during initial data fetch:", error);
                     logout();
                 }
-
-            } catch (error) {
-                console.error("Error during initial data fetch:", error);
-                logout();
+            } else {
+                setUser(null);
+                setCompany(null);
             }
-        } else {
-            setUser(null);
-            setCompany(null);
-        }
-        setLoading(false);
-    });
+            setLoading(false);
+        });
 
-    return () => unsubscribe();
-  }, [logout, setupListeners]);
+        return () => unsubscribe();
+    }, [logout, setupListeners]);
 
 
   const login = async (email: string, password?: string): Promise<boolean> => {
@@ -381,7 +397,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, company, setCompany: setActiveCompany, userCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
+    <UserContext.Provider value={{ user, company, setCompany: setActiveCompany, userCompanies, setUserCompanies, loading, login, logout, updateUser, updateCompany, getUnacknowledgedAlerts, acknowledgeAlerts }}>
       {children}
     </UserContext.Provider>
   );
