@@ -30,6 +30,7 @@ import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
@@ -232,153 +233,156 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 pt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="make"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aircraft Make</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Cessna" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="model"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aircraft Model</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., 172 Skyhawk" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="tailNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Aircraft Registration</FormLabel>
-                <div className="flex items-center gap-2">
-                    <FormControl>
-                        <Input placeholder="e.g., ZS-ABC" {...field} />
-                    </FormControl>
-                    {settings.useAiChecklists && (
-                        <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
-                            <Bot className="h-4 w-4" />
-                        </Button>
+        <ScrollArea className="h-[65vh] pr-4">
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="make"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Aircraft Make</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Cessna" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
                     )}
-                </div>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-             <FormField
-                control={form.control}
-                name="aircraftType"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Aircraft Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    />
+                    <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Aircraft Model</FormLabel>
                         <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select aircraft type" />
-                        </SelectTrigger>
+                            <Input placeholder="e.g., 172 Skyhawk" {...field} />
                         </FormControl>
-                        <SelectContent>
-                            <SelectItem value="SE">SE</SelectItem>
-                            <SelectItem value="ME">ME</SelectItem>
-                            <SelectItem value="FSTD">FSTD</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-            control={form.control}
-            name="hours"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Current Hobbs Hours</FormLabel>
-                <div className="flex items-center gap-2">
-                        <FormControl>
-                            <Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} />
-                        </FormControl>
-                        {settings.useAiChecklists && (
-                            <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
-                                <Bot className="h-4 w-4" />
-                            </Button>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="tailNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Aircraft Registration</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <FormControl>
+                                <Input placeholder="e.g., ZS-ABC" {...field} />
+                            </FormControl>
+                            {settings.useAiChecklists && (
+                                <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
+                                    <Bot className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="aircraftType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Aircraft Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select aircraft type" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="SE">SE</SelectItem>
+                                    <SelectItem value="ME">ME</SelectItem>
+                                    <SelectItem value="FSTD">FSTD</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
                         )}
-                    </div>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
-        
-        <Separator />
-        <h4 className="font-medium text-center">Maintenance Information</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-             <FormField
-                control={form.control}
-                name="currentTachoReading"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Current Tacho Reading</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="next50HourInspection"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Next 50hr Insp.</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="next100HourInspection"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Next 100hr Insp.</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
+                    />
+                    <FormField
+                    control={form.control}
+                    name="hours"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Current Hobbs Hours</FormLabel>
+                        <div className="flex items-center gap-2">
+                                <FormControl>
+                                    <Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} />
+                                </FormControl>
+                                {settings.useAiChecklists && (
+                                    <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
+                                        <Bot className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                
+                <Separator />
+                <h4 className="font-medium text-center">Maintenance Information</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="currentTachoReading"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Current Tacho Reading</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="next50HourInspection"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Next 50hr Insp.</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="next100HourInspection"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Next 100hr Insp.</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
-        <Separator />
+                <Separator />
 
-        <h4 className="font-medium text-center">Document Expiry Dates</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DatePickerField name="airworthinessExpiry" label="Certificate of Airworthiness" />
-        <DatePickerField name="insuranceExpiry" label="Insurance" />
-        <DatePickerField name="certificateOfReleaseToServiceExpiry" label="Release to Service" />
-        <DatePickerField name="certificateOfRegistrationExpiry" label="Certificate of Registration" />
-        <DatePickerField name="massAndBalanceExpiry" label="Mass & Balance" />
-        <DatePickerField name="radioStationLicenseExpiry" label="Radio Station License" />
-        </div>
-        
+                <h4 className="font-medium text-center">Document Expiry Dates</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DatePickerField name="airworthinessExpiry" label="Certificate of Airworthiness" />
+                <DatePickerField name="insuranceExpiry" label="Insurance" />
+                <DatePickerField name="certificateOfReleaseToServiceExpiry" label="Release to Service" />
+                <DatePickerField name="certificateOfRegistrationExpiry" label="Certificate of Registration" />
+                <DatePickerField name="massAndBalanceExpiry" label="Mass & Balance" />
+                <DatePickerField name="radioStationLicenseExpiry" label="Radio Station License" />
+                </div>
+            </div>
+        </ScrollArea>
         <div className="md:col-span-2 flex justify-end items-center pt-4">
           <Button type="submit">{initialData ? 'Save Changes' : 'Add Aircraft'}</Button>
         </div>
