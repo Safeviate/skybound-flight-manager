@@ -81,14 +81,11 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
         
         let logoUrl = '';
         if (logoFile) {
-            const reader = new FileReader();
-            reader.readAsDataURL(logoFile);
-            await new Promise<void>((resolve, reject) => {
-                reader.onload = () => {
-                    logoUrl = reader.result as string;
-                    resolve();
-                };
-                reader.onerror = (error) => reject(error);
+            logoUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(logoFile);
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = error => reject(error);
             });
         }
 
