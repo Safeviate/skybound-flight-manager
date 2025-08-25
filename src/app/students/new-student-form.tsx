@@ -21,17 +21,18 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
-import type { Role, User, Alert } from '@/lib/types';
+import type { Role, User, Alert, UserDocument } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, writeBatch, setDoc, doc } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { createUserAndSendWelcomeEmail } from '../actions';
 import { useSettings } from '@/context/settings-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_DOCUMENTS } from '@/lib/types';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -98,36 +99,47 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         return;
     }
     
-    const documentsToSave = (data.documents || [])
-        .filter(doc => doc.expiryDate)
-        .map(doc => ({
-            id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-            type: doc.type,
-            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
-        }));
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, Math.random().toString(36).slice(-8));
+        const newUserId = userCredential.user.uid;
+        await updateProfile(userCredential.user, { displayName: data.name });
 
-    const studentData = {
-        ...data,
-        role: 'Student',
-        status: 'Active',
-        documents: documentsToSave,
-    } as unknown as Omit<User, 'id'>;
+        const documentsToSave = (data.documents || [])
+            .filter(doc => doc.expiryDate)
+            .map(doc => ({
+                id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
+                type: doc.type as typeof ALL_DOCUMENTS[number],
+                expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+            }));
 
-    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, settings.welcomeEmailEnabled);
+        const studentData: Partial<User> = {
+            id: newUserId,
+            companyId: company.id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            role: 'Student',
+            status: 'Active',
+            instructor: data.instructor,
+            licenseType: data.licenseType as any,
+            studentCode: data.studentCode,
+            consentDisplayContact: data.consentDisplayContact,
+            documents: documentsToSave,
+            flightHours: 0,
+            progress: 0,
+        };
 
-    if (result.success) {
-        toast({
-            title: 'Student Added',
-            description: result.message,
-        });
+        await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentData);
+
+        toast({ title: 'Student Added', description: `${data.name} has been added.` });
         form.reset();
         onSuccess();
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Error Creating Student',
-            description: result.message,
-        });
+    } catch (error: any) {
+        let errorMessage = 'An error occurred while creating the student.';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email address is already in use by another account.';
+        }
+        toast({ variant: 'destructive', title: 'Error Creating Student', description: errorMessage });
     }
   }
 
@@ -227,5 +239,3 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     </Form>
   );
 }
-
-    

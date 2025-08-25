@@ -6,7 +6,6 @@ import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { sendEmail } from '@/ai/flows/send-email-flow';
 import { format } from 'date-fns';
 
 export async function createUserAndSendWelcomeEmail(
@@ -17,7 +16,6 @@ export async function createUserAndSendWelcomeEmail(
 ): Promise<{ success: boolean; message: string }> {
   try {
     let newUserId: string;
-    let userExists = false;
 
     // If email is provided, create user in Firebase Auth
     if (userData.email) {
@@ -30,19 +28,9 @@ export async function createUserAndSendWelcomeEmail(
                 displayName: userData.name,
             });
 
-            if (welcomeEmailEnabled) {
-                const loginUrl = 'https://skybound-flight-manager.web.app/login';
-                await sendEmail({
-                    to: userData.email,
-                    subject: `Welcome to ${companyName}`,
-                    emailData: {
-                        userName: userData.name,
-                        companyName: companyName,
-                        userEmail: userData.email,
-                        loginUrl: loginUrl
-                    }
-                });
-            }
+            // The welcome email logic is now completely removed from the core user creation.
+            // It was previously causing issues and was not desired.
+            
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
                 return { success: false, message: "This email address is already in use by another account." };

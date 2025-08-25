@@ -29,7 +29,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { createUserAndSendWelcomeEmail } from '../actions';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { navItems as allNavItems, adminNavItems } from '@/components/layout/nav';
@@ -37,6 +36,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PermissionsListbox } from './permissions-listbox';
 import { ALL_DOCUMENTS } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -131,37 +134,54 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
         return;
     }
+    
+    let newUserId;
+    try {
+        if (data.email) {
+            const tempPassword = Math.random().toString(36).slice(-8);
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
+            newUserId = userCredential.user.uid;
+            await updateProfile(userCredential.user, { displayName: data.name });
+        } else {
+            newUserId = doc(collection(db, 'temp')).id;
+        }
 
-    const documentsToSave: UserDocument[] = (data.documents || [])
-        .filter(doc => doc.expiryDate) // Only save documents that have an expiry date set
-        .map(doc => ({
-            id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-            type: doc.type as typeof ALL_DOCUMENTS[number],
-            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
-        }));
-
-    const dataToSubmit = {
-        ...data,
-        instructorGrade: isInstructorRole ? data.instructorGrade : null,
-        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
-        documents: documentsToSave,
-    } as unknown as Omit<User, 'id'>
-
-    const result = await createUserAndSendWelcomeEmail(dataToSubmit, company.id, company.name, settings.welcomeEmailEnabled);
-
-     if (result.success) {
-        toast({
-            title: 'Personnel Added',
-            description: result.message,
-        });
+        const documentsToSave: UserDocument[] = (data.documents || [])
+            .filter(doc => doc.expiryDate)
+            .map(doc => ({
+                id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
+                type: doc.type as typeof ALL_DOCUMENTS[number],
+                expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+            }));
+            
+        const personnelData: Omit<User, 'password'> = {
+            id: newUserId,
+            companyId: company.id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            role: data.role,
+            department: data.department,
+            instructorGrade: isInstructorRole ? data.instructorGrade : null,
+            consentDisplayContact: data.consentDisplayContact,
+            permissions: data.permissions as Permission[],
+            visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
+            documents: documentsToSave,
+            status: 'Active'
+        };
+        
+        await setDoc(doc(db, `companies/${company.id}/users`, newUserId), personnelData);
+        
+        toast({ title: 'Personnel Added', description: `${data.name} has been added.` });
         form.reset();
         onSuccess();
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Error Creating Personnel',
-            description: result.message,
-        });
+
+    } catch (error: any) {
+        let errorMessage = 'An error occurred while creating the user.';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email address is already in use by another account.';
+        }
+        toast({ variant: 'destructive', title: 'Error Creating Personnel', description: errorMessage });
     }
   }
 
@@ -451,5 +471,3 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     </Form>
   );
 }
-
-    
