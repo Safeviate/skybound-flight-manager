@@ -23,13 +23,22 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
-  const { user, company: currentCompany, setCompany, userCompanies } = useUser();
+  const { user, company: currentCompany, setCompany, userCompanies, setUserCompanies } = useUser();
   const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isNewCompanyDialogOpen, setIsNewCompanyDialogOpen] = React.useState(false);
   const [isEditCompanyDialogOpen, setIsEditCompanyDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const router = useRouter();
+  
+  React.useEffect(() => {
+    // If userCompanies from the context is available, use it as the source of truth
+    if (userCompanies.length > 0) {
+        setCompanies(userCompanies);
+    } else {
+        setCompanies(initialCompanies);
+    }
+  }, [initialCompanies, userCompanies]);
 
   const handleUpdateCompany = async (updatedData: Partial<Company>, logoFile?: File) => {
     if (!editingCompany) return;
@@ -46,9 +55,17 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
       }
 
       const companyRef = doc(db, 'companies', editingCompany.id);
-      await updateDoc(companyRef, { ...updatedData, logoUrl });
+      const dataToSave = { ...updatedData, logoUrl };
+      await updateDoc(companyRef, dataToSave);
 
-      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, ...updatedData, logoUrl } : c));
+      const finalUpdatedData = { ...editingCompany, ...dataToSave };
+
+      setUserCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalUpdatedData : c));
+      
+      if (currentCompany?.id === editingCompany.id) {
+          setCompany(finalUpdatedData);
+      }
+
       setIsEditCompanyDialogOpen(false);
       setEditingCompany(null);
       toast({ title: 'Company Updated', description: 'The company details have been saved.' });
@@ -85,7 +102,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
             
             const batch = writeBatch(db);
             const companyDocRef = doc(db, 'companies', companyId);
-            const finalCompanyData: Partial<Company> = {
+            const finalCompanyData: Company = {
                 id: companyId,
                 logoUrl: logoUrl,
                 trademark: `Your Trusted Partner in Aviation`,
@@ -111,7 +128,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                 description: `The company portal for ${companyData.name} is ready.`
             });
             
-            setCompanies(prev => [...prev, { ...finalCompanyData, id: companyId } as Company]);
+            setUserCompanies(prev => [...prev, finalCompanyData]);
             setIsNewCompanyDialogOpen(false);
 
         } catch (error: any) {
