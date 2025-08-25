@@ -114,7 +114,7 @@ export default function CorporatePage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4 md:p-8">
         <div className="absolute top-8 left-8 flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
-            <span className="text-xl font-semibold">SkyBound Flight Manager</span>
+            <span className="text-xl font-semibold">Safeviate</span>
         </div>
         <div className="absolute top-8 right-8">
             <Button asChild variant="outline">
@@ -126,12 +126,6 @@ export default function CorporatePage() {
         </div>
         
         <div className="w-full max-w-4xl space-y-8">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold tracking-tight">Register Your Company</h1>
-                <p className="text-muted-foreground mt-2">
-                    Set up a new company portal, administrator account, and branding in one place.
-                </p>
-            </div>
             <Card className="w-full">
                 <CardContent className="p-6 md:p-8">
                     <NewCompanyForm onSubmit={handleNewCompany} />
