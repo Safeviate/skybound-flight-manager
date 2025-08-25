@@ -162,7 +162,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
             phone: data.phone,
             role: data.role,
             department: data.department,
-            instructorGrade: isInstructorRole ? data.instructorGrade : null,
+            instructorGrade: isInstructorRole ? data.instructorGrade || null : null,
             consentDisplayContact: data.consentDisplayContact,
             permissions: data.permissions as Permission[],
             visibleMenuItems: data.visibleMenuItems as NavMenuItem[],

@@ -93,21 +93,26 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
   });
 
   useEffect(() => {
+    const defaultTheme = {
+        primary: '',
+        background: '',
+        card: '',
+        accent: '',
+        foreground: '',
+        cardForeground: '',
+        sidebarBackground: '',
+        sidebarForeground: '',
+        sidebarAccent: '',
+        font: 'var(--font-inter)',
+    };
+
     form.reset({
         name: company.name,
         trademark: company.trademark || '',
         enabledFeatures: company.enabledFeatures || [],
-        theme: company.theme || {
-            primary: '',
-            background: '',
-            card: '',
-            accent: '',
-            foreground: '',
-            cardForeground: '',
-            sidebarBackground: '',
-            sidebarForeground: '',
-            sidebarAccent: '',
-            font: 'var(--font-inter)',
+        theme: {
+          ...defaultTheme,
+          ...company.theme,
         },
     })
   }, [company, form]);
@@ -221,7 +226,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                     render={({ field }) => (
                         <FormItem className="pt-4">
                             <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                 <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a font" />
