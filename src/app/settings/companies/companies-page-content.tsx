@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection, addDoc, setDoc } from 'firebase/firestore';
 import type { Company, Feature, User } from '@/lib/types';
 import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
@@ -95,7 +95,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
             trademark: `Your Trusted Partner in Aviation`,
             ...companyData,
         };
-        await addDoc(collection(db, 'companies'), finalCompanyData);
+        await setDoc(companyDocRef, finalCompanyData);
 
         toast({
             title: "New Company Created!",
