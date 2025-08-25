@@ -118,15 +118,15 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
 
   useEffect(() => {
     const defaultTheme = {
-        primary: '',
-        background: '',
-        card: '',
-        accent: '',
-        foreground: '',
-        cardForeground: '',
-        sidebarBackground: '',
-        sidebarForeground: '',
-        sidebarAccent: '',
+        primary: '#0d6efd',
+        background: '#f8f9fa',
+        card: '#ffffff',
+        accent: '#ffc107',
+        foreground: '#212529',
+        cardForeground: '#212529',
+        sidebarBackground: '#0c0a09',
+        sidebarForeground: '#f8f9fa',
+        sidebarAccent: '#1f2937',
         font: 'var(--font-inter)',
     };
 
@@ -180,7 +180,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         <FormItem>
                         <FormLabel>Trademark / Slogan</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Flying High Since 2002" {...field} />
+                            <Input placeholder="e.g., Flying High Since 2002" {...field} value={field.value || ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
