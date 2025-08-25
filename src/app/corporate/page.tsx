@@ -20,6 +20,7 @@ export default function CorporatePage() {
     const router = useRouter();
 
     const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+        // CORRECTLY create a predictable company ID from the name.
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
@@ -40,7 +41,7 @@ export default function CorporatePage() {
             const newUserId = userCredential.user.uid;
             await updateProfile(userCredential.user, { displayName: adminData.name });
 
-            // 2. Create Company Document with a predictable ID
+            // 2. Create Company Document with the CORRECT, PREDICTABLE ID
             const companyDocRef = doc(db, 'companies', companyId);
             
             const defaultTheme = {
