@@ -15,8 +15,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import type { Company, User, Feature } from '@/lib/types';
+import type { Company, User, Feature, NavMenuItem } from '@/lib/types';
 import { Paintbrush, Type } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -24,6 +23,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect } from 'react';
+import { navItems, adminNavItems } from '@/components/layout/nav';
+
+const allNavMenuItems = [...navItems, ...adminNavItems].map(item => item.label);
+
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
     {
@@ -64,8 +69,6 @@ const fonts = [
     { label: 'Montserrat', value: 'var(--font-montserrat)' },
 ];
 
-const MAX_FILE_SIZE = 500000; // 500KB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
@@ -81,6 +84,7 @@ const companyFormSchema = z.object({
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
   enabledFeatures: z.array(z.string()).default([]),
+  visibleMenuItems: z.array(z.string()).default(allNavMenuItems),
   theme: z.object({
     primary: z.string().optional(),
     background: z.string().optional(),
@@ -93,12 +97,16 @@ const companyFormSchema = z.object({
     sidebarAccent: z.string().optional(),
     font: z.string().optional(),
   }).optional(),
+  adminName: z.string().min(2, 'Admin name is required.'),
+  adminEmail: z.string().email('A valid admin email is required.'),
+  adminPhone: z.string().min(1, 'Admin phone number is required.'),
+  password: z.string().min(8, 'Password must be at least 8 characters.'),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
 }
 
 const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
@@ -138,7 +146,12 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     defaultValues: {
         companyName: '',
         enabledFeatures: allFeatures.map(f => f.id),
+        visibleMenuItems: allNavMenuItems,
         theme: defaultThemeValues,
+        adminName: '',
+        adminEmail: '',
+        adminPhone: '',
+        password: '',
     }
   });
 
@@ -146,7 +159,12 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     form.reset({
         companyName: '',
         enabledFeatures: allFeatures.map(f => f.id),
+        visibleMenuItems: allNavMenuItems,
         theme: defaultThemeValues,
+        adminName: '',
+        adminEmail: '',
+        adminPhone: '',
+        password: '',
     });
   }, [form]);
 
@@ -157,10 +175,16 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         enabledFeatures: data.enabledFeatures as Feature[],
     };
     
+    const adminData: Omit<User, 'id' | 'companyId'| 'role' | 'permissions'> = {
+        name: data.adminName,
+        email: data.adminEmail,
+        phone: data.adminPhone,
+        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
+    };
+
     const logoFile = data.logo?.[0];
 
-    onSubmit(newCompany, logoFile);
-    form.reset();
+    onSubmit(newCompany, adminData, data.password, logoFile);
   }
 
   return (
@@ -201,6 +225,26 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                 />
             </div>
             
+            <Separator />
+            
+             <div className="space-y-4">
+                <h4 className="font-semibold">Initial Administrator Account</h4>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="adminName" render={({ field }) => (
+                        <FormItem><FormLabel>Admin Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                     <FormField control={form.control} name="adminEmail" render={({ field }) => (
+                        <FormItem><FormLabel>Admin Email</FormLabel><FormControl><Input type="email" placeholder="e.g., admin@aero.com" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                     <FormField control={form.control} name="adminPhone" render={({ field }) => (
+                        <FormItem><FormLabel>Admin Phone</FormLabel><FormControl><Input placeholder="e.g., +27821234567" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                     <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormItem><FormLabel>Admin Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                </div>
+            </div>
+
             <Separator />
 
              <div className="space-y-2">
@@ -262,6 +306,51 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                     )}
                 />
             </div>
+            
+            <Separator />
+            
+             <FormField
+                control={form.control}
+                name="visibleMenuItems"
+                render={() => (
+                    <FormItem>
+                        <div className="mb-4">
+                            <FormLabel className="text-base">Default Menu Items for New Users</FormLabel>
+                            <FormDescription>
+                            Select the menu items that will be visible by default for new users in this company.
+                            </FormDescription>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {allNavMenuItems.map((item) => (
+                                <FormField
+                                    key={item}
+                                    control={form.control}
+                                    name="visibleMenuItems"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value?.includes(item)}
+                                                    onCheckedChange={(checked) => {
+                                                        const newItems = checked
+                                                            ? [...(field.value || []), item]
+                                                            : field.value?.filter((label) => label !== item);
+                                                        field.onChange(newItems);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">{item}</FormLabel>
+                                        </FormItem>
+                                    )}
+                                />
+                            ))}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <Separator />
 
             <FormField
                 control={form.control}

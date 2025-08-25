@@ -11,15 +11,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
-import { db, auth } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection, addDoc } from 'firebase/firestore';
 import type { Company, Feature, User } from '@/lib/types';
 import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { NewCompanyForm } from '@/app/corporate/new-company-form';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { NewCompanyForm } from './new-company-form';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
@@ -74,76 +73,46 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update company.' });
     }
   };
-
-  const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+  
+  const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
+    const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
-        const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    let logoUrl = '';
+    if (logoFile) {
+        logoUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(logoFile);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    try {
+        const companyDocRef = doc(db, 'companies', companyId);
+        const finalCompanyData: Company = {
+            id: companyId,
+            logoUrl: logoUrl,
+            trademark: `Your Trusted Partner in Aviation`,
+            ...companyData,
+        };
+        await addDoc(collection(db, 'companies'), finalCompanyData);
+
+        toast({
+            title: "New Company Created!",
+            description: `The company portal for ${companyData.name} is ready. You should create an admin user for it.`
+        });
         
-        let logoUrl = '';
-        if (logoFile) {
-            logoUrl = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(logoFile);
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
-            const newUserId = userCredential.user.uid;
-            
-            await updateProfile(userCredential.user, {
-                displayName: adminData.name,
-            });
-            
-            const batch = writeBatch(db);
-            const companyDocRef = doc(db, 'companies', companyId);
-            const finalCompanyData: Company = {
-                id: companyId,
-                logoUrl: logoUrl,
-                trademark: `Your Trusted Partner in Aviation`,
-                ...companyData,
-            };
-            batch.set(companyDocRef, finalCompanyData, { merge: true });
-
-            const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
-            const finalUserData: User = {
-                ...adminData,
-                id: newUserId,
-                companyId: companyId,
-                role: 'Admin',
-                permissions: ROLE_PERMISSIONS['Admin'],
-                status: 'Active',
-            } as User;
-            batch.set(userInCompanyRef, finalUserData);
-
-            await batch.commit();
-
-            toast({
-                title: "New Company & Admin Created!",
-                description: `The company portal for ${companyData.name} is ready.`
-            });
-            
-            setUserCompanies(prev => [...prev, finalCompanyData]);
-            setIsNewCompanyDialogOpen(false);
-
-        } catch (error: any) {
-            console.error("Error creating company:", error);
-            const errorCode = error.code;
-            let errorMessage = "An unknown error occurred.";
-            if (errorCode === 'auth/email-already-in-use') {
-                errorMessage = "This email address is already in use by another account.";
-            } else if (errorCode === 'auth/weak-password') {
-                errorMessage = "The password is too weak. Please use at least 8 characters.";
-            }
-            toast({
-                variant: 'destructive',
-                title: "Registration Failed",
-                description: errorMessage,
-            });
-        }
-    };
+        setUserCompanies(prev => [...prev, finalCompanyData]);
+        setIsNewCompanyDialogOpen(false);
+    } catch (error: any) {
+        console.error("Error creating company:", error);
+        toast({
+            variant: 'destructive',
+            title: "Registration Failed",
+            description: "An error occurred while creating the company.",
+        });
+    }
+  };
 
   const handleSwitchCompany = (companyToSwitch: Company) => {
     setCompany(companyToSwitch);
@@ -179,7 +148,7 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                  <DialogHeader>
                     <DialogTitle>Create New Company</DialogTitle>
                     <DialogDescription>
-                        Set up a new company portal and its first administrator account.
+                        Set up a new company portal. You can add users after creation.
                     </DialogDescription>
                 </DialogHeader>
                 <NewCompanyForm onSubmit={handleNewCompany} />
