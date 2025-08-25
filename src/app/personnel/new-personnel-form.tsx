@@ -191,7 +191,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                         <FormItem>
                         <FormLabel>Email (Optional)</FormLabel>
                         <FormControl>
-                            <Input type="email" placeholder="staff@company.com" {...field} />
+                            <Input type="email" placeholder="staff@company.com" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>If provided, a user account will be created.</FormDescription>
                         <FormMessage />
