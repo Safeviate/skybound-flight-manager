@@ -54,7 +54,7 @@ export const navItems: {
   requiredFeature?: Feature;
 }[] = [
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
-  { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard, requiredPermissions: ['Super User'] },
+  { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
   { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck, requiredPermissions: ['Aircraft:View'] },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
@@ -66,15 +66,15 @@ export const navItems: {
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
-  { href: '/settings/company', label: 'Company Settings', icon: Cog, requiredPermissions: ['Super User'] },
+  { href: '/settings/company', label: 'Company Settings', icon: Cog },
 ];
 
 export const adminNavItems = [
-    { href: '/settings/companies', label: 'Manage Companies', icon: Building, requiredPermissions: ['Super User'] },
-    { href: '/reports/system-health', label: 'System Health', icon: Activity, requiredPermissions: ['Super User'] },
-    { href: '/settings/seed-data', label: 'Seed Data', icon: Database, requiredPermissions: ['Super User'] },
-    { href: '/functions', label: 'Functions', icon: FlaskConical, requiredPermissions: ['Super User'] },
-    { href: '/gantt-chart', label: 'Gantt Chart', icon: BarChart, requiredPermissions: ['Super User'] },
+    { href: '/settings/companies', label: 'Manage Companies', icon: Building },
+    { href: '/reports/system-health', label: 'System Health', icon: Activity },
+    { href: '/settings/seed-data', label: 'Seed Data', icon: Database },
+    { href: '/functions', label: 'Functions', icon: FlaskConical },
+    { href: '/gantt-chart', label: 'Gantt Chart', icon: BarChart },
 ]
 
 const settingsNavItems: {
