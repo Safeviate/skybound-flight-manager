@@ -35,7 +35,7 @@ export default function CorporatePage() {
 
         try {
             // This is the new, correct sequence.
-            // 1. First, create all the necessary documents in Firestore.
+            // 1. First, create the company document in Firestore.
             const companyDocRef = doc(db, 'companies', companyId);
             const finalCompanyData: Company = {
                 id: companyId,
@@ -43,23 +43,7 @@ export default function CorporatePage() {
                 trademark: `Your Trusted Partner in Aviation`,
                 ...companyData,
             };
-
-            // We use a temporary user ID here that will be replaced by the auth UID.
-            const tempUserId = `temp-${Date.now()}`; 
-            const userInCompanyRef = doc(db, `companies/${companyId}/users`, tempUserId);
-            
-            const finalUserData: Partial<User> = {
-                ...adminData,
-                companyId: companyId,
-                role: 'Admin',
-                permissions: ROLE_PERMISSIONS['Admin'],
-                status: 'Active',
-            };
-
-            // Write these initial documents.
             await setDoc(companyDocRef, finalCompanyData);
-            await setDoc(userInCompanyRef, finalUserData);
-
 
             // 2. NOW, create the user in Firebase Authentication.
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
@@ -69,11 +53,17 @@ export default function CorporatePage() {
                 displayName: adminData.name,
             });
 
-            // 3. Finally, update the user document with the REAL auth UID.
+            // 3. Finally, create the user document in Firestore with the REAL auth UID.
             const finalUserDocRef = doc(db, `companies/${companyId}/users`, newUserId);
-            await setDoc(finalUserDocRef, { ...finalUserData, id: newUserId });
-            // This leaves a temporary document with the random ID, but prevents the race condition.
-            // A cleanup function could remove these later.
+            const finalUserData: Partial<User> = {
+                ...adminData,
+                id: newUserId,
+                companyId: companyId,
+                role: 'Admin',
+                permissions: ROLE_PERMISSIONS['Admin'],
+                status: 'Active',
+            };
+            await setDoc(finalUserDocRef, finalUserData);
 
             toast({
                 title: "Administrator Account Created!",

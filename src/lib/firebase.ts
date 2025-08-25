@@ -2,7 +2,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getPerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration is now hardcoded to fix initialization errors.
 const firebaseConfig = {
@@ -20,13 +19,5 @@ const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseCon
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let perf: any = null;
-if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
-  try {
-    perf = getPerformance(app);
-  } catch (error) {
-    console.log("Could not initialize Firebase Performance", error);
-  }
-}
 
-export { app, db, auth, perf };
+export { app, db, auth };
