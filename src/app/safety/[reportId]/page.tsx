@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -391,13 +392,16 @@ function SafetyReportInvestigationPage() {
         return;
     }
     
-    const companyId = 'skybound-aero';
+    if (!company) {
+        setLoading(false);
+        return;
+    }
     
     async function fetchReport() {
         if (!reportId) return;
         setDataLoading(true);
         try {
-            const reportRef = doc(db, `companies/${companyId}/safety-reports`, reportId);
+            const reportRef = doc(db, `companies/${company!.id}/safety-reports`, reportId);
             const reportSnap = await getDoc(reportRef);
 
             if (reportSnap.exists()) {
@@ -417,14 +421,14 @@ function SafetyReportInvestigationPage() {
     }
     
     async function fetchPersonnel() {
-      const usersRef = collection(db, `companies/${companyId}/users`);
+      const usersRef = collection(db, `companies/${company!.id}/users`);
       const snapshot = await getDocs(usersRef);
       setPersonnel(snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User)));
     };
 
     fetchReport();
     fetchPersonnel();
-  }, [reportId, user, userLoading, router, toast]);
+  }, [reportId, user, userLoading, company, router, toast]);
 
   const investigationTeamMembers = useMemo(() => {
     if (!report || !personnel.length || !report.investigationTeam) return [];
@@ -444,12 +448,10 @@ function SafetyReportInvestigationPage() {
 
 
   const handleNewDiscussionMessage = (data: DiscussionFormValues) => {
-    if (!user || !report) {
+    if (!user || !report || !company) {
         toast({ variant: 'destructive', title: 'You must be logged in to post.'});
         return;
     }
-
-    const companyId = 'skybound-aero';
 
     const newEntry: DiscussionEntry = {
         id: `d-${Date.now()}`,
@@ -497,12 +499,11 @@ function SafetyReportInvestigationPage() {
 
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
-    if (!report) return;
-    const companyId = 'skybound-aero';
+    if (!report || !company) return;
     const newReport = { ...report, ...updatedReport };
     setReport(newReport); // Optimistic update
     try {
-        const reportRef = doc(db, `companies/${companyId}/safety-reports`, reportId);
+        const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
         await setDoc(reportRef, newReport, { merge: true });
         if (showToast) {
             toast({ title: 'Report Updated', description: 'Your changes have been saved.' });
@@ -515,9 +516,9 @@ function SafetyReportInvestigationPage() {
   };
 
   const handlePromoteRisk = async (newRisk: Risk) => {
-    const companyId = 'skybound-aero';
+    if(!company) return;
     try {
-        const riskRef = doc(db, `companies/${companyId}/risks`, newRisk.id);
+        const riskRef = doc(db, `companies/${company.id}/risks`, newRisk.id);
         await setDoc(riskRef, newRisk);
     } catch (error) {
         console.error("Error promoting risk:", error);
@@ -1063,4 +1064,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-

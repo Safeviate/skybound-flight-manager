@@ -1,8 +1,6 @@
 
 'use client';
 
-// This file is being kept for now to avoid breaking imports, but it no longer provides mock data.
-// All data fetching is now handled directly by components from Firestore.
 import type { Aircraft, User, Booking, Endorsement, TrainingLogEntry, Airport, SafetyReport, Risk, QualityAudit, AuditScheduleItem, Alert, Company, ComplianceItem, RiskLikelihood, RiskSeverity } from './types';
 
 export const airportData: Airport[] = [];

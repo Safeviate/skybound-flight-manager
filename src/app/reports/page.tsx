@@ -1,25 +1,36 @@
 
+'use client';
+
 import { getReportsPageData } from './data';
 import { ReportsPageContent } from './reports-page-content';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import type { Booking, Aircraft, User } from '@/lib/types';
 
-async function getInitialData(companyId: string) {
-    try {
-        const data = await getReportsPageData(companyId);
-        return data || { bookings: [], aircraft: [], users: [] };
-    } catch (error) {
-        console.error("Failed to fetch initial data for reports page:", error);
-        return { bookings: [], aircraft: [], users: [] };
-    }
-}
+export default function ReportsPage() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{ bookings: Booking[], aircraft: Aircraft[], users: User[] }>({
+        bookings: [],
+        aircraft: [],
+        users: [],
+    });
 
-export default async function ReportsPage() {
-    const companyId = 'skybound-aero';
-    const { bookings, aircraft, users } = await getInitialData(companyId);
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getReportsPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
 
     return <ReportsPageContent 
-        initialBookings={bookings}
-        initialAircraft={aircraft}
-        initialUsers={users}
+        initialBookings={initialData.bookings}
+        initialAircraft={initialData.aircraft}
+        initialUsers={initialData.users}
     />;
 }
 

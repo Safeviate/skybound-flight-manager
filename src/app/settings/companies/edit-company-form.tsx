@@ -92,6 +92,7 @@ const companyFormSchema = z.object({
     background: z.string().optional(),
     card: z.string().optional(),
     foreground: z.string().optional(),
+    headerForeground: z.string().optional(),
     cardForeground: z.string().optional(),
     accent: z.string().optional(),
     sidebarBackground: z.string().optional(),
@@ -136,6 +137,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         card: '#ffffff',
         accent: '#ffc107',
         foreground: '#212529',
+        headerForeground: '#212529',
         cardForeground: '#212529',
         sidebarBackground: '#0c0a09',
         sidebarForeground: '#f8f9fa',
@@ -155,6 +157,7 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
           card: companyTheme.card || defaultTheme.card,
           accent: companyTheme.accent || defaultTheme.accent,
           foreground: companyTheme.foreground || defaultTheme.foreground,
+          headerForeground: companyTheme.headerForeground || defaultTheme.headerForeground,
           cardForeground: companyTheme.cardForeground || defaultTheme.cardForeground,
           sidebarBackground: companyTheme.sidebarBackground || defaultTheme.sidebarBackground,
           sidebarForeground: companyTheme.sidebarForeground || defaultTheme.sidebarForeground,
@@ -247,6 +250,12 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
                         <CardContent className="p-4 grid grid-cols-2 gap-4">
                            <ColorInput name="theme.foreground" control={form.control} label="Foreground" />
                            <ColorInput name="theme.cardForeground" control={form.control} label="Card Text" />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="p-4"><CardTitle className="text-base">Header Text</CardTitle></CardHeader>
+                        <CardContent className="p-4">
+                            <ColorInput name="theme.headerForeground" control={form.control} label="Header" />
                         </CardContent>
                     </Card>
                      <Card>

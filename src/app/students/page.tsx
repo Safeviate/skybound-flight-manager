@@ -1,21 +1,28 @@
 
+'use client';
+
 import { getStudentsPageData } from './data';
 import { StudentsPageContent } from './students-page-content';
 import type { User } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
 
-async function getInitialData(companyId: string): Promise<User[]> {
-    try {
-        return await getStudentsPageData(companyId);
-    } catch (error) {
-        console.error("Failed to fetch initial data for students page:", error);
-        return [];
-    }
-}
 
-export default async function StudentsPageContainer() {
-    // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero';
-    const initialStudents = await getInitialData(companyId);
+export default function StudentsPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialStudents, setInitialStudents] = useState<User[]>([]);
+
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getStudentsPageData(company.id);
+                setInitialStudents(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
     
     return <StudentsPageContent initialStudents={initialStudents} />;
 }

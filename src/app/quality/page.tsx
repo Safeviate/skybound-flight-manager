@@ -1,30 +1,38 @@
 
+'use client';
+
 import { getQualityPageData } from './data';
 import { QualityPageContent } from './quality-page-content';
 import type { QualityAudit, AuditScheduleItem, AuditChecklist, User } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
 
-async function getInitialData(companyId: string) {
-    if (!companyId) {
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] };
-    }
-    try {
-        const data = await getQualityPageData(companyId);
-        return data || { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] };
-    } catch (error) {
-        console.error("Failed to fetch initial data for quality page:", error);
-        return { auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] };
-    }
-}
+export default function QualityPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{
+        auditsList: QualityAudit[],
+        scheduleList: AuditScheduleItem[],
+        checklistsList: AuditChecklist[],
+        personnelList: User[]
+    }>({ auditsList: [], scheduleList: [], checklistsList: [], personnelList: [] });
 
-export default async function QualityPageContainer() {
-    const companyId = 'skybound-aero';
-    const { auditsList, scheduleList, checklistsList, personnelList } = await getInitialData(companyId);
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getQualityPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
     
     return <QualityPageContent 
-                initialAudits={auditsList} 
-                initialSchedule={scheduleList}
-                initialChecklists={checklistsList} 
-                initialPersonnel={personnelList}
+                initialAudits={initialData.auditsList} 
+                initialSchedule={initialData.scheduleList}
+                initialChecklists={initialData.checklistsList} 
+                initialPersonnel={initialData.personnelList}
             />;
 }
 

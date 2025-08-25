@@ -1,26 +1,37 @@
 
+'use client';
+
 import { AircraftPageContent } from './aircraft-page-content';
 import { getAircraftPageData } from './data';
 import type { Aircraft, Booking, ExternalContact } from '@/lib/types';
-
-async function getInitialData(companyId: string): Promise<{ aircraft: Aircraft[], bookings: Booking[], contacts: ExternalContact[] }> {
-    try {
-        return await getAircraftPageData(companyId);
-    } catch (error) {
-        console.error("Failed to fetch initial data for aircraft page:", error);
-        return { aircraft: [], bookings: [], contacts: [] };
-    }
-}
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
 
 
-export default async function AircraftPageContainer() {
-    const companyId = 'skybound-aero';
-    const { aircraft, bookings, contacts } = await getInitialData(companyId);
+export default function AircraftPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{
+        aircraft: Aircraft[],
+        bookings: Booking[],
+        contacts: ExternalContact[]
+    }>({ aircraft: [], bookings: [], contacts: [] });
+
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getAircraftPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
 
     return <AircraftPageContent 
-                initialAircraft={aircraft} 
-                initialBookings={bookings} 
-                initialExternalContacts={contacts} 
+                initialAircraft={initialData.aircraft} 
+                initialBookings={initialData.bookings} 
+                initialExternalContacts={initialData.contacts} 
             />;
 }
 

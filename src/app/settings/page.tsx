@@ -24,6 +24,7 @@ const themeFormSchema = z.object({
   background: z.string().optional(),
   card: z.string().optional(),
   foreground: z.string().optional(),
+  headerForeground: z.string().optional(),
   cardForeground: z.string().optional(),
   accent: z.string().optional(),
   sidebarBackground: z.string().optional(),
@@ -90,6 +91,7 @@ function SettingsPage() {
         card: '#ffffff',
         accent: '#ffc107',
         foreground: '#212529',
+        headerForeground: '#212529',
         cardForeground: '#212529',
         sidebarBackground: '#0c0a09',
         sidebarForeground: '#f8f9fa',
@@ -150,6 +152,12 @@ function SettingsPage() {
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
                                     <ColorInput name="foreground" control={form.control} label="Foreground" />
                                     <ColorInput name="cardForeground" control={form.control} label="Card Text" />
+                                    </CardContent>
+                                </Card>
+                                 <Card>
+                                    <CardHeader className="p-4"><CardTitle className="text-base">Header Text</CardTitle></CardHeader>
+                                    <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                       <ColorInput name="headerForeground" control={form.control} label="Header" />
                                     </CardContent>
                                 </Card>
                                 <Card>

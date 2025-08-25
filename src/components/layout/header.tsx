@@ -175,7 +175,7 @@ export default function Header({ title, children }: { title: string, children?: 
         {/* Intentionally left for stable element positioning, other content added dynamically */}
       </div>
 
-      <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap flex-1">{title}</h1>
+      <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap flex-1 text-[var(--header-foreground)]">{title}</h1>
       
       <div className="flex items-center justify-end gap-4">
         {children}

@@ -1,26 +1,37 @@
 
+'use client';
+
 import { TrainingSchedulePageContent } from './training-schedule-client';
 import { getSchedulePageData } from './data';
-
-async function getInitialData(companyId: string) {
-    try {
-        const data = await getSchedulePageData(companyId);
-        return data || { aircraft: [], bookings: [], users: [] };
-    } catch (error) {
-        console.error("Failed to fetch initial data for schedule page:", error);
-        return { aircraft: [], bookings: [], users: [] };
-    }
-}
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import type { Aircraft, Booking, User } from '@/lib/types';
 
 
-export default async function TrainingSchedulePage() {
-  const companyId = 'skybound-aero';
-  const { aircraft, bookings, users } = await getInitialData(companyId);
+export default function TrainingSchedulePage() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{
+        aircraft: Aircraft[],
+        bookings: Booking[],
+        users: User[],
+    }>({ aircraft: [], bookings: [], users: [] });
 
-  return <TrainingSchedulePageContent 
-            initialAircraft={aircraft}
-            initialBookings={bookings}
-            initialUsers={users}
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getSchedulePageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
+
+    return <TrainingSchedulePageContent 
+            initialAircraft={initialData.aircraft}
+            initialBookings={initialData.bookings}
+            initialUsers={initialData.users}
          />;
 }
 

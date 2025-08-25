@@ -1,23 +1,31 @@
 
+'use client';
+
 import { getAlertsPageData } from './data';
 import { AlertsPageContent } from './alerts-page-content';
 import type { Alert } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
 
-async function getInitialData(companyId: string): Promise<{ alertsList: Alert[] }> {
-    try {
-        return await getAlertsPageData(companyId);
-    } catch (error) {
-        console.error("Failed to fetch initial data for alerts page:", error);
-        return { alertsList: [] };
-    }
-}
 
-export default async function AlertsPageContainer() {
-    // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero'; 
-    const { alertsList } = await getInitialData(companyId);
+export default function AlertsPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{ alertsList: Alert[] }>({ alertsList: [] });
 
-    return <AlertsPageContent initialAlerts={alertsList} />;
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getAlertsPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
+
+
+    return <AlertsPageContent initialAlerts={initialData.alertsList} />;
 }
 
 AlertsPageContainer.title = 'Alerts & Notifications';

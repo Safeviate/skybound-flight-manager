@@ -77,7 +77,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Rocket className="h-8 w-8 text-primary" />
-        <span className="text-xl font-semibold">{company?.name || 'SkyBound Flight Manager'}</span>
+        <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
       </div>
 
       <div className="w-full max-w-sm">

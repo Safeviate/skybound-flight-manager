@@ -1,30 +1,42 @@
 
+'use client';
 
 import { getSafetyPageData } from './data';
 import { SafetyPageContent } from './safety-page-content';
 import type { SafetyReport, Risk, Booking, ManagementOfChange } from '@/lib/types';
-
-async function getInitialData(companyId: string) {
-    try {
-        const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(companyId);
-        return { reportsList, risksList, bookingsList, mocList };
-    } catch (error) {
-        console.error("Failed to fetch initial data for safety page:", error);
-        return { reportsList: [], risksList: [], bookingsList: [], mocList: [] };
-    }
-}
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
 
 
-export default async function SafetyPageContainer() {
-    const companyId = 'skybound-aero';
-    const { reportsList, risksList, bookingsList, mocList } = await getInitialData(companyId);
+export default function SafetyPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{
+        reportsList: SafetyReport[],
+        risksList: Risk[],
+        bookingsList: Booking[],
+        mocList: ManagementOfChange[],
+    }>({ reportsList: [], risksList: [], bookingsList: [], mocList: [] });
+
+
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getSafetyPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
+
 
     return (
         <SafetyPageContent 
-            initialReports={reportsList} 
-            initialRisks={risksList}
-            initialBookings={bookingsList}
-            initialMoc={mocList}
+            initialReports={initialData.reportsList} 
+            initialRisks={initialData.risksList}
+            initialBookings={initialData.bookingsList}
+            initialMoc={initialData.mocList}
         />
     )
 }

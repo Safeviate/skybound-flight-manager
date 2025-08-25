@@ -39,6 +39,7 @@ const fallbackCompany: Company = {
         accent: '#ffc107',
         foreground: '#212529',
         cardForeground: '#212529',
+        headerForeground: '#212529',
         sidebarBackground: '#0c0a09',
         sidebarForeground: '#f8f9fa',
         sidebarAccent: '#1f2937',
@@ -129,6 +130,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const foreground = theme.foreground ? hexToHSL(theme.foreground)?.hslString : null;
         const card = theme.card ? hexToHSL(theme.card)?.hslString : null;
         const cardForeground = theme.cardForeground ? hexToHSL(theme.cardForeground)?.hslString : null;
+        const headerForeground = theme.headerForeground ? hexToHSL(theme.headerForeground)?.hslString : null;
         
         const sidebarBackground = theme.sidebarBackground ? hexToHSL(theme.sidebarBackground)?.hslString : null;
         const sidebarForeground = theme.sidebarForeground ? hexToHSL(theme.sidebarForeground)?.hslString : null;
@@ -142,6 +144,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           ${foreground ? `--foreground: ${foreground};` : ''}
           ${card ? `--card: ${card};` : ''}
           ${cardForeground ? `--card-foreground: ${cardForeground};` : ''}
+          ${headerForeground ? `--header-foreground: ${headerForeground};` : ''}
           ${sidebarBackground ? `--sidebar-background: ${sidebarBackground};` : ''}
           ${sidebarForeground ? `--sidebar-foreground: ${sidebarForeground};` : ''}
           ${sidebarAccent ? `--sidebar-accent: ${sidebarAccent};` : ''}

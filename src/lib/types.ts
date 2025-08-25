@@ -23,6 +23,7 @@ export type ThemeColors = {
   card?: string;
   foreground?: string;
   cardForeground?: string;
+  headerForeground?: string;
   accent?: string;
   sidebarBackground?: string;
   sidebarForeground?: string;
