@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench, BookOpen } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Archive, RotateCw, Plane, ArrowLeft, Check, Download, History, ChevronRight, Trash2, Mail, Eye, CheckCircle2, XCircle, AlertTriangle, Loader2, ListChecks, Wrench, BookOpen, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -35,6 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getTechnicalReportsForAircraft } from './data';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -127,38 +128,51 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                             <CardTitle className="text-lg">Detailed History</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-[300px]">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>System</TableHead>
-                                            <TableHead>Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {isLoading ? (
-                                            <TableRow><TableCell colSpan={3} className="text-center h-24"><Loader2 className="animate-spin" /></TableCell></TableRow>
-                                        ) : reports.length > 0 ? (
-                                            reports.map(report => (
-                                                <TableRow key={report.id}>
-                                                    <TableCell>{format(parseISO(report.dateReported), 'PPP')}</TableCell>
-                                                    <TableCell>{report.component}</TableCell>
-                                                    <TableCell>
+                           {isLoading ? (
+                                <div className="flex items-center justify-center h-24"><Loader2 className="animate-spin" /></div>
+                           ) : reports.length > 0 ? (
+                               <div className="space-y-2">
+                                   {reports.map(report => (
+                                       <Collapsible key={report.id} className="border p-4 rounded-lg">
+                                           <CollapsibleTrigger asChild>
+                                               <div className="flex justify-between items-center cursor-pointer">
+                                                   <div className="flex-1">
+                                                        <p className="font-semibold">{report.reportNumber}: {report.description}</p>
+                                                        <p className="text-sm text-muted-foreground">{format(parseISO(report.dateReported), 'PPP')} - {report.component}</p>
+                                                   </div>
+                                                   <div className="flex items-center gap-4">
                                                         <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
                                                             {report.status || 'Open'}
                                                         </Badge>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={3} className="h-24 text-center">No technical reports found.</TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </ScrollArea>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        </Button>
+                                                   </div>
+                                               </div>
+                                           </CollapsibleTrigger>
+                                           <CollapsibleContent className="pt-4 mt-4 border-t space-y-4">
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                                    <div><p className="font-medium text-muted-foreground">Reported By</p><p>{report.reportedBy}</p></div>
+                                                    <div><p className="font-medium text-muted-foreground">System</p><p>{report.component}</p></div>
+                                                    <div><p className="font-medium text-muted-foreground">Component</p><p>{report.subcomponent || 'N/A'}</p></div>
+                                                    <div><p className="font-medium text-muted-foreground">Logbook Entry #</p><p>{report.physicalLogEntry || 'N/A'}</p></div>
+                                                </div>
+                                                <Separator />
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                                     <div><p className="font-medium text-muted-foreground">Rectified By</p><p>{report.rectifiedBy || 'N/A'}</p></div>
+                                                     <div><p className="font-medium text-muted-foreground">Rectification Date</p><p>{report.rectificationDate ? format(parseISO(report.rectificationDate), 'PPP p') : 'N/A'}</p></div>
+                                                </div>
+                                                <div><p className="font-medium text-muted-foreground">Rectification Details</p><p className="text-sm p-2 bg-muted rounded-md">{report.rectificationDetails || 'N/A'}</p></div>
+                                                <div><p className="font-medium text-muted-foreground">Components Replaced</p><p className="text-sm p-2 bg-muted rounded-md">{report.componentsReplaced || 'N/A'}</p></div>
+                                           </CollapsibleContent>
+                                       </Collapsible>
+                                   ))}
+                               </div>
+                           ) : (
+                                <div className="h-24 flex items-center justify-center text-muted-foreground">
+                                    No technical reports found.
+                                </div>
+                           )}
                         </CardContent>
                     </Card>
                 </div>
