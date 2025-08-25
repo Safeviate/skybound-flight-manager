@@ -213,7 +213,7 @@ export type Role =
   | 'System Admin'
   | 'Super User';
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart';
 
 export type User = {
     id: string;
@@ -676,7 +676,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   'Super User': ['Super User'],
   'Accountable Manager': ['Super User'],
   'System Admin': ['Super User'],
-  'Admin': ['Super User'],
+  'Admin': [
+    ...VIEW_ALL_PAGES, 
+    'Aircraft:Edit',
+    'Students:Edit',
+    'Personnel:Edit',
+    'Settings:Edit'
+  ],
   'Operations Manager': ['Super User'],
   'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
   'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
@@ -713,4 +719,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-

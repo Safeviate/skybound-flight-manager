@@ -105,10 +105,12 @@ export default function Nav() {
   
   const isMenuItemVisible = (item: { label: NavMenuItem, requiredPermissions?: Permission[] }) => {
     if (!user) return false;
-    // Super users see everything
-    if (user.permissions.includes('Super User')) {
-        return true;
+    
+    // System Admins see everything for their company. Super User logic can be refined or removed if 'System Admin' is the new top tier.
+    if (user.role === 'System Admin') {
+      return true;
     }
+    
     // Check against the user's specific visibleMenuItems array
     if (user.visibleMenuItems && !user.visibleMenuItems.includes(item.label)) {
         return false;
@@ -136,6 +138,8 @@ export default function Nav() {
   // Filter main and admin items based on visibility rules
   const visibleNavItems = navItems.filter(isMenuItemVisible);
   const visibleAdminItems = adminNavItems.filter(isMenuItemVisible);
+  const showAdminMenu = user.role === 'System Admin';
+
 
   return (
     <>
@@ -169,7 +173,7 @@ export default function Nav() {
               </Link>
             </SidebarMenuItem>
           ))}
-          {!isMobile && visibleAdminItems.length > 0 && (
+          {!isMobile && showAdminMenu && (
             <SidebarMenuItem>
                 <div className="px-3 pt-2 pb-1 text-xs font-semibold text-sidebar-foreground/70">Webapp Administration</div>
                 {visibleAdminItems.map((item) => (
