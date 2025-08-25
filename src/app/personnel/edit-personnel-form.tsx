@@ -192,7 +192,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                         <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                            <Input type="tel" placeholder="+27 12 345 6789" {...field} />
+                            <Input type="tel" placeholder="+27 12 345 6789" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
                         Include country code.
