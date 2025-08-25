@@ -173,13 +173,13 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         name: data.companyName,
         theme: data.theme,
         enabledFeatures: data.enabledFeatures as Feature[],
+        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
     };
     
     const adminData: Omit<User, 'id' | 'companyId'| 'role' | 'permissions'> = {
         name: data.adminName,
         email: data.adminEmail,
         phone: data.adminPhone,
-        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
     };
 
     const logoFile = data.logo?.[0];

@@ -8,17 +8,18 @@ import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { setDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { setDoc, doc, writeBatch } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { ROLE_PERMISSIONS } from '@/lib/types';
 
 
 export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
-        
+    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
@@ -32,6 +33,14 @@ export default function CorporatePage() {
         }
 
         try {
+            const batch = writeBatch(db);
+
+            // 1. Create Auth user for the admin
+            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email!, password);
+            const newUserId = userCredential.user.uid;
+            await updateProfile(userCredential.user, { displayName: adminData.name });
+
+            // 2. Create Company Document
             const companyDocRef = doc(db, 'companies', companyId);
             const finalCompanyData: Company = {
                 id: companyId,
@@ -39,21 +48,42 @@ export default function CorporatePage() {
                 trademark: `Your Trusted Partner in Aviation`,
                 ...companyData,
             };
-            await setDoc(companyDocRef, finalCompanyData);
+            batch.set(companyDocRef, finalCompanyData);
+            
+            // 3. Create Admin User Document
+            const adminUserDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+            const finalAdminData: User = {
+                id: newUserId,
+                companyId: companyId,
+                name: adminData.name,
+                email: adminData.email,
+                phone: adminData.phone,
+                role: 'System Admin',
+                permissions: ROLE_PERMISSIONS['System Admin'],
+                status: 'Active',
+            };
+            batch.set(adminUserDocRef, finalAdminData);
+
+            // 4. Commit batch
+            await batch.commit();
 
             toast({
                 title: "Company Created!",
-                description: `The company portal for ${companyData.name} is ready. You can now switch to it from the settings menu to add users.`
+                description: `The company portal for ${companyData.name} is ready. You can now log in.`
             });
 
             router.push('/login');
 
         } catch (error: any) {
             console.error("Error creating company:", error);
+            let errorMessage = "An error occurred while creating the company.";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "This email address is already in use by another account.";
+            }
             toast({
                 variant: 'destructive',
                 title: "Registration Failed",
-                description: "An error occurred while creating the company.",
+                description: errorMessage,
             });
         }
     };
@@ -85,7 +115,7 @@ export default function CorporatePage() {
                 <CardHeader>
                     <CardTitle>Register New Company</CardTitle>
                     <CardDescription>
-                        Set up a new company portal. You can add users after creation.
+                        Set up a new company portal and administrator account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

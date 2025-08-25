@@ -18,14 +18,13 @@ import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { NewCompanyForm } from './new-company-form';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import Link from 'next/link';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
   const { user, company: currentCompany, setCompany, userCompanies, setUserCompanies } = useUser();
   const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
-  const [isNewCompanyDialogOpen, setIsNewCompanyDialogOpen] = React.useState(false);
   const [isEditCompanyDialogOpen, setIsEditCompanyDialogOpen] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const router = useRouter();
@@ -74,46 +73,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
     }
   };
   
-  const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
-    const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        
-    let logoUrl = '';
-    if (logoFile) {
-        logoUrl = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(logoFile);
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    try {
-        const companyDocRef = doc(db, 'companies', companyId);
-        const finalCompanyData: Company = {
-            id: companyId,
-            logoUrl: logoUrl,
-            trademark: `Your Trusted Partner in Aviation`,
-            ...companyData,
-        };
-        await setDoc(companyDocRef, finalCompanyData);
-
-        toast({
-            title: "New Company Created!",
-            description: `The company portal for ${companyData.name} is ready. You should create an admin user for it.`
-        });
-        
-        setUserCompanies(prev => [...prev, finalCompanyData]);
-        setIsNewCompanyDialogOpen(false);
-    } catch (error: any) {
-        console.error("Error creating company:", error);
-        toast({
-            variant: 'destructive',
-            title: "Registration Failed",
-            description: "An error occurred while creating the company.",
-        });
-    }
-  };
-
   const handleSwitchCompany = (companyToSwitch: Company) => {
     setCompany(companyToSwitch);
     toast({
@@ -138,22 +97,11 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                 View and manage all companies registered in the system.
               </CardDescription>
             </div>
-            <Dialog open={isNewCompanyDialogOpen} onOpenChange={setIsNewCompanyDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" /> New Company
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl">
-                 <DialogHeader>
-                    <DialogTitle>Create New Company</DialogTitle>
-                    <DialogDescription>
-                        Set up a new company portal. You can add users after creation.
-                    </DialogDescription>
-                </DialogHeader>
-                <NewCompanyForm onSubmit={handleNewCompany} />
-              </DialogContent>
-            </Dialog>
+            <Button asChild>
+              <Link href="/corporate">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Company
+              </Link>
+            </Button>
         </CardHeader>
         <CardContent>
           <Table>
