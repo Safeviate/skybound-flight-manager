@@ -70,6 +70,8 @@ const companyFormSchema = z.object({
   enabledFeatures: z.array(z.string()).default([]),
   adminName: z.string().min(2, 'Admin name is required.'),
   adminEmail: z.string().email('Please enter a valid email address.'),
+  password: z.string().min(8, 'Password must be at least 8 characters.'),
+  confirmPassword: z.string(),
   theme: z.object({
     primary: z.string().optional(),
     background: z.string().optional(),
@@ -82,6 +84,9 @@ const companyFormSchema = z.object({
     sidebarAccent: z.string().optional(),
     font: z.string().optional(),
   }).optional(),
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -142,8 +147,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
     const logoFile = data.logo?.[0];
 
-    // Use a default password for the demo environment
-    onSubmit(newCompany, newAdmin, "password", logoFile);
+    onSubmit(newCompany, newAdmin, data.password, logoFile);
     form.reset();
   }
 
@@ -188,6 +192,32 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormLabel>Admin Email</FormLabel>
                         <FormControl>
                             <Input placeholder="admin@yourcompany.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
