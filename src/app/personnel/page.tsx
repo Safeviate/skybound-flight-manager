@@ -1,23 +1,38 @@
 
+'use client';
+
+import { useEffect, useState } from 'react';
 import { getPersonnelPageData } from './data';
 import { PersonnelPageContent } from './personnel-page-content';
 import type { User } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
 
-async function getInitialData(companyId: string): Promise<User[]> {
-    try {
-        return await getPersonnelPageData(companyId);
-    } catch (error) {
-        console.error("Failed to fetch initial data for personnel page:", error);
-        return [];
+function PersonnelPageContainer() {
+    const { company, loading: userLoading } = useUser();
+    const [initialPersonnel, setInitialPersonnel] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                setLoading(true);
+                const personnel = await getPersonnelPageData(company.id);
+                setInitialPersonnel(personnel);
+                setLoading(false);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
+
+    if (loading || userLoading) {
+        return <div className="flex-1 flex items-center justify-center"><p>Loading personnel...</p></div>;
     }
-}
-
-export default async function PersonnelPageContainer() {
-    // In a real app, you'd get the companyId from the user's session
-    const companyId = 'skybound-aero'; 
-    const initialPersonnel = await getInitialData(companyId);
     
     return <PersonnelPageContent initialPersonnel={initialPersonnel} />;
 }
 
 PersonnelPageContainer.title = "Personnel Management";
+
+export default PersonnelPageContainer;
