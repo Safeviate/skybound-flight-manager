@@ -20,7 +20,6 @@ export default function CorporatePage() {
     const router = useRouter();
 
     const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
-        // CORRECTLY create a predictable company ID from the name.
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
@@ -41,7 +40,7 @@ export default function CorporatePage() {
             const newUserId = userCredential.user.uid;
             await updateProfile(userCredential.user, { displayName: adminData.name });
 
-            // 2. Create Company Document with the CORRECT, PREDICTABLE ID
+            // 2. Create Company Document
             const companyDocRef = doc(db, 'companies', companyId);
             
             const defaultTheme = {
@@ -65,7 +64,7 @@ export default function CorporatePage() {
                 ...companyData,
                 theme: {
                     ...defaultTheme,
-                    ...companyData.theme, // Merge with any theme data from the form
+                    ...companyData.theme, 
                 }
             };
             batch.set(companyDocRef, finalCompanyData);
@@ -112,7 +111,7 @@ export default function CorporatePage() {
 
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4 md:p-8">
         <div className="absolute top-8 left-8 flex items-center gap-2">
             <Rocket className="h-8 w-8 text-primary" />
             <span className="text-xl font-semibold">SkyBound Flight Manager</span>
@@ -125,22 +124,16 @@ export default function CorporatePage() {
                 </Link>
             </Button>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl items-center">
-            <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
-                <p className="text-muted-foreground">
-                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your company or log in to continue.
+        
+        <div className="w-full max-w-4xl space-y-8">
+            <div className="text-center">
+                <h1 className="text-4xl font-bold tracking-tight">Register Your Company</h1>
+                <p className="text-muted-foreground mt-2">
+                    Set up a new company portal, administrator account, and branding in one place.
                 </p>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Register New Company</CardTitle>
-                    <CardDescription>
-                        Set up a new company portal and administrator account.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+            <Card className="w-full">
+                <CardContent className="p-6 md:p-8">
                     <NewCompanyForm onSubmit={handleNewCompany} />
                 </CardContent>
             </Card>
