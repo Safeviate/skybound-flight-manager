@@ -40,7 +40,7 @@ export default function CorporatePage() {
             const newUserId = userCredential.user.uid;
             await updateProfile(userCredential.user, { displayName: adminData.name });
 
-            // 2. Create Company Document
+            // 2. Create Company Document with a predictable ID
             const companyDocRef = doc(db, 'companies', companyId);
             const finalCompanyData: Company = {
                 id: companyId,
@@ -79,6 +79,8 @@ export default function CorporatePage() {
             let errorMessage = "An error occurred while creating the company.";
             if (error.code === 'auth/email-already-in-use') {
                 errorMessage = "This email address is already in use by another account.";
+            } else if (error.code === 'permission-denied') {
+                 errorMessage = "Permission denied. Check your Firestore security rules to allow unauthenticated company creation.";
             }
             toast({
                 variant: 'destructive',

@@ -22,7 +22,7 @@ import { ROLE_PERMISSIONS } from '@/lib/types';
 import Link from 'next/link';
 
 export function CompaniesPageContent({ initialCompanies }: { initialCompanies: Company[] }) {
-  const { user, company: currentCompany, setCompany, userCompanies, setUserCompanies } = useUser();
+  const { user, company: currentCompany, setCompany, userCompanies, setUserCompanies, updateCompany } = useUser();
   const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
   const [isEditCompanyDialogOpen, setIsEditCompanyDialogOpen] = React.useState(false);
@@ -52,21 +52,25 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
         });
       }
 
-      const companyRef = doc(db, 'companies', editingCompany.id);
-      const dataToSave = { ...updatedData, logoUrl };
-      await updateDoc(companyRef, dataToSave);
-
-      const finalUpdatedData = { ...editingCompany, ...dataToSave };
-
-      setUserCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalUpdatedData : c));
+      const finalDataToSave = { ...updatedData, logoUrl };
       
-      if (currentCompany?.id === editingCompany.id) {
-          setCompany(finalUpdatedData);
-      }
+      const success = await updateCompany(editingCompany.id, finalDataToSave);
 
-      setIsEditCompanyDialogOpen(false);
-      setEditingCompany(null);
-      toast({ title: 'Company Updated', description: 'The company details have been saved.' });
+      if (success) {
+        const finalUpdatedData = { ...editingCompany, ...finalDataToSave };
+
+        setUserCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalUpdatedData : c));
+        
+        if (currentCompany?.id === editingCompany.id) {
+            setCompany(finalUpdatedData);
+        }
+
+        setIsEditCompanyDialogOpen(false);
+        setEditingCompany(null);
+        toast({ title: 'Company Updated', description: 'The company details have been saved.' });
+      } else {
+        throw new Error("Update company failed");
+      }
     } catch (error) {
       console.error('Error updating company:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to update company.' });

@@ -19,7 +19,7 @@ interface UserContextType {
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
-  updateCompany: (updatedData: Partial<Company>) => Promise<boolean>;
+  updateCompany: (companyId: string, updatedData: Partial<Company>) => Promise<boolean>;
   getUnacknowledgedAlerts: (types?: Alert['type'][]) => Alert[];
   acknowledgeAlerts: (alertIds: string[]) => Promise<void>;
 }
@@ -352,11 +352,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateCompany = async (updatedData: Partial<Company>): Promise<boolean> => {
-    if (!company) return false;
+  const updateCompany = async (companyId: string, updatedData: Partial<Company>): Promise<boolean> => {
     try {
-        const companyRef = doc(db, 'companies', company.id);
-        await setDoc(companyRef, updatedData, { merge: true });
+        const companyRef = doc(db, 'companies', companyId);
+        await updateDoc(companyRef, updatedData);
         return true;
     } catch (error) {
         console.error("Failed to update company:", error);
