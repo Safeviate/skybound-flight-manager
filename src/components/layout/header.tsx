@@ -199,7 +199,7 @@ export default function Header({ title, children }: { title: string, children?: 
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>My Personal Information</span>
                   </DropdownMenuItem>
-                   {userCompanies.length > 1 && (
+                   {userCompanies.length > 1 && user?.permissions.includes('Super User') && (
                      <DropdownMenuItem onSelect={() => setIsSwitcherOpen(true)}>
                         <Building className="mr-2 h-4 w-4" />
                         <span>Switch Company</span>
