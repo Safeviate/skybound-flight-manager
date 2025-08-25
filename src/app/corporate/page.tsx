@@ -19,7 +19,7 @@ export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
@@ -35,12 +35,7 @@ export default function CorporatePage() {
         try {
             const batch = writeBatch(db);
 
-            // 1. Create Auth user for the admin
-            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email!, password);
-            const newUserId = userCredential.user.uid;
-            await updateProfile(userCredential.user, { displayName: adminData.name });
-
-            // 2. Create Company Document
+            // 1. Create Company Document
             const companyDocRef = doc(db, 'companies', companyId);
             
             const defaultTheme = {
@@ -69,21 +64,6 @@ export default function CorporatePage() {
             };
             batch.set(companyDocRef, finalCompanyData);
             
-            // 3. Create Admin User Document
-            const adminUserDocRef = doc(db, `companies/${companyId}/users`, newUserId);
-            const finalAdminData: User = {
-                id: newUserId,
-                companyId: companyId,
-                name: adminData.name,
-                email: adminData.email,
-                phone: adminData.phone,
-                role: 'System Admin',
-                permissions: ROLE_PERMISSIONS['System Admin'],
-                status: 'Active',
-            };
-            batch.set(adminUserDocRef, finalAdminData);
-
-            // 4. Commit batch
             await batch.commit();
 
             toast({

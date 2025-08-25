@@ -98,16 +98,12 @@ const companyFormSchema = z.object({
     sidebarAccent: z.string().optional(),
     font: z.string().optional(),
   }).optional(),
-  adminName: z.string().min(2, 'Admin name is required.'),
-  adminEmail: z.string().email('A valid admin email is required.'),
-  adminPhone: z.string().min(1, 'Admin phone number is required.'),
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => void;
 }
 
 const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
@@ -150,10 +146,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         enabledFeatures: allFeatures.map(f => f.id),
         visibleMenuItems: allNavMenuItems,
         theme: defaultThemeValues,
-        adminName: '',
-        adminEmail: '',
-        adminPhone: '',
-        password: '',
     }
   });
 
@@ -163,10 +155,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         enabledFeatures: allFeatures.map(f => f.id),
         visibleMenuItems: allNavMenuItems,
         theme: defaultThemeValues,
-        adminName: '',
-        adminEmail: '',
-        adminPhone: '',
-        password: '',
     });
   }, [form]);
 
@@ -178,15 +166,9 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
     };
     
-    const adminData: Omit<User, 'id' | 'companyId'| 'role' | 'permissions'> = {
-        name: data.adminName,
-        email: data.adminEmail,
-        phone: data.adminPhone,
-    };
-
     const logoFile = data.logo?.[0];
 
-    onSubmit(newCompany, adminData, data.password, logoFile);
+    onSubmit(newCompany, logoFile);
   }
 
   return (
@@ -230,31 +212,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         </FormItem>
                     )}
                 />
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <KeyRound className="h-5 w-5" />
-                    Initial Administrator Account
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="adminName" render={({ field }) => (
-                        <FormItem><FormLabel>Admin Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                     <FormField control={form.control} name="adminEmail" render={({ field }) => (
-                        <FormItem><FormLabel>Admin Email</FormLabel><FormControl><Input type="email" placeholder="e.g., admin@aero.com" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                     <FormField control={form.control} name="adminPhone" render={({ field }) => (
-                        <FormItem><FormLabel>Admin Phone</FormLabel><FormControl><Input placeholder="e.g., +27821234567" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                     <FormField control={form.control} name="password" render={({ field }) => (
-                        <FormItem><FormLabel>Admin Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                </div>
             </CardContent>
         </Card>
 
