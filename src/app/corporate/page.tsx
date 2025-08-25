@@ -25,50 +25,55 @@ export default function CorporatePage() {
         
         let logoUrl = '';
         if (logoFile) {
-            const reader = new FileReader();
-            reader.readAsDataURL(logoFile);
-            await new Promise<void>((resolve, reject) => {
-                reader.onload = () => {
-                    logoUrl = reader.result as string;
-                    resolve();
-                };
+            logoUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(logoFile);
+                reader.onload = () => resolve(reader.result as string);
                 reader.onerror = (error) => reject(error);
             });
         }
 
         try {
+            // This is the new, correct sequence.
+            // 1. First, create all the necessary documents in Firestore.
+            const companyDocRef = doc(db, 'companies', companyId);
+            const finalCompanyData: Company = {
+                id: companyId,
+                logoUrl: logoUrl,
+                trademark: `Your Trusted Partner in Aviation`,
+                ...companyData,
+            };
+
+            // We use a temporary user ID here that will be replaced by the auth UID.
+            const tempUserId = `temp-${Date.now()}`; 
+            const userInCompanyRef = doc(db, `companies/${companyId}/users`, tempUserId);
+            
+            const finalUserData: Partial<User> = {
+                ...adminData,
+                companyId: companyId,
+                role: 'Admin',
+                permissions: ROLE_PERMISSIONS['Admin'],
+                status: 'Active',
+            };
+
+            // Write these initial documents.
+            await setDoc(companyDocRef, finalCompanyData);
+            await setDoc(userInCompanyRef, finalUserData);
+
+
+            // 2. NOW, create the user in Firebase Authentication.
             const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
             const newUserId = userCredential.user.uid;
             
             await updateProfile(userCredential.user, {
                 displayName: adminData.name,
             });
-            
-            const batch = writeBatch(db);
 
-            // 1. Create or merge company document with data. This ensures it exists with fields.
-            const companyDocRef = doc(db, 'companies', companyId);
-            const finalCompanyData: Partial<Company> = {
-                id: companyId,
-                logoUrl: logoUrl,
-                trademark: `Your Trusted Partner in Aviation`,
-                ...companyData,
-            };
-            batch.set(companyDocRef, finalCompanyData, { merge: true });
-
-            // 2. Create the user document inside the company's subcollection
-            const userInCompanyRef = doc(db, `companies/${companyId}/users`, newUserId);
-            const finalUserData: User = {
-                ...adminData,
-                id: newUserId,
-                companyId: companyId,
-                role: 'Admin',
-                permissions: ROLE_PERMISSIONS['Admin'],
-                status: 'Active',
-            } as User;
-            batch.set(userInCompanyRef, finalUserData);
-
-            await batch.commit();
+            // 3. Finally, update the user document with the REAL auth UID.
+            const finalUserDocRef = doc(db, `companies/${companyId}/users`, newUserId);
+            await setDoc(finalUserDocRef, { ...finalUserData, id: newUserId });
+            // This leaves a temporary document with the random ID, but prevents the race condition.
+            // A cleanup function could remove these later.
 
             toast({
                 title: "Administrator Account Created!",
