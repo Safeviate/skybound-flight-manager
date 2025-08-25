@@ -197,7 +197,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         
         const title = `Document Expiry: ${docItem.type}`;
         
-        // Check if an alert with this exact title already exists for this user
+        // Check if an alert with this exact title already exists for this user in this company
         const existingAlertsQuery = query(
             alertsCollection, 
             where('targetUserId', '==', user.id), 
@@ -236,7 +236,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } else {
         const userData = userSnap.data() as User;
         setUser(userData);
-        checkExpiringDocuments(userData, companyId);
+        // Ensure we only check for the current user in the current company
+        if (userData.id === userId && userData.companyId === companyId) {
+            checkExpiringDocuments(userData, companyId);
+        }
       }
     }, (error) => {
         console.error("User listener error:", error);
