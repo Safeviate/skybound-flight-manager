@@ -112,27 +112,46 @@ const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyForm
     />
 );
 
+const defaultThemeValues = {
+    primary: '#0d6efd',
+    background: '#f8f9fa',
+    card: '#ffffff',
+    accent: '#ffc107',
+    foreground: '#212529',
+    cardForeground: '#212529',
+    sidebarBackground: '#0c0a09',
+    sidebarForeground: '#f8f9fa',
+    sidebarAccent: '#1f2937',
+    font: 'var(--font-inter)',
+};
+
+
 export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
         companyName: '',
-        enabledFeatures: ['Safety', 'Quality', 'Bookings', 'Aircraft', 'Students', 'Personnel', 'AdvancedAnalytics'],
-        theme: {
-            primary: '#0d6efd',
-            background: '#f8f9fa',
-            card: '#ffffff',
-            accent: '#ffc107',
-            foreground: '#212529',
-            cardForeground: '#212529',
-            sidebarBackground: '#0c0a09',
-            sidebarForeground: '#f8f9fa',
-            sidebarAccent: '#1f2937',
-            font: 'var(--font-inter)',
-        }
+        adminName: '',
+        adminEmail: '',
+        password: '',
+        confirmPassword: '',
+        enabledFeatures: allFeatures.map(f => f.id),
+        theme: defaultThemeValues,
     }
   });
+
+  useEffect(() => {
+    form.reset({
+        companyName: '',
+        adminName: '',
+        adminEmail: '',
+        password: '',
+        confirmPassword: '',
+        enabledFeatures: allFeatures.map(f => f.id),
+        theme: defaultThemeValues,
+    });
+  }, [form]);
 
   function handleFormSubmit(data: CompanyFormValues) {
     const newCompany: Omit<Company, 'id' | 'trademark'> = {
@@ -353,7 +372,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
           </div>
         </ScrollArea>
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Administrator Account</Button>
+          <Button type="submit">Create Company & Administrator</Button>
         </div>
       </form>
     </Form>
