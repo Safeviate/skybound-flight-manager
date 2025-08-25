@@ -69,10 +69,6 @@ const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
   logo: z.any().optional(),
   enabledFeatures: z.array(z.string()).default([]),
-  adminName: z.string().min(2, 'Admin name is required.'),
-  adminEmail: z.string().email('Please enter a valid email address.'),
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
-  confirmPassword: z.string(),
   theme: z.object({
     primary: z.string().optional(),
     background: z.string().optional(),
@@ -85,15 +81,12 @@ const companyFormSchema = z.object({
     sidebarAccent: z.string().optional(),
     font: z.string().optional(),
   }).optional(),
-}).refine(data => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => void;
 }
 
 const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
@@ -132,10 +125,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
         companyName: '',
-        adminName: '',
-        adminEmail: '',
-        password: '',
-        confirmPassword: '',
         enabledFeatures: allFeatures.map(f => f.id),
         theme: defaultThemeValues,
     }
@@ -144,10 +133,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   useEffect(() => {
     form.reset({
         companyName: '',
-        adminName: '',
-        adminEmail: '',
-        password: '',
-        confirmPassword: '',
         enabledFeatures: allFeatures.map(f => f.id),
         theme: defaultThemeValues,
     });
@@ -159,15 +144,10 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         theme: data.theme,
         enabledFeatures: data.enabledFeatures as Feature[],
     };
-    const newAdmin: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'> = {
-        name: data.adminName,
-        email: data.adminEmail,
-        phone: '', // Can be added later
-    };
-
+    
     const logoFile = data.logo?.[0];
 
-    onSubmit(newCompany, newAdmin, data.password, logoFile);
+    onSubmit(newCompany, logoFile);
     form.reset();
   }
 
@@ -177,7 +157,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
             <div className="space-y-4">
-                <h4 className="font-semibold">Company & Administrator Details</h4>
+                <h4 className="font-semibold">Company Details</h4>
                 <FormField
                     control={form.control}
                     name="companyName"
@@ -199,58 +179,6 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
                         <FormLabel>Company Logo</FormLabel>
                         <FormControl>
                             <Input type="file" accept="image/*" {...form.register('logo')} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="adminName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Admin Full Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Jane Smith" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="adminEmail"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Admin Email</FormLabel>
-                        <FormControl>
-                            <Input placeholder="admin@yourcompany.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -385,7 +313,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
           </div>
         </ScrollArea>
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Company & Administrator</Button>
+          <Button type="submit">Create Company</Button>
         </div>
       </form>
     </Form>

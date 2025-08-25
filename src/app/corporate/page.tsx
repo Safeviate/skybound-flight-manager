@@ -8,10 +8,8 @@ import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ROLE_PERMISSIONS } from '@/lib/types';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { db, auth } from '@/lib/firebase';
+import { setDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 
@@ -19,7 +17,7 @@ export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, adminData: Omit<User, 'id' | 'companyId' | 'role' | 'permissions'>, password: string, logoFile?: File) => {
+    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
         
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
@@ -34,8 +32,6 @@ export default function CorporatePage() {
         }
 
         try {
-            // This is the new, correct sequence.
-            // 1. First, create the company document in Firestore.
             const companyDocRef = doc(db, 'companies', companyId);
             const finalCompanyData: Company = {
                 id: companyId,
@@ -45,46 +41,19 @@ export default function CorporatePage() {
             };
             await setDoc(companyDocRef, finalCompanyData);
 
-            // 2. NOW, create the user in Firebase Authentication.
-            const userCredential = await createUserWithEmailAndPassword(auth, adminData.email, password);
-            const newUserId = userCredential.user.uid;
-            
-            await updateProfile(userCredential.user, {
-                displayName: adminData.name,
-            });
-
-            // 3. Finally, create the user document in Firestore with the REAL auth UID.
-            const finalUserDocRef = doc(db, `companies/${companyId}/users`, newUserId);
-            const finalUserData: Partial<User> = {
-                ...adminData,
-                id: newUserId,
-                companyId: companyId,
-                role: 'Admin',
-                permissions: ROLE_PERMISSIONS['Admin'],
-                status: 'Active',
-            };
-            await setDoc(finalUserDocRef, finalUserData);
-
             toast({
-                title: "Administrator Account Created!",
-                description: `The company portal is ready. Redirecting to login...`
+                title: "Company Created!",
+                description: `The company portal for ${companyData.name} is ready. You can now switch to it from the settings menu to add users.`
             });
 
             router.push('/login');
 
         } catch (error: any) {
             console.error("Error creating company:", error);
-            const errorCode = error.code;
-            let errorMessage = "An unknown error occurred.";
-            if (errorCode === 'auth/email-already-in-use') {
-                errorMessage = "This email address is already in use by another account.";
-            } else if (errorCode === 'auth/weak-password') {
-                errorMessage = "The password is too weak. Please use at least 8 characters.";
-            }
             toast({
                 variant: 'destructive',
                 title: "Registration Failed",
-                description: errorMessage,
+                description: "An error occurred while creating the company.",
             });
         }
     };
@@ -109,14 +78,14 @@ export default function CorporatePage() {
             <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tight">Modern Aviation Management</h1>
                 <p className="text-muted-foreground">
-                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your administrator account or log in to continue.
+                    Welcome to SkyBound, the all-in-one platform for flight school operations, safety, and compliance. Register your company or log in to continue.
                 </p>
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Create Administrator Account</CardTitle>
+                    <CardTitle>Register New Company</CardTitle>
                     <CardDescription>
-                        Set up the first administrator account for your company portal.
+                        Set up a new company portal. You can add users after creation.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
