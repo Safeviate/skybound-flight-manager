@@ -754,8 +754,8 @@ export function AircraftPageContent({
       <Card>
         <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
-                <CardTitle>Manage Fleet</CardTitle>
-                <CardDescription>View and manage all aircraft in your fleet.</CardDescription>
+                <CardTitle>Aircraft Management</CardTitle>
+                <CardDescription>View, manage, and perform operations on all aircraft in your fleet.</CardDescription>
             </div>
             <Button onClick={openNewDialog} className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -764,10 +764,12 @@ export function AircraftPageContent({
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="active">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="active">Active Fleet ({activeAircraft.length})</TabsTrigger>
                     <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
                     <TabsTrigger value="technical-log">Technical Log</TabsTrigger>
+                    <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
+                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active" className="mt-4">
                     <AircraftCardList aircraft={activeAircraft} />
@@ -778,24 +780,7 @@ export function AircraftPageContent({
                  <TabsContent value="technical-log" className="mt-4">
                     <TechnicalLogView aircraftList={aircraftList} />
                 </TabsContent>
-            </Tabs>
-        </CardContent>
-      </Card>
-      
-      <Card>
-          <CardHeader>
-              <div className="space-y-1">
-                <CardTitle>Aircraft Operations</CardTitle>
-                <CardDescription>Perform checklists and view historical records.</CardDescription>
-              </div>
-          </CardHeader>
-          <CardContent>
-              <Tabs defaultValue="checklists">
-                <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
-                    <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
-                    <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
-                </TabsList>
-                 <TabsContent value="checklists" className="pt-6">
+                 <TabsContent value="checklists" className="pt-6 mt-4">
                     <div className="max-w-2xl mx-auto space-y-6">
                         {!selectedAircraftForChecklist ? (
                             <ChecklistStarter 
@@ -807,7 +792,7 @@ export function AircraftPageContent({
                         )}
                     </div>
                 </TabsContent>
-                 <TabsContent value="history" className="pt-6">
+                 <TabsContent value="history" className="pt-6 mt-4">
                     <div className="space-y-2">
                         <Label>Select an aircraft to view history</Label>
                         <Select onValueChange={setSelectedHistoryAircraftId}>
@@ -856,8 +841,8 @@ export function AircraftPageContent({
                         </div>
                     )}
                 </TabsContent>
-              </Tabs>
-          </CardContent>
+            </Tabs>
+        </CardContent>
       </Card>
 
       <Dialog open={isNewAircraftDialogOpen} onOpenChange={setIsNewAircraftDialogOpen}>
