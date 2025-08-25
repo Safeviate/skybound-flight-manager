@@ -15,8 +15,8 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { Company, User, Feature, NavMenuItem } from '@/lib/types';
-import { Paintbrush, Type, Check, Building, KeyRound, Palette } from 'lucide-react';
+import type { Company, Feature, NavMenuItem } from '@/lib/types';
+import { Paintbrush, Type, Check, Building, KeyRound, Palette, Wand2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,48 +30,9 @@ const allNavMenuItems = [...navItems, ...adminNavItems].map(item => item.label);
 const MAX_FILE_SIZE = 500000; // 500KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-const featureGroups: { title: string; features: { id: Feature, label: string, description: string }[] }[] = [
-    {
-        title: 'Core Operations',
-        features: [
-            { id: 'Aircraft', label: 'Aircraft Management', description: 'Enables fleet management, document tracking, and checklists.' },
-            { id: 'Bookings', label: 'Flight Scheduling', description: 'Enables the aircraft and personnel scheduling system.' },
-        ]
-    },
-    {
-        title: 'Personnel & Training',
-        features: [
-            { id: 'Personnel', label: 'Personnel Management', description: 'Enables management of staff and non-student personnel records.' },
-            { id: 'Students', label: 'Student Management', description: 'Enables tracking of student training progress, logs, and endorsements.' },
-        ]
-    },
-    {
-        title: 'Safety & Quality',
-        features: [
-            { id: 'Safety', label: 'Safety Management', description: 'Enables the Safety Management System (SMS) module for incident reporting and risk management.' },
-            { id: 'Quality', label: 'Quality Management', description: 'Enables the Quality Management System (QMS) module for audits and compliance.' },
-        ]
-    },
-    {
-        title: 'Data & Analytics',
-        features: [
-            { id: 'AdvancedAnalytics', label: 'Advanced Analytics', description: 'Enables the flight statistics and reporting module.' },
-        ]
-    }
-];
-
-const allFeatures = featureGroups.flatMap(g => g.features);
-
-const fonts = [
-    { label: 'Inter', value: 'var(--font-inter)' },
-    { label: 'Roboto', value: 'var(--font-roboto)' },
-    { label: 'Lato', value: 'var(--font-lato)' },
-    { label: 'Montserrat', value: 'var(--font-montserrat)' },
-];
-
-
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'Company name is required.'),
+  trademark: z.string().min(2, "Trademark is required."),
   logo: z
     .any()
     .optional()
@@ -83,8 +44,6 @@ const companyFormSchema = z.object({
       (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
     ),
-  enabledFeatures: z.array(z.string()).default([]),
-  visibleMenuItems: z.array(z.string()).default(allNavMenuItems),
   theme: z.object({
     primary: z.string().optional(),
     background: z.string().optional(),
@@ -103,7 +62,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id'|'enabledFeatures'|'visibleMenuItems'>, logoFile?: File) => void;
 }
 
 const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
@@ -143,8 +102,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
         companyName: '',
-        enabledFeatures: allFeatures.map(f => f.id),
-        visibleMenuItems: allNavMenuItems,
+        trademark: '',
         theme: defaultThemeValues,
     }
   });
@@ -152,18 +110,16 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   useEffect(() => {
     form.reset({
         companyName: '',
-        enabledFeatures: allFeatures.map(f => f.id),
-        visibleMenuItems: allNavMenuItems,
+        trademark: 'Your Trusted Partner in Aviation',
         theme: defaultThemeValues,
     });
   }, [form]);
 
   function handleFormSubmit(data: CompanyFormValues) {
-    const newCompany: Omit<Company, 'id' | 'trademark'> = {
+    const newCompany = {
         name: data.companyName,
+        trademark: data.trademark,
         theme: data.theme,
-        enabledFeatures: data.enabledFeatures as Feature[],
-        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
     };
     
     const logoFile = data.logo?.[0];
@@ -174,165 +130,80 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5"/>
-                    Company Details
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="space-y-4">
+             <h3 className="text-lg font-semibold">Company Details</h3>
+            <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., AeroVentures Inc." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="trademark"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Trademark / Slogan</FormLabel>
+                    <FormControl>
+                        <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
                 <FormField
-                    control={form.control}
-                    name="companyName"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., AeroVentures Inc." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="logo"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Company Logo</FormLabel>
-                        <FormControl>
-                            <Input type="file" accept="image/*" {...form.register('logo')} />
-                        </FormControl>
-                         <FormDescription>
-                          Max file size: 500KB. Accepted types: JPG, PNG, WEBP.
-                        </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-        </Card>
+                control={form.control}
+                name="logo"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Company Logo</FormLabel>
+                    <FormControl>
+                        <Input type="file" accept="image/*" {...form.register('logo')} />
+                    </FormControl>
+                        <FormDescription>
+                        Max file size: 500KB. Accepted types: JPG, PNG, WEBP.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
 
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
-                    Branding & Theme
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
-                        <h4 className="font-semibold text-sm">Backgrounds</h4>
-                        <ColorInput name="theme.background" control={form.control} label="Main" />
+        <Separator />
+
+        <div className="space-y-4">
+             <h3 className="text-lg font-semibold flex items-center gap-2"><Wand2 className="h-5 w-5"/> Company Theme</h3>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                    <CardHeader className="p-4"><CardTitle className="text-base">Main Backgrounds</CardTitle></CardHeader>
+                    <CardContent className="p-4 grid grid-cols-2 gap-4">
+                        <ColorInput name="theme.background" control={form.control} label="Background" />
                         <ColorInput name="theme.card" control={form.control} label="Card" />
-                        <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
-                    </div>
-                     <div className="space-y-4">
-                        <h4 className="font-semibold text-sm">Text</h4>
-                        <ColorInput name="theme.foreground" control={form.control} label="Main" />
-                        <ColorInput name="theme.cardForeground" control={form.control} label="Card" />
-                        <ColorInput name="theme.sidebarForeground" control={form.control} label="Sidebar" />
-                    </div>
-                     <div className="space-y-4">
-                        <h4 className="font-semibold text-sm">Accents</h4>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="p-4"><CardTitle className="text-base">Main Text</CardTitle></CardHeader>
+                    <CardContent className="p-4 grid grid-cols-2 gap-4">
+                    <ColorInput name="theme.foreground" control={form.control} label="Foreground" />
+                    <ColorInput name="theme.cardForeground" control={form.control} label="Card Text" />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="p-4"><CardTitle className="text-base">Accents</CardTitle></CardHeader>
+                    <CardContent className="p-4 grid grid-cols-2 gap-4">
                         <ColorInput name="theme.primary" control={form.control} label="Primary" />
-                        <ColorInput name="theme.accent" control={form.control} label="Highlight" />
-                        <ColorInput name="theme.sidebarAccent" control={form.control} label="Sidebar Accent" />
-                    </div>
-                </div>
-                 <FormField
-                    control={form.control}
-                    name="theme.font"
-                    render={({ field }) => (
-                        <FormItem className="pt-4">
-                            <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4" /> Company Font</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a font" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {fonts.map(font => <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Check className="h-5 w-5"/>
-                    Module Selection
-                </CardTitle>
-                <CardDescription>Select the system modules that this company will have access to.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <FormField
-                    control={form.control}
-                    name="enabledFeatures"
-                    render={() => (
-                        <FormItem>
-                        <div className="space-y-6">
-                            {featureGroups.map((group) => (
-                                <div key={group.title}>
-                                    <h4 className="font-semibold text-sm mb-3">{group.title}</h4>
-                                    <div className="space-y-4">
-                                    {group.features.map((item) => (
-                                        <FormField
-                                            key={item.id}
-                                            control={form.control}
-                                            name="enabledFeatures"
-                                            render={({ field }) => {
-                                            return (
-                                                <FormItem
-                                                key={item.id}
-                                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                                >
-                                                <FormControl>
-                                                    <Checkbox
-                                                    checked={field.value?.includes(item.id)}
-                                                    onCheckedChange={(checked) => {
-                                                        return checked
-                                                        ? field.onChange([...(field.value || []), item.id])
-                                                        : field.onChange(
-                                                            field.value?.filter(
-                                                                (value) => value !== item.id
-                                                            )
-                                                            )
-                                                    }}
-                                                    />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel className="font-normal">
-                                                        {item.label}
-                                                    </FormLabel>
-                                                    <FormDescription>
-                                                        {item.description}
-                                                    </FormDescription>
-                                                </div>
-                                                </FormItem>
-                                            )
-                                            }}
-                                        />
-                                    ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-        </Card>
+                        <ColorInput name="theme.accent" control={form.control} label="Accent" />
+                    </CardContent>
+                </Card>
+             </div>
+        </div>
         
         <div className="flex justify-end pt-4">
           <Button type="submit" size="lg">Create Company</Button>
