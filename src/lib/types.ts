@@ -674,31 +674,25 @@ export const VIEW_ALL_PAGES: Permission[] = [
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  'Super User': ['Super User'],
-  'Accountable Manager': ['Super User'],
-  'System Admin': ['Super User'],
-  'Admin': [
-    ...VIEW_ALL_PAGES, 
-    'Aircraft:Edit',
-    'Students:Edit',
-    'Personnel:Edit',
-    'Settings:Edit'
-  ],
-  'Operations Manager': ['Super User'],
-  'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
-  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
-  'Instructor Grade 1': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
-  'Instructor Grade 2': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
-  'Instructor Grade 3': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
-  'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
-  'Auditee': ['Quality:View'],
+  'Super User': [],
+  'Accountable Manager': [],
+  'System Admin': [],
+  'Admin': [],
+  'Operations Manager': [],
+  'HR Manager': [],
+  'Safety Manager': [],
+  'Quality Manager': [],
+  'Aircraft Manager': [],
+  'Maintenance': [],
+  'Chief Flight Instructor': [],
+  'Head Of Training': [],
+  'Instructor Grade 1': [],
+  'Instructor Grade 2': [],
+  'Instructor Grade 3': [],
+  'Student': [],
+  'Auditee': [],
   'Driver': [],
-  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View'],
-  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Front Office': [],
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
@@ -720,3 +714,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
