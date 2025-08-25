@@ -235,9 +235,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         logout();
       } else {
         const userData = userSnap.data() as User;
-        setUser(userData);
-        // Ensure we only check for the current user in the current company
-        if (userData.id === userId && userData.companyId === companyId) {
+        if (auth.currentUser?.uid === userData.id) {
+            setUser(userData);
             checkExpiringDocuments(userData, companyId);
         }
       }
