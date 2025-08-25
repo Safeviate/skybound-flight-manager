@@ -95,7 +95,7 @@ const personnelRoles: Role[] = [
     'Safety Manager',
 ];
 
-const availableNavItems = [...allNavItems.filter(item => !item.requiredPermissions?.includes('Super User')), ...adminNavItems]
+const availableNavItems = [...allNavItems, ...adminNavItems]
   .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data' && item.label !== 'Manage Companies' && item.label !== 'System Health');
 
 export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
