@@ -7,35 +7,53 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Paintbrush, ZoomIn, Eraser, Type } from "lucide-react"
+import { Paintbrush, ZoomIn, Eraser, Type, Building, Image as ImageIcon } from "lucide-react"
 import { useUser } from "@/context/user-provider"
 import { useRouter } from "next/navigation"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
 import { useScale } from "@/context/scale-provider"
 import { Slider } from "@/components/ui/slider"
-import type { ThemeColors } from "@/lib/types"
+import type { Company, ThemeColors } from "@/lib/types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Image from "next/image"
 
-const themeFormSchema = z.object({
-  primary: z.string().optional(),
-  background: z.string().optional(),
-  card: z.string().optional(),
-  foreground: z.string().optional(),
-  headerForeground: z.string().optional(),
-  cardForeground: z.string().optional(),
-  accent: z.string().optional(),
-  sidebarBackground: z.string().optional(),
-  sidebarForeground: z.string().optional(),
-  sidebarAccent: z.string().optional(),
-  font: z.string().optional(),
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+const appearanceFormSchema = z.object({
+  trademark: z.string().min(2, "Trademark is required."),
+  logo: z
+    .any()
+    .optional()
+    .refine(
+      (files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE,
+      `Max file size is 500KB.`
+    )
+    .refine(
+      (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
+  theme: z.object({
+    primary: z.string().optional(),
+    background: z.string().optional(),
+    card: z.string().optional(),
+    foreground: z.string().optional(),
+    headerForeground: z.string().optional(),
+    cardForeground: z.string().optional(),
+    accent: z.string().optional(),
+    sidebarBackground: z.string().optional(),
+    sidebarForeground: z.string().optional(),
+    sidebarAccent: z.string().optional(),
+    font: z.string().optional(),
+  }).optional(),
 });
 
-type ThemeFormValues = z.infer<typeof themeFormSchema>;
+type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
 
-const ColorInput = ({ name, control, label }: { name: keyof ThemeFormValues, control: any, label: string }) => (
+const ColorInput = ({ name, control, label }: { name: `theme.${keyof AppearanceFormValues['theme']}`, control: any, label: string }) => (
     <FormField
         control={control}
         name={name}
@@ -64,23 +82,49 @@ function SettingsPage() {
   const { toast } = useToast();
   const { scale, setScale } = useScale();
 
-  const form = useForm<ThemeFormValues>({
-    resolver: zodResolver(themeFormSchema),
-    defaultValues: company?.theme || {},
+  const form = useForm<AppearanceFormValues>({
+    resolver: zodResolver(appearanceFormSchema),
+    defaultValues: {
+        trademark: company?.trademark || '',
+        theme: company?.theme || {},
+    },
   });
   
   React.useEffect(() => {
-    if (company?.theme) {
-      form.reset(company.theme);
+    if (company) {
+      form.reset({
+        trademark: company.trademark || '',
+        theme: company.theme || {}
+      });
     }
   }, [company, form]);
 
-  const handleThemeSubmit = async (data: ThemeFormValues) => {
-    const success = await updateCompany({ theme: data as ThemeColors });
+  const handleAppearanceSubmit = async (data: AppearanceFormValues) => {
+    if (!company) return;
+
+    let logoUrl = company.logoUrl;
+    const logoFile = data.logo?.[0];
+
+    if (logoFile) {
+        logoUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(logoFile);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+        });
+    }
+
+    const updatedData: Partial<Company> = {
+        trademark: data.trademark,
+        theme: data.theme as ThemeColors,
+        logoUrl: logoUrl,
+    };
+    
+    const success = await updateCompany(company.id, updatedData);
     if (success) {
-      toast({ title: 'Theme Updated', description: 'Your new theme has been applied.' });
+      toast({ title: 'Appearance Updated', description: 'Your new settings have been applied.' });
     } else {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update theme.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update settings.' });
     }
   };
   
@@ -98,8 +142,8 @@ function SettingsPage() {
         sidebarAccent: '#1f2937',
         font: 'var(--font-inter)',
     };
-    form.reset(defaultTheme);
-    updateCompany({ theme: defaultTheme });
+    form.setValue('theme', defaultTheme);
+    updateCompany(company!.id, { theme: defaultTheme });
     toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });
   }
 
@@ -125,12 +169,57 @@ function SettingsPage() {
             <CardHeader>
                 <CardTitle>Appearance Settings</CardTitle>
                 <CardDescription>
-                Customize the look and feel of the application.
+                Customize the look and feel of the application for your company.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleThemeSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(handleAppearanceSubmit)} className="space-y-6">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                <Building className="h-4 w-4" />
+                                Branding
+                            </h3>
+                             <FormField
+                                control={form.control}
+                                name="trademark"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Trademark / Slogan</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., Flying High Since 2002" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="logo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Company Logo</FormLabel>
+                                    <div className="flex items-center gap-4">
+                                        {company?.logoUrl ? (
+                                            <Image src={company.logoUrl} alt="Current company logo" width={48} height={48} className="h-12 w-12 rounded-md object-contain bg-muted p-1" />
+                                        ) : (
+                                            <div className="h-12 w-12 flex items-center justify-center bg-muted rounded-md"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>
+                                        )}
+                                        <FormControl>
+                                            <Input type="file" accept="image/*" {...form.register('logo')} className="flex-1"/>
+                                        </FormControl>
+                                    </div>
+                                    <FormDescription>
+                                        Max file size: 500KB. Accepted types: JPG, PNG, WEBP.
+                                    </FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <Separator />
+
                         <div className="space-y-4">
                             <h3 className="font-semibold flex items-center gap-2">
                                 <Paintbrush className="h-4 w-4" />
@@ -143,41 +232,41 @@ function SettingsPage() {
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Main Backgrounds</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                        <ColorInput name="background" control={form.control} label="Background" />
-                                        <ColorInput name="card" control={form.control} label="Card" />
+                                        <ColorInput name="theme.background" control={form.control} label="Background" />
+                                        <ColorInput name="theme.card" control={form.control} label="Card" />
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Main Text</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                    <ColorInput name="foreground" control={form.control} label="Foreground" />
-                                    <ColorInput name="cardForeground" control={form.control} label="Card Text" />
+                                    <ColorInput name="theme.foreground" control={form.control} label="Foreground" />
+                                    <ColorInput name="theme.cardForeground" control={form.control} label="Card Text" />
                                     </CardContent>
                                 </Card>
                                  <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Header Text</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                       <ColorInput name="headerForeground" control={form.control} label="Header" />
+                                       <ColorInput name="theme.headerForeground" control={form.control} label="Header" />
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Accents</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                        <ColorInput name="primary" control={form.control} label="Primary" />
-                                        <ColorInput name="accent" control={form.control} label="Accent" />
+                                        <ColorInput name="theme.primary" control={form.control} label="Primary" />
+                                        <ColorInput name="theme.accent" control={form.control} label="Accent" />
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Background</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                        <ColorInput name="sidebarBackground" control={form.control} label="Sidebar" />
+                                        <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Text</CardTitle></CardHeader>
                                     <CardContent className="p-4 grid grid-cols-2 gap-4">
-                                    <ColorInput name="sidebarForeground" control={form.control} label="Foreground" />
-                                    <ColorInput name="sidebarAccent" control={form.control} label="Accent" />
+                                    <ColorInput name="theme.sidebarForeground" control={form.control} label="Foreground" />
+                                    <ColorInput name="theme.sidebarAccent" control={form.control} label="Accent" />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -192,11 +281,11 @@ function SettingsPage() {
                             </h3>
                             <FormField
                                 control={form.control}
-                                name="font"
+                                name="theme.font"
                                 render={({ field }) => (
                                     <FormItem className="max-w-sm">
                                         <FormLabel>Application Font</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select a font" />
@@ -218,7 +307,7 @@ function SettingsPage() {
                         <div className="flex justify-end gap-2 pt-4 border-t">
                             <Button type="button" variant="ghost" onClick={handleResetTheme}>
                                 <Eraser className="mr-2 h-4 w-4" />
-                                Reset All
+                                Reset Theme
                             </Button>
                             <Button type="submit">Save Appearance Settings</Button>
                         </div>
@@ -233,7 +322,7 @@ function SettingsPage() {
                     Page Scale
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Adjust the overall size of the application UI.
+                    Adjust the overall size of the application UI. This setting is local to your browser.
                   </p>
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-medium w-16 text-right">
