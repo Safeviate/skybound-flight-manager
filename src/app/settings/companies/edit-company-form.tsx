@@ -145,25 +145,17 @@ export function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
         font: 'var(--font-inter)',
     };
     
-    const companyTheme = company.theme || {};
+    // Explicitly merge company theme with defaults to prevent undefined values
+    const companyTheme = {
+        ...defaultTheme,
+        ...(company.theme || {})
+    };
 
     form.reset({
         name: company.name,
         trademark: company.trademark || '',
         enabledFeatures: company.enabledFeatures || [],
-        theme: {
-          primary: companyTheme.primary || defaultTheme.primary,
-          background: companyTheme.background || defaultTheme.background,
-          card: companyTheme.card || defaultTheme.card,
-          accent: companyTheme.accent || defaultTheme.accent,
-          foreground: companyTheme.foreground || defaultTheme.foreground,
-          headerForeground: companyTheme.headerForeground || defaultTheme.headerForeground,
-          cardForeground: companyTheme.cardForeground || defaultTheme.cardForeground,
-          sidebarBackground: companyTheme.sidebarBackground || defaultTheme.sidebarBackground,
-          sidebarForeground: companyTheme.sidebarForeground || defaultTheme.sidebarForeground,
-          sidebarAccent: companyTheme.sidebarAccent || defaultTheme.sidebarAccent,
-          font: companyTheme.font || defaultTheme.font,
-        },
+        theme: companyTheme,
     })
   }, [company, form]);
 
