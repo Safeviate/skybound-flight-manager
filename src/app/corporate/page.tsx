@@ -49,7 +49,7 @@ export default function CorporatePage() {
                 card: '#ffffff',
                 accent: '#ffc107',
                 foreground: '#212529',
-                headerForeground: '#212529', // Ensure this is present
+                headerForeground: '#212529',
                 cardForeground: '#212529',
                 sidebarBackground: '#0c0a09',
                 sidebarForeground: '#f8f9fa',
@@ -98,8 +98,8 @@ export default function CorporatePage() {
             let errorMessage = "An error occurred while creating the company.";
             if (error.code === 'auth/email-already-in-use') {
                 errorMessage = "This email address is already in use by another account.";
-            } else if (error.code === 'permission-denied') {
-                 errorMessage = "Permission denied. Check your Firestore security rules to allow unauthenticated company creation.";
+            } else if (error.code === 'permission-denied' || error.code === 'not-found') {
+                 errorMessage = "Permission denied or resource not found. Check your Firestore security rules to allow unauthenticated company creation.";
             }
             toast({
                 variant: 'destructive',

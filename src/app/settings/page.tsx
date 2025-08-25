@@ -76,6 +76,20 @@ const fonts = [
     { label: 'Montserrat', value: 'var(--font-montserrat)' },
 ];
 
+const defaultTheme = {
+  primary: '#0d6efd',
+  background: '#f8f9fa',
+  card: '#ffffff',
+  accent: '#ffc107',
+  foreground: '#212529',
+  headerForeground: '#212529',
+  cardForeground: '#212529',
+  sidebarBackground: '#0c0a09',
+  sidebarForeground: '#f8f9fa',
+  sidebarAccent: '#1f2937',
+  font: 'var(--font-inter)',
+};
+
 function SettingsPage() {
   const { user, company, updateCompany, loading } = useUser();
   const router = useRouter();
@@ -85,8 +99,8 @@ function SettingsPage() {
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues: {
-        trademark: company?.trademark || '',
-        theme: company?.theme || {},
+        trademark: '',
+        theme: defaultTheme,
     },
   });
   
@@ -94,24 +108,13 @@ function SettingsPage() {
     if (company) {
       form.reset({
         trademark: company.trademark || '',
-        theme: company.theme || {}
+        theme: {
+            ...defaultTheme,
+            ...(company.theme || {}),
+        }
       });
     }
   }, [company, form]);
-
-  const defaultTheme = {
-    primary: '#0d6efd',
-    background: '#f8f9fa',
-    card: '#ffffff',
-    accent: '#ffc107',
-    foreground: '#212529',
-    headerForeground: '#212529',
-    cardForeground: '#212529',
-    sidebarBackground: '#0c0a09',
-    sidebarForeground: '#f8f9fa',
-    sidebarAccent: '#1f2937',
-    font: 'var(--font-inter)',
-  };
 
   const handleAppearanceSubmit = async (data: AppearanceFormValues) => {
     if (!company) return;
@@ -130,7 +133,6 @@ function SettingsPage() {
 
     const updatedData: Partial<Company> = {
         trademark: data.trademark,
-        // Merge with defaults to ensure no undefined values are sent to Firestore
         theme: { ...defaultTheme, ...(data.theme || {}) },
         logoUrl: logoUrl,
     };
@@ -143,10 +145,15 @@ function SettingsPage() {
     }
   };
   
-  const handleResetTheme = () => {
+  const handleResetTheme = async () => {
+    if (!company) return;
     form.setValue('theme', defaultTheme);
-    updateCompany(company!.id, { theme: defaultTheme });
-    toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });
+    const success = await updateCompany(company.id, { theme: defaultTheme });
+    if (success) {
+        toast({ title: 'Theme Reset', description: 'The theme has been reset to its default settings.' });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to reset theme.' });
+    }
   }
 
   React.useEffect(() => {
@@ -247,7 +254,7 @@ function SettingsPage() {
                                 </Card>
                                  <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Header Text</CardTitle></CardHeader>
-                                    <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                    <CardContent className="p-4">
                                        <ColorInput name="theme.headerForeground" control={form.control} label="Header" />
                                     </CardContent>
                                 </Card>
@@ -260,7 +267,7 @@ function SettingsPage() {
                                 </Card>
                                 <Card>
                                     <CardHeader className="p-4"><CardTitle className="text-base">Sidebar Background</CardTitle></CardHeader>
-                                    <CardContent className="p-4 grid grid-cols-2 gap-4">
+                                    <CardContent className="p-4">
                                         <ColorInput name="theme.sidebarBackground" control={form.control} label="Sidebar" />
                                     </CardContent>
                                 </Card>

@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, getDoc, writeBatch, collection, addDoc, setDoc } from 'firebase/firestore';
 import type { Company, Feature, User } from '@/lib/types';
-import { EditCompanyForm } from './edit-company-form';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +24,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
   const { user, company: currentCompany, setCompany, userCompanies, setUserCompanies, updateCompany } = useUser();
   const { toast } = useToast();
   const [companies, setCompanies] = React.useState<Company[]>(initialCompanies);
-  const [isEditCompanyDialogOpen, setIsEditCompanyDialogOpen] = React.useState(false);
-  const [editingCompany, setEditingCompany] = React.useState<Company | null>(null);
   const router = useRouter();
   
   React.useEffect(() => {
@@ -37,45 +34,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
         setCompanies(initialCompanies);
     }
   }, [initialCompanies, userCompanies]);
-
-  const handleUpdateCompany = async (updatedData: Partial<Company>, logoFile?: File) => {
-    if (!editingCompany) return;
-
-    try {
-      let logoUrl = editingCompany.logoUrl;
-      if (logoFile) {
-        logoUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(logoFile);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-        });
-      }
-
-      const finalDataToSave = { ...updatedData, logoUrl };
-      
-      const success = await updateCompany(editingCompany.id, finalDataToSave);
-
-      if (success) {
-        const finalUpdatedData = { ...editingCompany, ...finalDataToSave };
-
-        setUserCompanies(prev => prev.map(c => c.id === editingCompany.id ? finalUpdatedData : c));
-        
-        if (currentCompany?.id === editingCompany.id) {
-            setCompany(finalUpdatedData);
-        }
-
-        setIsEditCompanyDialogOpen(false);
-        setEditingCompany(null);
-        toast({ title: 'Company Updated', description: 'The company details have been saved.' });
-      } else {
-        throw new Error("Update company failed");
-      }
-    } catch (error) {
-      console.error('Error updating company:', error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update company.' });
-    }
-  };
   
   const handleSwitchCompany = (companyToSwitch: Company) => {
     setCompany(companyToSwitch);
@@ -85,11 +43,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
     });
     router.push('/my-dashboard');
   }
-
-  const openEditDialog = (company: Company) => {
-    setEditingCompany(company);
-    setIsEditCompanyDialogOpen(true);
-  };
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -144,8 +97,10 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
                     >
                         <Repeat className="mr-2 h-4 w-4" /> Switch to Company
                     </Button>
-                    <Button variant="ghost" size="icon" className="ml-2" onClick={() => openEditDialog(company)}>
-                        <Edit className="h-4 w-4"/>
+                    <Button asChild variant="ghost" size="icon" className="ml-2">
+                        <Link href="/settings">
+                            <Edit className="h-4 w-4"/>
+                        </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -154,20 +109,6 @@ export function CompaniesPageContent({ initialCompanies }: { initialCompanies: C
           </Table>
         </CardContent>
       </Card>
-      
-      {editingCompany && (
-        <Dialog open={isEditCompanyDialogOpen} onOpenChange={setIsEditCompanyDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Company: {editingCompany.name}</DialogTitle>
-            </DialogHeader>
-            <EditCompanyForm
-              company={editingCompany}
-              onSubmit={handleUpdateCompany}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </main>
   );
 }
