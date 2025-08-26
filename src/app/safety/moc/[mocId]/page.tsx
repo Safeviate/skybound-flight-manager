@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -698,7 +699,7 @@ export default function MocDetailPage() {
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
             {moc.phases?.map((phase, phaseIndex) => (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
-                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
+                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">{phaseIndex + 1}. {phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
                              <h4 className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
