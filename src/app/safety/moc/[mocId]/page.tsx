@@ -658,8 +658,11 @@ export default function MocDetailPage() {
                     ))}
                 </div>
             ) : (
-                <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg no-print">
-                    <p className="text-muted-foreground">No implementation phases have been added yet.</p>
+                <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
+                    <h4 className="text-lg font-semibold">Start the Implementation Plan</h4>
+                    <p className="text-muted-foreground text-sm">
+                        Use the AI to generate a plan, or add your first implementation phase manually.
+                    </p>
                 </div>
             )}
             </CardContent>
