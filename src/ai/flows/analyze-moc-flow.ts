@@ -18,6 +18,7 @@ const AnalyzeMocInputSchema = z.object({
   description: z.string().describe('The detailed description of the change.'),
   reason: z.string().describe('The reason or justification for the change.'),
   scope: z.string().describe('The scope of the change (e.g., departments, personnel, operations affected).'),
+  analysisParameters: z.string().optional().describe('Additional user-provided parameters or areas of focus for the AI analysis.'),
 });
 export type AnalyzeMocInput = z.infer<typeof AnalyzeMocInputSchema>;
 
@@ -69,6 +70,11 @@ const prompt = ai.definePrompt({
   - Description: {{{description}}}
   - Reason for Change: {{{reason}}}
   - Scope of Change: {{{scope}}}
+
+  {{#if analysisParameters}}
+  The user has provided the following specific parameters to guide your analysis. Pay close attention to these points:
+  - Analysis Parameters: {{{analysisParameters}}}
+  {{/if}}
 
   Based on this proposal, you must:
   1.  **Deconstruct the change into 3-5 high-level implementation PHASES.** Examples include "Update Documentation", "Conduct Personnel Training", "Amend Regulatory Approvals", etc. Consider what SACAA approvals or notifications might be required.

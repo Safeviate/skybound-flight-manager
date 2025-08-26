@@ -404,6 +404,7 @@ export default function MocDetailPage() {
   const [selectedPhase, setSelectedPhase] = useState<MocPhase | null>(null);
   const [editingPhase, setEditingPhase] = useState<MocPhase | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [analysisParams, setAnalysisParams] = useState('');
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
 
@@ -468,6 +469,7 @@ export default function MocDetailPage() {
         description: moc.description,
         reason: moc.reason,
         scope: moc.scope,
+        analysisParameters: analysisParams,
       });
 
       const newPhases: MocPhase[] = result.phases.map(phase => ({
@@ -601,18 +603,27 @@ export default function MocDetailPage() {
                             Outline the phases and steps to implement the change, and identify associated hazards.
                         </CardDescription>
                     </div>
-                    {canEdit && (
-                        <div className="flex items-center gap-2">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
-                                {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Analyze with AI
-                            </Button>
-                            <AddPhaseDialog onAddPhase={handleAddPhase} />
-                        </div>
-                    )}
                 </div>
             </CardHeader>
             <CardContent>
+             {canEdit && (
+                <div className="space-y-4 rounded-lg border p-4 mb-6">
+                     <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
+                     <Textarea 
+                        id="analysis-params"
+                        placeholder="Enter specific keywords or areas for the AI to focus on, e.g., 'impact on flight crew duty times' or 'required maintenance tooling'."
+                        value={analysisParams}
+                        onChange={(e) => setAnalysisParams(e.target.value)}
+                    />
+                    <div className="flex items-center gap-2 justify-end">
+                        <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
+                            {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                            Analyze with AI
+                        </Button>
+                        <AddPhaseDialog onAddPhase={handleAddPhase} />
+                    </div>
+                </div>
+            )}
             {moc.phases && moc.phases.length > 0 ? (
                 <div className="space-y-2">
                     {moc.phases.map((phase, index) => (
@@ -645,7 +656,7 @@ export default function MocDetailPage() {
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
             {moc.phases?.map((phase, phaseIndex) => (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
-                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
+                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">{phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
                              <h4 className="font-semibold">Step #{phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
