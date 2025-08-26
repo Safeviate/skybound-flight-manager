@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -375,6 +374,48 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                             <Label>Risk Score:</Label>
                                             <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore) }}>{risk.riskScore} - {getRiskLevel(risk.riskScore)}</Badge>
                                         </div>
+
+                                        <Separator />
+                                        
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <Label>Mitigation Controls</Label>
+                                                <Button variant="outline" size="sm" onClick={() => handleAddMitigation(step.id, hazard.id, risk.id)}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
+                                                </Button>
+                                            </div>
+                                            {risk.mitigations?.map((mitigation, mitIndex) => (
+                                                <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
+                                                    <div className="flex justify-end">
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                     <Textarea 
+                                                        placeholder="Describe the mitigation control..." 
+                                                        value={mitigation.description} 
+                                                        onChange={(e) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'description', e.target.value)}
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <Input 
+                                                            placeholder="Responsible Person" 
+                                                            value={mitigation.responsiblePerson}
+                                                            onChange={(e) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'responsiblePerson', e.target.value)}
+                                                        />
+                                                         <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !mitigation.completionDate && "text-muted-foreground")}>
+                                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                                    {mitigation.completionDate ? format(parseISO(mitigation.completionDate), "PPP") : <span>Set Date</span>}
+                                                                </Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined} onSelect={(date) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'completionDate', date)} /></PopoverContent>
+                                                        </Popover>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
                                     </div>
                                 ))}
                             </div>
@@ -659,7 +700,7 @@ export default function MocDetailPage() {
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">{phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step #{phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
+                             <h4 className="font-semibold">Step #{stepIndex + 1}: {step.description}</h4>
                              {step.hazards?.map((hazard, hIndex) => (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
                                     <h5 className="font-medium">Hazard: {hazard.description}</h5>
@@ -718,5 +759,3 @@ export default function MocDetailPage() {
 
 MocDetailPage.title = "Management of Change";
 
-
-    
