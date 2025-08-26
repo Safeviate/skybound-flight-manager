@@ -307,6 +307,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                 {localPhase.steps?.map((step, stepIndex) => {
                     let hazardCounter = 0;
                     let riskCounter = 0;
+                    let mitigationCounter = 0;
                     
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
@@ -351,7 +352,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                 />
                                 {hazard.risks?.map((risk) => {
                                     riskCounter++;
-                                    let mitigationCounter = 0;
+                                    let riskMitigationCounter = 0;
 
                                     return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t border-yellow-400">
@@ -397,11 +398,11 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                 </Button>
                                             </div>
                                             {risk.mitigations?.map((mitigation) => {
-                                                mitigationCounter++;
+                                                riskMitigationCounter++;
                                                 return (
                                                 <div key={mitigation.id} className="p-3 border border-green-500 bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
+                                                        <Label className="font-semibold">{`Mitigation ${riskMitigationCounter} Step ${stepIndex + 1}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -810,6 +811,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
