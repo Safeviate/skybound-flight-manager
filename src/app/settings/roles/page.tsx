@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { CompanyRole, CompanyDepartment, Permission } from '@/lib/types';
 import { PermissionsListbox } from '@/app/personnel/permissions-listbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ALL_PERMISSIONS } from '@/lib/types';
 
 const itemFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -213,23 +214,20 @@ export default function RolesAndDepartmentsPage() {
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<CompanyRole[]>([]);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
-    const [allPermissions, setAllPermissions] = React.useState<Permission[]>([]);
+    const [allPermissions, setAllPermissions] = React.useState<Permission[]>(ALL_PERMISSIONS); // Fallback to hardcoded list
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const permsQuery = query(collection(db, `companies/${company.id}/permissions`));
-
-            const [rolesSnapshot, deptsSnapshot, permsSnapshot] = await Promise.all([
+            
+            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
                 getDocs(deptsQuery),
-                getDocs(permsQuery)
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
-            setAllPermissions(permsSnapshot.docs.map(doc => doc.data().name as Permission));
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -260,3 +258,5 @@ export default function RolesAndDepartmentsPage() {
 }
 
 RolesAndDepartmentsPage.title = "Roles & Departments";
+
+    
