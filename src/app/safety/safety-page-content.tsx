@@ -431,14 +431,18 @@ export function SafetyPageContent({
   const [isNewMocOpen, setIsNewMocOpen] = useState(false);
   const router = useRouter();
   
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     if (!company) return;
     const { reportsList, risksList, bookingsList, mocList } = await getSafetyPageData(company.id);
     setSafetyReports(reportsList);
     setRisks(risksList);
     setBookings(bookingsList);
     setMocs(mocList);
-  };
+  }, [company]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const [spiConfigs, setSpiConfigs] = useState<SpiConfig[]>([
     { 
@@ -501,7 +505,7 @@ export function SafetyPageContent({
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
         await updateDoc(reportRef, { status: 'Archived' });
-        setSafetyReports(prev => prev.map(r => r.id === reportId ? {...r, status: 'Archived'} : r));
+        fetchData();
         toast({ title: 'Report Archived', description: 'The safety report has been archived.' });
     } catch (error) {
         console.error("Error archiving report:", error);
@@ -514,10 +518,10 @@ export function SafetyPageContent({
     try {
         const reportRef = doc(db, `companies/${company.id}/safety-reports`, reportId);
         await updateDoc(reportRef, { status: 'Open' }); // Or 'Under Review'
-        setSafetyReports(prev => prev.map(r => r.id === reportId ? {...r, status: 'Open'} : r));
+        fetchData();
         toast({ title: 'Report Reactivated', description: 'The safety report has been moved back to active reports.' });
     } catch (error) {
-        console.error("Error reactivating report:", error);
+        console.error(`Error updating student status:`, error);
         toast({
             variant: 'destructive',
             title: 'Update Failed',
