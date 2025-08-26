@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -39,6 +40,7 @@ import {
   BookOpen,
   FlaskConical,
   BarChart,
+  Network
 } from 'lucide-react';
 import type { Permission, Feature, NavMenuItem } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
@@ -67,6 +69,7 @@ export const navItems: {
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
   { href: '/settings/company', label: 'Company Settings', icon: Cog },
+  { href: '/settings/roles', label: 'Roles & Departments', icon: Network, requiredPermissions: ['Super User'] },
 ];
 
 export const adminNavItems = [

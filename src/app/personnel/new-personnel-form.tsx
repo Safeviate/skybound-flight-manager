@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Role, User, Permission, UserDocument, NavMenuItem, Department } from '@/lib/types';
+import type { Role, User, Permission, UserDocument, NavMenuItem, Department, CompanyRole, CompanyDepartment } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -44,8 +44,6 @@ import { auth } from '@/lib/firebase';
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );
-
-const companyDepartments: Department[] = ['Management', 'Flight Operations', 'Ground Operation', 'Maintenance', 'Administrative', 'Cargo', 'Finance', 'Human Resources'];
 
 const personnelFormSchema = z.object({
   name: z.string().min(2, {
@@ -75,26 +73,6 @@ interface NewPersonnelFormProps {
     onSuccess: () => void;
 }
 
-const personnelRoles: Role[] = [
-    'Accountable Manager',
-    'Admin',
-    'System Admin',
-    'Aircraft Manager',
-    'Auditee',
-    'Chief Flight Instructor',
-    'Driver',
-    'Front Office',
-    'Head Of Training',
-    'HR Manager',
-    'Instructor Grade 1',
-    'Instructor Grade 2',
-    'Instructor Grade 3',
-    'Maintenance',
-    'Operations Manager',
-    'Quality Manager',
-    'Safety Manager',
-];
-
 const availableNavItems = [...allNavItems, ...adminNavItems]
   .filter(item => item.label !== 'Functions' && item.label !== 'Seed Data' && item.label !== 'Manage Companies' && item.label !== 'System Health');
 
@@ -102,6 +80,8 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   const { company } = useUser();
   const { settings } = useSettings();
   const { toast } = useToast();
+  const [roles, setRoles] = useState<CompanyRole[]>([]);
+  const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -117,10 +97,28 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     }
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!company) return;
+        try {
+            const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
+            const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
+            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
+                getDocs(rolesQuery),
+                getDocs(deptsQuery)
+            ]);
+            setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
+            setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch roles or departments.' });
+        }
+    };
+    fetchData();
+  }, [company, toast]);
+
   const selectedRole = form.watch('role');
 
-  const isInstructorRole = ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'].includes(selectedRole);
-
+  const isInstructorRole = selectedRole?.toLowerCase().includes('instructor');
 
   async function handleFormSubmit(data: PersonnelFormValues) {
     if (!company) {
@@ -240,9 +238,9 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {personnelRoles.map((role) => (
-                                <SelectItem key={role} value={role}>
-                                {role}
+                            {roles.map((role) => (
+                                <SelectItem key={role.id} value={role.name}>
+                                {role.name}
                                 </SelectItem>
                             ))}
                             </SelectContent>
@@ -264,9 +262,9 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {companyDepartments.map((dept) => (
-                                <SelectItem key={dept} value={dept}>
-                                {dept}
+                            {departments.map((dept) => (
+                                <SelectItem key={dept.id} value={dept.name}>
+                                {dept.name}
                                 </SelectItem>
                             ))}
                             </SelectContent>

@@ -191,30 +191,10 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Super User',
 ];
 
-export type Department = 'Management' | 'Flight Operations' | 'Ground Operation' | 'Maintenance' | 'External' | 'Administrative' | 'Cargo' | 'Finance' | 'Human Resources';
+export type Role = string;
+export type Department = string;
 
-export type Role =
-  | 'Accountable Manager'
-  | 'Admin'
-  | 'Aircraft Manager'
-  | 'Chief Flight Instructor'
-  | 'Driver'
-  | 'Front Office'
-  | 'Head Of Training'
-  | 'HR Manager'
-  | 'Instructor Grade 1'
-  | 'Instructor Grade 2'
-  | 'Instructor Grade 3'
-  | 'Maintenance'
-  | 'Operations Manager'
-  | 'Quality Manager'
-  | 'Safety Manager'
-  | 'Student'
-  | 'Auditee'
-  | 'System Admin'
-  | 'Super User';
-
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments';
 
 export type User = {
     id: string;
@@ -715,3 +695,12 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Post-impact'
 ];
 
+export type CompanyRole = {
+    id: string;
+    name: string;
+};
+
+export type CompanyDepartment = {
+    id: string;
+    name: string;
+};
