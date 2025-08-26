@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 
 const mocFormSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
+  proposedBy: z.string(),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   reason: z.string().min(20, 'Reason for change must be at least 20 characters.'),
   scope: z.string().min(20, 'Scope of change must be at least 20 characters.'),
@@ -36,6 +37,7 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
     resolver: zodResolver(mocFormSchema),
     defaultValues: {
         title: '',
+        proposedBy: user?.name || '',
         description: '',
         reason: '',
         scope: '',
@@ -58,7 +60,6 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
         ...data,
         companyId: company.id,
         mocNumber: mocNumber,
-        proposedBy: user.name,
         proposalDate: new Date().toISOString(),
         status: 'Proposed',
       };
@@ -83,6 +84,17 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
             <FormItem>
               <FormLabel>Title of Change</FormLabel>
               <FormControl><Input placeholder="e.g., Introduction of new aircraft type" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="proposedBy"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Proposed by</FormLabel>
+              <FormControl><Input {...field} readOnly disabled /></FormControl>
               <FormMessage />
             </FormItem>
           )}
