@@ -1,7 +1,7 @@
 import { AppConfig } from './types';
 
 const config: Partial<AppConfig> = {
-  useMockData: true,
+  useMockData: false,
   appName: 'Safeviate (Dev)',
 };
 
