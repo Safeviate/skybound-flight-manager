@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -759,4 +760,3 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
-
