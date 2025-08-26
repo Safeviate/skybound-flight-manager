@@ -778,7 +778,7 @@ export function AircraftPageContent({
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="active">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 h-auto md:h-10">
                     <TabsTrigger value="active">Active Fleet ({activeAircraft.length})</TabsTrigger>
                     <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
                     <TabsTrigger value="technical-log">Technical Log</TabsTrigger>
