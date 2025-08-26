@@ -74,7 +74,6 @@ export const navItems: {
 export const adminNavItems = [
     { href: '/settings/companies', label: 'Manage Companies', icon: Building },
     { href: '/reports/system-health', label: 'System Health', icon: Activity },
-    { href: '/settings/seed-data', label: 'Seed Data', icon: Database },
     { href: '/functions', label: 'Functions', icon: FlaskConical },
     { href: '/gantt-chart', label: 'Gantt Chart', icon: BarChart },
 ]
