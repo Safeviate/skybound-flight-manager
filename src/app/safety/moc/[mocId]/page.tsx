@@ -402,6 +402,7 @@ export default function MocDetailPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [selectedPhase, setSelectedPhase] = useState<MocPhase | null>(null);
+  const [editingPhase, setEditingPhase] = useState<MocPhase | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
@@ -526,6 +527,14 @@ export default function MocDetailPage() {
       const updatedPhases = moc.phases?.map(p => p.id === updatedPhase.id ? updatedPhase : p);
       handleUpdate({ phases: updatedPhases });
   };
+  
+  const handleEditPhase = (phaseId: string, newDescription: string) => {
+    if (!moc) return;
+    const updatedPhases = moc.phases?.map(p => p.id === phaseId ? { ...p, description: newDescription } : p);
+    handleUpdate({ phases: updatedPhases });
+    setEditingPhase(null);
+  };
+
 
   if (loading || userLoading) {
     return (
@@ -614,7 +623,7 @@ export default function MocDetailPage() {
                                     <Wind className="mr-2 h-4 w-4" />
                                     Analyze ({phase.steps?.length || 0} Steps)
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); /* edit logic */}}><Edit className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => setEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id) }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
                         </div>
@@ -671,6 +680,26 @@ export default function MocDetailPage() {
                 onClose={() => setSelectedPhase(null)}
             />
         </Dialog>
+      )}
+      {editingPhase && (
+          <Dialog open={!!editingPhase} onOpenChange={() => setEditingPhase(null)}>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>Edit Phase Title</DialogTitle>
+                  </DialogHeader>
+                  <Input 
+                      defaultValue={editingPhase.description}
+                      id="edit-phase-input"
+                  />
+                  <DialogFooter>
+                      <Button variant="outline" onClick={() => setEditingPhase(null)}>Cancel</Button>
+                      <Button onClick={() => {
+                          const newDesc = (document.getElementById('edit-phase-input') as HTMLInputElement).value;
+                          if (newDesc) handleEditPhase(editingPhase.id, newDesc);
+                      }}>Save</Button>
+                  </DialogFooter>
+              </DialogContent>
+          </Dialog>
       )}
     </main>
   );
