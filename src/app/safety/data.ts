@@ -6,22 +6,32 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import type { SafetyReport, Risk, Booking, ManagementOfChange } from '@/lib/types';
 
 export async function getSafetyPageData(companyId: string) {
+    if (!companyId) {
+        console.error("getSafetyPageData called without a companyId.");
+        return { reportsList: [], risksList: [], bookingsList: [], mocList: [] };
+    }
+
     const reportsQuery = query(collection(db, `companies/${companyId}/safety-reports`));
     const risksQuery = query(collection(db, `companies/${companyId}/risks`));
     const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
     const mocQuery = query(collection(db, `companies/${companyId}/management-of-change`));
     
-    const [reportsSnapshot, risksSnapshot, bookingsSnapshot, mocSnapshot] = await Promise.all([
-        getDocs(reportsQuery),
-        getDocs(risksQuery),
-        getDocs(bookingsQuery),
-        getDocs(mocQuery),
-    ]);
+    try {
+        const [reportsSnapshot, risksSnapshot, bookingsSnapshot, mocSnapshot] = await Promise.all([
+            getDocs(reportsQuery),
+            getDocs(risksQuery),
+            getDocs(bookingsQuery),
+            getDocs(mocQuery),
+        ]);
 
-    const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
-    const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
-    const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-    const mocList = mocSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagementOfChange));
-    
-    return { reportsList, risksList, bookingsList, mocList };
+        const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SafetyReport));
+        const risksList = risksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Risk));
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        const mocList = mocSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagementOfChange));
+        
+        return { reportsList, risksList, bookingsList, mocList };
+    } catch (error) {
+        console.error(`Failed to fetch safety page data for company ${companyId}:`, error);
+        return { reportsList: [], risksList: [], bookingsList: [], mocList: [] };
+    }
 }
