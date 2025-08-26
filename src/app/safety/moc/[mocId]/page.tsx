@@ -304,10 +304,14 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                 </div>
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
-                {localPhase.steps?.map((step, stepIndex) => (
+                {localPhase.steps?.map((step, stepIndex) => {
+                    let hazardCounter = 0;
+                    let riskCounter = 0;
+                    
+                    return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${phaseNumber}.${stepIndex + 1}`}</Label>
+                            <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${stepIndex + 1}`}</Label>
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handleAddHazard(step.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Hazard
@@ -323,10 +327,13 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                             value={step.description}
                             onChange={(e) => handleStepChange(step.id, e.target.value)}
                         />
-                        {step.hazards?.map((hazard, hazardIndex) => (
+                        {step.hazards?.map((hazard) => {
+                            hazardCounter++;
+                            
+                            return (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">{`Hazard ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}`}</Label>
+                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold">{`Hazard ${hazardCounter} Step ${stepIndex + 1}`}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
@@ -337,15 +344,18 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     </div>
                                 </div>
                                 <Input
-                                    id={`hazard-desc-${hazardIndex}`}
+                                    id={`hazard-desc-${hazardCounter}`}
                                     placeholder="Describe the potential hazard..."
                                     value={hazard.description}
                                     onChange={(e) => handleHazardChange(step.id, hazard.id, e.target.value)}
                                 />
-                                {hazard.risks?.map((risk, riskIndex) => (
+                                {hazard.risks?.map((risk) => {
+                                    riskCounter++;
+                                    let mitigationCounter = 0;
+                                    return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">{`Risk ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}.${riskIndex + 1}`}</Label>
+                                            <Label className="font-semibold">{`Risk ${riskCounter} Step ${stepIndex + 1}`}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -385,10 +395,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
                                                 </Button>
                                             </div>
-                                            {risk.mitigations?.map((mitigation, mitigationIndex) => (
+                                            {risk.mitigations?.map((mitigation) => {
+                                                mitigationCounter++;
+                                                return (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">{`Mitigation ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}.${riskIndex + 1}.${mitigationIndex + 1}`}</Label>
+                                                        <Label className="font-semibold">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -435,15 +447,14 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                         <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.residualRiskScore) }}>{mitigation.residualRiskScore} - {getRiskLevel(mitigation.residualRiskScore)}</Badge>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
-
                                     </div>
-                                ))}
+                                )})}
                             </div>
-                        ))}
+                        )})}
                     </div>
-                ))}
+                )})}
                 {(!localPhase.steps || localPhase.steps.length === 0) && (
                     <div className="text-sm text-center text-muted-foreground py-8">No steps added yet for this phase.</div>
                 )}
@@ -720,28 +731,38 @@ export default function MocDetailPage() {
             {moc.phases?.map((phase, phaseIndex) => (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
-                    {phase.steps?.map((step, stepIndex) => (
+                    {phase.steps?.map((step, stepIndex) => {
+                        let hazardCounter = 0;
+                        let riskCounter = 0;
+                        return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
                              <h4 className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
-                             {step.hazards?.map((hazard, hazardIndex) => (
+                             {step.hazards?.map((hazard) => {
+                                hazardCounter++;
+                                 return (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
-                                    <h5 className="font-medium">Hazard {phaseIndex + 1}.{stepIndex + 1}.{hazardIndex + 1}: {hazard.description}</h5>
-                                    {hazard.risks?.map((risk, riskIndex) => (
+                                    <h5 className="font-medium">Hazard {stepIndex + 1}.{hazardCounter}: {hazard.description}</h5>
+                                    {hazard.risks?.map((risk) => {
+                                        riskCounter++;
+                                        let mitigationCounter = 0;
+                                        return (
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk {phaseIndex + 1}.{stepIndex + 1}.{hazardIndex + 1}.{riskIndex + 1}:</strong> {risk.description}</p>
+                                            <p className="text-sm"><strong>Risk {riskCounter}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
-                                            {risk.mitigations?.map((mitigation, mitigationIndex) => (
+                                            {risk.mitigations?.map((mitigation) => {
+                                                mitigationCounter++;
+                                                return (
                                                 <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation {phaseIndex + 1}.{stepIndex + 1}.{hazardIndex + 1}.{riskIndex + 1}.{mitigationIndex + 1}:</strong> {mitigation.description}</p>
+                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
-                            ))}
+                            )})}
                         </div>
-                    ))}
+                    )})}
                 </div>
             ))}
         </div>
@@ -781,5 +802,7 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
+    
 
     
