@@ -68,7 +68,7 @@ export const navItems: {
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
   { href: '/settings/company', label: 'Company Settings', icon: Cog },
-  { href: '/settings/roles', label: 'Roles & Departments', icon: Network, requiredPermissions: ['Super User'] },
+  { href: '/settings/roles', label: 'Roles & Departments', icon: Network, requiredPermissions: ['Roles & Departments:View'] },
 ];
 
 export const adminNavItems = [
