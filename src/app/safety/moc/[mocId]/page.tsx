@@ -307,6 +307,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                 {localPhase.steps?.map((step, stepIndex) => {
                     let hazardCounter = 0;
                     let riskCounter = 0;
+                    let mitigationCounter = 0;
                     
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
@@ -351,7 +352,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                 />
                                 {hazard.risks?.map((risk) => {
                                     riskCounter++;
-                                    let mitigationCounter = 0;
 
                                     return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
@@ -811,6 +811,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
