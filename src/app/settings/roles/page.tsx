@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -38,6 +37,14 @@ const ItemForm = ({
     resolver: zodResolver(itemFormSchema),
     defaultValues: existingItem || { name: '' },
   });
+  
+  React.useEffect(() => {
+    if (existingItem) {
+        form.reset({ name: existingItem.name });
+    } else {
+        form.reset({ name: '' });
+    }
+  }, [existingItem, form]);
 
   return (
     <Form {...form}>
