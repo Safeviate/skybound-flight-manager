@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -83,7 +82,7 @@ const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote'
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
 
-const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, onUpdate: (updatedPhase: MocPhase) => void, onClose: () => void }) => {
+const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase: MocPhase, onUpdate: (updatedPhase: MocPhase) => void, onClose: () => void, phaseNumber: number }) => {
     const [localPhase, setLocalPhase] = useState<MocPhase>(phase);
 
     const handleAddStep = (phaseId: string) => {
@@ -294,7 +293,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
     return (
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>Hazard Analysis for Phase: {phase.description}</DialogTitle>
+                <DialogTitle>Hazard Analysis for Phase {phaseNumber}: {phase.description}</DialogTitle>
                  <div className="flex items-center gap-2 pt-2">
                     <Button className="w-fit" onClick={() => handleAddStep(phase.id)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -306,7 +305,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                 {localPhase.steps?.map((step, stepIndex) => (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
-                             <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">Step #{stepIndex + 1}</Label>
+                             <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">Step {phaseNumber}.{stepIndex + 1}</Label>
                               <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handleAddHazard(step.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Hazard
@@ -325,7 +324,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                         {step.hazards?.map((hazard, hazardIndex) => (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">Hazard for Step #{stepIndex + 1}</Label>
+                                    <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">Hazard {phaseNumber}.{stepIndex + 1}.{hazardIndex + 1}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
@@ -344,7 +343,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                 {hazard.risks?.map((risk, riskIndex) => (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">Risk #{riskIndex + 1}</Label>
+                                            <Label className="font-semibold">Risk {phaseNumber}.{stepIndex + 1}.{hazardIndex + 1}.{riskIndex + 1}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -386,7 +385,8 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                             </div>
                                             {risk.mitigations?.map((mitigation, mitIndex) => (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
-                                                    <div className="flex justify-end">
+                                                     <div className="flex items-center justify-between">
+                                                        <Label className="font-semibold">Mitigation {phaseNumber}.{stepIndex + 1}.{hazardIndex + 1}.{riskIndex + 1}.{mitIndex + 1}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -669,7 +669,7 @@ export default function MocDetailPage() {
                 <div className="space-y-2">
                     {moc.phases.map((phase, index) => (
                          <div key={phase.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center no-print">
-                            <h4 className="font-semibold">{phase.description}</h4>
+                            <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
                                     <Wind className="mr-2 h-4 w-4" />
@@ -697,20 +697,20 @@ export default function MocDetailPage() {
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
             {moc.phases?.map((phase, phaseIndex) => (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
-                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">{phase.description}</h3>
+                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step #{stepIndex + 1}: {step.description}</h4>
+                             <h4 className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
                              {step.hazards?.map((hazard, hIndex) => (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
-                                    <h5 className="font-medium">Hazard: {hazard.description}</h5>
+                                    <h5 className="font-medium">Hazard {phaseIndex + 1}.{stepIndex + 1}.{hIndex + 1}: {hazard.description}</h5>
                                     {hazard.risks?.map((risk, rIndex) => (
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk:</strong> {risk.description}</p>
+                                            <p className="text-sm"><strong>Risk {phaseIndex + 1}.{stepIndex + 1}.{hIndex + 1}.{rIndex + 1}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
                                             {risk.mitigations?.map((mitigation, mIndex) => (
                                                 <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation:</strong> {mitigation.description}</p>
+                                                    <p className="text-sm"><strong>Mitigation {phaseIndex + 1}.{stepIndex + 1}.{hIndex + 1}.{rIndex + 1}.{mIndex + 1}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
                                             ))}
@@ -730,6 +730,7 @@ export default function MocDetailPage() {
                 phase={selectedPhase} 
                 onUpdate={handleUpdatePhase}
                 onClose={() => setSelectedPhase(null)}
+                phaseNumber={moc.phases?.findIndex(p => p.id === selectedPhase.id) + 1 || 0}
             />
         </Dialog>
       )}
