@@ -161,6 +161,8 @@ export type Permission =
   | 'Bookings:View'
   | 'Bookings:Edit'
   | 'MOC:Edit'
+  | 'Roles & Departments:View'
+  | 'Roles & Departments:Edit'
   | 'Super User';
 
 export const ALL_PERMISSIONS: Permission[] = [
@@ -187,6 +189,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Bookings:View',
     'Bookings:Edit',
     'MOC:Edit',
+    'Roles & Departments:View',
+    'Roles & Departments:Edit',
     'Super User',
 ];
 

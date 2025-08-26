@@ -91,7 +91,7 @@ const ItemForm = ({
 };
 
 
-const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments', allPermissions: Permission[] }) => {
+const ManagementSection = ({ title, items, onUpdate, type, allPermissions, canEdit }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments', allPermissions: Permission[], canEdit: boolean }) => {
     const { company } = useUser();
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -143,7 +143,7 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { t
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <CardTitle>{title}</CardTitle>
-                <Button onClick={openNewDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
+                {canEdit && <Button onClick={openNewDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>}
             </CardHeader>
             <CardContent>
                 <Table>
@@ -151,7 +151,7 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { t
                         <TableRow>
                             <TableHead>Name</TableHead>
                             {isRole && <TableHead>Permissions</TableHead>}
-                            <TableHead className="text-right">Actions</TableHead>
+                            {canEdit && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -163,6 +163,7 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { t
                                         {(item as CompanyRole).permissions?.length || 0} assigned
                                     </TableCell>
                                 )}
+                                {canEdit && (
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}><Edit className="h-4 w-4" /></Button>
                                     <AlertDialog>
@@ -183,6 +184,7 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { t
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 </TableCell>
+                                )}
                             </TableRow>
                         )) : (
                             <TableRow><TableCell colSpan={isRole ? 3 : 2} className="h-24 text-center">No {type} found.</TableCell></TableRow>
@@ -210,11 +212,11 @@ const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { t
 };
 
 export default function RolesAndDepartmentsPage() {
-    const { company } = useUser();
+    const { company, user } = useUser();
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<CompanyRole[]>([]);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
-    const [allPermissions, setAllPermissions] = React.useState<Permission[]>(ALL_PERMISSIONS); // Fallback to hardcoded list
+    const [allPermissions, setAllPermissions] = React.useState<Permission[]>(ALL_PERMISSIONS);
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
@@ -239,6 +241,24 @@ export default function RolesAndDepartmentsPage() {
         fetchData();
     }, [fetchData]);
 
+    const canView = user?.permissions.includes('Super User') || user?.permissions.includes('Roles & Departments:View');
+    const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('Roles & Departments:Edit');
+
+    if (!canView) {
+        return (
+            <main className="flex-1 p-4 md:p-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Access Denied</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>You do not have permission to view this page.</p>
+                    </CardContent>
+                </Card>
+            </main>
+        );
+    }
+
     return (
         <main className="flex-1 p-4 md:p-8">
             <Card>
@@ -249,8 +269,8 @@ export default function RolesAndDepartmentsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-8">
-                   <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" allPermissions={allPermissions} />
-                   <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" allPermissions={allPermissions} />
+                   <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" allPermissions={allPermissions} canEdit={canEdit} />
+                   <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" allPermissions={allPermissions} canEdit={canEdit} />
                 </CardContent>
             </Card>
         </main>
@@ -258,5 +278,3 @@ export default function RolesAndDepartmentsPage() {
 }
 
 RolesAndDepartmentsPage.title = "Roles & Departments";
-
-    
