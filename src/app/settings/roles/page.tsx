@@ -32,10 +32,12 @@ const ItemForm = ({
   onSubmit,
   existingItem,
   isRole,
+  allPermissions,
 }: {
   onSubmit: (data: ItemFormValues) => void;
   existingItem?: { id: string; name: string, permissions?: Permission[] } | null;
   isRole?: boolean;
+  allPermissions: Permission[];
 }) => {
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
@@ -73,7 +75,7 @@ const ItemForm = ({
                 render={() => (
                     <FormItem>
                         <FormLabel>Permissions</FormLabel>
-                        <PermissionsListbox control={form.control} />
+                        <PermissionsListbox control={form.control} allPermissions={allPermissions} />
                         <FormMessage />
                     </FormItem>
                 )}
@@ -88,7 +90,7 @@ const ItemForm = ({
 };
 
 
-const ManagementSection = ({ title, items, onUpdate, type }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments' }) => {
+const ManagementSection = ({ title, items, onUpdate, type, allPermissions }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments', allPermissions: Permission[] }) => {
     const { company } = useUser();
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -192,7 +194,12 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
                             <DialogTitle>{editingItem ? 'Edit' : 'Add'} {title.slice(0, -1)}</DialogTitle>
                         </DialogHeader>
                         <ScrollArea className="h-[70vh] pr-4">
-                           <ItemForm onSubmit={handleFormSubmit} existingItem={editingItem} isRole={isRole} />
+                           <ItemForm 
+                                onSubmit={handleFormSubmit} 
+                                existingItem={editingItem} 
+                                isRole={isRole} 
+                                allPermissions={allPermissions}
+                            />
                         </ScrollArea>
                     </DialogContent>
                 </Dialog>
@@ -206,18 +213,24 @@ export default function RolesAndDepartmentsPage() {
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<CompanyRole[]>([]);
     const [departments, setDepartments] = React.useState<CompanyDepartment[]>([]);
+    const [allPermissions, setAllPermissions] = React.useState<Permission[]>([]);
 
     const fetchData = React.useCallback(async () => {
         if (!company) return;
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
+            const permsQuery = query(collection(db, `companies/${company.id}/permissions`));
+
+            const [rolesSnapshot, deptsSnapshot, permsSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
-                getDocs(deptsQuery)
+                getDocs(deptsQuery),
+                getDocs(permsQuery)
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
+            setAllPermissions(permsSnapshot.docs.map(doc => doc.data().name as Permission));
+
         } catch (error) {
             console.error("Error fetching data:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load company roles or departments.' });
@@ -238,8 +251,8 @@ export default function RolesAndDepartmentsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-8">
-                   <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" />
-                   <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" />
+                   <ManagementSection title="Roles" items={roles} onUpdate={fetchData} type="roles" allPermissions={allPermissions} />
+                   <ManagementSection title="Departments" items={departments} onUpdate={fetchData} type="departments" allPermissions={allPermissions} />
                 </CardContent>
             </Card>
         </main>

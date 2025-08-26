@@ -26,6 +26,14 @@ export function PermissionsListbox({ control, allPermissions }: PermissionsListb
     field.onChange(Array.from(currentPermissions));
   };
 
+  if (!allPermissions) {
+      return (
+          <div className="flex items-center justify-center h-72 rounded-md border">
+              <p className="text-sm text-muted-foreground">Loading permissions...</p>
+          </div>
+      );
+  }
+
   return (
     <ScrollArea className="h-72 rounded-md border p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
