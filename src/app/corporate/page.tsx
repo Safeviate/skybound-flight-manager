@@ -63,6 +63,37 @@ export default function CorporatePage() {
                 }
             };
             batch.set(companyDocRef, finalCompanyData);
+
+             // 2. Seed default roles and departments
+            const defaultRoles = [
+                { name: 'Accountable Manager' },
+                { name: 'Safety Manager' },
+                { name: 'Quality Manager' },
+                { name: 'Head of Training' },
+                { name: 'Chief Flight Instructor' },
+                { name: 'Instructor' },
+                { name: 'Student' },
+                { name: 'Admin' },
+            ];
+            const defaultDepts = [
+                { name: 'Management' },
+                { name: 'Flight Operations' },
+                { name: 'Safety' },
+                { name: 'Quality' },
+                { name: 'Administration' },
+            ];
+            
+            const rolesCollectionRef = collection(db, `companies/${companyId}/roles`);
+            defaultRoles.forEach(role => {
+                const roleDocRef = doc(rolesCollectionRef);
+                batch.set(roleDocRef, role);
+            });
+
+            const deptsCollectionRef = collection(db, `companies/${companyId}/departments`);
+            defaultDepts.forEach(dept => {
+                const deptDocRef = doc(deptsCollectionRef);
+                batch.set(deptDocRef, dept);
+            });
             
             await batch.commit();
 
