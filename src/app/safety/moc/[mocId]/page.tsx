@@ -305,9 +305,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
-                     const hazardNumberForLabel = (stepIndex) => (localPhase.steps?.slice(0, stepIndex).reduce((acc, s) => acc + (s.hazards?.length || 0), 0) || 0) + 1;
-                     const riskNumberForLabel = (stepIndex, hazardIndex) => (localPhase.steps[stepIndex]?.hazards?.slice(0, hazardIndex).reduce((acc, h) => acc + (h.risks?.length || 0), 0) || 0) + 1;
-
+                    let riskCounter = 0;
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
@@ -328,8 +326,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                             onChange={(e) => handleStepChange(step.id, e.target.value)}
                         />
                         {step.hazards?.map((hazard, hazardIndex) => {
-                            const currentHazardNumber = hazardNumberForLabel(stepIndex) + hazardIndex;
-                             
+                             let mitigationCounter = 0;
                              return (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
@@ -349,14 +346,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     value={hazard.description}
                                     onChange={(e) => handleHazardChange(step.id, hazard.id, e.target.value)}
                                 />
-                                {hazard.risks?.map((risk, riskIndex) => {
-                                    const currentRiskNumber = riskNumberForLabel(stepIndex, hazardIndex) + riskIndex;
-                                    const mitigationStartIndex = (risk.mitigations?.length || 0);
-
+                                {hazard.risks?.map((risk) => {
+                                    riskCounter++;
                                     return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">Risk {currentRiskNumber} Step {stepIndex + 1}</Label>
+                                            <Label className="font-semibold">Risk {riskCounter} Step {stepIndex + 1}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -396,12 +391,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
                                                 </Button>
                                             </div>
-                                            {risk.mitigations?.map((mitigation, mitIndex) => {
-                                                 const currentMitigationNumber = mitigationStartIndex + mitIndex + 1;
+                                            {risk.mitigations?.map((mitigation) => {
+                                                 mitigationCounter++;
                                                  return (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">Mitigation {currentMitigationNumber} Step {stepIndex + 1}</Label>
+                                                        <Label className="font-semibold">Mitigation {mitigationCounter} Risk {riskCounter} Step {stepIndex + 1}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -684,7 +679,7 @@ export default function MocDetailPage() {
                 <div className="space-y-2">
                     {moc.phases.map((phase, index) => (
                          <div key={phase.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center no-print">
-                            <h4 className="font-semibold">{phase.description}</h4>
+                            <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
                                     <Wind className="mr-2 h-4 w-4" />
@@ -710,32 +705,36 @@ export default function MocDetailPage() {
         {/* Print-only section */}
         <div className="hidden print:block space-y-6">
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
-            {moc.phases?.map((phase, phaseIndex) => (
+            {moc.phases?.map((phase, phaseIndex) => {
+                 let hazardCounter = 0;
+                return (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => {
-                        const hazardStartIndex = phase.steps.slice(0, stepIndex).reduce((acc, s) => acc + (s.hazards?.length || 0), 0);
+                        let riskCounter = 0;
                         return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
+                             <h4 className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
                              {step.hazards?.map((hazard, hIndex) => {
-                                const currentHazardNumber = hazardStartIndex + hIndex + 1;
-                                const riskStartIndex = hazard.risks?.slice(0, hIndex).reduce((acc, r) => acc + (r.mitigations?.length || 0), 0) || 0;
+                                hazardCounter++;
+                                let mitigationCounter = 0;
                                 return (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
-                                    <h5 className="font-medium">Hazard {currentHazardNumber}: {hazard.description}</h5>
+                                    <h5 className="font-medium">Hazard {hazardCounter} Step {stepIndex + 1}: {hazard.description}</h5>
                                     {hazard.risks?.map((risk, rIndex) => {
-                                        const currentRiskNumber = riskStartIndex + rIndex + 1;
+                                        riskCounter++;
                                         return(
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk {currentRiskNumber}:</strong> {risk.description}</p>
+                                            <p className="text-sm"><strong>Risk {riskCounter} Step {stepIndex + 1}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
-                                            {risk.mitigations?.map((mitigation, mIndex) => (
+                                            {risk.mitigations?.map((mitigation, mIndex) => {
+                                                mitigationCounter++;
+                                                return (
                                                 <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation {mIndex + 1}:</strong> {mitigation.description}</p>
+                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter} Risk {riskCounter} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                     )})}
                                 </div>
@@ -743,7 +742,7 @@ export default function MocDetailPage() {
                         </div>
                     )})}
                 </div>
-            ))}
+            )})}
         </div>
       </div>
       {selectedPhase && (
@@ -781,6 +780,7 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
 
 
