@@ -306,8 +306,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
                     let hazardCounter = 0;
-                    let riskCounter = 0;
-                    let mitigationCounter = 0;
                     
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
@@ -330,9 +328,10 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                         />
                         {step.hazards?.map((hazard) => {
                             hazardCounter++;
+                            let riskCounter = 0;
                             
                             return (
-                            <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
+                            <div key={hazard.id} className="ml-4 p-4 border border-red-500 rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold">{`Hazard ${hazardCounter} Step ${stepIndex + 1}`}</Label>
                                     <div className="flex items-center gap-2">
@@ -354,7 +353,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     riskCounter++;
 
                                     return (
-                                    <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
+                                    <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t border-yellow-400">
                                         <div className="flex items-center justify-between">
                                             <Label className="font-semibold">{`Risk ${riskCounter} Step ${stepIndex + 1}`}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
@@ -396,12 +395,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
                                                 </Button>
                                             </div>
-                                            {risk.mitigations?.map((mitigation) => {
-                                                mitigationCounter++;
+                                            {risk.mitigations?.map((mitigation, mitigationIndex) => {
+                                                
                                                 return (
-                                                <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
+                                                <div key={mitigation.id} className="p-3 border border-green-500 bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
+                                                        <Label className="font-semibold">{`Mitigation ${mitigationIndex + 1} Step ${stepIndex + 1}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -730,35 +729,35 @@ export default function MocDetailPage() {
         <div className="hidden print:block space-y-6">
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
             {moc.phases?.map((phase, phaseIndex) => {
-                let hazardCounter = 0;
-                let riskCounter = 0;
+                let stepCounter = 0;
                 
                 return (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
-                    {phase.steps?.map((step, stepIndex) => {
-                        hazardCounter = 0;
-                        riskCounter = 0;
+                    {phase.steps?.map((step) => {
+                        stepCounter++;
+                        let hazardCounter = 0;
                         return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
+                             <h4 className="font-semibold">Step {stepCounter}: {step.description}</h4>
                              {step.hazards?.map((hazard) => {
                                 hazardCounter++;
+                                let riskCounter = 0;
                                  return (
-                                <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
-                                    <h5 className="font-medium">Hazard {hazardCounter} Step {stepIndex + 1}: {hazard.description}</h5>
+                                <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3 border-l-2 border-red-500">
+                                    <h5 className="font-medium">Hazard {hazardCounter} Step {stepCounter}: {hazard.description}</h5>
                                     {hazard.risks?.map((risk) => {
                                         riskCounter++;
                                         let mitigationCounter = 0;
                                         return (
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk {riskCounter} Step {stepIndex + 1}:</strong> {risk.description}</p>
+                                            <p className="text-sm"><strong>Risk {riskCounter} Step {stepCounter}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
                                             {risk.mitigations?.map((mitigation) => {
                                                 mitigationCounter++;
                                                 return (
-                                                <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
+                                                <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-500">
+                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter} Step {stepCounter}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
                                             )})}
@@ -811,6 +810,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
