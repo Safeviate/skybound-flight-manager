@@ -1,5 +1,4 @@
 
-
 import type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 export type { GenerateCorrectiveActionPlanOutput } from '@/ai/flows/generate-corrective-action-plan-flow';
 import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
@@ -653,26 +652,24 @@ export const VIEW_ALL_PAGES: Permission[] = [
   'Bookings:View',
 ];
 
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  'Super User': [],
-  'Accountable Manager': [],
-  'System Admin': [],
-  'Admin': [],
-  'Operations Manager': [],
-  'HR Manager': [],
-  'Safety Manager': [],
-  'Quality Manager': [],
-  'Aircraft Manager': [],
-  'Maintenance': [],
-  'Chief Flight Instructor': [],
-  'Head Of Training': [],
-  'Instructor Grade 1': [],
-  'Instructor Grade 2': [],
-  'Instructor Grade 3': [],
-  'Student': [],
-  'Auditee': [],
+export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
+  'Super User': ['Super User'],
+  'Accountable Manager': ['Super User'],
+  'System Admin': ['Super User'],
+  'Admin': ['Super User'],
+  'Operations Manager': ['Super User'],
+  'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
+  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
+  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
+  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
+  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
+  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
+  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
+  'Auditee': ['Quality:View'],
   'Driver': [],
-  'Front Office': [],
+  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
@@ -698,6 +695,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
 export type CompanyRole = {
     id: string;
     name: string;
+    permissions: Permission[];
 };
 
 export type CompanyDepartment = {

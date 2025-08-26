@@ -133,6 +133,15 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
 
   const selectedRole = form.watch('role');
 
+  useEffect(() => {
+    if (selectedRole && roles.length > 0) {
+      const roleData = roles.find(r => r.name === selectedRole);
+      if (roleData) {
+        form.setValue('permissions', roleData.permissions || []);
+      }
+    }
+  }, [selectedRole, roles, form]);
+
   const isInstructorRole = selectedRole?.toLowerCase().includes('instructor');
 
   function handleFormSubmit(data: PersonnelFormValues) {

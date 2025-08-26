@@ -118,6 +118,15 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
 
   const selectedRole = form.watch('role');
 
+  useEffect(() => {
+    if (selectedRole) {
+      const roleData = roles.find(r => r.name === selectedRole);
+      if (roleData) {
+        form.setValue('permissions', roleData.permissions || []);
+      }
+    }
+  }, [selectedRole, roles, form]);
+
   const isInstructorRole = selectedRole?.toLowerCase().includes('instructor');
 
   async function handleFormSubmit(data: PersonnelFormValues) {

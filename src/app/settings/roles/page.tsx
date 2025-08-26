@@ -17,33 +17,39 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { CompanyRole, CompanyDepartment } from '@/lib/types';
-
+import type { CompanyRole, CompanyDepartment, Permission } from '@/lib/types';
+import { PermissionsListbox } from '@/app/personnel/permissions-listbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const itemFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
+  permissions: z.array(z.string()).optional(),
 });
 
 type ItemFormValues = z.infer<typeof itemFormSchema>;
 
 const ItemForm = ({
   onSubmit,
-  existingItem
+  existingItem,
+  isRole,
 }: {
   onSubmit: (data: ItemFormValues) => void;
-  existingItem?: { id: string; name: string } | null;
+  existingItem?: { id: string; name: string, permissions?: Permission[] } | null;
+  isRole?: boolean;
 }) => {
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues: existingItem || { name: '' },
+    defaultValues: {
+        name: existingItem?.name || '',
+        permissions: existingItem?.permissions || [],
+    },
   });
   
   React.useEffect(() => {
-    if (existingItem) {
-        form.reset({ name: existingItem.name });
-    } else {
-        form.reset({ name: '' });
-    }
+    form.reset({
+        name: existingItem?.name || '',
+        permissions: existingItem?.permissions || [],
+    });
   }, [existingItem, form]);
 
   return (
@@ -60,6 +66,19 @@ const ItemForm = ({
             </FormItem>
           )}
         />
+        {isRole && (
+            <FormField
+                control={form.control}
+                name="permissions"
+                render={() => (
+                    <FormItem>
+                        <FormLabel>Permissions</FormLabel>
+                        <PermissionsListbox control={form.control} />
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <div className="flex justify-end pt-2">
           <Button type="submit">{existingItem ? 'Save Changes' : 'Add Item'}</Button>
         </div>
@@ -69,11 +88,12 @@ const ItemForm = ({
 };
 
 
-const ManagementSection = ({ title, items, onUpdate, type }: { title: string, items: {id: string, name: string}[], onUpdate: () => void, type: 'roles' | 'departments' }) => {
+const ManagementSection = ({ title, items, onUpdate, type }: { title: string, items: (CompanyRole | CompanyDepartment)[], onUpdate: () => void, type: 'roles' | 'departments' }) => {
     const { company } = useUser();
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-    const [editingItem, setEditingItem] = React.useState<{id: string, name: string} | null>(null);
+    const [editingItem, setEditingItem] = React.useState<CompanyRole | CompanyDepartment | null>(null);
+    const isRole = type === 'roles';
 
     const handleFormSubmit = async (data: ItemFormValues) => {
         if (!company) return;
@@ -81,10 +101,10 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
         try {
             if (editingItem) {
                 const docRef = doc(db, `companies/${company.id}/${type}`, editingItem.id);
-                await updateDoc(docRef, { name: data.name });
+                await updateDoc(docRef, data as any);
                 toast({ title: `${title.slice(0, -1)} Updated` });
             } else {
-                await addDoc(collection(db, `companies/${company.id}/${type}`), { name: data.name });
+                await addDoc(collection(db, `companies/${company.id}/${type}`), data);
                 toast({ title: `${title.slice(0, -1)} Added` });
             }
             onUpdate();
@@ -106,7 +126,7 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
         }
     };
 
-    const openEditDialog = (item: {id: string, name: string}) => {
+    const openEditDialog = (item: CompanyRole | CompanyDepartment) => {
         setEditingItem(item);
         setIsDialogOpen(true);
     };
@@ -127,6 +147,7 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
+                            {isRole && <TableHead>Permissions</TableHead>}
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -134,6 +155,11 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
                         {items.length > 0 ? items.map(item => (
                             <TableRow key={item.id}>
                                 <TableCell>{item.name}</TableCell>
+                                {isRole && (
+                                    <TableCell className="text-xs text-muted-foreground">
+                                        {(item as CompanyRole).permissions?.length || 0} assigned
+                                    </TableCell>
+                                )}
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}><Edit className="h-4 w-4" /></Button>
                                     <AlertDialog>
@@ -156,16 +182,18 @@ const ManagementSection = ({ title, items, onUpdate, type }: { title: string, it
                                 </TableCell>
                             </TableRow>
                         )) : (
-                            <TableRow><TableCell colSpan={2} className="h-24 text-center">No {type} found.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={isRole ? 3 : 2} className="h-24 text-center">No {type} found.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
                  <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingItem(null); }}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>{editingItem ? 'Edit' : 'Add'} {title.slice(0, -1)}</DialogTitle>
                         </DialogHeader>
-                        <ItemForm onSubmit={handleFormSubmit} existingItem={editingItem} />
+                        <ScrollArea className="h-[70vh] pr-4">
+                           <ItemForm onSubmit={handleFormSubmit} existingItem={editingItem} isRole={isRole} />
+                        </ScrollArea>
                     </DialogContent>
                 </Dialog>
             </CardContent>
