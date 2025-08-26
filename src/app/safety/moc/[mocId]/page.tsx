@@ -617,7 +617,7 @@ export default function MocDetailPage() {
                 <div className="space-y-2">
                     {moc.phases.map((phase, index) => (
                          <div key={phase.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center no-print">
-                            <h4 className="font-semibold">Phase {index + 1}: {phase.description}</h4>
+                            <h4 className="font-semibold">{phase.description}</h4>
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
                                     <Wind className="mr-2 h-4 w-4" />
