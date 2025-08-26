@@ -306,11 +306,9 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
                     let hazardCounter = 0;
-                    let riskCounter = 0;
-                    let mitigationCounter = 0;
                     
                     return (
-                    <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
+                    <Card key={step.id} className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
                             <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${stepIndex + 1}`}</Label>
                             <div className="flex items-center gap-2">
@@ -330,11 +328,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                         />
                         {step.hazards?.map((hazard) => {
                             hazardCounter++;
+                            let riskCounter = 0;
                             
                             return (
-                            <div key={hazard.id} className="ml-4 p-4 border border-red-500 rounded-md space-y-4">
+                            <Card key={hazard.id} className="p-4 border-red-500 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold">{`Hazard ${hazardCounter} Step ${stepIndex + 1}`}</Label>
+                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold text-red-600">{`Hazard ${hazardCounter} Step ${stepIndex + 1}`}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
@@ -352,12 +351,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                 />
                                 {hazard.risks?.map((risk) => {
                                     riskCounter++;
-                                    let riskMitigationCounter = 0;
+                                    let mitigationCounter = 0;
 
                                     return (
-                                    <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t border-yellow-400">
+                                    <Card key={risk.id} className="p-4 border-yellow-500 space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">{`Risk ${riskCounter} Step ${stepIndex + 1}`}</Label>
+                                            <Label className="font-semibold text-yellow-600">{`Risk ${riskCounter} Step ${stepIndex + 1}`}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -398,11 +397,11 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                 </Button>
                                             </div>
                                             {risk.mitigations?.map((mitigation) => {
-                                                riskMitigationCounter++;
+                                                mitigationCounter++;
                                                 return (
-                                                <div key={mitigation.id} className="p-3 border border-green-500 bg-muted/50 rounded-md space-y-3">
+                                                <Card key={mitigation.id} className="p-3 border-green-500 bg-muted/50 space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">{`Mitigation ${riskMitigationCounter} Step ${stepIndex + 1}`}</Label>
+                                                        <Label className="font-semibold text-green-600">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -448,14 +447,14 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                         <Label>Residual Risk Score:</Label>
                                                         <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.residualRiskScore) }}>{mitigation.residualRiskScore} - {getRiskLevel(mitigation.residualRiskScore)}</Badge>
                                                     </div>
-                                                </div>
+                                                </Card>
                                             )})}
                                         </div>
-                                    </div>
+                                    </Card>
                                 )})}
-                            </div>
+                            </Card>
                         )})}
-                    </div>
+                    </Card>
                 )})}
                 {(!localPhase.steps || localPhase.steps.length === 0) && (
                     <div className="text-sm text-center text-muted-foreground py-8">No steps added yet for this phase.</div>
@@ -811,6 +810,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
