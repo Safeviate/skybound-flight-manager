@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 
 const mocFormSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
-  proposedBy: z.string(),
+  proposedBy: z.string().min(1, 'Proposed by is required.'),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   reason: z.string().min(20, 'Reason for change must be at least 20 characters.'),
   scope: z.string().min(20, 'Scope of change must be at least 20 characters.'),
@@ -94,7 +94,7 @@ export function NewMocForm({ onClose, onUpdate }: NewMocFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Proposed by</FormLabel>
-              <FormControl><Input {...field} readOnly disabled /></FormControl>
+              <FormControl><Input {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
