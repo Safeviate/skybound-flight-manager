@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -442,6 +443,7 @@ export default function MocDetailPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [selectedPhase, setSelectedPhase] = useState<MocStep | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
 
@@ -494,6 +496,44 @@ export default function MocDetailPage() {
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to MOC.' });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleAnalyzeWithAi = async () => {
+    if (!moc) return;
+    setIsAiLoading(true);
+    try {
+      const result = await analyzeMoc({
+        title: moc.title,
+        description: moc.description,
+        reason: moc.reason,
+        scope: moc.scope,
+      });
+
+      const newSteps: MocStep[] = result.steps.map(step => ({
+        id: `step-${Date.now()}-${Math.random()}`,
+        description: step.description,
+        hazards: step.hazards.map(hazard => ({
+          id: `hazard-${Date.now()}-${Math.random()}`,
+          description: hazard.description,
+          risks: hazard.risks.map(risk => ({
+            id: `risk-${Date.now()}-${Math.random()}`,
+            description: risk.description,
+            likelihood: risk.likelihood,
+            severity: risk.severity,
+            riskScore: getRiskScore(risk.likelihood, risk.severity),
+            mitigations: [],
+          })),
+        })),
+      }));
+
+      handleUpdate({ steps: newSteps }, true);
+      toast({ title: 'AI Analysis Complete', description: 'Suggested implementation plan has been populated.' });
+    } catch (error) {
+      console.error("AI Analysis Error:", error);
+      toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not generate an implementation plan.' });
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -584,12 +624,20 @@ export default function MocDetailPage() {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle>Implementation Phases</CardTitle>
+                        <CardTitle>Implementation Phases & Hazard Analysis</CardTitle>
                         <CardDescription>
-                            Outline the steps required to implement the change.
+                            Outline the steps and identify hazards for implementing the change.
                         </CardDescription>
                     </div>
-                    {canEdit && <AddPhaseDialog onAddPhase={handleAddPhase} />}
+                    {canEdit && (
+                        <div className="flex items-center gap-2">
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
+                                {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Analyze with AI
+                            </Button>
+                            <AddPhaseDialog onAddPhase={handleAddPhase} />
+                        </div>
+                    )}
                 </div>
             </CardHeader>
             <CardContent>
