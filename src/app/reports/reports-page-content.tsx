@@ -264,7 +264,12 @@ const KeyMetrics = ({ bookings }: { bookings: Booking[] }) => {
 
 const AircraftStats = ({ bookings, aircraftData }: { bookings: Booking[], aircraftData: Aircraft[] }) => {
   const stats = useMemo(() => {
-    const totalFlightHours = aircraftData.reduce((sum, ac) => sum + ac.hours, 0);
+    const totalFlightHours = bookings.reduce((sum, b) => {
+        if (b.status === 'Completed' && b.flightDuration) {
+            return sum + b.flightDuration;
+        }
+        return sum;
+    }, 0);
     const totalBookings = bookings.length;
     const totalFuelUplift = bookings.reduce((sum, b) => sum + (b.fuelUplift || 0), 0);
     const totalOilUplift = bookings.reduce((sum, b) => sum + (b.oilUplift || 0), 0);
@@ -393,7 +398,7 @@ export function ReportsPageContent({
   const activeBookings = useMemo(() => bookingData.filter(b => b.status !== 'Archived'), [bookingData]);
   const archivedBookings = useMemo(() => bookingData.filter(b => b.status === 'Archived'), [bookingData]);
 
-  const displayedBookings = useMemo(() => showArchived ? archivedBookings : activeBookings, [showArchived, activeBookings, archivedBookings]);
+  const displayedBookings = useMemo(() => showArchived ? archivedBookings : activeBookings, [showArchived, archivedBookings, activeBookings]);
   
   const recentBookings = useMemo(() => {
     return displayedBookings
@@ -623,7 +628,7 @@ export function ReportsPageContent({
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                         <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete the {selectedBookings.length} selected booking(s).
+                                                            This action cannot be undone. This will permanently delete the ${selectedBookings.length} selected booking(s).
                                                         </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
