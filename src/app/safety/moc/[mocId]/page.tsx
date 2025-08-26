@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -316,7 +317,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                 </Button>
                               </div>
                         </div>
-                        <Textarea
+                        <Input
                             id={`step-desc-${stepIndex}`}
                             placeholder="Describe the implementation step..."
                             value={step.description}
@@ -343,7 +344,37 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                 />
                                 {hazard.risks?.map((risk, riskIndex) => (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
-                                        {/* Risk and Mitigation fields here */}
+                                        <div className="flex items-center justify-between">
+                                            <Label className="font-semibold">Risk #{riskIndex + 1}</Label>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <Textarea
+                                            placeholder="Describe the potential risk..."
+                                            value={risk.description}
+                                            onChange={(e) => handleRiskChange(step.id, hazard.id, risk.id, 'description', e.target.value)}
+                                        />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Likelihood</Label>
+                                                <Select value={risk.likelihood} onValueChange={(value) => handleRiskChange(step.id, hazard.id, risk.id, 'likelihood', value)}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                             <div className="space-y-2">
+                                                <Label>Severity</Label>
+                                                <Select value={risk.severity} onValueChange={(value) => handleRiskChange(step.id, hazard.id, risk.id, 'severity', value)}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Label>Risk Score:</Label>
+                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore) }}>{risk.riskScore} - {getRiskLevel(risk.riskScore)}</Badge>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
