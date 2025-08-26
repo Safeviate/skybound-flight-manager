@@ -31,17 +31,22 @@ const MocRiskSchema = z.object({
 });
 
 const MocHazardSchema = z.object({
-  description: z.string().describe('A concise description of the potential hazard identified for this phase.'),
+  description: z.string().describe('A concise description of the potential hazard identified for this implementation step.'),
   risks: z.array(MocRiskSchema).min(1).describe('An array of one or more potential risks associated with the identified hazard.'),
 });
 
 const MocStepSchema = z.object({
-  description: z.string().describe('A high-level implementation phase or step for the proposed change.'),
-  hazards: z.array(MocHazardSchema).describe('An array of potential hazards identified for this implementation phase. If no specific hazards are identified for a phase, return an empty array.'),
+  description: z.string().describe('A specific, actionable step within the implementation phase.'),
+  hazards: z.array(MocHazardSchema).describe('An array of potential hazards identified for this step. If no specific hazards are identified for a step, return an empty array.'),
+});
+
+const MocPhaseSchema = z.object({
+    description: z.string().describe('A high-level implementation phase for the proposed change.'),
+    steps: z.array(MocStepSchema).min(1).describe('An array of one or more detailed implementation steps for this phase.'),
 });
 
 const AnalyzeMocOutputSchema = z.object({
-  steps: z.array(MocStepSchema).min(3).describe('An array of 3-5 high-level implementation phases.'),
+  phases: z.array(MocPhaseSchema).min(3).describe('An array of 3-5 high-level implementation phases.'),
 });
 export type AnalyzeMocOutput = z.infer<typeof AnalyzeMocOutputSchema>;
 
@@ -66,10 +71,11 @@ const prompt = ai.definePrompt({
   - Scope of Change: {{{scope}}}
 
   Based on this proposal, you must:
-  1.  **Deconstruct the change into high-level implementation phases.** Generate 3 to 5 logical steps that would be required to implement this change successfully. Examples include "Update Operations Manual", "Conduct Personnel Training", "Amend Regulatory Approvals", "Procure New Equipment", "Update Software Systems", etc.
-  2.  **For each implementation phase, identify potential new hazards.** Think about what could go wrong during or after each phase. If a phase is purely administrative (like updating a document) and introduces no new operational hazards, you can return an empty array for its hazards.
-  3.  **For each hazard, identify the associated risks.** A risk is the potential negative consequence of a hazard.
-  4.  **Perform an initial risk assessment for each risk.** Assign an initial 'likelihood' and 'severity' based on your expert judgment.
+  1.  **Deconstruct the change into 3-5 high-level implementation PHASES.** Examples include "Update Documentation", "Conduct Personnel Training", "Amend Regulatory Approvals", etc.
+  2.  **For each PHASE, break it down into 1 or more specific implementation STEPS.** These should be actionable tasks. For example, the "Conduct Personnel Training" phase might have steps like "Develop training materials", "Schedule training sessions", and "Conduct practical assessments".
+  3.  **For each STEP, identify potential new HAZARDS.** Think about what could go wrong during or after each specific action. If a step is purely administrative and introduces no new operational hazards, you can return an empty array for its hazards.
+  4.  **For each HAZARD, identify the associated RISKS.** A risk is the potential negative consequence of a hazard.
+  5.  **Perform an initial risk assessment for each RISK.** Assign an initial 'likelihood' and 'severity' based on your expert judgment.
 
   Structure your entire output in the required JSON format.
   `,

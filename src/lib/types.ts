@@ -595,6 +595,12 @@ export type MocStep = {
     hazards?: MocHazard[];
 };
 
+export type MocPhase = {
+  id: string;
+  description: string;
+  steps: MocStep[];
+};
+
 export type ManagementOfChange = {
   id: string;
   companyId: string;
@@ -606,7 +612,7 @@ export type ManagementOfChange = {
   proposedBy: string;
   proposalDate: string;
   status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
-  steps?: MocStep[];
+  phases?: MocPhase[];
 };
 
 export type TechnicalReport = {
