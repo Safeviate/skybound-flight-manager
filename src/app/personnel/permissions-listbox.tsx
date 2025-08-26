@@ -5,14 +5,15 @@ import * as React from 'react';
 import { useController, type Control } from 'react-hook-form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormItem, FormLabel } from '@/components/ui/form';
-import { ALL_PERMISSIONS, type Permission } from '@/lib/types';
+import type { Permission } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PermissionsListboxProps {
   control: Control<any>;
+  allPermissions: Permission[];
 }
 
-export function PermissionsListbox({ control }: PermissionsListboxProps) {
+export function PermissionsListbox({ control, allPermissions }: PermissionsListboxProps) {
   const { field } = useController({ name: 'permissions', control });
 
   const handlePermissionChange = (permission: Permission, checked: boolean) => {
@@ -28,7 +29,7 @@ export function PermissionsListbox({ control }: PermissionsListboxProps) {
   return (
     <ScrollArea className="h-72 rounded-md border p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {ALL_PERMISSIONS.map((permission) => (
+        {allPermissions.map((permission) => (
           <FormItem key={permission} className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
               <Checkbox
@@ -45,5 +46,3 @@ export function PermissionsListbox({ control }: PermissionsListboxProps) {
     </ScrollArea>
   );
 }
-
-    

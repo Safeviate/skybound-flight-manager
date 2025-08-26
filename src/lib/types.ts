@@ -652,6 +652,23 @@ export const VIEW_ALL_PAGES: Permission[] = [
   'Bookings:View',
 ];
 
+export type CompanyPermission = {
+    id: string;
+    name: Permission;
+    description?: string;
+}
+
+export type CompanyRole = {
+    id: string;
+    name: string;
+    permissions: Permission[];
+};
+
+export type CompanyDepartment = {
+    id: string;
+    name: string;
+};
+
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   'Super User': ['Super User'],
   'Accountable Manager': ['Super User'],
@@ -691,14 +708,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
-export type CompanyRole = {
-    id: string;
-    name: string;
-    permissions: Permission[];
-};
-
-export type CompanyDepartment = {
-    id: string;
-    name: string;
-};
