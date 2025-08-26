@@ -309,7 +309,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
-                             <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">Step {stepIndex + 1}</Label>
+                             <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${phaseNumber}.${stepIndex + 1}`}</Label>
                               <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handleAddHazard(step.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Hazard
@@ -330,7 +330,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                              return (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">Hazard {hazardIndex + 1} Step {stepIndex + 1}</Label>
+                                    <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">{`Hazard ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}`}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
@@ -346,12 +346,13 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     value={hazard.description}
                                     onChange={(e) => handleHazardChange(step.id, hazard.id, e.target.value)}
                                 />
-                                {hazard.risks?.map((risk) => {
+                                {hazard.risks?.map((risk, riskIndex) => {
                                     riskCounter++;
+                                    let mitigationCounterForThisRisk = 0;
                                     return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">Risk {riskCounter} Step {stepIndex + 1}</Label>
+                                            <Label className="font-semibold">{`Risk ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}.${riskIndex + 1}`}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -391,12 +392,13 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
                                                 </Button>
                                             </div>
-                                            {risk.mitigations?.map((mitigation) => {
+                                            {risk.mitigations?.map((mitigation, mitigationIndex) => {
                                                  mitigationCounter++;
+                                                 mitigationCounterForThisRisk++;
                                                  return (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">Mitigation {mitigationCounter} Risk {riskCounter} Step {stepIndex + 1}</Label>
+                                                        <Label className="font-semibold">{`Mitigation ${phaseNumber}.${stepIndex + 1}.${hazardIndex + 1}.${riskIndex + 1}.${mitigationCounterForThisRisk}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -421,6 +423,26 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined} onSelect={(date) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'completionDate', date)} /></PopoverContent>
                                                         </Popover>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label>Residual Likelihood</Label>
+                                                            <Select value={mitigation.residualLikelihood} onValueChange={(value) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'residualLikelihood', value)}>
+                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                <SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                         <div className="space-y-2">
+                                                            <Label>Residual Severity</Label>
+                                                            <Select value={mitigation.residualSeverity} onValueChange={(value) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'residualSeverity', value)}>
+                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                <SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+                                                     <div className="flex items-center justify-end gap-2">
+                                                        <Label>Residual Risk Score:</Label>
+                                                        <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.residualRiskScore) }}>{mitigation.residualRiskScore} - {getRiskLevel(mitigation.residualRiskScore)}</Badge>
                                                     </div>
                                                 </div>
                                             )})}
@@ -780,7 +802,3 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
-
-
-
-
