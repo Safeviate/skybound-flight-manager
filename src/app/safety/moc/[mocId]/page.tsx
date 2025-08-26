@@ -306,6 +306,8 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
                     let hazardCounter = 0;
+                    let riskCounter = 0;
+                    let mitigationCounter = 0;
                     
                     return (
                     <Card key={step.id} className="p-4 space-y-4">
@@ -328,7 +330,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                         />
                         {step.hazards?.map((hazard) => {
                             hazardCounter++;
-                            let riskCounter = 0;
                             
                             return (
                             <Card key={hazard.id} className="p-4 border-red-500 space-y-4">
@@ -351,7 +352,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                 />
                                 {hazard.risks?.map((risk) => {
                                     riskCounter++;
-                                    let mitigationCounter = 0;
 
                                     return (
                                     <Card key={risk.id} className="p-4 border-yellow-500 space-y-4">
@@ -810,6 +810,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
