@@ -291,9 +291,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
         onUpdate(localPhase);
         onClose();
     };
-    
-    let hazardCounter = 0;
-    let riskCounter = 0;
 
     return (
         <DialogContent className="max-w-4xl">
@@ -308,8 +305,8 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
-                    hazardCounter = 0;
-                    riskCounter = 0;
+                    let hazardCounter = 0;
+                    let riskCounter = 0;
                     
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
@@ -354,7 +351,8 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                 />
                                 {hazard.risks?.map((risk) => {
                                     riskCounter++;
-                                    
+                                    let mitigationCounter = 0;
+
                                     return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
@@ -398,11 +396,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
                                                 </Button>
                                             </div>
-                                            {risk.mitigations?.map((mitigation, mitigationIndex) => {
+                                            {risk.mitigations?.map((mitigation) => {
+                                                mitigationCounter++;
                                                 return (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">{`Mitigation ${mitigationIndex + 1} Step ${stepIndex + 1}`}</Label>
+                                                        <Label className="font-semibold">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -731,13 +730,15 @@ export default function MocDetailPage() {
         <div className="hidden print:block space-y-6">
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
             {moc.phases?.map((phase, phaseIndex) => {
-                let riskCounter = 0;
                 let hazardCounter = 0;
+                let riskCounter = 0;
                 
                 return (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => {
+                        hazardCounter = 0;
+                        riskCounter = 0;
                         return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
                              <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
@@ -810,5 +811,6 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
