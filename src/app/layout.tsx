@@ -1,13 +1,10 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { UserProvider } from '@/context/user-provider';
-import { SettingsProvider } from '@/context/settings-provider';
 import { AppContent } from './app-content';
 import { Inter, Roboto, Lato, Montserrat } from 'next/font/google';
-import { ScaleProvider } from '@/context/scale-provider';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { Providers } from './providers';
+
 
 const inter = Inter({
   subsets: ['latin'],
@@ -55,18 +52,12 @@ export default function RootLayout({
           <meta name="theme-color" content="#2563eb" />
       </head>
       <body>
-          <UserProvider>
-            <SettingsProvider>
-              <ScaleProvider>
-                <SidebarProvider>
-                  <AppContent>
-                    {children}
-                  </AppContent>
-                </SidebarProvider>
-                <Toaster />
-              </ScaleProvider>
-            </SettingsProvider>
-          </UserProvider>
+          <Providers>
+            <AppContent>
+              {children}
+            </AppContent>
+            <Toaster />
+          </Providers>
       </body>
     </html>
   );
