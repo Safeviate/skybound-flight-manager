@@ -730,30 +730,34 @@ export default function MocDetailPage() {
         {/* Print-only section */}
         <div className="hidden print:block space-y-6">
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
-            {moc.phases?.map((phase, phaseIndex) => (
+            {moc.phases?.map((phase, phaseIndex) => {
+                let riskCounter = 0;
+                let hazardCounter = 0;
+                
+                return (
                 <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
                     {phase.steps?.map((step, stepIndex) => {
-                        let hazardCounter = 0;
                         return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
                              <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
                              {step.hazards?.map((hazard) => {
                                 hazardCounter++;
-                                let riskCounter = 0;
                                  return (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
                                     <h5 className="font-medium">Hazard {hazardCounter} Step {stepIndex + 1}: {hazard.description}</h5>
                                     {hazard.risks?.map((risk) => {
                                         riskCounter++;
+                                        let mitigationCounter = 0;
                                         return (
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
                                             <p className="text-sm"><strong>Risk {riskCounter} Step {stepIndex + 1}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
-                                            {risk.mitigations?.map((mitigation, mitigationIndex) => {
+                                            {risk.mitigations?.map((mitigation) => {
+                                                mitigationCounter++;
                                                 return (
                                                 <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation {mitigationIndex + 1} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
+                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
                                             )})}
@@ -764,7 +768,7 @@ export default function MocDetailPage() {
                         </div>
                     )})}
                 </div>
-            ))}
+            )})}
         </div>
       </div>
       {selectedPhase && (
@@ -806,4 +810,5 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
