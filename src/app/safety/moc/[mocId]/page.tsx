@@ -323,7 +323,10 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                             value={step.description}
                             onChange={(e) => handleStepChange(step.id, e.target.value)}
                         />
-                        {step.hazards?.map((hazard, hazardIndex) => (
+                        {step.hazards?.map((hazard, hazardIndex) => {
+                             const riskStartIndex = step.hazards.slice(0, hazardIndex).reduce((acc, h) => acc + (h.risks?.length || 0), 0);
+                             
+                             return (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor={`hazard-desc-${hazardIndex}`} className="font-semibold">Hazard {hazardIndex + 1} Step {stepIndex + 1}</Label>
@@ -342,10 +345,12 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     value={hazard.description}
                                     onChange={(e) => handleHazardChange(step.id, hazard.id, e.target.value)}
                                 />
-                                {hazard.risks?.map((risk, riskIndex) => (
+                                {hazard.risks?.map((risk, riskIndex) => {
+                                    const mitigationStartIndex = (hazard.risks?.slice(0, riskIndex) || []).reduce((acc, r) => acc + (r.mitigations?.length || 0), 0);
+                                    return (
                                     <div key={risk.id} className="ml-2 pt-4 space-y-4 border-t">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold">Risk {riskIndex + 1} Step {stepIndex + 1}</Label>
+                                            <Label className="font-semibold">Risk {riskStartIndex + riskIndex + 1} Step {stepIndex + 1}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -388,7 +393,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                             {risk.mitigations?.map((mitigation, mitIndex) => (
                                                 <div key={mitigation.id} className="p-3 border bg-muted/50 rounded-md space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold">Mitigation {mitIndex + 1} Step {stepIndex + 1}</Label>
+                                                        <Label className="font-semibold">Mitigation {mitigationStartIndex + mitIndex + 1} Step {stepIndex + 1}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -419,9 +424,9 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                         </div>
 
                                     </div>
-                                ))}
+                                )})}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 ))}
                 {(!localPhase.steps || localPhase.steps.length === 0) && (
@@ -761,4 +766,5 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
