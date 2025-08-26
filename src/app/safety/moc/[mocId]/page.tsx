@@ -291,6 +291,9 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
         onUpdate(localPhase);
         onClose();
     };
+    
+    let hazardCounter = 0;
+    let riskCounter = 0;
 
     return (
         <DialogContent className="max-w-4xl">
@@ -305,7 +308,8 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
             </DialogHeader>
             <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 {localPhase.steps?.map((step, stepIndex) => {
-                    let hazardCounter = 0;
+                    hazardCounter = 0;
+                    riskCounter = 0;
                     
                     return (
                     <div key={step.id} className="p-4 border-2 border-gray-200 rounded-lg space-y-4">
@@ -328,7 +332,6 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                         />
                         {step.hazards?.map((hazard) => {
                             hazardCounter++;
-                            let riskCounter = 0;
                             
                             return (
                             <div key={hazard.id} className="ml-4 p-4 border rounded-md space-y-4">
@@ -734,23 +737,23 @@ export default function MocDetailPage() {
                         let hazardCounter = 0;
                         return (
                         <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</h4>
+                             <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
                              {step.hazards?.map((hazard) => {
                                 hazardCounter++;
                                 let riskCounter = 0;
                                  return (
                                 <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3">
-                                    <h5 className="font-medium">Hazard {phaseIndex + 1}.{stepIndex + 1}.{hazardCounter}: {hazard.description}</h5>
+                                    <h5 className="font-medium">Hazard {hazardCounter} Step {stepIndex + 1}: {hazard.description}</h5>
                                     {hazard.risks?.map((risk) => {
                                         riskCounter++;
                                         return (
                                         <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk {riskCounter}:</strong> {risk.description}</p>
+                                            <p className="text-sm"><strong>Risk {riskCounter} Step {stepIndex + 1}:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
                                             {risk.mitigations?.map((mitigation, mitigationIndex) => {
                                                 return (
                                                 <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-400">
-                                                    <p className="text-sm"><strong>Mitigation {mitigationIndex + 1}:</strong> {mitigation.description}</p>
+                                                    <p className="text-sm"><strong>Mitigation {mitigationIndex + 1} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
                                                     <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
                                                 </div>
                                             )})}
@@ -803,3 +806,4 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
