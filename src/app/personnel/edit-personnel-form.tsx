@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ROLE_PERMISSIONS } from '@/lib/types';
+import { ROLE_PERMISSIONS, ALL_PERMISSIONS } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, ArrowLeftRight } from 'lucide-react';
@@ -80,7 +80,6 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
   const { company } = useUser();
   const [roles, setRoles] = useState<CompanyRole[]>([]);
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -92,19 +91,16 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const permsQuery = query(collection(db, `companies/${company.id}/permissions`));
-
-            const [rolesSnapshot, deptsSnapshot, permsSnapshot] = await Promise.all([
+            
+            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
-                getDocs(deptsQuery),
-                getDocs(permsQuery)
+                getDocs(deptsQuery)
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
-            setAllPermissions(permsSnapshot.docs.map(doc => doc.data().name as Permission));
 
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch roles, departments, or permissions.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch roles or departments.' });
         }
     };
     fetchData();
@@ -348,7 +344,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                                     Select all permissions that apply to this user. Defaults are set by role.
                                 </FormDescription>
                             </div>
-                            <PermissionsListbox control={form.control} allPermissions={allPermissions} />
+                            <PermissionsListbox control={form.control} allPermissions={ALL_PERMISSIONS} />
                             <FormMessage />
                         </FormItem>
                     )}
