@@ -350,7 +350,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose }: { phase: MocPhase, o
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                        <Textarea
+                                        <Input
                                             placeholder="Describe the potential risk..."
                                             value={risk.description}
                                             onChange={(e) => handleRiskChange(step.id, hazard.id, risk.id, 'description', e.target.value)}
@@ -677,3 +677,6 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
+
+    
