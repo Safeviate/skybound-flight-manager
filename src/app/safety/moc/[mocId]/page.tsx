@@ -761,3 +761,4 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
