@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -57,15 +56,15 @@ export const navItems: {
 }[] = [
   { href: '/my-dashboard', label: 'My Dashboard', icon: UserCircle },
   { href: '/dashboard', label: 'Company Dashboard', icon: LayoutDashboard },
-  { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredPermissions: ['Aircraft:View'], requiredFeature: 'Aircraft' },
-  { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck, requiredPermissions: ['Aircraft:View'] },
+  { href: '/aircraft', label: 'Aircraft Management', icon: Plane, requiredFeature: 'Aircraft' },
+  { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
-  { href: '/students', label: 'Students', icon: Users, requiredPermissions: ['Students:View', 'Students:Edit'], requiredFeature: 'Students' },
-  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredPermissions: ['Personnel:View', 'Personnel:Edit'], requiredFeature: 'Personnel' },
-  { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredPermissions: ['Students:View'], requiredFeature: 'Students' },
-  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredPermissions: ['Reports:View'], requiredFeature: 'AdvancedAnalytics' },
-  { href: '/safety', label: 'Safety', icon: Shield, requiredPermissions: ['Safety:View', 'Safety:Edit'], requiredFeature: 'Safety' },
-  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredPermissions: ['Quality:View', 'Quality:Edit'], requiredFeature: 'Quality' },
+  { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
+  { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
+  { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
+  { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
+  { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
+  { href: '/quality', label: 'Quality', icon: CheckSquare, requiredFeature: 'Quality' },
   { href: '/settings/contacts', label: 'External Contacts', icon: Contact, requiredPermissions: ['Settings:Edit'] },
   { href: '/settings', label: 'Appearance', icon: Settings },
   { href: '/settings/company', label: 'Company Settings', icon: Cog },

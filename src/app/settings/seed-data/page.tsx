@@ -15,6 +15,7 @@ export default function SeedDataPage() {
   const { company } = useUser();
   const { toast } = useToast();
   const [isSeedingAircraft, setIsSeedingAircraft] = useState(false);
+  const [isSeedingRoles, setIsSeedingRoles] = useState(false);
   
   const handleSeedAircraft = async () => {
     if (!company) {
@@ -70,6 +71,73 @@ export default function SeedDataPage() {
     }
   };
 
+  const handleSeedRolesAndDepts = async () => {
+    if (!company) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No company selected. Cannot seed data.',
+      });
+      return;
+    }
+
+    setIsSeedingRoles(true);
+    try {
+      const batch = writeBatch(db);
+
+      const defaultRoles = [
+        { name: 'Accountable Manager' }, { name: 'Safety Manager' }, { name: 'Quality Manager' },
+        { name: 'Head of Training' }, { name: 'Chief Flight Instructor' }, { name: 'Instructor' },
+        { name: 'Student' }, { name: 'Admin' },
+      ];
+      const defaultDepts = [
+        { name: 'Management' }, { name: 'Flight Operations' }, { name: 'Safety' },
+        { name: 'Quality' }, { name: 'Administration' }, { name: 'Maintenance' },
+      ];
+
+      const rolesCollectionRef = collection(db, `companies/${company.id}/roles`);
+      const deptsCollectionRef = collection(db, `companies/${company.id}/departments`);
+
+      // Check existing to avoid duplicates
+      const [existingRolesSnap, existingDeptsSnap] = await Promise.all([
+          getDocs(rolesCollectionRef),
+          getDocs(deptsCollectionRef)
+      ]);
+      const existingRoles = new Set(existingRolesSnap.docs.map(d => d.data().name));
+      const existingDepts = new Set(existingDeptsSnap.docs.map(d => d.data().name));
+
+      defaultRoles.forEach(role => {
+          if (!existingRoles.has(role.name)) {
+            const roleDocRef = doc(rolesCollectionRef);
+            batch.set(roleDocRef, role);
+          }
+      });
+      defaultDepts.forEach(dept => {
+          if (!existingDepts.has(dept.name)) {
+            const deptDocRef = doc(deptsCollectionRef);
+            batch.set(deptDocRef, dept);
+          }
+      });
+
+      await batch.commit();
+
+      toast({
+        title: 'Roles & Departments Seeded',
+        description: 'Default roles and departments have been added to your company.',
+      });
+
+    } catch (error) {
+      console.error('Error seeding roles/depts:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Seeding Failed',
+        description: 'An error occurred while trying to seed roles and departments.',
+      });
+    } finally {
+      setIsSeedingRoles(false);
+    }
+  };
+
   return (
       <main className="flex-1 p-4 md:p-8">
         <Card className="max-w-2xl mx-auto">
@@ -94,6 +162,22 @@ export default function SeedDataPage() {
                   <Database className="mr-2 h-4 w-4" />
                 )}
                 Seed Sample Aircraft
+              </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4">
+              <div>
+                <h3 className="font-semibold">Seed Default Roles &amp; Departments</h3>
+                <p className="text-sm text-muted-foreground">
+                  Populates the database with a standard set of roles and departments for your company.
+                </p>
+              </div>
+              <Button onClick={handleSeedRolesAndDepts} disabled={isSeedingRoles} className="mt-2 sm:mt-0">
+                {isSeedingRoles ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Database className="mr-2 h-4 w-4" />
+                )}
+                Seed Roles &amp; Depts
               </Button>
             </div>
           </CardContent>
