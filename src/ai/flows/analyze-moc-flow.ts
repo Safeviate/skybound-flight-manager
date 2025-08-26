@@ -60,7 +60,7 @@ const prompt = ai.definePrompt({
   name: 'analyzeMocPrompt',
   input: {schema: AnalyzeMocInputSchema},
   output: {schema: AnalyzeMocOutputSchema},
-  prompt: `You are an expert Aviation Safety Manager with extensive experience in Management of Change (MOC) processes under ICAO Doc 9859.
+  prompt: `You are an expert Aviation Safety Manager with extensive experience in Management of Change (MOC) processes under ICAO Doc 9859 and South African Civil Aviation Authority (SACAA) regulations.
 
   You have been given a Management of Change proposal. Your task is to perform an initial analysis to assist the safety team.
 
@@ -71,9 +71,9 @@ const prompt = ai.definePrompt({
   - Scope of Change: {{{scope}}}
 
   Based on this proposal, you must:
-  1.  **Deconstruct the change into 3-5 high-level implementation PHASES.** Examples include "Update Documentation", "Conduct Personnel Training", "Amend Regulatory Approvals", etc.
-  2.  **For each PHASE, break it down into 1 or more specific implementation STEPS.** These should be actionable tasks. For example, the "Conduct Personnel Training" phase might have steps like "Develop training materials", "Schedule training sessions", and "Conduct practical assessments".
-  3.  **For each STEP, identify potential new HAZARDS.** Think about what could go wrong during or after each specific action. If a step is purely administrative and introduces no new operational hazards, you can return an empty array for its hazards.
+  1.  **Deconstruct the change into 3-5 high-level implementation PHASES.** Examples include "Update Documentation", "Conduct Personnel Training", "Amend Regulatory Approvals", etc. Consider what SACAA approvals or notifications might be required.
+  2.  **For each PHASE, break it down into 1 or more specific implementation STEPS.** These should be actionable tasks. For example, a "Personnel Training" phase might have steps like "Develop SACAA-compliant training materials", "Schedule training sessions", and "Conduct practical assessments".
+  3.  **For each STEP, identify potential new HAZARDS.** Think about what could go wrong during or after each specific action, including any regulatory compliance hazards under SACAA rules. If a step is purely administrative and introduces no new operational hazards, you can return an empty array for its hazards.
   4.  **For each HAZARD, identify the associated RISKS.** A risk is the potential negative consequence of a hazard.
   5.  **Perform an initial risk assessment for each RISK.** Assign an initial 'likelihood' and 'severity' based on your expert judgment.
 
