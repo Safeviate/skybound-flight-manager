@@ -103,71 +103,42 @@ body {
 }
 
 @media print {
-  body {
-    background: #fff !important;
-    color: #000 !important;
-  }
-  header, [data-sidebar], button, input, textarea, a[href], .no-print {
-    display: none !important;
-  }
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  .card {
-    border: none !important;
-    box-shadow: none !important;
-    page-break-inside: avoid;
-  }
-  .print-block {
-    display: block !important;
-  }
-  .print-hidden {
-    display: none !important;
-  }
-  [role="tabpanel"][data-state="inactive"] {
-    display: block !important;
-  }
-  .print-force-color {
-    -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
-  }
-  /* MOC Print specific styles */
-  .moc-print-hazard-title {
-    color: black !important;
-    font-weight: 600 !important;
-    border-bottom: none !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 8px !important;
-  }
-  .moc-print-risk-wrapper {
-    border-left: none !important;
-    padding-left: 12px !important;
-    margin-top: 8px !important;
-    margin-bottom: 8px !important;
-  }
-  .moc-print-risk-title {
-     color: black !important;
-     font-weight: 600 !important;
-  }
-   .moc-print-mitigation-wrapper {
-    border-left: none !important;
-    padding-left: 12px !important;
-    margin-top: 8px !important;
-  }
-  .moc-print-mitigation-title {
-     color: black !important;
-     font-weight: 600 !important;
-  }
-  [data-radix-collapsible-content] {
-      display: block !important;
-      height: auto !important;
-      visibility: visible !important;
-  }
-  [data-state='closed'] {
-      display: block !important;
-  }
-  [role="dialog"], [role="alertdialog"] {
-    display: none !important;
-  }
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+    
+    header, [data-sidebar], button, input, textarea, a[href], .no-print {
+        display: none !important;
+    }
+
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .print-block {
+        display: block !important;
+    }
+    
+    .print-hidden {
+        display: none !important;
+    }
+
+    [role="dialog"], [role="alertdialog"] {
+      display: none !important;
+    }
+    
+    /* Ensure all content is visible and not scrollable */
+    * {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
 }
