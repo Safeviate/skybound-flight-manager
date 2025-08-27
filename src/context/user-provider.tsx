@@ -307,7 +307,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                         }
 
                     } else {
-                        console.error(`User document for UID "${firebaseUser.uid}" not found in any company. Logging out.`);
+                        // User exists in Auth but not in any company's database.
+                        // This can happen if the database record creation fails after Auth user creation.
+                        // Silently log them out.
                         logout();
                     }
                 } catch (error) {
