@@ -49,8 +49,8 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
 
-  const activeStudents = students.filter(s => s.status === 'Active');
-  const archivedStudents = students.filter(s => s.status === 'Archived');
+  const activeStudents = useMemo(() => students.filter(s => s.status !== 'Archived'), [students]);
+  const archivedStudents = useMemo(() => students.filter(s => s.status === 'Archived'), [students]);
 
   const fetchStudents = async () => {
     if (!company) return;
