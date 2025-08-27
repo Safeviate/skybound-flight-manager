@@ -680,81 +680,82 @@ export default function MocDetailPage() {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-             {canEdit && (
-                <div className="space-y-4 rounded-lg border p-4 mb-6 no-print">
-                     <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
-                     <Textarea 
-                        id="analysis-params"
-                        placeholder="Enter specific keywords or areas for the AI to focus on, e.g., 'impact on flight crew duty times' or 'required maintenance tooling'."
-                        value={analysisParams}
-                        onChange={(e) => setAnalysisParams(e.target.value)}
-                    />
-                    <div className="flex items-center gap-2 justify-end">
-                        <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
-                            {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                            Analyze with AI
-                        </Button>
-                        <AddPhaseDialog onAddPhase={handleAddPhase} />
+            <CardContent className="space-y-6">
+                {canEdit && (
+                    <div className="space-y-4 rounded-lg border p-4 no-print">
+                        <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
+                        <Textarea 
+                            id="analysis-params"
+                            placeholder="Enter specific keywords or areas for the AI to focus on, e.g., 'impact on flight crew duty times' or 'required maintenance tooling'."
+                            value={analysisParams}
+                            onChange={(e) => setAnalysisParams(e.target.value)}
+                        />
+                        <div className="flex items-center gap-2 justify-end">
+                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
+                                {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Analyze with AI
+                            </Button>
+                            <AddPhaseDialog onAddPhase={handleAddPhase} />
+                        </div>
                     </div>
-                </div>
-            )}
-            {moc.phases && moc.phases.length > 0 ? (
-                <div className="space-y-4">
-                  {moc.phases.map((phase, index) => (
-                    <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid">
-                        <div className="p-3 hover:bg-muted transition-colors flex justify-between items-center no-print">
-                            <CollapsibleTrigger asChild>
-                                <div className="flex-1 text-left flex items-center gap-2 cursor-pointer">
-                                    <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                                    <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                )}
+                 
+                {moc.phases && moc.phases.length > 0 ? (
+                    <div className="space-y-4">
+                    {moc.phases.map((phase, index) => (
+                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid">
+                            <div className="p-3 hover:bg-muted transition-colors flex justify-between items-center">
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex-1 text-left flex items-center gap-2 cursor-pointer no-print">
+                                        <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
+                                        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <h4 className="font-semibold print:block hidden">{index + 1}. {phase.description}</h4>
+                                <div className="flex items-center gap-2 no-print">
+                                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
+                                        <Wind className="mr-2 h-4 w-4" />
+                                        Analyze ({phase.steps?.length || 0} Steps)
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
-                            </CollapsibleTrigger>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
-                                    <Wind className="mr-2 h-4 w-4" />
-                                    Analyze ({phase.steps?.length || 0} Steps)
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
-                        </div>
-                      <CollapsibleContent className="p-4 pt-0 data-[state=closed]:print:hidden">
-                        <h4 className="font-semibold print:block hidden mb-2">{index + 1}. {phase.description}</h4>
-                        <div className="pl-4 border-l-2 space-y-4">
-                          {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
-                            <Card key={step.id} className="p-3 bg-muted/50">
-                              <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
-                              <div className="pl-4 mt-2 space-y-2">
-                                {step.hazards?.map(hazard => (
-                                  <div key={hazard.id} className="text-xs">
-                                    <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
-                                    {hazard.risks?.map(risk => (
-                                      <div key={risk.id} className="pl-4">
-                                        <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge variant="destructive">{risk.riskScore}</Badge></p>
-                                        {risk.mitigations?.map(mit => (
-                                          <p key={mit.id} className="pl-4 text-green-700"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge variant="success">{mit.residualRiskScore}</Badge></p>
+                        <CollapsibleContent className="p-4 pt-0 data-[state=closed]:print:hidden">
+                            <div className="pl-4 border-l-2 space-y-4">
+                            {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
+                                <Card key={step.id} className="p-3 bg-muted/50">
+                                <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
+                                <div className="pl-4 mt-2 space-y-2">
+                                    {step.hazards?.map(hazard => (
+                                    <div key={hazard.id} className="text-xs">
+                                        <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
+                                        {hazard.risks?.map(risk => (
+                                        <div key={risk.id} className="pl-4">
+                                            <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore) }}>{risk.riskScore}</Badge></p>
+                                            {risk.mitigations?.map(mit => (
+                                            <p key={mit.id} className="pl-4 text-green-700"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore)}}>{mit.residualRiskScore}</Badge></p>
+                                            ))}
+                                        </div>
                                         ))}
-                                      </div>
+                                    </div>
                                     ))}
-                                  </div>
-                                ))}
-                              </div>
-                            </Card>
-                          )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
-                    <h4 className="text-lg font-semibold">Start the Implementation Plan</h4>
-                    <p className="text-muted-foreground text-sm">
-                        Use the AI to generate a plan, or add your first implementation phase manually.
-                    </p>
-                </div>
-            )}
+                                </div>
+                                </Card>
+                            )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
+                            </div>
+                        </CollapsibleContent>
+                        </Collapsible>
+                    ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
+                        <h4 className="text-lg font-semibold">Start the Implementation Plan</h4>
+                        <p className="text-muted-foreground text-sm">
+                            Use the AI to generate a plan, or add your first implementation phase manually.
+                        </p>
+                    </div>
+                )}
             </CardContent>
         </Card>
       </div>
@@ -793,5 +794,3 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
-
-    
