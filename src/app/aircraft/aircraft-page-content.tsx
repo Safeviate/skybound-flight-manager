@@ -47,6 +47,21 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
     return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
 }
 
+const componentHierarchy = {
+    "Airframe": ["Fuselage", "Wings", "Empennage", "Doors", "Windows"],
+    "Powerplant": ["Engine", "Propeller", "Exhaust System", "Ignition System", "Fuel System (Engine)"],
+    "Landing Gear": ["Main Gear", "Nose Gear", "Wheels", "Tires", "Brakes"],
+    "Avionics/Instruments": ["GPS/Navigation", "Com Radio", "Transponder", "Attitude Indicator", "Airspeed Indicator", "Altimeter", "Other Instrument"],
+    "Flight Controls": ["Ailerons", "Elevator/Stabilator", "Rudder", "Flaps", "Control Cables/Rods"],
+    "Fuel System": ["Tanks", "Lines & Hoses", "Pumps", "Gauges"],
+    "Electrical System": ["Battery", "Alternator/Generator", "Wiring", "Circuit Breakers", "Lighting"],
+    "Interior/Cabin": ["Seats", "Belts/Harnesses", "HVAC", "Panels/Trim"],
+    "Other": [],
+};
+
+const componentOptions = Object.keys(componentHierarchy);
+const allSubcomponents = Array.from(new Set(Object.values(componentHierarchy).flat()));
+
 const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
     const { user, company } = useUser();
     const { toast } = useToast();
@@ -309,7 +324,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                 </DialogContent>
             </Dialog>
             <Dialog open={!!editingReport} onOpenChange={() => setEditingReport(null)}>
-                <DialogContent>
+                <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Edit Technical Report</DialogTitle>
                         <DialogDescription>Edit the details for report {editingReport?.reportNumber}.</DialogDescription>
@@ -323,6 +338,32 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                         }}
                         className="space-y-4 py-4"
                     >
+                        <div className="space-y-2">
+                            <Label htmlFor="component">System</Label>
+                            <Select name="component" defaultValue={editingReport?.component}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select system..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {componentOptions.map(comp => (
+                                        <SelectItem key={comp} value={comp}>{comp}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="subcomponent">Component</Label>
+                             <Select name="subcomponent" defaultValue={editingReport?.subcomponent}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select component..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {allSubcomponents.map(sub => (
+                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="description">Description of Issue</Label>
                             <Textarea id="description" name="description" required defaultValue={editingReport?.description || ''} />
