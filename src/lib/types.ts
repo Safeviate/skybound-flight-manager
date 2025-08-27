@@ -142,6 +142,7 @@ export type Permission =
   | 'Aircraft:View'
   | 'Aircraft:Edit'
   | 'Aircraft:UpdateHobbs'
+  | 'TechnicalLog:View'
   | 'Students:View'
   | 'Students:Edit'
   | 'Personnel:View'
@@ -170,6 +171,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Aircraft:View',
     'Aircraft:Edit',
     'Aircraft:UpdateHobbs',
+    'TechnicalLog:View',
     'Students:View',
     'Students:Edit',
     'Personnel:View',
@@ -687,10 +689,10 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   'Admin': ['Super User'],
   'Operations Manager': ['Super User'],
   'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit'],
-  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit'],
-  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit'],
+  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View'],
+  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View'],
+  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit', 'TechnicalLog:View'],
+  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit', 'TechnicalLog:View'],
   'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
   'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],

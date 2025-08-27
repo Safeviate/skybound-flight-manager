@@ -454,6 +454,7 @@ export function AircraftPageContent({
     };
 
     const isSuperUser = user?.permissions.includes('Super User');
+    const canViewTechnicalLog = user?.permissions.includes('TechnicalLog:View') || isSuperUser;
 
     const AircraftCardList = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
         if (isDataLoading) {
@@ -781,7 +782,9 @@ export function AircraftPageContent({
                 <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 h-auto md:h-10">
                     <TabsTrigger value="active">Active Fleet ({activeAircraft.length})</TabsTrigger>
                     <TabsTrigger value="archived">Archived ({archivedAircraft.length})</TabsTrigger>
-                    <TabsTrigger value="technical-log">Technical Log</TabsTrigger>
+                    {canViewTechnicalLog && (
+                        <TabsTrigger value="technical-log">Technical Log</TabsTrigger>
+                    )}
                     <TabsTrigger value="checklists"><CheckCircle2 className="mr-2 h-4 w-4" />Aircraft Checklist</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4" />Checklist History</TabsTrigger>
                 </TabsList>
@@ -792,7 +795,13 @@ export function AircraftPageContent({
                      <AircraftCardList aircraft={archivedAircraft} isArchived />
                 </TabsContent>
                  <TabsContent value="technical-log" className="mt-4">
-                    <TechnicalLogView aircraftList={aircraftList} />
+                    {canViewTechnicalLog ? (
+                        <TechnicalLogView aircraftList={aircraftList} />
+                    ) : (
+                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You do not have permission to view the technical log.</p>
+                        </div>
+                    )}
                 </TabsContent>
                  <TabsContent value="checklists" className="pt-6 mt-4">
                     <div className="max-w-2xl mx-auto space-y-6">
