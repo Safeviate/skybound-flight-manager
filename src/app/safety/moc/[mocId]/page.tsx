@@ -689,45 +689,47 @@ export default function MocDetailPage() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                {canEdit && (
-                    <div className="space-y-4 rounded-lg border p-4 no-print">
-                        <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
-                        <Textarea 
-                            id="analysis-params"
-                            placeholder="Enter specific keywords or areas for the AI to focus on, e.g., 'impact on flight crew duty times' or 'required maintenance tooling'."
-                            value={analysisParams}
-                            onChange={(e) => setAnalysisParams(e.target.value)}
-                        />
-                        <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
-                                {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Analyze with AI
-                            </Button>
-                            <AddPhaseDialog onAddPhase={handleAddPhase} />
-                        </div>
-                    </div>
-                )}
+                <div className="space-y-4 rounded-lg border p-4 no-print">
+                    {canEdit && (
+                        <>
+                            <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
+                            <Textarea 
+                                id="analysis-params"
+                                placeholder="Enter specific keywords or areas for the AI to focus on, e.g., 'impact on flight crew duty times' or 'required maintenance tooling'."
+                                value={analysisParams}
+                                onChange={(e) => setAnalysisParams(e.target.value)}
+                            />
+                            <div className="flex items-center gap-2 justify-end">
+                                <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>
+                                    {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                    Analyze with AI
+                                </Button>
+                                <AddPhaseDialog onAddPhase={handleAddPhase} />
+                            </div>
+                        </>
+                    )}
+                </div>
                  
                 {moc.phases && moc.phases.length > 0 ? (
                     <div className="space-y-4">
                     {moc.phases.map((phase, index) => (
                         <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid" defaultOpen>
-                            <CollapsibleTrigger asChild>
-                                 <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
-                                    <div className="flex-1 text-left flex items-center gap-2">
+                            <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors">
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex-1 text-left flex items-center gap-2 cursor-pointer">
                                         <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                                         <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
                                     </div>
-                                    <div className="flex items-center gap-2 no-print">
-                                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
-                                            <Wind className="mr-2 h-4 w-4" />
-                                            Analyze ({phase.steps?.length || 0} Steps)
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    </div>
+                                </CollapsibleTrigger>
+                                <div className="flex items-center gap-2 no-print">
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
+                                        <Wind className="mr-2 h-4 w-4" />
+                                        Analyze ({phase.steps?.length || 0} Steps)
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => setEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeletePhase(phase.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
-                            </CollapsibleTrigger>
+                            </div>
                         <CollapsibleContent>
                              <div className="p-4 pt-0 space-y-4 print:block">
                                 {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
@@ -814,5 +816,6 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
 
