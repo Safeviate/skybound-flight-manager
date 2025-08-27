@@ -112,6 +112,10 @@ body {
   header, [data-sidebar], button, input, textarea, a[href], .no-print {
     display: none !important;
   }
+  /* This targets shadcn's Dialog and Alert Dialog content specifically */
+  [role="dialog"], [role="alertdialog"] {
+    display: none !important;
+  }
   main {
     padding: 0 !important;
     margin: 0 !important;
