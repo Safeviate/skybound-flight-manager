@@ -48,27 +48,30 @@ async function getChecklistHistory(companyId: string, aircraftId: string): Promi
 }
 
 const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
-    const { company } = useUser();
+    const { user, company } = useUser();
+    const { toast } = useToast();
     const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
     const [reports, setReports] = useState<TechnicalReport[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [editingReport, setEditingReport] = useState<TechnicalReport | null>(null);
+    
+    const fetchReports = useCallback(async () => {
+        if (!company || !selectedAircraftId) {
+            setReports([]);
+            return;
+        }
+        setIsLoading(true);
+        const selectedAircraft = aircraftList.find(a => a.id === selectedAircraftId);
+        if (selectedAircraft) {
+            const fetchedReports = await getTechnicalReportsForAircraft(company.id, selectedAircraft.tailNumber);
+            setReports(fetchedReports);
+        }
+        setIsLoading(false);
+    }, [company, selectedAircraftId, aircraftList]);
 
     useEffect(() => {
-        const fetchReports = async () => {
-            if (!company || !selectedAircraftId) {
-                setReports([]);
-                return;
-            }
-            setIsLoading(true);
-            const selectedAircraft = aircraftList.find(a => a.id === selectedAircraftId);
-            if (selectedAircraft) {
-                const fetchedReports = await getTechnicalReportsForAircraft(company.id, selectedAircraft.tailNumber);
-                setReports(fetchedReports);
-            }
-            setIsLoading(false);
-        };
         fetchReports();
-    }, [selectedAircraftId, company, aircraftList]);
+    }, [fetchReports]);
 
     const chartData = useMemo(() => {
         const counts = reports.reduce((acc, report) => {
@@ -78,6 +81,32 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
         }, {} as Record<string, number>);
         return Object.entries(counts).map(([name, count]) => ({ name, count }));
     }, [reports]);
+
+    const handleUpdateReport = async (updatedData: Partial<TechnicalReport>) => {
+        if (!editingReport || !company) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update report.' });
+            return;
+        }
+        
+        const reportRef = doc(db, `companies/${company.id}/technical-reports`, editingReport.id);
+        
+        const finalData = {
+            ...updatedData,
+            status: 'Rectified',
+            rectificationDate: new Date().toISOString(),
+            rectifiedBy: user?.name,
+        }
+
+        try {
+            await updateDoc(reportRef, finalData);
+            setEditingReport(null);
+            fetchReports();
+            toast({ title: 'Report Updated', description: 'The technical log has been updated.' });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update the report.' });
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -144,6 +173,11 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                         <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
                                                             {report.status || 'Open'}
                                                         </Badge>
+                                                        {report.status !== 'Rectified' && (
+                                                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setEditingReport(report); }}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Rectify
+                                                            </Button>
+                                                        )}
                                                         <Button variant="ghost" size="icon" className="h-8 w-8">
                                                             <ChevronDown className="h-4 w-4" />
                                                         </Button>
@@ -177,6 +211,40 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                     </Card>
                 </div>
             )}
+             <Dialog open={!!editingReport} onOpenChange={() => setEditingReport(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rectify Technical Report</DialogTitle>
+                        <DialogDescription>Enter the details of the rectification for report {editingReport?.reportNumber}.</DialogDescription>
+                    </DialogHeader>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const data = Object.fromEntries(formData.entries());
+                            handleUpdateReport(data as Partial<TechnicalReport>);
+                        }}
+                        className="space-y-4 py-4"
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="rectificationDetails">Rectification Details</Label>
+                            <Textarea id="rectificationDetails" name="rectificationDetails" required defaultValue={editingReport?.rectificationDetails || ''} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="componentsReplaced">Components Replaced</Label>
+                            <Input id="componentsReplaced" name="componentsReplaced" defaultValue={editingReport?.componentsReplaced || ''} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="physicalLogEntry">Physical Logbook Entry #</Label>
+                            <Input id="physicalLogEntry" name="physicalLogEntry" defaultValue={editingReport?.physicalLogEntry || ''} />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setEditingReport(null)}>Cancel</Button>
+                            <Button type="submit">Save &amp; Rectify</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
