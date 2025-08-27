@@ -702,13 +702,13 @@ export default function MocDetailPage() {
             {moc.phases && moc.phases.length > 0 ? (
                 <div className="space-y-4">
                   {moc.phases.map((phase, index) => (
-                    <Collapsible key={phase.id} className="border rounded-lg no-print">
-                        <div className="p-3 hover:bg-muted transition-colors flex justify-between items-center">
+                    <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid">
+                        <div className="p-3 hover:bg-muted transition-colors flex justify-between items-center no-print">
                             <CollapsibleTrigger asChild>
-                                <button className="flex-1 text-left flex items-center gap-2">
+                                <div className="flex-1 text-left flex items-center gap-2 cursor-pointer">
                                     <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                                     <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-                                </button>
+                                </div>
                             </CollapsibleTrigger>
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
@@ -719,7 +719,8 @@ export default function MocDetailPage() {
                                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
                         </div>
-                      <CollapsibleContent className="p-4 pt-0">
+                      <CollapsibleContent className="p-4 pt-0 data-[state=closed]:print:hidden">
+                        <h4 className="font-semibold print:block hidden mb-2">{index + 1}. {phase.description}</h4>
                         <div className="pl-4 border-l-2 space-y-4">
                           {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
                             <Card key={step.id} className="p-3 bg-muted/50">
@@ -756,42 +757,6 @@ export default function MocDetailPage() {
             )}
             </CardContent>
         </Card>
-
-        {/* Print-only section */}
-        <div className="hidden print:block space-y-4">
-            <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
-            {moc.phases?.map((phase, phaseIndex) => (
-                <div key={`print-phase-${phase.id}`} className="space-y-2" style={{ pageBreakInside: 'avoid' }}>
-                    <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
-                    {phase.steps?.map((step, stepIndex) => (
-                        <div key={`print-step-${step.id}`} className="pl-4 space-y-2">
-                            <p><strong>Step {phaseIndex + 1}.{stepIndex + 1}:</strong> {step.description}</p>
-                            {step.hazards?.map((hazard, hazardIndex) => (
-                                <div key={`print-hazard-${hazard.id}`} className="pl-4 border-l-2 border-gray-300 space-y-2">
-                                    <p><strong>Hazard:</strong> {hazard.description}</p>
-                                    {hazard.risks?.map((risk, riskIndex) => (
-                                        <div key={`print-risk-${risk.id}`} className="pl-4 space-y-1">
-                                            <p className="text-sm"><strong>Risk:</strong> {risk.description}</p>
-                                            <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
-                                            {risk.mitigations?.map((mitigation, mitIndex) => (
-                                                <div key={`print-mitigation-${mitigation.id}`} className="pl-4 border-l-2 border-gray-200 py-1">
-                                                    <p className="text-sm"><strong>Mitigation:</strong> {mitigation.description}</p>
-                                                    <p className="text-xs">
-                                                        <strong>Responsible:</strong> {mitigation.responsiblePerson || 'N/A'} | 
-                                                        <strong> Due:</strong> {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'} | 
-                                                        <strong> Residual Risk:</strong> {getRiskLevel(mitigation.residualRiskScore)} (Score: {mitigation.residualRiskScore})
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-            ))}
-        </div>
       </div>
       {selectedPhase && (
         <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
