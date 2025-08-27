@@ -75,12 +75,24 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
     const chartData = useMemo(() => {
         const counts = reports.reduce((acc, report) => {
-            const componentKey = report.otherInstrument || report.otherComponent || report.subcomponent || report.component || 'Other';
-            acc[componentKey] = (acc[componentKey] || 0) + 1;
+            const specificComponent = report.componentDetails || report.otherInstrument || report.otherComponent || report.subcomponent || report.component;
+            const system = report.component;
+    
+            // Create a unique key to group by, including the parent system to avoid name clashes
+            const key = `${specificComponent} (${system})`;
+    
+            if (!acc[key]) {
+                acc[key] = {
+                    name: specificComponent,
+                    system: system,
+                    count: 0
+                };
+            }
+            acc[key].count++;
             return acc;
-        }, {} as Record<string, number>);
-
-        return Object.entries(counts).map(([name, count]) => ({ name, count }));
+        }, {} as Record<string, { name: string, system: string, count: number }>);
+    
+        return Object.values(counts);
     }, [reports]);
 
     const handleUpdateReport = async (updatedData: Partial<TechnicalReport>) => {
@@ -109,7 +121,17 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
         }
     };
 
-    const chartHeight = Math.max(300, chartData.length * 40);
+    const chartHeight = Math.max(300, chartData.length * 50);
+
+    const CustomYAxisTick = ({ y, payload }: any) => {
+        const item = chartData.find(d => d.name === payload.value);
+        return (
+            <g transform={`translate(0,${y})`}>
+                <text x={0} y={0} dy={-2} textAnchor="start" fill="#666" className="text-sm font-semibold">{payload.value}</text>
+                {item && <text x={0} y={0} dy={12} textAnchor="start" fill="#999" className="text-xs">{item.system}</text>}
+            </g>
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -143,10 +165,10 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                             ) : chartData.length > 0 ? (
                                 <ScrollArea className="h-full">
                                     <ResponsiveContainer width="100%" height={chartHeight}>
-                                        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis type="number" allowDecimals={false} />
-                                            <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} interval={0} />
+                                            <YAxis dataKey="name" type="category" width={150} interval={0} tick={<CustomYAxisTick />} />
                                             <Tooltip />
                                             <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" barSize={20}/>
                                         </BarChart>
