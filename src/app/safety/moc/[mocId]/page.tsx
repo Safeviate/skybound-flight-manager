@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -702,18 +703,22 @@ export default function MocDetailPage() {
                 <div className="space-y-4">
                   {moc.phases.map((phase, index) => (
                     <Collapsible key={phase.id} className="border rounded-lg no-print">
-                      <CollapsibleTrigger className="w-full text-left p-3 hover:bg-muted transition-colors flex justify-between items-center">
-                        <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
-                                <Wind className="mr-2 h-4 w-4" />
-                                Analyze ({phase.steps?.length || 0} Steps)
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                            <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                        <div className="p-3 hover:bg-muted transition-colors flex justify-between items-center">
+                            <CollapsibleTrigger asChild>
+                                <button className="flex-1 text-left flex items-center gap-2">
+                                    <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
+                                    <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                </button>
+                            </CollapsibleTrigger>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
+                                    <Wind className="mr-2 h-4 w-4" />
+                                    Analyze ({phase.steps?.length || 0} Steps)
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                            </div>
                         </div>
-                      </CollapsibleTrigger>
                       <CollapsibleContent className="p-4 pt-0">
                         <div className="pl-4 border-l-2 space-y-4">
                           {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
