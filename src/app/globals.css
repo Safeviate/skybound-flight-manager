@@ -159,15 +159,11 @@ body {
     padding-left: 12px !important;
   }
   .moc-print-mitigation-title {
-     color: #16a34a !important;
+     color: #16a3a4 !important;
      font-weight: 600 !important;
-  }
-  [data-state='closed'] > div {
-    display: block !important;
-    visibility: visible !important;
-    height: auto !important;
   }
   [data-radix-collapsible-content][data-state='closed'] {
       display: block !important;
   }
 }
+

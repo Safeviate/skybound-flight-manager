@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -737,17 +738,17 @@ export default function MocDetailPage() {
                                                 <div className="pl-4 mt-2 space-y-3">
                                                     {step.hazards?.map(hazard => (
                                                     <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                                        <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
+                                                        <p className="font-semibold text-red-600">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
                                                         {hazard.risks?.map(risk => (
                                                         <div key={risk.id} className="pl-4 pt-2 mt-2">
                                                             <div className="flex justify-between items-start">
-                                                                <p className="flex-1"><span className="font-semibold text-orange-500">Risk:</span> {risk.description}</p>
+                                                                <p className="flex-1"><span className="font-semibold text-orange-500">Risk:</span> <span className="font-normal text-black">{risk.description}</span></p>
                                                                 <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                             </div>
                                                             {risk.mitigations?.map(mit => (
                                                                 <div key={mit.id} className="pl-4 pt-2 mt-2">
                                                                     <div className="flex justify-between items-start">
-                                                                        <p className="flex-1"><span className="font-semibold text-green-600">Mitigation:</span> {mit.description}</p>
+                                                                        <p className="flex-1"><span className="font-semibold text-green-600">Mitigation:</span> <span className="font-normal text-black">{mit.description}</span></p>
                                                                         <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                                     </div>
                                                                     <div className="text-xs text-muted-foreground mt-1">
@@ -815,3 +816,4 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
