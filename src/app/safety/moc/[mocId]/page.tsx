@@ -612,6 +612,14 @@ export default function MocDetailPage() {
     setEditingPhase(null);
   };
 
+  const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
+  const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
+
+  const getAlphanumericCode = (likelihood: RiskLikelihood, severity: RiskSeverity): string => {
+    if (!likelihood || !severity) return 'N/A';
+    return `${likelihoodMap[likelihood]}${severityMap[severity]}`;
+  };
+
 
   if (loading || userLoading) {
     return (
@@ -733,13 +741,13 @@ export default function MocDetailPage() {
                                             <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
                                                 <div className="flex justify-between items-start">
                                                     <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
-                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
+                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                 </div>
                                                 {risk.mitigations?.map(mit => (
                                                     <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
                                                         <div className="flex justify-between items-start">
                                                             <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
-                                                            <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{mit.residualRiskScore}</Badge>
+                                                            <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                         </div>
                                                         <div className="text-xs text-muted-foreground mt-1">
                                                             <span>{mit.responsiblePerson}</span>
@@ -806,4 +814,5 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
