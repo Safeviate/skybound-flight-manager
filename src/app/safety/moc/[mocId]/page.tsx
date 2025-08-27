@@ -705,7 +705,7 @@ export default function MocDetailPage() {
                     {moc.phases.map((phase, index) => (
                         <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid" defaultOpen>
                             <CollapsibleTrigger asChild>
-                                <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
+                                 <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
                                     <div className="flex-1 text-left flex items-center gap-2">
                                         <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                                         <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
@@ -730,10 +730,23 @@ export default function MocDetailPage() {
                                         <div key={hazard.id} className="text-xs print:border print:p-2 print:border-red-500 print:mt-2">
                                             <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
                                             {hazard.risks?.map(risk => (
-                                            <div key={risk.id} className="pl-4 print:border print:p-2 print:border-yellow-500 print:mt-2">
-                                                <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge></p>
+                                            <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
+                                                <div className="flex justify-between items-start">
+                                                    <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
+                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge>
+                                                </div>
                                                 {risk.mitigations?.map(mit => (
-                                                <p key={mit.id} className="pl-4 text-green-700 print:border print:p-2 print:border-green-500 print:mt-2"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore)}}>{mit.residualRiskScore}</Badge></p>
+                                                    <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
+                                                        <div className="flex justify-between items-start">
+                                                            <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
+                                                            <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{mit.residualRiskScore}</Badge>
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground mt-1">
+                                                            <span>{mit.responsiblePerson}</span>
+                                                            {mit.responsiblePerson && mit.completionDate && <span> | </span>}
+                                                            <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                             ))}
@@ -793,3 +806,4 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
