@@ -30,7 +30,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
-    <div className="space-y-1">
+    <div className="space-y-1 print:break-inside-avoid">
         <h4 className="font-semibold text-muted-foreground text-sm">{title}</h4>
         <div className="p-3 bg-muted/50 rounded-md text-sm">{children}</div>
     </div>
@@ -703,14 +703,14 @@ export default function MocDetailPage() {
                 {moc.phases && moc.phases.length > 0 ? (
                     <div className="space-y-4">
                     {moc.phases.map((phase, index) => (
-                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid">
-                            <CollapsibleTrigger asChild className="no-print">
+                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid" defaultOpen>
+                            <CollapsibleTrigger asChild>
                                 <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
                                     <div className="flex-1 text-left flex items-center gap-2">
                                         <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                                        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                        <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 no-print">
                                         <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
                                             <Wind className="mr-2 h-4 w-4" />
                                             Analyze ({phase.steps?.length || 0} Steps)
@@ -720,23 +720,20 @@ export default function MocDetailPage() {
                                     </div>
                                 </div>
                             </CollapsibleTrigger>
-                            <div className="p-3 print:block hidden">
-                                <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                            </div>
                         <CollapsibleContent>
-                             <div className="p-4 pt-0 space-y-4">
+                             <div className="p-4 pt-0 space-y-4 print:block">
                                 {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
-                                    <Card key={step.id} className="p-3 bg-muted/50">
+                                    <Card key={step.id} className="p-3 bg-muted/50 print:border print:shadow-none print:bg-white print:mt-4">
                                     <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
                                     <div className="pl-4 mt-2 space-y-2">
                                         {step.hazards?.map(hazard => (
-                                        <div key={hazard.id} className="text-xs">
+                                        <div key={hazard.id} className="text-xs print:border print:p-2 print:border-red-500 print:mt-2">
                                             <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
                                             {hazard.risks?.map(risk => (
-                                            <div key={risk.id} className="pl-4">
-                                                <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore) }}>{risk.riskScore}</Badge></p>
+                                            <div key={risk.id} className="pl-4 print:border print:p-2 print:border-yellow-500 print:mt-2">
+                                                <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{risk.riskScore}</Badge></p>
                                                 {risk.mitigations?.map(mit => (
-                                                <p key={mit.id} className="pl-4 text-green-700"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore)}}>{mit.residualRiskScore}</Badge></p>
+                                                <p key={mit.id} className="pl-4 text-green-700 print:border print:p-2 print:border-green-500 print:mt-2"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore)}}>{mit.residualRiskScore}</Badge></p>
                                                 ))}
                                             </div>
                                             ))}
