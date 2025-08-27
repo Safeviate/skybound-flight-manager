@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ROLE_PERMISSIONS } from '@/lib/types';
+import { ALL_PERMISSIONS } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
@@ -38,8 +38,7 @@ import { ALL_DOCUMENTS } from '@/lib/types';
 import { useSettings } from '@/context/settings-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserAndSendWelcomeEmail } from '../actions';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -82,7 +81,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   const { toast } = useToast();
   const [roles, setRoles] = useState<CompanyRole[]>([]);
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [allPermissions, setAllPermissions] = useState<Permission[]>(ALL_PERMISSIONS);
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -104,16 +103,13 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         try {
             const rolesQuery = query(collection(db, `companies/${company.id}/roles`));
             const deptsQuery = query(collection(db, `companies/${company.id}/departments`));
-            const permsQuery = query(collection(db, `companies/${company.id}/permissions`));
             
-            const [rolesSnapshot, deptsSnapshot, permsSnapshot] = await Promise.all([
+            const [rolesSnapshot, deptsSnapshot] = await Promise.all([
                 getDocs(rolesQuery),
                 getDocs(deptsQuery),
-                getDocs(permsQuery)
             ]);
             setRoles(rolesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyRole)));
             setDepartments(deptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyDepartment)));
-            setAllPermissions(permsSnapshot.docs.map(doc => doc.data().name as Permission));
 
         } catch (error) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch roles or departments.' });
@@ -141,53 +137,36 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         return;
     }
     
-    let newUserId;
-    try {
-        if (data.email) {
-            const tempPassword = Math.random().toString(36).slice(-8);
-            const userCredential = await createUserWithEmailAndPassword(auth, data.email, tempPassword);
-            newUserId = userCredential.user.uid;
-            await updateProfile(userCredential.user, { displayName: data.name });
-        } else {
-            newUserId = doc(collection(db, 'temp')).id;
-        }
+    const documentsToSave = (data.documents || [])
+        .filter(doc => doc.expiryDate)
+        .map(doc => ({
+            type: doc.type,
+            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+        }));
 
-        const documentsToSave: UserDocument[] = (data.documents || [])
-            .filter(doc => doc.expiryDate)
-            .map(doc => ({
-                id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-                type: doc.type as typeof ALL_DOCUMENTS[number],
-                expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
-            }));
-            
-        const personnelData: Omit<User, 'password'> = {
-            id: newUserId,
-            companyId: company.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            role: data.role,
-            department: data.department,
-            instructorGrade: isInstructorRole ? data.instructorGrade || null : null,
-            consentDisplayContact: data.consentDisplayContact,
-            permissions: data.permissions as Permission[],
-            visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
-            documents: documentsToSave,
-            status: 'Active'
-        };
-        
-        await setDoc(doc(db, `companies/${company.id}/users`, newUserId), personnelData);
-        
-        toast({ title: 'Personnel Added', description: `${data.name} has been added.` });
-        form.reset();
-        onSuccess();
+    const userData: Omit<User, 'id'> = {
+        companyId: company.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        department: data.department,
+        instructorGrade: isInstructorRole ? data.instructorGrade : null,
+        consentDisplayContact: data.consentDisplayContact,
+        permissions: data.permissions as Permission[],
+        visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
+        documents: documentsToSave as UserDocument[],
+        status: 'Active',
+    };
+    
+    const result = await createUserAndSendWelcomeEmail(userData, company.id, company.name, settings.welcomeEmailEnabled);
 
-    } catch (error: any) {
-        let errorMessage = 'An error occurred while creating the user.';
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = 'This email address is already in use by another account.';
-        }
-        toast({ variant: 'destructive', title: 'Error Creating Personnel', description: errorMessage });
+    if (result.success) {
+      toast({ title: 'Personnel Added', description: result.message });
+      form.reset();
+      onSuccess();
+    } else {
+      toast({ variant: 'destructive', title: 'Error Creating Personnel', description: result.message });
     }
   }
 

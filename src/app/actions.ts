@@ -77,7 +77,7 @@ export async function createUserAndSendWelcomeEmail(
 
     delete (userToAdd as any).password;
 
-    // Save user document to Firestore
+    // Save user document to the correct Firestore collection
     const collectionName = userData.role === 'Student' ? 'students' : 'users';
     await setDoc(doc(db, `companies/${companyId}/${collectionName}`, newUserId), userToAdd);
 

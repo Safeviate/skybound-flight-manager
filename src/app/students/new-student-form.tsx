@@ -31,8 +31,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useSettings } from '@/context/settings-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_DOCUMENTS } from '@/lib/types';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserAndSendWelcomeEmail } from '../actions';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -56,6 +55,7 @@ const studentFormSchema = z.object({
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
+  flightHours: z.coerce.number().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -80,6 +80,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       instructor: '',
       consentDisplayContact: 'Not Consented',
       documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
+      flightHours: 0,
     }
   });
   
@@ -99,47 +100,38 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         return;
     }
     
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, Math.random().toString(36).slice(-8));
-        const newUserId = userCredential.user.uid;
-        await updateProfile(userCredential.user, { displayName: data.name });
+    const documentsToSave = (data.documents || [])
+        .filter(doc => doc.expiryDate)
+        .map(doc => ({
+            type: doc.type,
+            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+        }));
 
-        const documentsToSave = (data.documents || [])
-            .filter(doc => doc.expiryDate)
-            .map(doc => ({
-                id: `doc-${doc.type.toLowerCase().replace(/ /g, '-')}`,
-                type: doc.type as typeof ALL_DOCUMENTS[number],
-                expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
-            }));
+    const studentData: Omit<User, 'id'> = {
+        companyId: company.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: 'Student',
+        status: 'Active',
+        instructor: data.instructor,
+        licenseType: data.licenseType as any,
+        studentCode: data.studentCode,
+        consentDisplayContact: data.consentDisplayContact,
+        documents: documentsToSave as UserDocument[],
+        flightHours: data.flightHours || 0,
+        progress: 0,
+        permissions: [],
+    };
+    
+    const result = await createUserAndSendWelcomeEmail(studentData, company.id, company.name, settings.welcomeEmailEnabled);
 
-        const studentData: Partial<User> = {
-            id: newUserId,
-            companyId: company.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            role: 'Student',
-            status: 'Active',
-            instructor: data.instructor,
-            licenseType: data.licenseType as any,
-            studentCode: data.studentCode,
-            consentDisplayContact: data.consentDisplayContact,
-            documents: documentsToSave,
-            flightHours: 0,
-            progress: 0,
-        };
-
-        await setDoc(doc(db, `companies/${company.id}/students`, newUserId), studentData);
-
-        toast({ title: 'Student Added', description: `${data.name} has been added.` });
-        form.reset();
-        onSuccess();
-    } catch (error: any) {
-        let errorMessage = 'An error occurred while creating the student.';
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = 'This email address is already in use by another account.';
-        }
-        toast({ variant: 'destructive', title: 'Error Creating Student', description: errorMessage });
+    if (result.success) {
+      toast({ title: 'Student Added', description: result.message });
+      form.reset();
+      onSuccess();
+    } else {
+      toast({ variant: 'destructive', title: 'Error Creating Student', description: result.message });
     }
   }
 
@@ -155,6 +147,21 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+
+                <div>
+                    <FormField
+                        control={form.control}
+                        name="flightHours"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Previous Flight Hours (Optional)</FormLabel>
+                                <FormControl><Input type="number" step="0.1" {...field} value={field.value ?? ''} /></FormControl>
+                                <FormDescription>If the student is transferring from another school, enter their total hours here. This will create an initial "Brought Forward" logbook entry.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
 
                  <div>

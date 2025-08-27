@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -9,6 +10,5 @@ export async function getPersonnelPageData(companyId: string): Promise<User[]> {
     const snapshot = await getDocs(personnelQuery);
     const personnelList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
     
-    // Filter out the system administrator account
-    return personnelList.filter(p => p.email !== 'barry@safeviate.com');
+    return personnelList;
 }
