@@ -738,17 +738,17 @@ export default function MocDetailPage() {
                                                 <div className="pl-4 mt-2 space-y-3">
                                                     {step.hazards?.map(hazard => (
                                                     <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                                        <p className="font-semibold text-red-600">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
+                                                        <p className="moc-print-hazard-title">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
                                                         {hazard.risks?.map(risk => (
-                                                        <div key={risk.id} className="pl-4 pt-2 mt-2">
+                                                        <div key={risk.id} className="pl-4 pt-2 mt-2 moc-print-risk-wrapper">
                                                             <div className="flex justify-between items-start">
-                                                                <p className="flex-1"><span className="font-semibold text-orange-500">Risk:</span> <span className="font-normal text-black">{risk.description}</span></p>
+                                                                <p className="flex-1 moc-print-risk-title">Risk: <span className="font-normal text-black">{risk.description}</span></p>
                                                                 <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                             </div>
                                                             {risk.mitigations?.map(mit => (
-                                                                <div key={mit.id} className="pl-4 pt-2 mt-2">
+                                                                <div key={mit.id} className="pl-4 pt-2 mt-2 moc-print-mitigation-wrapper">
                                                                     <div className="flex justify-between items-start">
-                                                                        <p className="flex-1"><span className="font-semibold text-green-600">Mitigation:</span> <span className="font-normal text-black">{mit.description}</span></p>
+                                                                        <p className="flex-1 moc-print-mitigation-title">Mitigation: <span className="font-normal text-black">{mit.description}</span></p>
                                                                         <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                                     </div>
                                                                     <div className="text-xs text-muted-foreground mt-1">
@@ -817,3 +817,6 @@ export default function MocDetailPage() {
 
 MocDetailPage.title = "Management of Change";
 
+
+
+    
