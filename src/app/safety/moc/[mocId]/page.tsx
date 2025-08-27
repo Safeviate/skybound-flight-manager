@@ -733,22 +733,22 @@ export default function MocDetailPage() {
                                 <CollapsibleContent>
                                     <div className="p-4 pt-0 space-y-4">
                                         {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
-                                            <Card key={step.id} className="p-3 bg-muted/50 print:border print:shadow-none print:bg-white">
+                                            <Card key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white">
                                                 <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
-                                                <div className="pl-4 mt-2 space-y-2">
+                                                <div className="pl-4 mt-2 space-y-3">
                                                     {step.hazards?.map(hazard => (
                                                     <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                                        <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
+                                                        <p className="moc-print-hazard-title"><span className="text-red-600 font-semibold">Hazard:</span> {hazard.description}</p>
                                                         {hazard.risks?.map(risk => (
-                                                        <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
+                                                        <div key={risk.id} className="pl-4 pt-2 mt-2 moc-print-risk-wrapper">
                                                             <div className="flex justify-between items-start">
-                                                                <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
+                                                                <p className="flex-1"><span className="moc-print-risk-title">Risk:</span> {risk.description}</p>
                                                                 <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                             </div>
                                                             {risk.mitigations?.map(mit => (
-                                                                <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
+                                                                <div key={mit.id} className="pl-4 pt-2 mt-2 moc-print-mitigation-wrapper">
                                                                     <div className="flex justify-between items-start">
-                                                                        <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
+                                                                        <p className="flex-1"><span className="moc-print-mitigation-title">Mitigation:</span> {mit.description}</p>
                                                                         <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                                     </div>
                                                                     <div className="text-xs text-muted-foreground mt-1">
@@ -816,6 +816,7 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
 
 

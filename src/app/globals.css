@@ -106,8 +106,8 @@ body {
 
 @media print {
   body {
-    background: #fff;
-    color: #000;
+    background: #fff !important;
+    color: #000 !important;
   }
   header, [data-sidebar], button, input, textarea, a[href], .no-print {
     display: none !important;
@@ -121,13 +121,10 @@ body {
     box-shadow: none !important;
     page-break-inside: avoid;
   }
-  .no-print {
-    display: none !important;
-  }
-  .print\:block {
+  .print-block {
     display: block !important;
   }
-  .print\:hidden {
+  .print-hidden {
     display: none !important;
   }
   [role="tabpanel"][data-state="inactive"] {
@@ -137,5 +134,36 @@ body {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
+  /* MOC Print specific styles */
+  .moc-print-hazard-title {
+    color: #dc2626 !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid #dc2626 !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 8px !important;
+  }
+  .moc-print-risk-wrapper {
+    border-left: 3px solid #f59e0b !important;
+    padding-left: 12px !important;
+  }
+  .moc-print-risk-title {
+     color: #f59e0b !important;
+     font-weight: 600 !important;
+  }
+   .moc-print-mitigation-wrapper {
+    border-left: 3px solid #16a34a !important;
+    padding-left: 12px !important;
+  }
+  .moc-print-mitigation-title {
+     color: #16a34a !important;
+     font-weight: 600 !important;
+  }
+  [data-state='closed'] > div {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+  }
+  [data-radix-collapsible-content][data-state='closed'] {
+      display: block !important;
+  }
 }
-
