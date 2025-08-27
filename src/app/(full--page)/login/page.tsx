@@ -56,7 +56,11 @@ export default function LoginPage() {
     setIsLoading(true);
     setLoginError(null);
     try {
-      await sendPasswordResetEmail(auth, email);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/login`,
+        handleCodeInApp: true,
+      };
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
       toast({
         title: 'Password Reset Email Sent',
         description: `An email has been sent to ${email} with instructions to reset your password.`,
