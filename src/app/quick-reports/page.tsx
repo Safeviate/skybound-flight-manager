@@ -18,6 +18,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import { StandardCamera } from '@/components/ui/standard-camera';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Camera, ImageIcon } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 const technicalReportSchema = z.object({
   aircraftRegistration: z.string().min(1, 'Please select an aircraft.'),
@@ -26,6 +30,7 @@ const technicalReportSchema = z.object({
   otherComponent: z.string().optional(),
   otherInstrument: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
+  photo: z.string().optional(),
 }).refine(data => {
     if (data.component === 'Other') {
         return !!data.otherComponent && data.otherComponent.length > 0;
@@ -66,6 +71,7 @@ function QuickReportsPage() {
   const { user, company } = useUser();
   const { toast } = useToast();
   const [aircraftList, setAircraftList] = React.useState<Aircraft[]>([]);
+  const [isCameraOpen, setIsCameraOpen] = React.useState(false);
 
   const form = useForm<TechnicalReportFormValues>({
     resolver: zodResolver(technicalReportSchema),
@@ -76,19 +82,22 @@ function QuickReportsPage() {
       otherComponent: '',
       otherInstrument: '',
       description: '',
+      photo: '',
     },
   });
 
-  const selectedComponent = form.watch('component');
-  const selectedSubcomponent = form.watch('subcomponent');
+  const { setValue, watch } = form;
+  const selectedComponent = watch('component');
+  const selectedSubcomponent = watch('subcomponent');
+  const capturedPhoto = watch('photo');
   const subcomponentOptions = selectedComponent ? componentHierarchy[selectedComponent as keyof typeof componentHierarchy] : [];
 
   React.useEffect(() => {
     // Reset subcomponent when component changes
-    form.setValue('subcomponent', '');
-    form.setValue('otherComponent', '');
-    form.setValue('otherInstrument', '');
-  }, [selectedComponent, form]);
+    setValue('subcomponent', '');
+    setValue('otherComponent', '');
+    setValue('otherInstrument', '');
+  }, [selectedComponent, setValue]);
 
   React.useEffect(() => {
     if (!company) return;
@@ -99,6 +108,11 @@ function QuickReportsPage() {
     };
     fetchAircraft();
   }, [company]);
+  
+  const handlePhotoSuccess = (dataUrl: string) => {
+    setValue('photo', dataUrl, { shouldValidate: true });
+    setIsCameraOpen(false);
+  }
 
   const handleFormSubmit = async (data: TechnicalReportFormValues) => {
     if (!user || !company) return;
@@ -128,6 +142,7 @@ function QuickReportsPage() {
   };
 
   return (
+    <>
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         <Card>
@@ -258,6 +273,27 @@ function QuickReportsPage() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="photo"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Attach Photo (Optional)</FormLabel>
+                            {capturedPhoto ? (
+                                <div className="flex items-center gap-2">
+                                    <ImageIcon className="h-5 w-5 text-green-500" />
+                                    <span className="text-sm text-green-500">Photo captured</span>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setIsCameraOpen(true)}>Retake</Button>
+                                </div>
+                            ) : (
+                                <Button type="button" variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)}>
+                                    <Camera className="mr-2" /> Take Photo
+                                </Button>
+                            )}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <div className="flex justify-end pt-4">
                   <Button type="submit">Submit Technical Report</Button>
                 </div>
@@ -267,6 +303,18 @@ function QuickReportsPage() {
         </Card>
       </div>
     </main>
+    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Take Photo of Issue</DialogTitle>
+                <DialogDescription>
+                    Capture a clear image of the technical issue or component.
+                </DialogDescription>
+            </DialogHeader>
+            <StandardCamera onSuccess={handlePhotoSuccess} />
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

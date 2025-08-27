@@ -636,6 +636,7 @@ export type TechnicalReport = {
   physicalLogEntry?: string;
   rectifiedBy?: string;
   rectificationDate?: string;
+  photo?: string;
 };
 
 

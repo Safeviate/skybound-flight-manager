@@ -199,6 +199,14 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                 </div>
                                                 <div><p className="font-medium text-muted-foreground">Rectification Details</p><p className="text-sm p-2 bg-muted rounded-md">{report.rectificationDetails || 'N/A'}</p></div>
                                                 <div><p className="font-medium text-muted-foreground">Components Replaced</p><p className="text-sm p-2 bg-muted rounded-md">{report.componentsReplaced || 'N/A'}</p></div>
+                                                {report.photo && (
+                                                    <div>
+                                                        <p className="font-medium text-muted-foreground">Attached Photo</p>
+                                                        <div className="mt-2">
+                                                            <Image src={report.photo} alt="Technical report photo" width={400} height={225} className="rounded-md" />
+                                                        </div>
+                                                    </div>
+                                                )}
                                            </CollapsibleContent>
                                        </Collapsible>
                                    ))}
