@@ -682,7 +682,7 @@ export default function MocDetailPage() {
             </CardHeader>
             <CardContent>
              {canEdit && (
-                <div className="space-y-4 rounded-lg border p-4 mb-6">
+                <div className="space-y-4 rounded-lg border p-4 mb-6 no-print">
                      <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
                      <Textarea 
                         id="analysis-params"
@@ -810,6 +810,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
