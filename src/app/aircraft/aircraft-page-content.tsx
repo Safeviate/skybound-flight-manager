@@ -75,7 +75,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
     const chartData = useMemo(() => {
         const counts = reports.reduce((acc, report) => {
-            const componentKey = report.otherInstrument || report.otherComponent || report.subcomponent || report.component || 'Other';
+            const componentKey = report.otherComponent || report.otherInstrument || report.subcomponent || report.component || 'Other';
             acc[componentKey] = (acc[componentKey] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
