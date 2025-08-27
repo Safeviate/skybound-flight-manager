@@ -687,9 +687,7 @@ export default function MocDetailPage() {
                         </CardDescription>
                     </div>
                 </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-4 rounded-lg border p-4 no-print">
+                <div className="space-y-4 rounded-lg border p-4 no-print mt-4">
                     {canEdit && (
                         <>
                             <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
@@ -709,75 +707,74 @@ export default function MocDetailPage() {
                         </>
                     )}
                 </div>
-                 
-                <div className="space-y-4">
-                    {moc.phases && moc.phases.length > 0 ? (
-                        moc.phases.map((phase, index) => (
-                            <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid print:border-none" defaultOpen>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
-                                        <div className="flex-1 text-left flex items-center gap-2">
-                                            <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                                            <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
-                                        </div>
-                                        <div className="flex items-center gap-2 no-print">
-                                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
-                                                <Wind className="mr-2 h-4 w-4" />
-                                                Analyze ({phase.steps?.length || 0} Steps)
-                                            </Button>
-                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                        </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {moc.phases && moc.phases.length > 0 ? (
+                    moc.phases.map((phase, index) => (
+                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid print:border-none" defaultOpen>
+                            <CollapsibleTrigger asChild>
+                                <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
+                                    <div className="flex-1 text-left flex items-center gap-2">
+                                        <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
+                                        <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
                                     </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <div className="p-4 pt-0 space-y-4">
-                                        {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
-                                            <Card key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white">
-                                                <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
-                                                <div className="pl-4 mt-2 space-y-3">
-                                                    {step.hazards?.map(hazard => (
-                                                    <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                                        <p className="moc-print-hazard-title">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
-                                                        {hazard.risks?.map(risk => (
-                                                        <div key={risk.id} className="pl-4 pt-2 mt-2 moc-print-risk-wrapper">
-                                                            <div className="flex justify-between items-start">
-                                                                <p className="flex-1 moc-print-risk-title">Risk: <span className="font-normal text-black">{risk.description}</span></p>
-                                                                <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
-                                                            </div>
-                                                            {risk.mitigations?.map(mit => (
-                                                                <div key={mit.id} className="pl-4 pt-2 mt-2 moc-print-mitigation-wrapper">
-                                                                    <div className="flex justify-between items-start">
-                                                                        <p className="flex-1 moc-print-mitigation-title">Mitigation: <span className="font-normal text-black">{mit.description}</span></p>
-                                                                        <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
-                                                                    </div>
-                                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                                        <span>{mit.responsiblePerson}</span>
-                                                                        {mit.responsiblePerson && mit.completionDate && <span> | </span>}
-                                                                        <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                    <div className="flex items-center gap-2 no-print">
+                                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
+                                            <Wind className="mr-2 h-4 w-4" />
+                                            Analyze ({phase.steps?.length || 0} Steps)
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <div className="p-4 pt-0 space-y-4">
+                                    {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
+                                        <Card key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white">
+                                            <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
+                                            <div className="pl-4 mt-2 space-y-3">
+                                                {step.hazards?.map(hazard => (
+                                                <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
+                                                    <p className="moc-print-hazard-title">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
+                                                    {hazard.risks?.map(risk => (
+                                                    <div key={risk.id} className="pl-4 pt-2 mt-2 moc-print-risk-wrapper">
+                                                        <div className="flex justify-between items-start">
+                                                            <p className="flex-1 moc-print-risk-title">Risk: <span className="font-normal text-black">{risk.description}</span></p>
+                                                            <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                         </div>
+                                                        {risk.mitigations?.map(mit => (
+                                                            <div key={mit.id} className="pl-4 pt-2 mt-2 moc-print-mitigation-wrapper">
+                                                                <div className="flex justify-between items-start">
+                                                                    <p className="flex-1 moc-print-mitigation-title">Mitigation: <span className="font-normal text-black">{mit.description}</span></p>
+                                                                    <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground mt-1">
+                                                                    <span>{mit.responsiblePerson}</span>
+                                                                    {mit.responsiblePerson && mit.completionDate && <span> | </span>}
+                                                                    <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
+                                                                </div>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                     ))}
                                                 </div>
-                                            </Card>
-                                        )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
-                        ))
-                    ) : (
-                        <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
-                            <h4 className="text-lg font-semibold">Start the Implementation Plan</h4>
-                            <p className="text-muted-foreground text-sm">
-                                Use the AI to generate a plan, or add your first implementation phase manually.
-                            </p>
-                        </div>
-                    )}
-                </div>
+                                                ))}
+                                            </div>
+                                        </Card>
+                                    )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    ))
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
+                        <h4 className="text-lg font-semibold">Start the Implementation Plan</h4>
+                        <p className="text-muted-foreground text-sm">
+                            Use the AI to generate a plan, or add your first implementation phase manually.
+                        </p>
+                    </div>
+                )}
             </CardContent>
         </Card>
       </div>
@@ -818,5 +815,7 @@ export default function MocDetailPage() {
 MocDetailPage.title = "Management of Change";
 
 
+
+    
 
     
