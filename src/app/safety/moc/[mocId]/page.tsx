@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -700,20 +699,47 @@ export default function MocDetailPage() {
                 </div>
             )}
             {moc.phases && moc.phases.length > 0 ? (
-                <div className="space-y-2">
-                    {moc.phases.map((phase, index) => (
-                         <div key={phase.id} className="w-full text-left p-3 border rounded-lg hover:bg-muted transition-colors flex justify-between items-center no-print">
-                            <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
-                             <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
-                                    <Wind className="mr-2 h-4 w-4" />
-                                    Analyze ({phase.steps?.length || 0} Steps)
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id) }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                            </div>
+                <div className="space-y-4">
+                  {moc.phases.map((phase, index) => (
+                    <Collapsible key={phase.id} className="border rounded-lg no-print">
+                      <CollapsibleTrigger className="w-full text-left p-3 hover:bg-muted transition-colors flex justify-between items-center">
+                        <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
+                                <Wind className="mr-2 h-4 w-4" />
+                                Analyze ({phase.steps?.length || 0} Steps)
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                            <ChevronDown className="h-4 w-4 transition-transform duration-200" />
                         </div>
-                    ))}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="p-4 pt-0">
+                        <div className="pl-4 border-l-2 space-y-4">
+                          {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
+                            <Card key={step.id} className="p-3 bg-muted/50">
+                              <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
+                              <div className="pl-4 mt-2 space-y-2">
+                                {step.hazards?.map(hazard => (
+                                  <div key={hazard.id} className="text-xs">
+                                    <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
+                                    {hazard.risks?.map(risk => (
+                                      <div key={risk.id} className="pl-4">
+                                        <p><span className="font-semibold text-yellow-600">Risk:</span> {risk.description} <Badge variant="destructive">{risk.riskScore}</Badge></p>
+                                        {risk.mitigations?.map(mit => (
+                                          <p key={mit.id} className="pl-4 text-green-700"><span className="font-semibold">Mitigation:</span> {mit.description} <Badge variant="success">{mit.residualRiskScore}</Badge></p>
+                                        ))}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            </Card>
+                          )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center text-center h-24 border-2 border-dashed rounded-lg no-print">
@@ -799,16 +825,3 @@ export default function MocDetailPage() {
 MocDetailPage.title = "Management of Change";
 
     
-
-    
-
-
-
-
-
-
-
-
-
-
-
