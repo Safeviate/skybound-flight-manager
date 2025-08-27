@@ -158,7 +158,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
     const chartHeight = Math.max(300, chartData.length * 50);
 
-    const CustomYAxisTick = ({ y, payload }: any) => {
+    const CustomYAxisTick = React.memo(({ y, payload }: any) => {
         const item = chartData.find(d => d.name === payload.value);
         return (
             <g transform={`translate(0,${y})`}>
@@ -166,7 +166,9 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                 {item && <text x={0} y={0} dy={12} textAnchor="start" fill="#999" className="text-xs">{item.system}</text>}
             </g>
         );
-    };
+    });
+    CustomYAxisTick.displayName = 'CustomYAxisTick';
+
 
     return (
         <div className="space-y-6">
@@ -205,7 +207,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                             <XAxis type="number" allowDecimals={false} />
                                             <YAxis dataKey="name" type="category" width={150} interval={0} tick={<CustomYAxisTick />} />
                                             <Tooltip />
-                                            <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" barSize={20}/>
+                                            <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" barSize={20} key={(bar) => bar.name} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ScrollArea>
