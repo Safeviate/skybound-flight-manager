@@ -25,8 +25,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useUser } from '@/context/user-provider';
@@ -47,6 +47,10 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
 
   const userPermissions = user?.permissions || [];
   const canEdit = userPermissions.includes('Super User') || userPermissions.includes('Students:Edit');
+
+  useEffect(() => {
+    setStudents(initialStudents);
+  }, [initialStudents]);
 
   const activeStudents = useMemo(() => students.filter(s => s.status !== 'Archived'), [students]);
   const archivedStudents = useMemo(() => students.filter(s => s.status === 'Archived'), [students]);
