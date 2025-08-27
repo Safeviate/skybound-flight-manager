@@ -59,6 +59,8 @@ const componentHierarchy = {
 };
 
 const componentOptions = Object.keys(componentHierarchy);
+const allSubcomponents = Array.from(new Set(Object.values(componentHierarchy).flat()));
+
 
 function QuickReportsPage() {
   const { user, company } = useUser();
@@ -209,9 +211,16 @@ function QuickReportsPage() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Specify Component</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Left wingtip light" {...field} />
-                                </FormControl>
+                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Select component..." /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {allSubcomponents.map(subcomp => (
+                                        <SelectItem key={subcomp} value={subcomp}>{subcomp}</SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}
