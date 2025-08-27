@@ -36,7 +36,6 @@ import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { EditStudentForm } from './edit-student-form';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 export function StudentsPageContent({ initialStudents }: { initialStudents: User[] }) {
   const { toast } = useToast();
