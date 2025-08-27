@@ -29,6 +29,7 @@ const technicalReportSchema = z.object({
   subcomponent: z.string().optional(),
   otherComponent: z.string().optional(),
   otherInstrument: z.string().optional(),
+  componentDetails: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
   photo: z.string().optional(),
 }).refine(data => {
@@ -81,6 +82,7 @@ function QuickReportsPage() {
       subcomponent: '',
       otherComponent: '',
       otherInstrument: '',
+      componentDetails: '',
       description: '',
       photo: '',
     },
@@ -97,6 +99,7 @@ function QuickReportsPage() {
     setValue('subcomponent', '');
     setValue('otherComponent', '');
     setValue('otherInstrument', '');
+    setValue('componentDetails', '');
   }, [selectedComponent, setValue]);
 
   React.useEffect(() => {
@@ -254,6 +257,21 @@ function QuickReportsPage() {
                                 <FormMessage />
                             </FormItem>
                         )}
+                    />
+                )}
+                 {(selectedSubcomponent || selectedComponent === 'Other') && (
+                    <FormField
+                      control={form.control}
+                      name="componentDetails"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Component Details (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Left main tire, inner tube" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                 )}
                 <FormField

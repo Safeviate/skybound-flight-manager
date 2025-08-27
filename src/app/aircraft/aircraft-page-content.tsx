@@ -190,6 +190,9 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                     <div><p className="font-medium text-muted-foreground">Reported By</p><p>{report.reportedBy}</p></div>
                                                     <div><p className="font-medium text-muted-foreground">System</p><p>{report.component}</p></div>
                                                     <div><p className="font-medium text-muted-foreground">Component</p><p>{report.otherInstrument || report.otherComponent || report.subcomponent || 'N/A'}</p></div>
+                                                    {report.componentDetails && (
+                                                        <div className="col-span-full"><p className="font-medium text-muted-foreground">Component Details</p><p>{report.componentDetails}</p></div>
+                                                    )}
                                                     <div><p className="font-medium text-muted-foreground">Logbook Entry #</p><p>{report.physicalLogEntry || 'N/A'}</p></div>
                                                 </div>
                                                 <Separator />
