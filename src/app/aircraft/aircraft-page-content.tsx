@@ -75,7 +75,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
     const chartData = useMemo(() => {
         const counts = reports.reduce((acc, report) => {
-            const componentKey = report.otherComponent || report.otherInstrument || report.subcomponent || report.component || 'Other';
+            const componentKey = report.otherInstrument || report.otherComponent || report.subcomponent || report.component || 'Other';
             acc[componentKey] = (acc[componentKey] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -109,6 +109,8 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
         }
     };
 
+    const chartHeight = Math.max(300, chartData.length * 40);
+
     return (
         <div className="space-y-6">
              <div className="max-w-xs">
@@ -135,19 +137,21 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                         <CardHeader>
                             <CardTitle className="text-lg">Component Report Frequency</CardTitle>
                         </CardHeader>
-                        <CardContent className="h-[300px] w-full pr-6">
+                        <CardContent className="h-[300px] w-full">
                             {isLoading ? (
                                 <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>
                             ) : chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis type="number" allowDecimals={false} />
-                                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                                        <Tooltip />
-                                        <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                <ScrollArea className="h-full">
+                                    <ResponsiveContainer width="100%" height={chartHeight}>
+                                        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis type="number" allowDecimals={false} />
+                                            <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} interval={0} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="hsl(var(--primary))" name="Reports" barSize={20}/>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </ScrollArea>
                             ) : (
                                 <div className="flex items-center justify-center h-full text-muted-foreground">No chart data available.</div>
                             )}
