@@ -110,10 +110,6 @@ body {
   header, [data-sidebar], button, input, textarea, a[href], .no-print {
     display: none !important;
   }
-  /* This targets shadcn's Dialog and Alert Dialog content specifically */
-  [role="dialog"], [role="alertdialog"] {
-    display: none !important;
-  }
   main {
     padding: 0 !important;
     margin: 0 !important;
@@ -138,39 +134,40 @@ body {
   }
   /* MOC Print specific styles */
   .moc-print-hazard-title {
-    color: #dc2626 !important;
+    color: black !important;
     font-weight: 600 !important;
-    border-bottom: 1px solid #dc2626 !important;
-    padding-bottom: 4px !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
     margin-bottom: 8px !important;
   }
   .moc-print-risk-wrapper {
-    border-left: 3px solid #f59e0b !important;
+    border-left: none !important;
     padding-left: 12px !important;
     margin-top: 8px !important;
     margin-bottom: 8px !important;
   }
   .moc-print-risk-title {
-     color: #f59e0b !important;
+     color: black !important;
      font-weight: 600 !important;
   }
    .moc-print-mitigation-wrapper {
-    border-left: 3px solid #16a34a !important;
+    border-left: none !important;
     padding-left: 12px !important;
     margin-top: 8px !important;
   }
   .moc-print-mitigation-title {
-     color: #16a34a !important;
+     color: black !important;
      font-weight: 600 !important;
   }
   [data-radix-collapsible-content] {
       display: block !important;
+      height: auto !important;
+      visibility: visible !important;
   }
   [data-state='closed'] {
       display: block !important;
   }
+  [role="dialog"], [role="alertdialog"] {
+    display: none !important;
+  }
 }
-
-
-
-    
