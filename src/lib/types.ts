@@ -625,6 +625,7 @@ export type TechnicalReport = {
   aircraftRegistration: string;
   component: string; // This is now 'System'
   subcomponent?: string; // This is now 'Component'
+  otherComponent?: string;
   description: string;
   reportedBy: string;
   dateReported: string;

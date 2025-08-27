@@ -72,7 +72,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
     const chartData = useMemo(() => {
         const counts = reports.reduce((acc, report) => {
-            const component = report.component || 'Other';
+            const component = report.otherComponent || report.component || 'Other';
             acc[component] = (acc[component] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -138,7 +138,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                <div className="flex justify-between items-center cursor-pointer">
                                                    <div className="flex-1">
                                                         <p className="font-semibold">{report.reportNumber}: {report.description}</p>
-                                                        <p className="text-sm text-muted-foreground">{format(parseISO(report.dateReported), 'PPP')} - {report.component}</p>
+                                                        <p className="text-sm text-muted-foreground">{format(parseISO(report.dateReported), 'PPP')} - {report.otherComponent || report.component}</p>
                                                    </div>
                                                    <div className="flex items-center gap-4">
                                                         <Badge variant={report.status === 'Rectified' ? 'success' : 'warning'}>
@@ -154,7 +154,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                                                     <div><p className="font-medium text-muted-foreground">Reported By</p><p>{report.reportedBy}</p></div>
                                                     <div><p className="font-medium text-muted-foreground">System</p><p>{report.component}</p></div>
-                                                    <div><p className="font-medium text-muted-foreground">Component</p><p>{report.subcomponent || 'N/A'}</p></div>
+                                                    <div><p className="font-medium text-muted-foreground">Component</p><p>{report.otherComponent || report.subcomponent || 'N/A'}</p></div>
                                                     <div><p className="font-medium text-muted-foreground">Logbook Entry #</p><p>{report.physicalLogEntry || 'N/A'}</p></div>
                                                 </div>
                                                 <Separator />

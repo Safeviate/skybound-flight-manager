@@ -23,7 +23,16 @@ const technicalReportSchema = z.object({
   aircraftRegistration: z.string().min(1, 'Please select an aircraft.'),
   component: z.string().min(1, 'Please select a system.'),
   subcomponent: z.string().optional(),
+  otherComponent: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
+}).refine(data => {
+    if (data.component === 'Other') {
+        return !!data.otherComponent && data.otherComponent.length > 0;
+    }
+    return true;
+}, {
+    message: 'Please specify the component.',
+    path: ['otherComponent'],
 });
 
 type TechnicalReportFormValues = z.infer<typeof technicalReportSchema>;
@@ -53,6 +62,7 @@ function QuickReportsPage() {
       aircraftRegistration: '',
       component: '',
       subcomponent: '',
+      otherComponent: '',
       description: '',
     },
   });
@@ -63,6 +73,7 @@ function QuickReportsPage() {
   React.useEffect(() => {
     // Reset subcomponent when component changes
     form.setValue('subcomponent', '');
+    form.setValue('otherComponent', '');
   }, [selectedComponent, form]);
 
   React.useEffect(() => {
@@ -156,7 +167,7 @@ function QuickReportsPage() {
                         </FormItem>
                     )}
                     />
-                    {subcomponentOptions && subcomponentOptions.length > 0 && (
+                    {selectedComponent !== 'Other' && subcomponentOptions && subcomponentOptions.length > 0 && (
                         <FormField
                         control={form.control}
                         name="subcomponent"
@@ -178,6 +189,21 @@ function QuickReportsPage() {
                         )}
                         />
                     )}
+                     {selectedComponent === 'Other' && (
+                        <FormField
+                            control={form.control}
+                            name="otherComponent"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Specify Component</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., Left wingtip light" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                     )}
                  </div>
                 <FormField
                   control={form.control}
@@ -211,5 +237,6 @@ function QuickReportsPage() {
 QuickReportsPage.title = 'Quick Reports';
 
 export default QuickReportsPage;
+
 
 
