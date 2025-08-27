@@ -236,14 +236,9 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                             {report.status || 'Open'}
                                                         </Badge>
                                                         {report.status !== 'Rectified' && (
-                                                            <>
-                                                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setEditingReport(report); }}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </Button>
-                                                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRectifyingReport(report); }}>
+                                                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRectifyingReport(report); }}>
                                                                 <Wrench className="mr-2 h-4 w-4" /> Rectify
                                                             </Button>
-                                                            </>
                                                         )}
                                                         <Button variant="ghost" size="icon" className="h-8 w-8">
                                                             <ChevronDown className="h-4 w-4" />
@@ -274,6 +269,13 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                         <div className="mt-2">
                                                             <Image src={report.photo} alt="Technical report photo" width={400} height={225} className="rounded-md" />
                                                         </div>
+                                                    </div>
+                                                )}
+                                                {report.status !== 'Rectified' && (
+                                                    <div className="flex justify-end pt-4 border-t">
+                                                        <Button variant="outline" size="sm" onClick={() => setEditingReport(report)}>
+                                                            <Edit className="mr-2 h-4 w-4" /> Edit Original Report
+                                                        </Button>
                                                     </div>
                                                 )}
                                            </CollapsibleContent>
