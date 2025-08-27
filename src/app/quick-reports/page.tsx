@@ -24,6 +24,7 @@ const technicalReportSchema = z.object({
   component: z.string().min(1, 'Please select a system.'),
   subcomponent: z.string().optional(),
   otherComponent: z.string().optional(),
+  otherInstrument: z.string().optional(),
   description: z.string().min(10, 'A detailed description is required.'),
 }).refine(data => {
     if (data.component === 'Other') {
@@ -33,6 +34,14 @@ const technicalReportSchema = z.object({
 }, {
     message: 'Please specify the component.',
     path: ['otherComponent'],
+}).refine(data => {
+    if (data.component === 'Avionics/Instruments' && data.subcomponent === 'Other Instrument') {
+        return !!data.otherInstrument && data.otherInstrument.length > 0;
+    }
+    return true;
+}, {
+    message: 'Please specify the instrument.',
+    path: ['otherInstrument'],
 });
 
 type TechnicalReportFormValues = z.infer<typeof technicalReportSchema>;
@@ -63,17 +72,20 @@ function QuickReportsPage() {
       component: '',
       subcomponent: '',
       otherComponent: '',
+      otherInstrument: '',
       description: '',
     },
   });
 
   const selectedComponent = form.watch('component');
+  const selectedSubcomponent = form.watch('subcomponent');
   const subcomponentOptions = selectedComponent ? componentHierarchy[selectedComponent as keyof typeof componentHierarchy] : [];
 
   React.useEffect(() => {
     // Reset subcomponent when component changes
     form.setValue('subcomponent', '');
     form.setValue('otherComponent', '');
+    form.setValue('otherInstrument', '');
   }, [selectedComponent, form]);
 
   React.useEffect(() => {
@@ -189,22 +201,37 @@ function QuickReportsPage() {
                         )}
                         />
                     )}
-                     {selectedComponent === 'Other' && (
-                        <FormField
-                            control={form.control}
-                            name="otherComponent"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Specify Component</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Left wingtip light" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                     )}
                  </div>
+                 {selectedComponent === 'Other' && (
+                    <FormField
+                        control={form.control}
+                        name="otherComponent"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Specify Component</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., Left wingtip light" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                 )}
+                {selectedComponent === 'Avionics/Instruments' && selectedSubcomponent === 'Other Instrument' && (
+                     <FormField
+                        control={form.control}
+                        name="otherInstrument"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Specify Other Instrument</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., Engine Monitoring Unit" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
                 <FormField
                   control={form.control}
                   name="description"
@@ -237,6 +264,3 @@ function QuickReportsPage() {
 QuickReportsPage.title = 'Quick Reports';
 
 export default QuickReportsPage;
-
-
-
