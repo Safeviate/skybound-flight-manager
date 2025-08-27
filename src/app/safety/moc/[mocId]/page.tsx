@@ -312,7 +312,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                     return (
                     <Card key={step.id} className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${stepIndex + 1}`}</Label>
+                            <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${phaseNumber}.${stepIndex + 1}`}</Label>
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handleAddHazard(step.id)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Hazard
@@ -334,7 +334,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                             return (
                             <Card key={hazard.id} className="p-4 border-red-500 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold text-red-600">{`Hazard ${hazardCounter} Step ${stepIndex + 1}`}</Label>
+                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold text-red-600">{`Hazard ${phaseNumber}.${stepIndex + 1}.${hazardCounter}`}</Label>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
@@ -356,7 +356,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                     return (
                                     <Card key={risk.id} className="p-4 border-yellow-500 space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <Label className="font-semibold text-yellow-600">{`Risk ${riskCounter} Step ${stepIndex + 1}`}</Label>
+                                            <Label className="font-semibold text-yellow-600">{`Risk ${phaseNumber}.${stepIndex + 1}.${hazardCounter}.${riskCounter}`}</Label>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -401,7 +401,7 @@ const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase
                                                 return (
                                                 <Card key={mitigation.id} className="p-3 border-green-500 bg-muted/50 space-y-3">
                                                      <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold text-green-600">{`Mitigation ${mitigationCounter} Step ${stepIndex + 1}`}</Label>
+                                                        <Label className="font-semibold text-green-600">{`Mitigation ${phaseNumber}.${stepIndex + 1}.${hazardCounter}.${riskCounter}.${mitigationCounter}`}</Label>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -713,56 +713,56 @@ export default function MocDetailPage() {
                 {moc.phases && moc.phases.length > 0 ? (
                     <div className="space-y-4">
                     {moc.phases.map((phase, index) => (
-                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid" defaultOpen>
-                            <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors">
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex-1 text-left flex items-center gap-2 cursor-pointer">
+                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid print:border-none" defaultOpen>
+                            <CollapsibleTrigger asChild>
+                                <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
+                                    <div className="flex-1 text-left flex items-center gap-2">
                                         <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
                                         <ChevronDown className="h-4 w-4 transition-transform duration-200 no-print" />
                                     </div>
-                                </CollapsibleTrigger>
-                                <div className="flex items-center gap-2 no-print">
-                                    <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
-                                        <Wind className="mr-2 h-4 w-4" />
-                                        Analyze ({phase.steps?.length || 0} Steps)
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => setEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeletePhase(phase.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    <div className="flex items-center gap-2 no-print">
+                                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedPhase(phase); }}>
+                                            <Wind className="mr-2 h-4 w-4" />
+                                            Analyze ({phase.steps?.length || 0} Steps)
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingPhase(phase); }}><Edit className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeletePhase(phase.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
                                 </div>
-                            </div>
-                        <CollapsibleContent>
-                             <div className="p-4 pt-0 space-y-4 print:block">
+                            </CollapsibleTrigger>
+                        <CollapsibleContent className="print:block">
+                             <div className="p-4 pt-0 space-y-4">
                                 {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
                                     <Card key={step.id} className="p-3 bg-muted/50 print:border print:shadow-none print:bg-white print:mt-4">
-                                    <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
-                                    <div className="pl-4 mt-2 space-y-2">
-                                        {step.hazards?.map(hazard => (
-                                        <div key={hazard.id} className="text-xs print:border print:p-2 print:border-red-500 print:mt-2">
-                                            <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
-                                            {hazard.risks?.map(risk => (
-                                            <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
-                                                <div className="flex justify-between items-start">
-                                                    <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
-                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
-                                                </div>
-                                                {risk.mitigations?.map(mit => (
-                                                    <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
-                                                        <div className="flex justify-between items-start">
-                                                            <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
-                                                            <Badge style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground mt-1">
-                                                            <span>{mit.responsiblePerson}</span>
-                                                            {mit.responsiblePerson && mit.completionDate && <span> | </span>}
-                                                            <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
-                                                        </div>
+                                        <p className="font-semibold text-sm">Step {index + 1}.{stepIndex + 1}: {step.description}</p>
+                                        <div className="pl-4 mt-2 space-y-2">
+                                            {step.hazards?.map(hazard => (
+                                            <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:border-yellow-500/50 print:mt-2">
+                                                <p><span className="font-semibold text-red-600">Hazard:</span> {hazard.description}</p>
+                                                {hazard.risks?.map(risk => (
+                                                <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
+                                                    <div className="flex justify-between items-start">
+                                                        <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
+                                                        <Badge className="font-mono" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                     </div>
+                                                    {risk.mitigations?.map(mit => (
+                                                        <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
+                                                            <div className="flex justify-between items-start">
+                                                                <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
+                                                                <Badge className="font-mono" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground mt-1">
+                                                                <span>{mit.responsiblePerson}</span>
+                                                                {mit.responsiblePerson && mit.completionDate && <span> | </span>}
+                                                                <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                                 ))}
                                             </div>
                                             ))}
                                         </div>
-                                        ))}
-                                    </div>
                                     </Card>
                                 )) : <p className="text-xs text-muted-foreground text-center py-4">No steps defined for this phase.</p>}
                             </div>
@@ -816,6 +816,7 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
 
 
