@@ -638,20 +638,20 @@ export default function MocDetailPage() {
   }
 
   return (
-    <main className="flex-1 p-4 md:p-8">
+    <main className="flex-1 p-4 md:p-8 print:p-0">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between">
-            <Button variant="outline" onClick={() => router.push('/safety?tab=moc')} className="no-print">
+        <div className="flex justify-between no-print">
+            <Button variant="outline" onClick={() => router.push('/safety?tab=moc')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to MOC List
             </Button>
-            <Button variant="outline" className="no-print" onClick={() => window.print()}>
+            <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" />
                 Print
             </Button>
         </div>
         
-        <Card>
+        <Card className="print:shadow-none print:border-none">
           <CardHeader>
             <div className="flex justify-between items-start">
                 <div>
@@ -677,7 +677,7 @@ export default function MocDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="print:shadow-none print:border-none">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
@@ -713,8 +713,8 @@ export default function MocDetailPage() {
                 {moc.phases && moc.phases.length > 0 ? (
                     <div className="space-y-4">
                     {moc.phases.map((phase, index) => (
-                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid print:border-none" defaultOpen>
-                            <CollapsibleTrigger asChild>
+                        <Collapsible key={phase.id} className="border rounded-lg print:break-inside-avoid print:border-none print-expand" defaultOpen>
+                           <CollapsibleTrigger asChild>
                                 <div className="flex justify-between items-center p-3 hover:bg-muted transition-colors cursor-pointer">
                                     <div className="flex-1 text-left flex items-center gap-2">
                                         <h4 className="font-semibold">{index + 1}. {phase.description}</h4>
@@ -730,7 +730,7 @@ export default function MocDetailPage() {
                                     </div>
                                 </div>
                             </CollapsibleTrigger>
-                        <CollapsibleContent className="print:block">
+                        <CollapsibleContent>
                              <div className="p-4 pt-0 space-y-4">
                                 {phase.steps?.length > 0 ? phase.steps.map((step, stepIndex) => (
                                     <Card key={step.id} className="p-3 bg-muted/50 print:border print:shadow-none print:bg-white print:mt-4">
@@ -743,15 +743,15 @@ export default function MocDetailPage() {
                                                 <div key={risk.id} className="pl-4 pt-2 mt-2 border-t border-red-200">
                                                     <div className="flex justify-between items-start">
                                                         <p className="flex-1"><span className="font-semibold text-yellow-600">Risk:</span> {risk.description}</p>
-                                                        <Badge className="font-mono" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                     </div>
                                                     {risk.mitigations?.map(mit => (
                                                         <div key={mit.id} className="pl-4 pt-2 mt-2 border-t border-yellow-200">
                                                             <div className="flex justify-between items-start">
                                                                 <p className="flex-1"><span className="font-semibold text-green-700">Mitigation:</span> {mit.description}</p>
-                                                                <Badge className="font-mono" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                                <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                             </div>
-                                                            <div className="text-xs text-muted-foreground mt-1">
+                                                             <div className="text-xs text-muted-foreground mt-1">
                                                                 <span>{mit.responsiblePerson}</span>
                                                                 {mit.responsiblePerson && mit.completionDate && <span> | </span>}
                                                                 <span>{mit.completionDate ? format(parseISO(mit.completionDate), 'PPP') : ''}</span>
@@ -816,6 +816,7 @@ export default function MocDetailPage() {
 }
 
 MocDetailPage.title = "Management of Change";
+
 
 
 
