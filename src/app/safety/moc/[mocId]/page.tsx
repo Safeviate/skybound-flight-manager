@@ -727,48 +727,39 @@ export default function MocDetailPage() {
         </Card>
 
         {/* Print-only section */}
-        <div className="hidden print:block space-y-6">
+        <div className="hidden print:block space-y-4">
             <h2 className="text-xl font-bold border-b pb-2">Implementation Plan & Hazard Analysis</h2>
-            {moc.phases?.map((phase, phaseIndex) => {
-                
-                return (
-                <div key={`print-phase-${phase.id}`} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
+            {moc.phases?.map((phase, phaseIndex) => (
+                <div key={`print-phase-${phase.id}`} className="space-y-2" style={{ pageBreakInside: 'avoid' }}>
                     <h3 className="text-lg font-semibold bg-gray-100 p-2 rounded-md">Phase {phaseIndex + 1}: {phase.description}</h3>
-                    {phase.steps?.map((step, stepIndex) => {
-                        let hazardCounter = 0;
-                        let riskCounter = 0;
-                        let mitigationCounter = 0;
-
-                        return (
-                        <div key={`print-step-${step.id}`} className="pl-4 space-y-3">
-                             <h4 className="font-semibold">Step {stepIndex + 1}: {step.description}</h4>
-                             {step.hazards?.map((hazard) => {
-                                hazardCounter++;
-                                 return (
-                                <div key={`print-hazard-${hazard.id}`} className="pl-4 space-y-3 border-l-2 border-red-500">
-                                    <h5 className="font-medium">Hazard {hazardCounter} Step {stepIndex + 1}: {hazard.description}</h5>
-                                    {hazard.risks?.map((risk) => {
-                                        riskCounter++;
-                                        return (
-                                        <div key={`print-risk-${risk.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-yellow-400">
-                                            <p className="text-sm"><strong>Risk {riskCounter} Step {stepIndex + 1}:</strong> {risk.description}</p>
+                    {phase.steps?.map((step, stepIndex) => (
+                        <div key={`print-step-${step.id}`} className="pl-4 space-y-2">
+                            <p><strong>Step {phaseIndex + 1}.{stepIndex + 1}:</strong> {step.description}</p>
+                            {step.hazards?.map((hazard, hazardIndex) => (
+                                <div key={`print-hazard-${hazard.id}`} className="pl-4 border-l-2 border-gray-300 space-y-2">
+                                    <p><strong>Hazard:</strong> {hazard.description}</p>
+                                    {hazard.risks?.map((risk, riskIndex) => (
+                                        <div key={`print-risk-${risk.id}`} className="pl-4 space-y-1">
+                                            <p className="text-sm"><strong>Risk:</strong> {risk.description}</p>
                                             <p className="text-xs"><strong>Initial Assessment:</strong> {risk.likelihood} / {risk.severity} (Score: {risk.riskScore})</p>
-                                            {risk.mitigations?.map((mitigation) => {
-                                                mitigationCounter++;
-                                                return (
-                                                <div key={`print-mitigation-${mitigation.id}`} className="p-2 ml-4 space-y-1 border-l-2 border-green-500">
-                                                    <p className="text-sm"><strong>Mitigation {mitigationCounter} Step {stepIndex + 1}:</strong> {mitigation.description}</p>
-                                                    <p className="text-xs"><strong>Residual Risk:</strong> {mitigation.residualLikelihood} / {mitigation.residualSeverity} (Score: {mitigation.residualRiskScore})</p>
+                                            {risk.mitigations?.map((mitigation, mitIndex) => (
+                                                <div key={`print-mitigation-${mitigation.id}`} className="pl-4 border-l-2 border-gray-200 py-1">
+                                                    <p className="text-sm"><strong>Mitigation:</strong> {mitigation.description}</p>
+                                                    <p className="text-xs">
+                                                        <strong>Responsible:</strong> {mitigation.responsiblePerson || 'N/A'} | 
+                                                        <strong> Due:</strong> {mitigation.completionDate ? format(parseISO(mitigation.completionDate), 'PPP') : 'N/A'} | 
+                                                        <strong> Residual Risk:</strong> {getRiskLevel(mitigation.residualRiskScore)} (Score: {mitigation.residualRiskScore})
+                                                    </p>
                                                 </div>
-                                            )})}
+                                            ))}
                                         </div>
-                                    )})}
+                                    ))}
                                 </div>
-                            )})}
+                            ))}
                         </div>
-                    )})}
+                    ))}
                 </div>
-            )})}
+            ))}
         </div>
       </div>
       {selectedPhase && (
@@ -810,6 +801,7 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
 
