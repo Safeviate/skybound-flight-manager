@@ -54,6 +54,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
     const [reports, setReports] = useState<TechnicalReport[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [editingReport, setEditingReport] = useState<TechnicalReport | null>(null);
+    const [rectifyingReport, setRectifyingReport] = useState<TechnicalReport | null>(null);
     
     const fetchReports = useCallback(async () => {
         if (!company || !selectedAircraftId) {
@@ -103,6 +104,25 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
         
         const reportRef = doc(db, `companies/${company.id}/technical-reports`, editingReport.id);
         
+        try {
+            await updateDoc(reportRef, updatedData);
+            setEditingReport(null);
+            fetchReports();
+            toast({ title: 'Report Updated', description: 'The technical log has been updated.' });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to update the report.' });
+        }
+    };
+    
+    const handleRectifyReport = async (updatedData: Partial<TechnicalReport>) => {
+        if (!rectifyingReport || !company) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update report.' });
+            return;
+        }
+        
+        const reportRef = doc(db, `companies/${company.id}/technical-reports`, rectifyingReport.id);
+        
         const finalData = {
             ...updatedData,
             status: 'Rectified',
@@ -112,7 +132,7 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 
         try {
             await updateDoc(reportRef, finalData);
-            setEditingReport(null);
+            setRectifyingReport(null);
             fetchReports();
             toast({ title: 'Report Updated', description: 'The technical log has been updated.' });
         } catch (error) {
@@ -201,9 +221,14 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                                                             {report.status || 'Open'}
                                                         </Badge>
                                                         {report.status !== 'Rectified' && (
-                                                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setEditingReport(report); }}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Rectify
+                                                            <>
+                                                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setEditingReport(report); }}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
                                                             </Button>
+                                                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setRectifyingReport(report); }}>
+                                                                <Wrench className="mr-2 h-4 w-4" /> Rectify
+                                                            </Button>
+                                                            </>
                                                         )}
                                                         <Button variant="ghost" size="icon" className="h-8 w-8">
                                                             <ChevronDown className="h-4 w-4" />
@@ -249,11 +274,45 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                     </Card>
                 </div>
             )}
-             <Dialog open={!!editingReport} onOpenChange={() => setEditingReport(null)}>
+             <Dialog open={!!rectifyingReport} onOpenChange={() => setRectifyingReport(null)}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Rectify Technical Report</DialogTitle>
-                        <DialogDescription>Enter the details of the rectification for report {editingReport?.reportNumber}.</DialogDescription>
+                        <DialogDescription>Enter the details of the rectification for report {rectifyingReport?.reportNumber}.</DialogDescription>
+                    </DialogHeader>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const data = Object.fromEntries(formData.entries());
+                            handleRectifyReport(data as Partial<TechnicalReport>);
+                        }}
+                        className="space-y-4 py-4"
+                    >
+                        <div className="space-y-2">
+                            <Label htmlFor="rectificationDetails">Rectification Details</Label>
+                            <Textarea id="rectificationDetails" name="rectificationDetails" required defaultValue={rectifyingReport?.rectificationDetails || ''} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="componentsReplaced">Components Replaced</Label>
+                            <Input id="componentsReplaced" name="componentsReplaced" defaultValue={rectifyingReport?.componentsReplaced || ''} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="physicalLogEntry">Physical Logbook Entry #</Label>
+                            <Input id="physicalLogEntry" name="physicalLogEntry" defaultValue={rectifyingReport?.physicalLogEntry || ''} />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setRectifyingReport(null)}>Cancel</Button>
+                            <Button type="submit">Save &amp; Rectify</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={!!editingReport} onOpenChange={() => setEditingReport(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Technical Report</DialogTitle>
+                        <DialogDescription>Edit the details for report {editingReport?.reportNumber}.</DialogDescription>
                     </DialogHeader>
                     <form
                         onSubmit={(e) => {
@@ -265,20 +324,12 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
                         className="space-y-4 py-4"
                     >
                         <div className="space-y-2">
-                            <Label htmlFor="rectificationDetails">Rectification Details</Label>
-                            <Textarea id="rectificationDetails" name="rectificationDetails" required defaultValue={editingReport?.rectificationDetails || ''} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="componentsReplaced">Components Replaced</Label>
-                            <Input id="componentsReplaced" name="componentsReplaced" defaultValue={editingReport?.componentsReplaced || ''} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="physicalLogEntry">Physical Logbook Entry #</Label>
-                            <Input id="physicalLogEntry" name="physicalLogEntry" defaultValue={editingReport?.physicalLogEntry || ''} />
+                            <Label htmlFor="description">Description of Issue</Label>
+                            <Textarea id="description" name="description" required defaultValue={editingReport?.description || ''} />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setEditingReport(null)}>Cancel</Button>
-                            <Button type="submit">Save &amp; Rectify</Button>
+                            <Button type="submit">Save Changes</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
