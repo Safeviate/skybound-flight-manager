@@ -277,19 +277,20 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                   </FormItem>
                 )}
               />
-               <FormField
+               <div className="sm:col-span-2 flex items-center justify-end gap-2">
+                 <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
+                    <Camera className="mr-2 h-4 w-4" /> Take Photo
+                 </Button>
+                 <FormField
                     control={form.control}
                     name={fileFieldName as any}
                     render={({ field }) => (
-                        <FormItem className="sm:col-span-2 flex items-center justify-end gap-2">
-                           <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
-                              <Camera className="mr-2 h-4 w-4" /> Take Photo
-                           </Button>
+                        <FormItem>
                             <FormControl>
                                 <div className="relative">
                                     <Button type="button" variant="outline" asChild size="sm">
                                         <label htmlFor={fileFieldName} className="cursor-pointer">
-                                            {documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />}
+                                            <FileUp className="mr-2 h-4 w-4" />
                                             {documentUrl ? 'Change' : 'Upload'}
                                         </label>
                                     </Button>
@@ -306,6 +307,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                         </FormItem>
                     )}
                 />
+               </div>
           </div>
         </div>
       );

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Camera, FileUp } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format } from 'date-fns';
@@ -25,17 +26,22 @@ import type { Role, User, Alert, UserDocument } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc, writeBatch, setDoc, doc } from 'firebase/firestore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useSettings } from '@/context/settings-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_DOCUMENTS } from '@/lib/types';
 import { createUserAndSendWelcomeEmail } from '../actions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );
+
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const studentFormSchema = z.object({
   name: z.string().min(2, {
@@ -51,6 +57,8 @@ const studentFormSchema = z.object({
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
+      url: z.string().optional().nullable(),
+      file: z.any().optional(),
   })).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
@@ -69,6 +77,8 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   const { settings } = useSettings();
   const [instructors, setInstructors] = useState<User[]>([]);
   const { toast } = useToast();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoTarget, setPhotoTarget] = useState<string | null>(null);
   
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -79,10 +89,43 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       phone: '',
       instructor: '',
       consentDisplayContact: 'Not Consented',
-      documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null })),
+      documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null, url: null })),
       flightHours: 0,
     }
   });
+
+  const { watch, setValue } = form;
+
+  const handleFileChange = useCallback((file: File, index: number) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 500KB.' });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Only JPG, PNG, and WEBP are accepted.' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setValue(`documents.${index}.url`, reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [setValue, toast]);
+
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+      setValue(photoTarget as any, dataUrl, { shouldValidate: true });
+    }
+    setIsCameraOpen(false);
+    setPhotoTarget(null);
+  };
+  
+  const openCamera = (targetField: string) => {
+    setPhotoTarget(targetField);
+    setIsCameraOpen(true);
+  };
   
   useEffect(() => {
       const fetchInstructors = async () => {
@@ -101,10 +144,11 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     }
     
     const documentsToSave = (data.documents || [])
-        .filter(doc => doc.expiryDate)
+        .filter(doc => doc.expiryDate || doc.url)
         .map(doc => ({
             type: doc.type,
-            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null
+            expiryDate: doc.expiryDate ? format(doc.expiryDate, 'yyyy-MM-dd') : null,
+            url: doc.url || undefined,
         }));
 
     const studentData: Omit<User, 'id'> = {
@@ -136,6 +180,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <ScrollArea className="h-[70vh] pr-4">
@@ -165,36 +210,74 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                 </div>
 
                  <div>
-                    <FormLabel className="text-base font-semibold">Document Expiry Dates</FormLabel>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
-                         {(form.getValues('documents') || []).map((docItem, index) => (
-                            <FormField
-                                key={docItem.type}
-                                control={form.control}
-                                name={`documents.${index}.expiryDate`}
-                                render={({ field }) => {
-                                  const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
-                                  return (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>{docItem.type}</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
-                                                        {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}}
-                            />
-                        ))}
+                    <FormLabel className="text-base font-semibold">Document Expiry Dates & Uploads</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        {(form.getValues('documents') || []).map((docItem, index) => {
+                            const documentUrl = watch(`documents.${index}.url`);
+                            return (
+                                <div key={docItem.type} className="p-4 border rounded-lg space-y-3">
+                                    <p className="font-medium text-sm">{docItem.type}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                                        <FormField
+                                            control={form.control}
+                                            name={`documents.${index}.expiryDate`}
+                                            render={({ field }) => {
+                                                const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
+                                                return (
+                                                    <FormItem className="sm:col-span-1">
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <FormControl>
+                                                                    <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                                        {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
+                                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                    </Button>
+                                                                </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                                <Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )
+                                            }}
+                                        />
+                                        <div className="sm:col-span-2 flex items-center justify-end gap-2">
+                                            <Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}>
+                                                <Camera className="mr-2 h-4 w-4" /> Take Photo
+                                            </Button>
+                                            <FormField
+                                                control={form.control}
+                                                name={`documents.${index}.file`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl>
+                                                            <div className="relative">
+                                                                <Button type="button" variant="outline" asChild size="sm">
+                                                                    <label htmlFor={`doc-file-${index}`} className="cursor-pointer">
+                                                                        <FileUp className="mr-2 h-4 w-4" />
+                                                                        {documentUrl ? 'Change' : 'Upload'}
+                                                                    </label>
+                                                                </Button>
+                                                                <Input
+                                                                    id={`doc-file-${index}`}
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="absolute w-0 h-0 opacity-0"
+                                                                    onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)}
+                                                                />
+                                                            </div>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
 
@@ -244,5 +327,15 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         </div>
       </form>
     </Form>
+    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Take Photo</DialogTitle>
+            <DialogDescription>Take a picture of the document.</DialogDescription>
+          </DialogHeader>
+          <StandardCamera onSuccess={handlePhotoSuccess} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

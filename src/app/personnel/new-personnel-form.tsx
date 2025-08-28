@@ -67,6 +67,7 @@ const personnelFormSchema = z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
       url: z.string().optional().nullable(),
+      file: z.any().optional(),
   })).optional(),
   permissions: z.array(z.string()).optional(),
   visibleMenuItems: z.array(z.string()).optional(),
@@ -227,13 +228,89 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                 </div>
                 
                 <Separator />
+                
+                <FormField
+                    control={form.control}
+                    name="documents"
+                    render={() => (
+                        <FormItem>
+                        <div className="mb-4">
+                            <FormLabel className="text-base">Document Expiry Dates & Uploads</FormLabel>
+                            <FormDescription>Set the expiry date and upload a photo for each relevant document.</FormDescription>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {form.getValues('documents')?.map((docItem, index) => {
+                                const documentUrl = watch(`documents.${index}.url`);
+                                return (
+                                    <div key={docItem.type} className="p-4 border rounded-lg space-y-3">
+                                        <p className="font-medium text-sm">{docItem.type}</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                                            <FormField
+                                                control={form.control}
+                                                name={`documents.${index}.expiryDate`}
+                                                render={({ field }) => {
+                                                    const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
+                                                    return (
+                                                        <FormItem className="sm:col-span-1">
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <FormControl>
+                                                                        <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                                            {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
+                                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                        </Button>
+                                                                    </FormControl>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-auto p-0" align="start">
+                                                                    <Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus />
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )
+                                                }}
+                                            />
+                                            <div className="sm:col-span-2 flex items-center justify-end gap-2">
+                                                <Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}>
+                                                  <Camera className="mr-2 h-4 w-4" /> Take Photo
+                                                </Button>
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`documents.${index}.file`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <Button type="button" variant="outline" asChild size="sm">
+                                                                        <label htmlFor={`doc-file-${index}`} className="cursor-pointer">
+                                                                            <FileUp className="mr-2 h-4 w-4" />
+                                                                            {documentUrl ? 'Change' : 'Upload'}
+                                                                        </label>
+                                                                    </Button>
+                                                                    <Input
+                                                                        id={`doc-file-${index}`}
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        className="absolute w-0 h-0 opacity-0"
+                                                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)}
+                                                                    />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                <FormField control={form.control} name="visibleMenuItems" render={() => (<FormItem><div className="mb-4"><FormLabel className="text-base">Visible Menu Items</FormLabel><FormDescription>Select the top-level navigation items this user will be able to see.</FormDescription></div><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{availableNavItems.map((item) => (<FormField key={item.label} control={form.control} name="visibleMenuItems" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value?.includes(item.label)} onCheckedChange={(checked) => { const newItems = checked ? [...(field.value || []), item.label] : field.value?.filter((label) => label !== item.label); field.onChange(newItems); }} /></FormControl><FormLabel className="font-normal">{item.label}</FormLabel></FormItem>)} />))}</div><FormMessage /></FormItem>)} />
-                
-                <Separator />
-                
-                <FormField control={form.control} name="documents" render={() => (<FormItem><div className="mb-4"><FormLabel className="text-base">Document Expiry Dates & Uploads</FormLabel><FormDescription>Set the expiry date and upload a photo for each relevant document.</FormDescription></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{form.getValues('documents')?.map((docItem, index) => { const documentUrl = watch(`documents.${index}.url`); return (<div key={docItem.type} className="p-4 border rounded-lg space-y-3"><p className="font-medium text-sm">{docItem.type}</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"><FormField control={form.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void }; return (<FormItem className="sm:col-span-1"><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)}} /><FormField control={form.control} name={`documents.${index}.url`} render={({ field }) => (<FormItem className="sm:col-span-2 flex items-center justify-end gap-2"><Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}><Camera className="mr-2 h-4 w-4" /> Take Photo</Button><FormControl><div className="relative"><Button type="button" variant="outline" asChild size="sm"><label htmlFor={`doc-file-${index}`} className="cursor-pointer">{documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />} {documentUrl ? 'Change' : 'Upload'}</label></Button><Input id={`doc-file-${index}`} type="file" accept="image/*" className="absolute w-0 h-0 opacity-0" onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)} /></div></FormControl><FormMessage /></FormItem>)} /></div></div>)})}</div><FormMessage /></FormItem>)} />
-                
                 <Separator />
 
                 <FormField control={form.control} name="consentDisplayContact" render={({ field }) => (<FormItem className="space-y-3 rounded-md border p-4"><FormLabel>Privacy Consent</FormLabel><FormDescription>Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.</FormDescription><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1"><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Consented" /></FormControl><FormLabel className="font-normal">I consent</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Not Consented" /></FormControl><FormLabel className="font-normal">I do not consent</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
