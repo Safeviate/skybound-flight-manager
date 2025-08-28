@@ -1,50 +1,66 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
+  
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isUserInCompany(companyId) {
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) ||
-             exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
+      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) || exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
+    }
+
+    function getUserData(userId) {
+      // Note: This function can only be called from a context where the companyId is known.
+      // It cannot be used for the initial user lookup.
+      let studentPath = /databases/$(database)/documents/companies/$(request.resource.data.companyId)/students/$(userId);
+      let userPath = /databases/$(database)/documents/companies/$(request.resource.data.companyId)/users/$(userId);
+      
+      if (exists(studentPath)) {
+        return get(studentPath).data;
+      }
+      return get(userPath).data;
     }
     
-    function getUserData(companyId, userId) {
-      let userData = get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId));
-      if (!userData.data.size() > 0) {
-        return get(/databases/$(database)/documents/companies/$(companyId)/students/$(userId));
-      }
-      return userData;
-    }
-
     function hasPermission(permission) {
-      let userDoc = getUserData(request.resource.data.companyId, request.auth.uid);
-      return request.auth.uid != null && permission in userDoc.data.permissions;
+       let userData = getUserData(request.auth.uid);
+       return permission in userData.permissions || 'Super User' in userData.permissions;
     }
 
-    // COMPANY DATA
-    // Allow any signed-in user to read their own company's data.
-    match /companies/{companyId} {
-      allow read: if isSignedIn() && isUserInCompany(companyId);
-      allow write: if hasPermission('Super User'); // Only Super Users can edit company details directly.
-    }
-
-    // USER & STUDENT DATA
-    // This rule allows a user to find their own document across all companies upon login.
+    // Allow a user to find their own document across all companies for login purposes.
+    // This is the critical rule that was missing/incorrect before.
     match /{path=**}/users/{userId} {
-      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
     }
      match /{path=**}/students/{userId} {
-      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Company-level rules
+    match /companies/{companyId} {
+      allow read: if isSignedIn() && isUserInCompany(companyId);
+      allow write: if isSignedIn() && hasPermission('Super User'); 
     }
 
-    // Once inside a company, these rules apply.
-    match /companies/{companyId}/{document=**} {
-        allow read, write: if isSignedIn() && isUserInCompany(companyId);
+    // Rules for all collections within a company
+    match /companies/{companyId}/{collection}/{document} {
+       allow read, write: if isSignedIn() && isUserInCompany(companyId);
+    }
+    
+    // More specific rules for personnel and students
+    match /companies/{companyId}/users/{userId} {
+      allow read: if isSignedIn() && isUserInCompany(companyId);
+      allow create: if isSignedIn() && (hasPermission('Personnel:Edit') || hasPermission('Super User'));
+      allow update: if isSignedIn() && (request.auth.uid == userId || hasPermission('Personnel:Edit') || hasPermission('Super User'));
+      allow delete: if isSignedIn() && hasPermission('Super User');
+    }
+
+    match /companies/{companyId}/students/{studentId} {
+      allow read: if isSignedIn() && isUserInCompany(companyId);
+      allow create: if isSignedIn() && (hasPermission('Students:Edit') || hasPermission('Super User'));
+      allow update: if isSignedIn() && (request.auth.uid == studentId || hasPermission('Students:Edit') || hasPermission('Super User'));
+      allow delete: if isSignedIn() && hasPermission('Super User');
     }
   }
 }
