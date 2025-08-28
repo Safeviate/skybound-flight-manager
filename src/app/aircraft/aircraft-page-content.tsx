@@ -803,16 +803,13 @@ export function AircraftPageContent({
 
         if (company?.logoUrl) {
             try {
-                // Assuming logo is a data URL
-                const img = new window.Image();
-                img.src = company.logoUrl;
-                // Add image to PDF. You might need to adjust x, y, width, height.
-                // For a top-right logo:
+                // Determine image type from data URL
+                const imageType = company.logoUrl.split(';')[0].split('/')[1].toUpperCase();
                 const pageWidth = doc.internal.pageSize.getWidth();
-                const imageWidth = 20; // Adjust as needed
-                const imageHeight = 20; // Adjust as needed
-                const xPos = pageWidth - imageWidth - 14;
-                doc.addImage(company.logoUrl, 'PNG', xPos, 15, imageWidth, imageHeight);
+                const imageWidth = 20; 
+                const imageHeight = 20;
+                const xPos = pageWidth - imageWidth - 14; // Position on the right
+                doc.addImage(company.logoUrl, imageType, xPos, 15, imageWidth, imageHeight);
             } catch (e) {
                 console.error("Error adding logo to PDF:", e);
                 // Fail gracefully if the image can't be added
