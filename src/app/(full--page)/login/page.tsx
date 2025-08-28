@@ -56,16 +56,15 @@ export default function LoginPage() {
     setIsLoading(true);
     setLoginError(null);
     try {
-      // After password reset, user will be redirected here.
-      const continueUrl = `${window.location.origin}/login`;
+      // Direct the user to the new action handler page
       const actionCodeSettings = {
-        url: continueUrl,
+        url: `${window.location.origin}/auth/action`,
         handleCodeInApp: true,
       };
       await sendPasswordResetEmail(auth, email, actionCodeSettings);
       toast({
         title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${email} with instructions to reset your password. You will be redirected back to this page to log in after completion.`,
+        description: `An email has been sent to ${email} with instructions to reset your password.`,
       });
     } catch (error: any) {
       console.error(error);
