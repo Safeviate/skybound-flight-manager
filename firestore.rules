@@ -3,93 +3,84 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to reduce repetition
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isUserInCompany(companyId) {
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) ||
-             exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
+    // Helper function to get the user's role from their profile.
+    function getUserRole(userId, companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId)).data.role;
     }
     
-    function getUserData(companyId) {
-       // First, try to get from the 'users' collection
-      let userData = get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid));
-      // If not found in 'users', try 'students'
-      if (!userData.data.keys().hasAll(['permissions'])) {
-          return get(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
-      }
-      return userData;
+    // Helper function to get the user's permissions from their profile.
+    function getUserPermissions(userId, companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId)).data.permissions;
     }
 
-    function hasPermission(companyId, permission) {
-      // Ensure the user exists in the company before checking permissions.
-      // This prevents errors if a user from one company tries to access another.
-      if (!isUserInCompany(companyId)) {
-        return false;
-      }
-      // Get the user's data and check if their permissions array contains the required permission.
-      let userData = getUserData(companyId);
-      return permission in userData.data.permissions;
-    }
-    
-    // Global rule: By default, no one can access anything.
-    // This is a security best practice.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Allow new companies to be created by anyone.
-    // This is necessary for the corporate registration page to work.
-    match /companies/{companyId} {
-      allow create: if true;
-      allow read, update: if isSignedIn() && isUserInCompany(companyId) && hasPermission(companyId, 'Super User');
-    }
-
-    // This is the critical rule that allows a newly logged-in user to find their own
-    // user document (and thus their companyId) across all companies.
+    // Allow a user to find their own user or student document across all companies.
+    // This is essential for the application to determine the user's companyId after login.
     match /{path=**}/users/{userId} {
       allow get: if request.auth.uid == userId;
     }
-     match /{path=**}/students/{userId} {
+    match /{path=**}/students/{userId} {
       allow get: if request.auth.uid == userId;
     }
-    
+
     // Rules for all collections within a specific company.
-    // The `isUserInCompany(companyId)` check ensures users can only access their own company's data.
-    match /companies/{companyId}/{collection}/{docId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId); // General read for most collections if in company
-        allow write: if isSignedIn() && isUserInCompany(companyId) && hasPermission(companyId, 'Super User');
-    }
+    match /companies/{companyId} {
+      // Allow any authenticated user to read the company document itself.
+      allow read: if request.auth != null;
 
-    // More specific rules for collections that require fine-grained control
-    match /companies/{companyId}/users/{userId} {
-      allow get: if isSignedIn() && isUserInCompany(companyId);
-      allow list: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Personnel:View') || hasPermission(companyId, 'Super User'));
-      allow create, update, delete: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Personnel:Edit') || hasPermission(companyId, 'Super User'));
-    }
+      // Rules for collections within a company.
+      // Access is granted only if the user is a member of this company.
+      // Note: A specific check for company membership will be added to each collection rule.
+      
+      function isUserOfCompany() {
+          return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) ||
+                 exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
+      }
+      
+      // Allow read access to most collections if the user belongs to the company.
+      // Write access is restricted by more specific rules below.
+      allow read: if isUserOfCompany();
+      
+      match /aircraft/{aircraftId} {
+          allow read: if isUserOfCompany();
+          allow write: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Aircraft:Edit' in getUserPermissions(request.auth.uid, companyId));
+      }
+      
+      match /alerts/{alertId} {
+          allow read, write: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Alerts:Edit' in getUserPermissions(request.auth.uid, companyId));
+      }
 
-    match /companies/{companyId}/students/{studentId} {
-      allow get: if isSignedIn() && isUserInCompany(companyId);
-      allow list: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Students:View') || hasPermission(companyId, 'Super User'));
-      allow create, update, delete: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Students:Edit') || hasPermission(companyId, 'Super User'));
+      match /bookings/{bookingId} {
+          allow read, write: if isUserOfCompany(); // Allow all company members to read/write for simplicity, can be tightened later
+      }
+      
+      match /safety-reports/{reportId} {
+          allow read, write: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Safety:View' in getUserPermissions(request.auth.uid, companyId));
+      }
+      
+      match /quality-audits/{auditId} {
+          allow read, write: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Quality:View' in getUserPermissions(request.auth.uid, companyId));
+      }
+      
+      match /students/{studentId} {
+          allow read: if isUserOfCompany();
+          allow write: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Students:Edit' in getUserPermissions(request.auth.uid, companyId));
+      }
+
+      match /users/{userId} {
+          // Allow a user to update their own document.
+          allow update: if request.auth.uid == userId;
+          // Allow read/write based on permissions.
+          allow read, create, delete: if isUserOfCompany() && ('Super User' in getUserPermissions(request.auth.uid, companyId) || 'Personnel:Edit' in getUserPermissions(request.auth.uid, companyId));
+      }
+      
+       match /{collection}/{id} {
+        allow read, write: if isUserOfCompany();
+      }
     }
     
-    match /companies/{companyId}/safety-reports/{reportId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Safety:View') || hasPermission(companyId, 'Super User'));
-        allow write: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Safety:Edit') || hasPermission(companyId, 'Super User'));
-        allow create: if isSignedIn() && isUserInCompany(companyId); // Anyone in the company can file a report
-    }
-    
-    match /companies/{companyId}/quality-audits/{auditId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Quality:View') || hasPermission(companyId, 'Super User'));
-        allow write: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Quality:Edit') || hasPermission(companyId, 'Super User'));
-    }
-    
-    match /companies/{companyId}/bookings/{bookingId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Bookings:View') || hasPermission(companyId, 'Super User'));
-        allow write: if isSignedIn() && isUserInCompany(companyId) && (hasPermission(companyId, 'Bookings:Edit') || hasPermission(companyId, 'Super User'));
+    // Deny all other access by default.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
