@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ALL_PERMISSIONS } from '@/lib/types';
+import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
@@ -62,7 +62,7 @@ const personnelFormSchema = z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
   })).optional(),
-  permissions: z.array(z.string()).min(1, 'At least one permission must be selected.'),
+  permissions: z.array(z.string()).optional(),
   visibleMenuItems: z.array(z.string()).optional(),
 });
 
@@ -336,25 +336,6 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                     )}
                 />
                 
-                <Separator />
-                
-                <FormField
-                    control={form.control}
-                    name="permissions"
-                    render={() => (
-                        <FormItem>
-                            <div className="mb-4">
-                                <FormLabel className="text-base">Permissions</FormLabel>
-                                <FormDescription>
-                                    Select all permissions that apply to this user. Defaults are set by role.
-                                </FormDescription>
-                            </div>
-                            <PermissionsListbox control={form.control} allPermissions={allPermissions} />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 <Separator />
                 
                 <FormField
