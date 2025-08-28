@@ -17,7 +17,7 @@ interface UserContextType {
   setUserCompanies: React.Dispatch<React.SetStateAction<Company[]>>;
   loading: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (updatedData: Partial<User>) => Promise<boolean>;
   updateCompany: (companyId: string, updatedData: Partial<Company>) => Promise<boolean>;
   getUnacknowledgedAlerts: (types?: Alert['type'][]) => Alert[];
@@ -156,12 +156,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [company]);
 
   const logout = useCallback(async () => {
-    await signOut(auth);
-    setUser(null);
-    setCompany(null);
-    setUserCompanies([]);
-    setAllAlerts([]);
-    router.push('/login');
+    try {
+        await signOut(auth);
+        setUser(null);
+        setCompany(null);
+        setUserCompanies([]);
+        setAllAlerts([]);
+        router.push('/login');
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
   }, [router]);
 
   const checkExpiringDocuments = useCallback(async (user: User, companyId: string) => {
