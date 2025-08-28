@@ -5,7 +5,7 @@ import { twMerge } from "tailwind-merge"
 import { differenceInDays, format, parseISO, subDays, startOfDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import React, { useCallback } from 'react';
-import type { RiskLikelihood, RiskSeverity, TrainingLogEntry, Booking } from './types';
+import type { RiskLikelihood, RiskSeverity, TrainingLogEntry, Booking, AircraftDocument } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

@@ -800,6 +800,24 @@ export function AircraftPageContent({
         const doc = new jsPDF();
         const { results } = checklist;
         const isPreFlight = checklist.type === 'Pre-Flight';
+
+        if (company?.logoUrl) {
+            try {
+                // Assuming logo is a data URL
+                const img = new window.Image();
+                img.src = company.logoUrl;
+                // Add image to PDF. You might need to adjust x, y, width, height.
+                // For a top-right logo:
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const imageWidth = 20; // Adjust as needed
+                const imageHeight = 20; // Adjust as needed
+                const xPos = pageWidth - imageWidth - 14;
+                doc.addImage(company.logoUrl, 'PNG', xPos, 15, imageWidth, imageHeight);
+            } catch (e) {
+                console.error("Error adding logo to PDF:", e);
+                // Fail gracefully if the image can't be added
+            }
+        }
     
         doc.setFontSize(18);
         doc.text(`${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
@@ -1094,27 +1112,27 @@ export function AircraftPageContent({
                     <div className="py-4 space-y-4 pr-4">
                         <div className="flex items-center justify-between text-sm">
                             <span>Certificate of Airworthiness</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.airworthinessDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                             <span>Insurance Certificate</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.insuranceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.insuranceDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                             <span>Certificate of Release to Service</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfReleaseToServiceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.releaseToServiceDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                             <span>Certificate of Registration</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.certificateOfRegistrationExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.registrationDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                             <span>Mass & Balance</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.massAndBalanceExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.massAndBalanceDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                         <div className="flex items-center justify-between text-sm">
                             <span>Radio Station License</span>
-                            {getExpiryBadge(viewingDocumentsForAircraft?.radioStationLicenseExpiry, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                            {getExpiryBadge(viewingDocumentsForAircraft?.radioLicenseDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
                         </div>
                     </div>
                 </ScrollArea>

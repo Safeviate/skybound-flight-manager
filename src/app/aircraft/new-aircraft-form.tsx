@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Aircraft } from '@/lib/types';
+import type { Aircraft, AircraftDocument } from '@/lib/types';
 import { useUser } from '@/context/user-provider';
 import { addDoc, collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -60,7 +61,7 @@ interface NewAircraftFormProps {
   initialData?: Aircraft | null;
 }
 
-const parseDoc = (doc?: { expiryDate: string | null, url?: string | null }) => ({
+const parseDoc = (doc?: AircraftDocument) => ({
     expiryDate: doc?.expiryDate ? parseISO(doc.expiryDate) : undefined,
     url: doc?.url || undefined,
 });
