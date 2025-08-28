@@ -104,8 +104,10 @@ body {
 
 @media print {
     body {
-        background: #fff !important;
-        color: #000 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     
     header, [data-sidebar], button, input, textarea, a[href], .no-print {
@@ -118,16 +120,20 @@ body {
     }
 
     .card {
-        border: none !important;
+        border: 1px solid #e5e7eb !important;
         box-shadow: none !important;
         page-break-inside: avoid;
     }
     
-    .print-block {
+    .card-header, .card-content, .card-footer {
+        padding: 1rem !important;
+    }
+    
+    .print\:block {
         display: block !important;
     }
     
-    .print-hidden {
+    .print\:hidden {
         display: none !important;
     }
 
@@ -135,10 +141,47 @@ body {
       display: none !important;
     }
     
-    /* Ensure all content is visible and not scrollable */
+    [role="tablist"] {
+        display: none !important;
+    }
+    
+    [role="tabpanel"] {
+        display: block !important;
+    }
+
+    .print-force-color {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .moc-print-hazard-title,
+    .moc-print-risk-title,
+    .moc-print-mitigation-title {
+        font-weight: 600;
+        color: #4A5568; /* gray-700 */
+    }
+    
+    .moc-print-risk-wrapper {
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .moc-print-mitigation-wrapper {
+        border-top: 1px dashed #cbd5e0;
+    }
+
+    /* Specific overrides for safety report page */
+    .print-initial-report-only #investigation-tab-content,
+    .print-initial-report-only #mitigation-tab-content,
+    .print-initial-report-only #review-tab-content,
+    .print-initial-report-only #initial-risk-assessment-card,
+    .print-initial-report-only #classification-card {
+        display: none !important;
+    }
+
     * {
         overflow: visible !important;
         height: auto !important;
         max-height: none !important;
     }
 }
+
