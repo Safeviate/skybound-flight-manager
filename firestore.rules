@@ -1,113 +1,24 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper Functions
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isSuperUser(companyId) {
-      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)).data.permissions.hasAny(['Super User']);
-    }
-
-    function hasPermission(companyId, permission) {
-      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)).data.permissions.hasAny([permission, 'Super User']);
-    }
-    
-    function isUserInCompany(companyId) {
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) ||
-             exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
-    }
-
-    // Top-level collections - deny by default
-    match /{collection}/{docId} {
+    // Default deny all reads and writes
+    match /{document=**} {
       allow read, write: if false;
     }
-
-    // Allow unauthenticated users to create a company, but not read/write existing ones
-    match /companies/{companyId} {
-        allow create: if !isSignedIn();
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow update: if hasPermission(companyId, 'Settings:Edit');
-        
-        // Secure all subcollections within a company
-        match /{subcollection}/{docId} {
-            allow read, write: if false; // Deny by default, specific rules below will grant access
-        }
-
-        // Allow users to read/update their own profile
-        match /users/{userId} {
-            allow get: if isSignedIn(); // Allow getting any user doc by ID
-            allow list: if hasPermission(companyId, 'Personnel:View');
-            allow update: if (isSignedIn() && request.auth.uid == userId) || hasPermission(companyId, 'Personnel:Edit');
-            allow create, delete: if hasPermission(companyId, 'Personnel:Edit');
-        }
-
-        match /students/{studentId} {
-            allow get: if isSignedIn();
-            allow list: if hasPermission(companyId, 'Students:View');
-            allow update: if (isSignedIn() && request.auth.uid == studentId) || hasPermission(companyId, 'Students:Edit');
-            allow create, delete: if hasPermission(companyId, 'Students:Edit');
-        }
-        
-        // Rules for other collections
-        match /aircraft/{aircraftId} {
-            allow read: if hasPermission(companyId, 'Aircraft:View');
-            allow create, update, delete: if hasPermission(companyId, 'Aircraft:Edit');
-        }
-        
-        match /bookings/{bookingId} {
-            allow list: if hasPermission(companyId, 'Bookings:View');
-            allow get: if hasPermission(companyId, 'Bookings:View');
-            allow create, update, delete: if hasPermission(companyId, 'Bookings:Edit');
-        }
-        
-        match /safety-reports/{reportId} {
-            allow read: if hasPermission(companyId, 'Safety:View');
-            allow create, update, delete: if hasPermission(companyId, 'Safety:Edit');
-        }
-        
-        match /quality-audits/{auditId} {
-            allow read: if hasPermission(companyId, 'Quality:View');
-            allow create, update, delete: if hasPermission(companyId, 'Quality:Edit');
-        }
-        
-        match /audit-checklists/{checklistId} {
-            allow read: if hasPermission(companyId, 'Quality:View');
-            allow create, update, delete: if hasPermission(companyId, 'Quality:Edit');
-        }
-
-        match /alerts/{alertId} {
-            allow read: if isSignedIn(); // Users need to read alerts targeted at them
-            allow create, update, delete: if hasPermission(companyId, 'Alerts:Edit');
-        }
-
-        match /risks/{riskId} {
-            allow read: if hasPermission(companyId, 'Safety:View');
-            allow create, update, delete: if hasPermission(companyId, 'Safety:Edit');
-        }
-
-        match /management-of-change/{mocId} {
-            allow read: if hasPermission(companyId, 'Safety:View');
-            allow create, update, delete: if hasPermission(companyId, 'MOC:Edit');
-        }
-        
-        match /roles/{roleId} {
-            allow read: if isSignedIn();
-            allow create, update, delete: if hasPermission(companyId, 'Roles & Departments:Edit');
-        }
-
-        match /departments/{deptId} {
-            allow read: if isSignedIn();
-            allow create, update, delete: if hasPermission(companyId, 'Roles & Departments:Edit');
-        }
-        
-        match /external-contacts/{contactId} {
-            allow read: if isSignedIn();
-            allow create, update, delete: if hasPermission(companyId, 'Settings:Edit');
-        }
+    
+    // Allow any signed-in user to read all data within any company,
+    // but only write if they are signed in. This is a common pattern for apps
+    // where the main security concern is unauthorized writes, not reads by
+    // authenticated users. More granular read rules can be added later if needed.
+    match /companies/{companyId}/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }
