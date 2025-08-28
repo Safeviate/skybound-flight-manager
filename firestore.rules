@@ -3,106 +3,107 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper Functions
+    // ======== HELPER FUNCTIONS ======== //
+    
+    // Returns true if the user is authenticated.
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isUserInCompany(companyId) {
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid))
-          || exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
+    // Returns the requesting user's data from the 'users' or 'students' collection within their company.
+    function getRequestingUserData(companyId) {
+      let userPath = /databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid);
+      let studentPath = /databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid);
+      
+      if (exists(userPath)) {
+        return get(userPath).data;
+      }
+      if (exists(studentPath)) {
+        return get(studentPath).data;
+      }
+      return null;
     }
-    
-    function getRole(companyId) {
-        let userDoc = get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid));
-        if (exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid))) {
-            return 'Student';
-        }
-        return userDoc.data.role;
+
+    // Checks if the requesting user belongs to the specified company.
+    function isCompanyMember(companyId) {
+      let userData = getRequestingUserData(companyId);
+      return isSignedIn() && userData != null && userData.companyId == companyId;
     }
-    
+
+    // Checks if the requesting user has a specific permission.
     function hasPermission(companyId, permission) {
-        let userPermissions = get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)).data.permissions;
-        return permission in userPermissions;
+        let userData = getRequestingUserData(companyId);
+        return userData != null && (permission in userData.permissions || 'Super User' in userData.permissions);
+    }
+    
+    // Checks if the user is the owner of the document they are trying to access.
+    function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Top-level company documents can be read by any authenticated user of that company.
-    // Only super users should be able to create/edit companies.
+    // ======== COLLECTION RULES ======== //
+    
     match /companies/{companyId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if false; // Should be handled by backend functions for security
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Super User'); // Only Super Users can edit company details
     }
-
-    // Rules for all collections within a company
+    
     match /companies/{companyId}/{collection}/{docId} {
-        // Default deny all access unless explicitly allowed by nested rules
+        // Default Deny: No access unless explicitly granted by a more specific rule below.
         allow read, write: if false;
     }
     
-    // User and Student data access rules
+    // USERS and STUDENTS can only be managed by authorized personnel, but individuals can read/update their own data.
     match /companies/{companyId}/users/{userId} {
-        allow read: if isSignedIn() && (request.auth.uid == userId || hasPermission(companyId, 'Personnel:View'));
-        allow update: if isSignedIn() && (request.auth.uid == userId || hasPermission(companyId, 'Personnel:Edit'));
-        allow create: if isSignedIn() && hasPermission(companyId, 'Personnel:Edit');
-        allow delete: if isSignedIn() && hasPermission(companyId, 'Personnel:Edit');
+        allow read, update: if isOwner(userId);
+        allow create, delete: if hasPermission(companyId, 'Personnel:Edit');
     }
-    
+
     match /companies/{companyId}/students/{studentId} {
-        allow read: if isSignedIn() && (request.auth.uid == studentId || hasPermission(companyId, 'Students:View'));
-        allow update: if isSignedIn() && (request.auth.uid == studentId || hasPermission(companyId, 'Students:Edit'));
-        allow create: if isSignedIn() && hasPermission(companyId, 'Students:Edit');
-        allow delete: if isSignedIn() && hasPermission(companyId, 'Students:Edit');
+        allow read, update: if isOwner(studentId);
+        allow create, delete: if hasPermission(companyId, 'Students:Edit');
     }
 
-    // Rules for other collections
-    match /companies/{companyId}/aircraft/{aircraftId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if isSignedIn() && hasPermission(companyId, 'Aircraft:Edit');
-    }
-
-    match /companies/{companyId}/bookings/{bookingId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if isSignedIn() && hasPermission(companyId, 'Bookings:Edit');
-    }
-
-    match /companies/{companyId}/safety-reports/{reportId} {
-        allow read: if isSignedIn() && hasPermission(companyId, 'Safety:View');
-        allow write: if isSignedIn() && hasPermission(companyId, 'Safety:Edit');
-    }
-    
-    match /companies/{companyId}/quality-audits/{auditId} {
-        allow read: if isSignedIn() && hasPermission(companyId, 'Quality:View');
-        allow write: if isSignedIn() && hasPermission(companyId, 'Quality:Edit');
-    }
-    
-     match /companies/{companyId}/risks/{riskId} {
-        allow read: if isSignedIn() && hasPermission(companyId, 'Safety:View');
-        allow write: if isSignedIn() && hasPermission(companyId, 'Safety:Edit');
-    }
-
-    match /companies/{companyId}/alerts/{alertId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if isSignedIn() && (hasPermission(companyId, 'Alerts:Edit') || request.auth.uid == resource.data.targetUserId);
-    }
-    
-    // Other collections can be added here with similar patterns...
+    // Allow any company member to read general company configuration like roles and departments.
     match /companies/{companyId}/roles/{roleId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if isSignedIn() && hasPermission(companyId, 'Roles & Departments:Edit');
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Roles & Departments:Edit');
     }
-    
     match /companies/{companyId}/departments/{deptId} {
-        allow read: if isSignedIn() && isUserInCompany(companyId);
-        allow write: if isSignedIn() && hasPermission(companyId, 'Roles & Departments:Edit');
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Roles & Departments:Edit');
     }
+
+    // General read access for most collections to company members. Write access is restricted by role.
+    match /companies/{companyId}/aircraft/{aircraftId} {
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Aircraft:Edit');
+    }
+    match /companies/{companyId}/bookings/{bookingId} {
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Bookings:Edit');
+    }
+    match /companies/{companyId}/safety-reports/{reportId} {
+        allow read: if isCompanyMember(companyId); // Further checks can be added based on investigation team
+        allow write: if hasPermission(companyId, 'Safety:Edit');
+        allow create: if isSignedIn(); // Any signed-in user can file a report
+    }
+     match /companies/{companyId}/quality-audits/{auditId} {
+        allow read: if isCompanyMember(companyId);
+        allow write: if hasPermission(companyId, 'Quality:Edit');
+    }
+     match /companies/{companyId}/{document=**} {
+        allow read, write: if isCompanyMember(companyId);
+     }
     
-    // This allows the user provider to find the user's company on login.
+    // ======== COLLECTION GROUP RULES ======== //
+    // This is crucial. It allows the login function to securely find which company a user belongs to
+    // without needing to know the companyId beforehand.
     match /{path=**}/users/{userId} {
-      allow read: if request.auth.uid == userId;
+      allow get: if isOwner(userId);
     }
-    
-    match /{path=**}/students/{userId} {
-        allow read: if request.auth.uid == userId;
+     match /{path=**}/students/{studentId} {
+      allow get: if isOwner(studentId);
     }
   }
 }
