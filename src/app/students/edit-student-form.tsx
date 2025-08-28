@@ -200,18 +200,18 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                     return (
                         <div key={docItem.type} className="p-4 border rounded-lg space-y-3">
                             <p className="font-medium text-sm">{docItem.type}</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                            <div className="flex justify-between items-center gap-4">
                                 <FormField
                                     control={form.control}
                                     name={`documents.${index}.expiryDate`}
                                     render={({ field }) => {
                                         const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void };
                                         return (
-                                            <FormItem className="sm:col-span-1">
+                                            <FormItem>
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <FormControl>
-                                                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                            <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
                                                                 {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
                                                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                             </Button>
@@ -226,7 +226,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                                         )
                                     }}
                                 />
-                                 <div className="sm:col-span-2 flex items-center justify-end gap-4">
+                                 <div className="flex items-center gap-2">
                                     <Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}>
                                         <Camera className="mr-2 h-4 w-4" /> Take Photo
                                     </Button>

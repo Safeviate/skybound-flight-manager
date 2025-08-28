@@ -250,18 +250,18 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       return (
         <div className="p-4 border rounded-lg space-y-3">
           <p className="font-medium text-sm">{label}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+          <div className="flex justify-between items-center gap-4">
               <FormField
                 control={form.control}
                 name={name}
                 render={({ field }) => (
-                  <FormItem className="sm:col-span-1">
+                  <FormItem>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
                             {field.value ? format(field.value as Date, "PPP") : <span>Set expiry date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -276,7 +276,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                   </FormItem>
                 )}
               />
-               <div className="sm:col-span-2 flex items-center justify-end gap-4">
+               <div className="flex items-center gap-2">
                  <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
                     <Camera className="mr-2 h-4 w-4" /> Take Photo
                  </Button>
