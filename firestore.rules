@@ -1,57 +1,40 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
+    
+    // Helper function to check if the user is authenticated
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
+    // Helper function to get the user's role and permissions from their user document
     function getUserData(userId) {
       // First, try to get from the 'users' collection group
-      let userDoc = get(/databases/$(database)/documents/companies/$(request.resource.data.companyId)/users/$(userId));
-      if (userDoc != null) {
-        return userDoc.data;
-      }
+      let userData = get(/databases/$(database)/documents/users/$(userId)).data;
       // If not found, try the 'students' collection group
-      return get(/databases/$(database)/documents/companies/$(request.resource.data.companyId)/students/$(userId)).data;
+      if (userData == null) {
+        userData = get(/databases/$(database)/documents/students/$(userId)).data;
+      }
+      return userData;
     }
-    
-    function isCompanyMember(companyId) {
-        return isSignedIn() && exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid))
-            || exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
-    }
-    
-    function hasPermission(permission) {
-        let userDoc = getUserData(request.auth.uid);
-        return userDoc != null && (permission in userDoc.permissions || 'Super User' in userDoc.permissions);
-    }
-    
-    // Allow a user to find their own document across all companies.
-    // This is the critical rule that was missing/incorrect and fixes the login permission error.
+
+    // Allow a user to find their own document on login to get their companyId and roles
     match /{path=**}/users/{userId} {
-      allow get: if isUser(userId);
-      allow list: if hasPermission('Personnel:View');
+      allow get: if isAuthenticated() && request.auth.uid == userId;
     }
-    
     match /{path=**}/students/{userId} {
-       allow get: if isUser(userId);
-       allow list: if hasPermission('Students:View');
+       allow get: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Rules for all documents within a specific company
     match /companies/{companyId}/{collection}/{docId} {
-      allow read, write: if isCompanyMember(companyId);
+      allow read, write: if isAuthenticated() && getUserData(request.auth.uid).companyId == companyId;
     }
     
-    // Allow unauthenticated users to create a company, but not read/update/delete existing ones.
-    match /companies/{companyId} {
-        allow read, update, delete: if false;
-        allow create: if true;
+    // Default deny all other access
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
