@@ -56,6 +56,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setLoginError(null);
     try {
+      // Correctly configure the action URL to point to your new page
       const actionCodeSettings = {
         url: `${window.location.origin}/auth/action`,
         handleCodeInApp: true,
