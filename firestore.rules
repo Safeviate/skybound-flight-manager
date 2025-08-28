@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -8,51 +9,42 @@ service cloud.firestore {
     }
 
     function isUserInCompany(companyId) {
-      let userPath = /databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid);
-      let studentPath = /databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid);
-      return exists(userPath) || exists(studentPath);
-    }
-
-    function getRole(userId) {
-      // Check both collections for the user's role. This is more robust for cross-collection permissions.
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      if (userDoc != null) {
-        return userDoc.data.role;
-      }
-      let studentDoc = get(/databases/$(database)/documents/students/$(userId));
-       if (studentDoc != null) {
-        return studentDoc.data.role;
-      }
-      return ''; // No role found
+      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) ||
+             exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
     }
     
+    function getUserData(companyId, userId) {
+      let userData = get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId));
+      if (!userData.data.size() > 0) {
+        return get(/databases/$(database)/documents/companies/$(companyId)/students/$(userId));
+      }
+      return userData;
+    }
+
     function hasPermission(permission) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      if (userDoc != null) {
-        return permission in userDoc.data.permissions;
-      }
-       let studentDoc = get(/databases/$(database)/documents/students/$(request.auth.uid));
-       if (studentDoc != null) {
-        return permission in studentDoc.data.permissions;
-      }
-      return false;
+      let userDoc = getUserData(request.resource.data.companyId, request.auth.uid);
+      return request.auth.uid != null && permission in userDoc.data.permissions;
     }
 
-    // Rules for company creation
-     match /companies/{companyId} {
-      allow read: if isSignedIn();
-      allow create: if true; // Allow anyone to create a company
-      allow update: if hasPermission('Super User') || hasPermission('Settings:Edit');
+    // COMPANY DATA
+    // Allow any signed-in user to read their own company's data.
+    match /companies/{companyId} {
+      allow read: if isSignedIn() && isUserInCompany(companyId);
+      allow write: if hasPermission('Super User'); // Only Super Users can edit company details directly.
     }
 
-    // Rules for top-level user & student collections (for login lookup)
-    match /{collection}/{userId} {
-        allow read, update: if isSignedIn() && request.auth.uid == userId;
+    // USER & STUDENT DATA
+    // This rule allows a user to find their own document across all companies upon login.
+    match /{path=**}/users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+    }
+     match /{path=**}/students/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Match any document inside a specific company's subcollections.
+    // Once inside a company, these rules apply.
     match /companies/{companyId}/{document=**} {
-      allow read, write: if isSignedIn() && isUserInCompany(companyId);
+        allow read, write: if isSignedIn() && isUserInCompany(companyId);
     }
   }
 }

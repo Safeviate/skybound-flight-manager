@@ -6,7 +6,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: true, // PWA is fully disabled
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -62,5 +62,5 @@ const nextConfig: NextConfig = {
   }
 };
 
-// We apply pwaConfig only in production.
-export default process.env.NODE_ENV === 'development' ? nextConfig : pwaConfig(nextConfig);
+// PWA is now disabled in all environments
+export default nextConfig;
