@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -251,7 +250,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       return (
         <div className="p-4 border rounded-lg space-y-3">
           <p className="font-medium text-sm">{label}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
               <FormField
                 control={form.control}
                 name={name}
@@ -277,7 +276,7 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                   </FormItem>
                 )}
               />
-               <div className="sm:col-span-2 flex items-center justify-end gap-2">
+               <div className="sm:col-span-2 flex items-center justify-end gap-4">
                  <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
                     <Camera className="mr-2 h-4 w-4" /> Take Photo
                  </Button>
