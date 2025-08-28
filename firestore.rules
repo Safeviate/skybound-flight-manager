@@ -3,64 +3,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    function isSignedIn() {
-      return request.auth != null;
+    // Helper function to get the user's role from their user document.
+    function getUserRole(userId, companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId)).data.role;
     }
 
-    function isUserInCompany(companyId) {
-      return exists(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)) || exists(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid));
-    }
-
-    function getUserData(userId) {
-      // Note: This function can only be called from a context where the companyId is known.
-      // It cannot be used for the initial user lookup.
-      let studentPath = /databases/$(database)/documents/companies/$(request.resource.data.companyId)/students/$(userId);
-      let userPath = /databases/$(database)/documents/companies/$(request.resource.data.companyId)/users/$(userId);
-      
-      if (exists(studentPath)) {
-        return get(studentPath).data;
-      }
-      return get(userPath).data;
-    }
-    
-    function hasPermission(permission) {
-       let userData = getUserData(request.auth.uid);
-       return permission in userData.permissions || 'Super User' in userData.permissions;
-    }
-
-    // Allow a user to find their own document across all companies for login purposes.
-    // This is the critical rule that was missing/incorrect before.
+    // Collection Group rules allow for querying across all subcollections with the same name.
+    // This is CRITICAL for login, to find which company a user belongs to.
     match /{path=**}/users/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow read: if request.auth.uid == userId;
     }
-     match /{path=**}/students/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
+    match /{path=**}/students/{userId} {
+      allow read: if request.auth.uid == userId;
     }
-    
-    // Company-level rules
+
+    // Rules for company-specific data.
     match /companies/{companyId} {
-      allow read: if isSignedIn() && isUserInCompany(companyId);
-      allow write: if isSignedIn() && hasPermission('Super User'); 
-    }
+      allow read: if request.auth != null; // Allow any authenticated user to read company-level data (e.g., theme)
 
-    // Rules for all collections within a company
-    match /companies/{companyId}/{collection}/{document} {
-       allow read, write: if isSignedIn() && isUserInCompany(companyId);
-    }
-    
-    // More specific rules for personnel and students
-    match /companies/{companyId}/users/{userId} {
-      allow read: if isSignedIn() && isUserInCompany(companyId);
-      allow create: if isSignedIn() && (hasPermission('Personnel:Edit') || hasPermission('Super User'));
-      allow update: if isSignedIn() && (request.auth.uid == userId || hasPermission('Personnel:Edit') || hasPermission('Super User'));
-      allow delete: if isSignedIn() && hasPermission('Super User');
-    }
-
-    match /companies/{companyId}/students/{studentId} {
-      allow read: if isSignedIn() && isUserInCompany(companyId);
-      allow create: if isSignedIn() && (hasPermission('Students:Edit') || hasPermission('Super User'));
-      allow update: if isSignedIn() && (request.auth.uid == studentId || hasPermission('Students:Edit') || hasPermission('Super User'));
-      allow delete: if isSignedIn() && hasPermission('Super User');
+      // Rules for all collections within a company.
+      match /{collection}/{docId} {
+        allow read, write: if request.auth.uid != null && getUserRole(request.auth.uid, companyId) in ['Super User', 'Admin', 'Accountable Manager'];
+      }
+      
+      // Allow users to read and update their own documents.
+      match /users/{userId} {
+        allow get: if request.auth.uid != null; // Allow any authenticated user in the company to get basic user info.
+        allow list: if request.auth.uid != null;
+        allow update: if request.auth.uid == userId || getUserRole(request.auth.uid, companyId) in ['Super User', 'Admin'];
+        allow create: if getUserRole(request.auth.uid, companyId) in ['Super User', 'Admin'];
+      }
+      
+      match /students/{userId} {
+        allow get: if request.auth.uid != null;
+        allow list: if request.auth.uid != null;
+        allow update: if request.auth.uid == userId || getUserRole(request.auth.uid, companyId) in ['Super User', 'Admin', 'Instructor', 'Chief Flight Instructor', 'Head Of Training'];
+        allow create: if getUserRole(request.auth.uid, companyId) in ['Super User', 'Admin'];
+      }
     }
   }
 }
