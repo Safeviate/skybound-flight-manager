@@ -58,6 +58,11 @@ export type Company = {
   logoUrl?: string;
 };
 
+export type AircraftDocument = {
+    expiryDate: string | null;
+    url?: string | null;
+};
+
 export type Aircraft = {
   id: string;
   companyId: string;
@@ -67,12 +72,12 @@ export type Aircraft = {
   aircraftType?: 'SE' | 'ME' | 'FSTD';
   status: 'Available' | 'In Maintenance' | 'Booked' | 'Archived';
   hours: number;
-  airworthinessExpiry: string;
-  insuranceExpiry: string;
-  certificateOfReleaseToServiceExpiry: string;
-  certificateOfRegistrationExpiry: string;
-  massAndBalanceExpiry: string;
-  radioStationLicenseExpiry: string;
+  airworthinessDoc: AircraftDocument;
+  insuranceDoc: AircraftDocument;
+  releaseToServiceDoc: AircraftDocument;
+  registrationDoc: AircraftDocument;
+  massAndBalanceDoc: AircraftDocument;
+  radioLicenseDoc: AircraftDocument;
   location: string; // Airport ID
   checklistStatus?: 'needs-pre-flight' | 'needs-post-flight' | 'ready';
   activeBookingId?: string | null;
@@ -136,6 +141,7 @@ export type UserDocument = {
     id: string;
     type: typeof ALL_DOCUMENTS[number];
     expiryDate: string | null;
+    url?: string;
 };
 
 export type Permission =
@@ -232,10 +238,6 @@ export type User = {
     // Personnel-specific
     department?: Department;
     instructorGrade?: 'Grade 1' | 'Grade 2' | 'Grade 3' | null;
-    medicalExpiry?: string | null;
-    licenseExpiry?: string | null;
-    passportExpiry?: string | null;
-    visaExpiry?: string | null;
     documents?: UserDocument[];
     // External Auditee specific
     externalCompanyName?: string;

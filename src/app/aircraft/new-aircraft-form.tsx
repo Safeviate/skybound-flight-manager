@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,15 +23,18 @@ import { db } from '@/lib/firebase';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Bot } from 'lucide-react';
+import { CalendarIcon, Bot, FileUp, ImageIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AircraftInfoScanner } from './aircraft-info-scanner';
 import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+const MAX_FILE_SIZE = 500000; // 500KB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const aircraftFormSchema = z.object({
   make: z.string().min(1, 'Aircraft make is required.'),
@@ -38,12 +42,12 @@ const aircraftFormSchema = z.object({
   tailNumber: z.string().min(1, 'Aircraft registration is required.'),
   aircraftType: z.enum(['SE', 'ME', 'FSTD']).optional(),
   hours: z.coerce.number().min(0, 'Hobbs hours must be a positive number.'),
-  airworthinessExpiry: z.date().optional(),
-  insuranceExpiry: z.date().optional(),
-  certificateOfReleaseToServiceExpiry: z.date().optional(),
-  certificateOfRegistrationExpiry: z.date().optional(),
-  massAndBalanceExpiry: z.date().optional(),
-  radioStationLicenseExpiry: z.date().optional(),
+  airworthinessDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
+  insuranceDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
+  releaseToServiceDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
+  registrationDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
+  massAndBalanceDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
+  radioLicenseDoc: z.object({ expiryDate: z.date().optional(), url: z.string().optional() }),
   currentTachoReading: z.coerce.number().optional(),
   next50HourInspection: z.coerce.number().optional(),
   next100HourInspection: z.coerce.number().optional(),
@@ -56,9 +60,10 @@ interface NewAircraftFormProps {
   initialData?: Aircraft | null;
 }
 
-const parseDate = (dateString?: string | null): Date | undefined => {
-    return dateString ? parseISO(dateString) : undefined;
-}
+const parseDoc = (doc?: { expiryDate: string | null, url?: string | null }) => ({
+    expiryDate: doc?.expiryDate ? parseISO(doc.expiryDate) : undefined,
+    url: doc?.url || undefined,
+});
 
 export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps) {
   const { toast } = useToast();
@@ -71,12 +76,12 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     resolver: zodResolver(aircraftFormSchema),
     defaultValues: initialData ? {
         ...initialData,
-        airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
-        insuranceExpiry: parseDate(initialData.insuranceExpiry),
-        certificateOfReleaseToServiceExpiry: parseDate(initialData.certificateOfReleaseToServiceExpiry),
-        certificateOfRegistrationExpiry: parseDate(initialData.certificateOfRegistrationExpiry),
-        massAndBalanceExpiry: parseDate(initialData.massAndBalanceExpiry),
-        radioStationLicenseExpiry: parseDate(initialData.radioStationLicenseExpiry),
+        airworthinessDoc: parseDoc(initialData.airworthinessDoc),
+        insuranceDoc: parseDoc(initialData.insuranceDoc),
+        releaseToServiceDoc: parseDoc(initialData.releaseToServiceDoc),
+        registrationDoc: parseDoc(initialData.registrationDoc),
+        massAndBalanceDoc: parseDoc(initialData.massAndBalanceDoc),
+        radioLicenseDoc: parseDoc(initialData.radioLicenseDoc),
         currentTachoReading: initialData.currentTachoReading ?? undefined,
         next50HourInspection: initialData.next50HourInspection ?? undefined,
         next100HourInspection: initialData.next100HourInspection ?? undefined,
@@ -90,17 +95,37 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       next100HourInspection: 0,
     },
   });
+  
+  const { watch, setValue } = form;
+
+  const handleFileChange = useCallback((file: File, fieldName: keyof AircraftFormValues) => {
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 500KB.' });
+        return;
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast({ variant: 'destructive', title: 'Invalid file type', description: 'Only JPG, PNG, and WEBP are accepted.' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setValue(fieldName as any, reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [setValue, toast]);
 
   useEffect(() => {
     if (initialData) {
       form.reset({
         ...initialData,
-        airworthinessExpiry: parseDate(initialData.airworthinessExpiry),
-        insuranceExpiry: parseDate(initialData.insuranceExpiry),
-        certificateOfReleaseToServiceExpiry: parseDate(initialData.certificateOfReleaseToServiceExpiry),
-        certificateOfRegistrationExpiry: parseDate(initialData.certificateOfRegistrationExpiry),
-        massAndBalanceExpiry: parseDate(initialData.massAndBalanceExpiry),
-        radioStationLicenseExpiry: parseDate(initialData.radioStationLicenseExpiry),
+        airworthinessDoc: parseDoc(initialData.airworthinessDoc),
+        insuranceDoc: parseDoc(initialData.insuranceDoc),
+        releaseToServiceDoc: parseDoc(initialData.releaseToServiceDoc),
+        registrationDoc: parseDoc(initialData.registrationDoc),
+        massAndBalanceDoc: parseDoc(initialData.massAndBalanceDoc),
+        radioLicenseDoc: parseDoc(initialData.radioLicenseDoc),
         currentTachoReading: initialData.currentTachoReading ?? undefined,
         next50HourInspection: initialData.next50HourInspection ?? undefined,
         next100HourInspection: initialData.next100HourInspection ?? undefined,
@@ -114,12 +139,12 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         currentTachoReading: 0,
         next50HourInspection: 0,
         next100HourInspection: 0,
-        airworthinessExpiry: undefined,
-        insuranceExpiry: undefined,
-        certificateOfReleaseToServiceExpiry: undefined,
-        certificateOfRegistrationExpiry: undefined,
-        massAndBalanceExpiry: undefined,
-        radioStationLicenseExpiry: undefined,
+        airworthinessDoc: { expiryDate: undefined, url: undefined },
+        insuranceDoc: { expiryDate: undefined, url: undefined },
+        releaseToServiceDoc: { expiryDate: undefined, url: undefined },
+        registrationDoc: { expiryDate: undefined, url: undefined },
+        massAndBalanceDoc: { expiryDate: undefined, url: undefined },
+        radioLicenseDoc: { expiryDate: undefined, url: undefined },
       });
     }
   }, [initialData, form]);
@@ -132,13 +157,30 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     
     const aircraftDataToSave = {
         ...data,
-        airworthinessExpiry: data.airworthinessExpiry ? data.airworthinessExpiry.toISOString() : null,
-        insuranceExpiry: data.insuranceExpiry ? data.insuranceExpiry.toISOString() : null,
-        certificateOfReleaseToServiceExpiry: data.certificateOfReleaseToServiceExpiry ? data.certificateOfReleaseToServiceExpiry.toISOString() : null,
-        certificateOfRegistrationExpiry: data.certificateOfRegistrationExpiry ? data.certificateOfRegistrationExpiry.toISOString() : null,
-        massAndBalanceExpiry: data.massAndBalanceExpiry ? data.massAndBalanceExpiry.toISOString() : null,
-        radioStationLicenseExpiry: data.radioStationLicenseExpiry ? data.radioStationLicenseExpiry.toISOString() : null,
-        // Ensure undefined number fields become null
+        airworthinessDoc: {
+            expiryDate: data.airworthinessDoc?.expiryDate ? data.airworthinessDoc.expiryDate.toISOString() : null,
+            url: data.airworthinessDoc?.url || null
+        },
+        insuranceDoc: {
+            expiryDate: data.insuranceDoc?.expiryDate ? data.insuranceDoc.expiryDate.toISOString() : null,
+            url: data.insuranceDoc?.url || null
+        },
+        releaseToServiceDoc: {
+            expiryDate: data.releaseToServiceDoc?.expiryDate ? data.releaseToServiceDoc.expiryDate.toISOString() : null,
+            url: data.releaseToServiceDoc?.url || null
+        },
+        registrationDoc: {
+            expiryDate: data.registrationDoc?.expiryDate ? data.registrationDoc.expiryDate.toISOString() : null,
+            url: data.registrationDoc?.url || null
+        },
+        massAndBalanceDoc: {
+            expiryDate: data.massAndBalanceDoc?.expiryDate ? data.massAndBalanceDoc.expiryDate.toISOString() : null,
+            url: data.massAndBalanceDoc?.url || null
+        },
+        radioLicenseDoc: {
+            expiryDate: data.radioLicenseDoc?.expiryDate ? data.radioLicenseDoc.expiryDate.toISOString() : null,
+            url: data.radioLicenseDoc?.url || null
+        },
         currentTachoReading: data.currentTachoReading ?? null,
         next50HourInspection: data.next50HourInspection ?? null,
         next100HourInspection: data.next100HourInspection ?? null,
@@ -146,19 +188,17 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
 
     try {
         if (initialData) {
-            // Update existing aircraft
             const aircraftRef = doc(db, `companies/${company.id}/aircraft`, initialData.id);
             await setDoc(aircraftRef, { ...initialData, ...aircraftDataToSave });
             toast({ title: 'Aircraft Updated', description: `${data.tailNumber} details saved.` });
         } else {
-            // Add new aircraft
             const newAircraft: Omit<Aircraft, 'id'> = {
                 ...aircraftDataToSave,
                 companyId: company.id,
                 status: 'Available',
-                location: 'Default Base', // Placeholder
+                location: 'Default Base',
                 checklistStatus: 'ready',
-            };
+            } as Omit<Aircraft, 'id'>;
             await addDoc(collection(db, `companies/${company.id}/aircraft`), newAircraft);
             toast({ title: 'Aircraft Added', description: `${data.tailNumber} has been added to the fleet.` });
         }
@@ -188,46 +228,69 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     });
   };
 
-  const DatePickerField = ({ name, label }: { name: keyof AircraftFormValues, label: string }) => (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className="flex flex-col">
-          <FormLabel>{label}</FormLabel>
-          <Popover>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full pl-3 text-left font-normal",
-                    !field.value && "text-muted-foreground"
-                  )}
-                >
-                  {field.value ? (
-                    format(field.value as Date, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </FormControl>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={field.value as Date | undefined}
-                onSelect={field.onChange}
-                initialFocus
+  const DatePickerField = ({ name, label, urlFieldName, fileFieldName }: { name: keyof AircraftFormValues, label: string, urlFieldName: string, fileFieldName: string }) => {
+      const documentUrl = watch(urlFieldName as keyof AircraftFormValues) as string;
+    
+      return (
+        <div className="p-4 border rounded-lg space-y-3">
+          <p className="font-medium text-sm">{label}</p>
+          <div className="flex flex-col sm:flex-row gap-4">
+              <FormField
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value ? format(field.value as Date, "PPP") : <span>Set expiry date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value as Date | undefined} onSelect={field.onChange} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </PopoverContent>
-          </Popover>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+               <FormField
+                    control={form.control}
+                    name={fileFieldName as any}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <div className="relative">
+                                    <Button type="button" variant="outline" asChild>
+                                        <label htmlFor={fileFieldName} className="cursor-pointer">
+                                            {documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />}
+                                            {documentUrl ? 'Change' : 'Upload'}
+                                        </label>
+                                    </Button>
+                                    <Input
+                                        id={fileFieldName}
+                                        type="file"
+                                        accept="image/*"
+                                        className="absolute w-0 h-0 opacity-0"
+                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], urlFieldName as any)}
+                                    />
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+          </div>
+        </div>
+      );
+  }
+
 
   return (
     <>
@@ -236,150 +299,31 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
         <ScrollArea className="h-[65vh] pr-4">
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                    control={form.control}
-                    name="make"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Aircraft Make</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Cessna" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="model"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Aircraft Model</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., 172 Skyhawk" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="tailNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Aircraft Registration</FormLabel>
-                        <div className="flex items-center gap-2">
-                            <FormControl>
-                                <Input placeholder="e.g., ZS-ABC" {...field} />
-                            </FormControl>
-                            {settings.useAiChecklists && (
-                                <Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}>
-                                    <Bot className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="aircraftType"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Aircraft Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select aircraft type" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="SE">SE</SelectItem>
-                                    <SelectItem value="ME">ME</SelectItem>
-                                    <SelectItem value="FSTD">FSTD</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="hours"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Current Hobbs Hours</FormLabel>
-                        <div className="flex items-center gap-2">
-                                <FormControl>
-                                    <Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} />
-                                </FormControl>
-                                {settings.useAiChecklists && (
-                                    <Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}>
-                                        <Bot className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                    <FormField control={form.control} name="make" render={({ field }) => (<FormItem><FormLabel>Aircraft Make</FormLabel><FormControl><Input placeholder="e.g., Cessna" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="model" render={({ field }) => (<FormItem><FormLabel>Aircraft Model</FormLabel><FormControl><Input placeholder="e.g., 172 Skyhawk" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="tailNumber" render={({ field }) => (<FormItem><FormLabel>Aircraft Registration</FormLabel><div className="flex items-center gap-2"><FormControl><Input placeholder="e.g., ZS-ABC" {...field} /></FormControl>{settings.useAiChecklists && (<Button type="button" variant="outline" size="icon" onClick={() => openScanner('registration')}><Bot className="h-4 w-4" /></Button>)}</div><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="aircraftType" render={({ field }) => (<FormItem><FormLabel>Aircraft Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select aircraft type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SE">SE</SelectItem><SelectItem value="ME">ME</SelectItem><SelectItem value="FSTD">FSTD</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="hours" render={({ field }) => (<FormItem><FormLabel>Current Hobbs Hours</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="number" step="0.1" placeholder="e.g., 1234.5" {...field} /></FormControl>{settings.useAiChecklists && (<Button type="button" variant="outline" size="icon" onClick={() => openScanner('hobbs')}><Bot className="h-4 w-4" /></Button>)}</div><FormMessage /></FormItem>)} />
                 </div>
                 
                 <Separator />
                 <h4 className="font-medium text-center">Maintenance Information</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="currentTachoReading"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Current Tacho Reading</FormLabel>
-                            <FormControl>
-                                <Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="next50HourInspection"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Next 50hr Insp.</FormLabel>
-                            <FormControl>
-                                <Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="next100HourInspection"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Next 100hr Insp.</FormLabel>
-                            <FormControl>
-                                <Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={form.control} name="currentTachoReading" render={({ field }) => (<FormItem><FormLabel>Current Tacho Reading</FormLabel><FormControl><Input type="number" step="0.1" placeholder="e.g., 4321.0" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="next50HourInspection" render={({ field }) => (<FormItem><FormLabel>Next 50hr Insp.</FormLabel><FormControl><Input type="number" step="0.1" placeholder="e.g., 1284.5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="next100HourInspection" render={({ field }) => (<FormItem><FormLabel>Next 100hr Insp.</FormLabel><FormControl><Input type="number" step="0.1" placeholder="e.g., 1334.5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
 
                 <Separator />
 
                 <h4 className="font-medium text-center">Document Expiry Dates</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DatePickerField name="airworthinessExpiry" label="Certificate of Airworthiness" />
-                <DatePickerField name="insuranceExpiry" label="Insurance" />
-                <DatePickerField name="certificateOfReleaseToServiceExpiry" label="Release to Service" />
-                <DatePickerField name="certificateOfRegistrationExpiry" label="Certificate of Registration" />
-                <DatePickerField name="massAndBalanceExpiry" label="Mass & Balance" />
-                <DatePickerField name="radioStationLicenseExpiry" label="Radio Station License" />
+                <div className="grid grid-cols-1 gap-4">
+                    <DatePickerField name="airworthinessDoc.expiryDate" label="Certificate of Airworthiness" urlFieldName="airworthinessDoc.url" fileFieldName="airworthinessDoc.file" />
+                    <DatePickerField name="insuranceDoc.expiryDate" label="Insurance" urlFieldName="insuranceDoc.url" fileFieldName="insuranceDoc.file" />
+                    <DatePickerField name="releaseToServiceDoc.expiryDate" label="Release to Service" urlFieldName="releaseToServiceDoc.url" fileFieldName="releaseToServiceDoc.file" />
+                    <DatePickerField name="registrationDoc.expiryDate" label="Certificate of Registration" urlFieldName="registrationDoc.url" fileFieldName="registrationDoc.file" />
+                    <DatePickerField name="massAndBalanceDoc.expiryDate" label="Mass & Balance" urlFieldName="massAndBalanceDoc.url" fileFieldName="massAndBalanceDoc.file" />
+                    <DatePickerField name="radioLicenseDoc.expiryDate" label="Radio Station License" urlFieldName="radioLicenseDoc.url" fileFieldName="radioLicenseDoc.file" />
                 </div>
             </div>
         </ScrollArea>
@@ -404,5 +348,3 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     </>
   );
 }
-
-    
