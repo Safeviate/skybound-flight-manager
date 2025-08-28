@@ -8,7 +8,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Archive, RotateCw, KeyRound } from 'lucide-react';
 import type { User as PersonnelUser } from '@/lib/types';
 import { getExpiryBadge } from '@/lib/utils.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -141,6 +141,27 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             });
         }
     };
+    
+    const handleSendPasswordReset = async (person: PersonnelUser) => {
+        if (!person.email) {
+            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have an email address on file.' });
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, person.email);
+            toast({
+                title: 'Password Reset Email Sent',
+                description: `A password reset link has been sent to ${person.name}.`,
+            });
+        } catch (error: any) {
+            console.error("Error sending password reset email:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Email Failed',
+                description: 'Could not send the password reset email. Check if the user exists in Firebase Authentication.',
+            });
+        }
+    };
 
     const PersonnelCardList = ({ list, isArchived }: { list: PersonnelUser[], isArchived?: boolean }) => (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -198,6 +219,9 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                             <>
                                                 <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(person)}>
                                                     <Mail className="mr-2 h-4 w-4" /> Send Welcome Email
+                                                </DropdownMenuItem>
+                                                 <DropdownMenuItem onSelect={() => handleSendPasswordReset(person)}>
+                                                    <KeyRound className="mr-2 h-4 w-4" /> Send Password Reset
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleStatusChange(person.id, 'Archived')}>
                                                     <Archive className="mr-2 h-4 w-4" /> Archive
