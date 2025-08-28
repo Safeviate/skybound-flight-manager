@@ -276,40 +276,47 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 try {
-                    // Search across all companies for the user
-                    const usersQuery = query(collectionGroup(db, 'users'), where('id', '==', firebaseUser.uid));
-                    const studentsQuery = query(collectionGroup(db, 'students'), where('id', '==', firebaseUser.uid));
+                    // This logic is designed to find the user's document regardless of whether they are in 'users' or 'students'.
+                    const findUserDoc = async () => {
+                        const userRef = doc(db, 'users', firebaseUser.uid);
+                        const userSnap = await getDoc(userRef);
+                        if (userSnap.exists()) return { snap: userSnap, type: 'users' };
 
-                    const [usersSnapshot, studentsSnapshot] = await Promise.all([
-                        getDocs(usersQuery),
-                        getDocs(studentsQuery),
-                    ]);
-                    
-                    let userDocSnap, collectionType;
-                    if (!usersSnapshot.empty) {
-                        userDocSnap = usersSnapshot.docs[0];
-                        collectionType = 'users';
-                    } else if (!studentsSnapshot.empty) {
-                        userDocSnap = studentsSnapshot.docs[0];
-                        collectionType = 'students';
+                        const studentRef = doc(db, 'students', firebaseUser.uid);
+                        const studentSnap = await getDoc(studentRef);
+                        if (studentSnap.exists()) return { snap: studentSnap, type: 'students' };
+                        
+                        // If not found at top level, check within companies (this is the main path)
+                        const companiesSnapshot = await getDocs(collection(db, 'companies'));
+                        for (const companyDoc of companiesSnapshot.docs) {
+                            const companyId = companyDoc.id;
+                            
+                            const companyUserRef = doc(db, 'companies', companyId, 'users', firebaseUser.uid);
+                            const companyUserSnap = await getDoc(companyUserRef);
+                            if (companyUserSnap.exists()) return { snap: companyUserSnap, type: 'users', companyId };
+
+                            const companyStudentRef = doc(db, 'companies', companyId, 'students', firebaseUser.uid);
+                            const companyStudentSnap = await getDoc(companyStudentRef);
+                            if (companyStudentSnap.exists()) return { snap: companyStudentSnap, type: 'students', companyId };
+                        }
+                        return null;
                     }
+                    
+                    const userLocation = await findUserDoc();
 
-                    if (userDocSnap && collectionType) {
-                        const userData = userDocSnap.data() as User;
-                        const companyId = userData.companyId;
-                        const userDocRef = doc(db, 'companies', companyId, collectionType, firebaseUser.uid);
+                    if (userLocation && userLocation.companyId) {
+                        const { snap, type, companyId } = userLocation;
+                        const userDocRef = doc(db, 'companies', companyId, type, firebaseUser.uid);
                         setupListeners(userDocRef, companyId, firebaseUser.uid);
 
-                        if (userData.permissions.includes('Super User')) {
+                        if (snap.data().permissions?.includes('Super User')) {
                             const companiesQuery = query(collection(db, 'companies'));
                             const companiesSnapshot = await getDocs(companiesQuery);
                             setUserCompanies(companiesSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()} as Company)));
                         }
 
                     } else {
-                        // User exists in Auth but not in any company's database.
-                        // This can happen if the database record creation fails after Auth user creation.
-                        // Silently log them out.
+                        console.error(`User document for UID ${firebaseUser.uid} not found in any company.`);
                         logout();
                     }
                 } catch (error) {
