@@ -23,7 +23,7 @@ import { db } from '@/lib/firebase';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Bot, FileUp, ImageIcon } from 'lucide-react';
+import { CalendarIcon, Bot, FileUp, ImageIcon, Camera } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState, useEffect, useCallback } from 'react';
@@ -32,6 +32,7 @@ import { useSettings } from '@/context/settings-provider';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 const MAX_FILE_SIZE = 500000; // 500KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -71,6 +72,8 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scanMode, setScanMode] = useState<'registration' | 'hobbs' | null>(null);
   const { settings } = useSettings();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoTarget, setPhotoTarget] = useState<string | null>(null);
 
   const form = useForm<AircraftFormValues>({
     resolver: zodResolver(aircraftFormSchema),
@@ -115,6 +118,20 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       reader.readAsDataURL(file);
     }
   }, [setValue, toast]);
+  
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+      setValue(photoTarget as any, dataUrl, { shouldValidate: true });
+    }
+    setIsCameraOpen(false);
+    setPhotoTarget(null);
+  };
+  
+  const openCamera = (targetField: string) => {
+    setPhotoTarget(targetField);
+    setIsCameraOpen(true);
+  };
+
 
   useEffect(() => {
     if (initialData) {
@@ -234,12 +251,12 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       return (
         <div className="p-4 border rounded-lg space-y-3">
           <p className="font-medium text-sm">{label}</p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
               <FormField
                 control={form.control}
                 name={name}
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="sm:col-span-1">
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -264,10 +281,13 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
                     control={form.control}
                     name={fileFieldName as any}
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="sm:col-span-2 flex items-center justify-end gap-2">
+                           <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
+                              <Camera className="mr-2 h-4 w-4" /> Take Photo
+                           </Button>
                             <FormControl>
                                 <div className="relative">
-                                    <Button type="button" variant="outline" asChild>
+                                    <Button type="button" variant="outline" asChild size="sm">
                                         <label htmlFor={fileFieldName} className="cursor-pointer">
                                             {documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />}
                                             {documentUrl ? 'Change' : 'Upload'}
@@ -344,6 +364,16 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
             </DialogHeader>
             {scanMode && <AircraftInfoScanner scanMode={scanMode} onSuccess={handleScanSuccess} />}
         </DialogContent>
+    </Dialog>
+
+     <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Take Photo</DialogTitle>
+          <DialogDescription>Take a picture of the document.</DialogDescription>
+        </DialogHeader>
+        <StandardCamera onSuccess={handlePhotoSuccess} />
+      </DialogContent>
     </Dialog>
     </>
   );

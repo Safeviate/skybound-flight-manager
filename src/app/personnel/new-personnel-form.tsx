@@ -26,7 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ALL_PERMISSIONS, ROLE_PERMISSIONS } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, FileUp, ImageIcon } from 'lucide-react';
+import { CalendarIcon, FileUp, ImageIcon, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useUser } from '@/context/user-provider';
@@ -39,6 +39,8 @@ import { useSettings } from '@/context/settings-provider';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { createUserAndSendWelcomeEmail } from '../actions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { StandardCamera } from '@/components/ui/standard-camera';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -85,6 +87,8 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   const { toast } = useToast();
   const [roles, setRoles] = useState<CompanyRole[]>([]);
   const [departments, setDepartments] = useState<CompanyDepartment[]>([]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [photoTarget, setPhotoTarget] = useState<string | null>(null);
   
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),
@@ -119,6 +123,19 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
       reader.readAsDataURL(file);
     }
   }, [setValue, toast]);
+
+  const handlePhotoSuccess = (dataUrl: string) => {
+    if (photoTarget) {
+      setValue(photoTarget as any, dataUrl, { shouldValidate: true });
+    }
+    setIsCameraOpen(false);
+    setPhotoTarget(null);
+  };
+  
+  const openCamera = (targetField: string) => {
+    setPhotoTarget(targetField);
+    setIsCameraOpen(true);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,6 +212,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ScrollArea className="h-[60vh] pr-4">
@@ -214,7 +232,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                 
                 <Separator />
                 
-                <FormField control={form.control} name="documents" render={() => (<FormItem><div className="mb-4"><FormLabel className="text-base">Document Expiry Dates & Uploads</FormLabel><FormDescription>Set the expiry date and upload a photo for each relevant document.</FormDescription></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{form.getValues('documents')?.map((docItem, index) => { const documentUrl = watch(`documents.${index}.url`); return (<div key={docItem.type} className="p-4 border rounded-lg space-y-3"><p className="font-medium text-sm">{docItem.type}</p><div className="flex flex-col sm:flex-row gap-4"><FormField control={form.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void }; return (<FormItem className="flex-1"><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)}} /><FormField control={form.control} name={`documents.${index}.url`} render={({ field }) => (<FormItem><FormControl><div className="relative"><Button type="button" variant="outline" asChild><label htmlFor={`doc-file-${index}`} className="cursor-pointer">{documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />} {documentUrl ? 'Change' : 'Upload'}</label></Button><Input id={`doc-file-${index}`} type="file" accept="image/*" className="absolute w-0 h-0 opacity-0" onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)} /></div></FormControl><FormMessage /></FormItem>)} /></div></div>)})}</div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="documents" render={() => (<FormItem><div className="mb-4"><FormLabel className="text-base">Document Expiry Dates & Uploads</FormLabel><FormDescription>Set the expiry date and upload a photo for each relevant document.</FormDescription></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{form.getValues('documents')?.map((docItem, index) => { const documentUrl = watch(`documents.${index}.url`); return (<div key={docItem.type} className="p-4 border rounded-lg space-y-3"><p className="font-medium text-sm">{docItem.type}</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center"><FormField control={form.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined, onChange: (date: Date | undefined) => void }; return (<FormItem className="sm:col-span-1"><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)}} /><FormField control={form.control} name={`documents.${index}.url`} render={({ field }) => (<FormItem className="sm:col-span-2 flex items-center justify-end gap-2"><Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}><Camera className="mr-2 h-4 w-4" /> Take Photo</Button><FormControl><div className="relative"><Button type="button" variant="outline" asChild size="sm"><label htmlFor={`doc-file-${index}`} className="cursor-pointer">{documentUrl ? <ImageIcon className="mr-2" /> : <FileUp className="mr-2" />} {documentUrl ? 'Change' : 'Upload'}</label></Button><Input id={`doc-file-${index}`} type="file" accept="image/*" className="absolute w-0 h-0 opacity-0" onChange={(e) => e.target.files && handleFileChange(e.target.files[0], index)} /></div></FormControl><FormMessage /></FormItem>)} /></div></div>)})}</div><FormMessage /></FormItem>)} />
                 
                 <Separator />
 
@@ -228,5 +246,15 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         </div>
       </form>
     </Form>
+    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Take Photo</DialogTitle>
+            <DialogDescription>Take a picture of the document.</DialogDescription>
+          </DialogHeader>
+          <StandardCamera onSuccess={handlePhotoSuccess} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
