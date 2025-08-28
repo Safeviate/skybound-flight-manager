@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Helper function to get user's role from the database
+    function getUserRole(userId, companyId) {
+      // First try to get from 'users' collection
+      let userDoc = get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId)).data;
+      if (userDoc != null) {
+        return userDoc.role;
+      }
+      // If not found, try to get from 'students' collection
+      let studentDoc = get(/databases/$(database)/documents/companies/$(companyId)/students/$(userId)).data;
+      if (studentDoc != null) {
+        return studentDoc.role;
+      }
+      return null;
+    }
+    
+    // Helper function to check for Super User permission
+    function isSuperUser(userId, companyId) {
+       let userDoc = get(/databases/$(database)/documents/companies/$(companyId)/users/$(userId)).data;
+       return userDoc.permissions.hasAny(['Super User']);
+    }
+
+    // Allow company creation by any authenticated user
+    match /companies/{companyId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null; // Allows users to read their own company data
+    }
+    
+    match /companies/{companyId}/{collection}/{docId} {
+       allow read, write: if false; // Default deny all
+    }
+
+    // Rules for all collections within a company
+    match /companies/{companyId}/{document=**} {
+      allow read, write: if get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)).data.companyId == companyId || 
+                            get(/databases/$(database)/documents/companies/$(companyId)/students/$(request.auth.uid)).data.companyId == companyId;
+    }
+    
+    // Collection group query for users and students
+    // This is crucial for the initial user authentication and data fetching
+    match /{path=**}/users/{userId} {
+      allow get: if request.auth != null;
+    }
+    
+    match /{path=**}/students/{userId} {
+      allow get: if request.auth != null;
+    }
+    
+    // Specific collection rules
+    match /companies/{companyId}/users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if getUserRole(request.auth.uid, companyId) == 'Admin' || isSuperUser(request.auth.uid, companyId);
+      allow update: if request.auth.uid == userId || getUserRole(request.auth.uid, companyId) == 'Admin' || isSuperUser(request.auth.uid, companyId);
+      allow delete: if getUserRole(request.auth.uid, companyId) == 'Admin' || isSuperUser(request.auth.uid, companyId);
+    }
+    
+    match /companies/{companyId}/students/{studentId} {
+        allow read: if request.auth != null;
+        allow create: if getUserRole(request.auth.uid, companyId) in ['Admin', 'Instructor', 'Chief Flight Instructor', 'Head Of Training'] || isSuperUser(request.auth.uid, companyId);
+        allow update: if request.auth.uid == studentId || getUserRole(request.auth.uid, companyId) in ['Admin', 'Instructor', 'Chief Flight Instructor', 'Head Of Training'] || isSuperUser(request.auth.uid, companyId);
+        allow delete: if getUserRole(request.auth.uid, companyId) == 'Admin' || isSuperUser(request.auth.uid, companyId);
+    }
+
+    match /companies/{companyId}/aircraft/{aircraftId} {
+        allow read, write: if request.auth != null;
+    }
+
+    match /companies/{companyId}/bookings/{bookingId} {
+        allow read, write: if request.auth != null;
+    }
+    
+    match /companies/{companyId}/safety-reports/{reportId} {
+        allow read, write: if request.auth != null;
+    }
+
+    match /companies/{companyId}/quality-audits/{auditId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /companies/{companyId}/risks/{riskId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /companies/{companyId}/alerts/{alertId} {
+      allow read, write: if request.auth != null;
+    }
+    
+     match /companies/{companyId}/departments/{departmentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /companies/{companyId}/roles/{roleId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
