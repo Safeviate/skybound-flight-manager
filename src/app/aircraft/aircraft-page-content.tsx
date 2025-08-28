@@ -817,7 +817,7 @@ export function AircraftPageContent({
         }
     
         doc.setFontSize(18);
-        doc.text(`${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
+        doc.text(`${company?.name || 'Safeviate'} - ${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
         doc.setFontSize(10);
         doc.text(`Completed by ${checklist.userName} on ${format(parseISO(checklist.dateCompleted), 'PPP p')}`, 14, 28);
         
