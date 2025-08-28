@@ -1,12 +1,91 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to all documents
-    // if the user is authenticated.
-    // Warning: This is not secure for production.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // ===== HELPER FUNCTIONS =====
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Get the role of the requesting user.
+    function getRole(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid)).data.role;
+    }
+
+    // Get the full document of the requesting user.
+    function getUserDoc(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/users/$(request.auth.uid));
+    }
+    
+    // Check if the user belongs to the company they are trying to access.
+    function isUserInCompany(companyId) {
+      // Allow if the user document exists and its companyId matches the path.
+      return getUserDoc(companyId).data.companyId == companyId;
+    }
+    
+    // Check if the user is the owner of the document.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Check if the user has a specific permission.
+    function hasPermission(companyId, permission) {
+      let permissions = getUserDoc(companyId).data.permissions;
+      return permission in permissions || 'Super User' in permissions;
+    }
+
+    // ===== SECURITY RULES =====
+
+    // Rules for accessing company-specific data.
+    match /companies/{companyId} {
+      allow read: if isSignedIn() && isUserInCompany(companyId);
+      allow write: if hasPermission(companyId, 'Super User'); // Only Super Users can edit company doc
+
+      // --- USER & STUDENT DATA ---
+      match /users/{userId} {
+        allow read: if isSignedIn() && isUserInCompany(companyId) && (isOwner(userId) || hasPermission(companyId, 'Personnel:View'));
+        allow update: if isSignedIn() && isUserInCompany(companyId) && (isOwner(userId) || hasPermission(companyId, 'Personnel:Edit'));
+        allow create, delete: if isSignedIn() && isUserInCompany(companyId) && hasPermission(companyId, 'Personnel:Edit');
+      }
+
+      match /students/{studentId} {
+        allow read: if isSignedIn() && isUserInCompany(companyId) && (isOwner(studentId) || hasPermission(companyId, 'Students:View'));
+        allow update: if isSignedIn() && isUserInCompany(companyId) && (isOwner(studentId) || hasPermission(companyId, 'Students:Edit'));
+        allow create, delete: if isSignedIn() && isUserInCompany(companyId) && hasPermission(companyId, 'Students:Edit');
+      }
+      
+      // --- OPERATIONAL DATA ---
+      // Allow any authenticated user of the company to read most data, but restrict writes.
+      match /{collection}/{docId} {
+        allow read: if isSignedIn() && isUserInCompany(companyId);
+        
+        // Write rules require specific permissions
+        allow write: if isSignedIn() && isUserInCompany(companyId) 
+                      && ( (collection == 'aircraft' && hasPermission(companyId, 'Aircraft:Edit'))
+                        || (collection == 'bookings' && hasPermission(companyId, 'Bookings:Edit'))
+                        || (collection == 'safety-reports' && hasPermission(companyId, 'Safety:Edit'))
+                        || (collection == 'quality-audits' && hasPermission(companyId, 'Quality:Edit'))
+                        || (collection == 'risks' && hasPermission(companyId, 'Safety:Edit'))
+                        || (collection == 'alerts' && hasPermission(companyId, 'Alerts:Edit'))
+                        || (collection == 'roles' && hasPermission(companyId, 'Roles & Departments:Edit'))
+                        || (collection == 'departments' && hasPermission(companyId, 'Roles & Departments:Edit'))
+                        || (collection == 'external-contacts' && hasPermission(companyId, 'Settings:Edit'))
+                      );
+      }
+    }
+    
+    // --- COLLECTION GROUP RULES ---
+    // This is required to allow the application to find a user's document
+    // across all companies during the login process. It only allows the user
+    // to read THEIR OWN document.
+    match /{path=**}/users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+    }
+     match /{path=**}/students/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
     }
   }
 }
