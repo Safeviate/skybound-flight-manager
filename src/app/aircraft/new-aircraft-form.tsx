@@ -250,64 +250,62 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
       return (
         <div className="p-4 border rounded-lg space-y-3">
           <p className="font-medium text-sm">{label}</p>
-          <div className="flex justify-between items-center gap-4">
-              <FormField
-                control={form.control}
-                name={name}
-                render={({ field }) => (
-                  <FormItem>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? format(field.value as Date, "PPP") : <span>Set expiry date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value as Date | undefined} onSelect={field.onChange} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
+           <FormField
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                        >
+                          {field.value ? format(field.value as Date, "PPP") : <span>Set expiry date</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value as Date | undefined} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <div className="flex items-center gap-2">
+               <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => openCamera(urlFieldName)}>
+                  <Camera className="mr-2 h-4 w-4" /> Take Photo
+               </Button>
+               <FormField
+                  control={form.control}
+                  name={fileFieldName as any}
+                  render={({ field }) => (
+                      <FormItem className="flex-1">
+                          <FormControl>
+                              <div className="relative">
+                                  <Button type="button" variant="outline" asChild size="sm" className="w-full">
+                                      <label htmlFor={fileFieldName} className="cursor-pointer">
+                                          <FileUp className="mr-2 h-4 w-4" />
+                                          {documentUrl ? 'Change' : 'Upload'}
+                                      </label>
+                                  </Button>
+                                  <Input
+                                      id={fileFieldName}
+                                      type="file"
+                                      accept="image/*"
+                                      className="absolute w-0 h-0 opacity-0"
+                                      onChange={(e) => e.target.files && handleFileChange(e.target.files[0], urlFieldName as any)}
+                                  />
+                              </div>
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )}
               />
-               <div className="flex items-center gap-2">
-                 <Button type="button" variant="outline" size="sm" onClick={() => openCamera(urlFieldName)}>
-                    <Camera className="mr-2 h-4 w-4" /> Take Photo
-                 </Button>
-                 <FormField
-                    control={form.control}
-                    name={fileFieldName as any}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormControl>
-                                <div className="relative">
-                                    <Button type="button" variant="outline" asChild size="sm">
-                                        <label htmlFor={fileFieldName} className="cursor-pointer">
-                                            <FileUp className="mr-2 h-4 w-4" />
-                                            {documentUrl ? 'Change' : 'Upload'}
-                                        </label>
-                                    </Button>
-                                    <Input
-                                        id={fileFieldName}
-                                        type="file"
-                                        accept="image/*"
-                                        className="absolute w-0 h-0 opacity-0"
-                                        onChange={(e) => e.target.files && handleFileChange(e.target.files[0], urlFieldName as any)}
-                                    />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-               </div>
-          </div>
+             </div>
         </div>
       );
   }
@@ -379,3 +377,5 @@ export function NewAircraftForm({ onSuccess, initialData }: NewAircraftFormProps
     </>
   );
 }
+
+    

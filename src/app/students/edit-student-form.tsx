@@ -185,22 +185,22 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="studentCode" render={({ field }) => (<FormItem><FormLabel>Student Code</FormLabel><FormControl><Input placeholder="e.g., S12345" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="student@email.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="studentCode" render={({ field }) => (<FormItem><FormLabel>Student Code</FormLabel><FormControl><Input placeholder="e.g., S12345" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="student@email.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
         </div>
         
         <div>
-            <FormLabel className="text-base font-semibold">Document Expiry Dates</FormLabel>
+            <FormLabel className="text-base font-semibold">Document Expiry Dates & Uploads</FormLabel>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 {(form.watch('documents') || []).map((docItem, index) => {
                     const documentUrl = watch(`documents.${index}.url`);
                     return (
                         <div key={docItem.type} className="p-4 border rounded-lg space-y-3">
                             <p className="font-medium text-sm">{docItem.type}</p>
-                            <div className="flex justify-between items-center gap-4">
+                            <div className="space-y-2">
                                 <FormField
                                     control={form.control}
                                     name={`documents.${index}.expiryDate`}
@@ -211,7 +211,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <FormControl>
-                                                            <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
                                                                 {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
                                                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                             </Button>
@@ -226,18 +226,18 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
                                         )
                                     }}
                                 />
-                                 <div className="flex items-center gap-2">
-                                    <Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}>
+                                <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => openCamera(`documents.${index}.url`)}>
                                         <Camera className="mr-2 h-4 w-4" /> Take Photo
                                     </Button>
                                     <FormField
                                         control={form.control}
                                         name={`documents.${index}.file`}
                                         render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem className="flex-1">
                                                 <FormControl>
                                                     <div className="relative">
-                                                        <Button type="button" variant="outline" asChild size="sm">
+                                                        <Button type="button" variant="outline" asChild size="sm" className="w-full">
                                                             <label htmlFor={`doc-file-${index}`} className="cursor-pointer">
                                                                 <FileUp className="mr-2 h-4 w-4" />
                                                                 {documentUrl ? 'Change' : 'Upload'}
@@ -320,3 +320,5 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
     </>
   );
 }
+
+    

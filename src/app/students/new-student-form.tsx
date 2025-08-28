@@ -217,7 +217,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                             return (
                                 <div key={docItem.type} className="p-4 border rounded-lg space-y-3">
                                     <p className="font-medium text-sm">{docItem.type}</p>
-                                    <div className="flex justify-between items-center gap-4">
+                                    <div className="space-y-2">
                                         <FormField
                                             control={form.control}
                                             name={`documents.${index}.expiryDate`}
@@ -228,7 +228,7 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                                                         <Popover>
                                                             <PopoverTrigger asChild>
                                                                 <FormControl>
-                                                                    <Button variant={"outline"} className={cn("w-[240px] pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
+                                                                    <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>
                                                                         {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry date</span>}
                                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                     </Button>
@@ -244,17 +244,17 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                                             }}
                                         />
                                         <div className="flex items-center gap-2">
-                                            <Button type="button" variant="outline" size="sm" onClick={() => openCamera(`documents.${index}.url`)}>
+                                            <Button type="button" variant="outline" size="sm" className="flex-1" onClick={() => openCamera(`documents.${index}.url`)}>
                                                 <Camera className="mr-2 h-4 w-4" /> Take Photo
                                             </Button>
                                             <FormField
                                                 control={form.control}
                                                 name={`documents.${index}.file`}
                                                 render={({ field }) => (
-                                                    <FormItem>
+                                                    <FormItem className="flex-1">
                                                         <FormControl>
                                                             <div className="relative">
-                                                                <Button type="button" variant="outline" asChild size="sm">
+                                                                <Button type="button" variant="outline" asChild size="sm" className="w-full">
                                                                     <label htmlFor={`doc-file-${index}`} className="cursor-pointer">
                                                                         <FileUp className="mr-2 h-4 w-4" />
                                                                         {documentUrl ? 'Change' : 'Upload'}
@@ -339,3 +339,5 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
     </>
   );
 }
+
+    
