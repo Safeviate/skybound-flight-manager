@@ -689,73 +689,78 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-       <Tabs defaultValue="triage" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-              <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
-              <TabsTrigger value="investigation">Investigation</TabsTrigger>
-              <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-              <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
-          </TabsList>
-              
-          <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
-              <Card id="printable-report-header" className="print:shadow-none print:border-none">
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                            {company?.logoUrl && (
-                                <Image
-                                    src={company.logoUrl}
-                                    alt={`${company.name} Logo`}
-                                    width={64}
-                                    height={64}
-                                    className="h-16 w-16 rounded-md object-contain"
-                                />
-                            )}
+        <Tabs defaultValue="triage" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
+                <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+                <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+            </TabsList>
+            
+            <div id="printable-report-header" className="mt-6">
+                <Card className="print:shadow-none print:border-none">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-4">
+                                {company?.logoUrl && (
+                                    <Image
+                                        src={company.logoUrl}
+                                        alt={`${company.name} Logo`}
+                                        width={64}
+                                        height={64}
+                                        className="h-16 w-16 rounded-md object-contain"
+                                    />
+                                )}
+                            </div>
+                            <div className="flex-1 text-center">
+                                <CardTitle>{company?.name}</CardTitle>
+                                <CardDescription>Safety Report Investigation</CardDescription>
+                            </div>
+                            <div className="w-16">
+                                <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                            </div>
                         </div>
-                        <div className="flex-1 text-center">
-                            <CardTitle>{company?.name}</CardTitle>
-                            <CardDescription>Safety Report Investigation</CardDescription>
-                        </div>
-                        <div className="w-16"></div>
-                    </div>
-                    <Separator className="my-4"/>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                        <Separator className="my-4"/>
+                        <div className="text-center">
                             <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                             <CardDescription>
                                 Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
                             </CardDescription>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                <Separator className="mb-4" />
-                    <div className="flex justify-between items-center">
-                    <h3 className="font-semibold">Initial Report Details</h3>
-                    {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
-                        <div className="flex items-center gap-2">
-                            {isEditingReport ? (
-                                <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
-                            ) : (
-                                <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                    </CardHeader>
+                </Card>
+            </div>
+              
+            <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
+                 <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Initial Report Details</CardTitle>
+                            {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
+                                <div className="flex items-center gap-2">
+                                    {isEditingReport ? (
+                                        <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
+                                    ) : (
+                                        <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                                    )}
+                                </div>
                             )}
                         </div>
-                    )}
-                </div>
-                    {isEditingReport ? (
-                        <Textarea 
-                            value={reportDetails}
-                            onChange={(e) => setReportDetails(e.target.value)}
-                            className="min-h-[250px] whitespace-pre-wrap mt-2"
-                        />
-                    ) : (
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto mt-2">
-                            {report.details}
-                        </p>
-                    )}
-                </CardContent>
-              </Card>
+                    </CardHeader>
+                    <CardContent>
+                        {isEditingReport ? (
+                            <Textarea 
+                                value={reportDetails}
+                                onChange={(e) => setReportDetails(e.target.value)}
+                                className="min-h-[250px] whitespace-pre-wrap mt-2"
+                            />
+                        ) : (
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto mt-2">
+                                {report.details}
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
 
               <Card id="classification-card">
                   <CardHeader>
