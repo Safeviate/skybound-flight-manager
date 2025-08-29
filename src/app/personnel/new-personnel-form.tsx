@@ -170,7 +170,7 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     }
   }, [selectedRole, roles, form]);
 
-  const isInstructorRole = selectedRole?.toLowerCase().includes('instructor');
+  const isInstructorRole = selectedRole === 'Instructor';
 
   async function handleFormSubmit(data: PersonnelFormValues) {
     if (!company) {

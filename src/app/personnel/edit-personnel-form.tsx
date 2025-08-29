@@ -187,7 +187,7 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
     }
   }, [selectedRole, roles, form]);
 
-  const isInstructorRole = selectedRole?.toLowerCase().includes('instructor');
+  const isInstructorRole = selectedRole === 'Instructor';
 
   function handleFormSubmit(data: PersonnelFormValues) {
     const documentsToSave: UserDocument[] = (data.documents || [])
