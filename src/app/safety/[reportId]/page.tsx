@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -688,40 +687,36 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-
-      <Tabs defaultValue="triage" className="w-full">
+      
+       <Tabs defaultValue="triage" className="w-full">
         <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-            <TabsTrigger value="triage">Report & Triage</TabsTrigger>
+            <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
             <TabsTrigger value="investigation">Investigation</TabsTrigger>
-            <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
-            <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
+            <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+            <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
         </TabsList>
-
-        <div id="printable-report-header" className="mt-6">
-            <Card className="print:shadow-none print:border-none">
-                <CardHeader>
-                    <div className="flex items-center gap-4">
-                        {company?.logoUrl && (
-                            <Image
-                                src={company.logoUrl}
-                                alt={`${company.name} Logo`}
-                                width={64}
-                                height={64}
-                                className="h-16 w-16 rounded-md object-contain"
-                            />
-                        )}
-                        <div>
-                            <CardTitle>{company?.name}</CardTitle>
-                            <CardDescription>Safety Report Investigation</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-            </Card>
-        </div>
               
           <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
-              <Card>
+              <Card id="printable-report-header" className="print:shadow-none print:border-none">
                   <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-4">
+                            {company?.logoUrl && (
+                                <Image
+                                    src={company.logoUrl}
+                                    alt={`${company.name} Logo`}
+                                    width={64}
+                                    height={64}
+                                    className="h-16 w-16 rounded-md object-contain"
+                                />
+                            )}
+                            <div>
+                                <CardTitle>{company?.name}</CardTitle>
+                                <CardDescription>Safety Report Investigation</CardDescription>
+                            </div>
+                        </div>
+                    </div>
+                    <Separator className="my-4"/>
                       <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                       <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                       <CardDescription>
@@ -758,7 +753,7 @@ function SafetyReportInvestigationPage() {
 
               <Card id="classification-card">
                   <CardHeader>
-                        <CardTitle>Classification & Categorization</CardTitle>
+                        <CardTitle>Classification &amp; Categorization</CardTitle>
                         <CardDescription>Classify the report and assign an ICAO occurrence category.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -880,7 +875,7 @@ function SafetyReportInvestigationPage() {
               
               <Card>
                   <CardHeader>
-                      <CardTitle>Investigation Plan & Tools</CardTitle>
+                      <CardTitle>Investigation Plan &amp; Tools</CardTitle>
                       <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1004,7 +999,7 @@ function SafetyReportInvestigationPage() {
                                                           mode="single"
                                                           selected={field.value}
                                                           onSelect={field.onChange}
-                                                          disabled={(date) => date < new Date()}
+                                                          disabled={(date) => date &lt; new Date()}
                                                           initialFocus
                                                       />
                                                       </PopoverContent>
