@@ -59,7 +59,6 @@ const personnelFormSchema = z.object({
       message: 'A valid role must be selected.'
   }),
   department: z.custom<Department>().optional(),
-  instructorGrade: z.enum(['Grade 1', 'Grade 2', 'Grade 3']).optional(),
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
@@ -193,7 +192,6 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         phone: data.phone,
         role: data.role,
         department: data.department,
-        instructorGrade: isInstructorRole ? data.instructorGrade : null,
         consentDisplayContact: data.consentDisplayContact,
         permissions: data.permissions as Permission[],
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
@@ -224,7 +222,6 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{roles.map((role) => (<SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a department" /></SelectTrigger></FormControl><SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    {isInstructorRole && (<FormField control={form.control} name="instructorGrade" render={({ field }) => (<FormItem><FormLabel>Instructor Grade</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select instructor grade" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Grade 1">Grade 1</SelectItem><SelectItem value="Grade 2">Grade 2</SelectItem><SelectItem value="Grade 3">Grade 3</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />)}
                 </div>
                 
                 <Separator />
