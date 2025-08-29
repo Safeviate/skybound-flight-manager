@@ -27,6 +27,7 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import Image from 'next/image';
 
 
 const DetailSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -652,6 +653,26 @@ export default function MocDetailPage() {
         </div>
         
         <Card className="print:shadow-none print:border-none">
+            <CardHeader>
+                <div className="flex items-center gap-4">
+                    {company?.logoUrl && (
+                        <Image
+                            src={company.logoUrl}
+                            alt={`${company.name} Logo`}
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 rounded-md object-contain"
+                        />
+                    )}
+                    <div>
+                        <CardTitle>{company?.name}</CardTitle>
+                        <CardDescription>Management of Change</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+        </Card>
+
+        <Card className="print:shadow-none print:border-none">
           <CardHeader>
             <div className="flex justify-between items-start">
                 <div>
@@ -810,3 +831,4 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
