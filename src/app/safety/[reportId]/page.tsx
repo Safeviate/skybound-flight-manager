@@ -628,7 +628,7 @@ function SafetyReportInvestigationPage() {
       if (!taskToUpdate || !taskToUpdate.requestedDeadline) return;
       
       const updatedTasks = report?.tasks?.map(t =>
-          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : t
+          t.id === taskId ? { ...t, deadline: t.requestedDeadline!, extensionStatus: 'Approved' } : a
       );
       handleReportUpdate({ tasks: updatedTasks || [] }, true);
       toast({ title: 'Extension Approved', description: `The deadline has been updated.`});
@@ -698,7 +698,7 @@ function SafetyReportInvestigationPage() {
             </TabsList>
             
             <div id="printable-report-header" className="mt-6">
-                <Card className="print:shadow-none print:border-none">
+                 <Card className="print:shadow-none print:border-none">
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -716,12 +716,12 @@ function SafetyReportInvestigationPage() {
                                 <CardTitle>{company?.name}</CardTitle>
                                 <CardDescription>Safety Report Investigation</CardDescription>
                             </div>
-                             <div className="w-16">
+                            <div className="w-16 flex justify-end">
                                 <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                             </div>
                         </div>
                         <Separator className="my-4"/>
-                        <div className="text-center">
+                        <div className="text-left">
                             <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                             <CardDescription>
                                 Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
