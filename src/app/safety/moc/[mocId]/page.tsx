@@ -654,29 +654,30 @@ export default function MocDetailPage() {
         
         <Card className="print:shadow-none print:border-none">
           <CardHeader>
-            <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4">
-                    {company?.logoUrl && (
-                        <Image
-                            src={company.logoUrl}
-                            alt={`${company.name} Logo`}
-                            width={64}
-                            height={64}
-                            className="h-16 w-16 rounded-md object-contain"
-                        />
-                    )}
-                    <div>
-                        <CardTitle>{company?.name}</CardTitle>
-                        <CardDescription>Management of Change</CardDescription>
-                    </div>
+            <div className="flex items-center gap-4">
+                {company?.logoUrl && (
+                    <Image
+                        src={company.logoUrl}
+                        alt={`${company.name} Logo`}
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 rounded-md object-contain"
+                    />
+                )}
+                <div>
+                    <CardTitle>{company?.name}</CardTitle>
+                    <CardDescription>Management of Change</CardDescription>
                 </div>
-                 <div>
-                    <Badge>{moc.status}</Badge>
+            </div>
+            <Separator className="my-4" />
+            <div className="flex justify-between items-start">
+                <div>
                     <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
                     <CardDescription>
                         Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
                     </CardDescription>
                 </div>
+                <Badge>{moc.status}</Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -826,5 +827,6 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
 
