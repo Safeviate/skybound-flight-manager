@@ -495,7 +495,7 @@ function SafetyReportInvestigationPage() {
     } else if (icaoState.message && !icaoState.message.includes('complete')) {
        toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
     }
-  }, [icaoState, report, toast]); // Simplified dependencies
+  }, [icaoState.data, icaoState.message, report, toast]);
 
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
@@ -716,7 +716,7 @@ function SafetyReportInvestigationPage() {
                                 <CardTitle>{company?.name}</CardTitle>
                                 <CardDescription>Safety Report Investigation</CardDescription>
                             </div>
-                            <div className="w-16">
+                             <div className="w-16">
                                 <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                             </div>
                         </div>
