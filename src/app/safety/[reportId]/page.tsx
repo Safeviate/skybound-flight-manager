@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -670,7 +671,7 @@ function SafetyReportInvestigationPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-       <div className="flex justify-between items-center no-print">
+      <div className="flex justify-between items-center no-print">
           <Button asChild variant="outline">
               <Link href="/safety?tab=reports">
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -688,14 +689,13 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-
        <Tabs defaultValue="triage" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-            <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
-            <TabsTrigger value="investigation">Investigation</TabsTrigger>
-            <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-            <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
-        </TabsList>
+          <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
+              <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+              <TabsTrigger value="investigation">Investigation</TabsTrigger>
+              <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+              <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+          </TabsList>
               
           <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
               <Card id="printable-report-header" className="print:shadow-none print:border-none">
@@ -711,18 +711,23 @@ function SafetyReportInvestigationPage() {
                                     className="h-16 w-16 rounded-md object-contain"
                                 />
                             )}
-                            <div>
-                                <CardTitle>{company?.name}</CardTitle>
-                                <CardDescription>Safety Report Investigation</CardDescription>
-                            </div>
                         </div>
+                        <div className="flex-1 text-center">
+                            <CardTitle>{company?.name}</CardTitle>
+                            <CardDescription>Safety Report Investigation</CardDescription>
+                        </div>
+                        <div className="w-16"></div>
                     </div>
                     <Separator className="my-4"/>
-                    <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                    <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                    <CardDescription>
-                        Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                    </CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                            <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                            <CardDescription>
+                                Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                            </CardDescription>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                 <Separator className="mb-4" />
