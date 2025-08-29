@@ -110,7 +110,7 @@ body {
         print-color-adjust: exact;
     }
     
-    header, [data-sidebar], button, input, textarea, a[href], .no-print {
+    .no-print {
         display: none !important;
     }
 
@@ -129,6 +129,10 @@ body {
         padding: 1rem !important;
     }
     
+    #printable-report-header {
+      display: block !important;
+    }
+    
     .print\:block {
         display: block !important;
     }
@@ -145,7 +149,7 @@ body {
         display: none !important;
     }
     
-    [role="tabpanel"] {
+    [role="tabpanel"][data-state="inactive"] {
         display: block !important;
     }
 
@@ -169,7 +173,7 @@ body {
         border-top: 1px dashed #cbd5e0;
     }
 
-    /* Specific overrides for safety report page */
+    /* Specific overrides for initial safety report printing */
     .print-initial-report-only #investigation-tab-content,
     .print-initial-report-only #mitigation-tab-content,
     .print-initial-report-only #review-tab-content,
@@ -184,4 +188,3 @@ body {
         max-height: none !important;
     }
 }
-
