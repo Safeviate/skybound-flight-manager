@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -36,50 +36,6 @@ const DetailSection = ({ title, children }: { title: string, children: React.Rea
     </div>
 );
 
-const AddPhaseDialog = ({ onAddPhase }: { onAddPhase: (title:string) => void }) => {
-    const [title, setTitle] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
-
-    const handleSubmit = () => {
-        if (title.trim()) {
-            onAddPhase(title.trim());
-            setTitle('');
-            setIsOpen(false);
-        }
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Phase
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add Implementation Phase</DialogTitle>
-                    <DialogDescription>
-                        Enter a title for this phase of the change implementation.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-2">
-                    <Label htmlFor="phase-title">Phase Title</Label>
-                    <Input 
-                        id="phase-title" 
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g., Initial Training & Documentation"
-                    />
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleSubmit} disabled={!title.trim()}>Confirm</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
@@ -94,6 +50,17 @@ export default function MocDetailPage() {
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [analysisParams, setAnalysisParams] = useState('');
+  
+  // State for inline editing
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [editingPhaseText, setEditingPhaseText] = useState('');
+
+  // State for dialogs
+  const [dialogState, setDialogState] = useState<{
+      type: 'addStep' | 'addHazard' | 'editRisk' | 'editMitigation' | null;
+      data: any;
+  }>({ type: null, data: null });
+
   
   const canEdit = useMemo(() => user?.permissions.includes('MOC:Edit') || user?.permissions.includes('Super User'), [user]);
 
@@ -132,20 +99,17 @@ export default function MocDetailPage() {
 
   const handleUpdate = async (updatedData: Partial<ManagementOfChange>, showToast = true) => {
     if (!moc || !company) return;
-    setLoading(true);
     const mocRef = doc(db, `companies/${company.id}/management-of-change`, moc.id);
     try {
+      const newMocState = { ...moc, ...updatedData };
       await updateDoc(mocRef, updatedData);
-      const updatedMoc = { ...moc, ...updatedData };
-      setMoc(updatedMoc);
+      setMoc(newMocState);
       if (showToast) {
           toast({ title: 'MOC Updated', description: 'Your changes have been saved.' });
       }
     } catch (error) {
       console.error("Error updating MOC:", error);
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save changes to MOC.' });
-    } finally {
-      setLoading(false);
     }
   };
   
@@ -192,18 +156,18 @@ export default function MocDetailPage() {
     }
   };
 
-  const handleAddPhase = (title: string) => {
+  const handlePhaseUpdate = (phaseId: string, newDescription: string) => {
     if (!moc) return;
-
-    const newPhase: MocPhase = {
-      id: `phase-${Date.now()}`,
-      description: title,
-      steps: [],
-    };
-
-    const updatedPhases = [...(moc.phases || []), newPhase];
+    const updatedPhases = moc.phases?.map(p =>
+      p.id === phaseId ? { ...p, description: newDescription } : p
+    );
     handleUpdate({ phases: updatedPhases });
-    toast({ title: 'Phase Added', description: `Phase ${updatedPhases.length}: ${title} has been added.` });
+    setEditingPhaseId(null);
+  };
+  
+  const startEditingPhase = (phase: MocPhase) => {
+    setEditingPhaseId(phase.id);
+    setEditingPhaseText(phase.description);
   };
   
   const handleDeletePhase = (phaseId: string) => {
@@ -213,10 +177,49 @@ export default function MocDetailPage() {
     toast({ title: 'Phase Deleted', description: 'The implementation phase has been removed.' });
   }
 
-  const handleUpdatePhase = (updatedPhase: MocPhase) => {
-      if (!moc) return;
-      const updatedPhases = moc.phases?.map(p => p.id === updatedPhase.id ? updatedPhase : p);
-      handleUpdate({ phases: updatedPhases });
+  const handleDialogSubmit = (formData: any) => {
+    if (!moc) return;
+
+    const { type, data } = dialogState;
+    let updatedPhases = [...(moc.phases || [])];
+    
+    switch (type) {
+        case 'addStep': {
+            const { phaseId } = data;
+            const newStep: MocStep = { id: `step-${Date.now()}`, description: formData.description, hazards: [] };
+            updatedPhases = updatedPhases.map(p => p.id === phaseId ? { ...p, steps: [...(p.steps || []), newStep] } : p);
+            break;
+        }
+        case 'addHazard': {
+            const { phaseId, stepId } = data;
+            const newHazard: MocHazard = { id: `hazard-${Date.now()}`, description: formData.description, risks: [] };
+            updatedPhases = updatedPhases.map(p => p.id === phaseId ? {
+                ...p,
+                steps: p.steps?.map(s => s.id === stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s)
+            } : p);
+            break;
+        }
+        case 'editRisk': {
+            const { phaseId, stepId, hazardId, riskId } = data;
+             const riskScore = getRiskScore(formData.likelihood, formData.severity);
+            updatedPhases = updatedPhases.map(p => p.id === phaseId ? {
+                ...p,
+                steps: p.steps?.map(s => s.id === stepId ? {
+                    ...s,
+                    hazards: s.hazards?.map(h => h.id === hazardId ? {
+                        ...h,
+                        risks: h.risks?.map(r => r.id === riskId ? { ...r, ...formData, riskScore } : r)
+                    } : h)
+                } : s)
+            } : p);
+            break;
+        }
+        default:
+            break;
+    }
+    
+    handleUpdate({ phases: updatedPhases });
+    setDialogState({ type: null, data: null });
   };
   
   const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
@@ -259,36 +262,35 @@ export default function MocDetailPage() {
         </div>
         
         <Card className="print:shadow-none print:border-none">
-          <CardHeader>
-            {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
-            <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4">
-                    {company?.logoUrl && (
-                        <Image
-                            src={company.logoUrl}
-                            alt={`${company.name} Logo`}
-                            width={64}
-                            height={64}
-                            className="h-16 w-16 rounded-md object-contain"
-                        />
-                    )}
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                        {company?.logoUrl && (
+                            <Image
+                                src={company.logoUrl}
+                                alt={`${company.name} Logo`}
+                                width={64}
+                                height={64}
+                                className="h-16 w-16 rounded-md object-contain"
+                            />
+                        )}
+                    </div>
+                    <div className="flex-1 text-center">
+                        <CardTitle>{company?.name}</CardTitle>
+                        <CardDescription>Management of Change</CardDescription>
+                    </div>
+                    <div className="w-16 flex justify-end">
+                        <Badge>{moc.status}</Badge>
+                    </div>
                 </div>
-                <div className="flex-1 text-center">
-                    <CardTitle>{company?.name}</CardTitle>
-                    <CardDescription>Management of Change</CardDescription>
+                <Separator className="my-4"/>
+                <div>
+                    <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
+                    <CardDescription>
+                        Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
+                    </CardDescription>
                 </div>
-                <div className="w-16 flex justify-end">
-                    <Badge>{moc.status}</Badge>
-                </div>
-            </div>
-            <Separator className="my-4"/>
-            <div>
-                <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
-                <CardDescription>
-                    Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
-                </CardDescription>
-            </div>
-          </CardHeader>
+            </CardHeader>
           <CardContent className="space-y-6">
              <DetailSection title="Description of Change">
                 <p className="whitespace-pre-wrap">{moc.description}</p>
@@ -327,7 +329,9 @@ export default function MocDetailPage() {
                                     {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                                     Analyze with AI
                                 </Button>
-                                <AddPhaseDialog onAddPhase={handleAddPhase} />
+                                 <Button variant="outline" onClick={() => { /* Open add phase dialog */ }}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Phase
+                                </Button>
                             </div>
                         </>
                     )}
@@ -336,13 +340,23 @@ export default function MocDetailPage() {
             <CardContent className="space-y-4">
                 {moc.phases && moc.phases.length > 0 ? (
                     moc.phases.map((phase, phaseIndex) => (
-                        <div key={phase.id} className="space-y-4 print:break-inside-avoid">
+                        <div key={phase.id} className="space-y-4 print:break-inside-avoid border-l-4 pl-4 border-primary/20">
                              <div className="flex justify-between items-center py-2">
-                                <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
+                                {editingPhaseId === phase.id ? (
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <Input value={editingPhaseText} onChange={(e) => setEditingPhaseText(e.target.value)} className="text-lg font-semibold" />
+                                        <Button size="icon" onClick={() => handlePhaseUpdate(phase.id, editingPhaseText)}><Save className="h-4 w-4"/></Button>
+                                        <Button size="icon" variant="ghost" onClick={() => setEditingPhaseId(null)}>X</Button>
+                                    </div>
+                                ) : (
+                                    <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
+                                )}
+                                {canEdit && editingPhaseId !== phase.id && (
                                 <div className="flex items-center gap-2 no-print">
-                                    <Button variant="ghost" size="icon" onClick={() => {}}><Edit className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => startEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDeletePhase(phase.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
+                                )}
                             </div>
                             {phase.steps?.map((step, stepIndex) => (
                                 <Collapsible key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg">
@@ -360,7 +374,10 @@ export default function MocDetailPage() {
                                             <div key={risk.id} className="pl-4 pt-2 mt-2 moc-print-risk-wrapper">
                                                 <div className="flex justify-between items-start">
                                                     <p className="flex-1 moc-print-risk-title">Risk: <span className="font-normal text-black">{risk.description}</span></p>
-                                                    <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                        {canEdit && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDialogState({ type: 'editRisk', data: {phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id} })}><Edit className="h-3 w-3" /></Button>}
+                                                    </div>
                                                 </div>
                                                 {risk.mitigations?.map(mit => (
                                                     <div key={mit.id} className="pl-4 pt-2 mt-2 moc-print-mitigation-wrapper">
@@ -379,9 +396,15 @@ export default function MocDetailPage() {
                                             ))}
                                         </div>
                                         ))}
+                                        {canEdit && (
+                                        <div className="flex gap-2 mt-2 no-print">
+                                            <Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id } })}>Add Hazard</Button>
+                                        </div>
+                                        )}
                                     </CollapsibleContent>
                                 </Collapsible>
                             ))}
+                            {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id } })}>Add Step</Button>}
                         </div>
                     ))
                 ) : (
@@ -395,8 +418,62 @@ export default function MocDetailPage() {
             </CardContent>
         </Card>
       </div>
+
+       <Dialog open={dialogState.type !== null} onOpenChange={() => setDialogState({ type: null, data: null })}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        {dialogState.type === 'addStep' && 'Add Implementation Step'}
+                        {dialogState.type === 'addHazard' && 'Add Hazard'}
+                        {dialogState.type === 'editRisk' && 'Edit Risk'}
+                    </DialogTitle>
+                </DialogHeader>
+                {dialogState.type === 'addStep' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Describe the new step..." />}
+                {dialogState.type === 'addHazard' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Describe the potential hazard..." />}
+                {dialogState.type === 'editRisk' && <RiskForm onSubmit={handleDialogSubmit} risk={moc?.phases?.find(p => p.id === dialogState.data.phaseId)?.steps?.find(s => s.id === dialogState.data.stepId)?.hazards?.find(h => h.id === dialogState.data.hazardId)?.risks?.find(r => r.id === dialogState.data.riskId)} />}
+            </DialogContent>
+        </Dialog>
     </main>
   );
 }
 
+const TextareaForm = ({ onSubmit, placeholder }: { onSubmit: (data: { description: string }) => void, placeholder: string }) => {
+    const [description, setDescription] = useState('');
+    return (
+        <div className="space-y-4 py-4">
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={placeholder} />
+            <DialogFooter>
+                <Button onClick={() => onSubmit({ description })} disabled={!description.trim()}>Save</Button>
+            </DialogFooter>
+        </div>
+    );
+};
+
+const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: MocRisk }) => {
+    const [description, setDescription] = useState(risk?.description || '');
+    const [likelihood, setLikelihood] = useState<RiskLikelihood | undefined>(risk?.likelihood);
+    const [severity, setSeverity] = useState<RiskSeverity | undefined>(risk?.severity);
+
+    return (
+        <div className="space-y-4 py-4">
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the risk..." />
+            <div className="grid grid-cols-2 gap-4">
+                <Select value={likelihood} onValueChange={(v: RiskLikelihood) => setLikelihood(v)}>
+                    <SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger>
+                    <SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                </Select>
+                 <Select value={severity} onValueChange={(v: RiskSeverity) => setSeverity(v)}>
+                    <SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger>
+                    <SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                </Select>
+            </div>
+            <DialogFooter>
+                <Button onClick={() => onSubmit({ description, likelihood, severity })} disabled={!description.trim() || !likelihood || !severity}>Save Risk</Button>
+            </DialogFooter>
+        </div>
+    );
+};
+
+
 MocDetailPage.title = "Management of Change";
+
