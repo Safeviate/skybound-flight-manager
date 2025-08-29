@@ -1,6 +1,3 @@
-
-
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -50,6 +47,7 @@ import { CalendarIcon, Check } from 'lucide-react';
 import type { DiscussionEntry } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import Image from 'next/image';
 
 
 const getStatusVariant = (status: SafetyReport['status']) => {
@@ -671,6 +669,24 @@ function SafetyReportInvestigationPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
+        <Card className="print:hidden">
+            <CardHeader className="flex flex-row items-center gap-4">
+                {company?.logoUrl && (
+                    <Image
+                        src={company.logoUrl}
+                        alt={`${company.name} Logo`}
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 rounded-md object-contain"
+                    />
+                )}
+                <div>
+                    <CardTitle>{company?.name}</CardTitle>
+                    <CardDescription>Safety Report Investigation</CardDescription>
+                </div>
+            </CardHeader>
+        </Card>
+
       <Card>
           <CardHeader>
               <div className="flex justify-between items-start">
