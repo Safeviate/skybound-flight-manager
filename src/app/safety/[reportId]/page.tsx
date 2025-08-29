@@ -689,7 +689,7 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-       <div id="printable-report-header" className="mt-6">
+       <div id="printable-report-area">
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
                     <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
@@ -697,7 +697,8 @@ function SafetyReportInvestigationPage() {
                     <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
                     <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
                 </TabsList>
-                 <Card className="print:shadow-none print:border-none mt-6">
+            <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
+                 <Card>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -716,11 +717,10 @@ function SafetyReportInvestigationPage() {
                                 <CardDescription>Safety Report Investigation</CardDescription>
                             </div>
                             <div className="w-16 flex justify-end">
-                                {/* Placeholder for alignment */}
                             </div>
                         </div>
                         <Separator className="my-4"/>
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                             <div className="text-left">
                                 <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                                 <CardDescription>
@@ -729,13 +729,7 @@ function SafetyReportInvestigationPage() {
                             </div>
                             <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
-                    </CardHeader>
-                </Card>
-            <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
-                 <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <CardTitle>Initial Report Details</CardTitle>
+                         <div className="flex justify-between items-center mt-4">
                             {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
                                 <div className="flex items-center gap-2">
                                     {isEditingReport ? (
