@@ -51,6 +51,7 @@ const DetailSection = ({ title, children }: { title: string, children: React.Rea
 );
 
 type DialogState = 
+    | { type: 'addPhase' }
     | { type: 'editPhase'; data: { phaseId: string; description: string } }
     | { type: 'addStep'; data: { phaseId: string } }
     | { type: 'editStep'; data: { phaseId: string; stepId: string; description: string } }
@@ -173,9 +174,12 @@ export default function MocDetailPage() {
     if (!moc || !dialogState) return;
 
     let updatedPhases = [...(moc.phases || [])];
-    const { type, data } = dialogState;
+    const { type, data } = dialogState as any; // Cast to any to access data property without checking type
     
-    if (type === 'editPhase') {
+    if (type === 'addPhase') {
+        const newPhase: MocPhase = { id: `phase-${Date.now()}`, description: formData.description, steps: [] };
+        updatedPhases.push(newPhase);
+    } else if (type === 'editPhase') {
         updatedPhases = updatedPhases.map(p => p.id === data.phaseId ? { ...p, description: formData.description } : p);
     } else if (type === 'addStep') {
         const newStep: MocStep = { id: `step-${Date.now()}`, description: formData.description, hazards: [] };
@@ -296,16 +300,16 @@ export default function MocDetailPage() {
                                 <CollapsibleContent className="pl-4 mt-2 space-y-3 pt-3 border-t">
                                     {step.hazards?.map(hazard => (
                                     <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                        <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
+                                        <div className="flex items-center gap-2 moc-print-hazard-title"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
                                             {canEdit && <div className="flex items-center gap-1 no-print">
                                                 <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
                                                 <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                             </div>}
                                         </div>
                                         {hazard.risks?.map(risk => (
-                                        <div key={risk.id} className="pl-4 pt-2 mt-2 border-t">
+                                        <div key={risk.id} className="pl-4 pt-2 mt-2 border-t moc-print-risk-wrapper">
                                             <div className="flex justify-between items-start">
-                                                 <div className="flex items-center gap-2"><p className="font-semibold text-sm">Risk: {risk.description}</p>
+                                                 <div className="flex items-center gap-2 moc-print-risk-title"><p className="font-semibold text-sm">Risk: {risk.description}</p>
                                                     {canEdit && <div className="flex items-center gap-1 no-print">
                                                         <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
                                                         <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -314,9 +318,9 @@ export default function MocDetailPage() {
                                                 <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                             </div>
                                             {risk.mitigations?.map(mit => (
-                                            <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed">
+                                            <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
                                                 <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-2"><p className="font-semibold text-sm">Mitigation: {mit.description}</p>
+                                                    <div className="flex items-center gap-2 moc-print-mitigation-title"><p className="font-semibold text-sm">Mitigation: {mit.description}</p>
                                                         {canEdit && <div className="flex items-center gap-1 no-print">
                                                             <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation: mit } })}><Edit className="h-3 w-3" /></Button>
                                                             <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mit.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
@@ -344,6 +348,13 @@ export default function MocDetailPage() {
                         {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button>}
                     </div>
                 ))}
+                 {canEdit && (
+                    <div className="pt-4 border-t no-print">
+                        <Button variant="secondary" className="w-full" onClick={() => setDialogState({ type: 'addPhase' })}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Phase
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
       </div>
@@ -351,6 +362,7 @@ export default function MocDetailPage() {
        <Dialog open={dialogState !== null} onOpenChange={() => setDialogState(null)}>
             <DialogContent>
                 <DialogHeader><DialogTitle>{dialogState?.type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</DialogTitle></DialogHeader>
+                {dialogState?.type === 'addPhase' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Enter phase description..." />}
                 {dialogState?.type === 'editPhase' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Enter phase description..." initialValue={dialogState.data.description} />}
                 {dialogState?.type === 'addStep' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Enter step description..." />}
                 {dialogState?.type === 'editStep' && <TextareaForm onSubmit={handleDialogSubmit} placeholder="Enter step description..." initialValue={dialogState.data.description} />}
@@ -379,8 +391,9 @@ const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: Mo
 
 const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional() });
 const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => void, mitigation?: MocMitigation }) => {
-    const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined, responsiblePerson: mitigation.responsiblePerson || '' } : { responsiblePerson: '' } });
+    const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, responsiblePerson: mitigation.responsiblePerson || '', completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '' } });
     return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
 };
 
 MocDetailPage.title = "Management of Change";
+
