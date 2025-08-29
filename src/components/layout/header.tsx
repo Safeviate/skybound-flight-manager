@@ -165,19 +165,20 @@ export default function Header({ title, children }: { title: string, children?: 
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8 no-print">
-      <div className="md:hidden">
-        <SidebarTrigger>
-            <PanelLeft />
-        </SidebarTrigger>
+      <div className="flex items-center flex-1">
+        <div className="md:hidden">
+            <SidebarTrigger>
+                <PanelLeft />
+            </SidebarTrigger>
+        </div>
+        <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap text-[var(--header-foreground)] ml-4">{title}</h1>
       </div>
       
-      <div className="flex items-center gap-2">
-        {/* Intentionally left for stable element positioning, other content added dynamically */}
+      <div className="flex-1 text-center">
+        <span className="text-lg font-bold text-muted-foreground">{company?.name || 'Safeviate'}</span>
       </div>
-
-      <h1 className="text-xl font-semibold md:text-2xl whitespace-nowrap flex-1 text-[var(--header-foreground)]">{title}</h1>
       
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-end gap-4 flex-1">
         {children}
         <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
           <DropdownMenu>
