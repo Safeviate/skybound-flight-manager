@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -495,7 +494,7 @@ function SafetyReportInvestigationPage() {
     } else if (icaoState.message && !icaoState.message.includes('complete')) {
        toast({ variant: 'destructive', title: 'Error', description: icaoState.message });
     }
-  }, [icaoState.data, icaoState.message, report, toast]);
+  }, [icaoState.data, icaoState.message]);
 
 
   const handleReportUpdate = async (updatedReport: Partial<SafetyReport>, showToast = true) => {
@@ -721,15 +720,16 @@ function SafetyReportInvestigationPage() {
                         </div>
                         <Separator className="my-4"/>
                         <div className="flex justify-between items-center">
-                            <div className="text-left">
+                            <div>
                                 <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                                 <CardDescription>
                                     Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
                                 </CardDescription>
                             </div>
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
-                         <div className="flex justify-between items-center mt-4">
+                        <Separator className="my-4" />
+                         <div className="flex justify-between items-center">
                             {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
                                 <div className="flex items-center gap-2">
                                     {isEditingReport ? (
