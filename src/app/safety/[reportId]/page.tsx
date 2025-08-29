@@ -392,7 +392,7 @@ function SafetyReportInvestigationPage() {
     }
     
     if (!company) {
-        setLoading(false);
+        setDataLoading(false);
         return;
     }
     
@@ -670,9 +670,27 @@ function SafetyReportInvestigationPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
+        <div className="flex justify-between items-center no-print">
+            <Button asChild variant="outline">
+                <Link href="/safety?tab=reports">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Reports
+                </Link>
+            </Button>
+            <div className="flex gap-2">
+                 <Button variant="outline" onClick={handlePrintInitialReport}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Initial Report
+                </Button>
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Full Report
+                </Button>
+            </div>
+        </div>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                 <div className="flex flex-row items-center gap-4">
+                <div className="flex flex-row items-center gap-4">
                     {company?.logoUrl && (
                         <Image
                             src={company.logoUrl}
@@ -685,33 +703,18 @@ function SafetyReportInvestigationPage() {
                     <div>
                         <CardTitle className="print:hidden">{company?.name}</CardTitle>
                         <CardDescription className="print:hidden">Safety Report Investigation</CardDescription>
-                        
-                        <div className="flex-1">
-                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                           <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
-                           <p className="text-sm text-muted-foreground">
-                               Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                           </p>
-                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 no-print">
-                   <Button asChild variant="outline">
-                      <Link href="/safety?tab=reports">
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back to Reports
-                      </Link>
-                  </Button>
-                  <Button variant="outline" onClick={handlePrintInitialReport}>
-                      <Printer className="mr-2 h-4 w-4" />
-                      Print Initial Report
-                  </Button>
-                  <Button variant="outline" onClick={() => window.print()}>
-                      <Printer className="mr-2 h-4 w-4" />
-                      Print Full Report
-                  </Button>
-                </div>
             </CardHeader>
+            <CardContent>
+                <div className="flex-1">
+                    <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                    <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                    </p>
+                </div>
+            </CardContent>
         </Card>
               
           <Tabs defaultValue="triage" className="w-full">
@@ -1077,3 +1080,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
