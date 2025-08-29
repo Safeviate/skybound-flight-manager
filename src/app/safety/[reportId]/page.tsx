@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -669,7 +670,7 @@ function SafetyReportInvestigationPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-      <div className="flex justify-between items-center no-print">
+       <div className="flex justify-between items-center no-print">
           <Button asChild variant="outline">
               <Link href="/safety?tab=reports">
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -687,7 +688,7 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-      
+
        <Tabs defaultValue="triage" className="w-full">
         <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
             <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
@@ -698,7 +699,7 @@ function SafetyReportInvestigationPage() {
               
           <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
               <Card id="printable-report-header" className="print:shadow-none print:border-none">
-                  <CardHeader>
+                <CardHeader>
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
                             {company?.logoUrl && (
@@ -717,38 +718,38 @@ function SafetyReportInvestigationPage() {
                         </div>
                     </div>
                     <Separator className="my-4"/>
-                      <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                      <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                      <CardDescription>
-                          Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Separator className="mb-4" />
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-semibold">Initial Report Details</h3>
-                        {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
-                            <div className="flex items-center gap-2">
-                                {isEditingReport ? (
-                                    <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
-                                ) : (
-                                    <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                      {isEditingReport ? (
-                          <Textarea 
-                              value={reportDetails}
-                              onChange={(e) => setReportDetails(e.target.value)}
-                              className="min-h-[250px] whitespace-pre-wrap mt-2"
-                          />
-                      ) : (
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto mt-2">
-                              {report.details}
-                          </p>
-                      )}
-                  </CardContent>
+                    <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                    <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                    <CardDescription>
+                        Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Separator className="mb-4" />
+                    <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Initial Report Details</h3>
+                    {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
+                        <div className="flex items-center gap-2">
+                            {isEditingReport ? (
+                                <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
+                            ) : (
+                                <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+                    {isEditingReport ? (
+                        <Textarea 
+                            value={reportDetails}
+                            onChange={(e) => setReportDetails(e.target.value)}
+                            className="min-h-[250px] whitespace-pre-wrap mt-2"
+                        />
+                    ) : (
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto mt-2">
+                            {report.details}
+                        </p>
+                    )}
+                </CardContent>
               </Card>
 
               <Card id="classification-card">
@@ -999,7 +1000,7 @@ function SafetyReportInvestigationPage() {
                                                           mode="single"
                                                           selected={field.value}
                                                           onSelect={field.onChange}
-                                                          disabled={(date) => date &lt; new Date()}
+                                                          disabled={(date) => date < new Date()}
                                                           initialFocus
                                                       />
                                                       </PopoverContent>

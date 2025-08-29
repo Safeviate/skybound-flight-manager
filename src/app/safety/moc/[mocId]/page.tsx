@@ -653,7 +653,8 @@ export default function MocDetailPage() {
         </div>
         
         <Card className="print:shadow-none print:border-none">
-            <CardHeader>
+          <CardHeader>
+            <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
                     {company?.logoUrl && (
                         <Image
@@ -669,13 +670,7 @@ export default function MocDetailPage() {
                         <CardDescription>Management of Change</CardDescription>
                     </div>
                 </div>
-            </CardHeader>
-        </Card>
-
-        <Card className="print:shadow-none print:border-none">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
+                 <div>
                     <Badge>{moc.status}</Badge>
                     <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
                     <CardDescription>
@@ -831,4 +826,5 @@ MocDetailPage.title = "Management of Change";
     
 
     
+
 
