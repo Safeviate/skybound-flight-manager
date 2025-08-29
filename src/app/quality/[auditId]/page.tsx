@@ -249,6 +249,30 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 </DialogContent>
             </Dialog>
 
+             <div className="flex flex-wrap items-center justify-end gap-2 no-print">
+                <Button variant="outline" onClick={onNavigateBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Audits
+                </Button>
+                {audit.status === 'Closed' && (
+                    <Button variant="outline" onClick={handleReopenAudit}>
+                        <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
+                    </Button>
+                )}
+                <Button variant="outline" onClick={handleRequestSignatures}>
+                    <Signature className="mr-2 h-4 w-4" />
+                    Request Signatures
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleResetSignatures}>
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Reset Signatures
+                </Button>
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Report
+                </Button>
+            </div>
+
              <Card className="print:shadow-none print:border-none">
                 <CardHeader>
                     {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
@@ -279,29 +303,6 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <CardDescription>
                             Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
                             </CardDescription>
-                        </div>
-                         <div className="flex flex-wrap items-center gap-2 no-print">
-                            <Button variant="outline" onClick={onNavigateBack}>
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Audits
-                            </Button>
-                            {audit.status === 'Closed' && (
-                                <Button variant="outline" onClick={handleReopenAudit}>
-                                    <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
-                                </Button>
-                            )}
-                            <Button variant="outline" onClick={handleRequestSignatures}>
-                                <Signature className="mr-2 h-4 w-4" />
-                                Request Signatures
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={handleResetSignatures}>
-                                <Eraser className="mr-2 h-4 w-4" />
-                                Reset Signatures
-                            </Button>
-                            <Button variant="outline" onClick={() => window.print()}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Print Report
-                            </Button>
                         </div>
                     </div>
                 </CardHeader>
@@ -699,7 +700,12 @@ export default function QualityAuditDetailPage() {
       return;
     }
     
-    const companyId = 'skybound-aero';
+    const companyId = company?.id;
+    if (!companyId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+        setLoading(false);
+        return;
+    }
     
     const fetchAuditAndPersonnel = async () => {
       setLoading(true);
@@ -731,7 +737,7 @@ export default function QualityAuditDetailPage() {
     };
     
     fetchAuditAndPersonnel();
-  }, [auditId, user, userLoading, router, toast]);
+  }, [auditId, user, userLoading, router, toast, company]);
   
   const handleItemChange = (itemId: string, field: keyof AuditChecklistItem, value: any) => {
     if (!audit) return;
@@ -742,7 +748,7 @@ export default function QualityAuditDetailPage() {
   }
 
   const handleAuditUpdate = async (updatedAudit: QualityAudit, showToast = true) => {
-    const companyId = 'skybound-aero';
+    if (!company) return;
 
     const cleanAudit = JSON.parse(JSON.stringify(updatedAudit, (key, value) => {
         return value === undefined ? null : value;
@@ -750,7 +756,7 @@ export default function QualityAuditDetailPage() {
 
     setAudit(cleanAudit); 
     try {
-        const auditRef = doc(db, `companies/${companyId}/quality-audits`, auditId);
+        const auditRef = doc(db, `companies/${company.id}/quality-audits`, auditId);
         await setDoc(auditRef, cleanAudit, { merge: true });
         setSavedAudit(cleanAudit); // Update saved state after successful save
         if (showToast) {
@@ -1113,3 +1119,4 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
 
     
+
