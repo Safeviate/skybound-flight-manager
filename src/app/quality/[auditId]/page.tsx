@@ -249,37 +249,60 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                 </DialogContent>
             </Dialog>
 
-             <Card>
-                <CardHeader className="flex flex-row justify-between items-start">
-                    <div>
-                        <CardTitle className="text-2xl">{audit.title}</CardTitle>
-                        <CardDescription>
-                          Audit Number: {audit.auditNumber || audit.id} <br />
-                          Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
-                        </CardDescription>
+             <Card className="print:shadow-none print:border-none">
+                <CardHeader>
+                    {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-4">
+                            {company?.logoUrl && (
+                                <Image
+                                    src={company.logoUrl}
+                                    alt={`${company.name} Logo`}
+                                    width={64}
+                                    height={64}
+                                    className="h-16 w-16 rounded-md object-contain"
+                                />
+                            )}
+                        </div>
+                        <div className="flex-1 text-center">
+                            <CardTitle>{company?.name}</CardTitle>
+                            <CardDescription>Quality Audit Report</CardDescription>
+                        </div>
+                        <div className="w-16 flex justify-end">
+                            <Badge variant="success">{audit.status}</Badge>
+                        </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                         <Button variant="outline" className="no-print" onClick={onNavigateBack}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to Audits
-                        </Button>
-                        {audit.status === 'Closed' && (
-                            <Button variant="outline" className="no-print" onClick={handleReopenAudit}>
-                                <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
+                    <Separator className="my-4"/>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="mt-2 text-2xl">{audit.auditNumber || audit.id}: {audit.title}</CardTitle>
+                            <CardDescription>
+                            Audit Date: {format(parseISO(audit.date), 'MMMM d, yyyy')} | Type: {audit.type}
+                            </CardDescription>
+                        </div>
+                         <div className="flex flex-wrap items-center gap-2 no-print">
+                            <Button variant="outline" onClick={onNavigateBack}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Back to Audits
                             </Button>
-                        )}
-                        <Button variant="outline" className="no-print" onClick={handleRequestSignatures}>
-                            <Signature className="mr-2 h-4 w-4" />
-                            Request Signatures
-                        </Button>
-                        <Button variant="destructive" size="sm" className="no-print" onClick={handleResetSignatures}>
-                            <Eraser className="mr-2 h-4 w-4" />
-                            Reset Signatures
-                        </Button>
-                         <Button variant="outline" className="no-print" onClick={() => window.print()}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print Report
-                        </Button>
+                            {audit.status === 'Closed' && (
+                                <Button variant="outline" onClick={handleReopenAudit}>
+                                    <RotateCw className="mr-2 h-4 w-4" /> Reopen Audit
+                                </Button>
+                            )}
+                            <Button variant="outline" onClick={handleRequestSignatures}>
+                                <Signature className="mr-2 h-4 w-4" />
+                                Request Signatures
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={handleResetSignatures}>
+                                <Eraser className="mr-2 h-4 w-4" />
+                                Reset Signatures
+                            </Button>
+                            <Button variant="outline" onClick={() => window.print()}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Report
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
