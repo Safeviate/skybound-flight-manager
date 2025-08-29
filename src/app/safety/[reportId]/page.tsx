@@ -699,6 +699,7 @@ function SafetyReportInvestigationPage() {
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
+                    {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -730,7 +731,11 @@ function SafetyReportInvestigationPage() {
                             <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
                         <Separator className="my-4" />
-                        <div className="flex justify-end items-center">
+                         <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                                <h3 className="font-semibold">Event Details</h3>
+                                <p className="text-sm text-muted-foreground">A detailed account of the reported event.</p>
+                            </div>
                             {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
                                 <div className="flex items-center gap-2">
                                     {isEditingReport ? (
