@@ -689,16 +689,15 @@ function SafetyReportInvestigationPage() {
               </Button>
           </div>
       </div>
-        <Tabs defaultValue="triage" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-                <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
-                <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
-            </TabsList>
-            
-            <div id="printable-report-header" className="mt-6">
-                 <Card className="print:shadow-none print:border-none">
+       <div id="printable-report-header" className="mt-6">
+            <Tabs defaultValue="triage" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
+                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="investigation">Investigation</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                </TabsList>
+                 <Card className="print:shadow-none print:border-none mt-6">
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -717,20 +716,21 @@ function SafetyReportInvestigationPage() {
                                 <CardDescription>Safety Report Investigation</CardDescription>
                             </div>
                             <div className="w-16 flex justify-end">
-                                <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                                {/* Placeholder for alignment */}
                             </div>
                         </div>
                         <Separator className="my-4"/>
-                        <div className="text-left">
-                            <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                            <CardDescription>
-                                Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                            </CardDescription>
+                        <div className="flex justify-between items-start">
+                            <div className="text-left">
+                                <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                                <CardDescription>
+                                    Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                                </CardDescription>
+                            </div>
+                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
                     </CardHeader>
                 </Card>
-            </div>
-              
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
                     <CardHeader>
@@ -1078,6 +1078,7 @@ function SafetyReportInvestigationPage() {
                   <FinalReview report={report} onUpdate={handleReportUpdate} />
               </TabsContent>
           </Tabs>
+      </div>
     </main>
   );
 }
