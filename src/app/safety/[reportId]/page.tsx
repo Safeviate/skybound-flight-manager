@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -669,56 +670,52 @@ function SafetyReportInvestigationPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Card className="print:hidden">
-            <CardHeader className="flex flex-row items-center gap-4">
-                {company?.logoUrl && (
-                    <Image
-                        src={company.logoUrl}
-                        alt={`${company.name} Logo`}
-                        width={64}
-                        height={64}
-                        className="h-16 w-16 rounded-md object-contain"
-                    />
-                )}
-                <div>
-                    <CardTitle>{company?.name}</CardTitle>
-                    <CardDescription>Safety Report Investigation</CardDescription>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                 <div className="flex flex-row items-center gap-4">
+                    {company?.logoUrl && (
+                        <Image
+                            src={company.logoUrl}
+                            alt={`${company.name} Logo`}
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 rounded-md object-contain print:hidden"
+                        />
+                    )}
+                    <div>
+                        <CardTitle className="print:hidden">{company?.name}</CardTitle>
+                        <CardDescription className="print:hidden">Safety Report Investigation</CardDescription>
+                        
+                        <div className="flex-1">
+                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                           <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
+                           <p className="text-sm text-muted-foreground">
+                               Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                           </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 no-print">
+                   <Button asChild variant="outline">
+                      <Link href="/safety?tab=reports">
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Reports
+                      </Link>
+                  </Button>
+                  <Button variant="outline" onClick={handlePrintInitialReport}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print Initial Report
+                  </Button>
+                  <Button variant="outline" onClick={() => window.print()}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print Full Report
+                  </Button>
                 </div>
             </CardHeader>
         </Card>
-
-      <Card>
-          <CardHeader>
-              <div className="flex justify-between items-start">
-                  <div>
-                      <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                      <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
-                      <CardDescription>
-                          Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                      </CardDescription>
-                  </div>
-                   <div className="flex items-center gap-2">
-                       <Button asChild variant="outline">
-                          <Link href="/safety?tab=reports">
-                              <ArrowLeft className="mr-2 h-4 w-4" />
-                              Back to Reports
-                          </Link>
-                      </Button>
-                      <Button variant="outline" onClick={handlePrintInitialReport} className="no-print">
-                          <Printer className="mr-2 h-4 w-4" />
-                          Print Initial Report
-                      </Button>
-                      <Button variant="outline" onClick={() => window.print()} className="no-print">
-                          <Printer className="mr-2 h-4 w-4" />
-                          Print Full Report
-                      </Button>
-                  </div>
-              </div>
-          </CardHeader>
-      </Card>
               
           <Tabs defaultValue="triage" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-auto">
+              <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
                   <TabsTrigger value="triage">Report & Triage</TabsTrigger>
                   <TabsTrigger value="investigation">Investigation</TabsTrigger>
                   <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
