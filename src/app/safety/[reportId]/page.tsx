@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -710,20 +709,6 @@ function SafetyReportInvestigationPage() {
                     </div>
                 </CardHeader>
             </Card>
-            
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-start">
-                        <div className="flex-1">
-                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                            <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
-                            <p className="text-sm text-muted-foreground">
-                                Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                            </p>
-                        </div>
-                    </div>
-                </CardHeader>
-            </Card>
         </div>
               
           <Tabs defaultValue="triage" className="w-full">
@@ -738,28 +723,35 @@ function SafetyReportInvestigationPage() {
                   <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
                           <div>
-                            <CardTitle>Initial Report Details</CardTitle>
-                            <CardDescription>This is the original report as submitted.</CardDescription>
+                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                            <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
+                            <CardDescription>
+                                Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                            </CardDescription>
                           </div>
-                          {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
-                            <div className="flex items-center gap-2">
-                                {isEditingReport ? (
-                                    <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
-                                ) : (
-                                    <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
-                                )}
-                            </div>
-                          )}
                       </CardHeader>
                       <CardContent>
+                        <Separator className="mb-4" />
+                         <div className="flex justify-between items-center">
+                            <h3 className="font-semibold">Initial Report Details</h3>
+                            {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
+                                <div className="flex items-center gap-2">
+                                    {isEditingReport ? (
+                                        <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
+                                    ) : (
+                                        <Button variant="outline" onClick={() => setIsEditingReport(true)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                           {isEditingReport ? (
                               <Textarea 
                                   value={reportDetails}
                                   onChange={(e) => setReportDetails(e.target.value)}
-                                  className="min-h-[250px] whitespace-pre-wrap"
+                                  className="min-h-[250px] whitespace-pre-wrap mt-2"
                               />
                           ) : (
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md max-h-96 overflow-y-auto mt-2">
                                   {report.details}
                               </p>
                           )}
@@ -1089,3 +1081,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
