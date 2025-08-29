@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -691,10 +692,10 @@ function SafetyReportInvestigationPage() {
        <div id="printable-report-area">
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
+                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
@@ -719,17 +720,17 @@ function SafetyReportInvestigationPage() {
                             </div>
                         </div>
                         <Separator className="my-4"/>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="mt-2">{report.reportNumber}: {report.heading}</CardTitle>
                                 <CardDescription>
                                     Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
                                 </CardDescription>
                             </div>
-                           <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                            <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </div>
                         <Separator className="my-4" />
-                         <div className="flex justify-between items-center">
+                        <div className="flex justify-end items-center">
                             {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
                                 <div className="flex items-center gap-2">
                                     {isEditingReport ? (
