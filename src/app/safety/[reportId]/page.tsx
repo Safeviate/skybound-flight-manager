@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -688,33 +689,36 @@ function SafetyReportInvestigationPage() {
                 </Button>
             </div>
         </div>
+        <Card className="print:shadow-none print:border-none">
+            <CardHeader className="flex flex-row items-center gap-4">
+                {company?.logoUrl && (
+                    <Image
+                        src={company.logoUrl}
+                        alt={`${company.name} Logo`}
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 rounded-md object-contain print:hidden"
+                    />
+                )}
+                <div>
+                    <CardTitle className="print:hidden">{company?.name}</CardTitle>
+                    <CardDescription className="print:hidden">Safety Report Investigation</CardDescription>
+                </div>
+            </CardHeader>
+        </Card>
+        
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex flex-row items-center gap-4">
-                    {company?.logoUrl && (
-                        <Image
-                            src={company.logoUrl}
-                            alt={`${company.name} Logo`}
-                            width={64}
-                            height={64}
-                            className="h-16 w-16 rounded-md object-contain print:hidden"
-                        />
-                    )}
-                    <div>
-                        <CardTitle className="print:hidden">{company?.name}</CardTitle>
-                        <CardDescription className="print:hidden">Safety Report Investigation</CardDescription>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start">
+                    <div className="flex-1">
+                        <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
+                        <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
+                        </p>
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-                <div className="flex-1">
-                    <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
-                    <h2 className="text-2xl font-bold mt-2">{report.reportNumber}: {report.heading}</h2>
-                    <p className="text-sm text-muted-foreground">
-                        Occurrence on {report.occurrenceDate} at {report.occurrenceTime || 'N/A'}. Filed by {report.submittedBy} on {report.filedDate}.
-                    </p>
-                </div>
-            </CardContent>
         </Card>
               
           <Tabs defaultValue="triage" className="w-full">
@@ -1080,5 +1084,3 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
-
-    
