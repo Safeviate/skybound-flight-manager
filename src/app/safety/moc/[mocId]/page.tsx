@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -85,390 +84,6 @@ const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote'
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
 
 
-const HazardAnalysisDialog = ({ phase, onUpdate, onClose, phaseNumber }: { phase: MocPhase, onUpdate: (updatedPhase: MocPhase) => void, onClose: () => void, phaseNumber: number }) => {
-    const [localPhase, setLocalPhase] = useState<MocPhase>(phase);
-
-    const handleAddStep = (phaseId: string) => {
-        const newStep: MocStep = {
-            id: `step-${Date.now()}`,
-            description: '',
-            hazards: [],
-        };
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: [...(prev.steps || []), newStep]
-        }));
-    };
-    
-    const handleAddHazard = (stepId?: string) => {
-        const newHazard: MocHazard = {
-            id: `hazard-${Date.now()}`,
-            description: '',
-            risks: [],
-        };
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? { ...s, hazards: [...(s.hazards || []), newHazard] } : s)
-        }));
-    };
-    
-    const handleAddRisk = (stepId: string, hazardId?: string) => {
-         const newRisk: MocRisk = {
-            id: `risk-${Date.now()}`,
-            description: '',
-            likelihood: 'Improbable',
-            severity: 'Minor',
-            riskScore: 4,
-            mitigations: [],
-        };
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => {
-                if (s.id === stepId) {
-                    return {
-                        ...s,
-                        hazards: s.hazards?.map(h => 
-                            h.id === hazardId
-                            ? { ...h, risks: [...(h.risks || []), newRisk] }
-                            : h
-                        )
-                    };
-                }
-                return s;
-            })
-        }));
-    };
-    
-    const handleAddMitigation = (stepId: string, hazardId: string, riskId: string) => {
-        const newMitigation: MocMitigation = {
-            id: `mit-${Date.now()}`,
-            description: '',
-            responsiblePerson: '',
-            completionDate: '',
-            residualLikelihood: 'Improbable',
-            residualSeverity: 'Negligible',
-            residualRiskScore: 2,
-        };
-         setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => h.id === hazardId ? {
-                    ...h,
-                    risks: h.risks?.map(r => 
-                        r.id === riskId 
-                        ? { ...r, mitigations: [...(r.mitigations || []), newMitigation] }
-                        : r
-                    )
-                } : h)
-            } : s)
-        }));
-    };
-    
-    const handleStepChange = (stepId: string, value: string) => {
-         setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? { ...s, description: value } : s)
-        }));
-    };
-    
-    const handleHazardChange = (stepId: string, hazardId: string, value: string) => {
-         setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => h.id === hazardId ? { ...h, description: value } : h)
-            } : s)
-        }));
-    };
-    
-    const handleRiskChange = (stepId: string, hazardId: string, riskId: string, field: keyof MocRisk, value: any) => {
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => {
-                    if (h.id === hazardId) {
-                        const updatedRisks = h.risks?.map(r => {
-                            if (r.id === riskId) {
-                                const updatedRisk = { ...r, [field]: value };
-                                if (field === 'likelihood' || field === 'severity') {
-                                    updatedRisk.riskScore = getRiskScore(updatedRisk.likelihood, updatedRisk.severity);
-                                }
-                                return updatedRisk;
-                            }
-                            return r;
-                        });
-                        return { ...h, risks: updatedRisks };
-                    }
-                    return h;
-                })
-            } : s)
-        }));
-    };
-
-    const handleMitigationChange = (stepId: string, hazardId: string, riskId: string, mitigationId: string, field: keyof MocMitigation, value: any) => {
-         setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => h.id === hazardId ? {
-                    ...h,
-                    risks: h.risks?.map(r => {
-                        if (r.id === riskId) {
-                            return {
-                                ...r,
-                                mitigations: r.mitigations?.map(m => {
-                                    if (m.id === mitigationId) {
-                                        let updatedMitigation = { ...m, [field]: value };
-                                        if (field === 'residualLikelihood' || field === 'residualSeverity') {
-                                            updatedMitigation.residualRiskScore = getRiskScore(updatedMitigation.residualLikelihood, updatedMitigation.residualSeverity);
-                                        }
-                                        if (field === 'completionDate' && value instanceof Date) {
-                                            updatedMitigation = { ...updatedMitigation, completionDate: format(value, 'yyyy-MM-dd') };
-                                        }
-                                        return updatedMitigation;
-                                    }
-                                    return m;
-                                })
-                            };
-                        }
-                        return r;
-                    })
-                } : h)
-            } : s)
-        }));
-    };
-    
-    const handleDeleteStep = (stepId: string) => {
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps?.filter(s => s.id !== stepId)
-        }));
-    };
-    
-    const handleDeleteHazard = (stepId: string, hazardId: string) => {
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.filter(h => h.id !== hazardId)
-            } : s)
-        }));
-    };
-
-    const handleDeleteRisk = (stepId: string, hazardId: string, riskId: string) => {
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => 
-                    h.id === hazardId
-                    ? { ...h, risks: h.risks?.filter(r => r.id !== riskId) }
-                    : h
-                )
-            } : s)
-        }));
-    }
-
-    const handleDeleteMitigation = (stepId: string, hazardId: string, riskId: string, mitigationId: string) => {
-        setLocalPhase(prev => ({
-            ...prev,
-            steps: prev.steps.map(s => s.id === stepId ? {
-                ...s,
-                hazards: s.hazards?.map(h => h.id === hazardId ? {
-                    ...h,
-                    risks: h.risks?.map(r =>
-                        r.id === riskId
-                        ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== mitigationId) }
-                        : r
-                    )
-                } : h)
-            } : s)
-        }));
-    }
-
-    const handleSave = () => {
-        onUpdate(localPhase);
-        onClose();
-    };
-
-    return (
-        <DialogContent className="max-w-4xl">
-            <DialogHeader>
-                <DialogTitle>Phase {phaseNumber}: {phase.description}</DialogTitle>
-                 <div className="flex items-center gap-2 pt-2">
-                    <Button className="w-fit" onClick={() => handleAddStep(phase.id)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Step
-                    </Button>
-                </div>
-            </DialogHeader>
-            <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
-                {localPhase.steps?.map((step, stepIndex) => {
-                    let hazardCounter = 0;
-                    let riskCounter = 0;
-                    let mitigationCounter = 0;
-                    
-                    return (
-                    <Card key={step.id} className="p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor={`step-desc-${stepIndex}`} className="font-semibold">{`Step ${phaseNumber}.${stepIndex + 1}`}</Label>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleAddHazard(step.id)}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Hazard
-                                </Button>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteStep(step.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        <Input
-                            id={`step-desc-${stepIndex}`}
-                            placeholder="Describe the implementation step..."
-                            value={step.description}
-                            onChange={(e) => handleStepChange(step.id, e.target.value)}
-                        />
-                        {step.hazards?.map((hazard) => {
-                            hazardCounter++;
-                            
-                            return (
-                            <Card key={hazard.id} className="p-4 border-red-500 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor={`hazard-desc-${hazardCounter}`} className="font-semibold text-red-600">{`Hazard ${phaseNumber}.${stepIndex + 1}.${hazardCounter}`}</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => handleAddRisk(step.id, hazard.id)}>
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Risk
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteHazard(step.id, hazard.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <Input
-                                    id={`hazard-desc-${hazardCounter}`}
-                                    placeholder="Describe the potential hazard..."
-                                    value={hazard.description}
-                                    onChange={(e) => handleHazardChange(step.id, hazard.id, e.target.value)}
-                                />
-                                {hazard.risks?.map((risk) => {
-                                    riskCounter++;
-
-                                    return (
-                                    <Card key={risk.id} className="p-4 border-yellow-500 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="font-semibold text-yellow-600">{`Risk ${phaseNumber}.${stepIndex + 1}.${hazardCounter}.${riskCounter}`}</Label>
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteRisk(step.id, hazard.id, risk.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <Input
-                                            placeholder="Describe the potential risk..."
-                                            value={risk.description}
-                                            onChange={(e) => handleRiskChange(step.id, hazard.id, risk.id, 'description', e.target.value)}
-                                        />
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Likelihood</Label>
-                                                <Select value={risk.likelihood} onValueChange={(value) => handleRiskChange(step.id, hazard.id, risk.id, 'likelihood', value)}>
-                                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                                    <SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                             <div className="space-y-2">
-                                                <Label>Severity</Label>
-                                                <Select value={risk.severity} onValueChange={(value) => handleRiskChange(step.id, hazard.id, risk.id, 'severity', value)}>
-                                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                                    <SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-end gap-2">
-                                            <Label>Risk Score:</Label>
-                                            <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore) }}>{risk.riskScore} - {getRiskLevel(risk.riskScore)}</Badge>
-                                        </div>
-
-                                        <Separator />
-                                        
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <Label>Mitigation Controls</Label>
-                                                <Button variant="outline" size="sm" onClick={() => handleAddMitigation(step.id, hazard.id, risk.id)}>
-                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Mitigation
-                                                </Button>
-                                            </div>
-                                            {risk.mitigations?.map((mitigation) => {
-                                                mitigationCounter++;
-                                                return (
-                                                <Card key={mitigation.id} className="p-3 border-green-500 bg-muted/50 space-y-3">
-                                                     <div className="flex items-center justify-between">
-                                                        <Label className="font-semibold text-green-600">{`Mitigation ${phaseNumber}.${stepIndex + 1}.${hazardCounter}.${riskCounter}.${mitigationCounter}`}</Label>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteMitigation(step.id, hazard.id, risk.id, mitigation.id)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                     <Textarea 
-                                                        placeholder="Describe the mitigation control..." 
-                                                        value={mitigation.description} 
-                                                        onChange={(e) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'description', e.target.value)}
-                                                    />
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <Input 
-                                                            placeholder="Responsible Person" 
-                                                            value={mitigation.responsiblePerson}
-                                                            onChange={(e) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'responsiblePerson', e.target.value)}
-                                                        />
-                                                         <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !mitigation.completionDate && "text-muted-foreground")}>
-                                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                                    {mitigation.completionDate ? format(parseISO(mitigation.completionDate), "PPP") : <span>Set Date</span>}
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined} onSelect={(date) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'completionDate', date)} /></PopoverContent>
-                                                        </Popover>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-2">
-                                                            <Label>Residual Likelihood</Label>
-                                                            <Select value={mitigation.residualLikelihood} onValueChange={(value) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'residualLikelihood', value)}>
-                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                <SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                         <div className="space-y-2">
-                                                            <Label>Residual Severity</Label>
-                                                            <Select value={mitigation.residualSeverity} onValueChange={(value) => handleMitigationChange(step.id, hazard.id, risk.id, mitigation.id, 'residualSeverity', value)}>
-                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                <SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                    </div>
-                                                     <div className="flex items-center justify-end gap-2">
-                                                        <Label>Residual Risk Score:</Label>
-                                                        <Badge style={{ backgroundColor: getRiskScoreColor(mitigation.residualRiskScore) }}>{mitigation.residualRiskScore} - {getRiskLevel(mitigation.residualRiskScore)}</Badge>
-                                                    </div>
-                                                </Card>
-                                            )})}
-                                        </div>
-                                    </Card>
-                                )})}
-                            </Card>
-                        )})}
-                    </Card>
-                )})}
-                {(!localPhase.steps || localPhase.steps.length === 0) && (
-                    <div className="text-sm text-center text-muted-foreground py-8">No steps added yet for this phase.</div>
-                )}
-            </CardContent>
-            <DialogFooter>
-                <Button onClick={onClose} variant="outline">Cancel</Button>
-                <Button onClick={handleSave}>Save Changes</Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-};
-
 export default function MocDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -477,8 +92,6 @@ export default function MocDetailPage() {
   const [moc, setMoc] = useState<ManagementOfChange | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [selectedPhase, setSelectedPhase] = useState<MocPhase | null>(null);
-  const [editingPhase, setEditingPhase] = useState<MocPhase | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [analysisParams, setAnalysisParams] = useState('');
   
@@ -606,13 +219,6 @@ export default function MocDetailPage() {
       handleUpdate({ phases: updatedPhases });
   };
   
-  const handleEditPhase = (phaseId: string, newDescription: string) => {
-    if (!moc) return;
-    const updatedPhases = moc.phases?.map(p => p.id === phaseId ? { ...p, description: newDescription } : p);
-    handleUpdate({ phases: updatedPhases });
-    setEditingPhase(null);
-  };
-
   const severityMap: Record<RiskSeverity, string> = { 'Catastrophic': 'A', 'Hazardous': 'B', 'Major': 'C', 'Minor': 'D', 'Negligible': 'E' };
   const likelihoodMap: Record<RiskLikelihood, number> = { 'Frequent': 5, 'Occasional': 4, 'Remote': 3, 'Improbable': 2, 'Extremely Improbable': 1 };
 
@@ -654,6 +260,7 @@ export default function MocDetailPage() {
         
         <Card className="print:shadow-none print:border-none">
           <CardHeader>
+            {/* THIS IS THE STANDARD DOCUMENT HEADER. ALL REPORTS/FORMS SHOULD FOLLOW THIS FORMAT. */}
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
                     {company?.logoUrl && (
@@ -670,21 +277,19 @@ export default function MocDetailPage() {
                     <CardTitle>{company?.name}</CardTitle>
                     <CardDescription>Management of Change</CardDescription>
                 </div>
-                <div className="w-16"></div>
+                <div className="w-16 flex justify-end">
+                    <Badge>{moc.status}</Badge>
+                </div>
             </div>
             <Separator className="my-4"/>
-            <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
-                    <CardDescription>
-                        Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
-                    </CardDescription>
-                </div>
-                <Badge>{moc.status}</Badge>
+            <div>
+                <CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle>
+                <CardDescription>
+                    Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}
+                </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Separator />
              <DetailSection title="Description of Change">
                 <p className="whitespace-pre-wrap">{moc.description}</p>
              </DetailSection>
@@ -731,22 +336,23 @@ export default function MocDetailPage() {
             <CardContent className="space-y-4">
                 {moc.phases && moc.phases.length > 0 ? (
                     moc.phases.map((phase, phaseIndex) => (
-                        <div key={phase.id} className="space-y-4">
+                        <div key={phase.id} className="space-y-4 print:break-inside-avoid">
                              <div className="flex justify-between items-center py-2">
                                 <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
                                 <div className="flex items-center gap-2 no-print">
-                                    <Button variant="outline" size="sm" onClick={() => setSelectedPhase(phase)}>
-                                        <Wind className="mr-2 h-4 w-4" />
-                                        Analyze ({phase.steps?.length || 0} Steps)
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => setEditingPhase(phase)}><Edit className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => {}}><Edit className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDeletePhase(phase.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>
                             </div>
                             {phase.steps?.map((step, stepIndex) => (
-                                <Card key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid">
-                                    <p className="font-semibold text-sm">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
-                                    <div className="pl-4 mt-2 space-y-3">
+                                <Collapsible key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg">
+                                    <CollapsibleTrigger asChild>
+                                        <div className="flex items-center justify-between cursor-pointer">
+                                            <p className="font-semibold text-sm">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
+                                            <ChevronDown className="h-4 w-4" />
+                                        </div>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="pl-4 mt-2 space-y-3 pt-3 border-t">
                                         {step.hazards?.map(hazard => (
                                         <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
                                             <p className="moc-print-hazard-title">Hazard: <span className="font-normal text-black">{hazard.description}</span></p>
@@ -773,8 +379,8 @@ export default function MocDetailPage() {
                                             ))}
                                         </div>
                                         ))}
-                                    </div>
-                                </Card>
+                                    </CollapsibleContent>
+                                </Collapsible>
                             ))}
                         </div>
                     ))
@@ -789,48 +395,8 @@ export default function MocDetailPage() {
             </CardContent>
         </Card>
       </div>
-      {selectedPhase && (
-        <Dialog open={!!selectedPhase} onOpenChange={(isOpen) => !isOpen && setSelectedPhase(null)}>
-            <HazardAnalysisDialog 
-                phase={selectedPhase} 
-                onUpdate={handleUpdatePhase}
-                onClose={() => setSelectedPhase(null)}
-                phaseNumber={moc.phases?.findIndex(p => p.id === selectedPhase.id) + 1 || 0}
-            />
-        </Dialog>
-      )}
-      {editingPhase && (
-          <Dialog open={!!editingPhase} onOpenChange={() => setEditingPhase(null)}>
-              <DialogContent>
-                  <DialogHeader>
-                      <DialogTitle>Edit Phase Title</DialogTitle>
-                  </DialogHeader>
-                  <Input 
-                      defaultValue={editingPhase.description}
-                      id="edit-phase-input"
-                  />
-                  <DialogFooter>
-                      <Button variant="outline" onClick={() => setEditingPhase(null)}>Cancel</Button>
-                      <Button onClick={() => {
-                          const newDesc = (document.getElementById('edit-phase-input') as HTMLInputElement).value;
-                          if (newDesc) handleEditPhase(editingPhase.id, newDesc);
-                      }}>Save</Button>
-                  </DialogFooter>
-              </DialogContent>
-          </Dialog>
-      )}
     </main>
   );
 }
 
 MocDetailPage.title = "Management of Change";
-
-
-
-    
-
-    
-
-
-
-
