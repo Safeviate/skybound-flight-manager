@@ -17,7 +17,7 @@ const SendEmailInputSchema = z.object({
   emailData: z.object({
     userName: z.string(),
     companyName: z.string(),
-    userEmail: z.string().email(),
+    temporaryPassword: z.string(),
     loginUrl: z.string().url(),
   }),
 });
@@ -44,7 +44,7 @@ const sendEmailFlow = ai.defineFlow(
     }
     const resend = new Resend(apiKey);
 
-    const { userName, companyName, loginUrl, userEmail } = emailData;
+    const { userName, companyName, loginUrl, temporaryPassword } = emailData;
     
     const htmlBody = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333;">
@@ -54,8 +54,12 @@ const sendEmailFlow = ai.defineFlow(
           An account has been created for you in the ${companyName} portal.
         </p>
         <p style="font-size: 16px; line-height: 1.5;">
-          To get started, please visit the login page and use the "Forgot Password" link to set your password for the first time.
+          Please use the following temporary password to log in for the first time. You will be prompted to change it upon login.
         </p>
+        <div style="background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 5px; padding: 15px; text-align: center; margin: 20px 0;">
+          <p style="font-size: 14px; margin: 0; color: #777;">Your Temporary Password:</p>
+          <p style="font-size: 20px; font-weight: bold; margin: 5px 0; letter-spacing: 2px;">${temporaryPassword}</p>
+        </div>
         <a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
           Go to Login Page
         </a>
@@ -90,5 +94,3 @@ const sendEmailFlow = ai.defineFlow(
     }
   }
 );
-
-    

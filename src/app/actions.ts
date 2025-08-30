@@ -7,6 +7,8 @@ import { createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail }
 import type { User, Company, TrainingLogEntry } from '@/lib/types';
 import { ROLE_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
+import { sendEmail } from '@/ai/flows/send-email-flow';
+
 
 export async function createUserAndSendWelcomeEmail(
   userData: Omit<User, 'id'>, 
@@ -16,10 +18,11 @@ export async function createUserAndSendWelcomeEmail(
 ): Promise<{ success: boolean; message: string }> {
   try {
     let newUserId: string;
+    let temporaryPassword = '';
 
     // If email is provided, create user in Firebase Auth
     if (userData.email) {
-        const temporaryPassword = Math.random().toString(36).slice(-8);
+        temporaryPassword = Math.random().toString(36).slice(-8);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, userData.email, temporaryPassword);
             newUserId = userCredential.user.uid;
@@ -28,8 +31,18 @@ export async function createUserAndSendWelcomeEmail(
                 displayName: userData.name,
             });
 
-            // The welcome email logic is now completely removed from the core user creation.
-            // It was previously causing issues and was not desired.
+            if (welcomeEmailEnabled) {
+                await sendEmail({
+                    to: userData.email,
+                    subject: `Welcome to ${companyName}`,
+                    emailData: {
+                        userName: userData.name,
+                        companyName: companyName,
+                        temporaryPassword: temporaryPassword,
+                        loginUrl: `https://${companyId}.safeviate.com/login`, // Assuming a subdomain structure
+                    }
+                });
+            }
             
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
