@@ -155,13 +155,13 @@ export default function LoginPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-muted/40 p-4 relative">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Rocket className="h-8 w-8 text-primary" />
         <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
       </div>
 
-      <div className="absolute top-1/2 left-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 space-y-4">
+      <div className="w-full max-w-sm space-y-4">
         <Card className="border-2 border-primary">
             <CardHeader>
             <CardTitle className="text-2xl">
