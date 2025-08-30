@@ -56,6 +56,7 @@ export type Company = {
   theme?: Partial<ThemeColors>;
   enabledFeatures?: Feature[];
   logoUrl?: string;
+  riskMatrixColors?: Record<string, string>;
 };
 
 export type AircraftDocument = {
@@ -726,3 +727,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+

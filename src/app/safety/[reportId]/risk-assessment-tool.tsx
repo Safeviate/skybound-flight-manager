@@ -54,12 +54,25 @@ interface RiskAssessmentToolProps {
 }
 
 export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessmentToolProps) {
+  const { user, company, updateCompany } = useUser();
   const [cellColors, setCellColors] = React.useState(INITIAL_CELL_COLORS);
-  const { user } = useUser();
   const canEditColors = user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit');
+  
+  React.useEffect(() => {
+    if (company?.riskMatrixColors) {
+      setCellColors(company.riskMatrixColors);
+    } else {
+      setCellColors(INITIAL_CELL_COLORS);
+    }
+  }, [company?.riskMatrixColors]);
+
 
   const handleColorChange = (riskCode: string, value: string) => {
-    setCellColors(prev => ({ ...prev, [riskCode]: value }));
+    const newColors = { ...cellColors, [riskCode]: value };
+    setCellColors(newColors);
+    if (company) {
+        updateCompany(company.id, { riskMatrixColors: newColors });
+    }
   };
 
   return (
