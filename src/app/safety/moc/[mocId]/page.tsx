@@ -275,7 +275,7 @@ export default function MocDetailPage() {
 
                 <div className="space-y-4 pt-4">
                     {moc.phases?.map((phase, phaseIndex) => (
-                        <div key={phase.id} className="space-y-4 print:break-inside-avoid border-l-4 pl-4 border-primary/20">
+                        <div key={phase.id} className="space-y-2 print:break-inside-avoid border-l-4 pl-2 border-primary/20">
                             <div className="flex justify-between items-center py-2">
                             <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
                             {canEdit && <div className="flex items-center gap-2 no-print">
@@ -284,7 +284,7 @@ export default function MocDetailPage() {
                             </div>}
                             </div>
                             {phase.steps?.map((step, stepIndex) => (
-                                <Collapsible key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg" defaultOpen>
+                                <Collapsible key={step.id} className="p-3 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg" defaultOpen>
                                     <CollapsibleTrigger asChild>
                                         <div className="flex items-center justify-between cursor-pointer w-full">
                                             <div className="flex-1 text-left">
@@ -397,5 +397,6 @@ const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => voi
 };
 
 MocDetailPage.title = "Management of Change";
+
 
 
