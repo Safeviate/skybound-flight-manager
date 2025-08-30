@@ -162,8 +162,8 @@ export default function LoginPage() {
       </div>
 
       <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
-        <div className="w-full max-w-sm space-y-8">
-            <Card>
+        <div className="w-full max-w-sm space-y-4">
+            <Card className="border-2 border-primary">
                 <CardHeader>
                 <CardTitle className="text-2xl">
                     Login
@@ -214,7 +214,7 @@ export default function LoginPage() {
                 </CardFooter>
             </Card>
             {loginError && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="border-destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Login Error</AlertTitle>
                     <AlertDescription>{loginError}</AlertDescription>
