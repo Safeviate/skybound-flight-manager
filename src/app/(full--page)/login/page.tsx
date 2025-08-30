@@ -83,7 +83,6 @@ function ChangePasswordDialog({ onPasswordChanged }: { onPasswordChanged: () => 
 export default function LoginPage() {
   const { user, login, company, loading, updateUser } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -131,7 +130,6 @@ export default function LoginPage() {
     setIsLoading(true);
     setLoginError(null);
     try {
-      // Correctly configure the action URL to point to your new page
       const actionCodeSettings = {
         url: `${window.location.origin}/auth/action`,
         handleCodeInApp: true,
@@ -155,76 +153,78 @@ export default function LoginPage() {
 
   return (
     <>
-    <div className="relative min-h-screen bg-muted/40">
-      <div className="absolute top-8 left-8 flex items-center gap-2">
-        <Rocket className="h-8 w-8 text-primary" />
-        <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
-      </div>
+      <div className="relative min-h-screen bg-muted/40">
+        <div className="absolute top-8 left-8 flex items-center gap-2">
+          <Rocket className="h-8 w-8 text-primary" />
+          <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
+        </div>
 
-      <div className="absolute left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 space-y-4 px-4">
-        <Card className="border-2 border-primary">
-            <CardHeader>
-            <CardTitle className="text-2xl">
-                Login
-            </CardTitle>
-            <CardDescription>
-                Enter your credentials to access your account.
-            </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                </div>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                        <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
-                        Forgot password?
-                    </Button>
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="w-full max-w-sm space-y-4">
+            <Card className="border-2 border-primary">
+              <CardHeader>
+                <CardTitle className="text-2xl">
+                    Login
+                </CardTitle>
+                <CardDescription>
+                    Enter your credentials to access your account.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="m@example.com"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
                     </div>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                Login
-                </Button>
-            </form>
-            </CardContent>
-            <CardFooter className="justify-center text-sm">
-                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
-                    Don't have an account? Register your company
-                </Link>
-            </CardFooter>
-        </Card>
-        {loginError && (
-            <Alert variant="destructive" className="border-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Login Error</AlertTitle>
-                <AlertDescription>{loginError}</AlertDescription>
-            </Alert>
-        )}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                            <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
+                            Forgot password?
+                        </Button>
+                        </div>
+                    <Input 
+                        id="password" 
+                        type="password" 
+                        required 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    </div>
+                    
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                    Login
+                    </Button>
+                </form>
+              </CardContent>
+              <CardFooter className="justify-center text-sm">
+                  <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                      Don't have an account? Register your company
+                  </Link>
+              </CardFooter>
+            </Card>
+            {loginError && (
+                <Alert variant="destructive" className="border-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Login Error</AlertTitle>
+                    <AlertDescription>{loginError}</AlertDescription>
+                </Alert>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-    
-    <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
-        <ChangePasswordDialog onPasswordChanged={onPasswordSuccessfullyChanged} />
-    </Dialog>
+      
+      <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
+          <ChangePasswordDialog onPasswordChanged={onPasswordSuccessfullyChanged} />
+      </Dialog>
     </>
   );
 }
