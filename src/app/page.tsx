@@ -13,11 +13,14 @@ function RootPage() {
 
   useEffect(() => {
     if (loading) {
-      return;
+      return; // Wait until the auth state is confirmed
     }
+    
+    // If auth state is resolved and there is a user, go to their dashboard.
     if (user) {
         router.push('/my-dashboard');
     } else {
+        // If auth state is resolved and there is no user, go to the login page.
         router.push('/login');
     }
   }, [user, loading, router]);
