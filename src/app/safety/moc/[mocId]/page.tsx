@@ -26,12 +26,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzeMoc } from '@/ai/flows/analyze-moc-flow';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
+import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -259,6 +259,15 @@ export default function MocDetailPage() {
                 <DetailSection title="Scope of Change"><p className="whitespace-pre-wrap">{moc.scope}</p></DetailSection>
                 
                 <Separator className="my-6 print:my-4" />
+                
+                <Card className="print:shadow-none print:border-none">
+                    <CardHeader>
+                        <CardTitle>Hazard Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <RiskAssessmentTool />
+                    </CardContent>
+                </Card>
 
                 <div>
                     <h2 className="text-xl font-bold mb-4">Implementation Plan & Hazard Analysis</h2>
@@ -285,20 +294,18 @@ export default function MocDetailPage() {
                                     </div>}
                                 </div>
                             </CardHeader>
-                            <CardContent className="space-y-3">
+                            <CardContent className="pl-6 space-y-4 border-l-2 border-primary ml-3">
                                 {phase.steps?.map((step, stepIndex) => (
-                                     <Card key={step.id} className="bg-muted/50 print:shadow-none print:border">
-                                        <CardHeader className="p-4">
-                                             <div className="flex items-center gap-2"><p className="font-semibold text-sm">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
-                                                {canEdit && <div className="flex items-center gap-1 no-print">
-                                                    <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
-                                                    <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                </div>}
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="p-4 pt-0 space-y-3">
-                                             {step.hazards?.map(hazard => (
-                                                <div key={hazard.id} className="p-3 bg-card rounded-md border">
+                                    <div key={step.id} className="pt-2">
+                                        <div className="flex items-center gap-2"><p className="font-semibold">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
+                                            {canEdit && <div className="flex items-center gap-1 no-print">
+                                                <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}><Edit className="h-3 w-3" /></Button>
+                                                <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('step', { phaseId: phase.id, stepId: step.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                            </div>}
+                                        </div>
+                                        <div className="pl-4 mt-2 space-y-3">
+                                            {step.hazards?.map(hazard => (
+                                                <div key={hazard.id} className="p-3 bg-muted/50 rounded-md border">
                                                     <div className="flex items-center gap-2"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
                                                         {canEdit && <div className="flex items-center gap-1 no-print">
                                                             <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
@@ -340,10 +347,10 @@ export default function MocDetailPage() {
                                                         <Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button>
                                                     </div>}
                                                 </div>
-                                             ))}
-                                             {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
-                                        </CardContent>
-                                     </Card>
+                                            ))}
+                                            {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
+                                        </div>
+                                    </div>
                                 ))}
                                 {canEdit && <div className="flex justify-end mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button></div>}
                             </CardContent>
@@ -398,6 +405,7 @@ const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => voi
 };
 
 MocDetailPage.title = "Management of Change";
+
 
 
 
