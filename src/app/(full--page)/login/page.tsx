@@ -159,9 +159,9 @@ export default function LoginPage() {
           <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
         </div>
 
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
           <div className="w-full max-w-sm space-y-4">
-            <Card className="border-2 border-primary">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">
                     Login
