@@ -160,65 +160,63 @@ export default function LoginPage() {
         <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
       </div>
 
-      <div className="w-full max-w-sm">
-        <Card>
-            <CardHeader>
-            <CardTitle className="text-2xl">
-                Login
-            </CardTitle>
-            <CardDescription>
-                Enter your credentials to access your account.
-            </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
+      <Card className="w-full max-w-sm">
+          <CardHeader>
+          <CardTitle className="text-2xl">
+              Login
+          </CardTitle>
+          <CardDescription>
+              Enter your credentials to access your account.
+          </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+              />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                    <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
+                      Forgot password?
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                     <Button data-nosnippet type="button" variant="link" className="p-0 h-auto text-xs" onClick={handlePasswordReset}>
-                        Forgot password?
-                    </Button>
-                  </div>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                Login
-                </Button>
-            </form>
-            </CardContent>
-            <CardFooter className="justify-center text-sm">
-                <Link href="/corporate" className="text-muted-foreground hover:text-primary">
-                    Don't have an account? Register your company
-                </Link>
-            </CardFooter>
-        </Card>
-        {loginError && (
-            <Alert variant="destructive" className="mt-8">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Login Error</AlertTitle>
-                <AlertDescription>{loginError}</AlertDescription>
-            </Alert>
-        )}
-      </div>
+              <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+              />
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+              Login
+              </Button>
+          </form>
+          </CardContent>
+          <CardFooter className="justify-center text-sm">
+              <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                  Don't have an account? Register your company
+              </Link>
+          </CardFooter>
+      </Card>
+      {loginError && (
+          <Alert variant="destructive" className="mt-8 max-w-sm">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Login Error</AlertTitle>
+              <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+      )}
     </div>
     
     <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
