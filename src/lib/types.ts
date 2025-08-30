@@ -618,6 +618,11 @@ export type ManagementOfChange = {
   proposalDate: string;
   status: 'Proposed' | 'Under Review' | 'Approved' | 'Rejected' | 'Implemented' | 'Closed';
   phases?: MocPhase[];
+  proposerSignature?: string;
+  proposerSignatureDate?: string;
+  approverName?: string;
+  approverSignature?: string;
+  approverSignatureDate?: string;
 };
 
 export type TechnicalReport = {
@@ -727,4 +732,14 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
+
+
+
+
+
+
+
+
+
 

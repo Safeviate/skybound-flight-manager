@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Edit, Wind, Printer, Bot, Loader2, ChevronDown, Save, Signature } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -32,6 +32,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
 import { RiskAssessmentTool } from '../../[reportId]/risk-assessment-tool';
+import { SignaturePad } from '@/components/ui/signature-pad';
 
 const probabilityOptions: RiskLikelihood[] = ['Frequent', 'Occasional', 'Remote', 'Improbable', 'Extremely Improbable'];
 const severityOptions: RiskSeverity[] = ['Catastrophic', 'Hazardous', 'Major', 'Minor', 'Negligible'];
@@ -220,9 +221,9 @@ export default function MocDetailPage() {
     } else if (itemType === 'hazard') {
         updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.filter(h => h.id !== ids.hazardId) } : s) } : p);
     } else if (itemType === 'risk') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === ids.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.filter(r => r.id !== ids.riskId) } : h) } : s) } : p);
     } else if (itemType === 'mitigation') {
-        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === ids.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
+        updatedPhases = updatedPhases.map((p: MocPhase) => p.id === data.phaseId ? { ...p, steps: p.steps?.map(s => s.id === data.stepId ? { ...s, hazards: s.hazards?.map(h => h.id === data.hazardId ? { ...h, risks: h.risks?.map(r => r.id === data.riskId ? { ...r, mitigations: r.mitigations?.filter(m => m.id !== ids.mitigationId) } : r) } : h) } : s) } : p);
     }
 
     handleUpdate({ phases: updatedPhases });
@@ -232,6 +233,9 @@ export default function MocDetailPage() {
 
   if (loading || userLoading) return <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>Loading MOC details...</p></main>;
   if (!moc) return <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>The requested Management of Change record could not be found.</p></main>;
+
+  const canSignAsProposer = user?.name === moc.proposedBy;
+  const canSignAsApprover = canEdit; // Simplified logic, could be a specific role
 
   return (
     <main className="flex-1 p-4 md:p-8 print:p-0">
@@ -364,6 +368,43 @@ export default function MocDetailPage() {
                         </div>
                     )}
                 </div>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Signatures</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <h4 className="font-semibold">Proposer: {moc.proposedBy}</h4>
+                            {moc.proposerSignature ? (
+                                <div>
+                                    <Image src={moc.proposerSignature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                    {moc.proposerSignatureDate && (
+                                        <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
+                                    )}
+                                </div>
+                            ) : canSignAsProposer ? (
+                                <SignaturePad onSubmit={(signature) => handleUpdate({ proposerSignature: signature, proposerSignatureDate: new Date().toISOString() }, true)} />
+                            ) : (
+                                <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-semibold">Approver: {moc.approverName || 'Not Assigned'}</h4>
+                            {moc.approverSignature ? (
+                                <div>
+                                    <Image src={moc.approverSignature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
+                                    {moc.approverSignatureDate && (
+                                        <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
+                                    )}
+                                </div>
+                            ) : canSignAsApprover ? (
+                                <SignaturePad onSubmit={(signature) => handleUpdate({ approverName: user?.name, approverSignature: signature, approverSignatureDate: new Date().toISOString() }, true)} />
+                            ) : (
+                                <div className="h-[150px] w-full max-w-sm flex items-center justify-center border rounded-md bg-muted text-muted-foreground">Awaiting signature</div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </CardContent>
         </Card>
       </div>
