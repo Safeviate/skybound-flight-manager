@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,7 +89,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const { toast } = useToast();
-
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -101,6 +103,17 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
   
+  useEffect(() => {
+    const measureContainer = () => {
+        if (containerRef.current) {
+            setContainerWidth(containerRef.current.offsetWidth);
+        }
+    };
+    measureContainer();
+    window.addEventListener('resize', measureContainer);
+    return () => window.removeEventListener('resize', measureContainer);
+  }, []);
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
@@ -159,7 +172,10 @@ export default function LoginPage() {
           <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
         </div>
 
-        <div className="flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
+        <div ref={containerRef} className="flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
+           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-2 py-1 text-xs font-mono rounded">
+             Container Width: {containerWidth}px
+           </div>
           <div className="w-full max-w-sm space-y-4">
             <Card>
               <CardHeader>
