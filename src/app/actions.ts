@@ -40,7 +40,7 @@ export async function createUserAndSendWelcomeEmail(
                         userName: userData.name,
                         companyName: companyName,
                         temporaryPassword: temporaryPassword,
-                        loginUrl: `https://studio--skybound-flight-manager.us-central1.hosted.app/login`, 
+                        loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`, 
                     }
                 });
             }
@@ -128,7 +128,7 @@ export async function resetUserPasswordAndSendWelcomeEmail(person: User, company
                 userName: person.name,
                 companyName: company.name,
                 temporaryPassword: temporaryPassword,
-                loginUrl: `https://studio--skybound-flight-manager.us-central1.hosted.app/login`,
+                loginUrl: `https://safeviate-develop--skybound-flight-manager.europe-west4.hosted.app/login`,
             }
         });
         
