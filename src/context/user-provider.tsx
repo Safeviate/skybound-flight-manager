@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, doc, collectionGroup } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { differenceInDays, parseISO, startOfDay } from 'date-fns';
@@ -342,6 +342,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
         if (!password) return false;
+        await setPersistence(auth, browserSessionPersistence);
         await signInWithEmailAndPassword(auth, email, password);
         return true;
     } catch (error) {
