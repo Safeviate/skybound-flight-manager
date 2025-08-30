@@ -111,7 +111,7 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                                             style={{ backgroundColor: cellColors[riskCode] }}
                                             onClick={() => onCellClick?.(likelihood, severity)}
                                         >
-                                            <div className="font-bold text-white">{riskCode}</div>
+                                            <div className="font-bold text-black">{riskCode}</div>
                                         </TableCell>
                                     </ContextMenuTrigger>
                                      {canEditColors && (
