@@ -124,13 +124,11 @@ export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium'
       return 'Extreme';
   }
 
-const getAlphanumericCodeFromScore = (score: number): string | null => {
-    for (const likelihood of Object.keys(LIKELIHOOD_MAP) as RiskLikelihood[]) {
-        for (const severity of Object.keys(SEVERITY_MAP) as RiskSeverity[]) {
-            if (getRiskScore(likelihood, severity) === score) {
-                return `${LIKELIHOOD_MAP[likelihood]}${SEVERITY_MAP[severity]}`;
-            }
-        }
+const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood, severity: RiskSeverity): string | null => {
+    const likelihoodValue = LIKELIHOOD_MAP[likelihood];
+    const severityValue = SEVERITY_MAP[severity];
+    if (likelihoodValue && severityValue) {
+        return `${likelihoodValue}${severityValue}`;
     }
     return null;
 }
@@ -138,15 +136,25 @@ const getAlphanumericCodeFromScore = (score: number): string | null => {
 export const getRiskScoreColor = (score: number | null | undefined, riskMatrixColors?: Record<string, string>): string => {
   if (score === null || score === undefined) return 'hsl(var(--muted-foreground))';
   
-  const alphanumericCode = getAlphanumericCodeFromScore(score);
+  // Find the likelihood and severity that produce this score to get the code
+    for (const likelihood of Object.keys(LIKELIHOOD_MAP) as RiskLikelihood[]) {
+        for (const severity of Object.keys(SEVERITY_MAP) as RiskSeverity[]) {
+            if (getRiskScore(likelihood, severity) === score) {
+                const alphanumericCode = getAlphanumericCodeFromLikelihoodAndSeverity(likelihood, severity);
+                if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
+                    return riskMatrixColors[alphanumericCode];
+                }
+                // Break after finding first match if needed, though multiple combos can yield same score.
+                // For a consistent fallback, we'll just use the first one we find.
+                break; 
+            }
+        }
+    }
 
-  if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
-    return riskMatrixColors[alphanumericCode];
-  }
 
-  // Fallback logic
+  // Fallback logic if no custom color is found
   if (score <= 4) return `hsl(var(--success))`;
-  if (score <= 9) return `hsl(var(--orange))`;
+  if (score <= 9) return `hsl(var(--warning))`;
   if (score <= 16) return `hsl(var(--orange))`;
   return `hsl(var(--destructive))`;
 }
