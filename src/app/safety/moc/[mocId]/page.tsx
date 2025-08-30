@@ -253,108 +253,109 @@ export default function MocDetailPage() {
                 <Separator className="my-4"/>
                 <div><CardTitle className="mt-2">{moc.mocNumber}: {moc.title}</CardTitle><CardDescription>Proposed by {moc.proposedBy} on {format(parseISO(moc.proposalDate), 'MMMM d, yyyy')}</CardDescription></div>
             </CardHeader>
-          <CardContent className="space-y-6">
-             <DetailSection title="Description of Change"><p className="whitespace-pre-wrap">{moc.description}</p></DetailSection>
-             <DetailSection title="Reason for Change"><p className="whitespace-pre-wrap">{moc.reason}</p></DetailSection>
-             <DetailSection title="Scope of Change"><p className="whitespace-pre-wrap">{moc.scope}</p></DetailSection>
-          </CardContent>
-        </Card>
+            <CardContent className="space-y-6">
+                <DetailSection title="Description of Change"><p className="whitespace-pre-wrap">{moc.description}</p></DetailSection>
+                <DetailSection title="Reason for Change"><p className="whitespace-pre-wrap">{moc.reason}</p></DetailSection>
+                <DetailSection title="Scope of Change"><p className="whitespace-pre-wrap">{moc.scope}</p></DetailSection>
+                
+                <Separator className="my-6 print:my-4" />
 
-        <Card className="print:shadow-none print:border-none">
-            <CardHeader>
-                <div className="flex justify-between items-start"><CardTitle>Implementation Plan & Hazard Analysis</CardTitle></div>
-                <div className="space-y-4 rounded-lg border p-4 no-print mt-4">
-                    {canEdit && (<>
-                        <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
-                        <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
-                        <div className="flex items-center gap-2 justify-end">
-                            <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
-                        </div>
-                    </>)}
+                <div>
+                    <h2 className="text-xl font-bold mb-4">Implementation Plan & Hazard Analysis</h2>
+                    <div className="space-y-4 rounded-lg border p-4 no-print">
+                        {canEdit && (<>
+                            <Label htmlFor="analysis-params">AI Analysis Parameters (Optional)</Label>
+                            <Textarea id="analysis-params" placeholder="Enter specific keywords for the AI to focus on, e.g., 'impact on flight crew duty times'..." value={analysisParams} onChange={(e) => setAnalysisParams(e.target.value)}/>
+                            <div className="flex items-center gap-2 justify-end">
+                                <Button variant="secondary" onClick={handleAnalyzeWithAi} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />} Analyze with AI</Button>
+                            </div>
+                        </>)}
+                    </div>
                 </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {moc.phases?.map((phase, phaseIndex) => (
-                    <div key={phase.id} className="space-y-4 print:break-inside-avoid border-l-4 pl-4 border-primary/20">
-                        <div className="flex justify-between items-center py-2">
-                           <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
-                           {canEdit && <div className="flex items-center gap-2 no-print">
-                                <Button variant="ghost" size="icon" onClick={() => setDialogState({ type: 'editPhase', data: { phaseId: phase.id, description: phase.description }})}><Edit className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete('phase', { phaseId: phase.id })}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                           </div>}
-                        </div>
-                        {phase.steps?.map((step, stepIndex) => (
-                            <Collapsible key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg" defaultOpen>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center justify-between cursor-pointer w-full">
-                                        <div className="flex-1 text-left">
-                                            <div className="flex items-center gap-2"><p className="font-semibold text-sm">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
-                                                {canEdit && <div className="flex items-center gap-1 no-print">
-                                                    <Button variant="link" className="p-0 h-4" onClick={(e) => { e.stopPropagation(); setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}}><Edit className="h-3 w-3" /></Button>
-                                                    <Button variant="link" className="p-0 h-4" onClick={(e) => { e.stopPropagation(); handleDelete('step', { phaseId: phase.id, stepId: step.id })}}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                                </div>}
-                                            </div>
-                                        </div><ChevronDown className="h-4 w-4" />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pl-4 mt-2 space-y-3 pt-3 border-t">
-                                    {step.hazards?.map(hazard => (
-                                    <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
-                                        <div className="flex items-center gap-2 moc-print-hazard-title"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
-                                            {canEdit && <div className="flex items-center gap-1 no-print">
-                                                <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
-                                                <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
-                                            </div>}
-                                        </div>
-                                        {hazard.risks?.map(risk => (
-                                        <div key={risk.id} className="pl-4 pt-2 mt-2 border-t moc-print-risk-wrapper">
-                                            <div className="flex justify-between items-start">
-                                                 <div className="flex items-center gap-2 moc-print-risk-title"><p className="font-semibold text-sm">Risk: {risk.description}</p>
+
+                <div className="space-y-4 pt-4">
+                    {moc.phases?.map((phase, phaseIndex) => (
+                        <div key={phase.id} className="space-y-4 print:break-inside-avoid border-l-4 pl-4 border-primary/20">
+                            <div className="flex justify-between items-center py-2">
+                            <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
+                            {canEdit && <div className="flex items-center gap-2 no-print">
+                                    <Button variant="ghost" size="icon" onClick={() => setDialogState({ type: 'editPhase', data: { phaseId: phase.id, description: phase.description }})}><Edit className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDelete('phase', { phaseId: phase.id })}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                            </div>}
+                            </div>
+                            {phase.steps?.map((step, stepIndex) => (
+                                <Collapsible key={step.id} className="p-4 bg-muted/50 print:border print:shadow-none print:bg-white print:break-inside-avoid rounded-lg" defaultOpen>
+                                    <CollapsibleTrigger asChild>
+                                        <div className="flex items-center justify-between cursor-pointer w-full">
+                                            <div className="flex-1 text-left">
+                                                <div className="flex items-center gap-2"><p className="font-semibold text-sm">Step {phaseIndex + 1}.{stepIndex + 1}: {step.description}</p>
                                                     {canEdit && <div className="flex items-center gap-1 no-print">
-                                                        <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
-                                                        <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                        <Button variant="link" className="p-0 h-4" onClick={(e) => { e.stopPropagation(); setDialogState({ type: 'editStep', data: { phaseId: phase.id, stepId: step.id, description: step.description }})}}><Edit className="h-3 w-3" /></Button>
+                                                        <Button variant="link" className="p-0 h-4" onClick={(e) => { e.stopPropagation(); handleDelete('step', { phaseId: phase.id, stepId: step.id })}}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                     </div>}
                                                 </div>
-                                                <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                            </div><ChevronDown className="h-4 w-4" />
+                                        </div>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="pl-4 mt-2 space-y-3 pt-3 border-t">
+                                        {step.hazards?.map(hazard => (
+                                        <div key={hazard.id} className="p-3 bg-white dark:bg-card rounded-md border print:border print:mt-2">
+                                            <div className="flex items-center gap-2 moc-print-hazard-title"><p className="font-semibold text-sm">Hazard: {hazard.description}</p>
+                                                {canEdit && <div className="flex items-center gap-1 no-print">
+                                                    <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editHazard', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, description: hazard.description }})}><Edit className="h-3 w-3" /></Button>
+                                                    <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('hazard', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                </div>}
                                             </div>
-                                            {risk.mitigations?.map(mit => (
-                                            <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
+                                            {hazard.risks?.map(risk => (
+                                            <div key={risk.id} className="pl-4 pt-2 mt-2 border-t moc-print-risk-wrapper">
                                                 <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-2 moc-print-mitigation-title"><p className="font-semibold text-sm">Mitigation: {mit.description}</p>
+                                                    <div className="flex items-center gap-2 moc-print-risk-title"><p className="font-semibold text-sm">Risk: {risk.description}</p>
                                                         {canEdit && <div className="flex items-center gap-1 no-print">
-                                                            <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation: mit } })}><Edit className="h-3 w-3" /></Button>
-                                                            <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mit.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                            <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, risk } })}><Edit className="h-3 w-3" /></Button>
+                                                            <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                         </div>}
                                                     </div>
-                                                    <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                    <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                 </div>
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    {mit.responsiblePerson && <span>Owner: {mit.responsiblePerson}</span>}
-                                                    {mit.completionDate && <span className="ml-4">Due: {format(parseISO(mit.completionDate), 'PPP')}</span>}
+                                                {risk.mitigations?.map(mit => (
+                                                <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed moc-print-mitigation-wrapper">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex items-center gap-2 moc-print-mitigation-title"><p className="font-semibold text-sm">Mitigation: {mit.description}</p>
+                                                            {canEdit && <div className="flex items-center gap-1 no-print">
+                                                                <Button variant="link" className="p-0 h-4" onClick={() => setDialogState({ type: 'editMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigation: mit } })}><Edit className="h-3 w-3" /></Button>
+                                                                <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mit.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                                                            </div>}
+                                                        </div>
+                                                        <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore), color: 'white'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                        {mit.responsiblePerson && <span>Owner: {mit.responsiblePerson}</span>}
+                                                        {mit.completionDate && <span className="ml-4">Due: {format(parseISO(mit.completionDate), 'PPP')}</span>}
+                                                    </div>
                                                 </div>
+                                                ))}
+                                                {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id }})}>Add Mitigation</Button>}
                                             </div>
                                             ))}
-                                            {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addMitigation', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id }})}>Add Mitigation</Button>}
-                                        </div>
-                                        ))}
-                                        {canEdit && <div className="flex gap-2 mt-2 no-print">
-                                            <Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button>
-                                        </div>}
-                                    </div>))}
-                                    {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
-                                </CollapsibleContent>
-                            </Collapsible>
-                        ))}
-                        {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button>}
-                    </div>
-                ))}
-                 {canEdit && (
-                    <div className="pt-4 border-t no-print">
-                        <Button variant="secondary" className="w-full" onClick={() => setDialogState({ type: 'addPhase' })}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Phase
-                        </Button>
-                    </div>
-                )}
+                                            {canEdit && <div className="flex gap-2 mt-2 no-print">
+                                                <Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addRisk', data: { phaseId: phase.id, stepId: step.id, hazardId: hazard.id }})}>Add Risk</Button>
+                                            </div>}
+                                        </div>))}
+                                        {canEdit && <div className="flex gap-2 mt-2 no-print"><Button variant="outline" size="sm" onClick={() => setDialogState({ type: 'addHazard', data: { phaseId: phase.id, stepId: step.id }})}>Add Hazard</Button></div>}
+                                    </CollapsibleContent>
+                                </Collapsible>
+                            ))}
+                            {canEdit && <Button variant="outline" size="sm" className="mt-2 no-print" onClick={() => setDialogState({ type: 'addStep', data: { phaseId: phase.id }})}>Add Step</Button>}
+                        </div>
+                    ))}
+                    {canEdit && (
+                        <div className="pt-4 border-t no-print">
+                            <Button variant="secondary" className="w-full" onClick={() => setDialogState({ type: 'addPhase' })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add New Phase
+                            </Button>
+                        </div>
+                    )}
+                </div>
             </CardContent>
         </Card>
       </div>
@@ -392,7 +393,7 @@ const RiskForm = ({ onSubmit, risk }: { onSubmit: (data: any) => void, risk?: Mo
 const mitigationFormSchema = z.object({ description: z.string().min(1, 'Description is required'), residualLikelihood: z.enum(probabilityOptions), residualSeverity: z.enum(severityOptions), responsiblePerson: z.string().optional(), completionDate: z.date().optional() });
 const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => void, mitigation?: MocMitigation }) => {
     const form = useForm<z.infer<typeof mitigationFormSchema>>({ resolver: zodResolver(mitigationFormSchema), defaultValues: mitigation ? { ...mitigation, responsiblePerson: mitigation.responsiblePerson || '', completionDate: mitigation.completionDate ? parseISO(mitigation.completionDate) : undefined } : { responsiblePerson: '' } });
-    return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
+    return (<Form {...form}><form onSubmit={form.handleSubmit((data) => onSubmit({...data, completionDate: data.completionDate ? format(data.completionDate, 'yyyy-MM-dd') : undefined }))} className="space-y-4 py-4"><FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Mitigation Action</FormLabel><FormControl><Textarea placeholder="Describe the mitigation..." {...field} /></FormControl><FormMessage /></FormItem>)} /><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="residualLikelihood" render={({ field }) => (<FormItem><FormLabel>Residual Likelihood</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Likelihood" /></SelectTrigger><SelectContent>{probabilityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="residualSeverity" render={({ field }) => (<FormItem><FormLabel>Residual Severity</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><SelectTrigger><SelectValue placeholder="Select Severity" /></SelectTrigger><SelectContent>{severityOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} /></div><div className="grid grid-cols-2 gap-4"><FormField control={form.control} name="responsiblePerson" render={({ field }) => (<FormItem><FormLabel>Responsible Person</FormLabel><FormControl><Input placeholder="e.g., Safety Manager" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="completionDate" render={({ field }) => (<FormItem><FormLabel>Completion Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} /></div><DialogFooter><Button type="submit">Save Mitigation</Button></DialogFooter></form></Form>);
 };
 
 MocDetailPage.title = "Management of Change";
