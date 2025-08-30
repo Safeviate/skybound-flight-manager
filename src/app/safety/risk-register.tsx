@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -127,13 +128,13 @@ export function RiskRegister({ risks, onUpdate }: RiskRegisterProps) {
                                             <TableCell className="font-medium">{risk.hazard}</TableCell>
                                             <TableCell>{risk.risk}</TableCell>
                                             <TableCell>
-                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                                <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
                                                     {risk.riskScore}
                                                 </Badge>
                                             </TableCell>
                                              <TableCell>
                                                 {risk.residualRiskScore !== undefined ? (
-                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
                                                         {risk.residualRiskScore}
                                                     </Badge>
                                                 ) : (

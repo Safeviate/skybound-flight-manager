@@ -124,7 +124,8 @@ export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium'
       return 'Extreme';
   }
 
-const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood, severity: RiskSeverity): string | null => {
+const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood | undefined, severity: RiskSeverity | undefined): string | null => {
+    if (!likelihood || !severity) return null;
     const likelihoodValue = LIKELIHOOD_MAP[likelihood];
     const severityValue = SEVERITY_MAP[severity];
     if (likelihoodValue && severityValue) {
@@ -133,24 +134,16 @@ const getAlphanumericCodeFromLikelihoodAndSeverity = (likelihood: RiskLikelihood
     return null;
 }
 
-export const getRiskScoreColor = (score: number | null | undefined, riskMatrixColors?: Record<string, string>): string => {
-  if (score === null || score === undefined) return 'hsl(var(--muted-foreground))';
-  
-  // Find the likelihood and severity that produce this score to get the code
-    for (const likelihood of Object.keys(LIKELIHOOD_MAP) as RiskLikelihood[]) {
-        for (const severity of Object.keys(SEVERITY_MAP) as RiskSeverity[]) {
-            if (getRiskScore(likelihood, severity) === score) {
-                const alphanumericCode = getAlphanumericCodeFromLikelihoodAndSeverity(likelihood, severity);
-                if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
-                    return riskMatrixColors[alphanumericCode];
-                }
-                // Break after finding first match if needed, though multiple combos can yield same score.
-                // For a consistent fallback, we'll just use the first one we find.
-                break; 
-            }
-        }
-    }
+export const getRiskScoreColor = (likelihood: RiskLikelihood | undefined, severity: RiskSeverity | undefined, riskMatrixColors?: Record<string, string>): string => {
+  if (!likelihood || !severity) return 'hsl(var(--muted-foreground))';
 
+  const alphanumericCode = getAlphanumericCodeFromLikelihoodAndSeverity(likelihood, severity);
+  
+  if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
+      return riskMatrixColors[alphanumericCode];
+  }
+  
+  const score = getRiskScore(likelihood, severity);
 
   // Fallback logic if no custom color is found
   if (score <= 4) return `hsl(var(--success))`;
@@ -158,6 +151,7 @@ export const getRiskScoreColor = (score: number | null | undefined, riskMatrixCo
   if (score <= 16) return `hsl(var(--orange))`;
   return `hsl(var(--destructive))`;
 }
+
 
 export const getRiskScoreColorWithOpacity = (score: number | null | undefined, opacity: number = 1): string => {
   if (score === null || score === undefined) return `hsla(var(--muted-foreground), ${opacity})`;

@@ -13,6 +13,7 @@ import { ArrowRight, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AssessMitigationForm } from './assess-mitigation-form';
+import { useUser } from '@/context/user-provider';
 
 interface MitigatedRiskAssessmentProps {
     report: SafetyReport;
@@ -22,7 +23,7 @@ interface MitigatedRiskAssessmentProps {
 
 export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }: MitigatedRiskAssessmentProps) {
   const [editingRisk, setEditingRisk] = useState<AssociatedRisk | null>(null);
-
+  const { company } = useUser();
   const { toast } = useToast();
 
   const handleAssessRisk = (riskId: string, updatedValues: Pick<AssociatedRisk, 'mitigationControls' | 'residualLikelihood' | 'residualSeverity'>) => {
@@ -77,12 +78,12 @@ export function MitigatedRiskAssessment({ report, onUpdate, correctiveActions }:
                             <TableCell className="max-w-xs">{risk.risk}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
-                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.riskScore), color: 'white' }}>
+                                    <Badge style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>
                                         {risk.riskScore}
                                     </Badge>
                                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                     {risk.residualRiskScore !== undefined ? (
-                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualRiskScore), color: 'white' }}>
+                                        <Badge style={{ backgroundColor: getRiskScoreColor(risk.residualLikelihood, risk.residualSeverity, company?.riskMatrixColors), color: 'black' }}>
                                             {risk.residualRiskScore}
                                         </Badge>
                                     ) : (

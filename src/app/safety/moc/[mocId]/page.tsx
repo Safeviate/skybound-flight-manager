@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -283,7 +284,7 @@ export default function MocDetailPage() {
 
                 <div className="space-y-4 pt-4">
                      {moc.phases?.map((phase, phaseIndex) => (
-                        <div key={phase.id} className="moc-print-phase-wrapper pt-4 border-t-2 border-primary">
+                        <div key={phase.id} className="pt-4 border-t-2 border-primary moc-print-phase-wrapper">
                              <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-semibold">{phaseIndex + 1}. {phase.description}</h3>
                                 {canEdit && <div className="flex items-center gap-2 no-print">
@@ -291,7 +292,7 @@ export default function MocDetailPage() {
                                         <Button variant="ghost" size="icon" onClick={() => handleDelete('phase', { phaseId: phase.id })}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                 </div>}
                             </div>
-                            <div className="pl-6 space-y-4">
+                            <div className="pl-2 space-y-4">
                                 {phase.steps?.map((step, stepIndex) => (
                                     <Card key={step.id} className="print:shadow-none print:border-none">
                                         <CardHeader className="p-4">
@@ -320,7 +321,7 @@ export default function MocDetailPage() {
                                                                     <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('risk', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                                 </div>}
                                                             </div>
-                                                            <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.riskScore, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
+                                                            <Badge className="font-mono print-force-color" style={{ backgroundColor: getRiskScoreColor(risk.likelihood, risk.severity, company?.riskMatrixColors), color: 'black' }}>{getAlphanumericCode(risk.likelihood, risk.severity)}</Badge>
                                                         </div>
                                                         {risk.mitigations?.map(mit => (
                                                         <div key={mit.id} className="pl-8 pt-2 mt-2 border-t border-dashed">
@@ -331,7 +332,7 @@ export default function MocDetailPage() {
                                                                         <Button variant="link" className="p-0 h-4" onClick={() => handleDelete('mitigation', { phaseId: phase.id, stepId: step.id, hazardId: hazard.id, riskId: risk.id, mitigationId: mit.id })}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                                                                     </div>}
                                                                 </div>
-                                                                <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualRiskScore, company?.riskMatrixColors), color: 'black'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
+                                                                <Badge className="font-mono print-force-color" style={{backgroundColor: getRiskScoreColor(mit.residualLikelihood, mit.residualSeverity, company?.riskMatrixColors), color: 'black'}}>{getAlphanumericCode(mit.residualLikelihood, mit.residualSeverity)}</Badge>
                                                             </div>
                                                             <div className="text-xs text-muted-foreground mt-1">
                                                                 {mit.responsiblePerson && <span>Owner: {mit.responsiblePerson}</span>}
