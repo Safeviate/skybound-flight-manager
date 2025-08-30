@@ -1,5 +1,4 @@
 
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { differenceInDays, format, parseISO, subDays, startOfDay } from 'date-fns';
@@ -125,36 +124,32 @@ export const getRiskLevel = (score: number | null | undefined): 'Low' | 'Medium'
       return 'Extreme';
   }
 
-export const getRiskScoreColor = (score: number | null | undefined): string => {
+const getAlphanumericCodeFromScore = (score: number): string | null => {
+    for (const likelihood of Object.keys(LIKELIHOOD_MAP) as RiskLikelihood[]) {
+        for (const severity of Object.keys(SEVERITY_MAP) as RiskSeverity[]) {
+            if (getRiskScore(likelihood, severity) === score) {
+                return `${LIKELIHOOD_MAP[likelihood]}${SEVERITY_MAP[severity]}`;
+            }
+        }
+    }
+    return null;
+}
+
+export const getRiskScoreColor = (score: number | null | undefined, riskMatrixColors?: Record<string, string>): string => {
   if (score === null || score === undefined) return 'hsl(var(--muted-foreground))';
   
-  const riskCode = getRiskCodeFromScore(score);
-  
-  const riskClassifications: Record<string, string> = {
-    'Intolerable': 'hsl(var(--destructive))',
-    'Tolerable': 'hsl(var(--orange))',
-    'Acceptable': 'hsl(var(--success))',
-  };
+  const alphanumericCode = getAlphanumericCodeFromScore(score);
 
-  if (riskCode.level in riskClassifications) {
-    return riskClassifications[riskCode.level];
+  if (alphanumericCode && riskMatrixColors && riskMatrixColors[alphanumericCode]) {
+    return riskMatrixColors[alphanumericCode];
   }
-  
-  // Fallback based on score if code not found (should not happen)
+
+  // Fallback logic
   if (score <= 4) return `hsl(var(--success))`;
   if (score <= 9) return `hsl(var(--orange))`;
   if (score <= 16) return `hsl(var(--orange))`;
   return `hsl(var(--destructive))`;
 }
-
-const getRiskCodeFromScore = (score: number) => {
-    if (score >= 20) return { code: '5A/5B/4A', level: 'Intolerable' };
-    if (score >= 15) return { code: '5C/4B/3A', level: 'Intolerable' };
-    if (score >= 10) return { code: '5D/4C/3B/2A/2B', level: 'Tolerable' };
-    if (score >= 5) return { code: '5E/4D/3C/3D/1A/2C', level: 'Acceptable' };
-    return { code: '4E/3E/2D/2E/1B-1E', level: 'Acceptable' };
-};
-
 
 export const getRiskScoreColorWithOpacity = (score: number | null | undefined, opacity: number = 1): string => {
   if (score === null || score === undefined) return `hsla(var(--muted-foreground), ${opacity})`;
