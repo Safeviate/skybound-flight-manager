@@ -89,9 +89,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const { toast } = useToast();
-  
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -102,17 +99,6 @@ export default function LoginPage() {
         }
     }
   }, [user, loading, router]);
-  
-  useEffect(() => {
-    const measureContainer = () => {
-        if (containerRef.current) {
-            setContainerWidth(containerRef.current.offsetWidth);
-        }
-    };
-    measureContainer();
-    window.addEventListener('resize', measureContainer);
-    return () => window.removeEventListener('resize', measureContainer);
-  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -166,17 +152,13 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="relative min-h-screen bg-muted/40">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
         <div className="absolute top-8 left-8 flex items-center gap-2">
           <Rocket className="h-8 w-8 text-primary" />
           <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
         </div>
 
-        <div ref={containerRef} className="w-full flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
-           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-2 py-1 text-xs font-mono rounded">
-             Container Width: {containerWidth}px
-           </div>
-          <div className="w-full max-w-sm space-y-4">
+        <div className="w-full max-w-sm space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">
@@ -234,7 +216,6 @@ export default function LoginPage() {
                     <AlertDescription>{loginError}</AlertDescription>
                 </Alert>
             )}
-          </div>
         </div>
       </div>
       
