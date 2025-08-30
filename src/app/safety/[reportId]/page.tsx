@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useMemo } from 'react';
@@ -167,7 +166,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                 </div>
                 <Dialog open={isManualTaskOpen} onOpenChange={setIsManualTaskOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline">
+                        <Button variant="outline" className="no-print">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Task
                         </Button>
@@ -266,7 +265,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                     id={`task-${task.id}`}
                                     checked={task.status === 'Completed'}
                                     onCheckedChange={() => onUpdateTask(task.id, task.status === 'Open' ? 'Completed' : 'Open')}
-                                    className="mt-1"
+                                    className="mt-1 no-print"
                                 />
                                 <div className="flex-1 grid gap-1">
                                     <Label htmlFor={`task-${task.id}`} className={cn("font-medium", task.status === 'Completed' && 'line-through text-muted-foreground')}>{task.description}</Label>
@@ -278,7 +277,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                     </div>
                                 </div>
                                 <CollapsibleTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="relative">
+                                    <Button variant="ghost" size="sm" className="relative no-print">
                                         <MessageSquare className="mr-2 h-4 w-4" />
                                         Comments ({task.comments?.length || 0})
                                         {unreadCount > 0 && (
@@ -296,7 +295,7 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                     <p>New Deadline: {format(parseISO(task.requestedDeadline!), 'PPP')}</p>
                                     <p className="p-2 bg-background rounded-md text-muted-foreground italic">"{task.extensionRequestReason}"</p>
                                     {isTeamLead && (
-                                        <div className="flex gap-2 pt-2 border-t border-amber-300 dark:border-amber-700">
+                                        <div className="flex gap-2 pt-2 border-t border-amber-300 dark:border-amber-700 no-print">
                                             <Button size="sm" variant="success" onClick={() => onApproveExtension(task.id)}>
                                                 <CheckCircle className="mr-2 h-4 w-4" /> Approve
                                             </Button>
@@ -329,9 +328,11 @@ const InvestigationTaskList = ({ report, personnel, onUpdateTask, onAddComment, 
                                          <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
                                     )}
                                 </div>
-                                <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
+                                <div className="no-print">
+                                    <TaskCommentForm taskId={task.id} onAddComment={onAddComment} />
+                                </div>
                                 {isUserAssigned && (
-                                    <div className="pt-3 mt-3 border-t">
+                                    <div className="pt-3 mt-3 border-t no-print">
                                          <Dialog open={isExtensionOpen} onOpenChange={setIsExtensionOpen}>
                                             <DialogTrigger asChild>
                                                 <Button variant="outline" size="sm">Request Deadline Extension</Button>
@@ -692,10 +693,10 @@ function SafetyReportInvestigationPage() {
        <div id="printable-report-area">
             <Tabs defaultValue="triage" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-auto print:hidden">
-                    <TabsTrigger value="triage">Report & Triage</TabsTrigger>
+                    <TabsTrigger value="triage">Report &amp; Triage</TabsTrigger>
                     <TabsTrigger value="investigation">Investigation</TabsTrigger>
-                    <TabsTrigger value="mitigation">Mitigation & CAP</TabsTrigger>
-                    <TabsTrigger value="review">Final Review & Sign-off</TabsTrigger>
+                    <TabsTrigger value="mitigation">Mitigation &amp; CAP</TabsTrigger>
+                    <TabsTrigger value="review">Final Review &amp; Sign-off</TabsTrigger>
                 </TabsList>
             <TabsContent value="triage" id="triage-tab-content" className="mt-6 space-y-6">
                  <Card>
@@ -737,7 +738,7 @@ function SafetyReportInvestigationPage() {
                                 <p className="text-sm text-muted-foreground">A detailed account of the reported event.</p>
                             </div>
                             {(user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit')) && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 no-print">
                                     {isEditingReport ? (
                                         <Button onClick={handleSaveReportDetails}><Check className="mr-2 h-4 w-4" /> Save Details</Button>
                                     ) : (
@@ -793,7 +794,7 @@ function SafetyReportInvestigationPage() {
                                   ICAO Occurrence Category
                                   <Dialog>
                                       <DialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                                          <Button variant="ghost" size="icon" className="h-5 w-5 no-print">
                                               <Info className="h-4 w-4 text-muted-foreground" />
                                           </Button>
                                       </DialogTrigger>
@@ -916,7 +917,7 @@ function SafetyReportInvestigationPage() {
                                   This is the final summary of the investigation findings.
                               </CardDescription>
                           </div>
-                            <Button onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
+                            <Button className="no-print" onClick={() => handleReportUpdate(report, true)}>Save Notes</Button>
                       </div>
                       <div className="pt-4">
                           <Textarea 
@@ -942,7 +943,7 @@ function SafetyReportInvestigationPage() {
                       </div>
                       <Dialog open={isDiscussionDialogOpen} onOpenChange={setIsDiscussionDialogOpen}>
                           <DialogTrigger asChild>
-                              <Button variant="outline">
+                              <Button variant="outline" className="no-print">
                                   <Send className="mr-2 h-4 w-4" />
                                   Post Message
                               </Button>
@@ -1085,3 +1086,5 @@ function SafetyReportInvestigationPage() {
 
 SafetyReportInvestigationPage.title = "Safety Report Investigation";
 export default SafetyReportInvestigationPage;
+
+    
