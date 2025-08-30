@@ -172,7 +172,7 @@ export default function LoginPage() {
           <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
         </div>
 
-        <div ref={containerRef} className="flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
+        <div ref={containerRef} className="w-full flex min-h-screen items-center justify-center p-4 border-2 border-red-500">
            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-2 py-1 text-xs font-mono rounded">
              Container Width: {containerWidth}px
            </div>
