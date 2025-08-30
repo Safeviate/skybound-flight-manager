@@ -211,15 +211,14 @@ export default function LoginPage() {
                 </Link>
             </CardFooter>
         </Card>
-      </div>
-
-       {loginError && (
-            <Alert variant="destructive" className="mt-8 max-w-sm">
+        {loginError && (
+            <Alert variant="destructive" className="mt-8">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Login Error</AlertTitle>
                 <AlertDescription>{loginError}</AlertDescription>
             </Alert>
         )}
+      </div>
     </div>
     
     <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
