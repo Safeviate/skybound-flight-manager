@@ -117,6 +117,8 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
             return;
         }
 
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+
         try {
             await sendEmail({
                 to: person.email,
@@ -124,13 +126,13 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                 emailData: {
                     userName: person.name,
                     companyName: company.name,
-                    userEmail: person.email,
+                    temporaryPassword: temporaryPassword,
                     loginUrl: window.location.origin + '/login',
                 }
             });
             toast({
                 title: 'Welcome Email Sent',
-                description: `A welcome email has been sent to ${person.name}.`,
+                description: `A welcome email with a temporary password has been sent to ${person.name}.`,
             });
         } catch (error) {
             console.error("Error sending welcome email:", error);
@@ -175,7 +177,6 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
                                 <CardTitle>{person.name}</CardTitle>
                                 <CardDescription>
                                     {person.role}
-                                    {person.instructorGrade && ` (${person.instructorGrade})`}
                                 </CardDescription>
                             </div>
                             {canEdit && (
