@@ -6,7 +6,7 @@ import { useUser } from '@/context/user-provider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogIn, Rocket, Loader2, Users } from 'lucide-react';
+import { LogIn, Rocket, Loader2, Users, KeyRound } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -14,23 +14,90 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail, updatePassword } from 'firebase/auth';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+
+function ChangePasswordDialog({ onPasswordChanged }: { onPasswordChanged: () => void }) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+    setError(null);
+    setIsLoading(true);
+
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        await updatePassword(user, newPassword);
+        onPasswordChanged();
+      } catch (e) {
+        console.error(e);
+        setError('Failed to update password. Please log out and try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Change Your Password</DialogTitle>
+        <DialogDescription>
+          For security, you must change your temporary password before you can continue.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="new-password">New Password</Label>
+          <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password">Confirm New Password</Label>
+          <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+      <DialogFooter>
+        <Button onClick={handleChangePassword} disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Set New Password
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
 export default function LoginPage() {
-  const { user, login, company, loading } = useUser();
+  const { user, login, company, loading, updateUser } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const { toast } = useToast();
 
 
   useEffect(() => {
-    // Redirect logged-in users
     if (!loading && user) {
-        router.push('/my-dashboard');
+        if (user.mustChangePassword) {
+            setIsChangePasswordOpen(true);
+        } else {
+            router.push('/my-dashboard');
+        }
     }
   }, [user, loading, router]);
   
@@ -45,7 +112,14 @@ export default function LoginPage() {
       setLoginError('Login failed. Please check your email and password.');
       setIsLoading(false);
     }
-    // The useEffect hook will handle redirection on successful login
+  }
+  
+  const onPasswordSuccessfullyChanged = async () => {
+    if (!user) return;
+    await updateUser({ mustChangePassword: false });
+    setIsChangePasswordOpen(false);
+    toast({ title: "Password Updated!", description: "Your new password has been set." });
+    router.push('/my-dashboard');
   }
 
   async function handlePasswordReset() {
@@ -79,6 +153,7 @@ export default function LoginPage() {
   }
 
   return (
+    <>
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Rocket className="h-8 w-8 text-primary" />
@@ -146,5 +221,10 @@ export default function LoginPage() {
             </Alert>
         )}
     </div>
+    
+    <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
+        <ChangePasswordDialog onPasswordChanged={onPasswordSuccessfullyChanged} />
+    </Dialog>
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft } from 'lucide-react';
+import { LogOut, User as UserIcon, FileText, Building, Check, Users, Repeat, Cog, PanelLeft, KeyRound } from 'lucide-react';
 import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import {
@@ -39,8 +39,9 @@ import { format, parseISO } from 'date-fns';
 import type { UserDocument, User as AppUser } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
+import { updatePassword } from 'firebase/auth';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -62,6 +63,17 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+const passwordFormSchema = z.object({
+    newPassword: z.string().min(6, 'Password must be at least 6 characters long.'),
+    confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+});
+
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+
+
 export default function Header({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user, company, userCompanies, setCompany, logout, updateUser } = useUser();
   const router = useRouter();
@@ -69,8 +81,12 @@ export default function Header({ title, children }: { title: string, children?: 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<ProfileFormValues>({
+  const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
+  });
+  
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
   });
 
   const getCombinedDocuments = useCallback(() => {
@@ -81,7 +97,6 @@ export default function Header({ title, children }: { title: string, children?: 
     
     const combined = new Map<string, UserDocument>();
 
-    // First, add all required documents, ensuring they have a placeholder if not present.
     requiredDocTypes.forEach(type => {
         const existing = existingDocs.find(d => d.type === type);
         if (existing) {
@@ -91,7 +106,6 @@ export default function Header({ title, children }: { title: string, children?: 
         }
     });
 
-    // Then, add any existing documents that have an expiry date, even if no longer required.
     existingDocs.forEach(doc => {
         if (doc.expiryDate && !combined.has(doc.type)) {
             combined.set(doc.type, doc);
@@ -104,7 +118,7 @@ export default function Header({ title, children }: { title: string, children?: 
   useEffect(() => {
     if (user && isProfileOpen) {
       const combinedDocs = getCombinedDocuments();
-      form.reset({
+      profileForm.reset({
         name: user.name,
         phone: user.phone,
         homeAddress: user.homeAddress || '',
@@ -113,8 +127,9 @@ export default function Header({ title, children }: { title: string, children?: 
         nextOfKinEmail: user.nextOfKinEmail || '',
         documents: combinedDocs.map(d => ({ ...d, expiryDate: d.expiryDate ? parseISO(d.expiryDate) : null })),
       });
+      passwordForm.reset();
     }
-  }, [user, form, isProfileOpen, getCombinedDocuments]);
+  }, [user, profileForm, passwordForm, isProfileOpen, getCombinedDocuments]);
 
   const handleLogout = () => {
     logout();
@@ -131,7 +146,6 @@ export default function Header({ title, children }: { title: string, children?: 
         type: d.type,
         expiryDate: d.expiryDate ? format(d.expiryDate, 'yyyy-MM-dd') : null
     })).filter(d => 
-        // Keep the document if it's required OR if it has an expiry date set.
         requiredDocTypes.has(d.type) || d.expiryDate
     );
 
@@ -147,17 +161,31 @@ export default function Header({ title, children }: { title: string, children?: 
 
     if (success) {
       toast({ title: 'Profile Updated', description: 'Your information has been successfully saved.' });
-      setIsProfileOpen(false);
     } else {
       toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save your changes.' });
     }
   };
+
+  const handleChangePassword = async (data: PasswordFormValues) => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Not authenticated.' });
+          return;
+      }
+      try {
+          await updatePassword(currentUser, data.newPassword);
+          toast({ title: 'Password Updated', description: 'Your password has been changed successfully.' });
+          passwordForm.reset();
+      } catch (error) {
+          console.error(error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to update password. You may need to log out and log back in.' });
+      }
+  }
   
   const handleSwitchCompany = (newCompanyId: string) => {
     const newCompany = userCompanies.find(c => c.id === newCompanyId);
     if (newCompany && newCompany.id !== company?.id) {
         setCompany(newCompany);
-        // Optionally, redirect to a specific page after switching
         router.push('/my-dashboard'); 
     }
     setIsSwitcherOpen(false);
@@ -214,172 +242,61 @@ export default function Header({ title, children }: { title: string, children?: 
                 Update your contact details and view required documents.
               </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleProfileUpdate)}>
-                <ScrollArea className="h-[60vh] pr-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-sm">Personal Details</h4>
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormItem>
-                        <Label>Email</Label>
-                        <Input value={user?.email || ''} disabled />
-                      </FormItem>
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Example: +27 12 345 6789
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="homeAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Home Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="123 Main St, Anytown, USA" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-sm">Next of Kin Details</h4>
-                      <FormField
-                        control={form.control}
-                        name="nextOfKinName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Jane Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="nextOfKinPhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="555-987-6543" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Example: +27 12 345 6789
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="nextOfKinEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="jane.doe@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <Separator />
-
-                  <div>
-                      <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          Required Documents
-                      </h4>
-                      <div className="space-y-4">
-                        {form.watch('documents')?.map((docItem, index) => {
-                              return (
-                            <FormField
-                                key={docItem.id}
-                                control={form.control}
-                                name={`documents.${index}.expiryDate`}
-                                render={({ field }) => {
-                                  const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void };
-
-                                  return (
-                                  <FormItem className="flex items-center justify-between">
-                                    <FormLabel className="w-1/2">{docItem.type}</FormLabel>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <FormControl>
-                                          <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                              "w-1/2 pl-3 text-left font-normal",
-                                              !typedField.value && "text-muted-foreground"
-                                            )}
-                                          >
-                                            {typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                          </Button>
-                                        </FormControl>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                          mode="single"
-                                          selected={typedField.value || undefined}
-                                          onSelect={typedField.onChange}
-                                          initialFocus
-                                        />
-                                      </PopoverContent>
-                                    </Popover>
-                                  </FormItem>
-                                )}}
-                            />
-                          )})}
-                        {(form.getValues('documents') || []).length === 0 && (
-                            <p className="text-sm text-muted-foreground">No specific documents have been requested.</p>
-                        )}
-                      </div>
-                  </div>
-                </div>
-                </ScrollArea>
-                <DialogFooter className="pt-4">
-                  <DialogClose asChild>
-                    <Button type="button" variant="secondary">
-                      Close
-                    </Button>
-                  </DialogClose>
-                  <Button type="submit">Save Changes</Button>
-                </DialogFooter>
-              </form>
-            </Form>
+             <Tabs defaultValue="personal">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="personal">Personal Info</TabsTrigger>
+                    <TabsTrigger value="security">Security & Password</TabsTrigger>
+                </TabsList>
+                <TabsContent value="personal">
+                    <Form {...profileForm}>
+                        <form onSubmit={profileForm.handleSubmit(handleProfileUpdate)}>
+                            <ScrollArea className="h-[60vh] pr-6">
+                            <div className="space-y-4 pt-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                                    <div className="space-y-4">
+                                        <h4 className="font-medium text-sm">Personal Details</h4>
+                                        <FormField control={profileForm.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormItem><Label>Email</Label><Input value={user?.email || ''} disabled /></FormItem>
+                                        <FormField control={profileForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Example: +27 12 345 6789</FormDescription><FormMessage /></FormItem>)} />
+                                        <FormField control={profileForm.control} name="homeAddress" render={({ field }) => (<FormItem><FormLabel>Home Address</FormLabel><FormControl><Input placeholder="123 Main St, Anytown, USA" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <h4 className="font-medium text-sm">Next of Kin Details</h4>
+                                        <FormField control={profileForm.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={profileForm.control} name="nextOfKinPhone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="555-987-6543" {...field} /></FormControl><FormDescription>Example: +27 12 345 6789</FormDescription><FormMessage /></FormItem>)} />
+                                        <FormField control={profileForm.control} name="nextOfKinEmail" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="jane.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <h4 className="font-medium text-sm mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" />Required Documents</h4>
+                                    <div className="space-y-4">
+                                        {profileForm.watch('documents')?.map((docItem, index) => (<FormField key={docItem.id} control={profileForm.control} name={`documents.${index}.expiryDate`} render={({ field }) => { const typedField = field as unknown as { value: Date | null | undefined; onChange: (date: Date | undefined) => void }; return (<FormItem className="flex items-center justify-between"><FormLabel className="w-1/2">{docItem.type}</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-1/2 pl-3 text-left font-normal", !typedField.value && "text-muted-foreground")}>{typedField.value ? format(typedField.value, "PPP") : <span>Set expiry</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={typedField.value || undefined} onSelect={typedField.onChange} initialFocus /></PopoverContent></Popover></FormItem>)}} />))}
+                                        {(profileForm.getValues('documents') || []).length === 0 && (<p className="text-sm text-muted-foreground">No specific documents have been requested.</p>)}
+                                    </div>
+                                </div>
+                            </div>
+                            </ScrollArea>
+                            <DialogFooter className="pt-4">
+                                <DialogClose asChild><Button type="button" variant="secondary">Close</Button></DialogClose>
+                                <Button type="submit">Save Changes</Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </TabsContent>
+                <TabsContent value="security">
+                     <Form {...passwordForm}>
+                        <form onSubmit={passwordForm.handleSubmit(handleChangePassword)} className="space-y-6 pt-4">
+                            <FormField control={passwordForm.control} name="newPassword" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                             <DialogFooter className="pt-4">
+                                <DialogClose asChild><Button type="button" variant="secondary">Close</Button></DialogClose>
+                                <Button type="submit">Set New Password</Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
         <Dialog open={isSwitcherOpen} onOpenChange={setIsSwitcherOpen}>
