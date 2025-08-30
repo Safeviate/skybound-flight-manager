@@ -152,7 +152,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4 border-2 border-dashed border-red-500">
         <div className="absolute top-8 left-8 flex items-center gap-2">
           <Rocket className="h-8 w-8 text-primary" />
           <span className="text-xl font-semibold">{company?.name || 'Safeviate'}</span>
