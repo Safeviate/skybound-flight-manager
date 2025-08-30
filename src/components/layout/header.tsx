@@ -134,7 +134,6 @@ export default function Header({ title, children }: { title: string, children?: 
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
   };
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
