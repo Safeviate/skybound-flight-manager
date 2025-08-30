@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/lib/types';
-import { sendEmail } from '@/ai/flows/send-email-flow';
+import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditPersonnelForm } from './edit-personnel-form';
@@ -108,38 +108,18 @@ export function PersonnelPageContent({ initialPersonnel }: { initialPersonnel: P
     };
     
     const handleSendWelcomeEmail = async (person: PersonnelUser) => {
-        if (!person.email) {
-            toast({ variant: 'destructive', title: 'Error', description: 'This user does not have an email address on file.' });
-            return;
-        }
-        if (!company) {
-             toast({ variant: 'destructive', title: 'Error', description: 'Company details not found.' });
-            return;
-        }
-
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-
-        try {
-            await sendEmail({
-                to: person.email,
-                subject: `Welcome to ${company.name}`,
-                emailData: {
-                    userName: person.name,
-                    companyName: company.name,
-                    temporaryPassword: temporaryPassword,
-                    loginUrl: window.location.origin + '/login',
-                }
-            });
+        if (!company) return;
+        const result = await resetUserPasswordAndSendWelcomeEmail(person, company);
+        if (result.success) {
             toast({
                 title: 'Welcome Email Sent',
-                description: `A welcome email with a temporary password has been sent to ${person.name}.`,
+                description: result.message,
             });
-        } catch (error) {
-            console.error("Error sending welcome email:", error);
-            toast({
+        } else {
+             toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: 'Could not send the welcome email. Please check server logs for details.',
+                description: result.message,
             });
         }
     };
