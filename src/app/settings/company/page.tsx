@@ -11,7 +11,8 @@ import { useUser } from '@/context/user-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
-import { Bot } from 'lucide-react';
+import { Bot, ShieldAlert } from 'lucide-react';
+import { RiskAssessmentTool } from '@/app/safety/[reportId]/risk-assessment-tool';
 
 const REGULATORY_LIMITS = {
   daily: 8,
@@ -61,7 +62,7 @@ function CompanySettingsPage() {
   }
 
   return (
-      <main className="flex-1 p-4 md:p-8">
+      <main className="flex-1 p-4 md:p-8 space-y-6">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle>Operational Rules & Workflow</CardTitle>
@@ -212,6 +213,13 @@ function CompanySettingsPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <Separator />
+
+             <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldAlert /> Risk Matrix Configuration</h3>
+                <RiskAssessmentTool />
             </div>
 
           </CardContent>

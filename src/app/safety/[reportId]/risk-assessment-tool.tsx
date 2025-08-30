@@ -51,12 +51,13 @@ const INITIAL_CELL_COLORS: Record<string, string> = {
 interface RiskAssessmentToolProps {
   onCellClick?: (likelihood: RiskLikelihood, severity: RiskSeverity) => void;
   selectedCode?: string | null;
+  readOnly?: boolean;
 }
 
-export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessmentToolProps) {
+export function RiskAssessmentTool({ onCellClick, selectedCode, readOnly = false }: RiskAssessmentToolProps) {
   const { user, company, updateCompany } = useUser();
   const [cellColors, setCellColors] = React.useState(INITIAL_CELL_COLORS);
-  const canEditColors = user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit');
+  const canEditColors = !readOnly && (user?.permissions.includes('Super User') || user?.permissions.includes('Safety:Edit'));
   
   React.useEffect(() => {
     if (company?.riskMatrixColors) {
@@ -118,11 +119,12 @@ export function RiskAssessmentTool({ onCellClick, selectedCode }: RiskAssessment
                                     <ContextMenuTrigger asChild>
                                         <TableCell 
                                             className={cn(
-                                                "p-2 text-center cursor-pointer transition-all border",
+                                                "p-2 text-center transition-all border",
+                                                !readOnly && "cursor-pointer",
                                                 isSelected && 'ring-2 ring-primary ring-offset-2 z-10'
                                             )} 
                                             style={{ backgroundColor: cellColors[riskCode] }}
-                                            onClick={() => onCellClick?.(likelihood, severity)}
+                                            onClick={() => !readOnly && onCellClick?.(likelihood, severity)}
                                         >
                                             <div className="font-bold text-black">{riskCode}</div>
                                         </TableCell>
