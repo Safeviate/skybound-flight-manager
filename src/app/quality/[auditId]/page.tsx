@@ -282,9 +282,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                                 <Image
                                     src={company.logoUrl}
                                     alt={`${company.name} Logo`}
-                                    width={64}
-                                    height={64}
-                                    className="h-16 w-16 rounded-md object-contain"
+                                    width={80}
+                                    height={80}
+                                    className="h-20 w-20 rounded-md object-contain"
                                 />
                             )}
                         </div>
@@ -1119,4 +1119,5 @@ QualityAuditDetailPage.title = "Quality Audit Investigation";
 
 
     
+
 
