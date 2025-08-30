@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -20,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getRiskScore, getRiskScoreColor, getRiskLevel } from '@/lib/utils';
+import { getRiskScore, getRiskScoreColor } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
@@ -379,7 +378,7 @@ export default function MocDetailPage() {
                                 <div>
                                     <Image src={moc.proposerSignature} alt="Proposer Signature" width={300} height={150} className="rounded-md border bg-white"/>
                                     {moc.proposerSignatureDate && (
-                                        <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Signed by {moc.proposedBy} on: {format(parseISO(moc.proposerSignatureDate), 'PPP p')}</p>
                                     )}
                                 </div>
                             ) : canSignAsProposer ? (
@@ -394,7 +393,7 @@ export default function MocDetailPage() {
                                 <div>
                                     <Image src={moc.approverSignature} alt="Approver Signature" width={300} height={150} className="rounded-md border bg-white"/>
                                     {moc.approverSignatureDate && (
-                                        <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Signed by {moc.approverName} on: {format(parseISO(moc.approverSignatureDate), 'PPP p')}</p>
                                     )}
                                 </div>
                             ) : canSignAsApprover ? (
@@ -446,3 +445,4 @@ const MitigationForm = ({ onSubmit, mitigation }: { onSubmit: (data: any) => voi
 };
 
 MocDetailPage.title = "Management of Change";
+
