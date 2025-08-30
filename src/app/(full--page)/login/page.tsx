@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -217,6 +216,52 @@ export default function LoginPage() {
                 </Alert>
             )}
         </div>
+      </div>
+
+      <div className="w-full max-w-sm space-y-4 p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">
+                Second Login Card
+            </CardTitle>
+            <CardDescription>
+                This card is outside the flexbox.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form className="space-y-4">
+                <div className="space-y-2">
+                <Label htmlFor="email2">Email</Label>
+                <Input
+                    id="email2"
+                    type="email"
+                    placeholder="m@example.com"
+                    required
+                />
+                </div>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                    <Label htmlFor="password2">Password</Label>
+                    </div>
+                <Input 
+                    id="password2" 
+                    type="password" 
+                    required 
+                />
+                </div>
+                
+                <Button type="submit" className="w-full">
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+                </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="justify-center text-sm">
+              <Link href="/corporate" className="text-muted-foreground hover:text-primary">
+                  Don't have an account? Register your company
+              </Link>
+          </CardFooter>
+        </Card>
       </div>
       
       <Dialog open={isChangePasswordOpen} onOpenChange={() => {}}>
