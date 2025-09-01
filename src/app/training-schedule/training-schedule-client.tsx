@@ -63,6 +63,22 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
     });
     
+    // Fetch all users once
+    const fetchAllUsers = async () => {
+        const personnelQuery = query(collection(db, `companies/${company.id}/users`));
+        const studentsQuery = query(collection(db, `companies/${company.id}/students`));
+
+        const [personnelSnapshot, studentsSnapshot] = await Promise.all([
+            getDocs(personnelQuery),
+            getDocs(studentsQuery),
+        ]);
+        
+        const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers([...personnel, ...students]);
+    };
+    fetchAllUsers();
+    
     return () => {
         aircraftUnsub();
     };
