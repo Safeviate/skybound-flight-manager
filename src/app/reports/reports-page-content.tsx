@@ -690,7 +690,8 @@ export function ReportsPageContent({
                                 <TableHead>Date</TableHead>
                                 <TableHead>Aircraft</TableHead>
                                 <TableHead>Purpose</TableHead>
-                                <TableHead>Details</TableHead>
+                                <TableHead>Student</TableHead>
+                                <TableHead>Instructor</TableHead>
                                 <TableHead>Pre-flight Hobbs</TableHead>
                                 <TableHead>Post-flight Hobbs</TableHead>
                                 <TableHead>Duration</TableHead>
@@ -719,11 +720,8 @@ export function ReportsPageContent({
                                             <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
                                             <TableCell>{booking.aircraft}</TableCell>
                                             <TableCell>{booking.purpose}</TableCell>
-                                            <TableCell>
-                                                {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
-                                                {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
-                                                {booking.purpose === 'Maintenance' && booking.maintenanceType}
-                                            </TableCell>
+                                            <TableCell>{booking.purpose === 'Training' || booking.purpose === 'Private' ? booking.student : 'N/A'}</TableCell>
+                                            <TableCell>{booking.purpose === 'Training' ? booking.instructor : 'N/A'}</TableCell>
                                             <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
                                             <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
                                             <TableCell>{duration}</TableCell>
@@ -738,7 +736,7 @@ export function ReportsPageContent({
                                 })
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={13} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
+                                <TableCell colSpan={14} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
@@ -751,4 +749,5 @@ export function ReportsPageContent({
     </main>
   );
 }
+
 
