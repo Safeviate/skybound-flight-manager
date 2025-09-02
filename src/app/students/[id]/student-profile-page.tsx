@@ -301,7 +301,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         
         const firestoreUpdate: Partial<StudentUser> = {
             trainingLogs: updatedLogs,
-            flightHours: newTotalHours,
             milestoneNotificationsSent: arrayUnion(...newNotifications),
         };
 
@@ -340,11 +339,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
              updatedLogs.push({ ...newLogEntry, id: logId, trainingExercises: [] });
         }
         
-        const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
-
         handleUpdate({
             trainingLogs: updatedLogs,
-            flightHours: newTotalHours,
         });
 
         setIsLogbookEditOpen(false);
@@ -394,11 +390,9 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const handleDeleteLogEntry = (logIdToDelete: string) => {
         if (!student) return;
         const updatedLogs = student.trainingLogs?.filter(log => log.id !== logIdToDelete);
-        const newTotalHours = updatedLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
         
         handleUpdate({
             trainingLogs: updatedLogs,
-            flightHours: newTotalHours
         });
         
         setIsLogbookEditOpen(false);
@@ -668,11 +662,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             updatedLogs.push({ ...newEntry, id: `bf-${Date.now()}` });
         }
         
-        const newTotalHours = updatedLogs.reduce((total, log) => total + (log.flightDuration || 0), 0);
-        
         handleUpdate({
             trainingLogs: updatedLogs,
-            flightHours: newTotalHours
         });
         
         setIsBroughtForwardOpen(false);
@@ -724,17 +715,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     if (userLoading) {
         return (
-            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                <p>Loading student profile...</p>
-            </main>
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>Loading student profile...</p></main>
         )
     }
 
     if (!student || !currentUser) {
         return (
-            <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
-                <p>Student not found.</p>
-            </main>
+            <main className="flex-1 p-4 md:p-8 flex items-center justify-center"><p>Student not found.</p></main>
         )
     }
 
