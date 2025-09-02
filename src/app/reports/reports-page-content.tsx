@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, Calendar, Check, Plane, Users, Clock, AlertTriangle, Search, Loader2, Fuel, Droplets, Archive, RotateCw, ListChecks, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, writeBatch, deleteDoc } from 'firebase/firestore';
@@ -690,35 +690,38 @@ export function ReportsPageContent({
                             </TableHeader>
                             <TableBody>
                             {filteredBookings.length > 0 ? (
-                                filteredBookings.map((booking) => (
-                                <TableRow key={booking.id}>
-                                    <TableCell>
-                                        <Checkbox
-                                            checked={selectedBookings.includes(booking.id)}
-                                            onCheckedChange={(checked) => handleSelectOne(booking.id, !!checked)}
-                                            aria-label="Select row"
-                                        />
-                                    </TableCell>
-                                    <TableCell>{booking.bookingNumber}</TableCell>
-                                    <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
-                                    <TableCell>{booking.aircraft}</TableCell>
-                                    <TableCell>{booking.purpose}</TableCell>
-                                    <TableCell>
-                                        {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
-                                        {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
-                                        {booking.purpose === 'Maintenance' && booking.maintenanceType}
-                                    </TableCell>
-                                    <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
-                                    <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
-                                    <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
-                                    <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
-                                    <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
-                                    </TableCell>
-                                    <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
-                                </TableRow>
-                                ))
+                                filteredBookings.map((booking) => {
+                                    const duration = booking.endHobbs && booking.startHobbs ? (booking.endHobbs - booking.startHobbs).toFixed(1) : 'N/A';
+                                    return (
+                                        <TableRow key={booking.id}>
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedBookings.includes(booking.id)}
+                                                    onCheckedChange={(checked) => handleSelectOne(booking.id, !!checked)}
+                                                    aria-label="Select row"
+                                                />
+                                            </TableCell>
+                                            <TableCell>{booking.bookingNumber}</TableCell>
+                                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
+                                            <TableCell>{booking.aircraft}</TableCell>
+                                            <TableCell>{booking.purpose}</TableCell>
+                                            <TableCell>
+                                                {booking.purpose === 'Training' && `${booking.student} w/ ${booking.instructor}`}
+                                                {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
+                                                {booking.purpose === 'Maintenance' && booking.maintenanceType}
+                                            </TableCell>
+                                            <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
+                                            <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
+                                            <TableCell>{duration !== 'N/A' ? `${duration} hrs` : 'N/A'}</TableCell>
+                                            <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
+                                            <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
+                                            </TableCell>
+                                            <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
+                                        </TableRow>
+                                    )
+                                })
                             ) : (
                                 <TableRow>
                                 <TableCell colSpan={13} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>

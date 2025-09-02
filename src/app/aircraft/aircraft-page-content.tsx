@@ -543,13 +543,16 @@ export function AircraftPageContent({
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
         if (!selectedAircraftForChecklist || !user || !company) return;
-
+    
         const isPreFlight = 'registration' in data;
         const batch = writeBatch(db);
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
-
+    
         try {
+            const flightDuration = !isPreFlight ? parseFloat((data.hobbs - (bookingForChecklist?.startHobbs || 0)).toFixed(1)) : 0;
+            const resultsWithDuration = !isPreFlight ? { ...data, flightDuration } : data;
+    
             const historyDoc: Omit<CompletedChecklist, 'id'> = {
                 aircraftId: selectedAircraftForChecklist.id,
                 aircraftTailNumber: selectedAircraftForChecklist.tailNumber,
@@ -557,12 +560,13 @@ export function AircraftPageContent({
                 userName: user.name,
                 dateCompleted: new Date().toISOString(),
                 type: isPreFlight ? 'Pre-Flight' : 'Post-Flight',
-                results: data,
+                results: resultsWithDuration,
                 bookingNumber: bookingForChecklist?.bookingNumber,
             };
+    
             const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             batch.set(doc(historyCollectionRef), historyDoc);
-
+    
             if (isPreFlight) {
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
                 if (bookingForChecklist) {
@@ -572,10 +576,9 @@ export function AircraftPageContent({
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else { // POST-FLIGHT LOGIC
                 batch.update(aircraftRef, { checklistStatus: 'ready', activeBookingId: null });
-
+    
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                    const flightDuration = parseFloat((data.hobbs - (bookingForChecklist.startHobbs || 0)).toFixed(1));
                     
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
@@ -600,15 +603,15 @@ export function AircraftPageContent({
                         });
                         
                         // Link the log entry ID back to the booking
-                        batch.update(bookingRef, { status: 'Completed', flightDuration: flightDuration, endHobbs: data.hobbs, pendingLogEntryId: newLogEntryId });
-
+                        batch.update(bookingRef, { status: 'Completed', pendingLogEntryId: newLogEntryId });
+    
                     } else {
-                         batch.update(bookingRef, { status: 'Completed', flightDuration: flightDuration, endHobbs: data.hobbs });
+                         batch.update(bookingRef, { status: 'Completed' });
                     }
                 }
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created. Ready for debrief.' });
             }
-
+    
             await batch.commit();
             setSelectedChecklistAircraftId(null);
         } catch (error) {
