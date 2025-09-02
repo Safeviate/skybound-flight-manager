@@ -347,9 +347,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     };
 
-    const handleDebriefClick = (booking: Booking) => {
-        if (!booking.pendingLogEntryId || !student?.trainingLogs) {
-             toast({
+    const handleDebriefClick = async (booking: Booking) => {
+        if (!student?.trainingLogs || !company) return;
+        let bookingData = { ...booking };
+
+        // If the booking doesn't have the pendingLogEntryId, try to refetch it.
+        if (!bookingData.pendingLogEntryId) {
+            const bookingRef = doc(db, `companies/${company.id}/bookings`, booking.id);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+                bookingData = { ...bookingSnap.data(), id: bookingSnap.id } as Booking;
+            }
+        }
+
+        if (!bookingData.pendingLogEntryId) {
+            toast({
                 variant: 'destructive',
                 title: 'Log Entry Not Found',
                 description: 'Could not find the corresponding log entry for this debrief. Please add it manually.',
@@ -357,17 +369,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             return;
         }
 
-        const logToUpdate = student.trainingLogs.find(log => log.id === booking.pendingLogEntryId);
+        const logToUpdate = student.trainingLogs.find(log => log.id === bookingData.pendingLogEntryId);
 
         if (logToUpdate) {
             setLogToEdit(logToUpdate);
-            setBookingForDebrief(booking);
+            setBookingForDebrief(bookingData);
             setIsDebriefOpen(true);
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Log Entry Not Found',
-                description: `Could not find log entry with ID: ${booking.pendingLogEntryId}. Please add it manually.`,
+                description: `Could not find log entry with ID: ${bookingData.pendingLogEntryId}. Please add it manually.`,
             });
         }
     };
@@ -797,7 +809,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </div>
                                         <div className="flex items-center space-x-3">
                                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(student.flightHours)}</span>
+                                            <span className="font-medium">Total Flight Hours: {student.flightHours?.toFixed(1) || '0.0'}</span>
                                         </div>
                                         
                                         {(student.documents || []).map((doc, index) => (
@@ -1109,6 +1121,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
 
 
 

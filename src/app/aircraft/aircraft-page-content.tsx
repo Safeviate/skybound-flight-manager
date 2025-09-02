@@ -593,6 +593,7 @@ export function AircraftPageContent({
     
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
+                    const newLogEntryId = `log-${Date.now()}`;
                     
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
@@ -602,7 +603,6 @@ export function AircraftPageContent({
                         const studentData = studentSnap.data() as User;
                         const newTotalHours = (studentData.flightHours || 0) + flightDuration;
                         
-                        const newLogEntryId = `log-${Date.now()}`;
                         const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
                             date: bookingForChecklist.date,
                             aircraft: `${selectedAircraftForChecklist.make} ${selectedAircraftForChecklist.model}`,
@@ -625,10 +625,11 @@ export function AircraftPageContent({
                         
                         // Link the log entry ID back to the booking
                         batch.update(bookingRef, { status: 'Completed', pendingLogEntryId: newLogEntryId });
-                        setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, pendingLogEntryId: newLogEntryId } : b));
+                        setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed', pendingLogEntryId: newLogEntryId } : b));
     
                     } else {
                          batch.update(bookingRef, { status: 'Completed' });
+                         setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed' } : b));
                     }
                 }
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created. Ready for debrief.' });
