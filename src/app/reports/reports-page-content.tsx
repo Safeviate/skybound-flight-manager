@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -678,6 +679,8 @@ export function ReportsPageContent({
                                 <TableHead>Aircraft</TableHead>
                                 <TableHead>Purpose</TableHead>
                                 <TableHead>Details</TableHead>
+                                <TableHead>Pre-flight Hobbs</TableHead>
+                                <TableHead>Post-flight Hobbs</TableHead>
                                 <TableHead>Duration</TableHead>
                                 <TableHead>Fuel Uplift</TableHead>
                                 <TableHead>Oil Uplift</TableHead>
@@ -705,6 +708,8 @@ export function ReportsPageContent({
                                         {booking.purpose === 'Private' && `Pilot: ${booking.student}`}
                                         {booking.purpose === 'Maintenance' && booking.maintenanceType}
                                     </TableCell>
+                                    <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
+                                    <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
                                     <TableCell>{booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A'}</TableCell>
                                     <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
                                     <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
@@ -716,7 +721,7 @@ export function ReportsPageContent({
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={11} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
+                                <TableCell colSpan={13} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
                                 </TableRow>
                             )}
                             </TableBody>
