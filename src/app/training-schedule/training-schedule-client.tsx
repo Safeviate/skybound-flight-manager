@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -141,11 +140,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   };
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
+    if (booking.status === 'Completed') {
+        return { className: 'bg-muted text-muted-foreground pointer-events-none' };
+    }
     if (aircraftForBooking?.status === 'In Maintenance') {
         return { className: 'bg-destructive' };
-    }
-    if (booking.status === 'Completed') {
-        return { style: { backgroundColor: '#7C3AED' } }; // Purple
     }
 
     if (!aircraftForBooking) {
@@ -405,10 +404,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 </div>
                 <div>
                     <div className="color-legend">
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#28a745'}}></div>Ready for Pre-Flight</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--success))'}}></div>Ready for Pre-Flight</div>
                         <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#dc3545'}}></div>In Maintenance</div>
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#7C3AED'}}></div>Completed</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--destructive))'}}></div>In Maintenance</div>
+                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--muted))'}}></div>Completed</div>
                     </div>
                 </div>
             </div>
