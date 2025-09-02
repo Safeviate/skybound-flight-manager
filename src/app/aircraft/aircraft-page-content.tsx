@@ -932,7 +932,25 @@ export function AircraftPageContent({
         );
     };
     
-  const ChecklistForms = () => (
+  const ChecklistForms = () => {
+    const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
+    const canPerformPostFlight = isPostFlight && user && activeBookingForSelectedAircraft &&
+                                   (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
+
+    if (isPostFlight && !isSuperUser && !canPerformPostFlight) {
+        return (
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Post-Flight Check Required</AlertTitle>
+                <AlertDescription>
+                    Only the student or instructor from the previous flight can complete the post-flight checklist.
+                    A Super User can override this from the main aircraft management view.
+                </AlertDescription>
+            </Alert>
+        );
+    }
+    
+    return (
       <>
           <div className="mb-4">
               <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
@@ -941,10 +959,10 @@ export function AircraftPageContent({
               </Button>
           </div>
           {isSuperUser ? (
-              <Tabs defaultValue="pre-flight">
+              <Tabs defaultValue={isPostFlight ? "post-flight" : "pre-flight"}>
                   <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="pre-flight">Pre-Flight</TabsTrigger>
-                      <TabsTrigger value="post-flight">Post-Flight</TabsTrigger>
+                      <TabsTrigger value="pre-flight" disabled={isPostFlight}>Pre-Flight</TabsTrigger>
+                      <TabsTrigger value="post-flight" disabled={!isPostFlight}>Post-Flight</TabsTrigger>
                   </TabsList>
                   <TabsContent value="pre-flight" className="pt-4">
                       <PreFlightChecklistForm
@@ -963,7 +981,7 @@ export function AircraftPageContent({
                   </TabsContent>
               </Tabs>
           ) : (
-              selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight' ? (
+              isPostFlight ? (
                   <PostFlightChecklistForm
                       onSuccess={handleChecklistSuccess}
                       aircraft={selectedAircraftForChecklist!}
@@ -979,7 +997,8 @@ export function AircraftPageContent({
               )
           )}
       </>
-  );
+    );
+  };
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
