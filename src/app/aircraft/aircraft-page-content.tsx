@@ -40,7 +40,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
     const historyRef = collection(db, `companies/${companyId}/aircraft/${aircraftId}/completed-checklists`);
-    const snapshot = await getDocs(historyRef);
+    const q = query(historyRef, orderBy('dateCompleted', 'desc'));
+    const snapshot = await getDocs(q);
     if (snapshot.empty) {
         return [];
     }
@@ -407,6 +408,7 @@ export function AircraftPageContent({
     const [checklistHistory, setChecklistHistory] = useState<CompletedChecklist[]>([]);
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
+    const [allChecklists, setAllChecklists] = useState<Map<string, CompletedChecklist[]>>(new Map());
     
     useEffect(() => {
         if (!company) return;
@@ -415,6 +417,9 @@ export function AircraftPageContent({
         const unsubscribe = onSnapshot(aircraftQuery, (snapshot) => {
             const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
             setAircraftList(aircrafts);
+            
+            // Fetch all checklists for all aircraft
+            fetchAllChecklists(company.id, aircrafts.map(a => a.id));
         }, (error) => {
             console.error("Error fetching real-time aircraft data:", error);
             toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
@@ -425,6 +430,15 @@ export function AircraftPageContent({
             unsubscribe();
         };
     }, [company, toast]);
+
+    const fetchAllChecklists = async (companyId: string, aircraftIds: string[]) => {
+        const checklistsMap = new Map<string, CompletedChecklist[]>();
+        for (const aircraftId of aircraftIds) {
+            const history = await getChecklistHistory(companyId, aircraftId);
+            checklistsMap.set(aircraftId, history);
+        }
+        setAllChecklists(checklistsMap);
+    };
     
     useEffect(() => {
         // We still set initial data to avoid flickering on load
@@ -575,7 +589,7 @@ export function AircraftPageContent({
                 }
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else { // POST-FLIGHT LOGIC
-                batch.update(aircraftRef, { checklistStatus: 'ready', activeBookingId: null });
+                batch.update(aircraftRef, { checklistStatus: 'ready', activeBookingId: null, hours: data.hobbs });
     
                 if (bookingForChecklist) {
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
@@ -682,6 +696,8 @@ export function AircraftPageContent({
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {aircraft.map((ac) => {
+                    const latestChecklist = allChecklists.get(ac.id)?.[0];
+                    const currentHobbs = latestChecklist?.results?.hobbs ?? ac.hours;
                     const hoursUntil50 = ac.next50HourInspection ? (ac.next50HourInspection - (ac.currentTachoReading || 0)) : -1;
                     const hoursUntil100 = ac.next100HourInspection ? (ac.next100HourInspection - (ac.currentTachoReading || 0)) : -1;
 
@@ -776,7 +792,7 @@ export function AircraftPageContent({
                             <CardContent className="space-y-4 text-sm flex-grow">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Hobbs</span>
-                                    <span>{ac.hours.toFixed(1)}</span>
+                                    <span>{currentHobbs.toFixed(1)}</span>
                                 </div>
                                  <div className="flex justify-between">
                                     <span className="text-muted-foreground">Current Tacho</span>

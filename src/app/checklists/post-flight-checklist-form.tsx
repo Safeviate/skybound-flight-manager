@@ -51,7 +51,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         hobbs: 0,
-        tacho: 0,
+        tacho: aircraft.currentTachoReading || 0,
         fuelUplift: 0,
         oilUplift: 0,
         leftSidePhoto: '',
