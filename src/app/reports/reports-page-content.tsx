@@ -690,7 +690,9 @@ export function ReportsPageContent({
                             <TableBody>
                             {filteredBookings.length > 0 ? (
                                 filteredBookings.map((booking) => {
-                                    const duration = booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A';
+                                    const duration = booking.endHobbs && booking.startHobbs
+                                        ? (booking.endHobbs - booking.startHobbs).toFixed(1)
+                                        : booking.flightDuration ? booking.flightDuration.toFixed(1) : 'N/A';
                                     return (
                                         <TableRow key={booking.id}>
                                             <TableCell>
