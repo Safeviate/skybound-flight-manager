@@ -800,8 +800,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <span className="font-medium">Total Flight Hours: {formatDecimalTime(student.flightHours)}</span>
                                         </div>
                                         
-                                        {(student.documents || []).map(doc => (
-                                            <div key={doc.id} className="flex items-center space-x-3">
+                                        {(student.documents || []).map((doc, index) => (
+                                            <div key={`${doc.id}-${index}`} className="flex items-center space-x-3">
                                                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                                                 <span>{doc.type}: {getExpiryBadge(doc.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}</span>
                                             </div>
@@ -1109,4 +1109,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+
 
