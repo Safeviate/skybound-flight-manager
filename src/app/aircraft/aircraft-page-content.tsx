@@ -934,16 +934,19 @@ export function AircraftPageContent({
     
   const ChecklistForms = () => {
     const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
-    const canPerformPostFlight = isPostFlight && user && activeBookingForSelectedAircraft &&
-                                   (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
+    let canPerformPostFlight = isPostFlight && user && (user.permissions.includes('Checklists:Complete') || isSuperUser);
 
+    if (settings.enforcePostFlightCheck) {
+        canPerformPostFlight = isPostFlight && user && activeBookingForSelectedAircraft && (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
+    }
+    
     if (isPostFlight && !isSuperUser && !canPerformPostFlight) {
         return (
             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Post-Flight Check Required</AlertTitle>
                 <AlertDescription>
-                    Only the student or instructor from the previous flight can complete the post-flight checklist.
+                    Only the student or instructor from the previous flight, or a user with checklist completion permissions, can complete the post-flight checklist.
                     A Super User can override this from the main aircraft management view.
                 </AlertDescription>
             </Alert>

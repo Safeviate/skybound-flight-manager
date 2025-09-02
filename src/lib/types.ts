@@ -162,6 +162,7 @@ export type Permission =
   | 'Quality:Delete'
   | 'Checklists:View'
   | 'Checklists:Edit'
+  | 'Checklists:Complete'
   | 'Alerts:View'
   | 'Alerts:Edit'
   | 'Reports:View'
@@ -191,6 +192,7 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Quality:Delete',
     'Checklists:View',
     'Checklists:Edit',
+    'Checklists:Complete',
     'Alerts:View',
     'Alerts:Edit',
     'Reports:View',
@@ -700,13 +702,13 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   'Admin': ['Super User'],
   'Operations Manager': ['Super User'],
   'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View'],
-  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View'],
+  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
+  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
   'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit', 'TechnicalLog:View'],
-  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit', 'TechnicalLog:View'],
-  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit'],
-  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View'],
+  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
+  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit', 'Checklists:Complete'],
+  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit', 'Checklists:Complete'],
+  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View', 'Checklists:Complete'],
   'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
   'Auditee': ['Quality:View'],
   'Driver': [],
@@ -732,6 +734,7 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
 
 
 
