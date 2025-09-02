@@ -313,5 +313,3 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
     </Form>
   )
 }
-
-    

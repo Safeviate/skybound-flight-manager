@@ -344,5 +344,3 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     </Form>
   )
 }
-
-    

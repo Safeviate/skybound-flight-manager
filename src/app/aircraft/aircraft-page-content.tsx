@@ -820,11 +820,14 @@ export function AircraftPageContent({
         doc.text(`${company?.name || 'Safeviate'} - ${checklist.type} Checklist: ${checklist.aircraftTailNumber}`, 14, 22);
         doc.setFontSize(10);
         doc.text(`Completed by ${checklist.userName} on ${format(parseISO(checklist.dateCompleted), 'PPP p')}`, 14, 28);
+        if (checklist.bookingNumber) {
+            doc.text(`Booking Number: ${checklist.bookingNumber}`, 14, 34);
+        }
         
-        let yPos = 40;
+        let yPos = 45;
         
         const addField = (label: string, value: string | number | boolean | undefined) => {
-            if (value !== undefined) {
+            if (value !== undefined && value !== null && value !== 0) {
                 doc.setFont('helvetica', 'bold');
                 doc.text(label, 14, yPos);
                 doc.setFont('helvetica', 'normal');
@@ -833,13 +836,10 @@ export function AircraftPageContent({
             }
         };
     
-        if (isPreFlight) {
-            const preFlightResults = results as PreFlightChecklistFormValues;
-            addField('Aircraft Registration:', preFlightResults.registration);
-            addField('Hobbs Hours:', preFlightResults.hobbs);
-        } else {
-             addField('Hobbs Hours:', (results as PostFlightChecklistFormValues).hobbs);
-        }
+        addField('Hobbs Hours:', (results as any).hobbs);
+        addField('Tacho Reading:', (results as any).tacho);
+        addField('Fuel Uplift (L):', (results as any).fuelUplift);
+        addField('Oil Uplift (qts):', (results as any).oilUplift);
         
         yPos += 5;
     
@@ -1190,13 +1190,19 @@ export function AircraftPageContent({
                         <DialogTitle>{viewingChecklist.type} Checklist: {viewingChecklist.aircraftTailNumber}</DialogTitle>
                         <DialogDescription>
                             Completed by {viewingChecklist.userName} on {format(parseISO(viewingChecklist.dateCompleted), 'PPP p')}
+                            {viewingChecklist.bookingNumber && ` (Booking: ${viewingChecklist.bookingNumber})`}
                         </DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="max-h-[70vh] pr-4">
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <h4 className="font-semibold text-sm">Flight Details</h4>
-                                <p className="text-sm"><strong>Hobbs:</strong> {(viewingChecklist.results as any).hobbs}</p>
+                                <div className="grid grid-cols-2 gap-x-4 text-sm">
+                                    <p><strong>Hobbs:</strong> {(viewingChecklist.results as any).hobbs}</p>
+                                    <p><strong>Tacho:</strong> {(viewingChecklist.results as any).tacho || 'N/A'}</p>
+                                    <p><strong>Fuel Uplift:</strong> {(viewingChecklist.results as any).fuelUplift || 0} L</p>
+                                    <p><strong>Oil Uplift:</strong> {(viewingChecklist.results as any).oilUplift || 0} qts</p>
+                                </div>
                             </div>
                             <Separator />
 
