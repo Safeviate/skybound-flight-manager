@@ -934,14 +934,62 @@ export function AircraftPageContent({
     
   const ChecklistForms = () => {
     const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
-    let canPerformPostFlight = isPostFlight && user && (user.permissions.includes('Checklists:Complete') || isSuperUser);
 
-    if (settings.enforcePostFlightCheck) {
-        canPerformPostFlight = isPostFlight && user && activeBookingForSelectedAircraft && (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
+    if (isSuperUser) {
+        // Super User can always see both forms and switch between them.
+        return (
+          <>
+            <div className="mb-4">
+                <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Change Aircraft
+                </Button>
+            </div>
+            <Tabs defaultValue={isPostFlight ? "post-flight" : "pre-flight"}>
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="pre-flight" disabled={isPostFlight}>Pre-Flight</TabsTrigger>
+                    <TabsTrigger value="post-flight" disabled={!isPostFlight}>Post-Flight</TabsTrigger>
+                </TabsList>
+                <TabsContent value="pre-flight" className="pt-4">
+                    <PreFlightChecklistForm
+                        onSuccess={handleChecklistSuccess}
+                        aircraft={selectedAircraftForChecklist!}
+                        onReportIssue={handleReportIssue}
+                    />
+                </TabsContent>
+                <TabsContent value="post-flight" className="pt-4">
+                    <PostFlightChecklistForm
+                        onSuccess={handleChecklistSuccess}
+                        aircraft={selectedAircraftForChecklist!}
+                        startHobbs={activeBookingForSelectedAircraft?.startHobbs}
+                        onReportIssue={handleReportIssue}
+                    />
+                </TabsContent>
+            </Tabs>
+        </>
+      );
+    }
+  
+    // Logic for non-super users
+    let canPerformPostFlight = false;
+    if (isPostFlight) {
+        if (!settings.enforcePostFlightCheck) {
+            canPerformPostFlight = user?.permissions.includes('Checklists:Complete') ?? false;
+        } else {
+            canPerformPostFlight = user && activeBookingForSelectedAircraft && 
+                (activeBookingForSelectedAircraft.student === user.name || activeBookingForSelectedAircraft.instructor === user.name);
+        }
     }
     
-    if (isPostFlight && !isSuperUser && !canPerformPostFlight) {
-        return (
+    if (isPostFlight && !canPerformPostFlight) {
+      return (
+        <>
+            <div className="mb-4">
+                <Button variant="outline" size="sm" onClick={() => handleAircraftSelected(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Change Aircraft
+                </Button>
+            </div>
             <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Post-Flight Check Required</AlertTitle>
@@ -950,7 +998,8 @@ export function AircraftPageContent({
                     A Super User can override this from the main aircraft management view.
                 </AlertDescription>
             </Alert>
-        );
+        </>
+      );
     }
     
     return (
@@ -961,43 +1010,19 @@ export function AircraftPageContent({
                   Change Aircraft
               </Button>
           </div>
-          {isSuperUser ? (
-              <Tabs defaultValue={isPostFlight ? "post-flight" : "pre-flight"}>
-                  <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="pre-flight" disabled={isPostFlight}>Pre-Flight</TabsTrigger>
-                      <TabsTrigger value="post-flight" disabled={!isPostFlight}>Post-Flight</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="pre-flight" className="pt-4">
-                      <PreFlightChecklistForm
-                          onSuccess={handleChecklistSuccess}
-                          aircraft={selectedAircraftForChecklist!}
-                          onReportIssue={handleReportIssue}
-                      />
-                  </TabsContent>
-                  <TabsContent value="post-flight" className="pt-4">
-                      <PostFlightChecklistForm
-                          onSuccess={handleChecklistSuccess}
-                          aircraft={selectedAircraftForChecklist!}
-                          startHobbs={activeBookingForSelectedAircraft?.startHobbs}
-                          onReportIssue={handleReportIssue}
-                      />
-                  </TabsContent>
-              </Tabs>
+          { isPostFlight ? (
+              <PostFlightChecklistForm
+                  onSuccess={handleChecklistSuccess}
+                  aircraft={selectedAircraftForChecklist!}
+                  startHobbs={activeBookingForSelectedAircraft?.startHobbs}
+                  onReportIssue={handleReportIssue}
+              />
           ) : (
-              isPostFlight ? (
-                  <PostFlightChecklistForm
-                      onSuccess={handleChecklistSuccess}
-                      aircraft={selectedAircraftForChecklist!}
-                      startHobbs={activeBookingForSelectedAircraft?.startHobbs}
-                      onReportIssue={handleReportIssue}
-                  />
-              ) : (
-                  <PreFlightChecklistForm
-                      onSuccess={handleChecklistSuccess}
-                      aircraft={selectedAircraftForChecklist!}
-                      onReportIssue={handleReportIssue}
-                  />
-              )
+              <PreFlightChecklistForm
+                  onSuccess={handleChecklistSuccess}
+                  aircraft={selectedAircraftForChecklist!}
+                  onReportIssue={handleReportIssue}
+              />
           )}
       </>
     );
