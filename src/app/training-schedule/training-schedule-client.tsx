@@ -20,6 +20,7 @@ import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { useSettings } from '@/context/settings-provider';
 
 
 interface TrainingSchedulePageContentProps {
@@ -31,6 +32,7 @@ interface TrainingSchedulePageContentProps {
 export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [aircraft, setAircraft] = useState<Aircraft[]>(initialAircraft);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -274,6 +276,26 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         }
     };
   
+  const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
+    if (settings.enforcePostFlightCheck && aircraft.checklistStatus === 'needs-post-flight') {
+        toast({
+            variant: 'destructive',
+            title: 'Booking Prohibited',
+            description: 'A post-flight check is outstanding for this aircraft. It cannot be booked until the previous flight is signed off.',
+        });
+        return;
+    }
+    if (aircraft.status === 'In Maintenance') {
+        toast({
+            variant: 'destructive',
+            title: 'Booking Prohibited',
+            description: 'This aircraft is currently in maintenance and cannot be booked.',
+        });
+        return;
+    }
+    setNewBookingSlot({ aircraft, time });
+  }
+
   const handleDialogClose = () => {
     setNewBookingSlot(null);
     setEditingBooking(null);
@@ -443,7 +465,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                     }
                                   }
                                   return (
-                                    <td key={time} className="empty-slot" onClick={() => setNewBookingSlot({ aircraft: ac, time })}></td>
+                                    <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
                                   );
                                 })}
                             </tr>
