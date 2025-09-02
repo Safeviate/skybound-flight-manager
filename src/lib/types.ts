@@ -697,19 +697,59 @@ export type CompanyDepartment = {
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   'Super User': ['Super User'],
-  'Accountable Manager': ['Super User'],
   'System Admin': ['Super User'],
-  'Admin': ['Super User'],
-  'Operations Manager': ['Super User'],
-  'HR Manager': [...VIEW_ALL_PAGES, 'Personnel:Edit', 'Settings:Edit'],
-  'Safety Manager': [...VIEW_ALL_PAGES, 'Safety:Edit', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
-  'Quality Manager': [...VIEW_ALL_PAGES, 'Quality:Edit', 'Quality:Delete', 'Alerts:Edit', 'Reports:View', 'Settings:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
-  'Aircraft Manager': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Alerts:Edit', 'TechnicalLog:View'],
-  'Maintenance': [...VIEW_ALL_PAGES, 'Aircraft:Edit', 'Aircraft:UpdateHobbs', 'Checklists:Edit', 'TechnicalLog:View', 'Checklists:Complete'],
-  'Chief Flight Instructor': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit', 'Checklists:Complete'],
-  'Head Of Training': [...VIEW_ALL_PAGES, 'Students:Edit', 'Personnel:View', 'Checklists:Edit', 'Alerts:Edit', 'Settings:Edit', 'Checklists:Complete'],
-  'Instructor': [...VIEW_ALL_PAGES, 'Students:View', 'Checklists:View', 'Checklists:Complete'],
-  'Student': ['Aircraft:View', 'Students:View', 'Alerts:View', 'Bookings:View', 'Bookings:Edit'],
+  'Accountable Manager': [
+    'Aircraft:View',
+    'Students:View',
+    'Personnel:View',
+    'Safety:View',
+    'Quality:View',
+    'Checklists:View',
+    'Alerts:View',
+    'Reports:View',
+    'Bookings:View',
+    'Settings:Edit',
+  ],
+  'Admin': [
+    'Aircraft:Edit',
+    'Students:Edit',
+    'Personnel:Edit',
+    'Safety:View',
+    'Quality:View',
+    'Checklists:Edit',
+    'Alerts:Edit',
+    'Reports:View',
+    'Bookings:Edit',
+    'Settings:Edit',
+  ],
+  'Operations Manager': [
+    'Aircraft:View',
+    'Bookings:Edit',
+    'Personnel:View',
+  ],
+  'HR Manager': ['Personnel:View', 'Personnel:Edit', 'Students:View'],
+  'Safety Manager': ['Safety:View', 'Safety:Edit', 'Reports:View', 'Aircraft:View'],
+  'Quality Manager': ['Quality:View', 'Quality:Edit', 'Reports:View', 'Aircraft:View'],
+  'Aircraft Manager': ['Aircraft:View', 'Aircraft:Edit', 'Aircraft:UpdateHobbs'],
+  'Maintenance': ['Aircraft:View', 'Aircraft:Edit', 'Checklists:View', 'Checklists:Edit'],
+  'Chief Flight Instructor': [
+    'Students:View',
+    'Students:Edit',
+    'Personnel:View',
+    'Bookings:View',
+    'Bookings:Edit',
+    'Checklists:View',
+  ],
+  'Head Of Training': [
+    'Students:View',
+    'Students:Edit',
+    'Personnel:View',
+    'Bookings:View',
+    'Bookings:Edit',
+    'Checklists:View',
+  ],
+  'Instructor': ['Students:View', 'Bookings:View', 'Checklists:View'],
+  'Student': ['Students:View', 'Bookings:View'],
   'Auditee': ['Quality:View'],
   'Driver': [],
   'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
@@ -734,7 +774,6 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
 
 
 
