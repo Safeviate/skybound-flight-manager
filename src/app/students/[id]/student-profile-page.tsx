@@ -159,7 +159,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             if (sortOrder === 'newest') {
                 return dateB - dateA;
             } else {
-                return dateA - dateB;
+                return dateA - b;
             }
         });
         return sortableLogs;
@@ -167,10 +167,6 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const broughtForwardLog = useMemo(() => {
         return student?.trainingLogs?.find(log => log.aircraft === 'Previous Experience');
-    }, [student?.trainingLogs]);
-    
-    const totalFlightHours = useMemo(() => {
-        return student?.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
     }, [student?.trainingLogs]);
     
     const totalHoursLog = useMemo(() => {
@@ -801,7 +797,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                         </div>
                                         <div className="flex items-center space-x-3">
                                             <BookUser className="h-5 w-5 text-muted-foreground" />
-                                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(totalFlightHours)}</span>
+                                            <span className="font-medium">Total Flight Hours: {formatDecimalTime(student.flightHours)}</span>
                                         </div>
                                         
                                         {(student.documents || []).map(doc => (
@@ -813,7 +809,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                     </CardContent>
                                 </Card>
 
-                                    {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={totalFlightHours} />}
+                                    {student.licenseType !== 'PPL' && <MilestoneProgress currentHours={student.flightHours || 0} />}
 
                                 <Card>
                                     <CardHeader>
