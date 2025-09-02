@@ -14,18 +14,54 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
         const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`), orderBy('date', 'desc'));
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
         const usersQuery = query(collection(db, `companies/${companyId}/users`));
-        
-        const [bookingsSnapshot, aircraftSnapshot, usersSnapshot] = await Promise.all([
+        const completedChecklistsQuery = query(collection(db, `companies/${companyId}/aircraft`), where => where('status', '!=', 'Archived'));
+
+        const [bookingsSnapshot, aircraftSnapshot, usersSnapshot, aircraftForChecklistsSnapshot] = await Promise.all([
             getDocs(bookingsQuery),
             getDocs(aircraftQuery),
-            getDocs(usersSnapshot)
+            getDocs(usersQuery),
+            getDocs(completedChecklistsQuery)
         ]);
 
         const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
         const aircraft = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         
-        return { bookings, aircraft, users };
+        let allChecklists: CompletedChecklist[] = [];
+        for (const acDoc of aircraftForChecklistsSnapshot.docs) {
+            const checklistsCol = collection(db, `companies/${companyId}/aircraft/${acDoc.id}/completed-checklists`);
+            const checklistsSnap = await getDocs(checklistsCol);
+            const checklists = checklistsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
+            allChecklists = allChecklists.concat(checklists);
+        }
+
+        const checklistsByBookingNumber = new Map<string, { pre?: number, post?: number }>();
+
+        allChecklists.forEach(checklist => {
+            if (checklist.bookingNumber) {
+                const entry = checklistsByBookingNumber.get(checklist.bookingNumber) || {};
+                if (checklist.type === 'Pre-Flight') {
+                    entry.pre = checklist.results?.hobbs;
+                } else if (checklist.type === 'Post-Flight') {
+                    entry.post = checklist.results?.hobbs;
+                }
+                checklistsByBookingNumber.set(checklist.bookingNumber, entry);
+            }
+        });
+        
+        const bookingsWithHobbs = bookings.map(booking => {
+            if (booking.bookingNumber && checklistsByBookingNumber.has(booking.bookingNumber)) {
+                const { pre, post } = checklistsByBookingNumber.get(booking.bookingNumber)!;
+                return {
+                    ...booking,
+                    startHobbs: pre ?? booking.startHobbs,
+                    endHobbs: post ?? booking.endHobbs,
+                };
+            }
+            return booking;
+        });
+
+        return { bookings: bookingsWithHobbs, aircraft, users };
     } catch (error) {
         console.error("Failed to fetch reports page data:", error);
         return { bookings: [], aircraft: [], users: [] };
