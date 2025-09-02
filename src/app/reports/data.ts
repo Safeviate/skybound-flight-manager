@@ -3,8 +3,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, doc, getDoc, writeBatch } from 'firebase/firestore';
-import type { Booking, Aircraft, User, CompletedChecklist } from '@/lib/types';
+import { collection, query, getDocs, orderBy, doc, getDoc, writeBatch, where, arrayUnion, addDoc } from 'firebase/firestore';
+import type { Booking, Aircraft, User, CompletedChecklist, Alert } from '@/lib/types';
+import { format } from 'date-fns';
 
 export async function getReportsPageData(companyId: string): Promise<{ bookings: Booking[], aircraft: Aircraft[], users: User[] }> {
     if (!companyId) {
@@ -66,14 +67,6 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
 
                 if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
                     flightDuration = parseFloat((endHobbs - startHobbs).toFixed(1));
-                    
-                    if (booking.purpose === 'Training' && booking.studentId) {
-                        const studentRef = doc(db, `companies/${companyId}/students/${booking.studentId}`);
-                        // Schedule a write to update flightHours, but don't execute it yet.
-                        // This logic assumes we need to recalculate totals, which is complex here.
-                        // A better approach is to have a separate process or trigger for this.
-                        // For this request, we'll focus on the data prep.
-                    }
                 }
                 
                 return {
@@ -88,8 +81,6 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
             return booking;
         });
         
-        // This is a simplified recalculation logic. 
-        // A more robust system might use cloud functions to avoid re-calculating all hours on every page load.
         const studentHoursMap = new Map<string, number>();
         students.forEach(s => studentHoursMap.set(s.id, 0));
 
@@ -100,14 +91,50 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
             }
         });
         
-        students.forEach(student => {
+        for (const student of students) {
             const calculatedHours = studentHoursMap.get(student.id);
             if (calculatedHours !== undefined && student.flightHours !== calculatedHours) {
                 const studentRef = doc(db, `companies/${companyId}/students/${student.id}`);
                 batch.update(studentRef, { flightHours: calculatedHours });
                 writesToPerform = true;
+                
+                const milestones = [10, 20, 30];
+                const notificationsSent = student.milestoneNotificationsSent || [];
+
+                for (const milestone of milestones) {
+                    if (calculatedHours >= milestone && !notificationsSent.includes(milestone)) {
+                        
+                        const headOfTrainingQuery = query(collection(db, `companies/${companyId}/users`), where('role', '==', 'Head Of Training'));
+                        const hotSnapshot = await getDocs(headOfTrainingQuery);
+                        const hot = hotSnapshot.empty ? null : hotSnapshot.docs[0].data() as User;
+                        
+                        const instructorQuery = query(collection(db, `companies/${companyId}/users`), where('name', '==', student.instructor));
+                        const instructorSnapshot = await getDocs(instructorQuery);
+                        const instructor = instructorSnapshot.empty ? null : instructorSnapshot.docs[0].data() as User;
+
+                        const targetUserIds = [hot?.id, instructor?.id].filter(Boolean) as string[];
+
+                        for (const targetId of targetUserIds) {
+                            const newAlert: Omit<Alert, 'id'|'number'> = {
+                                companyId: companyId,
+                                type: 'Task',
+                                title: `Milestone Alert: ${student.name}`,
+                                description: `${student.name} has reached the ${milestone}-hour milestone with ${calculatedHours.toFixed(1)} total hours. Please schedule a progress check.`,
+                                author: 'System',
+                                date: new Date().toISOString(),
+                                readBy: [],
+                                targetUserId: targetId,
+                                relatedLink: `/students/${student.id}`,
+                            };
+                            const alertsCollection = collection(db, `companies/${companyId}/alerts`);
+                            await addDoc(alertsCollection, newAlert);
+                        }
+                        
+                        batch.update(studentRef, { milestoneNotificationsSent: arrayUnion(milestone) });
+                    }
+                }
             }
-        });
+        }
 
         if (writesToPerform) {
             await batch.commit();
