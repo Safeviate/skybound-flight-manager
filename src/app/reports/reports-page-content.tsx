@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -35,9 +36,10 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
 
     // 2. Add flight hours from bookings to the map.
     bookings.forEach(booking => {
-        if (booking.aircraft && hoursByAircraft.has(booking.aircraft) && booking.status !== 'Cancelled' && booking.flightDuration) {
+        if (booking.aircraft && hoursByAircraft.has(booking.aircraft) && booking.status === 'Completed' && booking.endHobbs && booking.startHobbs) {
+            const duration = booking.endHobbs - booking.startHobbs;
             const currentHours = hoursByAircraft.get(booking.aircraft) || 0;
-            hoursByAircraft.set(booking.aircraft, currentHours + booking.flightDuration);
+            hoursByAircraft.set(booking.aircraft, currentHours + duration);
         }
     });
 
@@ -71,8 +73,9 @@ const AircraftUtilizationChart = ({ bookings, aircraft }: { bookings: Booking[],
 const InstructorHoursChart = ({ bookings, users }: { bookings: Booking[], users: User[] }) => {
     const instructorData = useMemo(() => {
         const hoursByInstructor = bookings.reduce((acc, booking) => {
-            if (booking.instructor && booking.status !== 'Cancelled' && booking.flightDuration) {
-                acc[booking.instructor] = (acc[booking.instructor] || 0) + booking.flightDuration;
+            if (booking.instructor && booking.status === 'Completed' && booking.endHobbs && booking.startHobbs) {
+                const duration = booking.endHobbs - booking.startHobbs;
+                acc[booking.instructor] = (acc[booking.instructor] || 0) + duration;
             }
             return acc;
         }, {} as Record<string, number>);
@@ -199,7 +202,12 @@ const KeyMetrics = ({ bookings }: { bookings: Booking[] }) => {
         const totalBookings = bookings.length;
         const completedFlights = bookings.filter(b => b.status === 'Completed').length;
         const cancelledFlights = bookings.filter(b => b.status === 'Cancelled').length;
-        const totalFlightHours = bookings.reduce((sum, b) => b.status === 'Completed' ? sum + (b.flightDuration || 0) : sum, 0);
+        const totalFlightHours = bookings.reduce((sum, b) => {
+            if (b.status === 'Completed' && b.endHobbs && b.startHobbs) {
+                return sum + (b.endHobbs - b.startHobbs);
+            }
+            return sum;
+        }, 0);
         
         const cancellationRate = totalBookings > 0 ? (cancelledFlights / totalBookings) * 100 : 0;
         const avgDuration = completedFlights > 0 ? totalFlightHours / completedFlights : 0;
@@ -265,8 +273,8 @@ const KeyMetrics = ({ bookings }: { bookings: Booking[] }) => {
 const AircraftStats = ({ bookings, aircraftData }: { bookings: Booking[], aircraftData: Aircraft[] }) => {
   const stats = useMemo(() => {
     const totalFlightHours = bookings.reduce((sum, b) => {
-        if (b.status === 'Completed' && b.flightDuration) {
-            return sum + b.flightDuration;
+        if (b.status === 'Completed' && b.endHobbs && b.startHobbs) {
+            return sum + (b.endHobbs - b.startHobbs);
         }
         return sum;
     }, 0);
@@ -316,9 +324,14 @@ const IndividualAircraftStats = ({ bookings, aircraftData }: { bookings: Booking
             <h2 className="text-2xl font-bold tracking-tight my-4">Individual Aircraft Statistics</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {aircraftData.filter(ac => ac.status !== 'Archived').map(aircraft => {
-                    const aircraftBookings = bookings.filter(b => b.aircraft === aircraft.tailNumber);
-                    const totalHours = aircraftBookings.reduce((sum, b) => sum + (b.flightDuration || 0), 0);
-                    const totalBookings = aircraftBookings.length;
+                    const aircraftBookings = bookings.filter(b => b.aircraft === aircraft.tailNumber && b.status === 'Completed');
+                    const totalHours = aircraftBookings.reduce((sum, b) => {
+                        if (b.endHobbs && b.startHobbs) {
+                            return sum + (b.endHobbs - b.startHobbs);
+                        }
+                        return sum;
+                    }, 0);
+                    const totalBookingsCount = aircraftBookings.length;
                     const totalFuel = aircraftBookings.reduce((sum, b) => sum + (b.fuelUplift || 0), 0);
                     const totalOil = aircraftBookings.reduce((sum, b) => sum + (b.oilUplift || 0), 0);
                     
@@ -335,7 +348,7 @@ const IndividualAircraftStats = ({ bookings, aircraftData }: { bookings: Booking
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Bookings</span>
-                                    <span>{totalBookings}</span>
+                                    <span>{totalBookingsCount}</span>
                                 </div>
                                  <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Fuel Uplift</span>
@@ -692,7 +705,7 @@ export function ReportsPageContent({
                                 filteredBookings.map((booking) => {
                                     const duration = booking.endHobbs && booking.startHobbs
                                         ? (booking.endHobbs - booking.startHobbs).toFixed(1)
-                                        : booking.flightDuration ? booking.flightDuration.toFixed(1) : 'N/A';
+                                        : 'N/A';
                                     return (
                                         <TableRow key={booking.id}>
                                             <TableCell>
@@ -738,3 +751,4 @@ export function ReportsPageContent({
     </main>
   );
 }
+
