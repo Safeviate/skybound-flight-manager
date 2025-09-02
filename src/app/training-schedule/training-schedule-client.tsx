@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -304,7 +305,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }
 
   const handleChecklistIconClick = (aircraft: Aircraft) => {
-    if (aircraft.checklistStatus === 'needs-post-flight') {
+    if (aircraft.checklistStatus === 'needs-post-flight' && !user?.permissions.includes('Super User')) {
       setChecklistWarning("A post-flight check is outstanding for this aircraft. The previous crew must complete their checks before a new pre-flight can be initiated.");
     }
     setSelectedChecklistAircraft(aircraft);
