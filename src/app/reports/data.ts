@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
-import type { Booking, Aircraft, User } from '@/lib/types';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import type { Booking, Aircraft, User, CompletedChecklist } from '@/lib/types';
 
 export async function getReportsPageData(companyId: string): Promise<{ bookings: Booking[], aircraft: Aircraft[], users: User[] }> {
     if (!companyId) {
@@ -11,14 +11,14 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
     }
 
     try {
-        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
+        const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`), orderBy('date', 'desc'));
         const aircraftQuery = query(collection(db, `companies/${companyId}/aircraft`));
         const usersQuery = query(collection(db, `companies/${companyId}/users`));
         
         const [bookingsSnapshot, aircraftSnapshot, usersSnapshot] = await Promise.all([
             getDocs(bookingsQuery),
             getDocs(aircraftQuery),
-            getDocs(usersQuery)
+            getDocs(usersSnapshot)
         ]);
 
         const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
