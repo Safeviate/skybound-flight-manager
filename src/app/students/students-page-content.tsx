@@ -146,7 +146,7 @@ export function StudentsPageContent({ initialStudents }: { initialStudents: User
   const StudentCardList = ({ list, isArchived }: { list: User[], isArchived?: boolean }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {list.map((student) => {
-             const totalFlightHours = student.trainingLogs?.reduce((total, log) => total + (log.flightDuration || 0), 0) || 0;
+             const totalFlightHours = student.flightHours || 0;
             return (
             <Card key={student.id} className={cn("flex flex-col", isArchived && 'bg-muted/50')}>
                  <CardHeader>
