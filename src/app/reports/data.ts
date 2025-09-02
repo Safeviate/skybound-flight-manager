@@ -52,11 +52,20 @@ export async function getReportsPageData(companyId: string): Promise<{ bookings:
         const bookingsWithChecklistData = bookings.map(booking => {
             if (booking.bookingNumber && checklistsByBookingNumber.has(booking.bookingNumber)) {
                 const { pre, post } = checklistsByBookingNumber.get(booking.bookingNumber)!;
+                
+                const startHobbs = pre?.results?.hobbs ?? booking.startHobbs;
+                const endHobbs = post?.results?.hobbs ?? booking.endHobbs;
+                let flightDuration = booking.flightDuration;
+
+                if (startHobbs !== undefined && endHobbs !== undefined) {
+                    flightDuration = endHobbs - startHobbs;
+                }
+                
                 return {
                     ...booking,
-                    startHobbs: pre?.results?.hobbs ?? booking.startHobbs,
-                    endHobbs: post?.results?.hobbs ?? booking.endHobbs,
-                    flightDuration: post?.results?.flightDuration ?? booking.flightDuration,
+                    startHobbs: startHobbs,
+                    endHobbs: endHobbs,
+                    flightDuration: flightDuration,
                     fuelUplift: pre?.results?.fuelUplift ?? post?.results?.fuelUplift ?? booking.fuelUplift,
                     oilUplift: pre?.results?.oilUplift ?? post?.results?.oilUplift ?? booking.oilUplift,
                 };
