@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,30 +109,32 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
   });
   
   useEffect(() => {
-      const getInitialValues = () => {
-          if (logToEdit) {
-              return {
-                  ...logToEdit,
-                  date: parseISO(logToEdit.date),
-              };
-          }
-          if (booking) {
-              return {
-                  date: parseISO(booking.date),
-                  aircraft: booking.aircraft,
-                  startHobbs: booking.startHobbs || 0,
-                  endHobbs: booking.endHobbs || 0,
-                  instructorName: booking.instructor || '',
-                  trainingExercises: logEntryForBooking?.trainingExercises.length ? logEntryForBooking.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
-                  departure: logEntryForBooking?.departure,
-                  arrival: logEntryForBooking?.arrival,
-              };
-          }
-          return defaultFormValues;
-      };
+    const getInitialValues = () => {
+        if (logToEdit) {
+            return {
+                ...logToEdit,
+                date: parseISO(logToEdit.date),
+            };
+        }
+        if (booking) {
+            // Find the associated log entry if it exists
+            const associatedLog = student.trainingLogs?.find(log => log.id === booking.pendingLogEntryId);
+            return {
+                date: parseISO(booking.date),
+                aircraft: booking.aircraft,
+                startHobbs: associatedLog?.startHobbs || booking.startHobbs || 0,
+                endHobbs: associatedLog?.endHobbs || booking.endHobbs || 0,
+                instructorName: booking.instructor || '',
+                trainingExercises: associatedLog?.trainingExercises.length ? associatedLog.trainingExercises : [{ exercise: '', rating: 0, comment: '' }],
+                departure: associatedLog?.departure,
+                arrival: associatedLog?.arrival,
+            };
+        }
+        return defaultFormValues;
+    };
 
-      form.reset(getInitialValues() as DebriefFormValues);
-  }, [booking, logToEdit, logEntryForBooking, form]);
+    form.reset(getInitialValues() as DebriefFormValues);
+  }, [booking, logToEdit, student.trainingLogs, form]);
 
 
   function handleFormSubmit(data: DebriefFormValues) {
@@ -143,7 +146,8 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
       date: format(data.date, 'yyyy-MM-dd'),
     };
     
-    onSubmit(newEntry, booking?.id, logToEdit?.id);
+    const logId = logToEdit?.id || logEntryForBooking?.id;
+    onSubmit(newEntry, booking?.id, logId);
     
     form.reset();
   }

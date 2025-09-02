@@ -625,6 +625,7 @@ export function AircraftPageContent({
                         
                         // Link the log entry ID back to the booking
                         batch.update(bookingRef, { status: 'Completed', pendingLogEntryId: newLogEntryId });
+                        setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, pendingLogEntryId: newLogEntryId } : b));
     
                     } else {
                          batch.update(bookingRef, { status: 'Completed' });
