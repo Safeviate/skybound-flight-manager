@@ -691,7 +691,7 @@ export function ReportsPageContent({
                             <TableBody>
                             {filteredBookings.length > 0 ? (
                                 filteredBookings.map((booking) => {
-                                    const duration = booking.endHobbs && booking.startHobbs ? (booking.endHobbs - booking.startHobbs).toFixed(1) : 'N/A';
+                                    const duration = booking.flightDuration ? `${booking.flightDuration.toFixed(1)} hrs` : 'N/A';
                                     return (
                                         <TableRow key={booking.id}>
                                             <TableCell>
@@ -712,7 +712,7 @@ export function ReportsPageContent({
                                             </TableCell>
                                             <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
                                             <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
-                                            <TableCell>{duration !== 'N/A' ? `${duration} hrs` : 'N/A'}</TableCell>
+                                            <TableCell>{duration}</TableCell>
                                             <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
                                             <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
                                             <TableCell>
