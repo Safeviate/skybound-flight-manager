@@ -16,7 +16,7 @@ export default function Footer() {
       <p>
         &copy; {new Date().getFullYear()} {companyName}. "{trademark}" is a trademark of the project owner. All rights reserved. Unauthorized use of this name is strictly prohibited.
         <span className="mx-2">|</span>
-        Version {appVersion} 🍻
+        Version {appVersion} 🍻🍻🍻
       </p>
     </footer>
   );
