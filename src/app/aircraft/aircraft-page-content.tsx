@@ -596,6 +596,12 @@ export function AircraftPageContent({
                     
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
+                        
+                        // Get current student data to update hours
+                        const studentSnap = await getDoc(studentRef);
+                        const studentData = studentSnap.data() as User;
+                        const newTotalHours = (studentData.flightHours || 0) + flightDuration;
+                        
                         const newLogEntryId = `log-${Date.now()}`;
                         const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
                             date: bookingForChecklist.date,
@@ -613,7 +619,8 @@ export function AircraftPageContent({
                         
                         batch.update(studentRef, { 
                             trainingLogs: arrayUnion({ ...newLogEntry, id: newLogEntryId }),
-                            pendingBookingIds: arrayUnion(bookingForChecklist.id)
+                            pendingBookingIds: arrayUnion(bookingForChecklist.id),
+                            flightHours: newTotalHours
                         });
                         
                         // Link the log entry ID back to the booking
