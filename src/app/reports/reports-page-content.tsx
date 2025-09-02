@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -537,7 +536,7 @@ export function ReportsPageContent({
     <main className="flex-1 p-4 md:p-8 space-y-8">
         <Tabs defaultValue="overview">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="overview">Charts & Overview</TabsTrigger>
+                <TabsTrigger value="overview">Charts &amp; Overview</TabsTrigger>
                 <TabsTrigger value="bookings">Recent Bookings Log</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-8">
