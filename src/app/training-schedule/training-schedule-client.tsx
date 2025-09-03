@@ -415,168 +415,123 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="w-[1200px] mx-auto p-4 md:p-8">
-        <Tabs defaultValue="bookings">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="history">Bookings History</TabsTrigger>
-          </TabsList>
-          <TabsContent value="bookings" className="mt-6">
-            <div className="w-full flex flex-col items-start gap-4">
-                <div>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-[280px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                            data-nosnippet
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => setSelectedDate(date || new Date())}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                    <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
-                </div>
-                <div>
-                    <div className="color-legend">
-                        <div className="legend-item"><div className="legend-color-box bg-primary"></div>Ready for Pre-Flight</div>
-                        <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
-                        <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
-                    </div>
-                </div>
-            </div>
-             <div className="gantt-container mt-12">
-                <table className="gantt-table">
-                    <thead>
-                        <tr>
-                            <th>Aircraft</th>
-                            {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {aircraft.map(ac => {
-                          const renderedSlots = new Set();
-                          return (
-                          <tr key={ac.id}>
-                                <td>
-                                  <div className="flex items-center justify-between px-3 h-full">
-                                    <span>{ac.tailNumber}</span>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChecklistIconClick(ac)}>
-                                      <ListChecks className={cn(
-                                        "h-4 w-4",
-                                        ac.checklistStatus === 'needs-post-flight' ? 'text-red-500' : 'text-green-500'
-                                      )} />
-                                    </Button>
-                                  </div>
-                                </td>
-                                {timeSlots.map(time => {
-                                  if (renderedSlots.has(time)) return null;
+        <Card>
+            <CardHeader>
+                <CardTitle>Training Schedule</CardTitle>
+                <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Tabs defaultValue="bookings">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                        <TabsTrigger value="history">Bookings History</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="bookings" className="mt-6">
+                        <div className="w-full flex flex-col items-start gap-4">
+                            <div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-[280px] justify-start text-left font-normal",
+                                            !selectedDate && "text-muted-foreground"
+                                        )}
+                                        data-nosnippet
+                                        >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                        mode="single"
+                                        selected={selectedDate}
+                                        onSelect={(date) => setSelectedDate(date || new Date())}
+                                        initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                            </div>
+                            <div>
+                                <div className="color-legend">
+                                    <div className="legend-item"><div className="legend-color-box bg-primary"></div>Ready for Pre-Flight</div>
+                                    <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
+                                    <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="gantt-container mt-12">
+                            <table className="gantt-table">
+                                <thead>
+                                    <tr>
+                                        <th>Aircraft</th>
+                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {aircraft.map(ac => {
+                                    const renderedSlots = new Set();
+                                    return (
+                                    <tr key={ac.id}>
+                                            <td>
+                                            <div className="flex items-center justify-between px-3 h-full">
+                                                <span>{ac.tailNumber}</span>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChecklistIconClick(ac)}>
+                                                <ListChecks className={cn(
+                                                    "h-4 w-4",
+                                                    ac.checklistStatus === 'needs-post-flight' ? 'text-red-500' : 'text-green-500'
+                                                )} />
+                                                </Button>
+                                            </div>
+                                            </td>
+                                            {timeSlots.map(time => {
+                                            if (renderedSlots.has(time)) return null;
 
-                                  const booking = getBookingForSlot(ac.tailNumber, time);
-                                  if (booking) {
-                                    const colSpan = calculateColSpan(booking, time);
-                                    if (colSpan > 0) {
-                                      const startTimeInMinutes = timeToMinutes(booking.startTime);
-                                      for (let i = 1; i < colSpan; i++) {
-                                        const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                        const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
-                                        const nextMinute = nextSlotTimeInMinutes % 60;
-                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                      }
-                                      const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-                                      const variant = getBookingVariant(booking, aircraftForBooking);
-                                      const checklistOutstanding = aircraftForBooking?.checklistStatus === 'needs-pre-flight' || aircraftForBooking?.checklistStatus === 'needs-post-flight';
-                                      return (
-                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
-                                          <div className={cn('gantt-bar', variant.className)} style={variant.style}>
-                                             <div className="flex items-center gap-2">
-                                                {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
-                                                <span>{getBookingLabel(booking)}</span>
-                                              </div>
-                                          </div>
-                                        </td>
-                                      )
-                                    }
-                                  }
-                                  return (
-                                    <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
-                                  );
-                                })}
-                            </tr>
-                          )
-                        })}
-                    </tbody>
-                </table>
-            </div>
-          </TabsContent>
-          <TabsContent value="history" className="mt-6">
-             <Card>
-                 <CardHeader>
-                     <CardTitle>Bookings History</CardTitle>
-                     <CardDescription>A log of all completed and cancelled bookings.</CardDescription>
-                 </CardHeader>
-                 <CardContent>
-                     <div className="py-4">
-                        <Input 
-                            placeholder="Search history..."
-                            value={historySearchTerm}
-                            onChange={e => setHistorySearchTerm(e.target.value)}
-                            className="max-w-sm"
-                        />
-                     </div>
-                     <Table>
-                         <TableHeader>
-                             <TableRow>
-                                 <TableHead>Booking #</TableHead>
-                                 <TableHead>Date</TableHead>
-                                 <TableHead>Aircraft</TableHead>
-                                 <TableHead>Student</TableHead>
-                                 <TableHead>Instructor</TableHead>
-                                 <TableHead>Exercise</TableHead>
-                                 <TableHead>Start Hobbs</TableHead>
-                                 <TableHead>End Hobbs</TableHead>
-                                 <TableHead>Flight Total</TableHead>
-                                 <TableHead>Status</TableHead>
-                             </TableRow>
-                         </TableHeader>
-                         <TableBody>
-                             {bookings.length > 0 ? (
-                                bookings.map(b => (
-                                    <TableRow key={b.id}>
-                                        <TableCell>{b.bookingNumber}</TableCell>
-                                        <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
-                                        <TableCell>{b.aircraft}</TableCell>
-                                        <TableCell>{b.student || 'N/A'}</TableCell>
-                                        <TableCell>{b.instructor || 'N/A'}</TableCell>
-                                        <TableCell>{b.trainingExercise || 'N/A'}</TableCell>
-                                        <TableCell>{b.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                        <TableCell>{b.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                        <TableCell>{(b.flightDuration || 0).toFixed(1)}</TableCell>
-                                        <TableCell><Badge variant={getStatusVariant(b.status)}>{b.status}</Badge></TableCell>
-                                    </TableRow>
-                                ))
-                             ) : (
-                                <TableRow>
-                                    <TableCell colSpan={10} className="h-24 text-center">No historical bookings found.</TableCell>
-                                </TableRow>
-                             )}
-                         </TableBody>
-                     </Table>
-                 </CardContent>
-             </Card>
-          </TabsContent>
-        </Tabs>
+                                            const booking = getBookingForSlot(ac.tailNumber, time);
+                                            if (booking) {
+                                                const colSpan = calculateColSpan(booking, time);
+                                                if (colSpan > 0) {
+                                                const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                                for (let i = 1; i < colSpan; i++) {
+                                                    const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
+                                                    const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                                    const nextMinute = nextSlotTimeInMinutes % 60;
+                                                    renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
+                                                }
+                                                const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+                                                const variant = getBookingVariant(booking, aircraftForBooking);
+                                                const checklistOutstanding = aircraftForBooking?.checklistStatus === 'needs-pre-flight' || aircraftForBooking?.checklistStatus === 'needs-post-flight';
+                                                return (
+                                                    <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
+                                                    <div className={cn('gantt-bar', variant.className)} style={variant.style}>
+                                                        <div className="flex items-center gap-2">
+                                                            {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
+                                                            <span>{getBookingLabel(booking)}</span>
+                                                        </div>
+                                                    </div>
+                                                    </td>
+                                                )
+                                                }
+                                            }
+                                            return (
+                                                <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
+                                            );
+                                            })}
+                                        </tr>
+                                    )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="history" className="mt-6">
+                      
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+       </Card>
       </div>
        <Dialog open={!!newBookingSlot || !!editingBooking} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">
