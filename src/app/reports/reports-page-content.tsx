@@ -386,9 +386,6 @@ export function ReportsPageContent({
   const [aircraftData, setAircraftData] = useState<Aircraft[]>(initialAircraft);
   const [userData, setUserData] = useState<User[]>(initialUsers);
   const [dataLoading, setDataLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
-  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     setBookingData(initialBookings);
@@ -402,139 +399,6 @@ export function ReportsPageContent({
       router.push('/login');
     }
   }, [user, loading, router]);
-  
-  useEffect(() => {
-    // Clear selections when the search term or archive view changes
-    setSelectedBookings([]);
-  }, [searchTerm, showArchived]);
-
-  const activeBookings = useMemo(() => bookingData.filter(b => b.status !== 'Archived'), [bookingData]);
-  const archivedBookings = useMemo(() => bookingData.filter(b => b.status === 'Archived'), [bookingData]);
-
-  const displayedBookings = useMemo(() => showArchived ? archivedBookings : activeBookings, [showArchived, archivedBookings, activeBookings]);
-  
-  const recentBookings = useMemo(() => {
-    return displayedBookings
-      .filter(b => b.bookingNumber) 
-      .sort((a, b) => {
-        const numA = parseInt(a.bookingNumber!.split('-')[1]);
-        const numB = parseInt(b.bookingNumber!.split('-')[1]);
-        return numB - numA; // Sort descending
-      });
-  }, [displayedBookings]);
-
-  const filteredBookings = useMemo(() => {
-      if (!searchTerm) return recentBookings;
-      const lowercasedFilter = searchTerm.toLowerCase();
-      return recentBookings.filter(booking => {
-          return (
-              booking.bookingNumber?.toLowerCase().includes(lowercasedFilter) ||
-              booking.aircraft.toLowerCase().includes(lowercasedFilter) ||
-              booking.purpose.toLowerCase().includes(lowercasedFilter) ||
-              booking.student?.toLowerCase().includes(lowercasedFilter) ||
-              booking.instructor?.toLowerCase().includes(lowercasedFilter) ||
-              booking.status.toLowerCase().includes(lowercasedFilter)
-          );
-      });
-  }, [searchTerm, recentBookings]);
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'Approved': return 'warning';
-      case 'Completed': return 'success';
-      case 'Cancelled': return 'destructive';
-      case 'Archived': return 'secondary';
-      default: return 'outline';
-    }
-  }
-  
-  const handleSelectAll = (checked: boolean) => {
-      if (checked) {
-          setSelectedBookings(filteredBookings.map(b => b.id));
-      } else {
-          setSelectedBookings([]);
-      }
-  }
-
-  const handleSelectOne = (bookingId: string, checked: boolean) => {
-      if (checked) {
-          setSelectedBookings(prev => [...prev, bookingId]);
-      } else {
-          setSelectedBookings(prev => prev.filter(id => id !== bookingId));
-      }
-  }
-
-  const handleArchiveSelected = async () => {
-    if (!company || selectedBookings.length === 0) return;
-
-    const batch = writeBatch(db);
-    selectedBookings.forEach(bookingId => {
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
-        batch.update(bookingRef, { status: 'Archived' });
-    });
-
-    try {
-        await batch.commit();
-        setBookingData(prev => prev.map(b => selectedBookings.includes(b.id) ? { ...b, status: 'Archived' } : b));
-        setSelectedBookings([]);
-        toast({
-            title: 'Bookings Archived',
-            description: `${selectedBookings.length} booking(s) have been successfully archived.`
-        });
-    } catch (error) {
-        console.error("Error archiving bookings:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to archive selected bookings.' });
-    }
-  };
-
-  const handleRestoreSelected = async () => {
-    if (!company || selectedBookings.length === 0) return;
-    
-    const batch = writeBatch(db);
-    selectedBookings.forEach(bookingId => {
-        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
-        // A simple restoration logic might be to set it back to 'Completed'.
-        // This may need to be more sophisticated based on business rules.
-        batch.update(bookingRef, { status: 'Completed' }); 
-    });
-
-    try {
-        await batch.commit();
-        setBookingData(prev => prev.map(b => selectedBookings.includes(b.id) ? { ...b, status: 'Completed' } : b));
-        setSelectedBookings([]);
-        toast({
-            title: 'Bookings Restored',
-            description: `${selectedBookings.length} booking(s) have been restored to a 'Completed' status.`
-        });
-    } catch (error) {
-        console.error("Error restoring bookings:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to restore selected bookings.' });
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!company || selectedBookings.length === 0) return;
-
-    const batch = writeBatch(db);
-    selectedBookings.forEach(bookingId => {
-      const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
-      batch.delete(bookingRef);
-    });
-
-    try {
-      await batch.commit();
-      setBookingData(prev => prev.filter(b => !selectedBookings.includes(b.id)));
-      setSelectedBookings([]);
-      toast({
-        title: 'Bookings Deleted',
-        description: `${selectedBookings.length} booking(s) have been permanently deleted.`,
-      });
-    } catch (error) {
-      console.error("Error deleting bookings:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to permanently delete selected bookings.' });
-    }
-  };
-
 
   if (loading || dataLoading || !user) {
     return (
@@ -547,207 +411,58 @@ export function ReportsPageContent({
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-8">
-        <Tabs defaultValue="overview">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="overview">Charts &amp; Overview</TabsTrigger>
-                <TabsTrigger value="bookings">Recent Bookings Log</TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="mt-4 space-y-8">
-                 <KeyMetrics bookings={bookingData} />
-                 <AircraftStats bookings={bookingData} aircraftData={aircraftData} />
-                 <IndividualAircraftStats bookings={bookingData} aircraftData={aircraftData} />
-                 <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Bookings Over Time</CardTitle>
-                            <CardDescription>Number of bookings created per month.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <BookingsOverTimeChart bookings={bookingData} />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Aircraft Utilization</CardTitle>
-                            <CardDescription>Total flight hours per aircraft.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Instructor Hours</CardTitle>
-                            <CardDescription>Total flight hours per instructor.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <InstructorHoursChart bookings={bookingData} users={userData} />
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Booking Purpose</CardTitle>
-                            <CardDescription>Breakdown of bookings by their purpose.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <BookingPurposeChart bookings={bookingData} />
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Cancellation Reasons</CardTitle>
-                            <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CancellationReasonChart bookings={bookingData} />
-                        </CardContent>
-                    </Card>
-                 </div>
-            </TabsContent>
-            <TabsContent value="bookings" className="mt-4">
-                 <Card>
+        <div className="mt-4 space-y-8">
+            <KeyMetrics bookings={bookingData} />
+            <AircraftStats bookings={bookingData} aircraftData={aircraftData} />
+            <IndividualAircraftStats bookings={bookingData} aircraftData={aircraftData} />
+            <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card>
                     <CardHeader>
-                        <CardTitle>Recent Bookings</CardTitle>
-                        <CardDescription>A log of all flights in the system.</CardDescription>
+                        <CardTitle>Bookings Over Time</CardTitle>
+                        <CardDescription>Number of bookings created per month.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-between py-4">
-                          <div className="relative w-full max-w-sm">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                              placeholder="Search bookings..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="pl-10"
-                              />
-                          </div>
-                          <div className="flex items-center gap-2">
-                             {showArchived ? (
-                                <>
-                                    {selectedBookings.length > 0 && (
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" onClick={handleRestoreSelected}>
-                                                <RotateCw className="mr-2 h-4 w-4" />
-                                                Restore ({selectedBookings.length})
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete ({selectedBookings.length})
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This action cannot be undone. This will permanently delete the ${selectedBookings.length} selected booking(s).
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleDeleteSelected}>
-                                                            Yes, delete bookings
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    )}
-                                    <Button variant="outline" onClick={() => setShowArchived(false)}>
-                                        <ListChecks className="mr-2 h-4 w-4" />
-                                        Show Active Bookings
-                                    </Button>
-                                </>
-                             ) : (
-                                <>
-                                    {selectedBookings.length > 0 && (
-                                        <Button variant="outline" onClick={handleArchiveSelected}>
-                                            <Archive className="mr-2 h-4 w-4" />
-                                            Archive Selected ({selectedBookings.length})
-                                        </Button>
-                                    )}
-                                     <Button variant="outline" onClick={() => setShowArchived(true)}>
-                                        <Archive className="mr-2 h-4 w-4" />
-                                        Show Archived
-                                    </Button>
-                                </>
-                             )}
-                          </div>
-                        </div>
-                        <ScrollArea className="h-[70vh]">
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-12">
-                                     <Checkbox 
-                                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                                        checked={selectedBookings.length > 0 && selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
-                                        aria-label="Select all"
-                                    />
-                                </TableHead>
-                                <TableHead>Booking #</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Aircraft</TableHead>
-                                <TableHead>Purpose</TableHead>
-                                <TableHead>Student</TableHead>
-                                <TableHead>Instructor</TableHead>
-                                <TableHead>Pre-flight Hobbs</TableHead>
-                                <TableHead>Post-flight Hobbs</TableHead>
-                                <TableHead>Duration</TableHead>
-                                <TableHead>Fuel Uplift</TableHead>
-                                <TableHead>Oil Uplift</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Reason for Cancellation</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {filteredBookings.length > 0 ? (
-                                filteredBookings.map((booking) => {
-                                    const duration = booking.endHobbs && booking.startHobbs
-                                        ? (booking.endHobbs - booking.startHobbs).toFixed(1)
-                                        : 'N/A';
-                                    return (
-                                        <TableRow key={booking.id}>
-                                            <TableCell>
-                                                <Checkbox
-                                                    checked={selectedBookings.includes(booking.id)}
-                                                    onCheckedChange={(checked) => handleSelectOne(booking.id, !!checked)}
-                                                    aria-label="Select row"
-                                                />
-                                            </TableCell>
-                                            <TableCell>{booking.bookingNumber}</TableCell>
-                                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
-                                            <TableCell>{booking.aircraft}</TableCell>
-                                            <TableCell>{booking.purpose}</TableCell>
-                                            <TableCell>{booking.purpose === 'Training' || booking.purpose === 'Private' ? booking.student : 'N/A'}</TableCell>
-                                            <TableCell>{booking.purpose === 'Training' ? booking.instructor : 'N/A'}</TableCell>
-                                            <TableCell>{booking.startHobbs ? `${booking.startHobbs.toFixed(1)}` : 'N/A'}</TableCell>
-                                            <TableCell>{booking.endHobbs ? `${booking.endHobbs.toFixed(1)}` : 'N/A'}</TableCell>
-                                            <TableCell>{duration}</TableCell>
-                                            <TableCell>{booking.fuelUplift ? `${booking.fuelUplift.toFixed(1)} L` : 'N/A'}</TableCell>
-                                            <TableCell>{booking.oilUplift ? `${booking.oilUplift.toFixed(1)} qts` : 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
-                                            </TableCell>
-                                            <TableCell>{booking.cancellationReason || 'N/A'}</TableCell>
-                                        </TableRow>
-                                    )
-                                })
-                            ) : (
-                                <TableRow>
-                                <TableCell colSpan={14} className="text-center h-24">{showArchived ? "No archived bookings found." : "No recent bookings found."}</TableCell>
-                                </TableRow>
-                            )}
-                            </TableBody>
-                        </Table>
-                        </ScrollArea>
+                        <BookingsOverTimeChart bookings={bookingData} />
                     </CardContent>
                 </Card>
-            </TabsContent>
-        </Tabs>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Aircraft Utilization</CardTitle>
+                        <CardDescription>Total flight hours per aircraft.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AircraftUtilizationChart bookings={bookingData} aircraft={aircraftData} />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Instructor Hours</CardTitle>
+                        <CardDescription>Total flight hours per instructor.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <InstructorHoursChart bookings={bookingData} users={userData} />
+                    </CardContent>
+                </Card>
+                    <Card>
+                    <CardHeader>
+                        <CardTitle>Booking Purpose</CardTitle>
+                        <CardDescription>Breakdown of bookings by their purpose.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <BookingPurposeChart bookings={bookingData} />
+                    </CardContent>
+                </Card>
+                    <Card>
+                    <CardHeader>
+                        <CardTitle>Cancellation Reasons</CardTitle>
+                        <CardDescription>Breakdown of reasons for cancelled bookings.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <CancellationReasonChart bookings={bookingData} />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     </main>
   );
 }
-
-
