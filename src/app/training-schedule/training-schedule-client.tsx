@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -195,7 +196,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }, [bookings, selectedDate]);
   
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
-      const hour = (Math.floor(i / 4) + 6) % 24;
+      const hour = (6 + Math.floor(i / 4)) % 24;
       const minute = (i % 4) * 15;
       return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
