@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -54,10 +55,20 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         const bookingsWithChecklistData = bookings.map(booking => {
             if (booking.bookingNumber && checklistsByBookingNumber.has(booking.bookingNumber)) {
                 const { pre, post } = checklistsByBookingNumber.get(booking.bookingNumber)!;
+                
+                const startHobbs = pre?.results?.hobbs ?? booking.startHobbs;
+                const endHobbs = post?.results?.hobbs ?? booking.endHobbs;
+                let flightDuration = booking.flightDuration;
+
+                if (typeof startHobbs === 'number' && typeof endHobbs === 'number' && endHobbs > startHobbs) {
+                    flightDuration = parseFloat((endHobbs - startHobbs).toFixed(1));
+                }
+                
                 return {
                     ...booking,
-                    startHobbs: pre?.results?.hobbs ?? booking.startHobbs,
-                    endHobbs: post?.results?.hobbs ?? booking.endHobbs,
+                    startHobbs: startHobbs,
+                    endHobbs: endHobbs,
+                    flightDuration: flightDuration,
                 };
             }
             return booking;
@@ -69,3 +80,4 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         return { aircraft: [], bookings: [], users: [] };
     }
 }
+
