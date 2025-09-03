@@ -59,10 +59,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
-  const [selectedHistoryBookings, setSelectedHistoryBookings] = useState<string[]>([]);
-  const [checklistHistory, setChecklistHistory] = useState<CombinedChecklistHistory[]>([]);
 
   const fetchBookingsForDate = useCallback(async (date: Date) => {
     if (!company) return;
@@ -78,44 +74,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     fetchBookingsForDate(selectedDate);
   }, [selectedDate, fetchBookingsForDate]);
   
-    const fetchChecklistHistory = useCallback(async () => {
-        if (!company) return;
-
-        let allChecklists: CompletedChecklist[] = [];
-        for (const ac of aircraft) {
-            const checklistsQuery = query(collection(db, `companies/${company.id}/aircraft/${ac.id}/completed-checklists`));
-            const snapshot = await getDocs(checklistsQuery);
-            const checklists = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
-            allChecklists = allChecklists.concat(checklists);
-        }
-
-        const groupedByBooking = allChecklists.reduce((acc, checklist) => {
-            const key = checklist.bookingNumber || `no-booking-${checklist.id}`;
-            if (!acc[key]) {
-                acc[key] = {
-                    bookingNumber: checklist.bookingNumber || 'N/A',
-                    date: checklist.dateCompleted,
-                    aircraftTailNumber: checklist.aircraftTailNumber,
-                };
-            }
-            if (checklist.type === 'Pre-Flight') {
-                acc[key].preFlight = checklist;
-            } else if (checklist.type === 'Post-Flight') {
-                acc[key].postFlight = checklist;
-            }
-            return acc;
-        }, {} as Record<string, CombinedChecklistHistory>);
-
-        const historyArray = Object.values(groupedByBooking);
-        historyArray.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setChecklistHistory(historyArray);
-        
-    }, [company, aircraft]);
-
-    useEffect(() => {
-        fetchChecklistHistory();
-    }, [fetchChecklistHistory]);
-
   useEffect(() => {
     if (!company) return;
 
@@ -147,24 +105,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     return bookings.filter(b => (b.status === 'Approved' || b.status === 'Completed') && b.date === format(selectedDate, 'yyyy-MM-dd') && b.status !== 'Cancelled');
   }, [bookings, selectedDate]);
   
-  const historyBookings = useMemo(() => {
-    return bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled' || b.status === 'Archived');
-  }, [bookings]);
-
-  const displayedHistoryBookings = useMemo(() => {
-    const listToFilter = showArchived 
-        ? historyBookings.filter(b => b.status === 'Archived')
-        : historyBookings.filter(b => b.status !== 'Archived');
-        
-    return listToFilter.filter(b => 
-        (b.bookingNumber?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
-        (b.aircraft?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
-        (b.student?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
-        (b.instructor?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '')
-    );
-  }, [historyBookings, historySearchTerm, showArchived]);
-
-
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
       const hour = (Math.floor(i / 4) + 6) % 24;
       const minute = (i % 4) * 15;
@@ -344,7 +284,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 description: `The checklist has been saved. ${!isPreFlight && bookingForChecklist ? 'Booking has been completed.' : ''}`
             });
              setSelectedChecklistAircraft(null);
-             fetchChecklistHistory();
         } catch (error) {
             console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
@@ -469,9 +408,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             </CardHeader>
             <CardContent>
                 <Tabs defaultValue="bookings">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                        <TabsTrigger value="history">Bookings History</TabsTrigger>
                     </TabsList>
                     <TabsContent value="bookings" className="mt-6">
                         <div className="w-full flex flex-col items-start gap-4">
@@ -572,44 +510,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </tbody>
                             </table>
                         </div>
-                    </TabsContent>
-                    <TabsContent value="history" className="mt-6">
-                       <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Booking #</TableHead>
-                                    <TableHead>Aircraft</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Start Hobbs</TableHead>
-                                    <TableHead>End Hobbs</TableHead>
-                                    <TableHead>Duration</TableHead>
-                                    <TableHead>Student</TableHead>
-                                    <TableHead>Instructor</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {displayedHistoryBookings.length > 0 ? (
-                                    displayedHistoryBookings.map(booking => (
-                                        <TableRow key={booking.id}>
-                                            <TableCell>{booking.bookingNumber || 'N/A'}</TableCell>
-                                            <TableCell>{booking.aircraft}</TableCell>
-                                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
-                                            <TableCell>{booking.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                            <TableCell>{booking.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                            <TableCell>{booking.flightDuration?.toFixed(1) || 'N/A'}</TableCell>
-                                            <TableCell>{booking.student || 'N/A'}</TableCell>
-                                            <TableCell>{booking.instructor || 'N/A'}</TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="h-24 text-center">
-                                            No booking history found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                       </Table>
                     </TabsContent>
                 </Tabs>
             </CardContent>
