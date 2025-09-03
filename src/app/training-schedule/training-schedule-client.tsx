@@ -551,8 +551,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                              </TableRow>
                          </TableHeader>
                          <TableBody>
-                             {displayedHistoryBookings.length > 0 ? (
-                                displayedHistoryBookings.map(b => (
+                             {bookings.length > 0 ? (
+                                bookings.map(b => (
                                     <TableRow key={b.id}>
                                         <TableCell>{b.bookingNumber}</TableCell>
                                         <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
@@ -645,4 +645,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-
