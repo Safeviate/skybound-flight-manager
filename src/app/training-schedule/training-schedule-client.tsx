@@ -583,33 +583,29 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                     <TableHead>Start Hobbs</TableHead>
                                     <TableHead>End Hobbs</TableHead>
                                     <TableHead>Duration</TableHead>
-                                    <TableHead>User</TableHead>
+                                    <TableHead>Student</TableHead>
+                                    <TableHead>Instructor</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {checklistHistory.length > 0 ? (
-                                    checklistHistory.map(item => {
-                                        const preFlightResults = item.preFlight?.results as PreFlightChecklistFormValues;
-                                        const postFlightResults = item.postFlight?.results as PostFlightChecklistFormValues;
-                                        const startHobbs = preFlightResults?.hobbs;
-                                        const endHobbs = postFlightResults?.hobbs;
-                                        const duration = (startHobbs && endHobbs) ? (endHobbs - startHobbs).toFixed(1) : 'N/A';
-                                        
-                                        return (
-                                            <TableRow key={item.bookingNumber}>
-                                                <TableCell>{item.bookingNumber}</TableCell>
-                                                <TableCell>{item.aircraftTailNumber}</TableCell>
-                                                <TableCell>{format(parseISO(item.date), 'PPP')}</TableCell>
-                                                <TableCell>{startHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                                <TableCell>{endHobbs?.toFixed(1) || 'N/A'}</TableCell>
-                                                <TableCell>{duration}</TableCell>
-                                                <TableCell>{item.preFlight?.userName || item.postFlight?.userName}</TableCell>
-                                            </TableRow>
-                                        )
-                                    })
+                                {displayedHistoryBookings.length > 0 ? (
+                                    displayedHistoryBookings.map(booking => (
+                                        <TableRow key={booking.id}>
+                                            <TableCell>{booking.bookingNumber || 'N/A'}</TableCell>
+                                            <TableCell>{booking.aircraft}</TableCell>
+                                            <TableCell>{format(parseISO(booking.date), 'PPP')}</TableCell>
+                                            <TableCell>{booking.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                            <TableCell>{booking.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                            <TableCell>{booking.flightDuration?.toFixed(1) || 'N/A'}</TableCell>
+                                            <TableCell>{booking.student || 'N/A'}</TableCell>
+                                            <TableCell>{booking.instructor || 'N/A'}</TableCell>
+                                        </TableRow>
+                                    ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center h-24">No booking history found.</TableCell>
+                                        <TableCell colSpan={8} className="h-24 text-center">
+                                            No booking history found.
+                                        </TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
