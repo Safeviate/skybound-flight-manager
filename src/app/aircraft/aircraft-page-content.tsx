@@ -564,7 +564,10 @@ export function AircraftPageContent({
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
     
         try {
-            const flightDuration = !isPreFlight ? parseFloat((data.hobbs - (bookingForChecklist?.startHobbs || 0)).toFixed(1)) : 0;
+            let flightDuration = 0;
+            if (!isPreFlight && bookingForChecklist?.startHobbs) {
+                flightDuration = parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1));
+            }
             const resultsWithDuration = !isPreFlight ? { ...data, flightDuration } : data;
     
             const historyDoc: Omit<CompletedChecklist, 'id'> = {
@@ -628,8 +631,8 @@ export function AircraftPageContent({
                         setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed', pendingLogEntryId: newLogEntryId } : b));
     
                     } else {
-                         batch.update(bookingRef, { status: 'Completed' });
-                         setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed' } : b));
+                         batch.update(bookingRef, { status: 'Completed', endHobbs: data.hobbs, flightDuration });
+                         setBookings(prevBookings => prevBookings.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed', endHobbs: data.hobbs, flightDuration } : b));
                     }
                 }
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created. Ready for debrief.' });
