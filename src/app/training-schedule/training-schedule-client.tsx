@@ -37,6 +37,14 @@ interface TrainingSchedulePageContentProps {
   initialUsers: User[];
 }
 
+interface CombinedChecklistHistory {
+    bookingNumber: string;
+    preFlight?: CompletedChecklist;
+    postFlight?: CompletedChecklist;
+    date: string;
+    aircraftTailNumber: string;
+}
+
 export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
@@ -54,6 +62,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedHistoryBookings, setSelectedHistoryBookings] = useState<string[]>([]);
+  const [checklistHistory, setChecklistHistory] = useState<CombinedChecklistHistory[]>([]);
 
   const fetchBookingsForDate = useCallback(async (date: Date) => {
     if (!company) return;
@@ -68,6 +77,44 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   useEffect(() => {
     fetchBookingsForDate(selectedDate);
   }, [selectedDate, fetchBookingsForDate]);
+  
+    const fetchChecklistHistory = useCallback(async () => {
+        if (!company) return;
+
+        let allChecklists: CompletedChecklist[] = [];
+        for (const ac of aircraft) {
+            const checklistsQuery = query(collection(db, `companies/${company.id}/aircraft/${ac.id}/completed-checklists`));
+            const snapshot = await getDocs(checklistsQuery);
+            const checklists = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CompletedChecklist));
+            allChecklists = allChecklists.concat(checklists);
+        }
+
+        const groupedByBooking = allChecklists.reduce((acc, checklist) => {
+            const key = checklist.bookingNumber || `no-booking-${checklist.id}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    bookingNumber: checklist.bookingNumber || 'N/A',
+                    date: checklist.dateCompleted,
+                    aircraftTailNumber: checklist.aircraftTailNumber,
+                };
+            }
+            if (checklist.type === 'Pre-Flight') {
+                acc[key].preFlight = checklist;
+            } else if (checklist.type === 'Post-Flight') {
+                acc[key].postFlight = checklist;
+            }
+            return acc;
+        }, {} as Record<string, CombinedChecklistHistory>);
+
+        const historyArray = Object.values(groupedByBooking);
+        historyArray.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setChecklistHistory(historyArray);
+        
+    }, [company, aircraft]);
+
+    useEffect(() => {
+        fetchChecklistHistory();
+    }, [fetchChecklistHistory]);
 
   useEffect(() => {
     if (!company) return;
@@ -76,7 +123,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
     });
     
-    // Fetch all users once
     const fetchAllUsers = async () => {
         const personnelQuery = query(collection(db, `companies/${company.id}/users`));
         const studentsQuery = query(collection(db, `companies/${company.id}/students`));
@@ -298,6 +344,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 description: `The checklist has been saved. ${!isPreFlight && bookingForChecklist ? 'Booking has been completed.' : ''}`
             });
              setSelectedChecklistAircraft(null);
+             fetchChecklistHistory();
         } catch (error) {
             console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
@@ -527,7 +574,46 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                         </div>
                     </TabsContent>
                     <TabsContent value="history" className="mt-6">
-                      
+                       <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Booking #</TableHead>
+                                    <TableHead>Aircraft</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Start Hobbs</TableHead>
+                                    <TableHead>End Hobbs</TableHead>
+                                    <TableHead>Duration</TableHead>
+                                    <TableHead>User</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {checklistHistory.length > 0 ? (
+                                    checklistHistory.map(item => {
+                                        const preFlightResults = item.preFlight?.results as PreFlightChecklistFormValues;
+                                        const postFlightResults = item.postFlight?.results as PostFlightChecklistFormValues;
+                                        const startHobbs = preFlightResults?.hobbs;
+                                        const endHobbs = postFlightResults?.hobbs;
+                                        const duration = (startHobbs && endHobbs) ? (endHobbs - startHobbs).toFixed(1) : 'N/A';
+                                        
+                                        return (
+                                            <TableRow key={item.bookingNumber}>
+                                                <TableCell>{item.bookingNumber}</TableCell>
+                                                <TableCell>{item.aircraftTailNumber}</TableCell>
+                                                <TableCell>{format(parseISO(item.date), 'PPP')}</TableCell>
+                                                <TableCell>{startHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                                <TableCell>{endHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                                <TableCell>{duration}</TableCell>
+                                                <TableCell>{item.preFlight?.userName || item.postFlight?.userName}</TableCell>
+                                            </TableRow>
+                                        )
+                                    })
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center h-24">No booking history found.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                       </Table>
                     </TabsContent>
                 </Tabs>
             </CardContent>
