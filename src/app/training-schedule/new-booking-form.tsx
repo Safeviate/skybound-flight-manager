@@ -125,10 +125,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const purpose = form.watch('purpose');
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
-  const instructors = useMemo(() => {
-    const instructorRoles: Role[] = ['Instructor', 'Chief Flight Instructor', 'Head Of Training', 'Safety Manager', 'Quality Manager', 'Accountable Manager', 'Admin', 'Super User'];
-    return users.filter(u => u.role && instructorRoles.includes(u.role));
-  }, [users]);
+  const instructors = useMemo(() => users, [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
