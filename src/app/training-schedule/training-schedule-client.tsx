@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import type { Aircraft, Booking, User, CompletedChecklist, Alert as AlertType, TrainingLogEntry } from '@/lib/types';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { NewBookingForm } from './new-booking-form';
 import { useUser } from '@/context/user-provider';
 import { db } from '@/lib/firebase';
@@ -11,7 +11,7 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2 } from 'lucide-react';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,12 +21,121 @@ import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
   initialBookings: Booking[];
   initialUsers: User[];
 }
+
+const deletionReasons = [
+    'Maintenance',
+    'Weather',
+    'Congested Airspace',
+    'No show - Pilot',
+    'No show - Student',
+    'Illness - Pilot',
+    'Illness - Student',
+    'Other',
+];
+
+const FlightHub = ({
+    activeFlight,
+    handleChecklistSuccess,
+    onCancelBooking,
+}: {
+    activeFlight: { booking: Booking, aircraft: Aircraft },
+    handleChecklistSuccess: (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => Promise<void>,
+    onCancelBooking: (bookingId: string, reason: string) => void,
+}) => {
+    const [deleteReason, setDeleteReason] = useState('');
+    const [otherReason, setOtherReason] = useState('');
+
+    const handleConfirmCancellation = () => {
+        const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
+        if (!finalReason) return;
+        onCancelBooking(activeFlight.booking.id, finalReason);
+    }
+    
+    return (
+        <>
+            <DialogHeader>
+                <DialogTitle>Flight Hub: {activeFlight.booking.bookingNumber}</DialogTitle>
+                <DialogDescription>
+                    {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.date), 'PPP')}`}
+                </DialogDescription>
+            </DialogHeader>
+            
+            {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
+                <PostFlightChecklistForm 
+                    onSuccess={handleChecklistSuccess}
+                    aircraft={activeFlight.aircraft}
+                    startHobbs={activeFlight.booking.startHobbs}
+                    onReportIssue={() => {}}
+                />
+            ) : (
+                <PreFlightChecklistForm 
+                    onSuccess={handleChecklistSuccess} 
+                    aircraft={activeFlight.aircraft}
+                    onReportIssue={() => {}}
+                    initialHobbs={activeFlight.aircraft.hours}
+                />
+            )}
+
+            <DialogFooter className="border-t pt-4">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button type="button" variant="destructive">
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Cancel Booking
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Reason for Cancellation</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Please select a reason for cancelling this booking. This information is used for reporting.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="py-4 space-y-4">
+                            <Select value={deleteReason} onValueChange={setDeleteReason}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a reason..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {deletionReasons.map(reason => (
+                                        <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {deleteReason === 'Other' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="other-reason">Please specify:</Label>
+                                    <Textarea
+                                        id="other-reason"
+                                        value={otherReason}
+                                        onChange={(e) => setOtherReason(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirmCancellation} disabled={!deleteReason || (deleteReason === 'Other' && !otherReason)}>
+                                Yes, Cancel Booking
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </DialogFooter>
+        </>
+    );
+};
+
 
 export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
@@ -518,28 +627,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
       <Dialog open={!!activeFlight} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-2xl">
            {activeFlight && (
-              <>
-                <DialogHeader>
-                    <DialogTitle>Flight Hub: {activeFlight.booking.bookingNumber}</DialogTitle>
-                    <DialogDescription>
-                        {`For ${activeFlight.aircraft.tailNumber} on ${format(parseISO(activeFlight.booking.date), 'PPP')}`}
-                    </DialogDescription>
-                </DialogHeader>
-                {activeFlight.aircraft.checklistStatus === 'needs-post-flight' ? (
-                    <PostFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess}
-                        aircraft={activeFlight.aircraft}
-                        startHobbs={activeFlight.booking.startHobbs}
-                        onReportIssue={() => {}}
-                    />
-                ) : (
-                    <PreFlightChecklistForm 
-                        onSuccess={handleChecklistSuccess} 
-                        aircraft={activeFlight.aircraft}
-                        onReportIssue={() => {}}
-                    />
-                )}
-              </>
+              <FlightHub 
+                activeFlight={activeFlight}
+                handleChecklistSuccess={handleChecklistSuccess}
+                onCancelBooking={handleBookingDelete}
+              />
            )}
         </DialogContent>
       </Dialog>
