@@ -62,6 +62,7 @@ export const navItems: {
   { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
+  { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
   { href: '/reports', label: 'Flight Statistics', icon: AreaChart, requiredFeature: 'AdvancedAnalytics' },
   { href: '/safety', label: 'Safety', icon: Shield, requiredFeature: 'Safety' },
   { href: '/quality', label: 'Quality', icon: CheckSquare, requiredFeature: 'Quality' },
