@@ -962,6 +962,8 @@ export function AircraftPageContent({
     
   const ChecklistForms = () => {
     const isPostFlight = selectedAircraftForChecklist?.checklistStatus === 'needs-post-flight';
+    const lastPostFlightChecklist = allChecklists.get(selectedAircraftForChecklist?.id || '')?.find(c => c.type === 'Post-Flight');
+    const initialHobbs = lastPostFlightChecklist?.results.hobbs || selectedAircraftForChecklist?.hours || 0;
 
     if (isSuperUser) {
         // Super User can always see both forms and switch between them.
@@ -983,6 +985,7 @@ export function AircraftPageContent({
                         onSuccess={handleChecklistSuccess}
                         aircraft={selectedAircraftForChecklist!}
                         onReportIssue={handleReportIssue}
+                        initialHobbs={initialHobbs}
                     />
                 </TabsContent>
                 <TabsContent value="post-flight" className="pt-4">
@@ -1050,6 +1053,7 @@ export function AircraftPageContent({
                   onSuccess={handleChecklistSuccess}
                   aircraft={selectedAircraftForChecklist!}
                   onReportIssue={handleReportIssue}
+                  initialHobbs={initialHobbs}
               />
           )}
       </>

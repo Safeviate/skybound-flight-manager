@@ -55,9 +55,10 @@ interface PreFlightChecklistFormProps {
     aircraft: Aircraft;
     onSuccess: (data: PreFlightChecklistFormValues) => void;
     onReportIssue: (aircraftId: string, issueDetails: { title: string, description: string, photo?: string }) => Promise<void>;
+    initialHobbs?: number;
 }
 
-export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: PreFlightChecklistFormProps) {
+export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue, initialHobbs }: PreFlightChecklistFormProps) {
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoTarget, setPhotoTarget] = useState<'leftSidePhoto' | 'rightSidePhoto' | 'defectPhoto' | null>(null);
@@ -66,7 +67,7 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
     resolver: zodResolver(checklistSchema),
     defaultValues: {
         registration: aircraft.tailNumber,
-        hobbs: aircraft.hours || 0,
+        hobbs: initialHobbs || aircraft.hours || 0,
         tacho: aircraft.currentTachoReading || 0,
         fuelUplift: 0,
         oilUplift: 0,
@@ -87,9 +88,9 @@ export function PreFlightChecklistForm({ aircraft, onSuccess, onReportIssue }: P
 
   useEffect(() => {
     form.setValue('registration', aircraft.tailNumber);
-    form.setValue('hobbs', aircraft.hours || 0);
+    form.setValue('hobbs', initialHobbs || aircraft.hours || 0);
     form.setValue('tacho', aircraft.currentTachoReading || 0);
-  }, [aircraft, form]);
+  }, [aircraft, initialHobbs, form]);
 
 
   const { setValue, watch, getValues } = form;
