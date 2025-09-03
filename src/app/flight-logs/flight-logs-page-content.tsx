@@ -21,7 +21,7 @@ interface FlightLogsPageContentProps {
 export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightLogsPageContentProps) {
   const { items, searchTerm, setSearchTerm, requestSort, sortConfig } = useTableControls(initialBookings, {
     initialSort: { key: 'date', direction: 'desc' },
-    searchKeys: ['bookingNumber', 'aircraft', 'student', 'instructor'],
+    searchKeys: ['bookingNumber', 'aircraft', 'student', 'instructor', 'trainingExercise'],
   });
 
   const handleDownloadPdf = () => {
@@ -36,11 +36,14 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
         log.student || 'N/A',
         log.instructor || 'N/A',
         log.flightDuration?.toFixed(1) || '0.0',
+        log.trainingExercise || 'N/A',
+        log.fuelUplift?.toFixed(1) || '0',
+        log.oilUplift?.toFixed(1) || '0',
     ]);
     
     autoTable(doc, {
         startY: 25,
-        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Duration (hrs)']],
+        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Duration', 'Exercise', 'Fuel (L)', 'Oil (qts)']],
         body: tableBody,
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] },
@@ -86,7 +89,10 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                 <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
                 <TableHead><SortableHeader label="Student/Pilot" sortKey="student" /></TableHead>
                 <TableHead><SortableHeader label="Instructor" sortKey="instructor" /></TableHead>
-                <TableHead><SortableHeader label="Duration (hrs)" sortKey="flightDuration" /></TableHead>
+                <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
+                <TableHead><SortableHeader label="Duration" sortKey="flightDuration" /></TableHead>
+                <TableHead><SortableHeader label="Fuel" sortKey="fuelUplift" /></TableHead>
+                <TableHead><SortableHeader label="Oil" sortKey="oilUplift" /></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -98,12 +104,15 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                     <TableCell>{log.aircraft}</TableCell>
                     <TableCell>{log.student || 'N/A'}</TableCell>
                     <TableCell>{log.instructor || 'N/A'}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
                     <TableCell>{log.flightDuration?.toFixed(1) || '0.0'}</TableCell>
+                    <TableCell>{log.fuelUplift?.toFixed(1) || '0'} L</TableCell>
+                    <TableCell>{log.oilUplift?.toFixed(1) || '0'} qts</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={9} className="h-24 text-center">
                     No completed flight logs found.
                   </TableCell>
                 </TableRow>
