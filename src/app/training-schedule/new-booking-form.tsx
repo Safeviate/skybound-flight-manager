@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,8 +31,6 @@ const bookingFormSchema = z.object({
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
   bookingNumber: z.string().optional(),
-  fuelUplift: z.coerce.number().optional(),
-  oilUplift: z.coerce.number().optional(),
   trainingExercise: z.string().optional(),
 }).refine(data => {
     if (data.purpose === 'Training') {
@@ -119,8 +116,6 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       instructor: existingBooking?.instructor || undefined,
       maintenanceType: existingBooking?.maintenanceType || undefined,
       bookingNumber: existingBooking?.bookingNumber || undefined,
-      fuelUplift: existingBooking?.fuelUplift ?? undefined,
-      oilUplift: existingBooking?.oilUplift ?? undefined,
       departure: existingBooking?.departure || '',
       arrival: existingBooking?.arrival || '',
       trainingExercise: existingBooking?.trainingExercise || '',
@@ -130,7 +125,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const purpose = form.watch('purpose');
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
-  const instructors = useMemo(() => users.filter(u => ['Instructor Grade 1', 'Instructor Grade 2', 'Instructor Grade 3', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
+  const instructors = useMemo(() => users.filter(u => ['Instructor', 'Chief Flight Instructor', 'Head Of Training'].includes(u.role)), [users]);
 
   function handleFormSubmit(data: BookingFormValues) {
     
@@ -160,8 +155,6 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
-        fuelUplift: data.fuelUplift ?? null,
-        oilUplift: data.oilUplift ?? null,
         endDate: format(bookingEndDate, 'yyyy-MM-dd'),
     };
 
@@ -421,4 +414,3 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     </Form>
   );
 }
-
