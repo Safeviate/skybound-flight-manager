@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -111,7 +110,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
-      if (b.status === 'Cancelled' || b.status === 'Completed') return false;
+      if (b.status === 'Completed' || b.status === 'Cancelled') return false;
       const startTimeInMinutes = timeToMinutes(b.startTime);
       const endTimeInMinutes = timeToMinutes(b.endTime);
       return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
