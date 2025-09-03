@@ -18,7 +18,7 @@ import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -142,7 +142,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
     if (booking.status === 'Completed') {
-        return { className: 'bg-muted text-foreground pointer-events-none' };
+        return { className: 'bg-gray-200 text-black pointer-events-none' };
     }
     if (aircraftForBooking?.status === 'In Maintenance') {
         return { className: 'bg-destructive' };
@@ -278,6 +278,18 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     };
   
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const bookingDateTime = setMinutes(setHours(selectedDate, hours), minutes);
+
+    if (isBefore(bookingDateTime, new Date())) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Time',
+            description: 'Cannot create a booking in the past.',
+        });
+        return;
+    }
+
     if (settings.enforcePostFlightCheck && aircraft.checklistStatus === 'needs-post-flight') {
         toast({
             variant: 'destructive',
