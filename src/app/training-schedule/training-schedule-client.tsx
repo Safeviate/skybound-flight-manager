@@ -98,7 +98,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company]);
   
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => (b.status === 'Approved' || b.status === 'Completed') && b.date === format(selectedDate, 'yyyy-MM-dd'));
+    return bookings.filter(b => (b.status === 'Approved' || b.status === 'Completed') && b.date === format(selectedDate, 'yyyy-MM-dd') && b.status !== 'Cancelled');
   }, [bookings, selectedDate]);
   
   const historyBookings = useMemo(() => {
@@ -541,8 +541,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                  <TableHead>Booking #</TableHead>
                                  <TableHead>Date</TableHead>
                                  <TableHead>Aircraft</TableHead>
-                                 <TableHead>Student/Pilot</TableHead>
+                                 <TableHead>Student</TableHead>
                                  <TableHead>Instructor</TableHead>
+                                 <TableHead>Exercise</TableHead>
                                  <TableHead>Start Hobbs</TableHead>
                                  <TableHead>End Hobbs</TableHead>
                                  <TableHead>Flight Total</TableHead>
@@ -558,6 +559,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         <TableCell>{b.aircraft}</TableCell>
                                         <TableCell>{b.student || 'N/A'}</TableCell>
                                         <TableCell>{b.instructor || 'N/A'}</TableCell>
+                                        <TableCell>{b.trainingExercise || 'N/A'}</TableCell>
                                         <TableCell>{b.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell>{b.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell>{(b.flightDuration || 0).toFixed(1)}</TableCell>
@@ -566,7 +568,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 ))
                              ) : (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="h-24 text-center">No historical bookings found.</TableCell>
+                                    <TableCell colSpan={10} className="h-24 text-center">No historical bookings found.</TableCell>
                                 </TableRow>
                              )}
                          </TableBody>
