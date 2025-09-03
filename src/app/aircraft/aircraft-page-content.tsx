@@ -410,56 +410,61 @@ export function AircraftPageContent({
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [allChecklists, setAllChecklists] = useState<Map<string, CompletedChecklist[]>>(new Map());
     
+    const fetchChecklistHistory = useCallback(async () => {
+        if (!company) return;
+        setAllChecklists(new Map());
+        for (const aircraft of aircraftList) {
+            const history = await getChecklistHistory(company.id, aircraft.id);
+            setAllChecklists(prev => new Map(prev).set(aircraft.id, history));
+        }
+    }, [company, aircraftList]);
+
     useEffect(() => {
         if (!company) return;
 
         const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
-        const unsubscribe = onSnapshot(aircraftQuery, (snapshot) => {
+        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+
+        const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
             const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
             setAircraftList(aircrafts);
-            
-            // Fetch all checklists for all aircraft
-            fetchAllChecklists(company.id, aircrafts.map(a => a.id));
         }, (error) => {
             console.error("Error fetching real-time aircraft data:", error);
             toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
         });
+        
+        const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+            const bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+            setBookings(bookingsData);
+        }, (error) => {
+            console.error("Error fetching real-time bookings data:", error);
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch live booking updates." });
+        });
 
-        // Cleanup subscription on component unmount
+        // Initial fetch for checklists
+        fetchChecklistHistory();
+
         return () => {
-            unsubscribe();
+            unsubAircraft();
+            unsubBookings();
         };
-    }, [company, toast]);
+    }, [company, toast, fetchChecklistHistory]);
 
-    const fetchAllChecklists = async (companyId: string, aircraftIds: string[]) => {
-        const checklistsMap = new Map<string, CompletedChecklist[]>();
-        for (const aircraftId of aircraftIds) {
-            const history = await getChecklistHistory(companyId, aircraftId);
-            checklistsMap.set(aircraftId, history);
-        }
-        setAllChecklists(checklistsMap);
-    };
-    
     useEffect(() => {
-        // We still set initial data to avoid flickering on load
         setAircraftList(initialAircraft);
         setBookings(initialBookings);
         setExternalContacts(initialExternalContacts);
     }, [initialAircraft, initialBookings, initialExternalContacts]);
     
     
-    const fetchHistory = useCallback(async () => {
+    useEffect(() => {
         if (selectedHistoryAircraftId && company) {
-            const history = await getChecklistHistory(company.id, selectedHistoryAircraftId);
-            setChecklistHistory(history);
+             const history = allChecklists.get(selectedHistoryAircraftId) || [];
+             setChecklistHistory(history);
         } else {
             setChecklistHistory([]);
         }
-    }, [selectedHistoryAircraftId, company]);
-
-    useEffect(() => {
-        fetchHistory();
-    }, [fetchHistory]);
+    }, [selectedHistoryAircraftId, company, allChecklists]);
 
 
     const activeAircraft = useMemo(() => aircraftList.filter(a => a.status !== 'Archived'), [aircraftList]);
@@ -503,7 +508,6 @@ export function AircraftPageContent({
                 title: 'Aircraft Deleted',
                 description: 'The aircraft has been permanently removed from the fleet.',
             });
-            // The onSnapshot listener will update the UI automatically
         } catch (error) {
             console.error("Error deleting aircraft:", error);
             toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the aircraft.' });
@@ -557,14 +561,13 @@ export function AircraftPageContent({
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
         if (!selectedAircraftForChecklist || !user || !company) return;
-    
+
         const isPreFlight = 'registration' in data;
         const batch = writeBatch(db);
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
-    
-        // This is the key: we find the booking using the activeBookingId on the aircraft
-        const bookingForChecklist = activeBookingForSelectedAircraft;
-    
+
+        const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
+
         try {
             const historyDoc: Omit<CompletedChecklist, 'id'> = {
                 aircraftId: selectedAircraftForChecklist.id,
@@ -576,10 +579,10 @@ export function AircraftPageContent({
                 results: data,
                 bookingNumber: bookingForChecklist?.bookingNumber,
             };
-    
+
             const historyCollectionRef = collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`);
             batch.set(doc(historyCollectionRef), historyDoc);
-    
+
             if (isPreFlight) {
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
                 if (bookingForChecklist) {
@@ -588,13 +591,13 @@ export function AircraftPageContent({
                 }
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else { // POST-FLIGHT LOGIC
-                batch.update(aircraftRef, { 
-                    checklistStatus: 'ready', 
-                    activeBookingId: null, 
+                batch.update(aircraftRef, {
+                    checklistStatus: 'ready',
+                    activeBookingId: null,
                     hours: data.hobbs,
                     currentTachoReading: data.tacho,
                 });
-    
+
                 if (bookingForChecklist) {
                     const flightDuration = bookingForChecklist.startHobbs ? parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1)) : 0;
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
@@ -603,7 +606,7 @@ export function AircraftPageContent({
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
                         const studentSnap = await getDoc(studentRef);
-                        
+
                         if (studentSnap.exists()) {
                             const studentData = studentSnap.data() as User;
                             const newTotalHours = (studentData.flightHours || 0) + flightDuration;
@@ -628,12 +631,10 @@ export function AircraftPageContent({
                             });
                         }
                     }
-                    // Refresh bookings to reflect the 'Completed' status
-                    setBookings(prev => prev.map(b => b.id === bookingForChecklist.id ? { ...b, status: 'Completed', endHobbs: data.hobbs, flightDuration } : b));
                 }
-                toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created.' });
+                toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
             }
-    
+
             await batch.commit();
             setSelectedChecklistAircraftId(null);
             fetchChecklistHistory(); // Refresh history after submission
@@ -670,7 +671,7 @@ export function AircraftPageContent({
             await deleteDoc(docRef);
             setViewingChecklist(null);
             toast({ title: 'Checklist Deleted', description: 'The checklist history record has been removed.' });
-            fetchHistory(); // Refresh the list
+            fetchChecklistHistory(); // Refresh the list
         } catch(e) {
             console.error(e);
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete checklist.' });
