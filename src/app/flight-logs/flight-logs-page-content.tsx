@@ -35,6 +35,8 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
         log.aircraft,
         log.student || 'N/A',
         log.instructor || 'N/A',
+        log.startHobbs?.toFixed(1) || '0.0',
+        log.endHobbs?.toFixed(1) || '0.0',
         log.flightDuration?.toFixed(1) || '0.0',
         log.trainingExercise || 'N/A',
         log.fuelUplift?.toFixed(1) || '0',
@@ -43,7 +45,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
     
     autoTable(doc, {
         startY: 25,
-        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Duration', 'Exercise', 'Fuel (L)', 'Oil (qts)']],
+        head: [['Booking #', 'Date', 'Aircraft', 'Student/Pilot', 'Instructor', 'Start Hobbs', 'End Hobbs', 'Duration', 'Exercise', 'Fuel (L)', 'Oil (qts)']],
         body: tableBody,
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] },
@@ -90,6 +92,8 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                 <TableHead><SortableHeader label="Student/Pilot" sortKey="student" /></TableHead>
                 <TableHead><SortableHeader label="Instructor" sortKey="instructor" /></TableHead>
                 <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
+                <TableHead><SortableHeader label="Start Hobbs" sortKey="startHobbs" /></TableHead>
+                <TableHead><SortableHeader label="End Hobbs" sortKey="endHobbs" /></TableHead>
                 <TableHead><SortableHeader label="Duration" sortKey="flightDuration" /></TableHead>
                 <TableHead><SortableHeader label="Fuel" sortKey="fuelUplift" /></TableHead>
                 <TableHead><SortableHeader label="Oil" sortKey="oilUplift" /></TableHead>
@@ -105,6 +109,8 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                     <TableCell>{log.student || 'N/A'}</TableCell>
                     <TableCell>{log.instructor || 'N/A'}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
+                    <TableCell>{log.startHobbs?.toFixed(1) || '0.0'}</TableCell>
+                    <TableCell>{log.endHobbs?.toFixed(1) || '0.0'}</TableCell>
                     <TableCell>{log.flightDuration?.toFixed(1) || '0.0'}</TableCell>
                     <TableCell>{log.fuelUplift?.toFixed(1) || '0'} L</TableCell>
                     <TableCell>{log.oilUplift?.toFixed(1) || '0'} qts</TableCell>
@@ -112,7 +118,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
+                  <TableCell colSpan={11} className="h-24 text-center">
                     No completed flight logs found.
                   </TableCell>
                 </TableRow>
