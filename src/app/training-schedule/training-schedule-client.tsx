@@ -541,7 +541,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                  <TableHead>Booking #</TableHead>
                                  <TableHead>Date</TableHead>
                                  <TableHead>Aircraft</TableHead>
-                                 <TableHead>Details</TableHead>
+                                 <TableHead>Student/Pilot</TableHead>
+                                 <TableHead>Instructor</TableHead>
                                  <TableHead>Start Hobbs</TableHead>
                                  <TableHead>End Hobbs</TableHead>
                                  <TableHead>Flight Total</TableHead>
@@ -555,7 +556,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         <TableCell>{b.bookingNumber}</TableCell>
                                         <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
                                         <TableCell>{b.aircraft}</TableCell>
-                                        <TableCell>{getBookingLabel(b)}</TableCell>
+                                        <TableCell>{b.student || 'N/A'}</TableCell>
+                                        <TableCell>{b.instructor || 'N/A'}</TableCell>
                                         <TableCell>{b.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell>{b.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell>{(b.flightDuration || 0).toFixed(1)}</TableCell>
@@ -564,7 +566,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 ))
                              ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center">No historical bookings found.</TableCell>
+                                    <TableCell colSpan={9} className="h-24 text-center">No historical bookings found.</TableCell>
                                 </TableRow>
                              )}
                          </TableBody>
