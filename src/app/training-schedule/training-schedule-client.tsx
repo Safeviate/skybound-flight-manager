@@ -11,7 +11,7 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon, Search, MoreHorizontal, Archive, RotateCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
@@ -21,6 +21,12 @@ import { format, parseISO, setHours, setMinutes, isBefore } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 interface TrainingSchedulePageContentProps {
@@ -43,6 +49,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [selectedChecklistAircraft, setSelectedChecklistAircraft] = useState<Aircraft | null>(null);
   const [checklistWarning, setChecklistWarning] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [selectedHistoryBookings, setSelectedHistoryBookings] = useState<string[]>([]);
 
   const fetchBookingsForDate = useCallback(async (date: Date) => {
     if (!company) return;
@@ -87,9 +96,21 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company]);
   
   const filteredBookings = useMemo(() => {
-    const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    return bookings.filter(b => b.date === dateStr);
-  }, [bookings, selectedDate]);
+    return bookings.filter(b => b.status === 'Approved');
+  }, [bookings]);
+  
+  const historyBookings = useMemo(() => {
+    return bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled');
+  }, [bookings]);
+
+  const filteredHistoryBookings = useMemo(() => {
+    return historyBookings.filter(b => 
+        (b.bookingNumber?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
+        (b.aircraft?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
+        (b.student?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
+        (b.instructor?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '')
+    );
+  }, [historyBookings, historySearchTerm]);
 
 
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
@@ -110,7 +131,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
-      if (b.status === 'Completed' || b.status === 'Cancelled') return false;
       const startTimeInMinutes = timeToMinutes(b.startTime);
       const endTimeInMinutes = timeToMinutes(b.endTime);
       return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
@@ -140,25 +160,22 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   };
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
-    if (booking.status === 'Completed') {
-        return { className: 'bg-gray-200 text-black pointer-events-none' };
-    }
     if (aircraftForBooking?.status === 'In Maintenance') {
-        return { className: 'bg-destructive' };
+        return { className: 'bg-destructive text-white' };
     }
 
     if (!aircraftForBooking) {
-        return { className: 'bg-gray-400' }; // Gray
+        return { className: 'bg-gray-400 text-white' };
     }
-
+    
     switch (aircraftForBooking.checklistStatus) {
       case 'needs-post-flight':
-        return { className: 'bg-blue-500' }; // Blue
+        return { className: 'bg-blue-500 text-white' };
       case 'ready':
       case 'needs-pre-flight':
-        return { className: 'bg-green-500' }; // Green
+        return { className: 'bg-green-500 text-white' };
       default:
-        return { className: 'bg-gray-400' }; // Gray
+        return { className: 'bg-gray-400 text-white' };
     }
   };
 
@@ -333,6 +350,16 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
     setEditingBooking(booking);
   };
+  
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'Approved': return 'warning';
+      case 'Completed': return 'success';
+      case 'Cancelled': return 'destructive';
+      case 'Archived': return 'secondary';
+      default: return 'outline';
+    }
+  }
 
   if (loading) {
     return (
@@ -364,7 +391,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
         .gantt-bar { 
-            color: white; 
             padding: 4px 8px; 
             border-radius: 4px; 
             text-align: center; 
@@ -386,7 +412,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="w-[1200px] mx-auto p-4 md:p-8">
-        <div id="ganttView">
+        <Tabs defaultValue="bookings">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="history">Bookings History</TabsTrigger>
+          </TabsList>
+          <TabsContent value="bookings" className="mt-6">
             <div className="w-full flex flex-col items-start gap-4">
                 <div>
                     <Popover>
@@ -416,10 +447,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 </div>
                 <div>
                     <div className="color-legend">
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--success))'}}></div>Ready for Pre-Flight</div>
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: '#007bff'}}></div>Post-Flight Outstanding</div>
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--destructive))'}}></div>In Maintenance</div>
-                        <div className="legend-item"><div className="legend-color-box" style={{backgroundColor: 'hsl(var(--muted))'}}></div>Completed</div>
+                        <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
+                        <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
+                        <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                     </div>
                 </div>
             </div>
@@ -486,7 +516,54 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     </tbody>
                 </table>
             </div>
-        </div>
+          </TabsContent>
+          <TabsContent value="history" className="mt-6">
+             <Card>
+                 <CardHeader>
+                     <CardTitle>Bookings History</CardTitle>
+                     <CardDescription>A log of all completed and cancelled bookings.</CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                     <div className="py-4">
+                        <Input 
+                            placeholder="Search history..."
+                            value={historySearchTerm}
+                            onChange={e => setHistorySearchTerm(e.target.value)}
+                            className="max-w-sm"
+                        />
+                     </div>
+                     <Table>
+                         <TableHeader>
+                             <TableRow>
+                                 <TableHead>Booking #</TableHead>
+                                 <TableHead>Date</TableHead>
+                                 <TableHead>Aircraft</TableHead>
+                                 <TableHead>Details</TableHead>
+                                 <TableHead>Status</TableHead>
+                             </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                             {filteredHistoryBookings.length > 0 ? (
+                                filteredHistoryBookings.map(b => (
+                                    <TableRow key={b.id}>
+                                        <TableCell>{b.bookingNumber}</TableCell>
+                                        <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
+                                        <TableCell>{b.aircraft}</TableCell>
+                                        <TableCell>{getBookingLabel(b)}</TableCell>
+                                        <TableCell><Badge variant={getStatusVariant(b.status)}>{b.status}</Badge></TableCell>
+                                    </TableRow>
+                                ))
+                             ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">No historical bookings found.</TableCell>
+                                </TableRow>
+                             )}
+                         </TableBody>
+                     </Table>
+                 </CardContent>
+             </Card>
+          </TabsContent>
+        </Tabs>
       </div>
        <Dialog open={!!newBookingSlot || !!editingBooking} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-xl">

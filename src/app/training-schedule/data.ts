@@ -24,15 +24,12 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         ]);
 
         const aircraft = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
-        const allBookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+        const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
         const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
         const users = [...personnel, ...students];
         
-        // Filter out cancelled bookings server-side
-        const bookings = allBookings.filter(b => b.status !== 'Cancelled');
-
         return { aircraft, bookings, users };
     } catch (error) {
         console.error("Failed to fetch schedule page data:", error);
