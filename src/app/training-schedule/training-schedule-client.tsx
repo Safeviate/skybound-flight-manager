@@ -137,7 +137,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
-      if (b.status === 'Completed' || b.status === 'Cancelled') return false; // Exclude completed/cancelled
+      if (b.status === 'Cancelled') return false; 
       const startTimeInMinutes = timeToMinutes(b.startTime);
       const endTimeInMinutes = timeToMinutes(b.endTime);
       return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
@@ -176,7 +176,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
     
     if (booking.status === 'Completed') {
-        return { className: 'bg-muted text-foreground' };
+        return { className: 'bg-gray-200 text-black' };
     }
     
     switch (aircraftForBooking.checklistStatus) {
@@ -351,14 +351,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }
   
   const handleBookingClick = (booking: Booking) => {
-    if (booking.status === 'Completed' && !user?.permissions.includes('Super User')) {
-      toast({
-        variant: 'destructive',
-        title: 'Booking Locked',
-        description: 'Completed bookings cannot be edited.',
-      });
-      return;
-    }
     setEditingBooking(booking);
   };
   
@@ -552,6 +544,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                  <TableHead>Details</TableHead>
                                  <TableHead>Start Hobbs</TableHead>
                                  <TableHead>End Hobbs</TableHead>
+                                 <TableHead>Flight Total</TableHead>
                                  <TableHead>Status</TableHead>
                              </TableRow>
                          </TableHeader>
@@ -565,12 +558,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         <TableCell>{getBookingLabel(b)}</TableCell>
                                         <TableCell>{b.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell>{b.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                        <TableCell>{(b.flightDuration || 0).toFixed(1)}</TableCell>
                                         <TableCell><Badge variant={getStatusVariant(b.status)}>{b.status}</Badge></TableCell>
                                     </TableRow>
                                 ))
                              ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">No historical bookings found.</TableCell>
+                                    <TableCell colSpan={8} className="h-24 text-center">No historical bookings found.</TableCell>
                                 </TableRow>
                              )}
                          </TableBody>
