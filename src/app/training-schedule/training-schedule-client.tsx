@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -25,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -57,7 +59,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     if (!company) return;
     setLoading(true);
     const dateStr = format(date, 'yyyy-MM-dd');
-    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('date', '==', dateStr));
+    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`)); // Fetch all
     const snapshot = await getDocs(bookingsQuery);
     setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
     setLoading(false);
@@ -96,21 +98,25 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company]);
   
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => b.status === 'Approved');
-  }, [bookings]);
+    return bookings.filter(b => b.status === 'Approved' && b.date === format(selectedDate, 'yyyy-MM-dd'));
+  }, [bookings, selectedDate]);
   
   const historyBookings = useMemo(() => {
-    return bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled');
+    return bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled' || b.status === 'Archived');
   }, [bookings]);
 
-  const filteredHistoryBookings = useMemo(() => {
-    return historyBookings.filter(b => 
+  const displayedHistoryBookings = useMemo(() => {
+    const listToFilter = showArchived 
+        ? historyBookings.filter(b => b.status === 'Archived')
+        : historyBookings.filter(b => b.status !== 'Archived');
+        
+    return listToFilter.filter(b => 
         (b.bookingNumber?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
         (b.aircraft?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
         (b.student?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '') ||
         (b.instructor?.toLowerCase().includes(historySearchTerm.toLowerCase()) || '')
     );
-  }, [historyBookings, historySearchTerm]);
+  }, [historyBookings, historySearchTerm, showArchived]);
 
 
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
@@ -131,6 +137,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
+      if (b.status === 'Completed' || b.status === 'Cancelled') return false; // Exclude completed/cancelled
       const startTimeInMinutes = timeToMinutes(b.startTime);
       const endTimeInMinutes = timeToMinutes(b.endTime);
       return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
@@ -161,11 +168,15 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
     if (aircraftForBooking?.status === 'In Maintenance') {
-        return { className: 'bg-destructive text-white' };
+        return { className: 'bg-destructive text-destructive-foreground' };
     }
 
     if (!aircraftForBooking) {
         return { className: 'bg-gray-400 text-white' };
+    }
+    
+    if (booking.status === 'Completed') {
+        return { className: 'bg-muted text-foreground' };
     }
     
     switch (aircraftForBooking.checklistStatus) {
@@ -173,7 +184,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return { className: 'bg-blue-500 text-white' };
       case 'ready':
       case 'needs-pre-flight':
-        return { className: 'bg-green-500 text-white' };
+        return { className: 'bg-primary text-primary-foreground' };
       default:
         return { className: 'bg-gray-400 text-white' };
     }
@@ -447,7 +458,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 </div>
                 <div>
                     <div className="color-legend">
-                        <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
+                        <div className="legend-item"><div className="legend-color-box bg-primary"></div>Ready for Pre-Flight</div>
                         <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
                         <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                     </div>
@@ -543,8 +554,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                              </TableRow>
                          </TableHeader>
                          <TableBody>
-                             {filteredHistoryBookings.length > 0 ? (
-                                filteredHistoryBookings.map(b => (
+                             {displayedHistoryBookings.length > 0 ? (
+                                displayedHistoryBookings.map(b => (
                                     <TableRow key={b.id}>
                                         <TableCell>{b.bookingNumber}</TableCell>
                                         <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
