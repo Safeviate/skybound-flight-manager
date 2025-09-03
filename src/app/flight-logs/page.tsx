@@ -1,17 +1,35 @@
 
 'use client';
 
-import * a React from 'react';
+import { getFlightLogsPageData } from './data';
+import { FlightLogsPageContent } from './flight-logs-page-content';
+import { useUser } from '@/context/user-provider';
+import { useState, useEffect } from 'react';
+import type { Booking, User } from '@/lib/types';
 
 export default function FlightLogsPage() {
+    const { company, loading: userLoading } = useUser();
+    const [initialData, setInitialData] = useState<{ bookings: Booking[], users: User[] }>({
+        bookings: [],
+        users: [],
+    });
 
-    return (
-        <main className="flex-1 p-4 md:p-8">
-            <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Flight Logs Page - Coming Soon</p>
-            </div>
-        </main>
-    )
+    useEffect(() => {
+        async function loadData() {
+            if (company) {
+                const data = await getFlightLogsPageData(company.id);
+                setInitialData(data);
+            }
+        }
+        if (!userLoading) {
+            loadData();
+        }
+    }, [company, userLoading]);
+
+    return <FlightLogsPageContent 
+        initialBookings={initialData.bookings}
+        initialUsers={initialData.users}
+    />;
 }
 
 FlightLogsPage.title = 'Flight Logs';
