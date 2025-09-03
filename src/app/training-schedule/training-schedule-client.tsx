@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -110,7 +111,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const slotTimeInMinutes = timeToMinutes(time);
     return filteredBookings.find(b => {
       if (b.aircraft !== aircraftTailNumber) return false;
-      if (b.status === 'Cancelled') return false;
+      if (b.status === 'Cancelled' || b.status === 'Completed') return false;
       const startTimeInMinutes = timeToMinutes(b.startTime);
       const endTimeInMinutes = timeToMinutes(b.endTime);
       return slotTimeInMinutes >= startTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
@@ -141,7 +142,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   
   const getBookingVariant = (booking: Booking, aircraftForBooking: Aircraft | undefined): { className?: string, style?: React.CSSProperties } => {
     if (booking.status === 'Completed') {
-        return { className: 'bg-muted text-muted-foreground pointer-events-none' };
+        return { className: 'bg-muted text-foreground pointer-events-none' };
     }
     if (aircraftForBooking?.status === 'In Maintenance') {
         return { className: 'bg-destructive' };
