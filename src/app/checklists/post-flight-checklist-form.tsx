@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bot, Camera, Plane, Hash, Image as ImageIcon, AlertTriangle, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AircraftInfoScanner } from '../aircraft/aircraft-info-scanner';
@@ -50,7 +50,7 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
   const form = useForm<PostFlightChecklistFormValues>({
     resolver: zodResolver(checklistSchema),
     defaultValues: {
-        hobbs: 0,
+        hobbs: startHobbs || 0,
         tacho: aircraft.currentTachoReading || 0,
         fuelUplift: 0,
         oilUplift: 0,
@@ -60,6 +60,20 @@ export function PostFlightChecklistForm({ aircraft, onSuccess, startHobbs, onRep
         defectPhoto: '',
     }
   });
+
+  useEffect(() => {
+    form.reset({
+        hobbs: startHobbs || 0,
+        tacho: aircraft.currentTachoReading || 0,
+        fuelUplift: 0,
+        oilUplift: 0,
+        leftSidePhoto: '',
+        rightSidePhoto: '',
+        report: '',
+        defectPhoto: '',
+    });
+  }, [aircraft, startHobbs, form]);
+
 
   const { setValue, watch, getValues } = form;
   const watchedValues = watch();
