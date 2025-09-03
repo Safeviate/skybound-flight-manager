@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addDays } from 'date-fns';
+import { format, addDays, isBefore, setHours, setMinutes } from 'date-fns';
 import type { Aircraft, User, Booking, Role } from '@/lib/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,6 +92,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const [deleteReason, setDeleteReason] = useState('');
   const [otherReason, setOtherReason] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const timeSlots = useMemo(() => {
     return Array.from({ length: 24 * 4 }, (_, i) => {
@@ -99,6 +100,11 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         const minute = (i % 4) * 15;
         return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     });
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -322,7 +328,14 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                            {timeSlots.map(time => {
+                                const [hour, minute] = time.split(':').map(Number);
+                                const slotDateTime = setMinutes(setHours(selectedDate || new Date(), hour), minute);
+                                const isDisabled = isBefore(slotDateTime, currentTime);
+                                return (
+                                    <SelectItem key={time} value={time} disabled={isDisabled}>{time}</SelectItem>
+                                )
+                            })}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -338,7 +351,14 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select time" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                            {timeSlots.map(time => {
+                                const [hour, minute] = time.split(':').map(Number);
+                                const slotDateTime = setMinutes(setHours(selectedDate || new Date(), hour), minute);
+                                const isDisabled = isBefore(slotDateTime, currentTime);
+                                return (
+                                    <SelectItem key={time} value={time} disabled={isDisabled}>{time}</SelectItem>
+                                )
+                            })}
                         </SelectContent>
                     </Select>
                     <FormMessage />
