@@ -12,7 +12,7 @@ import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, quer
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon, Search, MoreHorizontal, Archive, RotateCw, Trash2 } from 'lucide-react';
+import { Loader2, AreaChart, ListChecks, AlertTriangle, FileText, Calendar as CalendarIcon, Search, MoreHorizontal, Archive, RotateCw, Trash2, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
@@ -98,7 +98,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }, [company]);
   
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => b.status === 'Approved' && b.date === format(selectedDate, 'yyyy-MM-dd'));
+    return bookings.filter(b => (b.status === 'Approved' || b.status === 'Completed') && b.date === format(selectedDate, 'yyyy-MM-dd'));
   }, [bookings, selectedDate]);
   
   const historyBookings = useMemo(() => {
@@ -550,6 +550,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                  <TableHead>Date</TableHead>
                                  <TableHead>Aircraft</TableHead>
                                  <TableHead>Details</TableHead>
+                                 <TableHead>Start Hobbs</TableHead>
+                                 <TableHead>End Hobbs</TableHead>
                                  <TableHead>Status</TableHead>
                              </TableRow>
                          </TableHeader>
@@ -561,12 +563,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         <TableCell>{format(parseISO(b.date), 'PPP')}</TableCell>
                                         <TableCell>{b.aircraft}</TableCell>
                                         <TableCell>{getBookingLabel(b)}</TableCell>
+                                        <TableCell>{b.startHobbs?.toFixed(1) || 'N/A'}</TableCell>
+                                        <TableCell>{b.endHobbs?.toFixed(1) || 'N/A'}</TableCell>
                                         <TableCell><Badge variant={getStatusVariant(b.status)}>{b.status}</Badge></TableCell>
                                     </TableRow>
                                 ))
                              ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">No historical bookings found.</TableCell>
+                                    <TableCell colSpan={7} className="h-24 text-center">No historical bookings found.</TableCell>
                                 </TableRow>
                              )}
                          </TableBody>
