@@ -22,7 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -356,7 +356,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
                 batch.update(bookingRef, { 
                     startHobbs: data.hobbs,
-                    preFlightChecklist: data 
+                    preFlightChecklist: {
+                      leftSidePhoto: data.leftSidePhoto,
+                      rightSidePhoto: data.rightSidePhoto,
+                      defectPhoto: data.defectPhoto
+                    }
                 });
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else { // POST-FLIGHT LOGIC
@@ -375,7 +379,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     flightDuration,
                     fuelUplift: data.fuelUplift,
                     oilUplift: data.oilUplift,
-                    postFlightChecklist: data,
+                    postFlightChecklist: {
+                        leftSidePhoto: data.leftSidePhoto,
+                        rightSidePhoto: data.rightSidePhoto,
+                        defectPhoto: data.defectPhoto
+                    },
                 });
 
                 if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
@@ -412,8 +420,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     const bookingDateTime = setMinutes(setHours(selectedDate, hours), minutes);
+    const now = new Date();
 
-    if (isBefore(bookingDateTime, new Date())) {
+    if (isBefore(bookingDateTime, now)) {
         toast({
             variant: 'destructive',
             title: 'Invalid Time',
