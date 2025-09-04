@@ -12,7 +12,7 @@ const DropdownMenu = DropdownMenuPrimitive.Root
 const DropdownMenuTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
->(({ ...props }, ref) => (
+>((props, ref) => (
   <DropdownMenuPrimitive.Trigger ref={ref} {...props} data-nosnippet />
 ));
 DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
