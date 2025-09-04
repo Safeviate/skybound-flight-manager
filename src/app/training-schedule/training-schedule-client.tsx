@@ -476,7 +476,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     <>
       <style jsx>{`
         table { width: 100%; border-collapse: collapse; background-color: hsl(var(--card)); table-layout: fixed; }
-        th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 50px; }
+        th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 70px; }
         th { background-color: hsl(var(--muted)); text-align: center; padding: 12px 0; }
         td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
         td.empty-slot:hover { background-color: hsl(var(--muted)); }
