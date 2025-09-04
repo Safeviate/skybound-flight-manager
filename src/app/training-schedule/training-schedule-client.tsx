@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -442,6 +443,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   }
 
   const handleBookingClick = (booking: Booking) => {
+    if (booking.status === 'Completed') return;
     const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
     if (aircraftForBooking) {
         setActiveFlight({ booking, aircraft: aircraftForBooking });
@@ -492,8 +494,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            cursor: pointer; 
         }
+        .gantt-bar.clickable { cursor: pointer; }
+        .gantt-bar.not-clickable { cursor: not-allowed; }
         .color-legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; align-items: center;}
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
@@ -576,10 +579,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                                 }
                                                 const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                                 const variant = getBookingVariant(booking, aircraftForBooking);
-                                                const checklistOutstanding = aircraftForBooking?.checklistStatus === 'needs-pre-flight' || aircraftForBooking?.checklistStatus === 'needs-post-flight';
                                                 return (
                                                     <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
-                                                    <div className={cn('gantt-bar', variant.className)} style={variant.style}>
+                                                    <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
                                                         <div className="flex items-center gap-2">
                                                             {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
                                                             <span>{getBookingLabel(booking)}</span>
