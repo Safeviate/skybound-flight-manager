@@ -404,49 +404,58 @@ export function AircraftPageContent() {
 
     const fetchChecklistHistory = useCallback(async () => {
         if (!company) return;
-        setAllChecklists(new Map());
+        const newChecklistsMap = new Map<string, CompletedChecklist[]>();
         for (const aircraft of aircraftList) {
-            const history = await getChecklistHistory(company.id, aircraft.id);
-            setAllChecklists(prev => new Map(prev).set(aircraft.id, history));
+            try {
+                const history = await getChecklistHistory(company.id, aircraft.id);
+                newChecklistsMap.set(aircraft.id, history);
+            } catch (error) {
+                console.error(`Failed to fetch checklist history for ${aircraft.tailNumber}`, error);
+            }
         }
+        setAllChecklists(newChecklistsMap);
     }, [company, aircraftList]);
 
     useEffect(() => {
-        if (userLoading || !company) return;
+        if (!userLoading && company) {
+            setDataLoading(true);
 
-        setDataLoading(true);
+            const unsubAircraft = onSnapshot(query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber')), (snapshot) => {
+                const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
+                setAircraftList(aircrafts);
+                setDataLoading(false);
+            }, (error) => {
+                console.error("Error fetching real-time aircraft data:", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
+                setDataLoading(false);
+            });
 
-        const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
-        const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
-            const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
-            setAircraftList(aircrafts);
-        }, (error) => {
-            console.error("Error fetching real-time aircraft data:", error);
-            toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
-        });
+            const unsubBookings = onSnapshot(query(collection(db, `companies/${company.id}/bookings`)), (snapshot) => {
+                const bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+                setBookings(bookingsData);
+            }, (error) => {
+                console.error("Error fetching real-time bookings data:", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not fetch live booking updates." });
+            });
 
-        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-        const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
-            const bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-            setBookings(bookingsData);
-        }, (error) => {
-            console.error("Error fetching real-time bookings data:", error);
-            toast({ variant: "destructive", title: "Error", description: "Could not fetch live booking updates." });
-        });
+            const contactsQuery = query(collection(db, `companies/${company.id}/external-contacts`));
+            getDocs(contactsQuery).then(snapshot => {
+                setExternalContacts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExternalContact)));
+            });
 
-        const contactsQuery = query(collection(db, `companies/${company.id}/external-contacts`));
-        getDocs(contactsQuery).then(snapshot => {
-            setExternalContacts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExternalContact)));
-        });
+            return () => {
+                unsubAircraft();
+                unsubBookings();
+            };
+        }
+    }, [company, userLoading, toast]);
+    
+    useEffect(() => {
+        if (aircraftList.length > 0) {
+            fetchChecklistHistory();
+        }
+    }, [aircraftList, fetchChecklistHistory]);
 
-        fetchChecklistHistory();
-        setDataLoading(false);
-
-        return () => {
-            unsubAircraft();
-            unsubBookings();
-        };
-    }, [company, userLoading, toast, fetchChecklistHistory]);
 
     useEffect(() => {
         if (selectedHistoryAircraftId && company) {
