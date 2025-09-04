@@ -6,7 +6,7 @@ import { FlightLogsPageContent } from './flight-logs-page-content';
 import { useUser } from '@/context/user-provider';
 import { useState, useEffect } from 'react';
 import type { Booking, User } from '@/lib/types';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function FlightLogsPage() {
@@ -66,3 +66,4 @@ export default function FlightLogsPage() {
 }
 
 FlightLogsPage.title = 'Flight Logs';
+
