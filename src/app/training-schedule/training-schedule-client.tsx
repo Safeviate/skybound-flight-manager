@@ -252,7 +252,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     }
     
     if (booking.status === 'Completed') {
-        return { className: 'bg-gray-200 text-black' };
+        return { className: 'bg-gray-400 text-white' };
     }
     
     switch (aircraftForBooking.checklistStatus) {
@@ -260,7 +260,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         return { className: 'bg-blue-500 text-white' };
       case 'ready':
       case 'needs-pre-flight':
-        return { className: 'bg-success text-success-foreground' };
+        return { className: 'bg-green-500 text-white' };
       default:
         return { className: 'bg-gray-400 text-white' };
     }
@@ -542,9 +542,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                             <div>
                                 <div className="color-legend">
-                                    <div className="legend-item"><div className="legend-color-box bg-success"></div>Ready for Pre-Flight</div>
+                                    <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
                                     <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-gray-200"></div>Completed</div>
+                                    <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
                                     <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                                 </div>
                             </div>

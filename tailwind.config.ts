@@ -50,6 +50,10 @@ export default {
             DEFAULT: 'hsl(var(--orange))',
             foreground: 'hsl(var(--orange-foreground))',
         },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
         purple: {
             '600': '#7C3AED',
         },
