@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -306,7 +307,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     arrival: newBooking.arrival,
                 };
                 batch.update(studentRef, { 
-                    trainingLogs: arrayUnion(logEntry)
+                    trainingLogs: arrayUnion(logEntry),
+                    pendingBookingIds: arrayUnion(newBooking.id)
                 });
                 // Link this log entry ID to the booking
                 batch.update(bookingRef, { pendingLogEntryId: logEntry.id });

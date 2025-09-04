@@ -561,13 +561,13 @@ export function AircraftPageContent({
     
     const handleChecklistSuccess = async (data: PreFlightChecklistFormValues | PostFlightChecklistFormValues) => {
         if (!selectedAircraftForChecklist || !user || !company) return;
-
+    
         const isPreFlight = 'registration' in data;
         const batch = writeBatch(db);
         const aircraftRef = doc(db, `companies/${company.id}/aircraft`, selectedAircraftForChecklist.id);
-
+    
         const bookingForChecklist = bookings.find(b => b.id === selectedAircraftForChecklist.activeBookingId);
-
+    
         try {
             // Action B: Create the CompletedChecklist document for history
             const historyDocRef = doc(collection(db, `companies/${company.id}/aircraft/${selectedAircraftForChecklist.id}/completed-checklists`));
@@ -582,7 +582,7 @@ export function AircraftPageContent({
                 bookingNumber: bookingForChecklist?.bookingNumber,
             };
             batch.set(historyDocRef, historyDoc);
-
+    
             if (isPreFlight) {
                 // Action A: Update the Booking with startHobbs
                 if (bookingForChecklist) {
@@ -595,34 +595,24 @@ export function AircraftPageContent({
                 if (bookingForChecklist) {
                     const flightDuration = bookingForChecklist.startHobbs ? parseFloat((data.hobbs - bookingForChecklist.startHobbs).toFixed(1)) : 0;
                     const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingForChecklist.id);
-                     // Action A: Update the Booking with endHobbs and complete it
                     batch.update(bookingRef, { status: 'Completed', endHobbs: data.hobbs, flightDuration });
-
-                    // Also update student's logbook
+    
                     if (bookingForChecklist.purpose === 'Training' && bookingForChecklist.studentId) {
                         const studentRef = doc(db, `companies/${company.id}/students`, bookingForChecklist.studentId);
                         const studentSnap = await getDoc(studentRef);
-
+    
                         if (studentSnap.exists()) {
                             const studentData = studentSnap.data() as User;
                             const newTotalHours = (studentData.flightHours || 0) + flightDuration;
                             
-                            const newLogEntry: Omit<TrainingLogEntry, 'id'> = {
-                                date: bookingForChecklist.date,
-                                aircraft: `${selectedAircraftForChecklist.make} ${selectedAircraftForChecklist.model} ${selectedAircraftForChecklist.tailNumber}`,
-                                startHobbs: bookingForChecklist.startHobbs || 0,
-                                endHobbs: data.hobbs,
-                                flightDuration: flightDuration,
-                                instructorName: bookingForChecklist.instructor || 'Unknown',
-                                trainingExercises: [],
-                                departure: bookingForChecklist.departure,
-                                arrival: bookingForChecklist.arrival,
-                                departureTime: bookingForChecklist.startTime,
-                                arrivalTime: bookingForChecklist.endTime,
-                            };
+                            const updatedLogs = (studentData.trainingLogs || []).map(log => 
+                                log.id === bookingForChecklist.pendingLogEntryId
+                                ? { ...log, startHobbs: bookingForChecklist.startHobbs || 0, endHobbs: data.hobbs, flightDuration }
+                                : log
+                            );
                             
                             batch.update(studentRef, { 
-                                trainingLogs: arrayUnion({ ...newLogEntry, id: `log-${Date.now()}` }),
+                                trainingLogs: updatedLogs,
                                 flightHours: newTotalHours
                             });
                         }
@@ -637,7 +627,7 @@ export function AircraftPageContent({
                 });
                 toast({ title: 'Post-Flight Checklist Submitted', description: 'Logbook entry created and booking completed.' });
             }
-
+    
             await batch.commit();
             setSelectedChecklistAircraftId(null);
             fetchChecklistHistory(); // Refresh history after submission
