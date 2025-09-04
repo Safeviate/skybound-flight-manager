@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -34,8 +33,9 @@ import { collection, query, onSnapshot, getDocs, doc, updateDoc, writeBatch, add
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getTechnicalReportsForAircraft } from './data';
+import { getAircraftPageData, getTechnicalReportsForAircraft } from './data';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import Loading from '../loading';
 
 async function getChecklistHistory(companyId: string, aircraftId: string): Promise<CompletedChecklist[]> {
     if (!companyId || !aircraftId) return [];
@@ -385,19 +385,10 @@ const TechnicalLogView = ({ aircraftList }: { aircraftList: Aircraft[] }) => {
 }
 
 
-export function AircraftPageContent({ 
-    initialAircraft,
-    initialBookings,
-    initialExternalContacts,
-}: { 
-    initialAircraft: Aircraft[],
-    initialBookings: Booking[],
-    initialExternalContacts: ExternalContact[],
-}) {
-    const [aircraftList, setAircraftList] = useState<Aircraft[]>(initialAircraft);
-    const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>(initialExternalContacts);
-    const [isDataLoading, setIsDataLoading] = useState(false);
+export function AircraftPageContent() {
+    const [aircraftList, setAircraftList] = useState<Aircraft[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [externalContacts, setExternalContacts] = useState<ExternalContact[]>([]);
     const [isNewAircraftDialogOpen, setIsNewAircraftDialogOpen] = useState(false);
     const [editingAircraft, setEditingAircraft] = useState<Aircraft | null>(null);
     const { user, company, loading: userLoading } = useUser();
@@ -409,7 +400,8 @@ export function AircraftPageContent({
     const [viewingDocumentsForAircraft, setViewingDocumentsForAircraft] = useState<Aircraft | null>(null);
     const [viewingChecklist, setViewingChecklist] = useState<CompletedChecklist | null>(null);
     const [allChecklists, setAllChecklists] = useState<Map<string, CompletedChecklist[]>>(new Map());
-    
+    const [dataLoading, setDataLoading] = useState(true);
+
     const fetchChecklistHistory = useCallback(async () => {
         if (!company) return;
         setAllChecklists(new Map());
@@ -420,11 +412,11 @@ export function AircraftPageContent({
     }, [company, aircraftList]);
 
     useEffect(() => {
-        if (!company) return;
+        if (userLoading || !company) return;
+
+        setDataLoading(true);
 
         const aircraftQuery = query(collection(db, `companies/${company.id}/aircraft`), orderBy('tailNumber'));
-        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
-
         const unsubAircraft = onSnapshot(aircraftQuery, (snapshot) => {
             const aircrafts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
             setAircraftList(aircrafts);
@@ -432,7 +424,8 @@ export function AircraftPageContent({
             console.error("Error fetching real-time aircraft data:", error);
             toast({ variant: "destructive", title: "Error", description: "Could not fetch live aircraft updates." });
         });
-        
+
+        const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
         const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
             const bookingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
             setBookings(bookingsData);
@@ -441,22 +434,20 @@ export function AircraftPageContent({
             toast({ variant: "destructive", title: "Error", description: "Could not fetch live booking updates." });
         });
 
-        // Initial fetch for checklists
+        const contactsQuery = query(collection(db, `companies/${company.id}/external-contacts`));
+        getDocs(contactsQuery).then(snapshot => {
+            setExternalContacts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExternalContact)));
+        });
+
         fetchChecklistHistory();
+        setDataLoading(false);
 
         return () => {
             unsubAircraft();
             unsubBookings();
         };
-    }, [company, toast, fetchChecklistHistory]);
+    }, [company, userLoading, toast, fetchChecklistHistory]);
 
-    useEffect(() => {
-        setAircraftList(initialAircraft);
-        setBookings(initialBookings);
-        setExternalContacts(initialExternalContacts);
-    }, [initialAircraft, initialBookings, initialExternalContacts]);
-    
-    
     useEffect(() => {
         if (selectedHistoryAircraftId && company) {
              const history = allChecklists.get(selectedHistoryAircraftId) || [];
@@ -679,7 +670,7 @@ export function AircraftPageContent({
     const canViewTechnicalLog = user?.permissions.includes('TechnicalLog:View') || isSuperUser;
 
     const AircraftCardList = ({ aircraft, isArchived }: { aircraft: Aircraft[], isArchived?: boolean }) => {
-        if (isDataLoading) {
+        if (dataLoading) {
             return (
                 <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
                     <Loader2 className="mr-2 h-6 w-6 animate-spin" />
@@ -1053,6 +1044,10 @@ export function AircraftPageContent({
       </>
     );
   };
+
+  if (userLoading) {
+    return <Loading />;
+  }
 
   return (
     <main className="flex-1 p-4 md:p-8 space-y-6">
