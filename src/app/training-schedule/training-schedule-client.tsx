@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -149,23 +148,23 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  const fetchBookingsForDate = useCallback(async (date: Date) => {
-    if (!company) return;
+  
+  useEffect(() => {
+    if (!company) {
+        setLoading(false);
+        return;
+    }
     setLoading(true);
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`)); // Fetch all
-    const snapshot = await getDocs(bookingsQuery);
-    setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
-    setLoading(false);
-  }, [company]);
-  
-  useEffect(() => {
-    fetchBookingsForDate(selectedDate);
-  }, [selectedDate, fetchBookingsForDate]);
-  
-  useEffect(() => {
-    if (!company) return;
+    
+    const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+    const unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
+        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching real-time bookings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load schedule updates.' });
+        setLoading(false);
+    });
 
     const aircraftUnsub = onSnapshot(collection(db, `companies/${company.id}/aircraft`), (snapshot) => {
         setAircraft(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft)));
@@ -187,9 +186,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     fetchAllUsers();
     
     return () => {
+        unsubBookings();
         aircraftUnsub();
     };
-}, [company]);
+}, [company, toast]);
   
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => b.status !== 'Cancelled' && b.date === format(selectedDate, 'yyyy-MM-dd'));
@@ -319,7 +319,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         
         await batch.commit();
         handleDialogClose();
-        fetchBookingsForDate(selectedDate);
     } catch (error) {
         console.error("Error saving booking:", error);
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the booking.' });
@@ -336,7 +335,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         await updateDoc(bookingRef, { status: 'Cancelled', cancellationReason: reason });
         toast({ title: 'Booking Cancelled', description: `Reason: ${reason}` });
         handleDialogClose();
-        fetchBookingsForDate(selectedDate);
     } catch (error) {
         console.error("Error cancelling booking:", error);
         toast({ variant: 'destructive', title: 'Cancellation Failed', description: 'Could not cancel the booking.' });
@@ -400,7 +398,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             
             await batch.commit();
             handleDialogClose();
-            fetchBookingsForDate(selectedDate); // Refresh data
         } catch (error) {
             console.error("Error submitting checklist:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not submit checklist.' });
