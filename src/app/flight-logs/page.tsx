@@ -59,11 +59,15 @@ export default function FlightLogsPage() {
         return <div className="flex-1 flex items-center justify-center"><p>Loading flight logs...</p></div>
     }
 
+    const handleDeleteBooking = (bookingId: string) => {
+        setBookings(prev => prev.filter(b => b.id !== bookingId));
+    };
+
     return <FlightLogsPageContent 
         initialBookings={bookings}
         initialUsers={users}
+        onDelete={handleDeleteBooking}
     />;
 }
 
 FlightLogsPage.title = 'Flight Logs';
-

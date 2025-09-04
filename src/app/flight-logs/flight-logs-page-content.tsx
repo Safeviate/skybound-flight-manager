@@ -7,22 +7,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowUpDown, Download } from 'lucide-react';
+import { Search, ArrowUpDown, Download, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useTableControls } from '@/hooks/use-table-controls';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { useUser } from '@/context/user-provider';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface FlightLogsPageContentProps {
   initialBookings: Booking[];
   initialUsers: User[];
+  onDelete: (bookingId: string) => void;
 }
 
-export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightLogsPageContentProps) {
+export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete }: FlightLogsPageContentProps) {
   const { items, searchTerm, setSearchTerm, requestSort, sortConfig } = useTableControls(initialBookings, {
     initialSort: { key: 'date', direction: 'desc' },
     searchKeys: ['bookingNumber', 'aircraft', 'student', 'instructor', 'trainingExercise'],
   });
+  const { toast } = useToast();
+  const { company } = useUser();
+
+  const handleDelete = async (bookingId: string) => {
+    if (!company) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Company context not found.' });
+        return;
+    }
+    try {
+        const bookingRef = doc(db, `companies/${company.id}/bookings`, bookingId);
+        await deleteDoc(bookingRef);
+        onDelete(bookingId);
+        toast({ title: 'Log Deleted', description: 'The flight log has been permanently removed.' });
+    } catch (error) {
+        console.error("Error deleting flight log:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the flight log.' });
+    }
+  };
+
 
   const handleDownloadPdf = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
@@ -97,6 +132,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                 <TableHead><SortableHeader label="Duration" sortKey="flightDuration" /></TableHead>
                 <TableHead><SortableHeader label="Fuel" sortKey="fuelUplift" /></TableHead>
                 <TableHead><SortableHeader label="Oil" sortKey="oilUplift" /></TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -114,11 +150,34 @@ export function FlightLogsPageContent({ initialBookings, initialUsers }: FlightL
                     <TableCell>{log.flightDuration?.toFixed(1) || '0.0'}</TableCell>
                     <TableCell>{log.fuelUplift?.toFixed(1) || '0'} L</TableCell>
                     <TableCell>{log.oilUplift?.toFixed(1) || '0'} qts</TableCell>
+                    <TableCell className="text-right">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the flight log for booking #{log.bookingNumber}.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(log.id)}>
+                                    Yes, delete log
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
+                  <TableCell colSpan={12} className="h-24 text-center">
                     No completed flight logs found.
                   </TableCell>
                 </TableRow>
