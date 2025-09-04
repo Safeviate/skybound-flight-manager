@@ -130,6 +130,11 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                 <TableHead><SortableHeader label="Aircraft" sortKey="aircraft" /></TableHead>
                 <TableHead><SortableHeader label="Student/Pilot" sortKey="student" /></TableHead>
                 <TableHead><SortableHeader label="Instructor" sortKey="instructor" /></TableHead>
+                <TableHead>Start Hobbs</TableHead>
+                <TableHead>End Hobbs</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Fuel (L)</TableHead>
+                <TableHead>Oil (qts)</TableHead>
                 <TableHead><SortableHeader label="Exercise" sortKey="trainingExercise" /></TableHead>
                 <TableHead>Photos</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -138,54 +143,60 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
             <TableBody>
               {items.length > 0 ? (
                 items.map((log) => {
-                  const hasPhotos = log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
-                  return (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
-                    <TableCell>{format(parseISO(log.date), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>{log.aircraft}</TableCell>
-                    <TableCell>{log.student || 'N/A'}</TableCell>
-                    <TableCell>{log.instructor || 'N/A'}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
-                    <TableCell>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={!hasPhotos}
-                            onClick={() => setViewingPhotosFor(log)}
-                        >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                        </Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the flight log for booking #{log.bookingNumber}.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(log.id)}>
-                                    Yes, delete log
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                )})
+                    const hasPhotos = log.preFlightData?.leftSidePhoto || log.postFlightData?.leftSidePhoto || log.preFlightChecklist?.leftSidePhoto || log.postFlightChecklist?.leftSidePhoto;
+                    return (
+                    <TableRow key={log.id}>
+                        <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
+                        <TableCell>{format(parseISO(log.date), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{log.aircraft}</TableCell>
+                        <TableCell>{log.student || 'N/A'}</TableCell>
+                        <TableCell>{log.instructor || 'N/A'}</TableCell>
+                        <TableCell>{log.startHobbs?.toFixed(1) || '-'}</TableCell>
+                        <TableCell>{log.endHobbs?.toFixed(1) || '-'}</TableCell>
+                        <TableCell>{log.flightDuration?.toFixed(1) || '-'}</TableCell>
+                        <TableCell>{log.fuelUplift?.toFixed(1) || '-'}</TableCell>
+                        <TableCell>{log.oilUplift?.toFixed(1) || '-'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{log.trainingExercise || 'N/A'}</TableCell>
+                        <TableCell>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={!hasPhotos}
+                                onClick={() => setViewingPhotosFor(log)}
+                            >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                            </Button>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the flight log for booking #{log.bookingNumber}.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(log.id)}>
+                                        Yes, delete log
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                    </TableRow>
+                    )
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center">
+                  <TableCell colSpan={13} className="h-24 text-center">
                     No completed flight logs found.
                   </TableCell>
                 </TableRow>
@@ -207,13 +218,13 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                 <div>
                     <h3 className="font-semibold mb-2">Pre-Flight</h3>
                     <div className="space-y-4">
-                        {viewingPhotosFor?.preFlightChecklist?.leftSidePhoto ? <Image src={viewingPhotosFor.preFlightChecklist.leftSidePhoto} alt="Pre-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {viewingPhotosFor?.preFlightChecklist?.rightSidePhoto ? <Image src={viewingPhotosFor.preFlightChecklist.rightSidePhoto} alt="Pre-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
-                        {viewingPhotosFor?.preFlightChecklist?.defectPhoto && (
+                        {(viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor?.preFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor!.preFlightChecklist!.leftSidePhoto!} alt="Pre-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                        {(viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor?.preFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor!.preFlightChecklist!.rightSidePhoto!} alt="Pre-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                        {(viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor?.preFlightChecklist?.defectPhoto) && (
                             <>
                                 <Separator />
                                 <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor.preFlightChecklist.defectPhoto} alt="Pre-flight defect" width={400} height={225} className="rounded-md" />
+                                <Image src={viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor!.preFlightChecklist!.defectPhoto!} alt="Pre-flight defect" width={400} height={225} className="rounded-md" />
                             </>
                         )}
                     </div>
@@ -221,13 +232,13 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                  <div>
                     <h3 className="font-semibold mb-2">Post-Flight</h3>
                     <div className="space-y-4">
-                        {viewingPhotosFor?.postFlightChecklist?.leftSidePhoto ? <Image src={viewingPhotosFor.postFlightChecklist.leftSidePhoto} alt="Post-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {viewingPhotosFor?.postFlightChecklist?.rightSidePhoto ? <Image src={viewingPhotosFor.postFlightChecklist.rightSidePhoto} alt="Post-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
-                        {viewingPhotosFor?.postFlightChecklist?.defectPhoto && (
+                        {(viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor?.postFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor!.postFlightChecklist!.leftSidePhoto!} alt="Post-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                        {(viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor?.postFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor!.postFlightChecklist!.rightSidePhoto!} alt="Post-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                        {(viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor?.postFlightChecklist?.defectPhoto) && (
                              <>
                                 <Separator />
                                 <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor.postFlightChecklist.defectPhoto} alt="Post-flight defect" width={400} height={225} className="rounded-md" />
+                                <Image src={viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor!.postFlightChecklist!.defectPhoto!} alt="Post-flight defect" width={400} height={225} className="rounded-md" />
                             </>
                         )}
                     </div>
