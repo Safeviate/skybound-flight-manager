@@ -22,7 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -354,7 +354,10 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         try {
             if (isPreFlight) {
                 batch.update(aircraftRef, { checklistStatus: 'needs-post-flight' });
-                batch.update(bookingRef, { startHobbs: data.hobbs });
+                batch.update(bookingRef, { 
+                    startHobbs: data.hobbs,
+                    preFlightChecklist: data 
+                });
                 toast({ title: 'Pre-Flight Checklist Submitted' });
             } else { // POST-FLIGHT LOGIC
                 const flightDuration = activeFlight.booking.startHobbs ? parseFloat((data.hobbs - activeFlight.booking.startHobbs).toFixed(1)) : 0;
@@ -372,6 +375,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     flightDuration,
                     fuelUplift: data.fuelUplift,
                     oilUplift: data.oilUplift,
+                    postFlightChecklist: data,
                 });
 
                 if (activeFlight.booking.purpose === 'Training' && activeFlight.booking.studentId && activeFlight.booking.pendingLogEntryId) {
@@ -640,3 +644,5 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
+
+    

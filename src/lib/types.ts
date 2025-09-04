@@ -6,6 +6,8 @@ import type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow'
 export type { FiveWhysAnalysisOutput } from '@/ai/flows/five-whys-analysis-flow';
 import type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
 export type { SuggestInvestigationStepsOutput } from '@/ai/flows/suggest-investigation-steps-flow';
+import { PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
+import { PostFlightChecklistFormValues } from '@/app/checklists/post-flight-checklist-form';
 
 
 export type Airport = {
@@ -274,6 +276,8 @@ export type Booking = {
   departure?: string;
   arrival?: string;
   pendingLogEntryId?: string | null;
+  preFlightChecklist?: Partial<PreFlightChecklistFormValues>;
+  postFlightChecklist?: Partial<PostFlightChecklistFormValues>;
 };
 
 export type SafetyReportType = 'Flight Operations Report' | 'Ground Operations Report' | 'Occupational Report' | 'General Report' | 'Aircraft Defect Report';
@@ -785,3 +789,5 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
 
 
 
+
+    
