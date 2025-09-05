@@ -218,13 +218,13 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                 <div>
                     <h3 className="font-semibold mb-2">Pre-Flight</h3>
                     <div className="space-y-4">
-                        {(viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor?.preFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor!.preFlightChecklist!.leftSidePhoto!} alt="Pre-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {(viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor?.preFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor!.preFlightChecklist!.rightSidePhoto!} alt="Pre-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                        {(viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor?.preFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.leftSidePhoto || viewingPhotosFor!.preFlightChecklist!.leftSidePhoto!} alt="Pre-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                        {(viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor?.preFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.preFlightData?.rightSidePhoto || viewingPhotosFor!.preFlightChecklist!.rightSidePhoto!} alt="Pre-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
                         {(viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor?.preFlightChecklist?.defectPhoto) && (
                             <>
                                 <Separator />
                                 <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor!.preFlightChecklist!.defectPhoto!} alt="Pre-flight defect" width={400} height={225} className="rounded-md" />
+                                <Image src={viewingPhotosFor?.preFlightData?.defectPhoto || viewingPhotosFor!.preFlightChecklist!.defectPhoto!} alt="Pre-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
                             </>
                         )}
                     </div>
@@ -232,13 +232,13 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                  <div>
                     <h3 className="font-semibold mb-2">Post-Flight</h3>
                     <div className="space-y-4">
-                        {(viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor?.postFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor!.postFlightChecklist!.leftSidePhoto!} alt="Post-flight left side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
-                        {(viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor?.postFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor!.postFlightChecklist!.rightSidePhoto!} alt="Post-flight right side" width={400} height={225} className="rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
+                        {(viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor?.postFlightChecklist?.leftSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.leftSidePhoto || viewingPhotosFor!.postFlightChecklist!.leftSidePhoto!} alt="Post-flight left side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No left side photo.</p>}
+                        {(viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor?.postFlightChecklist?.rightSidePhoto) ? <Image src={viewingPhotosFor?.postFlightData?.rightSidePhoto || viewingPhotosFor!.postFlightChecklist!.rightSidePhoto!} alt="Post-flight right side" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" /> : <p className="text-sm text-muted-foreground">No right side photo.</p>}
                         {(viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor?.postFlightChecklist?.defectPhoto) && (
                              <>
                                 <Separator />
                                 <h4 className="font-semibold text-sm text-destructive">Defect Reported</h4>
-                                <Image src={viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor!.postFlightChecklist!.defectPhoto!} alt="Post-flight defect" width={400} height={225} className="rounded-md" />
+                                <Image src={viewingPhotosFor?.postFlightData?.defectPhoto || viewingPhotosFor!.postFlightChecklist!.defectPhoto!} alt="Post-flight defect" width={0} height={0} sizes="100vw" className="w-full h-auto rounded-md" />
                             </>
                         )}
                     </div>
