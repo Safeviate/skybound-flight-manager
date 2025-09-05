@@ -55,7 +55,7 @@ const logbookFormSchema = z.object({
   instructorName: z.string().optional(),
   remarks: z.string().optional(),
 }).refine(data => {
-    if (data.startHobbs !== undefined && data.endHobbs !== undefined) {
+    if (data.startHobbs !== undefined && data.endHobbs !== undefined && data.startHobbs > 0 && data.endHobbs > 0) {
         return data.endHobbs > data.startHobbs;
     }
     return true;
