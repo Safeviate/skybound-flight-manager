@@ -522,7 +522,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     
         const tableBody = sortedLogs.map(log => {
             const aircraftParts = log.aircraft?.split(' ') || [];
-            const reg = aircraftParts.pop() || ''; // Assume last part is registration
+            const reg = aircraftParts.length > 1 ? aircraftParts.pop() : log.aircraft;
             const make = aircraftParts.join(' ');
             return [
                 format(parseISO(log.date), 'dd/MM/yy'),
@@ -1032,13 +1032,26 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => {
-                                                            const aircraftParts = log.aircraft?.split(' ') || [];
-                                                            const reg = aircraftParts.length > 1 ? aircraftParts.pop() : log.aircraft;
-                                                            const make = aircraftParts.length > 0 ? aircraftParts.join(' ') : 'N/A';
+                                                            const aircraftString = log.aircraft || '';
+                                                            const registrationRegex = /(?<=[A-Z]{2}-?)[A-Z0-9]{3,5}/i;
+                                                            const match = aircraftString.match(registrationRegex);
+                                                            
+                                                            let make = aircraftString;
+                                                            let reg = '';
+
+                                                            if (match) {
+                                                                reg = match[0];
+                                                                make = aircraftString.replace(reg, '').trim();
+                                                            } else if (aircraftString.includes('-')) {
+                                                                // Fallback for simple cases like 'ZS-TEST'
+                                                                reg = aircraftString;
+                                                                make = '';
+                                                            }
+
                                                             return (
                                                             <TableRow key={log.id}>
                                                                 <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{make}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{make || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{reg}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
