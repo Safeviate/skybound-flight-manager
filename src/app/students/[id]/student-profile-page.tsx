@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save } from 'lucide-react';
+import { Mail, Phone, User, Award, BookUser, Calendar as CalendarIcon, Edit, PlusCircle, UserCheck, Plane, BookOpen, Clock, Download, Archive, User as UserIcon, Book, Trash2, Search, ChevronLeft, ChevronRight, Wind, Users as UsersIcon, Save, Signature } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Endorsement, TrainingLogEntry, Permission, User as StudentUser, Booking, Alert } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -248,7 +248,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     };
 
     const handleDebriefSubmit = async (newLogEntry: Omit<TrainingLogEntry, 'id'>, fromBookingId?: string, logIdToUpdate?: string) => {
-        if (!company || !student) return;
+        if (!company || !student || !currentUser) return;
 
         let updatedLogs = [...(student.trainingLogs || [])];
         const logId = logIdToUpdate || `log-${Date.now()}`;
@@ -309,6 +309,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             setPendingBookings(prev => prev.filter(b => b.id !== fromBookingId));
         }
 
+        if (newLogEntry.studentSignatureRequired) {
+            const newAlert: Omit<Alert, 'id'|'number'> = {
+                companyId: company.id,
+                type: 'Signature Request',
+                title: `Debrief Signature Required`,
+                description: `Please review and sign the logbook entry for your flight on ${newLogEntry.date}.`,
+                author: currentUser.name,
+                date: new Date().toISOString(),
+                readBy: [],
+                targetUserId: student.id,
+                relatedLink: `/students/${student.id}?tab=logbook`,
+            };
+            await addDoc(collection(db, `companies/${company.id}/alerts`), newAlert);
+            toast({ title: 'Student Notified', description: 'An alert has been sent to the student to request their signature.' });
+        }
+        
         await handleUpdate(firestoreUpdate);
         
         setIsDebriefOpen(false);
@@ -949,7 +965,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief Edit</Button>
+                                                    <Button size="sm" variant="secondary" onClick={() => handleDebriefClick(booking)}>Debrief</Button>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
                                                             <Button variant="ghost" size="icon" className="shrink-0">
@@ -1025,6 +1041,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     <TableRow>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE & MODEL</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>TYPE</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>REG</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
@@ -1050,11 +1067,18 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                             <TableRow key={log.id}>
                                                                 <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.make || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.aircraftType || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
-                                                                <TableCell className="border-r whitespace-pre-wrap">{bookingNumRemark}{log.remarks || ''}</TableCell>
+                                                                <TableCell className="border-r whitespace-pre-wrap">
+                                                                    {bookingNumRemark}
+                                                                    {log.remarks || ''}
+                                                                    {log.studentSignatureRequired && (
+                                                                        <Badge variant="warning" className="mt-1">Signature Required</Badge>
+                                                                    )}
+                                                                </TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
@@ -1091,7 +1115,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                         )})
                                                     ) : (
                                                         <TableRow>
-                                                            <TableCell colSpan={16} className="h-24 text-center">No logbook entries found.</TableCell>
+                                                            <TableCell colSpan={17} className="h-24 text-center">No logbook entries found.</TableCell>
                                                         </TableRow>
                                                     )}
                                                 </TableBody>
@@ -1134,5 +1158,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+    
 
     
