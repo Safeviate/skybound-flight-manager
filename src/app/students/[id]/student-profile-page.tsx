@@ -521,12 +521,13 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         yPos += 5;
     
         const tableBody = sortedLogs.map(log => {
-            const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
-            const model = modelParts.join(' ');
+            const aircraftParts = log.aircraft?.split(' ') || [];
+            const reg = aircraftParts.pop() || ''; // Assume last part is registration
+            const make = aircraftParts.join(' ');
             return [
                 format(parseISO(log.date), 'dd/MM/yy'),
                 make,
-                model,
+                reg,
                 log.departure || 'N/A',
                 log.arrival || 'N/A',
                 log.instructorName || '',
@@ -1031,13 +1032,14 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => {
-                                                            const [make, ...modelParts] = log.aircraft?.split(' ') || ['', ''];
-                                                            const model = modelParts.join(' ');
+                                                            const aircraftParts = log.aircraft?.split(' ') || [];
+                                                            const reg = aircraftParts.length > 1 ? aircraftParts.pop() : log.aircraft;
+                                                            const make = aircraftParts.length > 0 ? aircraftParts.join(' ') : 'N/A';
                                                             return (
                                                             <TableRow key={log.id}>
                                                                 <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{make}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{model}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{reg}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
@@ -1121,7 +1123,3 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
-
-
-
-
