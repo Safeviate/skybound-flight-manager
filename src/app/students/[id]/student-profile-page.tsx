@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -159,7 +157,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
             if (sortOrder === 'newest') {
                 return dateB - dateA;
             } else {
-                return dateA - b;
+                return dateA - dateB;
             }
         });
         return sortableLogs;
@@ -453,6 +451,11 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         }
     };
 
+    const getBookingForLog = (logId: string) => {
+        return pendingBookings.find(b => b.pendingLogEntryId === logId) || 
+               bookings.find(b => b.pendingLogEntryId === logId); // Assuming bookings are available in scope
+    };
+
 
     const handleDownloadLogbook = () => {
         if (!student) return;
@@ -521,17 +524,21 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         yPos += 5;
     
         const tableBody = sortedLogs.map(log => {
-            const aircraftParts = log.aircraft?.split(' ') || [];
-            const reg = aircraftParts.length > 1 ? aircraftParts.pop() : log.aircraft;
-            const make = aircraftParts.join(' ');
+            const aircraftString = log.aircraft || '';
+            const make = log.make || '';
+            const reg = aircraftString.replace(make, '').trim();
+
+            const booking = getBookingForLog(log.id);
+            const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
+
             return [
                 format(parseISO(log.date), 'dd/MM/yy'),
-                make,
-                reg,
+                log.make || 'N/A',
+                reg || 'N/A',
                 log.departure || 'N/A',
                 log.arrival || 'N/A',
                 log.instructorName || '',
-                log.remarks || '',
+                `${bookingNumRemark}${log.remarks || ''}`,
                 formatDecimalTime(log.singleEngineTime),
                 formatDecimalTime(log.multiEngineTime),
                 formatDecimalTime(log.fstdTime),
@@ -544,7 +551,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
         });
     
         const tableHeaders = [
-            'DATE', 'MAKE', 'MODEL/REG', 'DEPART', 'ARRIVE', 'PIC/INSTR', 'REMARKS',
+            'DATE', 'MAKE & MODEL', 'REG', 'DEPART', 'ARRIVE', 'PIC/INSTR', 'REMARKS',
             ...summaryHeaders
         ];
     
@@ -1012,8 +1019,8 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DATE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE</TableHead>
-                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MODEL/REG</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>MAKE & MODEL</TableHead>
+                                                        <TableHead className="text-center align-middle border-r" style={{ width: '120px' }}>REG</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>DEPART</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '80px' }}>ARRIVE</TableHead>
                                                         <TableHead className="text-center align-middle border-r" style={{ width: '150px' }}>NAME(S) PIC/INSTR</TableHead>
@@ -1032,33 +1039,17 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                 <TableBody>
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => {
-                                                            const aircraftString = log.aircraft || '';
-                                                            const parts = aircraftString.split(/\s+/);
-                                                            let reg = '';
-                                                            let make = aircraftString;
-
-                                                            // Find a registration-like string (e.g., ZS-ABC, N12345)
-                                                            const regIndex = parts.findIndex(p => /^[A-Z]{1,2}-?[A-Z0-9]{3,5}$/i.test(p));
-
-                                                            if (regIndex !== -1) {
-                                                                reg = parts[regIndex];
-                                                                make = parts.filter((_, i) => i !== regIndex).join(' ');
-                                                            } else if (parts.length === 1 && /^[A-Z]{1,2}-?[A-Z0-9]{3,5}$/i.test(parts[0])) {
-                                                                // Handle case where only registration is provided
-                                                                reg = parts[0];
-                                                                make = '';
-                                                            }
-
-
+                                                            const booking = getBookingForLog(log.id);
+                                                            const bookingNumRemark = booking?.bookingNumber ? `Booking: ${booking.bookingNumber}\n` : '';
                                                             return (
                                                             <TableRow key={log.id}>
                                                                 <TableCell className="text-center align-middle border-r">{format(parseISO(log.date), 'dd/MM/yy')}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{make || 'N/A'}</TableCell>
-                                                                <TableCell className="text-center align-middle border-r">{reg}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.make || 'N/A'}</TableCell>
+                                                                <TableCell className="text-center align-middle border-r">{log.aircraft.replace(log.make || '', '').trim()}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.departure || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.arrival || 'N/A'}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{log.instructorName}</TableCell>
-                                                                <TableCell className="border-r whitespace-pre-wrap">{log.remarks}</TableCell>
+                                                                <TableCell className="border-r whitespace-pre-wrap">{bookingNumRemark}{log.remarks || ''}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.singleEngineTime)}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.multiEngineTime)}</TableCell>
                                                                 <TableCell className="text-center align-middle border-r">{formatDecimalTime(log.fstdTime)}</TableCell>
