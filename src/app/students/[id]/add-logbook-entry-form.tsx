@@ -21,27 +21,30 @@ import { CalendarIcon, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils.tsx';
 import { format, parseISO } from 'date-fns';
-import type { Aircraft, TrainingLogEntry, User } from '@/lib/types';
+import type { Role, User, Aircraft, TrainingLogEntry, Booking, ExerciseLog } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@/context/user-provider';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { SignaturePad } from '@/components/ui/signature-pad';
+import { trainingExercisesData } from '@/lib/data-provider';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const logbookFormSchema = z.object({
-  date: z.date({
-    required_error: 'A date is required.',
-  }),
-  aircraft: z.string().min(1, { message: 'Aircraft details are required.' }),
+  date: z.date().optional().nullable(),
+  aircraft: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   departureTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
   arrivalTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
-  startHobbs: z.coerce.number().min(0),
-  endHobbs: z.coerce.number().min(0),
+  startHobbs: z.coerce.number().optional(),
+  endHobbs: z.coerce.number().optional(),
   singleEngineTime: z.coerce.number().optional(),
   multiEngineTime: z.coerce.number().optional(),
   fstdTime: z.coerce.number().optional(),
@@ -49,11 +52,14 @@ const logbookFormSchema = z.object({
   singleTime: z.coerce.number().optional(),
   nightTime: z.coerce.number().optional(),
   dayTime: z.coerce.number().optional(),
-  instructorName: z.string({
-    required_error: 'Please enter the instructor\'s name.',
-  }),
+  instructorName: z.string().optional(),
   remarks: z.string().optional(),
-}).refine(data => data.endHobbs > data.startHobbs, {
+}).refine(data => {
+    if (data.startHobbs !== undefined && data.endHobbs !== undefined) {
+        return data.endHobbs > data.startHobbs;
+    }
+    return true;
+}, {
     message: 'End Hobbs must be greater than Start Hobbs.',
     path: ['endHobbs'],
 }).refine(data => !(data.singleEngineTime && data.multiEngineTime), {
@@ -107,7 +113,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
     if (logToEdit) {
       form.reset({
         ...logToEdit,
-        date: parseISO(logToEdit.date),
+        date: logToEdit.date ? parseISO(logToEdit.date) : new Date(),
       });
     } else {
         form.reset(defaultFormValues as LogbookFormValues);
@@ -140,13 +146,13 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
 
 
   function handleFormSubmit(data: LogbookFormValues) {
-    const duration = parseFloat((data.endHobbs - data.startHobbs).toFixed(1));
+    const duration = parseFloat(((data.endHobbs || 0) - (data.startHobbs || 0)).toFixed(1));
     const dayTime = duration - (data.nightTime || 0);
     const newEntry = {
       ...data,
       flightDuration: duration,
       dayTime: dayTime,
-      date: format(data.date, 'yyyy-MM-dd'),
+      date: data.date ? format(data.date, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
     };
     onSubmit(newEntry, logToEdit?.id);
     form.reset();
@@ -179,7 +185,7 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={field.value}
+                                    selected={field.value ?? undefined}
                                     onSelect={field.onChange}
                                     disabled={(date) => date > new Date()}
                                     initialFocus
