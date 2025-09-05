@@ -39,6 +39,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 const logbookFormSchema = z.object({
   date: z.date().optional().nullable(),
   aircraft: z.string().optional(),
+  make: z.string().optional(),
+  aircraftType: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
   departureTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Use HH:mm format." }).optional().or(z.literal('')),
@@ -81,6 +83,8 @@ interface AddLogbookEntryFormProps {
 const defaultFormValues: Partial<LogbookFormValues> = {
     date: new Date(),
     aircraft: '',
+    make: '',
+    aircraftType: '',
     departure: '',
     arrival: '',
     departureTime: '',
@@ -196,19 +200,23 @@ export function AddLogbookEntryForm({ onSubmit, logToEdit, onDelete }: AddLogboo
                         </FormItem>
                     )}
                 />
-                <FormField
+                 <FormField
                     control={form.control}
                     name="aircraft"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Aircraft</FormLabel>
+                            <FormLabel>Aircraft Registration</FormLabel>
                              <FormControl>
-                                <Input placeholder="e.g., Cessna 172 ZS-ABC" {...field} />
+                                <Input placeholder="e.g., ZS-ABC" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="make" render={({ field }) => (<FormItem><FormLabel>Aircraft Make & Model</FormLabel><FormControl><Input placeholder="e.g., Cessna 172" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="aircraftType" render={({ field }) => (<FormItem><FormLabel>Aircraft Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger></FormControl><SelectContent><SelectItem value="SE">Single-Engine</SelectItem><SelectItem value="ME">Multi-Engine</SelectItem><SelectItem value="FSTD">FSTD</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="departure" render={({ field }) => (<FormItem><FormLabel>Departure Place</FormLabel><FormControl><Input placeholder="ICAO Code" {...field} /></FormControl><FormMessage /></FormItem>)} />

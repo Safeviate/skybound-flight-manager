@@ -107,6 +107,8 @@ export type TrainingLogEntry = {
   id:string;
   date: string;
   aircraft: string;
+  make?: string;
+  aircraftType?: 'SE' | 'ME' | 'FSTD';
   departure?: string;
   arrival?: string;
   departureTime?: string;

@@ -295,10 +295,13 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             // If it's a training booking, add its ID to the student's pending bookings
             if (newBooking.purpose === 'Training' && newBooking.studentId) {
                 const studentRef = doc(db, `companies/${company.id}/students`, newBooking.studentId);
+                const selectedAircraft = aircraft.find(ac => ac.tailNumber === newBooking.aircraft);
                 const logEntry: TrainingLogEntry = {
                     id: `log-${newBookingId}`,
                     date: newBooking.date,
                     aircraft: `${newBooking.aircraft}`,
+                    make: selectedAircraft?.make || '',
+                    aircraftType: selectedAircraft?.aircraftType,
                     startHobbs: 0,
                     endHobbs: 0,
                     flightDuration: 0,
@@ -659,5 +662,4 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }
 
     
-
 
