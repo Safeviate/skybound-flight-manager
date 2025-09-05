@@ -1033,20 +1033,22 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                                     {paginatedLogs.length > 0 ? (
                                                         paginatedLogs.map(log => {
                                                             const aircraftString = log.aircraft || '';
-                                                            const registrationRegex = /(?<=[A-Z]{2}-?)[A-Z0-9]{3,5}/i;
-                                                            const match = aircraftString.match(registrationRegex);
-                                                            
-                                                            let make = aircraftString;
+                                                            const parts = aircraftString.split(/\s+/);
                                                             let reg = '';
+                                                            let make = aircraftString;
 
-                                                            if (match) {
-                                                                reg = match[0];
-                                                                make = aircraftString.replace(reg, '').trim();
-                                                            } else if (aircraftString.includes('-')) {
-                                                                // Fallback for simple cases like 'ZS-TEST'
-                                                                reg = aircraftString;
+                                                            // Find a registration-like string (e.g., ZS-ABC, N12345)
+                                                            const regIndex = parts.findIndex(p => /^[A-Z]{1,2}-?[A-Z0-9]{3,5}$/i.test(p));
+
+                                                            if (regIndex !== -1) {
+                                                                reg = parts[regIndex];
+                                                                make = parts.filter((_, i) => i !== regIndex).join(' ');
+                                                            } else if (parts.length === 1 && /^[A-Z]{1,2}-?[A-Z0-9]{3,5}$/i.test(parts[0])) {
+                                                                // Handle case where only registration is provided
+                                                                reg = parts[0];
                                                                 make = '';
                                                             }
+
 
                                                             return (
                                                             <TableRow key={log.id}>
