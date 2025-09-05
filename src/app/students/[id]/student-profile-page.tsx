@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -84,6 +85,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const router = useRouter();
     const [student, setStudent] = useState<StudentUser | null>(initialStudent);
     const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
     const [searchTerm, setSearchTerm] = useState('');
@@ -119,25 +121,28 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     }, [userLoading, currentUser, router]);
 
      useEffect(() => {
-        const fetchPendingBookings = async () => {
-            if (!student || !company || !student.pendingBookingIds || student.pendingBookingIds.length === 0) {
-                setPendingBookings([]);
-                return;
-            }
+        const fetchBookings = async () => {
+            if (!company) return;
             try {
-                // Firestore 'in' queries are limited to 30 items. We may need to chunk this for students with many bookings.
-                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('id', 'in', student.pendingBookingIds.slice(0, 30)));
+                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
                 const snapshot = await getDocs(bookingsQuery);
-                const bookings = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Booking));
-                setPendingBookings(bookings);
+                const allBookings = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Booking));
+                setBookings(allBookings);
+
+                if (student?.pendingBookingIds && student.pendingBookingIds.length > 0) {
+                    const pending = allBookings.filter(b => student.pendingBookingIds!.includes(b.id));
+                    setPendingBookings(pending);
+                } else {
+                    setPendingBookings([]);
+                }
             } catch (error) {
-                console.error("Error fetching pending bookings:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load pending bookings for this student.' });
+                console.error("Error fetching bookings:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
             }
         };
 
-        if (student) {
-            fetchPendingBookings();
+        if (company && student) {
+            fetchBookings();
         }
     }, [student, company, toast]);
     
@@ -453,7 +458,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
     const getBookingForLog = (logId: string) => {
         return pendingBookings.find(b => b.pendingLogEntryId === logId) || 
-               bookings.find(b => b.pendingLogEntryId === logId); // Assuming bookings are available in scope
+               bookings.find(b => b.pendingLogEntryId === logId);
     };
 
 
@@ -1129,3 +1134,5 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
       </main>
   );
 }
+
+    
