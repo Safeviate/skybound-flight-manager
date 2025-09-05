@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, Calendar as CalendarIcon, Search, Trash2 } from
 import { PreFlightChecklistForm, type PreFlightChecklistFormValues } from '@/app/checklists/pre-flight-checklist-form';
 import { PostFlightChecklistForm, type PostFlightChecklistFormValues } from '../checklists/post-flight-checklist-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { format, parseISO, setHours, setMinutes, isBefore } from 'date-fns';
+import { format, parseISO, setHours, setMinutes, isBefore, addDays } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
@@ -418,8 +418,12 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     };
   
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const bookingDateTime = setMinutes(setHours(selectedDate, hours), minutes);
+    const [hour, minute] = time.split(':').map(Number);
+    
+    // Check if the booking time is for the next day (e.g., after midnight)
+    const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
+    
+    const bookingDateTime = setMinutes(setHours(bookingDate, hour), minute);
     const now = new Date();
 
     if (isBefore(bookingDateTime, now)) {
@@ -655,3 +659,4 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }
 
     
+
