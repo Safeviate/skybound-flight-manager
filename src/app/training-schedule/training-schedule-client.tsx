@@ -146,7 +146,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState(true);
-  const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string } | null>(null);
+  const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string, date: Date } | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
@@ -423,7 +423,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     // Check if the booking time is for the next day (e.g., after midnight)
     const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
     
-    const bookingDateTime = setMinutes(setHours(bookingDate, hour), minute);
+    const bookingDateTime = setMinutes(setHours(new Date(bookingDate), hour), minute);
     const now = new Date();
 
     if (isBefore(bookingDateTime, now)) {
@@ -451,7 +451,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         });
         return;
     }
-    setNewBookingSlot({ aircraft, time });
+    setNewBookingSlot({ aircraft, time, date: bookingDate });
   }
 
   const handleDialogClose = () => {
@@ -628,7 +628,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
           <DialogHeader>
             <DialogTitle>Create New Booking</DialogTitle>
             <DialogDescription>
-                {`Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${format(selectedDate, 'PPP')}`}
+                {`Creating a booking for ${newBookingSlot?.aircraft.tailNumber} on ${newBookingSlot ? format(newBookingSlot.date, 'PPP') : ''}`}
             </DialogDescription>
           </DialogHeader>
           {newBookingSlot && (
@@ -638,7 +638,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
               bookings={filteredBookings}
               onSubmit={handleBookingSubmit}
               startTime={newBookingSlot?.time}
-              selectedDate={selectedDate}
+              selectedDate={newBookingSlot?.date}
             />
           )}
         </DialogContent>
@@ -659,4 +659,5 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
 }
 
     
+
 
