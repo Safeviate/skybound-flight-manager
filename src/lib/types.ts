@@ -126,6 +126,7 @@ export type TrainingLogEntry = {
   instructorName: string;
   instructorSignature?: string;
   studentSignature?: string;
+  studentSignatureRequired?: boolean;
   trainingExercises: ExerciseLog[];
   weatherConditions?: string;
   remarks?: string;
@@ -278,6 +279,8 @@ export type Booking = {
   departure?: string;
   arrival?: string;
   pendingLogEntryId?: string | null;
+  preFlightData?: Partial<PreFlightChecklistFormValues>;
+  postFlightData?: Partial<PostFlightChecklistFormValues>;
   preFlightChecklist?: Partial<PreFlightChecklistFormValues>;
   postFlightChecklist?: Partial<PostFlightChecklistFormValues>;
 };
@@ -780,16 +783,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-
-
-
-
-
-
-
-
-
-
-
-
-    

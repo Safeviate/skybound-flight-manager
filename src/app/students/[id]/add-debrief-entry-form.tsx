@@ -60,7 +60,7 @@ const debriefFormSchema = z.object({
   }),
   trainingExercises: z.array(exerciseLogSchema).min(1, 'At least one exercise must be logged.'),
   instructorSignature: z.string().min(1, 'Instructor signature is required.'),
-  studentSignature: z.string().min(1, 'Student signature is required.'),
+  studentSignature: z.string().optional(),
   departure: z.string().optional(),
   arrival: z.string().optional(),
 }).refine(data => data.endHobbs > data.startHobbs, {
@@ -144,6 +144,7 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
       ...data,
       flightDuration: duration,
       date: format(data.date, 'yyyy-MM-dd'),
+      studentSignatureRequired: !data.studentSignature,
     };
     
     const logId = logToEdit?.id || logEntryForBooking?.id;
@@ -370,5 +371,3 @@ export function AddDebriefForm({ student, onSubmit, booking, logToEdit }: AddDeb
     </Form>
   );
 }
-
-    
