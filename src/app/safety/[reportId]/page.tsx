@@ -892,7 +892,7 @@ function SafetyReportInvestigationPage() {
                       <CardDescription>Use these tools to structure and guide the investigation process.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <InvestigationStepsGenerator report={report} personnel={investigationTeamMembers} onAssignTasks={handleAssignTasks} />
+                      <InvestigationStepsGenerator report={report} personnel={personnel} onAssignTasks={handleAssignTasks} />
                   </CardContent>
               </Card>
               
