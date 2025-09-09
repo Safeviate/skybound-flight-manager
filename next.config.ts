@@ -6,7 +6,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: true, // PWA is fully disabled
+  disable: true, // PWA is fully disabled to prevent chunk load errors
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -62,5 +62,6 @@ const nextConfig: NextConfig = {
   }
 };
 
-// PWA is now disabled in all environments
-export default nextConfig;
+// PWA is now disabled in all environments by the flag above.
+// The pwaConfig wrapper is kept for potential future use but is currently inactive.
+export default pwaConfig(nextConfig);
