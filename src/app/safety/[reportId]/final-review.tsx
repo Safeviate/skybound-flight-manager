@@ -8,7 +8,7 @@ import type { SafetyReport } from '@/lib/types';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { getRiskScoreColor, getRiskLevel } from '@/lib/utils.tsx';
-import { ArrowRight, Check, ShieldCheck, ShieldAlert, CircleAlert, FileText, CheckCircle } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, ShieldAlert, CircleAlert, FileText, CheckCircle, RotateCw } from 'lucide-react';
 
 interface FinalReviewProps {
   report: SafetyReport;
@@ -21,6 +21,14 @@ export function FinalReview({ report, onUpdate }: FinalReviewProps) {
       ...report,
       status: 'Closed',
       closedDate: new Date().toISOString().split('T')[0],
+    });
+  };
+
+  const handleReopenReport = () => {
+    onUpdate({
+      ...report,
+      status: 'Under Review', // Or 'Open', depending on desired workflow
+      closedDate: undefined,
     });
   };
 
@@ -84,20 +92,17 @@ export function FinalReview({ report, onUpdate }: FinalReviewProps) {
           </div>
         </div>
         <div className="border-t pt-6 flex justify-end">
-            <Button 
-                onClick={handleCloseReport} 
-                disabled={report.status === 'Closed'}
-                variant={report.status === 'Closed' ? 'success' : 'destructive'}
-            >
-                {report.status === 'Closed' ? (
-                    <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Report Closed
-                    </>
-                ) : (
-                    'Close Report Permanently'
-                )}
-            </Button>
+             {report.status === 'Closed' ? (
+                <Button onClick={handleReopenReport} variant="outline">
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    Re-open Report
+                </Button>
+            ) : (
+                <Button onClick={handleCloseReport} variant="destructive">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Close Report
+                </Button>
+            )}
         </div>
       </CardContent>
     </Card>
