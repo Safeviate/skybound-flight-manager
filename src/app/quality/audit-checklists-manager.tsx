@@ -282,6 +282,7 @@ export function AuditChecklistsManager({
 
     const { items: sortedTemplates, requestSort, sortConfig } = useTableControls(checklistTemplates, {
         initialSort: { key: 'title', direction: 'asc' },
+        searchKeys: ['title'],
     });
 
     const SortableHeader = ({ label, sortKey }: { label: string; sortKey: keyof Checklist }) => (
