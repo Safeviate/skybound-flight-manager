@@ -285,10 +285,12 @@ export function AuditChecklistsManager({
     });
 
     const SortableHeader = ({ label, sortKey }: { label: string; sortKey: keyof Checklist }) => (
-        <Button variant="ghost" onClick={() => requestSort(sortKey)}>
-            {label}
-            <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
-        </Button>
+        <TableHead>
+            <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-0">
+                {label}
+                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
+            </Button>
+        </TableHead>
     );
 
     const fetchTemplates = async () => {
@@ -441,8 +443,8 @@ export function AuditChecklistsManager({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead><SortableHeader label="Title" sortKey="title" /></TableHead>
-                                <TableHead><SortableHeader label="Items" sortKey="items" /></TableHead>
+                                <SortableHeader label="Title" sortKey="title" />
+                                <SortableHeader label="Items" sortKey="items" />
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
