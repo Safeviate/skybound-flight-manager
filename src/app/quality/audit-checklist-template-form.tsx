@@ -17,15 +17,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { AuditChecklist, AuditChecklistItem, AuditArea } from '@/lib/types';
+import type { AuditChecklist, AuditChecklistItem, AuditArea, ChecklistItemType } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const auditChecklistItemSchema = z.object({
     id: z.string().optional(),
     text: z.string().min(1, { message: "Item text cannot be empty."}),
     regulationReference: z.string().optional(),
+    type: z.custom<ChecklistItemType>(),
 });
 
 const auditChecklistFormSchema = z.object({
@@ -44,15 +46,18 @@ interface AuditChecklistTemplateFormProps {
     existingTemplate?: AuditChecklist | null;
 }
 
+const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'AICamera-Registration', 'AICamera-Hobbs', 'Header'];
+
+
 export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(auditChecklistFormSchema),
     defaultValues: existingTemplate ? {
         title: existingTemplate.title,
-        items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
+        items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
     } : {
       title: '',
-      items: [{ text: '', regulationReference: '' }],
+      items: [{ text: '', regulationReference: '', type: 'Checkbox' }],
     },
   });
   
@@ -60,7 +65,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
     if (existingTemplate) {
         form.reset({
             title: existingTemplate.title,
-            items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '' })),
+            items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
         });
     }
   }, [existingTemplate, form]);
@@ -99,36 +104,59 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
             <FormLabel>Checklist Items</FormLabel>
             <ScrollArea className="h-60 mt-2 pr-4">
                 <div className="space-y-3">
-                    {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-start gap-2 p-2 border rounded-md">
-                        <span className="font-semibold text-sm pt-2">{index + 1}.</span>
-                        <div className="flex-1 space-y-2">
-                             <FormField
-                                control={form.control}
-                                name={`items.${index}.text`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormControl>
-                                        <Textarea placeholder={`Item text (include regulation in text if applicable)`} {...field} className="min-h-[40px]"/>
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                       
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            disabled={fields.length <= 1}
-                            className="shrink-0 mt-1"
-                        >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </div>
-                    ))}
+                    {fields.map((field, index) => {
+                       const itemType = form.watch(`items.${index}.type`);
+                       const isHeader = itemType === 'Header';
+                       return (
+                            <div key={field.id} className={cn("flex items-start gap-2 p-2 border rounded-md", isHeader && "bg-muted/50")}>
+                                <span className="font-semibold text-sm pt-2">{index + 1}.</span>
+                                <div className="flex-1 space-y-2">
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.text`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormControl>
+                                                <Textarea placeholder={isHeader ? "Enter section header title..." : `Item text (include regulation in text if applicable)`} {...field} className={cn("min-h-[40px]", isHeader && "font-bold text-base bg-transparent border-0 shadow-none focus-visible:ring-0")} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name={`items.${index}.type`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Select item type" /></SelectTrigger></FormControl>
+                                                        <SelectContent>{checklistItemTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        {!isHeader && (
+                                            <FormField
+                                                control={form.control}
+                                                name={`items.${index}.regulationReference`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl><Input placeholder="Regulation (e.g., CAR 91.04.8)" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="shrink-0 mt-1">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                       )
+                    })}
                 </div>
              </ScrollArea>
              {form.formState.errors.items && form.formState.errors.items.root && (
@@ -141,7 +169,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
             type="button"
             variant="outline"
             className="w-full"
-            onClick={() => append({ text: '', regulationReference: '' })}
+            onClick={() => append({ text: '', regulationReference: '', type: 'Checkbox' })}
             >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Item

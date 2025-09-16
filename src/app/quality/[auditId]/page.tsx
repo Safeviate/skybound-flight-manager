@@ -481,6 +481,9 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                         </CardHeader>
                         <CardContent>
                             {audit.checklistItems.map(item => {
+                                if (item.type === 'Header') {
+                                    return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>;
+                                }
                                 const { icon, variant, text } = getFindingInfo(item.finding);
                                 return (
                                     <div key={item.id} className="p-4 border rounded-lg mb-4">
@@ -663,7 +666,7 @@ const AuditReportView = ({ audit, onUpdate, personnel, onNavigateBack }: { audit
                             <div>
                                 <Image src={audit.auditeeSignature} alt="Auditee Signature" width={300} height={150} className="rounded-md border bg-white"/>
                                 {audit.auditeeSignatureDate && (
-                                    <p className="text-xs text-muted-foreground mt-1">Signed on: {format(parseISO(audit.auditeeSignatureDate), 'PPP p')}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Signed by {audit.auditeeName} on: {format(parseISO(audit.auditeeSignatureDate), 'PPP p')}</p>
                                 )}
                             </div>
                         ) : canSign(user, audit.auditeeName) ? (
@@ -771,7 +774,7 @@ export default function QualityAuditDetailPage() {
    const handleFinalizeAudit = () => {
     if (!audit) return;
 
-    const totalApplicableItems = audit.checklistItems.filter(item => item.finding !== 'Not Applicable').length;
+    const totalApplicableItems = audit.checklistItems.filter(item => item.finding !== 'Not Applicable' && item.type !== 'Header').length;
     const compliantItems = audit.checklistItems.filter(item => item.finding === 'Compliant').length;
     const complianceScore = totalApplicableItems > 0 ? Math.round((compliantItems / totalApplicableItems) * 100) : 100;
 
@@ -809,6 +812,8 @@ export default function QualityAuditDetailPage() {
     const levelOptions: FindingLevel[] = ['Level 1 Finding', 'Level 2 Finding', 'Level 3 Finding', 'Observation'];
 
     const seededItems = audit.checklistItems.map((item, index) => {
+        if (item.type === 'Header') return item;
+
         let finding: FindingStatus = 'Compliant';
         let level: FindingLevel = null;
         let comment = 'Verified and found to be in full compliance with all relevant regulations.';
@@ -989,6 +994,9 @@ export default function QualityAuditDetailPage() {
                   {audit.checklistItems && audit.checklistItems.length > 0 ? (
                       <div className="space-y-4">
                           {audit.checklistItems.map(item => {
+                              if (item.type === 'Header') {
+                                return <h3 key={item.id} className="text-lg font-semibold mt-6 mb-2 border-b pb-2">{item.text}</h3>
+                              }
                               const findingInfo = getFindingInfo(item.finding);
                               const levelInfo = getLevelInfo(item.level);
                               return (
@@ -1110,14 +1118,3 @@ export default function QualityAuditDetailPage() {
 
 QualityAuditDetailPage.title = "Quality Audit Investigation";
     
-
-    
-
-
-
-
-
-
-    
-
-

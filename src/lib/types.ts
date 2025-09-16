@@ -448,6 +448,7 @@ export type FindingLevel = 'Level 1 Finding' | 'Level 2 Finding' | 'Level 3 Find
 export type AuditChecklistItem = {
     id: string;
     text: string;
+    type?: ChecklistItemType;
     finding: FindingStatus | null;
     level: FindingLevel;
     observation?: string;
@@ -464,7 +465,7 @@ export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' |
 
 export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
 
-export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs';
+export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 
 export type ChecklistItem = {
     id: string;
@@ -783,3 +784,4 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
