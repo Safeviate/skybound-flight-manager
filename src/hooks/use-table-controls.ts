@@ -45,7 +45,7 @@ export function useTableControls<T>(
         if (aValue === undefined || aValue === null) return 1;
         if (bValue === undefined || bValue === null) return -1;
         
-        // Specific logic for sorting by array length
+        // Check if we are sorting by a property that is an array to sort by length
         if (Array.isArray(aValue) && Array.isArray(bValue)) {
             if (aValue.length < bValue.length) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
