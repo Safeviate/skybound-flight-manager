@@ -46,7 +46,7 @@ export function useTableControls<T>(
         if (bValue === undefined || bValue === null) return -1;
         
         // Handle array length for 'items' key
-        if (sortConfig.key === 'items' && Array.isArray(aValue) && Array.isArray(bValue)) {
+        if (Array.isArray(aValue) && Array.isArray(bValue)) {
             if (aValue.length < bValue.length) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
             }
@@ -54,6 +54,13 @@ export function useTableControls<T>(
                 return sortConfig.direction === 'asc' ? 1 : -1;
             }
             return 0;
+        }
+
+        // Handle string and number sorting
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortConfig.direction === 'asc' 
+            ? aValue.localeCompare(bValue) 
+            : bValue.localeCompare(aValue);
         }
 
         if (aValue < bValue) {
