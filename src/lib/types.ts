@@ -463,18 +463,16 @@ export type AuditChecklistItem = {
 
 export type AuditArea = 'Personnel' | 'Maintenance' | 'Facilities' | 'Records' | 'Management' | 'Ground Ops' | 'Cabin Safety' | 'Security' | 'Occupational Safety' | 'Administration & Management';
 
-export type ChecklistCategory = 'Pre-Flight' | 'Post-Flight' | 'Post-Maintenance';
+export type ChecklistCategory = string;
 
 export type ChecklistItemType = 'Checkbox' | 'Textbox' | 'StandardCamera' | 'AICamera-Registration' | 'AICamera-Hobbs' | 'Header';
 
-export type ChecklistItem = {
+export type AuditChecklist = {
     id: string;
-    text: string;
-    type: ChecklistItemType;
-    completed: boolean;
-    value?: string | number | boolean;
-    regulationReference?: string;
-    evidence?: string;
+    companyId: string;
+    title: string;
+    category: ChecklistCategory;
+    items: AuditChecklistItem[];
 };
 
 export type CompletedChecklistItemResult = {
@@ -784,4 +782,3 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
-

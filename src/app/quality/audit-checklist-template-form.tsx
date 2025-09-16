@@ -34,6 +34,7 @@ const auditChecklistFormSchema = z.object({
   title: z.string().min(3, {
     message: 'Title must be at least 3 characters.',
   }),
+  category: z.string().min(1, 'Category is required.'),
   items: z.array(auditChecklistItemSchema).min(1, {
       message: "You must add at least one checklist item."
   }),
@@ -47,16 +48,18 @@ interface AuditChecklistTemplateFormProps {
 }
 
 const checklistItemTypes: ChecklistItemType[] = ['Checkbox', 'Textbox', 'StandardCamera', 'AICamera-Registration', 'AICamera-Hobbs', 'Header'];
-
+const checklistCategories = ['Flight Operations', 'Maintenance', 'Ground Handling', 'Safety Management', 'Quality Assurance', 'Administration'];
 
 export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: AuditChecklistTemplateFormProps) {
   const form = useForm<ChecklistFormValues>({
     resolver: zodResolver(auditChecklistFormSchema),
     defaultValues: existingTemplate ? {
         title: existingTemplate.title,
+        category: existingTemplate.category,
         items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
     } : {
       title: '',
+      category: 'Flight Operations',
       items: [{ text: '', regulationReference: '', type: 'Checkbox' }],
     },
   });
@@ -65,6 +68,7 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
     if (existingTemplate) {
         form.reset({
             title: existingTemplate.title,
+            category: existingTemplate.category,
             items: existingTemplate.items.map(item => ({ id: item.id, text: item.text, regulationReference: item.regulationReference || '', type: item.type || 'Checkbox' })),
         });
     }
@@ -87,19 +91,35 @@ export function AuditChecklistTemplateForm({ onSubmit, existingTemplate }: Audit
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Checklist Title</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Quarterly Flight Operations Inspection" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Checklist Title</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., C172 Pre-Flight" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
+                        <SelectContent>{checklistCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <div>
             <FormLabel>Checklist Items</FormLabel>
             <ScrollArea className="h-60 mt-2 pr-4">

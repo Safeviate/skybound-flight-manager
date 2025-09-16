@@ -5,7 +5,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users, ArrowUpDown } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -280,19 +280,16 @@ export function AuditChecklistsManager({
     const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
     const router = useRouter();
 
-    const { items: sortedTemplates, requestSort, sortConfig } = useTableControls(checklistTemplates, {
-        initialSort: { key: 'title', direction: 'asc' },
-        searchKeys: ['title'],
-    });
-
-    const SortableHeader = ({ label, sortKey }: { label: string; sortKey: keyof Checklist }) => (
-        <TableHead>
-            <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-0">
-                {label}
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
-            </Button>
-        </TableHead>
-    );
+    const groupedTemplates = useMemo(() => {
+        return checklistTemplates.reduce((acc, template) => {
+            const category = template.category || 'Uncategorized';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(template);
+            return acc;
+        }, {} as Record<string, Checklist[]>);
+    }, [checklistTemplates]);
 
     const fetchTemplates = async () => {
         if (!company) return;
@@ -385,14 +382,15 @@ export function AuditChecklistsManager({
             id: `temp-${Date.now()}`,
             companyId: company?.id || '',
             title: data.title,
+            category: 'Uncategorized',
             items: data.items.map((item, index) => ({
                 id: `item-${Date.now()}-${index}`,
                 text: item.text,
                 regulationReference: item.regulationReference,
+                type: 'Checkbox',
                 finding: null,
                 level: null,
             })),
-            category: 'Pre-Flight',
         };
         setEditingTemplate(newTemplate);
         setCreationMode('manual');
@@ -440,46 +438,51 @@ export function AuditChecklistsManager({
                         New Checklist Template
                     </Button>
                 </div>
-                <div className="border rounded-md">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <SortableHeader label="Title" sortKey="title" />
-                                <SortableHeader label="Items" sortKey="items" />
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sortedTemplates.length > 0 ? (
-                                sortedTemplates.map((template) => (
-                                    <TableRow key={template.id}>
-                                        <TableCell className="font-medium">{template.title}</TableCell>
-                                        <TableCell>{template.items.length}</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <StartAuditDialog 
-                                                template={template} 
-                                                onStart={(data) => handleStartAudit(data, template)} 
-                                                personnel={personnel} 
-                                            />
-                                            <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
-                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                            </Button>
-                                            <Button variant="destructive" size="icon" onClick={() => handleDelete(template.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
+                 {Object.keys(groupedTemplates).sort().map(category => (
+                    <div key={category} className="mb-8">
+                        <h3 className="text-lg font-semibold mb-2">{category}</h3>
+                        <div className="border rounded-md">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Items</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="h-24 text-center">
-                                        No audit checklist templates found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                </TableHeader>
+                                <TableBody>
+                                    {groupedTemplates[category].length > 0 ? (
+                                        groupedTemplates[category].map((template) => (
+                                            <TableRow key={template.id}>
+                                                <TableCell className="font-medium">{template.title}</TableCell>
+                                                <TableCell>{template.items.length}</TableCell>
+                                                <TableCell className="text-right space-x-2">
+                                                    <StartAuditDialog 
+                                                        template={template} 
+                                                        onStart={(data) => handleStartAudit(data, template)} 
+                                                        personnel={personnel} 
+                                                    />
+                                                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                    </Button>
+                                                    <Button variant="destructive" size="icon" onClick={() => handleDelete(template.id)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="h-24 text-center">
+                                                No audit checklist templates found in this category.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                 ))}
             </CardContent>
              <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
                 <DialogContent className="sm:max-w-3xl">
