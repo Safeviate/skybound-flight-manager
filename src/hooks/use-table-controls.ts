@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -44,6 +45,17 @@ export function useTableControls<T>(
         if (aValue === undefined || aValue === null) return 1;
         if (bValue === undefined || bValue === null) return -1;
         
+        // Handle array length for 'items' key
+        if (sortConfig.key === 'items' && Array.isArray(aValue) && Array.isArray(bValue)) {
+            if (aValue.length < bValue.length) {
+                return sortConfig.direction === 'asc' ? -1 : 1;
+            }
+            if (aValue.length > bValue.length) {
+                return sortConfig.direction === 'asc' ? 1 : -1;
+            }
+            return 0;
+        }
+
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }

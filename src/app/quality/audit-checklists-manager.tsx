@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Bot, FileText, Loader2, PlayCircle, Calendar as CalendarIcon, Users, ArrowUpDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/user-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTableControls } from '@/hooks/use-table-controls';
 
 
 const AiGenerator = ({ onGenerated }: { onGenerated: (data: any) => void }) => {
@@ -279,6 +280,17 @@ export function AuditChecklistsManager({
     const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
     const router = useRouter();
 
+    const { items: sortedTemplates, requestSort, sortConfig } = useTableControls(checklistTemplates, {
+        initialSort: { key: 'title', direction: 'asc' },
+    });
+
+    const SortableHeader = ({ label, sortKey }: { label: string; sortKey: keyof Checklist }) => (
+        <Button variant="ghost" onClick={() => requestSort(sortKey)}>
+            {label}
+            <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig?.key === sortKey ? '' : 'opacity-0 group-hover:opacity-50'}`} />
+        </Button>
+    );
+
     const fetchTemplates = async () => {
         if (!company) return;
         const templatesQuery = query(collection(db, `companies/${company.id}/audit-checklists`));
@@ -429,14 +441,14 @@ export function AuditChecklistsManager({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Items</TableHead>
+                                <TableHead><SortableHeader label="Title" sortKey="title" /></TableHead>
+                                <TableHead><SortableHeader label="Items" sortKey="items" /></TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {checklistTemplates.length > 0 ? (
-                                checklistTemplates.map((template) => (
+                            {sortedTemplates.length > 0 ? (
+                                sortedTemplates.map((template) => (
                                     <TableRow key={template.id}>
                                         <TableCell className="font-medium">{template.title}</TableCell>
                                         <TableCell>{template.items.length}</TableCell>
