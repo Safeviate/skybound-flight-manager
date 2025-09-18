@@ -31,6 +31,7 @@ const pilotFormSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   email: z.string().email('A valid email is required.'),
   phone: z.string().regex(phoneRegex, 'Invalid phone number.'),
+  emergencyContactNumber: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
@@ -104,6 +105,7 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
       name: pilot.name,
       email: pilot.email,
       phone: pilot.phone,
+      emergencyContactNumber: pilot.emergencyContactNumber,
       documents: formDocs,
     });
   }, [pilot, form]);
@@ -159,6 +161,17 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl><Input {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="emergencyContactNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Emergency Contact Number</FormLabel>
+              <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
               <FormMessage />
             </FormItem>
           )}

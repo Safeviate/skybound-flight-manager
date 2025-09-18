@@ -223,6 +223,7 @@ const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handl
                     <CardContent>
                         <p className="text-sm text-muted-foreground">{pilot.email}</p>
                         <p className="text-sm text-muted-foreground">{pilot.phone}</p>
+                        {pilot.emergencyContactNumber && <p className="text-sm text-muted-foreground">Emergency: {pilot.emergencyContactNumber}</p>}
                     </CardContent>
                 </Card>
             ))}

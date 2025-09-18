@@ -227,6 +227,7 @@ export type User = {
     role: Role;
     email?: string;
     phone: string;
+    emergencyContactNumber?: string;
     password?: string;
     permissions: Permission[];
     visibleMenuItems?: NavMenuItem[];

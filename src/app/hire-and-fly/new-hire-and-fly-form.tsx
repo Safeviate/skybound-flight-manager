@@ -35,6 +35,7 @@ const pilotFormSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   email: z.string().email('A valid email is required.'),
   phone: z.string().regex(phoneRegex, 'Invalid phone number.'),
+  emergencyContactNumber: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
@@ -62,6 +63,7 @@ export function NewHireAndFlyForm({ onSuccess }: NewHireAndFlyFormProps) {
       name: '',
       email: '',
       phone: '',
+      emergencyContactNumber: '',
       documents: HIRE_AND_FLY_DOCUMENTS.map(type => ({ type, expiryDate: null, url: null })),
     },
   });
@@ -172,6 +174,17 @@ export function NewHireAndFlyForm({ onSuccess }: NewHireAndFlyFormProps) {
                     <FormMessage />
                     </FormItem>
                 )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="emergencyContactNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Number</FormLabel>
+                      <FormControl><Input placeholder="+27 12 345 6789" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 <div className="space-y-2 pt-4">
