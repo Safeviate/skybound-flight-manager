@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -119,6 +118,9 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
+  
+  // The `users` prop contains a combined list of all personnel, students, and hire-and-fly pilots.
+  // This variable filters out only the students, making all other user types available for private flights.
   const privatePilots = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
 
 
