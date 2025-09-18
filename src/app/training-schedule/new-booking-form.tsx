@@ -279,7 +279,11 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                   <FormLabel>Pilot</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
-                    <SelectContent>{privatePilots.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                        {privatePilots.map(p => (
+                            <SelectItem key={p.id} value={p.name}>{p.name} ({p.role})</SelectItem>
+                        ))}
+                    </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
