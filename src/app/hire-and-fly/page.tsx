@@ -185,7 +185,10 @@ const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handl
                 <Card key={pilot.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle>{pilot.name}</CardTitle>
+                            <div>
+                                <CardTitle>{pilot.name}</CardTitle>
+                                <CardDescription>{pilot.licenseType || 'N/A'}</CardDescription>
+                            </div>
                             {canEdit && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>

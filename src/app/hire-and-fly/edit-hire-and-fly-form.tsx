@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -32,6 +33,7 @@ const pilotFormSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   email: z.string().email('A valid email is required.'),
   phone: z.string().regex(phoneRegex, 'Invalid phone number.'),
+  licenseType: z.string().optional(),
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
@@ -108,6 +110,7 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
       name: pilot.name,
       email: pilot.email,
       phone: pilot.phone,
+      licenseType: pilot.licenseType,
       documents: formDocs,
       nextOfKinName: pilot.nextOfKinName,
       nextOfKinRelation: pilot.nextOfKinRelation,
@@ -137,39 +140,60 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
     <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 pt-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email Address</FormLabel>
-              <FormControl><Input type="email" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <FormControl><Input type="email" {...field} /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="licenseType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>License Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                        <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="SPL">SPL</SelectItem>
+                            <SelectItem value="PPL">PPL</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         
         <Separator />
 
