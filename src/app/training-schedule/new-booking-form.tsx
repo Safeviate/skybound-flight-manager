@@ -29,6 +29,8 @@ const bookingFormSchema = z.object({
   // Conditional fields
   student: z.string().optional(),
   studentId: z.string().optional(),
+  pilotId: z.string().optional(),
+  pilotName: z.string().optional(),
   instructor: z.string().optional(),
   maintenanceType: z.string().optional(),
   bookingNumber: z.string().optional(),
@@ -49,6 +51,14 @@ const bookingFormSchema = z.object({
 }, {
     message: "Maintenance Type is required for Maintenance bookings.",
     path: ["maintenanceType"],
+}).refine(data => {
+    if (data.purpose === 'Private') {
+        return !!data.pilotName;
+    }
+    return true;
+}, {
+    message: "A pilot is required for Private bookings.",
+    path: ["pilotName"],
 });
 
 
@@ -106,6 +116,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
       purpose: existingBooking?.purpose,
       student: existingBooking?.student || undefined,
       studentId: existingBooking?.studentId || undefined,
+      pilotId: existingBooking?.pilotId || undefined,
+      pilotName: existingBooking?.pilotName || undefined,
       instructor: existingBooking?.instructor || undefined,
       maintenanceType: existingBooking?.maintenanceType || undefined,
       bookingNumber: existingBooking?.bookingNumber || undefined,
@@ -119,25 +131,24 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
-  
-  // This filter now correctly isolates only the "Hire and Fly" users.
-  const privatePilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
+  const privatePilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly' || u.role === 'Student'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
     
-    // Generate booking number only for new, non-maintenance bookings
     if (!existingBooking && data.purpose !== 'Maintenance') {
         const bookingCount = bookings.filter(b => b.bookingNumber).length;
         data.bookingNumber = `BKNG-${(bookingCount + 1).toString().padStart(4, '0')}`;
     }
     
-    // Find studentId if student name is selected
     if (data.student && !data.studentId) {
         const selectedStudent = users.find(u => u.name === data.student);
-        if (selectedStudent) {
-            data.studentId = selectedStudent.id;
-        }
+        if (selectedStudent) data.studentId = selectedStudent.id;
+    }
+    
+    if (data.pilotName && !data.pilotId) {
+        const selectedPilot = users.find(u => u.name === data.pilotName);
+        if (selectedPilot) data.pilotId = selectedPilot.id;
     }
 
     const bookingStartDate = new Date(data.date);
@@ -148,7 +159,10 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
     const cleanData = {
         ...data,
-        student: data.purpose === 'Training' || data.purpose === 'Private' ? data.student : null,
+        student: data.purpose === 'Training' ? data.student : null,
+        studentId: data.purpose === 'Training' ? data.studentId : null,
+        pilotId: data.purpose === 'Private' ? data.pilotId : null,
+        pilotName: data.purpose === 'Private' ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
@@ -165,7 +179,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const handleDeleteConfirm = () => {
     if (existingBooking && onDelete) {
         const finalReason = deleteReason === 'Other' ? `Other: ${otherReason}` : deleteReason;
-        if (!finalReason) return; // Prevent deletion without a reason
+        if (!finalReason) return;
         onDelete(existingBooking.id, finalReason);
     }
   }
@@ -275,7 +289,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
           <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
             <FormField
               control={form.control}
-              name="student"
+              name="pilotName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Pilot</FormLabel>
