@@ -72,7 +72,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
         log.bookingNumber || 'N/A',
         format(parseISO(log.date), 'dd/MM/yyyy'),
         log.aircraft,
-        log.student || 'N/A',
+        log.student || log.pilotName || 'N/A',
         log.instructor || 'N/A',
         log.startHobbs?.toFixed(1) || '0.0',
         log.endHobbs?.toFixed(1) || '0.0',
@@ -149,7 +149,7 @@ export function FlightLogsPageContent({ initialBookings, initialUsers, onDelete 
                         <TableCell className="font-medium">{log.bookingNumber || 'N/A'}</TableCell>
                         <TableCell>{format(parseISO(log.date), 'dd/MM/yyyy')}</TableCell>
                         <TableCell>{log.aircraft}</TableCell>
-                        <TableCell>{log.student || 'N/A'}</TableCell>
+                        <TableCell>{log.student || log.pilotName || 'N/A'}</TableCell>
                         <TableCell>{log.instructor || 'N/A'}</TableCell>
                         <TableCell>{log.startHobbs?.toFixed(1) || '-'}</TableCell>
                         <TableCell>{log.endHobbs?.toFixed(1) || '-'}</TableCell>
