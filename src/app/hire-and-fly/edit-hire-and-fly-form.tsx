@@ -19,6 +19,7 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { StandardCamera } from '@/components/ui/standard-camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
@@ -31,13 +32,15 @@ const pilotFormSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   email: z.string().email('A valid email is required.'),
   phone: z.string().regex(phoneRegex, 'Invalid phone number.'),
-  emergencyContactNumber: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
   documents: z.array(z.object({
       type: z.string(),
       expiryDate: z.date().nullable(),
       url: z.string().optional().nullable(),
       file: z.any().optional(),
   })).optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelation: z.string().optional(),
+  nextOfKinPhone: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
 });
 
 type PilotFormValues = z.infer<typeof pilotFormSchema>;
@@ -105,8 +108,10 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
       name: pilot.name,
       email: pilot.email,
       phone: pilot.phone,
-      emergencyContactNumber: pilot.emergencyContactNumber,
       documents: formDocs,
+      nextOfKinName: pilot.nextOfKinName,
+      nextOfKinRelation: pilot.nextOfKinRelation,
+      nextOfKinPhone: pilot.nextOfKinPhone,
     });
   }, [pilot, form]);
 
@@ -165,18 +170,20 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="emergencyContactNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emergency Contact Number</FormLabel>
-              <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         
+        <Separator />
+
+        <div className="space-y-2">
+            <h3 className="font-medium">Emergency Contact</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem className="col-span-full"><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+        </div>
+        
+        <Separator />
+
         <div className="space-y-2 pt-4">
             <h3 className="font-medium">Pilot Documents</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

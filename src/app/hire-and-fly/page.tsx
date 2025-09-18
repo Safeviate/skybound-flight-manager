@@ -23,6 +23,7 @@ import { getExpiryBadge } from '@/lib/utils.tsx';
 import { useSettings } from '@/context/settings-provider';
 import { HIRE_AND_FLY_DOCUMENTS } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 function HireAndFlyPage() {
     const { company, user } = useUser();
@@ -223,7 +224,10 @@ const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handl
                     <CardContent>
                         <p className="text-sm text-muted-foreground">{pilot.email}</p>
                         <p className="text-sm text-muted-foreground">{pilot.phone}</p>
-                        {pilot.emergencyContactNumber && <p className="text-sm text-muted-foreground">Emergency: {pilot.emergencyContactNumber}</p>}
+                        <Separator className="my-2"/>
+                        <p className="text-xs font-semibold">Emergency Contact</p>
+                        <p className="text-sm text-muted-foreground">{pilot.nextOfKinName || 'N/A'} ({pilot.nextOfKinRelation || 'N/A'})</p>
+                        <p className="text-sm text-muted-foreground">{pilot.nextOfKinPhone || 'N/A'}</p>
                     </CardContent>
                 </Card>
             ))}
