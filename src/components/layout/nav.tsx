@@ -60,7 +60,6 @@ export const navItems: {
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
-  { href: '/personnel', label: 'Hire and Fly', icon: Plane, requiredFeature: 'Personnel' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
   { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
