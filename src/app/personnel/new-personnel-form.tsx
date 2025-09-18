@@ -70,6 +70,9 @@ const personnelFormSchema = z.object({
   })).optional(),
   permissions: z.array(z.string()).optional(),
   visibleMenuItems: z.array(z.string()).optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelation: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -101,6 +104,9 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
       documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null, url: null })),
       permissions: [],
       visibleMenuItems: availableNavItems.map(item => item.label),
+      nextOfKinName: '',
+      nextOfKinRelation: '',
+      nextOfKinPhone: '',
     }
   });
 
@@ -197,6 +203,9 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
         visibleMenuItems: data.visibleMenuItems as NavMenuItem[],
         documents: documentsToSave as UserDocument[],
         status: 'Active',
+        nextOfKinName: data.nextOfKinName,
+        nextOfKinRelation: data.nextOfKinRelation,
+        nextOfKinPhone: data.nextOfKinPhone,
     };
     
     const result = await createUserAndSendWelcomeEmail(userData, company.id, company.name, settings.welcomeEmailEnabled);
@@ -224,6 +233,15 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
                     <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a department" /></SelectTrigger></FormControl><SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
                 
+                <div className="space-y-4 pt-4 border-t">
+                    <h3 className="font-semibold text-base">Emergency Contact</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                         <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                </div>
+
                 <Separator />
 
                 <FormField control={form.control} name="consentDisplayContact" render={({ field }) => (<FormItem className="space-y-3 rounded-md border p-4"><FormLabel>Privacy Consent</FormLabel><FormDescription>Select whether this user's contact details (email and phone number) can be displayed to other users within the application for operational purposes.</FormDescription><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1"><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Consented" /></FormControl><FormLabel className="font-normal">I consent</FormLabel></FormItem><FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="Not Consented" /></FormControl><FormLabel className="font-normal">I do not consent</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)} />
@@ -248,3 +266,4 @@ export function NewPersonnelForm({ onSuccess }: NewPersonnelFormProps) {
     </>
   );
 }
+

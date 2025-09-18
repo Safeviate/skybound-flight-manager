@@ -41,9 +41,7 @@ const MAX_FILE_SIZE = 500000; // 500KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const studentFormSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
+  name: z.string().min(2, 'Name is required.'),
   studentCode: z.string().optional(),
   email: z.string().email(),
   phone: z.string().regex(phoneRegex, 'Invalid Number!'),
@@ -60,6 +58,9 @@ const studentFormSchema = z.object({
   consentDisplayContact: z.enum(['Consented', 'Not Consented'], {
     required_error: "You must select a privacy option."
   }),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelation: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -78,15 +79,6 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
   
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      name: student.name || '',
-      studentCode: student.studentCode || '',
-      email: student.email || '',
-      phone: student.phone || '',
-      instructor: student.instructor || '',
-      licenseType: student.licenseType || '',
-      consentDisplayContact: student.consentDisplayContact || 'Not Consented',
-    },
   });
   
   const { setValue, watch } = form;
@@ -147,6 +139,9 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             licenseType: student.licenseType || '',
             documents: formDocs,
             consentDisplayContact: student.consentDisplayContact || 'Not Consented',
+            nextOfKinName: student.nextOfKinName || '',
+            nextOfKinRelation: student.nextOfKinRelation || '',
+            nextOfKinPhone: student.nextOfKinPhone || '',
         });
     }
   }, [student, form]);
@@ -192,6 +187,15 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
         </div>
         
+        <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-semibold text-base">Emergency Contact</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+        </div>
+
         <div>
             <FormLabel className="text-base font-semibold">Document Expiry Dates & Uploads</FormLabel>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">

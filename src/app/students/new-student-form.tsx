@@ -64,6 +64,9 @@ const studentFormSchema = z.object({
     required_error: "You must select a privacy option."
   }),
   flightHours: z.coerce.number().optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelation: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -91,6 +94,9 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
       consentDisplayContact: 'Not Consented',
       documents: ALL_DOCUMENTS.map(type => ({ type, expiryDate: null, url: null })),
       flightHours: 0,
+      nextOfKinName: '',
+      nextOfKinRelation: '',
+      nextOfKinPhone: '',
     }
   });
 
@@ -156,6 +162,9 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
         name: data.name,
         email: data.email,
         phone: data.phone,
+        nextOfKinName: data.nextOfKinName,
+        nextOfKinRelation: data.nextOfKinRelation,
+        nextOfKinPhone: data.nextOfKinPhone,
         role: 'Student',
         status: 'Active',
         instructor: data.instructor,
@@ -192,6 +201,15 @@ export function NewStudentForm({ onSuccess }: NewStudentFormProps) {
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="instructor" render={({ field }) => (<FormItem><FormLabel>Instructor</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an instructor" /></SelectTrigger></FormControl><SelectContent>{instructors.map((instructor) => (<SelectItem key={instructor.id} value={instructor.name}>{instructor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="licenseType" render={({ field }) => (<FormItem><FormLabel>License Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a license type" /></SelectTrigger></FormControl><SelectContent><SelectItem value="SPL">SPL</SelectItem><SelectItem value="PPL">PPL</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                    <h3 className="font-semibold text-base">Emergency Contact</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                         <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
                 </div>
 
                 <div>

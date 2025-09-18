@@ -237,6 +237,7 @@ export type User = {
     nextOfKinName?: string;
     nextOfKinPhone?: string;
     nextOfKinEmail?: string;
+    nextOfKinRelation?: string;
     // Student-specific
     studentCode?: string;
     instructor?: string;
@@ -798,3 +799,4 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
+
