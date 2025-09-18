@@ -131,7 +131,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
-  const hireAndFlyPilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
+  const hireAndFly = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
@@ -296,7 +296,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
                     <SelectContent>
-                        {hireAndFlyPilots.map(p => (
+                        {hireAndFly.map(p => (
                             <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
                         ))}
                     </SelectContent>
