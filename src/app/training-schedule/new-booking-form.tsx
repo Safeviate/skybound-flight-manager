@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -117,7 +118,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const purpose = form.watch('purpose');
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
-  const instructors = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
+  const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
+  const privatePilots = useMemo(() => users.filter(u => u.role !== 'Student'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
@@ -277,7 +279,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                   <FormLabel>Pilot</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select pilot" /></SelectTrigger></FormControl>
-                    <SelectContent>{users.filter(u => u.role !== 'Student').map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{privatePilots.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>

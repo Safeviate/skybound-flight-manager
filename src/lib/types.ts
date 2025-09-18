@@ -159,6 +159,8 @@ export type Permission =
   | 'Students:Edit'
   | 'Personnel:View'
   | 'Personnel:Edit'
+  | 'HireAndFly:View'
+  | 'HireAndFly:Edit'
   | 'Safety:View'
   | 'Safety:Edit'
   | 'Quality:View'
@@ -189,6 +191,8 @@ export const ALL_PERMISSIONS: Permission[] = [
     'Students:Edit',
     'Personnel:View',
     'Personnel:Edit',
+    'HireAndFly:View',
+    'HireAndFly:Edit',
     'Safety:View',
     'Safety:Edit',
     'Quality:View',
@@ -214,7 +218,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Hire and Fly' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments';
 
 export type User = {
     id: string;
@@ -678,6 +682,7 @@ export const VIEW_ALL_PAGES: Permission[] = [
   'Aircraft:View',
   'Students:View',
   'Personnel:View',
+  'HireAndFly:View',
   'Safety:View',
   'Quality:View',
   'Checklists:View',
@@ -735,7 +740,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Bookings:Edit',
     'Personnel:View',
   ],
-  'HR Manager': ['Personnel:View', 'Personnel:Edit', 'Students:View'],
+  'HR Manager': ['Personnel:View', 'Personnel:Edit', 'Students:View', 'HireAndFly:View'],
   'Safety Manager': ['Safety:View', 'Safety:Edit', 'Reports:View', 'Aircraft:View'],
   'Quality Manager': ['Quality:View', 'Quality:Edit', 'Reports:View', 'Aircraft:View'],
   'Aircraft Manager': ['Aircraft:View', 'Aircraft:Edit', 'Aircraft:UpdateHobbs'],
@@ -744,6 +749,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Students:View',
     'Students:Edit',
     'Personnel:View',
+    'HireAndFly:View',
     'Bookings:View',
     'Bookings:Edit',
     'Checklists:View',
@@ -752,15 +758,17 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'Students:View',
     'Students:Edit',
     'Personnel:View',
+    'HireAndFly:View',
     'Bookings:View',
     'Bookings:Edit',
     'Checklists:View',
   ],
   'Instructor': ['Students:View', 'Bookings:View', 'Checklists:View'],
   'Student': ['Students:View', 'Bookings:View'],
+  'Hire and Fly': ['Bookings:View'],
   'Auditee': ['Quality:View'],
   'Driver': [],
-  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View']
+  'Front Office': ['Bookings:View', 'Bookings:Edit', 'Students:View', 'Personnel:View', 'HireAndFly:View']
 };
 
 export const ICAO_OCCURRENCE_CATEGORIES: string[] = [
@@ -782,3 +790,14 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Go-around',
     'Post-impact'
 ];
+
+
+
+
+
+
+
+
+
+
+

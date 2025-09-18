@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db, auth } from '@/lib/firebase';
@@ -92,7 +93,13 @@ export async function createUserAndSendWelcomeEmail(
     delete (userToAdd as any).password;
 
     // Save user document to the correct Firestore collection
-    const collectionName = userData.role === 'Student' ? 'students' : 'users';
+    let collectionName = 'users';
+    if (userData.role === 'Student') {
+        collectionName = 'students';
+    } else if (userData.role === 'Hire and Fly') {
+        collectionName = 'hire-and-fly';
+    }
+    
     await setDoc(doc(db, `companies/${companyId}/${collectionName}`, newUserId), userToAdd);
 
     return { success: true, message: `${userData.name} has been added.` };
@@ -116,8 +123,14 @@ export async function resetUserPasswordAndSendWelcomeEmail(person: User, company
 
     try {
         await adminResetPassword({ userId: person.id, newPassword: temporaryPassword });
+        
+        let collectionName = 'users';
+        if (person.role === 'Student') {
+            collectionName = 'students';
+        } else if (person.role === 'Hire and Fly') {
+            collectionName = 'hire-and-fly';
+        }
 
-        const collectionName = person.role === 'Student' ? 'students' : 'users';
         const userRef = doc(db, `companies/${company.id}/${collectionName}`, person.id);
         await updateDoc(userRef, { mustChangePassword: true });
         

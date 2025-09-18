@@ -16,19 +16,22 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         const bookingsQuery = query(collection(db, `companies/${companyId}/bookings`));
         const personnelQuery = query(collection(db, `companies/${companyId}/users`));
         const studentsQuery = query(collection(db, `companies/${companyId}/students`));
+        const hireAndFlyQuery = query(collection(db, `companies/${companyId}/hire-and-fly`));
 
-        const [aircraftSnapshot, bookingsSnapshot, personnelSnapshot, studentsSnapshot] = await Promise.all([
+        const [aircraftSnapshot, bookingsSnapshot, personnelSnapshot, studentsSnapshot, hireAndFlySnapshot] = await Promise.all([
             getDocs(aircraftQuery),
             getDocs(bookingsQuery),
             getDocs(personnelQuery),
             getDocs(studentsQuery),
+            getDocs(hireAndFlyQuery),
         ]);
 
         const aircraft = aircraftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Aircraft));
         const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
         const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        const users = [...personnel, ...students];
+        const hireAndFly = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const users = [...personnel, ...students, ...hireAndFly];
 
         return { aircraft, bookings, users };
     } catch (error) {
@@ -36,6 +39,7 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         return { aircraft: [], bookings: [], users: [] };
     }
 }
+
 
 
 

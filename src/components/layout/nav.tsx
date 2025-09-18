@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -60,6 +61,7 @@ export const navItems: {
   { href: '/quick-reports', label: 'Quick Reports', icon: ClipboardCheck },
   { href: '/alerts', label: 'Alerts', icon: Bell, requiredPermissions: ['Alerts:View'] },
   { href: '/students', label: 'Students', icon: Users, requiredFeature: 'Students' },
+  { href: '/hire-and-fly', label: 'Hire and Fly', icon: Contact, requiredFeature: 'Personnel' },
   { href: '/personnel', label: 'Personnel', icon: UserCheck, requiredFeature: 'Personnel' },
   { href: '/training-schedule', label: 'Training Schedule', icon: Calendar, requiredFeature: 'Bookings' },
   { href: '/flight-logs', label: 'Flight Logs', icon: BookOpen },
