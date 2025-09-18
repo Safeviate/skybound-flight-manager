@@ -39,7 +39,6 @@ export type ThemeColors = {
   border?: string;
   input?: string;
   ring?: string;
-  font?: string;
 };
 
 export type Feature = 
@@ -801,4 +800,3 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
-

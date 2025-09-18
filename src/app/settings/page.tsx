@@ -47,7 +47,6 @@ const appearanceFormSchema = z.object({
     sidebarBackground: z.string().optional(),
     sidebarForeground: z.string().optional(),
     sidebarAccent: z.string().optional(),
-    font: z.string().optional(),
   }).optional(),
 });
 
@@ -87,7 +86,6 @@ const defaultTheme = {
   sidebarBackground: '#0c0a09',
   sidebarForeground: '#f8f9fa',
   sidebarAccent: '#1f2937',
-  font: 'var(--font-inter)',
 };
 
 function SettingsPage() {
@@ -280,38 +278,6 @@ function SettingsPage() {
                                 </Card>
                             </div>
                         </div>
-
-                        <Separator />
-                        
-                        <div className="space-y-4">
-                            <h3 className="font-semibold flex items-center gap-2">
-                                <Type className="h-4 w-4" />
-                                Typography
-                            </h3>
-                            <FormField
-                                control={form.control}
-                                name="theme.font"
-                                render={({ field }) => (
-                                    <FormItem className="max-w-sm">
-                                        <FormLabel>Application Font</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a font" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {fonts.map(font => (
-                                                    <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
 
                         <div className="flex justify-end gap-2 pt-4 border-t">
                             <Button type="button" variant="ghost" onClick={handleResetTheme}>
