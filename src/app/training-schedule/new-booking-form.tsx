@@ -410,5 +410,3 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     </Form>
   );
 }
-
-    
