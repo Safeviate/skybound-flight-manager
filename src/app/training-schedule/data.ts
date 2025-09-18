@@ -40,14 +40,3 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         return { aircraft: [], bookings: [], users: [] };
     }
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -121,7 +121,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
   
   // The `users` prop contains a combined list of all personnel, students, and hire-and-fly pilots.
-  // This filter now correctly isolates only the "Hire and Fly" users.
+  // This filter now correctly isolates only the "Hire and Fly" users for the private booking dropdown.
   const privatePilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
 
 
