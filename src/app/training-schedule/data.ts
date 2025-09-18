@@ -5,9 +5,9 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, where } from 'firebase/firestore';
 import type { Aircraft, Booking, User, CompletedChecklist } from '@/lib/types';
 
-export async function getSchedulePageData(companyId: string): Promise<{ aircraft: Aircraft[], bookings: Booking[], users: User[] }> {
+export async function getSchedulePageData(companyId: string): Promise<{ aircraft: Aircraft[], bookings: Booking[], users: User[], hireAndFly: User[] }> {
     if (!companyId) {
-        return { aircraft: [], bookings: [], users: [] };
+        return { aircraft: [], bookings: [], users: [], hireAndFly: [] };
     }
 
     try {
@@ -31,11 +31,11 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const hireAndFly = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         
-        const users = [...personnel, ...students, ...hireAndFly];
+        const users = [...personnel, ...students];
 
-        return { aircraft, bookings, users };
+        return { aircraft, bookings, users, hireAndFly };
     } catch (error) {
         console.error("Failed to fetch schedule page data:", error);
-        return { aircraft: [], bookings: [], users: [] };
+        return { aircraft: [], bookings: [], users: [], hireAndFly: [] };
     }
 }

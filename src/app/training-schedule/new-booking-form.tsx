@@ -66,6 +66,7 @@ type BookingFormValues = z.infer<typeof bookingFormSchema>;
 interface NewBookingFormProps {
   aircraft: Aircraft;
   users: User[];
+  hireAndFly: User[];
   bookings: Booking[];
   onSubmit: (data: Omit<Booking, 'id' | 'companyId' | 'status'> | Booking) => void;
   onDelete?: (bookingId: string, reason: string) => void;
@@ -85,7 +86,7 @@ const deletionReasons = [
     'Other',
 ];
 
-export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, existingBooking, startTime, selectedDate }: NewBookingFormProps) {
+export function NewBookingForm({ aircraft, users, hireAndFly, bookings, onSubmit, onDelete, existingBooking, startTime, selectedDate }: NewBookingFormProps) {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -130,7 +131,6 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
-  const hireAndFly = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
@@ -146,7 +146,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
     }
     
     if (data.pilotName && !data.pilotId) {
-        const selectedPilot = users.find(u => u.name === data.pilotName);
+        const selectedPilot = hireAndFly.find(u => u.name === data.pilotName);
         if (selectedPilot) data.pilotId = selectedPilot.id;
     }
 

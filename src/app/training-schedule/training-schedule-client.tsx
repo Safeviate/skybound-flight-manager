@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -22,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useSettings } from '@/context/settings-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +30,7 @@ interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
   initialBookings: Booking[];
   initialUsers: User[];
+  initialHireAndFly: User[];
 }
 
 const deletionReasons = [
@@ -138,13 +138,14 @@ const FlightHub = ({
 };
 
 
-export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers }: TrainingSchedulePageContentProps) {
+export function TrainingSchedulePageContent({ initialAircraft, initialBookings, initialUsers, initialHireAndFly }: TrainingSchedulePageContentProps) {
   const { user, company } = useUser();
   const { toast } = useToast();
   const { settings } = useSettings();
   const [aircraft, setAircraft] = useState<Aircraft[]>(initialAircraft);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [hireAndFly, setHireAndFly] = useState<User[]>(initialHireAndFly);
   const [loading, setLoading] = useState(true);
   const [newBookingSlot, setNewBookingSlot] = useState<{ aircraft: Aircraft, time: string, date: Date } | null>(null);
   const [activeFlight, setActiveFlight] = useState<{ booking: Booking, aircraft: Aircraft } | null>(null);
@@ -174,15 +175,20 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     const fetchAllUsers = async () => {
         const personnelQuery = query(collection(db, `companies/${company.id}/users`));
         const studentsQuery = query(collection(db, `companies/${company.id}/students`));
+        const hireAndFlyQuery = query(collection(db, `companies/${company.id}/hire-and-fly`));
 
-        const [personnelSnapshot, studentsSnapshot] = await Promise.all([
+        const [personnelSnapshot, studentsSnapshot, hireAndFlySnapshot] = await Promise.all([
             getDocs(personnelQuery),
             getDocs(studentsQuery),
+            getDocs(hireAndFlyQuery),
         ]);
         
         const personnel = personnelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const hireAndFlyData = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+
         setUsers([...personnel, ...students]);
+        setHireAndFly(hireAndFlyData);
     };
     fetchAllUsers();
     
@@ -236,9 +242,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     if (booking.purpose === 'Maintenance') {
       return `Maintenance: ${booking.maintenanceType || 'Scheduled'}`;
     }
-    if(booking.purpose === 'Private') {
-        const user = users.find(u => u.name === booking.student);
-        return `${bookingNumPart}Private: ${user?.name || booking.student}`;
+    if (booking.purpose === 'Hire and Fly') {
+        return `${bookingNumPart}${booking.purpose}: ${booking.pilotName}`;
     }
     return `${bookingNumPart}${booking.purpose}: ${booking.student} w/ ${booking.instructor}`;
   };
@@ -638,6 +643,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             <NewBookingForm
               aircraft={newBookingSlot.aircraft}
               users={users}
+              hireAndFly={hireAndFly}
               bookings={filteredBookings}
               onSubmit={handleBookingSubmit}
               startTime={newBookingSlot?.time}
@@ -660,6 +666,3 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     </>
   );
 }
-
-    
-

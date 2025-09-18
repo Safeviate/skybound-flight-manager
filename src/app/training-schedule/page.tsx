@@ -14,7 +14,8 @@ export default function TrainingSchedulePage() {
         aircraft: Aircraft[],
         bookings: Booking[],
         users: User[],
-    }>({ aircraft: [], bookings: [], users: [] });
+        hireAndFly: User[],
+    }>({ aircraft: [], bookings: [], users: [], hireAndFly: [] });
 
     useEffect(() => {
         async function loadData() {
@@ -32,6 +33,7 @@ export default function TrainingSchedulePage() {
             initialAircraft={initialData.aircraft}
             initialBookings={initialData.bookings}
             initialUsers={initialData.users}
+            initialHireAndFly={initialData.hireAndFly}
          />;
 }
 
