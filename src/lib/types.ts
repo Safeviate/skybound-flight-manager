@@ -274,7 +274,7 @@ export type Booking = {
   pilotId?: string | null;
   pilotName?: string | null;
   instructor?: string | null;
-  purpose: 'Training' | 'Maintenance' | 'Private';
+  purpose: 'Training' | 'Maintenance' | 'Private' | 'Hire and Fly';
   status: 'Approved' | 'Completed' | 'Cancelled';
   flightDuration?: number;
   maintenanceType?: string | null;
@@ -801,3 +801,4 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
+

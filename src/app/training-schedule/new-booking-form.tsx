@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
 const bookingFormSchema = z.object({
-  purpose: z.enum(['Training', 'Maintenance', 'Private']),
+  purpose: z.enum(['Training', 'Maintenance', 'Private', 'Hire and Fly']),
   aircraft: z.string(),
   date: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time." }),
@@ -51,12 +52,12 @@ const bookingFormSchema = z.object({
     message: "Maintenance Type is required for Maintenance bookings.",
     path: ["maintenanceType"],
 }).refine(data => {
-    if (data.purpose === 'Private') {
+    if (data.purpose === 'Private' || data.purpose === 'Hire and Fly') {
         return !!data.pilotName;
     }
     return true;
 }, {
-    message: "A pilot is required for Private bookings.",
+    message: "A pilot is required for this booking type.",
     path: ["pilotName"],
 });
 
@@ -160,8 +161,8 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
         ...data,
         student: data.purpose === 'Training' ? data.student : null,
         studentId: data.purpose === 'Training' ? data.studentId : null,
-        pilotId: data.purpose === 'Private' ? data.pilotId : null,
-        pilotName: data.purpose === 'Private' ? data.pilotName : null,
+        pilotId: (data.purpose === 'Private' || data.purpose === 'Hire and Fly') ? data.pilotId : null,
+        pilotName: (data.purpose === 'Private' || data.purpose === 'Hire and Fly') ? data.pilotName : null,
         instructor: data.purpose === 'Training' ? data.instructor : null,
         maintenanceType: data.purpose === 'Maintenance' ? data.maintenanceType : null,
         trainingExercise: data.purpose === 'Training' ? data.trainingExercise : null,
@@ -199,6 +200,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
                 <SelectContent>
                   <SelectItem value="Training">Training</SelectItem>
                   <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  <SelectItem value="Hire and Fly">Hire and Fly</SelectItem>
                   <SelectItem value="Private">Private</SelectItem>
                 </SelectContent>
               </Select>
@@ -284,7 +286,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
           </div>
         )}
         
-        {purpose === 'Private' && (
+        {(purpose === 'Private' || purpose === 'Hire and Fly') && (
           <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg">
             <FormField
               control={form.control}
