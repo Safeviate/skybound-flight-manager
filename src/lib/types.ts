@@ -791,13 +791,9 @@ export const ICAO_PHASES_OF_FLIGHT: string[] = [
     'Post-impact'
 ];
 
-
-
-
-
-
-
-
-
-
-
+export const HIRE_AND_FLY_DOCUMENTS = [
+  "Pilot License",
+  "Medical Certificate",
+  "Identification",
+  "Passport",
+] as const;

@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Mail, Edit, Trash2, Archive, RotateCw, KeyRound, User as UserIcon } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Mail, Edit, Trash2, Archive, RotateCw, KeyRound, User as UserIcon, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -19,6 +19,10 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { resetUserPasswordAndSendWelcomeEmail } from '@/app/actions';
 import { NewHireAndFlyForm } from './new-hire-and-fly-form';
 import { EditHireAndFlyForm } from './edit-hire-and-fly-form';
+import { getExpiryBadge } from '@/lib/utils.tsx';
+import { useSettings } from '@/context/settings-provider';
+import { HIRE_AND_FLY_DOCUMENTS } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function HireAndFlyPage() {
     const { company, user } = useUser();
@@ -26,6 +30,8 @@ function HireAndFlyPage() {
     const [pilots, setPilots] = React.useState<User[]>([]);
     const [isNewPilotOpen, setIsNewPilotOpen] = React.useState(false);
     const [editingPilot, setEditingPilot] = React.useState<User | null>(null);
+    const [viewingDocumentsFor, setViewingDocumentsFor] = React.useState<User | null>(null);
+    const { settings } = useSettings();
 
     const canEdit = user?.permissions.includes('Super User') || user?.permissions.includes('HireAndFly:Edit');
 
@@ -124,10 +130,10 @@ function HireAndFlyPage() {
                             <TabsTrigger value="archived">Archived Pilots</TabsTrigger>
                         </TabsList>
                         <TabsContent value="active" className="pt-4">
-                            <PilotList pilots={activePilots} canEdit={canEdit} setEditingPilot={setEditingPilot} handleStatusChange={handleStatusChange} handleSendWelcomeEmail={handleSendWelcomeEmail} isArchived={false} handleDeletePilot={handleDeletePilot} />
+                            <PilotList pilots={activePilots} canEdit={canEdit} setEditingPilot={setEditingPilot} handleStatusChange={handleStatusChange} handleSendWelcomeEmail={handleSendWelcomeEmail} isArchived={false} handleDeletePilot={handleDeletePilot} setViewingDocumentsFor={setViewingDocumentsFor} />
                         </TabsContent>
                         <TabsContent value="archived" className="pt-4">
-                            <PilotList pilots={archivedPilots} canEdit={canEdit} setEditingPilot={setEditingPilot} handleStatusChange={handleStatusChange} handleSendWelcomeEmail={handleSendWelcomeEmail} isArchived={true} handleDeletePilot={handleDeletePilot} />
+                            <PilotList pilots={archivedPilots} canEdit={canEdit} setEditingPilot={setEditingPilot} handleStatusChange={handleStatusChange} handleSendWelcomeEmail={handleSendWelcomeEmail} isArchived={true} handleDeletePilot={handleDeletePilot} setViewingDocumentsFor={setViewingDocumentsFor} />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
@@ -142,11 +148,36 @@ function HireAndFlyPage() {
                     </DialogContent>
                 </Dialog>
             )}
+             {viewingDocumentsFor && (
+            <Dialog open={!!viewingDocumentsFor} onOpenChange={() => setViewingDocumentsFor(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Document Expiry Dates for {viewingDocumentsFor.name}</DialogTitle>
+                        <DialogDescription>
+                            A list of all official documents and their expiry dates.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-[70vh]">
+                        <div className="py-4 space-y-4 pr-4">
+                            {HIRE_AND_FLY_DOCUMENTS.map(docType => {
+                                const userDoc = viewingDocumentsFor.documents?.find(d => d.type === docType);
+                                return (
+                                    <div key={docType} className="flex items-center justify-between text-sm">
+                                        <span>{docType}</span>
+                                        {getExpiryBadge(userDoc?.expiryDate, settings.expiryWarningOrangeDays, settings.expiryWarningYellowDays)}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
+       )}
         </main>
     );
 }
 
-const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handleSendWelcomeEmail, isArchived, handleDeletePilot }: { pilots: User[], canEdit: boolean, setEditingPilot: (pilot: User | null) => void, handleStatusChange: (id: string, status: 'Active' | 'Archived') => void, handleSendWelcomeEmail: (pilot: User) => void, isArchived: boolean, handleDeletePilot: (id: string) => void }) => {
+const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handleSendWelcomeEmail, isArchived, handleDeletePilot, setViewingDocumentsFor }: { pilots: User[], canEdit: boolean, setEditingPilot: (pilot: User | null) => void, handleStatusChange: (id: string, status: 'Active' | 'Archived') => void, handleSendWelcomeEmail: (pilot: User) => void, isArchived: boolean, handleDeletePilot: (id: string) => void, setViewingDocumentsFor: (pilot: User) => void }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {pilots.map(pilot => (
@@ -160,6 +191,9 @@ const PilotList = ({ pilots, canEdit, setEditingPilot, handleStatusChange, handl
                                     <DropdownMenuContent>
                                         <DropdownMenuItem onSelect={() => setEditingPilot(pilot)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleSendWelcomeEmail(pilot)}><Mail className="mr-2 h-4 w-4" /> Send Welcome Email</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setViewingDocumentsFor(pilot)}>
+                                            <Eye className="mr-2 h-4 w-4" /> View Documents
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {isArchived ? (
                                             <>
