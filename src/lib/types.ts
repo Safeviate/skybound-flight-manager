@@ -274,7 +274,7 @@ export type Booking = {
   pilotId?: string | null;
   pilotName?: string | null;
   instructor?: string | null;
-  purpose: 'Training' | 'Maintenance' | 'Private' | 'Hire and Fly';
+  purpose: 'Training' | 'Maintenance' | 'Hire and Fly';
   status: 'Approved' | 'Completed' | 'Cancelled';
   flightDuration?: number;
   maintenanceType?: string | null;
