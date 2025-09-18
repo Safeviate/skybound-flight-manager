@@ -31,7 +31,6 @@ export async function getSchedulePageData(companyId: string): Promise<{ aircraft
         const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         const hireAndFly = hireAndFlySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
         
-        // This is the corrected logic: combine all user types into a single array.
         const users = [...personnel, ...students, ...hireAndFly];
 
         return { aircraft, bookings, users };

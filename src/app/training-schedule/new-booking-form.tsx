@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -131,7 +130,7 @@ export function NewBookingForm({ aircraft, users, bookings, onSubmit, onDelete, 
 
   const students = useMemo(() => users.filter(u => u.role === 'Student'), [users]);
   const instructors = useMemo(() => users.filter(u => u.role !== 'Student' && u.role !== 'Hire and Fly'), [users]);
-  const privatePilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly' || u.role === 'Student'), [users]);
+  const privatePilots = useMemo(() => users.filter(u => u.role === 'Hire and Fly'), [users]);
 
 
   function handleFormSubmit(data: BookingFormValues) {
