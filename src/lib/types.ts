@@ -214,7 +214,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 export type Role = string;
 export type Department = string;
 
-export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments';
+export type NavMenuItem = 'My Dashboard' | 'Company Dashboard' | 'Aircraft Management' | 'Quick Reports' | 'Alerts' | 'Students' | 'Personnel' | 'Training Schedule' | 'Flight Logs' | 'Flight Statistics' | 'Safety' | 'Quality' | 'External Contacts' | 'Appearance' | 'Company Settings' | 'Manage Companies' | 'System Health' | 'Seed Data' | 'Functions' | 'Gantt Chart' | 'Roles & Departments' | 'Hire and Fly';
 
 export type User = {
     id: string;
