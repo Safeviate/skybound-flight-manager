@@ -8,16 +8,18 @@ import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { setDoc, doc, writeBatch, collection } from 'firebase/firestore';
+import { setDoc, doc, writeBatch, collection, addDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { ROLE_PERMISSIONS } from '@/lib/types';
+import { useUser } from '@/context/user-provider';
 
 
 export default function CorporatePage() {
     const { toast } = useToast();
     const router = useRouter();
+    const { setUserCompanies } = useUser();
 
     const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -96,6 +98,9 @@ export default function CorporatePage() {
             });
             
             await batch.commit();
+            
+            // 3. Update the user context with the new company
+            setUserCompanies(prev => [...prev, finalCompanyData]);
 
             toast({
                 title: "Company Created!",
