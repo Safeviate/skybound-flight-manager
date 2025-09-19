@@ -31,7 +31,7 @@ const MAX_FILE_SIZE = 500000; // 500KB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const companyFormSchema = z.object({
-  companyName: z.string().min(2, 'Company name is required.'),
+  name: z.string().min(2, 'Company name is required.'),
   trademark: z.string().min(2, "Trademark is required."),
   logo: z
     .any()
@@ -62,7 +62,7 @@ const companyFormSchema = z.object({
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface NewCompanyFormProps {
-  onSubmit: (companyData: Omit<Company, 'id'|'enabledFeatures'|'visibleMenuItems'>, logoFile?: File) => void;
+  onSubmit: (companyData: Omit<Company, 'id'>, logoFile?: File) => void;
 }
 
 const ColorInput = ({ name, control, label }: { name: `theme.${keyof CompanyFormValues['theme']}`, control: any, label: string }) => (
@@ -101,7 +101,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
-        companyName: '',
+        name: '',
         trademark: '',
         theme: defaultThemeValues,
     }
@@ -109,22 +109,16 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
 
   useEffect(() => {
     form.reset({
-        companyName: '',
+        name: '',
         trademark: 'Your Trusted Partner in Aviation',
         theme: defaultThemeValues,
     });
   }, [form]);
 
   function handleFormSubmit(data: CompanyFormValues) {
-    const newCompany = {
-        name: data.companyName,
-        trademark: data.trademark,
-        theme: data.theme,
-    };
-    
+    const { logo, ...companyData } = data;
     const logoFile = data.logo?.[0];
-
-    onSubmit(newCompany, logoFile);
+    onSubmit(companyData, logoFile);
   }
 
   return (
@@ -134,7 +128,7 @@ export function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
              <h3 className="text-lg font-semibold">Company Details</h3>
             <FormField
                 control={form.control}
-                name="companyName"
+                name="name"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Company Name</FormLabel>

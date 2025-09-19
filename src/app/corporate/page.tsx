@@ -21,7 +21,7 @@ export default function CorporatePage() {
     const router = useRouter();
     const { setUserCompanies } = useUser();
 
-    const handleNewCompany = async (companyData: Omit<Company, 'id' | 'trademark'>, logoFile?: File) => {
+    const handleNewCompany = async (companyData: Omit<Company, 'id'>, logoFile?: File) => {
         const companyId = companyData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
         let logoUrl = '';
@@ -56,9 +56,8 @@ export default function CorporatePage() {
 
             const finalCompanyData: Company = {
                 id: companyId,
-                logoUrl: logoUrl,
-                trademark: `Your Trusted Partner in Aviation`,
                 ...companyData,
+                logoUrl: logoUrl,
                 theme: {
                     ...defaultTheme,
                     ...companyData.theme, 

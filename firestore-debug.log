@@ -72,3 +72,7 @@ io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missin
 
 Sep 19, 2025 8:03:09 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
+Sep 19, 2025 8:10:56 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+Sep 19, 2025 8:11:22 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
