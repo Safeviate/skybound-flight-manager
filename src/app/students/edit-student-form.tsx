@@ -60,7 +60,7 @@ const studentFormSchema = z.object({
   }),
   nextOfKinName: z.string().optional(),
   nextOfKinRelation: z.string().optional(),
-  nextOfKinPhone: z.string().optional(),
+  nextOfKinPhone: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -192,7 +192,7 @@ export function EditStudentForm({ student, onUpdate }: EditStudentFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                 <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem className="col-span-full"><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
         </div>
 

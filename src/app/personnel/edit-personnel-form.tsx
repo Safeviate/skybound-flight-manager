@@ -69,6 +69,9 @@ const personnelFormSchema = z.object({
   })).optional(),
   permissions: z.array(z.string()).min(1, 'At least one permission must be selected.'),
   visibleMenuItems: z.array(z.string()).optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelation: z.string().optional(),
+  nextOfKinPhone: z.string().regex(phoneRegex, 'Invalid phone number.').optional().or(z.literal('')),
 });
 
 type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
@@ -169,6 +172,9 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
             documents: formDocs,
             permissions: personnel.permissions || [],
             visibleMenuItems: personnel.visibleMenuItems || availableNavItems.map(i => i.label),
+            nextOfKinName: personnel.nextOfKinName || '',
+            nextOfKinRelation: personnel.nextOfKinRelation || '',
+            nextOfKinPhone: personnel.nextOfKinPhone || '',
         });
     }
   }, [personnel, form]);
@@ -219,6 +225,15 @@ export function EditPersonnelForm({ personnel, onSubmit }: EditPersonnelFormProp
                     <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+27 12 345 6789" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Include country code.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="role" render={({ field }) => (<FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl><SelectContent>{roles.map((role) => (<SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a department" /></SelectTrigger></FormControl><SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+
+                 <div className="space-y-4 pt-4 border-t">
+                    <h3 className="font-semibold text-base">Emergency Contact</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                        <FormField control={form.control} name="nextOfKinName" render={({ field }) => (<FormItem><FormLabel>Emergency Contact Name</FormLabel><FormControl><Input placeholder="e.g., Jane Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="nextOfKinRelation" render={({ field }) => (<FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="e.g., Spouse" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="nextOfKinPhone" render={({ field }) => (<FormItem className="col-span-full"><FormLabel>Emergency Contact Phone</FormLabel><FormControl><Input type="tel" placeholder="+27 98 765 4321" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
                 </div>
                 
                 <Separator />

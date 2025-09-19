@@ -112,9 +112,9 @@ export function EditHireAndFlyForm({ pilot, onUpdate }: EditHireAndFlyFormProps)
       phone: pilot.phone,
       licenseType: pilot.licenseType,
       documents: formDocs,
-      nextOfKinName: pilot.nextOfKinName,
-      nextOfKinRelation: pilot.nextOfKinRelation,
-      nextOfKinPhone: pilot.nextOfKinPhone,
+      nextOfKinName: pilot.nextOfKinName || '',
+      nextOfKinRelation: pilot.nextOfKinRelation || '',
+      nextOfKinPhone: pilot.nextOfKinPhone || '',
     });
   }, [pilot, form]);
 
