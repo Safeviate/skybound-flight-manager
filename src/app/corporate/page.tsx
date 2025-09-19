@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { NewCompanyForm } from './new-company-form';
 import type { Company, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { setDoc, doc, writeBatch } from 'firebase/firestore';
+import { setDoc, doc, writeBatch, collection } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
