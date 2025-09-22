@@ -537,7 +537,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="bookings" className="mt-6">
+                    <TabsContent value="bookings" className="mt-6 flex flex-col">
                         <div className="w-full flex flex-col items-start gap-4">
                             <div>
                                 <Popover>
@@ -574,8 +574,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex">
-                           <div className="gantt-container flex-shrink">
+                        <div className="mt-6 flex-1 flex">
+                           <div className="gantt-container flex-shrink-0">
                             <table className="gantt-table">
                                 <thead>
                                     <tr>
