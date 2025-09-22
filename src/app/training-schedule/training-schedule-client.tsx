@@ -487,41 +487,37 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style jsx>{`
-        .gantt-table {
-            border-collapse: collapse;
-            table-layout: fixed;
-            min-width: 2550px; 
-        }
-        .gantt-table th, .gantt-table td {
+        .gantt-cell {
             border: 1px solid hsl(var(--border));
             padding: 0;
             text-align: left;
             height: 70px;
         }
-        .gantt-table th {
+        .gantt-header-cell {
             text-align: center;
             padding: 12px 0;
+            position: sticky;
+            top: 0;
+            background-color: hsl(var(--muted));
+            z-index: 11;
         }
-        .gantt-table td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
-        .gantt-table td.empty-slot:hover { background-color: hsl(var(--muted)); }
-        .gantt-table .booking-slot { position: relative; }
-        
-        .gantt-table th:first-child, .gantt-table td:first-child { 
+        .aircraft-name-cell { 
             position: sticky; 
             left: 0; 
             z-index: 10;
             width: 150px; 
             min-width: 150px;
             background-color: hsl(var(--card));
+            text-align: center;
+            font-weight: 600;
         }
-        .gantt-table thead th {
-            position: sticky;
-            top: 0;
-            background-color: hsl(var(--muted));
-            z-index: 11;
+        .gantt-header-cell.aircraft-name-cell {
+            z-index: 12;
         }
-        .gantt-table thead th:first-child { z-index: 12; }
-
+        .empty-slot { cursor: pointer; transition: background-color 0.2s; }
+        .empty-slot:hover { background-color: hsl(var(--muted)); }
+        .booking-slot { position: relative; }
+        
         .gantt-bar { 
             padding: 4px 8px; 
             border-radius: 4px; 
@@ -592,58 +588,59 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-auto mt-6" style={{minWidth: 0}}>
-                              <table className="gantt-table">
-                                  <thead>
-                                      <tr>
-                                          <th className="font-semibold text-center">Aircraft</th>
-                                          {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                      {aircraft.map(ac => {
-                                      const renderedSlots = new Set();
-                                      return (
-                                      <tr key={ac.id}>
-                                              <td className="font-semibold text-center">{ac.tailNumber}</td>
-                                              {timeSlots.map(time => {
-                                              if (renderedSlots.has(time)) return null;
+                        <ScrollArea className="flex-1 mt-6">
+                            <table className="w-full border-collapse" style={{ minWidth: '2550px' }}>
+                                <thead>
+                                    <tr>
+                                        <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
+                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="gantt-header-cell">{time}</th>)}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {aircraft.map(ac => {
+                                    const renderedSlots = new Set();
+                                    return (
+                                    <tr key={ac.id}>
+                                            <td className="gantt-cell aircraft-name-cell">{ac.tailNumber}</td>
+                                            {timeSlots.map(time => {
+                                            if (renderedSlots.has(time)) return null;
 
-                                              const booking = getBookingForSlot(ac.tailNumber, time);
-                                              if (booking) {
-                                                  const colSpan = calculateColSpan(booking, time);
-                                                  if (colSpan > 0) {
-                                                  const startTimeInMinutes = timeToMinutes(booking.startTime);
-                                                  for (let i = 1; i < colSpan; i++) {
-                                                      const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                                      const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
-                                                      const nextMinute = nextSlotTimeInMinutes % 60;
-                                                      renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                                  }
-                                                  const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-                                                  const variant = getBookingVariant(booking, aircraftForBooking);
-                                                  return (
-                                                      <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
-                                                      <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
-                                                          <div className="flex items-center gap-2">
-                                                              {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
-                                                              <span>{getBookingLabel(booking)}</span>
-                                                          </div>
-                                                      </div>
-                                                      </td>
-                                                  )
-                                                  }
-                                              }
-                                              return (
-                                                  <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
-                                              );
-                                              })}
-                                          </tr>
-                                      )
-                                      })}
-                                  </tbody>
-                              </table>
-                        </div>
+                                            const booking = getBookingForSlot(ac.tailNumber, time);
+                                            if (booking) {
+                                                const colSpan = calculateColSpan(booking, time);
+                                                if (colSpan > 0) {
+                                                const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                                for (let i = 1; i < colSpan; i++) {
+                                                    const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
+                                                    const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                                    const nextMinute = nextSlotTimeInMinutes % 60;
+                                                    renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
+                                                }
+                                                const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+                                                const variant = getBookingVariant(booking, aircraftForBooking);
+                                                return (
+                                                    <td key={time} colSpan={colSpan} className="gantt-cell booking-slot" onClick={() => handleBookingClick(booking)}>
+                                                    <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
+                                                        <div className="flex items-center gap-2">
+                                                            {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
+                                                            <span>{getBookingLabel(booking)}</span>
+                                                        </div>
+                                                    </div>
+                                                    </td>
+                                                )
+                                                }
+                                            }
+                                            return (
+                                                <td key={time} className="gantt-cell empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
+                                            );
+                                            })}
+                                        </tr>
+                                    )
+                                    })}
+                                </tbody>
+                            </table>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
                     </TabsContent>
                 </Tabs>
             </CardContent>
