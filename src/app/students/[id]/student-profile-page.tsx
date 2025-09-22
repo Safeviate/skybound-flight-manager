@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -85,6 +86,7 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
     const router = useRouter();
     const [student, setStudent] = useState<StudentUser | null>(initialStudent);
     const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
+    const [completedBookings, setCompletedBookings] = useState<Booking[]>([]);
     const [bookings, setBookings] = useState<Booking[]>([]);
     
     const [progress, setProgress] = useState(student?.progress || 0);
@@ -122,19 +124,19 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
 
      useEffect(() => {
         const fetchBookings = async () => {
-            if (!company) return;
+            if (!company || !student) return;
             try {
-                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`));
+                const bookingsQuery = query(collection(db, `companies/${company.id}/bookings`), where('studentId', '==', student.id));
                 const snapshot = await getDocs(bookingsQuery);
                 const allBookings = snapshot.docs.map(doc => ({...doc.data(), id: doc.id} as Booking));
                 setBookings(allBookings);
 
-                if (student?.pendingBookingIds && student.pendingBookingIds.length > 0) {
-                    const pending = allBookings.filter(b => student.pendingBookingIds!.includes(b.id));
-                    setPendingBookings(pending);
-                } else {
-                    setPendingBookings([]);
-                }
+                const pendingIds = new Set(student.pendingBookingIds || []);
+                setPendingBookings(allBookings.filter(b => pendingIds.has(b.id)));
+                
+                const completed = allBookings.filter(b => b.status === 'Completed' && !pendingIds.has(b.id));
+                setCompletedBookings(completed);
+
             } catch (error) {
                 console.error("Error fetching bookings:", error);
                 toast({ variant: 'destructive', title: 'Error', description: 'Could not load booking data for this student.' });
@@ -993,6 +995,29 @@ export function StudentProfilePage({ initialStudent }: { initialStudent: Student
                                             <p className="text-muted-foreground">
                                                 No flights awaiting debrief.
                                             </p>
+                                        </div>
+                                    )}
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Completed Instructor Debriefs</CardTitle>
+                                        <CardDescription>A history of all completed training sessions.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                    {completedBookings.length > 0 ? (
+                                        completedBookings.map(booking => (
+                                            <div key={booking.id} className="w-full text-left p-3 border rounded-lg flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-semibold text-sm">{booking.bookingNumber}: Flight on {format(parseISO(booking.date), 'PPP')}</p>
+                                                    <p className="text-xs text-muted-foreground">Aircraft: {booking.aircraft} | Instructor: {booking.instructor} | Duration: {booking.flightDuration} hrs</p>
+                                                </div>
+                                                <Button size="sm" variant="outline" onClick={() => handleDebriefClick(booking)}>View</Button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex items-center justify-center h-24 border-2 border-dashed rounded-lg">
+                                            <p className="text-muted-foreground">No completed debriefs found.</p>
                                         </div>
                                     )}
                                     </CardContent>
