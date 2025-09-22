@@ -488,10 +488,9 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
     <>
       <style jsx>{`
         .gantt-table {
-            width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            min-width: 3030px; 
+            min-width: 2550px; 
         }
         .gantt-table th, .gantt-table td {
             border: 1px solid hsl(var(--border));
@@ -500,25 +499,29 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             height: 70px;
         }
         .gantt-table th {
-            background-color: hsl(var(--muted));
             text-align: center;
             padding: 12px 0;
-            position: sticky;
-            top: 0;
-            z-index: 11;
         }
         .gantt-table td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
         .gantt-table td.empty-slot:hover { background-color: hsl(var(--muted)); }
         .gantt-table .booking-slot { position: relative; }
+        
         .gantt-table th:first-child, .gantt-table td:first-child { 
             position: sticky; 
             left: 0; 
-            z-index: 10; 
-            background-color: hsl(var(--card)); 
+            z-index: 10;
             width: 150px; 
-            min-width: 150px; 
+            min-width: 150px;
+            background-color: hsl(var(--card));
+        }
+        .gantt-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: hsl(var(--muted));
+            z-index: 11;
         }
         .gantt-table thead th:first-child { z-index: 12; }
+
         .gantt-bar { 
             padding: 4px 8px; 
             border-radius: 4px; 
@@ -547,7 +550,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                 <CardTitle>Training Schedule</CardTitle>
                 <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-1">
+            <CardContent className="flex flex-col flex-1 min-h-0">
                 <Tabs defaultValue="bookings" className="flex flex-col flex-1">
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
@@ -589,8 +592,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex-1 min-h-0 flex flex-col">
-                            <ScrollArea className="w-full" orientation="horizontal">
+                        <div className="flex-1 overflow-auto mt-6" style={{minWidth: 0}}>
                               <table className="gantt-table">
                                   <thead>
                                       <tr>
@@ -641,8 +643,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                       })}
                                   </tbody>
                               </table>
-                              <ScrollBar orientation="horizontal" />
-                            </ScrollArea>
                         </div>
                     </TabsContent>
                 </Tabs>
