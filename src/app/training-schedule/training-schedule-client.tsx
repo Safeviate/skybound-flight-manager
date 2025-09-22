@@ -554,43 +554,38 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
                     <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0">
-                        <div className="w-full flex flex-col items-start gap-4">
-                            <div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !selectedDate && "text-muted-foreground"
-                                        )}
-                                        data-nosnippet
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={selectedDate}
-                                        onSelect={(date) => setSelectedDate(date || new Date())}
-                                        initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <h2 className="text-xl font-bold mt-2">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
-                            </div>
-                            <div>
-                                <div className="color-legend">
-                                    <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
-                                </div>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[280px] justify-start text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                    data-nosnippet
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={(date) => setSelectedDate(date || new Date())}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <div className="color-legend">
+                                <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
+                                <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
+                                <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
+                                <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                             </div>
                         </div>
-                        <ScrollArea className="flex-1 mt-6">
+                        <div className="flex-1 mt-6 overflow-auto" style={{ minWidth: '0' }}>
                             <table className="w-full border-collapse" style={{ minWidth: '2550px' }}>
                                 <thead>
                                     <tr>
@@ -641,8 +636,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                     })}
                                 </tbody>
                             </table>
-                            <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </CardContent>
