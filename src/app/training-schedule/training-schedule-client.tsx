@@ -575,7 +575,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="mt-6 flex-1 min-w-0">
-                          <div className="gantt-container h-full overflow-auto rounded-lg border">
+                          <div className="h-full overflow-auto rounded-lg border">
                               <table className="gantt-table">
                                   <thead>
                                       <tr>
