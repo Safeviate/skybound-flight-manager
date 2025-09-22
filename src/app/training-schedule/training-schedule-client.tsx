@@ -574,8 +574,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex-1 flex">
-                           <div className="gantt-container flex-shrink-0">
+                        <div className="mt-6 flex flex-1 flex-col" style={{ minWidth: 0 }}>
+                           <div className="gantt-container flex-1">
                             <table className="gantt-table">
                                 <thead>
                                     <tr>
