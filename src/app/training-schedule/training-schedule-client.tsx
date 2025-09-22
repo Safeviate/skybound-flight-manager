@@ -566,59 +566,59 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex-1 flex" style={{ minWidth: 0 }}>
-                           <div className="flex-1 overflow-x-auto rounded-lg border">
-                            <table className="gantt-table">
-                                <thead>
-                                    <tr>
-                                        <th>Aircraft</th>
-                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {aircraft.map(ac => {
-                                    const renderedSlots = new Set();
-                                    return (
-                                    <tr key={ac.id}>
-                                            <td className="font-semibold text-center">{ac.tailNumber}</td>
-                                            {timeSlots.map(time => {
-                                            if (renderedSlots.has(time)) return null;
-
-                                            const booking = getBookingForSlot(ac.tailNumber, time);
-                                            if (booking) {
-                                                const colSpan = calculateColSpan(booking, time);
-                                                if (colSpan > 0) {
-                                                const startTimeInMinutes = timeToMinutes(booking.startTime);
-                                                for (let i = 1; i < colSpan; i++) {
-                                                    const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
-                                                    const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
-                                                    const nextMinute = nextSlotTimeInMinutes % 60;
-                                                    renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
-                                                }
-                                                const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
-                                                const variant = getBookingVariant(booking, aircraftForBooking);
-                                                return (
-                                                    <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
-                                                    <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
-                                                        <div className="flex items-center gap-2">
-                                                            {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
-                                                            <span>{getBookingLabel(booking)}</span>
-                                                        </div>
-                                                    </div>
-                                                    </td>
-                                                )
-                                                }
-                                            }
-                                            return (
-                                                <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
-                                            );
-                                            })}
+                        <div className="mt-6 flex-1 min-w-0">
+                            <div className="gantt-container overflow-x-auto rounded-lg border">
+                                <table className="gantt-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Aircraft</th>
+                                            {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
                                         </tr>
-                                    )
-                                    })}
-                                </tbody>
-                            </table>
-                           </div>
+                                    </thead>
+                                    <tbody>
+                                        {aircraft.map(ac => {
+                                        const renderedSlots = new Set();
+                                        return (
+                                        <tr key={ac.id}>
+                                                <td className="font-semibold text-center">{ac.tailNumber}</td>
+                                                {timeSlots.map(time => {
+                                                if (renderedSlots.has(time)) return null;
+
+                                                const booking = getBookingForSlot(ac.tailNumber, time);
+                                                if (booking) {
+                                                    const colSpan = calculateColSpan(booking, time);
+                                                    if (colSpan > 0) {
+                                                    const startTimeInMinutes = timeToMinutes(booking.startTime);
+                                                    for (let i = 1; i < colSpan; i++) {
+                                                        const nextSlotTimeInMinutes = startTimeInMinutes + i * 15;
+                                                        const nextHour = Math.floor(nextSlotTimeInMinutes / 60);
+                                                        const nextMinute = nextSlotTimeInMinutes % 60;
+                                                        renderedSlots.add(`${nextHour.toString().padStart(2, '0')}:${nextMinute.toString().padStart(2, '0')}`);
+                                                    }
+                                                    const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
+                                                    const variant = getBookingVariant(booking, aircraftForBooking);
+                                                    return (
+                                                        <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
+                                                        <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
+                                                            <div className="flex items-center gap-2">
+                                                                {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
+                                                                <span>{getBookingLabel(booking)}</span>
+                                                            </div>
+                                                        </div>
+                                                        </td>
+                                                    )
+                                                    }
+                                                }
+                                                return (
+                                                    <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
+                                                );
+                                                })}
+                                            </tr>
+                                        )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>
