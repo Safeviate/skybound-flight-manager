@@ -25,6 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -489,7 +490,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .gantt-table {
             width: 100%;
             border-collapse: collapse;
-            background-color: hsl(var(--card));
             table-layout: fixed;
             min-width: 3030px; 
         }
@@ -552,7 +552,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1">
+                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0">
                         <div className="w-full flex flex-col items-start gap-4">
                             <div>
                                 <Popover>
@@ -590,11 +590,11 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="mt-6 flex-1 min-h-0 flex flex-col">
-                            <div className="flex-1 overflow-auto rounded-lg border">
+                            <ScrollArea className="w-full" orientation="horizontal">
                               <table className="gantt-table">
                                   <thead>
                                       <tr>
-                                          <th>Aircraft</th>
+                                          <th className="font-semibold text-center">Aircraft</th>
                                           {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
                                       </tr>
                                   </thead>
@@ -641,7 +641,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                       })}
                                   </tbody>
                               </table>
-                            </div>
+                              <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
                         </div>
                     </TabsContent>
                 </Tabs>
