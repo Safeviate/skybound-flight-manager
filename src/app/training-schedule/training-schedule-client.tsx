@@ -428,7 +428,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
     const [hour, minute] = time.split(':').map(Number);
     
-    // Check if the booking time is for the next day (e.g., after midnight)
     const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
     
     const bookingDateTime = setMinutes(setHours(new Date(bookingDate), hour), minute);
@@ -494,12 +493,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         td.empty-slot:hover { background-color: hsl(var(--muted)); }
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
-        .gantt-container { 
-            overflow-x: auto; 
-            border: 1px solid hsl(var(--border));
-            border-radius: var(--radius);
-            min-width: 0;
-        }
         .gantt-table { min-width: 3030px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
         .gantt-table thead th { z-index: 3; }
@@ -573,8 +566,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex flex-1" style={{ minWidth: 0 }}>
-                           <div className="gantt-container flex-1">
+                        <div className="mt-6 flex-1 flex" style={{ minWidth: 0 }}>
+                           <div className="flex-1 overflow-x-auto rounded-lg border">
                             <table className="gantt-table">
                                 <thead>
                                     <tr>
