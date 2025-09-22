@@ -494,8 +494,16 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .booking-slot { position: relative; }
         h2 { margin-top: 20px; }
         .gantt-table { min-width: 3030px; }
-        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
-        .gantt-table thead th { z-index: 3; }
+        .gantt-table th:first-child, .gantt-table td:first-child { 
+            position: sticky; 
+            left: 0; 
+            z-index: 10; 
+            background-color: hsl(var(--card)); 
+            width: 150px; 
+            min-width: 150px; 
+        }
+        .gantt-table thead th { z-index: 11; top: 0; }
+        .gantt-table thead th:first-child { z-index: 12; }
         .gantt-bar { 
             padding: 4px 8px; 
             border-radius: 4px; 
@@ -555,7 +563,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                         />
                                     </PopoverContent>
                                 </Popover>
-                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
+                                <h2 className="text-xl font-bold mt-2">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
                             </div>
                             <div>
                                 <div className="color-legend">
@@ -567,7 +575,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                             </div>
                         </div>
                         <div className="mt-6 flex-1 min-w-0">
-                            <div className="gantt-container overflow-x-auto rounded-lg border">
+                            <div className="overflow-x-auto rounded-lg border">
                                 <table className="gantt-table">
                                     <thead>
                                         <tr>
