@@ -492,13 +492,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             padding: 0;
             text-align: left;
             height: 70px;
+            min-width: 3rem; /* 48px for 15 min slots */
         }
         .gantt-header-cell {
             text-align: center;
-            padding: 12px 0;
+            padding: 8px 0;
             position: sticky;
             top: 0;
-            background-color: hsl(var(--muted));
+            background-color: hsl(var(--card));
             z-index: 11;
         }
         .aircraft-name-cell { 
@@ -526,13 +527,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             white-space: normal; 
             overflow: hidden; 
             position: absolute; 
-            top: 0; 
-            left: 0; 
-            right: 0; 
-            bottom: 0; 
+            top: 4px; 
+            left: 4px; 
+            right: 4px; 
+            bottom: 4px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            border: 1px solid rgba(0,0,0,0.1);
         }
         .gantt-bar.clickable { cursor: pointer; }
         .gantt-bar.not-clickable { cursor: not-allowed; }
