@@ -526,7 +526,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="w-[1200px] mx-auto p-4 md:p-8">
+      <div className="flex flex-col flex-1 p-4 md:p-8">
         <Card>
             <CardHeader>
                 <CardTitle>Training Schedule</CardTitle>
@@ -574,7 +574,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="gantt-container mt-12">
+                        <div className="flex mt-12">
+                           <div className="gantt-container">
                             <table className="gantt-table">
                                 <thead>
                                     <tr>
@@ -625,6 +626,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                     })}
                                 </tbody>
                             </table>
+                           </div>
                         </div>
                     </TabsContent>
                 </Tabs>
