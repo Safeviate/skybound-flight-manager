@@ -527,17 +527,17 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
       <div className="flex flex-col flex-1 p-4 md:p-8">
-        <Card>
+        <Card className="flex flex-col flex-1">
             <CardHeader>
                 <CardTitle>Training Schedule</CardTitle>
                 <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="bookings">
+            <CardContent className="flex flex-col flex-1">
+                <Tabs defaultValue="bookings" className="flex flex-col flex-1">
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="bookings" className="mt-6 flex flex-col">
+                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1">
                         <div className="w-full flex flex-col items-start gap-4">
                             <div>
                                 <Popover>
@@ -574,7 +574,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex flex-1 flex-col">
+                        <div className="mt-6 flex flex-1" style={{ minWidth: 0 }}>
                             <div className="flex-1 overflow-auto rounded-lg border">
                                 <table className="gantt-table">
                                     <thead>
