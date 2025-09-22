@@ -486,14 +486,30 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style jsx>{`
-        table { width: 100%; border-collapse: collapse; background-color: hsl(var(--card)); table-layout: fixed; }
-        th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 70px; }
-        th { background-color: hsl(var(--muted)); text-align: center; padding: 12px 0; }
-        td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
-        td.empty-slot:hover { background-color: hsl(var(--muted)); }
-        .booking-slot { position: relative; }
-        h2 { margin-top: 20px; }
-        .gantt-table { min-width: 3030px; }
+        .gantt-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: hsl(var(--card));
+            table-layout: fixed;
+            min-width: 3030px; 
+        }
+        .gantt-table th, .gantt-table td {
+            border: 1px solid hsl(var(--border));
+            padding: 0;
+            text-align: left;
+            height: 70px;
+        }
+        .gantt-table th {
+            background-color: hsl(var(--muted));
+            text-align: center;
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 11;
+        }
+        .gantt-table td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
+        .gantt-table td.empty-slot:hover { background-color: hsl(var(--muted)); }
+        .gantt-table .booking-slot { position: relative; }
         .gantt-table th:first-child, .gantt-table td:first-child { 
             position: sticky; 
             left: 0; 
@@ -502,7 +518,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             width: 150px; 
             min-width: 150px; 
         }
-        .gantt-table thead th { z-index: 11; top: 0; }
         .gantt-table thead th:first-child { z-index: 12; }
         .gantt-bar { 
             padding: 4px 8px; 
@@ -574,8 +589,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex-1 min-w-0">
-                          <div className="h-full overflow-auto rounded-lg border">
+                        <div className="mt-6 flex-1 min-h-0 flex flex-col">
+                            <div className="flex-1 overflow-auto rounded-lg border">
                               <table className="gantt-table">
                                   <thead>
                                       <tr>
@@ -626,7 +641,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                       })}
                                   </tbody>
                               </table>
-                          </div>
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>
