@@ -498,6 +498,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             overflow-x: auto; 
             border: 1px solid hsl(var(--border));
             border-radius: var(--radius);
+            min-width: 0;
         }
         .gantt-table { min-width: 3030px; }
         .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
@@ -572,7 +573,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-6 flex-1 flex" style={{ minWidth: 0 }}>
+                        <div className="mt-6 flex flex-1" style={{ minWidth: 0 }}>
                            <div className="gantt-container flex-1">
                             <table className="gantt-table">
                                 <thead>
