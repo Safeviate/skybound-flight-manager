@@ -61,17 +61,21 @@ const SplitTableGanttChart = () => {
     return (
         <div className="grid grid-cols-[150px_1fr] h-[600px] border rounded-lg overflow-hidden">
             {/* Resource Column */}
-            <div ref={resourceColumnRef} className="overflow-y-hidden">
+            <div 
+                ref={resourceColumnRef} 
+                className="overflow-y-hidden"
+                onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current!)}
+            >
                  <Table className="h-full">
                     <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow>
+                        <TableRow className="h-[57px]">
                             <TableHead className="text-center">Resource</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {resources.map(resource => (
-                            <TableRow key={resource}>
-                                <TableCell className="font-medium h-[41px] text-center">{resource}</TableCell>
+                            <TableRow key={resource} className="h-[41px]">
+                                <TableCell className="font-medium text-center">{resource}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -86,7 +90,7 @@ const SplitTableGanttChart = () => {
             >
                 <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2400px' }}>
                      <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow>
+                        <TableRow className="h-[57px]">
                             {hourlyTimeSlots.map(time => (
                                 <TableHead key={time} colSpan={2} className="text-center w-[120px] border-l">{time}</TableHead>
                             ))}
@@ -94,7 +98,7 @@ const SplitTableGanttChart = () => {
                     </TableHeader>
                     <TableBody>
                         {resources.map(resource => (
-                            <TableRow key={resource}>
+                            <TableRow key={resource} className="h-[41px]">
                                 {timeSlots.map(time => (
                                     <TableCell key={time} className="w-[60px] border-l"></TableCell>
                                 ))}
@@ -140,4 +144,5 @@ function GanttChartPage() {
 GanttChartPage.title = "Gantt Chart";
 
 export default GanttChartPage;
+
 
