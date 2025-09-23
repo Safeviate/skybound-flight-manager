@@ -66,7 +66,7 @@ const SplitTableGanttChart = () => {
                 className="overflow-y-hidden"
                 onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current)}
             >
-                 <Table className="h-full">
+                 <Table className="h-full" style={{ tableLayout: 'fixed' }}>
                     <TableHeader className="sticky top-0 z-10 bg-card">
                         <TableRow className="h-[57px]">
                             <TableHead className="text-center">Resource</TableHead>
@@ -74,7 +74,7 @@ const SplitTableGanttChart = () => {
                     </TableHeader>
                     <TableBody>
                         {resources.map(resource => (
-                            <TableRow key={resource} className="h-[41px]">
+                            <TableRow key={resource} style={{ height: '41px' }}>
                                 <TableCell className="font-medium text-center">{resource}</TableCell>
                             </TableRow>
                         ))}
@@ -88,7 +88,7 @@ const SplitTableGanttChart = () => {
                 className="overflow-auto" 
                 onScroll={(e) => syncScroll(e.currentTarget, resourceColumnRef.current)}
             >
-                <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2400px' }}>
+                <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2880px' }}>
                      <TableHeader className="sticky top-0 z-10 bg-card">
                         <TableRow className="h-[57px]">
                             {hourlyTimeSlots.map(time => (
@@ -98,7 +98,7 @@ const SplitTableGanttChart = () => {
                     </TableHeader>
                     <TableBody>
                         {resources.map(resource => (
-                            <TableRow key={resource} className="h-[41px]">
+                            <TableRow key={resource} style={{ height: '41px' }}>
                                 {timeSlots.map(time => (
                                     <TableCell key={time} className="w-[60px] border-l"></TableCell>
                                 ))}
@@ -144,6 +144,7 @@ function GanttChartPage() {
 GanttChartPage.title = "Gantt Chart";
 
 export default GanttChartPage;
+
 
 
 
