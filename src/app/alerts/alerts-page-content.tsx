@@ -24,6 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const getAlertVariant = (type: Alert['type']) => {
@@ -42,8 +43,118 @@ const getAlertIcon = (type: Alert['type']) => {
     }
 }
 
+const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint }: { alert: Alert, userMap: Map<string, string>, canCreateAlerts: boolean, onDelete: (id: string) => void, onEdit: (alert: Alert) => void, onPrint: (id: string) => void }) => (
+    <Collapsible key={alert.id} id={`alert-${alert.id}`} className="w-full">
+        <Card className="hover:bg-muted/50 transition-colors">
+            <CardHeader>
+                  <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-4">
+                          {useUser().company?.logoUrl && (
+                              <Image
+                                  src={useUser().company!.logoUrl!}
+                                  alt={`${useUser().company!.name} Logo`}
+                                  width={60}
+                                  height={60}
+                                  className="h-16 w-16 rounded-md object-contain"
+                              />
+                          )}
+                      </div>
+                      <div className="flex-1 text-center">
+                          <CardTitle>{useUser().company?.name}</CardTitle>
+                          <CardDescription>System Alert</CardDescription>
+                      </div>
+                      <div className="w-16 flex justify-end">
+                          {getAlertIcon(alert.type)}
+                      </div>
+                  </div>
+                  <Separator className="my-4"/>
+                   <div className="flex justify-between items-start">
+                      <div>
+                          <CardTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</CardTitle>
+                          <CardDescription>
+                              Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
+                          </CardDescription>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                          <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
+                           {canCreateAlerts && (
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="no-print">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                      <DropdownMenuItem onSelect={() => onEdit(alert)}>
+                                          <Edit className="mr-2 h-4 w-4" /> Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => onPrint(`alert-${alert.id}`)}>
+                                          <Printer className="mr-2 h-4 w-4" /> Print
+                                      </DropdownMenuItem>
+                                      <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                  <Trash2 className="mr-2 h-4 w-4" />
+                                                  Delete
+                                              </DropdownMenuItem>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                  This action cannot be undone. This will permanently delete the alert "{alert.title}".
+                                              </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction onClick={() => onDelete(alert.id)}>
+                                                  Yes, delete alert
+                                              </AlertDialogAction>
+                                              </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                      </AlertDialog>
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
+                          )}
+                      </div>
+                  </div>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
+            </CardContent>
+             <CardFooter className="justify-end">
+              <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="text-muted-foreground">
+                  <Users className="mr-2 h-4 w-4" />
+                  View Acknowledgements ({alert.readBy.length})
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+              </CollapsibleTrigger>
+            </CardFooter>
+        </Card>
+        <CollapsibleContent>
+            <div className="p-4 border-t-0 border rounded-b-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <h4 className="text-sm font-semibold">Acknowledged By ({alert.readBy.length})</h4>
+              </div>
+              {alert.readBy.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {alert.readBy.map(userId => (
+                    <Badge key={userId} variant="secondary">{userMap.get(userId) || userId}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
+              )}
+            </div>
+        </CollapsibleContent>
+    </Collapsible>
+);
+
+
 export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: Alert[], allUsers: User[] }) {
-  const { user, company, loading, acknowledgeAlerts, getUnacknowledgedAlerts } = useUser();
+  const { user, company, loading, getUnacknowledgedAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
@@ -150,29 +261,6 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     }
   };
 
-  const handleAcknowledge = async (alertId: string) => {
-    if (!user) return;
-    try {
-        await acknowledgeAlerts([alertId]);
-        setAlerts(prev => 
-            prev.map(a => 
-                a.id === alertId ? { ...a, readBy: [...a.readBy, user.id] } : a
-            )
-        );
-        toast({
-            title: 'Alert Acknowledged',
-            description: 'The notification has been marked as read.',
-        });
-    } catch (error) {
-        console.error("Failed to acknowledge alert", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not acknowledge the alert.',
-        });
-    }
-  };
-  
   const handlePrint = (alertId: string) => {
     const printableArea = document.getElementById(`alert-${alertId}`);
     if (printableArea) {
@@ -184,6 +272,8 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     }
   };
 
+  const redTagAlerts = alerts.filter(alert => alert.type === 'Red Tag');
+  const yellowTagAlerts = alerts.filter(alert => alert.type === 'Yellow Tag');
 
   if (loading || !user) {
     return (
@@ -224,122 +314,38 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
           )}
         </CardHeader>
         <CardContent>
-          {alerts.length > 0 ? (
-              <div className="space-y-4">
-                  {alerts.map((alert) => (
-                      <Collapsible key={alert.id} id={`alert-${alert.id}`} className="w-full">
-                          <Card className="hover:bg-muted/50 transition-colors">
-                              <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex items-center gap-4">
-                                            {company?.logoUrl && (
-                                                <Image
-                                                    src={company.logoUrl}
-                                                    alt={`${company.name} Logo`}
-                                                    width={60}
-                                                    height={60}
-                                                    className="h-16 w-16 rounded-md object-contain"
-                                                />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 text-center">
-                                            <CardTitle>{company?.name}</CardTitle>
-                                            <CardDescription>System Alert</CardDescription>
-                                        </div>
-                                        <div className="w-16 flex justify-end">
-                                            {getAlertIcon(alert.type)}
-                                        </div>
-                                    </div>
-                                    <Separator className="my-4"/>
-                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <CardTitle className="mt-2 text-2xl">{alert.number ? `#${alert.number}`: ''} {alert.title}</CardTitle>
-                                            <CardDescription>
-                                                Issued by {alert.author} on {format(parseISO(alert.date), 'MMMM d, yyyy')}
-                                            </CardDescription>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <Badge variant={getAlertVariant(alert.type)}>{alert.type}</Badge>
-                                             {canCreateAlerts && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="no-print">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent>
-                                                        <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
-                                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onSelect={() => handlePrint(`alert-${alert.id}`)}>
-                                                            <Printer className="mr-2 h-4 w-4" /> Print
-                                                        </DropdownMenuItem>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Delete
-                                                                </DropdownMenuItem>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    This action cannot be undone. This will permanently delete the alert "{alert.title}".
-                                                                </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDeleteAlert(alert.id)}>
-                                                                    Yes, delete alert
-                                                                </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                        </div>
-                                    </div>
-                              </CardHeader>
-                              <CardContent>
-                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-muted rounded-md">{alert.description}</p>
-                              </CardContent>
-                               <CardFooter className="justify-end">
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="ghost" className="text-muted-foreground">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    View Acknowledgements ({alert.readBy.length})
-                                    <ChevronRight className="h-4 w-4 ml-2" />
-                                    </Button>
-                                </CollapsibleTrigger>
-                              </CardFooter>
-                          </Card>
-                          <CollapsibleContent>
-                              <div className="p-4 border-t-0 border rounded-b-lg">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Users className="h-4 w-4 text-muted-foreground" />
-                                  <h4 className="text-sm font-semibold">Acknowledged By ({alert.readBy.length})</h4>
-                                </div>
-                                {alert.readBy.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {alert.readBy.map(userId => (
-                                      <Badge key={userId} variant="secondary">{userMap.get(userId) || userId}</Badge>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-muted-foreground">No acknowledgements yet.</p>
-                                )}
-                              </div>
-                          </CollapsibleContent>
-                      </Collapsible>
-                  ))}
-              </div>
-          ) : (
-              <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">No active alerts.</p>
-              </div>
-          )}
+            <Tabs defaultValue="red-tags">
+                <TabsList>
+                    <TabsTrigger value="red-tags">Red Tags ({redTagAlerts.length})</TabsTrigger>
+                    <TabsTrigger value="yellow-tags">Yellow Tags ({yellowTagAlerts.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="red-tags" className="pt-4">
+                    {redTagAlerts.length > 0 ? (
+                        <div className="space-y-4">
+                            {redTagAlerts.map(alert => (
+                                <AlertCard key={alert.id} alert={alert} userMap={userMap} canCreateAlerts={canCreateAlerts} onDelete={handleDeleteAlert} onEdit={handleOpenEditDialog} onPrint={handlePrint} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">No active Red Tag alerts.</p>
+                        </div>
+                    )}
+                </TabsContent>
+                <TabsContent value="yellow-tags" className="pt-4">
+                    {yellowTagAlerts.length > 0 ? (
+                        <div className="space-y-4">
+                            {yellowTagAlerts.map(alert => (
+                                <AlertCard key={alert.id} alert={alert} userMap={userMap} canCreateAlerts={canCreateAlerts} onDelete={handleDeleteAlert} onEdit={handleOpenEditDialog} onPrint={handlePrint} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">No active Yellow Tag alerts.</p>
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </CardContent>
       </Card>
     </main>
