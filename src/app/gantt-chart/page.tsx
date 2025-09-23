@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -28,9 +29,9 @@ function GanttChartPage() {
                             <TabsTrigger value="calendar" disabled>Calendar View (Coming Soon)</TabsTrigger>
                         </TabsList>
                         <TabsContent value="gantt" className="mt-4">
-                            <ScrollArea className="rounded-md border">
-                                <div style={{ width: '2500px' }}>
-                                    <Table>
+                            <ScrollArea className="rounded-md border h-[600px]">
+                                <div className="relative">
+                                    <Table style={{ width: '2500px' }}>
                                         <TableHeader className="sticky top-0 z-10 bg-card">
                                             <TableRow>
                                                 <TableHead className="sticky left-0 z-20 bg-card w-[150px]">Resource</TableHead>
@@ -40,7 +41,7 @@ function GanttChartPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {['Aircraft 1', 'Aircraft 2', 'Instructor A', 'Instructor B', 'Room 1'].map(resource => (
+                                            {['Aircraft 1', 'Aircraft 2', 'Instructor A', 'Instructor B', 'Room 1', 'Aircraft 3', 'Aircraft 4', 'Instructor C', 'Instructor D', 'Room 2', 'Aircraft 5', 'Aircraft 6', 'Instructor E', 'Instructor F', 'Room 3'].map(resource => (
                                                 <TableRow key={resource}>
                                                     <TableCell className="sticky left-0 z-10 bg-card font-medium w-[150px]">{resource}</TableCell>
                                                     {timeSlots.map(time => (
