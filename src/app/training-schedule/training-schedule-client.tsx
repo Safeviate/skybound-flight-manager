@@ -25,6 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface TrainingSchedulePageContentProps {
   initialAircraft: Aircraft[];
@@ -428,7 +429,6 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   const handleNewBookingClick = (aircraft: Aircraft, time: string) => {
     const [hour, minute] = time.split(':').map(Number);
     
-    // Check if the booking time is for the next day (e.g., after midnight)
     const bookingDate = hour < 6 ? addDays(selectedDate, 1) : selectedDate;
     
     const bookingDateTime = setMinutes(setHours(new Date(bookingDate), hour), minute);
@@ -487,23 +487,38 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
   return (
     <>
       <style jsx>{`
-        table { width: 100%; border-collapse: collapse; background-color: hsl(var(--card)); table-layout: fixed; }
-        th, td { border: 1px solid hsl(var(--border)); padding: 0; text-align: left; height: 70px; }
-        th { background-color: hsl(var(--muted)); text-align: center; padding: 12px 0; }
-        td.empty-slot { cursor: pointer; transition: background-color 0.2s; }
-        td.empty-slot:hover { background-color: hsl(var(--muted)); }
-        .booking-slot { position: relative; }
-        h2 { margin-top: 20px; }
-        .gantt-container { 
-            overflow-x: auto; 
+        .gantt-cell {
             border: 1px solid hsl(var(--border));
-            border-radius: var(--radius);
-            width: 100%;
-            box-sizing: border-box;
+            padding: 0;
+            text-align: left;
+            height: 70px;
+            min-width: 3rem; /* 48px for 15 min slots */
         }
-        .gantt-table { min-width: 3030px; }
-        .gantt-table th:first-child, .gantt-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: hsl(var(--muted)); width: 150px; min-width: 150px; }
-        .gantt-table thead th { z-index: 3; }
+        .gantt-header-cell {
+            text-align: center;
+            padding: 8px 0;
+            position: sticky;
+            top: 0;
+            background-color: hsl(var(--card));
+            z-index: 11;
+        }
+        .aircraft-name-cell { 
+            position: sticky; 
+            left: 0; 
+            z-index: 10;
+            width: 150px; 
+            min-width: 150px;
+            background-color: hsl(var(--card));
+            text-align: center;
+            font-weight: 600;
+        }
+        .gantt-header-cell.aircraft-name-cell {
+            z-index: 12;
+        }
+        .empty-slot { cursor: pointer; transition: background-color 0.2s; }
+        .empty-slot:hover { background-color: hsl(var(--muted)); }
+        .booking-slot { position: relative; }
+        
         .gantt-bar { 
             padding: 4px 8px; 
             border-radius: 4px; 
@@ -512,13 +527,14 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
             white-space: normal; 
             overflow: hidden; 
             position: absolute; 
-            top: 0; 
-            left: 0; 
-            right: 0; 
-            bottom: 0; 
+            top: 4px; 
+            left: 4px; 
+            right: 4px; 
+            bottom: 4px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            border: 1px solid rgba(0,0,0,0.1);
         }
         .gantt-bar.clickable { cursor: pointer; }
         .gantt-bar.not-clickable { cursor: not-allowed; }
@@ -526,60 +542,55 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .legend-color-box { width: 15px; height: 15px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
       `}</style>
-      <div className="w-[1200px] mx-auto p-4 md:p-8">
-        <Card>
+      <div className="flex flex-col flex-1 p-4 md:p-8">
+        <Card className="flex flex-col flex-1">
             <CardHeader>
                 <CardTitle>Training Schedule</CardTitle>
                 <CardDescription>View and manage all aircraft and instructor bookings.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="bookings">
+            <CardContent className="flex flex-col flex-1 min-h-0">
+                <Tabs defaultValue="bookings" className="flex flex-col flex-1">
                     <TabsList>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="bookings" className="mt-6">
-                        <div className="w-full flex flex-col items-start gap-4">
-                            <div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[280px] justify-start text-left font-normal",
-                                            !selectedDate && "text-muted-foreground"
-                                        )}
-                                        data-nosnippet
-                                        >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                        mode="single"
-                                        selected={selectedDate}
-                                        onSelect={(date) => setSelectedDate(date || new Date())}
-                                        initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <h2 className="text-xl font-bold">Daily Schedule for {format(selectedDate, 'PPP')}</h2>
-                            </div>
-                            <div>
-                                <div className="color-legend">
-                                    <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
-                                    <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
-                                </div>
+                    <TabsContent value="bookings" className="mt-6 flex flex-col flex-1 min-h-0">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[280px] justify-start text-left font-normal",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                    data-nosnippet
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={(date) => setSelectedDate(date || new Date())}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <div className="color-legend">
+                                <div className="legend-item"><div className="legend-color-box bg-green-500"></div>Ready for Pre-Flight</div>
+                                <div className="legend-item"><div className="legend-color-box bg-blue-500"></div>Post-Flight Outstanding</div>
+                                <div className="legend-item"><div className="legend-color-box bg-gray-400"></div>Completed</div>
+                                <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                             </div>
                         </div>
-                        <div className="gantt-container mt-12">
-                            <table className="gantt-table">
+                        <div className="flex-1 mt-6 overflow-auto" style={{ minWidth: '0' }}>
+                            <table className="w-full border-collapse" style={{ minWidth: '2550px' }}>
                                 <thead>
                                     <tr>
-                                        <th>Aircraft</th>
-                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4}>{time}</th>)}
+                                        <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
+                                        {hourlyTimeSlots.map(time => <th key={time} colSpan={4} className="gantt-header-cell">{time}</th>)}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -587,7 +598,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                     const renderedSlots = new Set();
                                     return (
                                     <tr key={ac.id}>
-                                            <td className="font-semibold text-center">{ac.tailNumber}</td>
+                                            <td className="gantt-cell aircraft-name-cell">{ac.tailNumber}</td>
                                             {timeSlots.map(time => {
                                             if (renderedSlots.has(time)) return null;
 
@@ -605,7 +616,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                                 const aircraftForBooking = aircraft.find(a => a.tailNumber === booking.aircraft);
                                                 const variant = getBookingVariant(booking, aircraftForBooking);
                                                 return (
-                                                    <td key={time} colSpan={colSpan} className="booking-slot" onClick={() => handleBookingClick(booking)}>
+                                                    <td key={time} colSpan={colSpan} className="gantt-cell booking-slot" onClick={() => handleBookingClick(booking)}>
                                                     <div className={cn('gantt-bar', variant.className, booking.status === 'Completed' ? 'not-clickable' : 'clickable')} style={variant.style}>
                                                         <div className="flex items-center gap-2">
                                                             {(aircraftForBooking?.status === 'In Maintenance') && <AlertTriangle className="h-4 w-4 text-white flex-shrink-0" title="Aircraft In Maintenance" />}
@@ -617,7 +628,7 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                                 }
                                             }
                                             return (
-                                                <td key={time} className="empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
+                                                <td key={time} className="gantt-cell empty-slot" onClick={() => handleNewBookingClick(ac, time)}></td>
                                             );
                                             })}
                                         </tr>
