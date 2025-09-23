@@ -232,7 +232,10 @@ export function MyDashboardPageContent({ initialData }: { initialData: Dashboard
                                         <div className="flex items-start gap-3">
                                             {getAlertIcon(alert.type)}
                                             <div className="flex-1">
-                                                <p className="font-semibold text-sm leading-tight">{alert.title}</p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="font-semibold text-sm leading-tight">{alert.title}</p>
+                                                    <Badge variant="outline" className="text-xs">{alert.type}</Badge>
+                                                </div>
                                                 <p className="text-sm text-muted-foreground mt-1">{description}</p>
                                             </div>
                                         </div>
