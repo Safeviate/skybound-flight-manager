@@ -197,8 +197,8 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                           <Card className="hover:bg-muted/50 transition-colors">
                               <CardHeader className="flex flex-row items-start justify-between gap-4">
                                  <div className="flex items-start gap-4 flex-1">
-                                      <div className="flex flex-col items-center gap-2">
-                                        {company?.logoUrl && <Image src={company.logoUrl} alt="Company Logo" width={40} height={40} className="rounded-md" />}
+                                      <div className="flex flex-col items-center gap-4">
+                                        {company?.logoUrl && <Image src={company.logoUrl} alt="Company Logo" width={60} height={60} className="rounded-md" />}
                                         {getAlertIcon(alert.type)}
                                       </div>
                                       <div>
