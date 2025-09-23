@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit } from 'lucide-react';
+import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Alert } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -167,6 +167,17 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
         });
     }
   };
+  
+  const handlePrint = (alertId: string) => {
+    const printableArea = document.getElementById(alertId);
+    if (printableArea) {
+      document.body.classList.add('printing-alert');
+      printableArea.classList.add('print-this');
+      window.print();
+      document.body.classList.remove('printing-alert');
+      printableArea.classList.remove('print-this');
+    }
+  };
 
 
   if (loading || !user) {
@@ -211,7 +222,7 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
           {alerts.length > 0 ? (
               <div className="space-y-4">
                   {alerts.map((alert) => (
-                      <Collapsible key={alert.id} className="w-full">
+                      <Collapsible key={alert.id} id={`alert-${alert.id}`} className="w-full">
                           <Card className="hover:bg-muted/50 transition-colors">
                               <CardHeader className="flex flex-row items-start justify-between gap-4">
                                  <div className="flex items-start gap-4 flex-1">
@@ -247,6 +258,9 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                                           <DropdownMenuContent>
                                               <DropdownMenuItem onSelect={() => handleOpenEditDialog(alert)}>
                                                   <Edit className="mr-2 h-4 w-4" /> Edit
+                                              </DropdownMenuItem>
+                                               <DropdownMenuItem onSelect={() => handlePrint(`alert-${alert.id}`)}>
+                                                  <Printer className="mr-2 h-4 w-4" /> Print
                                               </DropdownMenuItem>
                                               <AlertDialog>
                                                   <AlertDialogTrigger asChild>

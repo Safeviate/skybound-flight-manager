@@ -187,4 +187,21 @@ body {
         height: auto !important;
         max-height: none !important;
     }
+
+    body.printing-alert .printable-area:not(.print-this) {
+        display: none !important;
+    }
+
+    body.printing-alert {
+        padding: 0;
+        margin: 0;
+    }
+
+    body.printing-alert .print-this {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
 }
