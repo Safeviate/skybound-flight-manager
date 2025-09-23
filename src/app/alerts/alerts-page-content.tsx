@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Info, ChevronRight, PlusCircle, Users, MoreHorizontal, Trash2, Check, Edit, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { Alert } from '@/lib/types';
+import type { Alert, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-provider';
 import {
@@ -41,13 +41,21 @@ const getAlertIcon = (type: Alert['type']) => {
     }
 }
 
-export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] }) {
+export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: Alert[], allUsers: User[] }) {
   const { user, company, loading, acknowledgeAlerts, getUnacknowledgedAlerts } = useUser();
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+
+  const userMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allUsers.forEach(u => {
+        map.set(u.id, u.name);
+    });
+    return map;
+  }, [allUsers]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -293,8 +301,8 @@ export function AlertsPageContent({ initialAlerts }: { initialAlerts: Alert[] })
                                 </div>
                                 {alert.readBy.length > 0 ? (
                                   <div className="flex flex-wrap gap-2">
-                                    {alert.readBy.map(name => (
-                                      <Badge key={name} variant="secondary">{name}</Badge>
+                                    {alert.readBy.map(userId => (
+                                      <Badge key={userId} variant="secondary">{userMap.get(userId) || userId}</Badge>
                                     ))}
                                   </div>
                                 ) : (
