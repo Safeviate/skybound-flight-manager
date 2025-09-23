@@ -51,9 +51,9 @@ const StickyGanttChart = () => {
 const SplitTableGanttChart = () => {
     const resourceColumnRef = React.useRef<HTMLDivElement>(null);
     const dataAreaRef = React.useRef<HTMLDivElement>(null);
-    
-    const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
-        if (target) {
+
+    const syncScroll = (source: HTMLDivElement | null, target: HTMLDivElement | null) => {
+        if (target && source) {
             target.scrollTop = source.scrollTop;
         }
     };
@@ -64,7 +64,7 @@ const SplitTableGanttChart = () => {
             <div 
                 ref={resourceColumnRef} 
                 className="overflow-y-hidden"
-                onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current!)}
+                onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current)}
             >
                  <Table className="h-full">
                     <TableHeader className="sticky top-0 z-10 bg-card">
@@ -86,7 +86,7 @@ const SplitTableGanttChart = () => {
             <div 
                 ref={dataAreaRef} 
                 className="overflow-auto" 
-                onScroll={(e) => syncScroll(e.currentTarget, resourceColumnRef.current!)}
+                onScroll={(e) => syncScroll(e.currentTarget, resourceColumnRef.current)}
             >
                 <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2400px' }}>
                      <TableHeader className="sticky top-0 z-10 bg-card">
@@ -121,7 +121,7 @@ function GanttChartPage() {
                     <CardDescription>A visual representation of schedules and bookings using different implementation techniques.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="sticky">
+                    <Tabs defaultValue="split">
                         <TabsList>
                             <TabsTrigger value="sticky">CSS Sticky Approach</TabsTrigger>
                             <TabsTrigger value="split">Split Table Approach</TabsTrigger>
@@ -144,5 +144,6 @@ function GanttChartPage() {
 GanttChartPage.title = "Gantt Chart";
 
 export default GanttChartPage;
+
 
 
