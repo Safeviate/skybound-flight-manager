@@ -217,7 +217,7 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
             number: newAlertNumber,
             author: user.name,
             date: format(new Date(), 'yyyy-MM-dd'),
-            readBy: [user.id],
+            readBy: [],
         };
 
         const docRef = await addDoc(alertsCollection, newAlertData);
