@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -301,7 +300,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                             if (companyUserSnap.exists()) return { snap: companyUserSnap, type: 'users', companyId };
 
                             const companyStudentRef = doc(db, 'companies', companyId, 'students', firebaseUser.uid);
-                            const companyStudentSnap = await getDoc(companyStudentSnap);
+                            const companyStudentSnap = await getDoc(companyStudentRef);
                             if (companyStudentSnap.exists()) return { snap: companyStudentSnap, type: 'students', companyId };
                         }
                         return null;
@@ -433,5 +432,5 @@ export function useUser() {
   }
   return context;
 }
-
+    
     
