@@ -63,12 +63,12 @@ const SplitTableGanttChart = () => {
             {/* Resource Column */}
             <div 
                 ref={resourceColumnRef} 
-                className="overflow-y-hidden"
+                className="overflow-y-hidden pr-[17px]" // Compensate for scrollbar width
                 onScroll={(e) => syncScroll(e.currentTarget, dataAreaRef.current)}
             >
-                 <Table className="h-full" style={{ tableLayout: 'fixed' }}>
+                 <Table style={{ tableLayout: 'fixed' }}>
                     <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow className="h-[57px]">
+                        <TableRow style={{ height: '57px' }}>
                             <TableHead className="text-center">Resource</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -90,7 +90,7 @@ const SplitTableGanttChart = () => {
             >
                 <Table className="border-collapse" style={{ tableLayout: 'fixed', width: '2880px' }}>
                      <TableHeader className="sticky top-0 z-10 bg-card">
-                        <TableRow className="h-[57px]">
+                        <TableRow style={{ height: '57px' }}>
                             {hourlyTimeSlots.map(time => (
                                 <TableHead key={time} colSpan={2} className="text-center w-[120px] border-l">{time}</TableHead>
                             ))}
@@ -144,6 +144,7 @@ function GanttChartPage() {
 GanttChartPage.title = "Gantt Chart";
 
 export default GanttChartPage;
+
 
 
 
