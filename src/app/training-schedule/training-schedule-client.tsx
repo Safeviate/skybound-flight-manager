@@ -585,8 +585,8 @@ export function TrainingSchedulePageContent({ initialAircraft, initialBookings, 
                                 <div className="legend-item"><div className="legend-color-box bg-destructive"></div>In Maintenance</div>
                             </div>
                         </div>
-                        <div className="flex-1 mt-6 overflow-auto" style={{ minWidth: '0' }}>
-                            <table className="w-full border-collapse" style={{ minWidth: '2550px' }}>
+                        <div className="flex-1 mt-6 overflow-auto rounded-lg border" style={{ minWidth: '0' }}>
+                            <table className="w-full border-collapse" style={{ minWidth: '2550px', tableLayout: 'fixed' }}>
                                 <thead>
                                     <tr>
                                         <th className="gantt-header-cell aircraft-name-cell">Aircraft</th>
