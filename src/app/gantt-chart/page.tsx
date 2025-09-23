@@ -29,9 +29,9 @@ function GanttChartPage() {
                             <TabsTrigger value="calendar" disabled>Calendar View (Coming Soon)</TabsTrigger>
                         </TabsList>
                         <TabsContent value="gantt" className="mt-4">
-                            <ScrollArea className="rounded-md border h-[600px]">
-                                <div className="relative">
-                                    <Table style={{ width: '2500px' }}>
+                            <ScrollArea className="rounded-md border h-[600px] w-full">
+                                <div className="relative" style={{ width: '2500px' }}>
+                                    <Table>
                                         <TableHeader className="sticky top-0 z-10 bg-card">
                                             <TableRow>
                                                 <TableHead className="sticky left-0 z-20 bg-card w-[150px]">Resource</TableHead>
