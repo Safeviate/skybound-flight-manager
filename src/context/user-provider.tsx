@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument } from '@/lib/types';
+import type { User, Alert, Company, QualityAudit, Permission, ThemeColors, UserDocument, AlertAcknowledgement } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import { getFirestore, getDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, writeBatch, getDocs, setDoc, doc, collectionGroup } from 'firebase/firestore';
@@ -263,7 +264,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
         const alertsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
         const filteredAlerts = alertsData.filter(alert => 
-            !alert.readBy.includes(userId) && 
+            !alert.readBy.some(ack => ack.userId === userId) && 
             (!alert.targetUserId || alert.targetUserId === userId)
         );
         setAllAlerts(filteredAlerts);
@@ -300,7 +301,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                             if (companyUserSnap.exists()) return { snap: companyUserSnap, type: 'users', companyId };
 
                             const companyStudentRef = doc(db, 'companies', companyId, 'students', firebaseUser.uid);
-                            const companyStudentSnap = await getDoc(companyStudentRef);
+                            const companyStudentSnap = await getDoc(companyStudentSnap);
                             if (companyStudentSnap.exists()) return { snap: companyStudentSnap, type: 'students', companyId };
                         }
                         return null;
@@ -386,7 +387,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user) return [];
 
     let filteredAlerts = allAlerts.filter(alert =>
-        !alert.readBy.includes(user.id) && 
+        !alert.readBy.some(ack => ack.userId === user.id) && 
         (!alert.targetUserId || alert.targetUserId === user.id)
     );
 
@@ -402,10 +403,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     try {
         const batch = writeBatch(db);
+        const acknowledgement: AlertAcknowledgement = {
+            userId: user.id,
+            date: new Date().toISOString(),
+        };
         alertIds.forEach(alertId => {
             const alertRef = doc(db, `companies/${company.id}/alerts`, alertId);
             batch.update(alertRef, {
-                readBy: arrayUnion(user.id)
+                readBy: arrayUnion(acknowledgement)
             });
         });
         await batch.commit();
@@ -428,3 +433,5 @@ export function useUser() {
   }
   return context;
 }
+
+    

@@ -561,6 +561,11 @@ export type AuditScheduleItem = {
   status: AuditStatus;
 };
 
+export type AlertAcknowledgement = {
+    userId: string;
+    date: string;
+};
+
 export type Alert = {
   id: string;
   companyId?: string;
@@ -570,7 +575,7 @@ export type Alert = {
   description: string;
   author: string;
   date: string;
-  readBy: string[];
+  readBy: AlertAcknowledgement[];
   targetUserId?: string;
   relatedLink?: string;
 };
@@ -800,3 +805,6 @@ export const HIRE_AND_FLY_DOCUMENTS = [
   "Identification",
   "Passport",
 ] as const;
+
+
+    

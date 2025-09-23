@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -140,8 +141,8 @@ const AlertCard = ({ alert, userMap, canCreateAlerts, onDelete, onEdit, onPrint 
               </div>
               {alert.readBy.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {alert.readBy.map(userId => (
-                    <Badge key={userId} variant="secondary">{userMap.get(userId) || userId}</Badge>
+                  {alert.readBy.map(ack => (
+                    <Badge key={ack.userId} variant="secondary">{userMap.get(ack.userId) || ack.userId} on {format(parseISO(ack.date), 'PPP p')}</Badge>
                   ))}
                 </div>
               ) : (
@@ -351,3 +352,5 @@ export function AlertsPageContent({ initialAlerts, allUsers }: { initialAlerts: 
     </main>
   );
 }
+
+    
