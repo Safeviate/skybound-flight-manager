@@ -45,7 +45,7 @@ const GanttChart = () => {
 
 function GanttChartPage() {
     return (
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-8 overflow-hidden">
             <Card>
                 <CardHeader>
                     <CardTitle>Gantt Chart</CardTitle>
@@ -62,3 +62,4 @@ function GanttChartPage() {
 GanttChartPage.title = "Gantt Chart";
 
 export default GanttChartPage;
+
